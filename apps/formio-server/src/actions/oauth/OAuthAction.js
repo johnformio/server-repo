@@ -255,6 +255,7 @@ module.exports = function(router) {
           provider: provider.name,
           tokens: tokens
         };
+        debug('oauthDeferredAuth: ', req.oauthDeferredAuth);
 
         return Q.ninvoke(formio.cache, 'loadCurrentForm', req)
         .then(function(currentForm) {
@@ -342,6 +343,7 @@ module.exports = function(router) {
       submission.set('externalTokens',
         _(req.oauthDeferredAuth.tokens).concat(submission.externalTokens).uniq('type').value()
       );
+      debug('externalTokens: ', submission.externalTokens);
 
       return submission.save()
       .then(function() {
