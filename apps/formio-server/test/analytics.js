@@ -35,7 +35,8 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var key = (new Date()).getMonth().toString() + ':' + template.project._id + ':ns';
+            var curr = new Date();
+            var key = curr.getUTCFullYear() + ':' + curr.getUTCMonth() + ':' + curr.getUTCDate() +  ':' + template.project._id + ':ns';
             redis.llen(key, function(err, length) {
               if (err) {
                 return done(err);
@@ -55,7 +56,8 @@ module.exports = function(app, template, hook) {
       });
 
       it('The projects submission based requests should be 0', function(done) {
-        app._server.analytics.getCalls((new Date()).getMonth(), template.project._id, function(err, calls) {
+        var curr = new Date();
+        app._server.analytics.getCalls(curr.getUTCFullYear(), curr.getUTCMonth(), curr.getUTCDate(), template.project._id, function(err, calls) {
           if (err) {
             return done(err);
           }
@@ -76,7 +78,8 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            app._server.analytics.getCalls((new Date()).getMonth(), template.project._id, function(err, calls) {
+            var curr = new Date();
+            app._server.analytics.getCalls(curr.getUTCFullYear(), curr.getUTCMonth(), curr.getUTCDate(), template.project._id, function(err, calls) {
               if (err) {
                 return done(err);
               }
@@ -95,7 +98,7 @@ module.exports = function(app, template, hook) {
         app._server.formio.plans.limits['basic'] = 1;
 
         request(app)
-          .get('/project/' + template.project._id)
+          .get('/project/' + template.project._id + '/form/' + template.resources.user._id + '/submission/' + template.users.user1._id)
           .set('x-jwt-token', template.formio.owner.token)
           .expect(200)
           .end(function(err, res) {
@@ -103,11 +106,15 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var key = (new Date()).getMonth().toString() + ':' + template.project._id;
+            var curr = new Date();
+            var key = curr.getUTCFullYear() + ':' + curr.getUTCMonth() + ':' + curr.getUTCDate() +  ':' + template.project._id + ':s';
             redis.llen(key, function(err, length) {
               if (err) {
                 return done(err);
               }
+
+              assert.equal(length, 2);
+              assert.equal(length > app._server.formio.plans.limits['basic'], true);
 
               // Reset the basic plan limits.
               app._server.formio.plans.limits['basic'] = old;
@@ -120,27 +127,27 @@ module.exports = function(app, template, hook) {
       });
     });
 
-    describe('Monthly Analytics - /project/:projectId/analytics/year/:year/month/:month', function() {
-      var _analytics = null;
-      it('A Project Owner should be able to request the monthly analytics', function(done) {
-        request(app)
-          .get('/project/' + template.project._id + '/analytics/year/' + (new Date()).getUTCFullYear() + '/month/' + (new Date()).getUTCMonth())
-          .set('x-jwt-token', template.formio.owner.token)
-          .expect('Content-Type', /json/)
-          .expect(200)
-          .end(function(err, res) {
-            if (err) {
-              return done(err);
-            }
-
-            var response = res.body;
-          });
-      });
-
-      it('The monthly analytics data should contain api calls for each day of the month', function(done) {
-
-      });
-    });
+    //describe('Monthly Analytics - /project/:projectId/analytics/year/:year/month/:month', function() {
+    //  var _analytics = null;
+    //  it('A Project Owner should be able to request the monthly analytics', function(done) {
+    //    request(app)
+    //      .get('/project/' + template.project._id + '/analytics/year/' + (new Date()).getUTCFullYear() + '/month/' + (new Date()).getUTCMonth())
+    //      .set('x-jwt-token', template.formio.owner.token)
+    //      .expect('Content-Type', /json/)
+    //      .expect(200)
+    //      .end(function(err, res) {
+    //        if (err) {
+    //          return done(err);
+    //        }
+    //
+    //        var response = res.body;
+    //      });
+    //  });
+    //
+    //  it('The monthly analytics data should contain api calls for each day of the month', function(done) {
+    //
+    //  });
+    //});
 
     describe('Crash Redis', function() {
       it('The API server will run smoothly without analytics', function(done) {

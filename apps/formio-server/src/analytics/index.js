@@ -100,7 +100,7 @@ module.exports = function(config) {
 
     // Update the redis key, dependent on if this is a submission or non-submission request.
     var now = new Date();
-    var key = now.getUTCMonth() + ':' + project;
+    var key = now.getUTCFullYear() + ':' + now.getUTCMonth() + ':' + now.getUTCDate() + ':' + project;
     if (!submission.test(path)) {
       debug.record('Updating key, non-submission request: ' + path);
       key += ':ns';
@@ -170,14 +170,18 @@ module.exports = function(config) {
    *   The Project Id to search for.
    * @param next {function}
    */
-  var getCalls = function(month, project, next) {
-    if (!connect() || !month || !project) {
+  var getCalls = function(year, month, day, project, next) {
+    if (!connect() || !year || !month || !project) {
       debug.getCalls('Skipping');
       return next();
     }
 
+    if (!day) {
+      day = '*';
+    }
+
     // Only look for submission calls.
-    var key = month.toString() + ':' + project.toString() + ':s';
+    var key = year.toString() + ':' + month.toString() + ':' + day.toString() + ':' + project.toString() + ':s';
     redis.llen(key, function(err, value) {
       if (err) {
         return next(err);

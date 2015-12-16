@@ -72,7 +72,7 @@ module.exports = function(formioServer, cache) {
           return cb(err);
         }
 
-        var month = (new Date()).getMonth();
+        var curr = new Date();
         var _plan = limits[plan];
 
         // Ignore limits for the formio project.
@@ -81,13 +81,16 @@ module.exports = function(formioServer, cache) {
         }
 
         // Check the calls made this month.
-        formioServer.analytics.getCalls(month, project._id, function(err, calls) {
+        formioServer.analytics.getCalls(curr.getUTCFullYear(), curr.getUTCMonth(), null, project._id, function(err, calls) {
           if (err) {
             debug.checkRequest(err);
             return cb(err);
           }
 
-          debug.checkRequest('API Calls for month: ' + month + ' and project: ' + project._id + ': ' + calls);
+          debug.checkRequest(
+            'API Calls for y/m/d: ' + curr.getUTCFullYear() + '/' + curr.getUTCMonth() + '/* and project: '
+            + project._id + ' -> ' + calls
+          );
           if (calls >= _plan) {
             process.nextTick(function() {
               debug.checkRequest('Monthly limit exceeded..');
