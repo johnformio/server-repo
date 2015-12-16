@@ -57,7 +57,7 @@ module.exports = function(router) {
   OAuthAction.settingsForm = function(req, res, next) {
     var fieldsSrc = formio.hook.alter('url', '/form/' + req.params.formId + '/components', req);
     var resourceSrc = formio.hook.alter('url', '/form?type=resource', req);
-    formio.roles.resource.model.find(formio.hook.alter('roleQuery', {}, req))
+    formio.resources.role.model.find(formio.hook.alter('roleQuery', {}, req))
       .sort({title: 1})
       .exec(function(err, roles) {
         if (err || !roles) {
@@ -259,10 +259,11 @@ module.exports = function(router) {
         return Q.ninvoke(formio.cache, 'loadCurrentForm', req)
         .then(function(currentForm) {
           debug('Filling in dummy passwords');
+          var tmpPassword = 'temp_' + chance.string({length: 16});
           util.eachComponent(currentForm.components, function(component) {
             // Fill in password fields with dummy data to pass validation
             if(component.type === 'password' && component.persistent !== false) {
-              req.body.data[component.key] = 'temp_' + chance.string({length: 16});
+              req.body.data[component.key] = tmpPassword;
               debug(component.key, 'is now', req.body.data[component.key]);
             }
           });
@@ -430,9 +431,11 @@ module.exports = function(router) {
               clientId: oauthSettings.clientId,
               authURI: provider.authURI,
               state: state,
-              scope: provider.scope,
-              display: provider.display
+              scope: provider.scope
             };
+            if (provider.display) {
+              component.oauth.display = provider.display;
+            }
           }
         }
         next();
