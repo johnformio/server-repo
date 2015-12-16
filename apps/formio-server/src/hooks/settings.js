@@ -24,6 +24,9 @@ module.exports = function(app) {
   // Attach the teams to formioServer.
   formioServer.formio.teams = require('../teams/index')(app, formioServer);
 
+  // Mount the analytics API.
+  formioServer.analytics.endpoints(app, formioServer);
+
   return {
     settings: function (settings, req, cb) {
       if (!req.projectId) {

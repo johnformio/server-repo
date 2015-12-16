@@ -6,7 +6,11 @@ var debug = {
   connect: require('debug')('formio:analytics:connect'),
   record: require('debug')('formio:analytics:record'),
   hook: require('debug')('formio:analytics:hook'),
-  getCalls: require('debug')('formio:analytics:getCalls')
+  getCalls: require('debug')('formio:analytics:getCalls'),
+
+  createAnalyticsHash: require('debug')('formio:analytics:createAnalyticsHash'),
+  getAnalyticsHashByKey: require('debug')('formio:analytics:getAnalyticsHashByKey'),
+  getDisplayAnalytics: require('debug')('formio:analytics:getDisplayAnalytics')
 };
 var url = require('url');
 var submission = /(\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}\/submission)/i;
@@ -185,12 +189,186 @@ module.exports = function(config) {
   };
 
   /**
+   * Get the analytics hash key with the given parameters.
+   *
+   * @param {String} project
+   *   The project id to search for.
+   * @param {Number} year
+   *   The full date year to search for (Date.getUTCFullYear() format).
+   * @param {Number} [month]
+   *   The full month to search for (Date.getUTCMonth() format).
+   * @param {Number} [day]
+   *   The full day to search for (Date.getUTCDate() format).
+   *
+   * @returns {string}
+   *   They key used to get/set data for this given set of parameters.
+   */
+  var getAnalyticsHashKey = function(project, year, month, day) {
+    // Create the base redis hash, and extend if applicable.
+    var key = 'analytics:' + project + ':' + year;
+    if(month) {
+      key += ':' + month;
+
+      // Only allow the day query if month was also included.
+      if(day) {
+        key += ':' + day;
+      }
+    }
+
+    return key;
+  };
+
+  /**
+   * Updates a squashed representation of detailed redis data for quick analytics displaying.
+   *
+   * @param {String} project
+   *   The project id to search for.
+   * @param {Number} year
+   *   The full date year to search for (Date.getUTCFullYear() format).
+   * @param {Number} [month]
+   *   The full month to search for (Date.getUTCMonth() format).
+   * @param {Number} [day]
+   *   The full day to search for (Date.getUTCDate() format).
+   * @param {Function} next
+   *   The callback function to call when the analytics function has been created.
+   */
+  var updateAnalyticsHash = function(project, year, month, day, oldHash, next) {
+    if(!project || !year) {
+      debug.updateAnalyticsHash('Quietly failing.');
+      return next(null, []);
+    }
+
+    // Determine what type of hash we are dealing with: y/m/d
+    if(day) {
+      debug.updateAnalyticsHash('Daily analytics not supported yet.');
+      return next(null, oldHash);
+    }
+    else if(month) {
+      debug.updateAnalyticsHash('Monthly analytics not supported yet.');
+      return next(null, oldHash);
+    }
+    else if(year) {
+      debug.updateAnalyticsHash('Yearly analytics not supported yet.');
+      return next(null, oldHash);
+    }
+    else {
+      debug.updateAnalyticsHash(
+        'Quietly failing, should never get here.. '
+        + '\nproject: ' + project
+        + '\nyear: ' + year
+        + '\nmonth: ' + month
+        + '\nday: ' + day
+      );
+      return next(null, oldHash);
+    }
+  };
+
+  /**
+   * Get the analytics hash from redis with the given key.
+   *
+   * @param {String} key
+   * @param {Function} next
+   */
+  var getAnalyticsHashByKey = function(key, next) {
+    // Quietly fail if requirements aren't present.
+    if(!connect() || !key) {
+      debug.getAnalyticsHashByKey('Quietly failing.');
+      return next(null, []);
+    }
+
+    debug.getAnalyticsHashByKey(key);
+    redis.hgetall(key, function(err, values) {
+      if(err) {
+        debug.getAnalyticsHashByKey(err);
+        return next(err);
+      }
+
+      debug.getAnalyticsHashByKey(values);
+      next(null, values);
+    });
+  };
+
+  /**
+   * Get the analytics for display with the given parameters.
+   *
+   * @param project {String}
+   *   The project id to search for.
+   * @param year {Number}
+   *   The full date year to search for (Date.getUTCFullYear() format).
+   * @param [month] {Number}
+   *   The full month to search for (Date.getUTCMonth() format).
+   * @param [day] {Number}
+   *   The full day to search for (Date.getUTCDate() format).
+   * @param next {Function}
+   *   The callback function to invoke with the analytics information.
+   */
+  var getDisplayAnalytics = function(project, year, month, day, next) {
+    // Quietly fail if requirements aren't present.
+    if(!project || !year) {
+      debug.getDisplayAnalytics('Quietly failing.');
+      return next(null, []);
+    }
+
+    var key = getAnalyticsHashKey(project, year, month, day);
+    getAnalyticsHashByKey(key, function(err, oldAnalytics) {
+      if(err) {
+        debug.getDisplayAnalytics('Quietly failing.');
+        debug.getDisplayAnalytics(err);
+        return next(null, []);
+      }
+
+      // Update/create the analytics hash as applicable.
+      oldAnalytics = oldAnalytics || [];
+      updateAnalyticsHash(project, year, month, day, oldAnalytics, function(err, newAnalytics) {
+        if(err) {
+          debug.getDisplayAnalytics('Quietly failing w/ error:');
+          debug.getDisplayAnalytics(err);
+          return next(null, oldAnalytics)
+        }
+
+        next(null, newAnalytics);
+      });
+    });
+  };
+
+  /**
+   *
+   * @param app
+   * @param formioServer
+   */
+  var endpoints = function(app, formioServer) {
+    /**
+     * Expose the daily api calls for each day of the month.
+     */
+    app.get(
+      '/project/:projectId/analytics/year/:year/month/:month',
+      formioServer.formio.middleware.tokenHandler,
+      formioServer.formio.middleware.permissionHandler,
+      function(req, res, next) {
+        if(!req.params.projectId || !req.params.year || !req.params.month) {
+          return res.status(400).send('Expected params `year` and `month`.');
+        }
+
+        getDisplayAnalytics(req.params.projectId, req.params.year, req.params.month, null, function(err, _analytics) {
+          if(err) {
+            return res.sendStatus(500);
+          }
+
+          return res.status(200).json(_analytics);
+        });
+      }
+    );
+
+  };
+
+  /**
    * Expose the redis interface for analytics.
    */
   return {
     getRedis: getRedis,
     connect: connect,
     hook: hook,
-    getCalls: getCalls
+    getCalls: getCalls,
+    endpoints: endpoints
   };
 };
