@@ -17,6 +17,7 @@ module.exports = function(cache) {
         if (err) {
           return next(err);
         }
+        debug(project);
         req.userProject = project;
         next();
       });

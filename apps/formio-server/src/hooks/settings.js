@@ -520,6 +520,16 @@ module.exports = function(app) {
               return req.userProject.primary;
             }
 
+            if (_url === '/payeezy') {
+              _debug(req.userProject.primary);
+              return req.userProject.primary;
+            }
+
+            if (_url === '/project/:projectId/upgrade') {
+              _debug(req.userProject.primary);
+              return req.userProject.primary;
+            }
+
             _debug('Checking for Formio Access.');
             _debug('Formio URL: ' + _url);
             if (_url === '/current' || _url === '/logout') {
