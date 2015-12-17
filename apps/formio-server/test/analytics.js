@@ -127,27 +127,118 @@ module.exports = function(app, template, hook) {
       });
     });
 
-    //describe('Monthly Analytics - /project/:projectId/analytics/year/:year/month/:month', function() {
-    //  var _analytics = null;
-    //  it('A Project Owner should be able to request the monthly analytics', function(done) {
-    //    request(app)
-    //      .get('/project/' + template.project._id + '/analytics/year/' + (new Date()).getUTCFullYear() + '/month/' + (new Date()).getUTCMonth())
-    //      .set('x-jwt-token', template.formio.owner.token)
-    //      .expect('Content-Type', /json/)
-    //      .expect(200)
-    //      .end(function(err, res) {
-    //        if (err) {
-    //          return done(err);
-    //        }
-    //
-    //        var response = res.body;
-    //      });
-    //  });
-    //
-    //  it('The monthly analytics data should contain api calls for each day of the month', function(done) {
-    //
-    //  });
-    //});
+    describe('Yearly Analytics - /project/:projectId/analytics/year/:year', function() {
+      it('A Project Owner should be able to request the yearly analytics', function(done) {
+        var curr = new Date();
+        request(app)
+          .get('/project/' + template.project._id + '/analytics/year/' + curr.getUTCFullYear())
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            // Check the response payload for the correct format.
+            assert.equal(response instanceof Array, true);
+            assert.equal(response.length, 12);
+            _.forEach(response, function(_month) {
+              assert.equal(_month.hasOwnProperty('month'), true);
+              assert.equal(_month.hasOwnProperty('days'), true);
+              assert.equal(_month.hasOwnProperty('submissions'), true);
+            });
+
+            // @TODO: Add verification to check that the given data was correct.
+            done();
+          });
+      });
+    });
+
+    describe('Monthly Analytics - /project/:projectId/analytics/year/:year/month/:month', function() {
+      it('A Project Owner should be able to request the monthly analytics', function(done) {
+        var curr = new Date();
+        request(app)
+          .get('/project/' + template.project._id + '/analytics/year/' + curr.getUTCFullYear() + '/month/' + curr.getUTCMonth())
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var daysInMonth = (new Date(parseInt(curr.getUTCFullYear()), parseInt(curr.getUTCMonth())+1, 0)).getUTCDate();
+            var response = res.body;
+            // Check the response payload for the correct format.
+            assert.equal(response instanceof Array, true);
+            assert.equal(response.length, daysInMonth);
+            _.forEach(response, function(_day) {
+              assert.equal(_day.hasOwnProperty('day'), true);
+              assert.equal(_day.hasOwnProperty('submissions'), true);
+            });
+
+            // Check the request count for the current day.
+            var key = app._server.analytics.getAnalyticsKey(template.project._id, curr.getUTCFullYear(), curr.getUTCMonth(), curr.getUTCDate(), 's');
+            redis.llen(key, function(err, len) {
+              if(err) {
+                return done(err);
+              }
+
+              // Check that the response has the correct data, only this day has data.
+              for(var pos = 0; pos < daysInMonth; pos++) {
+                if(pos === (curr.getUTCDate()-1)) {
+                  assert.equal(response[pos].submissions, len);
+                }
+                else {
+                  assert.equal(response[pos].submissions, 0);
+                }
+              }
+            });
+
+            // @TODO: Add more verification to check that the given data was correct.
+            done();
+          });
+      });
+    });
+
+    describe('Daily Analytics - /project/:projectId/analytics/year/:year/month/:month/day/:day', function(done) {
+      it('A Project Owner should be able to request the monthly analytics', function(done) {
+        var curr = new Date();
+        request(app)
+          .get('/project/' + template.project._id + '/analytics/year/' + curr.getUTCFullYear() + '/month/' + curr.getUTCMonth() + '/day/' + curr.getUTCDate())
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            // Check the response payload for the correct format.
+            assert.equal(response instanceof Object, true);
+            assert.equal(response.hasOwnProperty('submissions'), true);
+            assert.equal(response.submissions instanceof Array, true);
+            _.forEach(response.submissions, function(_timestamp) {
+              assert.equal(_.isString(_timestamp), true);
+            });
+
+            var key = app._server.analytics.getAnalyticsKey(template.project._id, curr.getUTCFullYear(), curr.getUTCMonth(), curr.getUTCDate(), 's');
+            redis.llen(key, function(err, length) {
+              if(err) {
+                return done(err);
+              }
+
+              assert.equal(response.submissions.length, length);
+            });
+
+            // @TODO: Add more verification to check that the given data was correct.
+            done();
+          });
+      });
+    });
 
     describe('Crash Redis', function() {
       it('The API server will run smoothly without analytics', function(done) {

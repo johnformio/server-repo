@@ -7,13 +7,13 @@ var debug = {
   record: require('debug')('formio:analytics:record'),
   hook: require('debug')('formio:analytics:hook'),
   getCalls: require('debug')('formio:analytics:getCalls'),
-
-  createAnalyticsHash: require('debug')('formio:analytics:createAnalyticsHash'),
-  getAnalyticsHashByKey: require('debug')('formio:analytics:getAnalyticsHashByKey'),
-  getDisplayAnalytics: require('debug')('formio:analytics:getDisplayAnalytics')
+  getYearlyAnalytics: require('debug')('formio:analytics:getYearlyAnalytics'),
+  getMonthlyAnalytics: require('debug')('formio:analytics:getMonthlyAnalytics'),
+  getDailyAnalytics: require('debug')('formio:analytics:getDailyAnalytics')
 };
 var url = require('url');
 var submission = /(\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}\/submission)/i;
+var _ = require('lodash');
 
 /**
  *
@@ -192,147 +192,12 @@ module.exports = function(config) {
     });
   };
 
-  /**
-   * Get the analytics hash key with the given parameters.
-   *
-   * @param {String} project
-   *   The project id to search for.
-   * @param {Number} year
-   *   The full date year to search for (Date.getUTCFullYear() format).
-   * @param {Number} [month]
-   *   The full month to search for (Date.getUTCMonth() format).
-   * @param {Number} [day]
-   *   The full day to search for (Date.getUTCDate() format).
-   *
-   * @returns {string}
-   *   They key used to get/set data for this given set of parameters.
-   */
-  var getAnalyticsHashKey = function(project, year, month, day) {
-    // Create the base redis hash, and extend if applicable.
-    var key = 'analytics:' + project + ':' + year;
-    if(month) {
-      key += ':' + month;
-
-      // Only allow the day query if month was also included.
-      if(day) {
-        key += ':' + day;
-      }
+  var getAnalyticsKey = function(project, year, month, day, type) {
+    if (!project || !year || !month || !day) {
+      return null;
     }
 
-    return key;
-  };
-
-  /**
-   * Updates a squashed representation of detailed redis data for quick analytics displaying.
-   *
-   * @param {String} project
-   *   The project id to search for.
-   * @param {Number} year
-   *   The full date year to search for (Date.getUTCFullYear() format).
-   * @param {Number} [month]
-   *   The full month to search for (Date.getUTCMonth() format).
-   * @param {Number} [day]
-   *   The full day to search for (Date.getUTCDate() format).
-   * @param {Function} next
-   *   The callback function to call when the analytics function has been created.
-   */
-  var updateAnalyticsHash = function(project, year, month, day, oldHash, next) {
-    if(!project || !year) {
-      debug.updateAnalyticsHash('Quietly failing.');
-      return next(null, []);
-    }
-
-    // Determine what type of hash we are dealing with: y/m/d
-    if(day) {
-      debug.updateAnalyticsHash('Daily analytics not supported yet.');
-      return next(null, oldHash);
-    }
-    else if(month) {
-      debug.updateAnalyticsHash('Monthly analytics not supported yet.');
-      return next(null, oldHash);
-    }
-    else if(year) {
-      debug.updateAnalyticsHash('Yearly analytics not supported yet.');
-      return next(null, oldHash);
-    }
-    else {
-      debug.updateAnalyticsHash(
-        'Quietly failing, should never get here.. '
-        + '\nproject: ' + project
-        + '\nyear: ' + year
-        + '\nmonth: ' + month
-        + '\nday: ' + day
-      );
-      return next(null, oldHash);
-    }
-  };
-
-  /**
-   * Get the analytics hash from redis with the given key.
-   *
-   * @param {String} key
-   * @param {Function} next
-   */
-  var getAnalyticsHashByKey = function(key, next) {
-    // Quietly fail if requirements aren't present.
-    if(!connect() || !key) {
-      debug.getAnalyticsHashByKey('Quietly failing.');
-      return next(null, []);
-    }
-
-    debug.getAnalyticsHashByKey(key);
-    redis.hgetall(key, function(err, values) {
-      if(err) {
-        debug.getAnalyticsHashByKey(err);
-        return next(err);
-      }
-
-      debug.getAnalyticsHashByKey(values);
-      next(null, values);
-    });
-  };
-
-  /**
-   * Get the analytics for display with the given parameters.
-   *
-   * @param project {String}
-   *   The project id to search for.
-   * @param year {Number}
-   *   The full date year to search for (Date.getUTCFullYear() format).
-   * @param [month] {Number}
-   *   The full month to search for (Date.getUTCMonth() format).
-   * @param [day] {Number}
-   *   The full day to search for (Date.getUTCDate() format).
-   * @param next {Function}
-   *   The callback function to invoke with the analytics information.
-   */
-  var getDisplayAnalytics = function(project, year, month, day, next) {
-    // Quietly fail if requirements aren't present.
-    if(!project || !year) {
-      debug.getDisplayAnalytics('Quietly failing.');
-      return next(null, []);
-    }
-
-    var key = getAnalyticsHashKey(project, year, month, day);
-    getAnalyticsHashByKey(key, function(err, oldAnalytics) {
-      if(err) {
-        debug.getDisplayAnalytics('Quietly failing.');
-        debug.getDisplayAnalytics(err);
-        return next(null, []);
-      }
-
-      // Update/create the analytics hash as applicable.
-      oldAnalytics = oldAnalytics || [];
-      updateAnalyticsHash(project, year, month, day, oldAnalytics, function(err, newAnalytics) {
-        if(err) {
-          debug.getDisplayAnalytics('Quietly failing w/ error:');
-          debug.getDisplayAnalytics(err);
-          return next(null, oldAnalytics)
-        }
-
-        next(null, newAnalytics);
-      });
-    });
+    return year.toString() + ':' + month.toString() + ':' + day.toString() + ':' + project.toString() + ':' + type.toString();
   };
 
   /**
@@ -342,6 +207,55 @@ module.exports = function(config) {
    */
   var endpoints = function(app, formioServer) {
     /**
+     * Expose the monthly api calls for each month of the year.
+     */
+    app.get(
+      '/project/:projectId/analytics/year/:year',
+      formioServer.formio.middleware.tokenHandler,
+      formioServer.formio.middleware.permissionHandler,
+      function(req, res, next) {
+        if(!connect() || !req.params.projectId || !req.params.year) {
+          return res.status(400).send('Expected params `year`.');
+        }
+
+        var project = req.params.projectId.toString();
+        var year = req.params.year.toString();
+        var transaction = redis.multi();
+        for(var month = 0; month < 12; month++) {
+          for(var day = 1; day < 32; day++) {
+            transaction.llen(getAnalyticsKey(project, year, month, day, 's'));
+          }
+        }
+
+        transaction.exec(function(err, response) {
+          if(err) {
+            debug.getYearlyAnalytics(err);
+            return res.sendStatus(500);
+          }
+
+          debug.getYearlyAnalytics('RAW: ' + JSON.stringify(response));
+          var output = [];
+
+          // Slice the response into 12 segments and add the submissions.
+          for(var month = 0; month < 12; month++) {
+            var monthData = response.slice((month * 31), ((month + 1) * 31));
+            var daysInMonth = (new Date(parseInt(year), parseInt(month)+1, 0)).getUTCDate();
+
+            debug.getYearlyAnalytics('Month ' + month + ', RAW: ' + JSON.stringify(monthData));
+            output.push({
+              month: month,
+              days: daysInMonth,
+              submissions: _.sum(monthData)
+            })
+          }
+
+          debug.getYearlyAnalytics(output);
+          return res.status(200).json(output);
+        });
+      }
+    );
+
+    /**
      * Expose the daily api calls for each day of the month.
      */
     app.get(
@@ -349,20 +263,79 @@ module.exports = function(config) {
       formioServer.formio.middleware.tokenHandler,
       formioServer.formio.middleware.permissionHandler,
       function(req, res, next) {
-        if(!req.params.projectId || !req.params.year || !req.params.month) {
+        if(!connect() || !req.params.projectId || !req.params.year || !req.params.month) {
           return res.status(400).send('Expected params `year` and `month`.');
         }
 
-        getDisplayAnalytics(req.params.projectId, req.params.year, req.params.month, null, function(err, _analytics) {
+        var project = req.params.projectId.toString();
+        var year = req.params.year.toString();
+        var month = req.params.month.toString();
+        var transaction = redis.multi();
+        for(var day = 1; day < 32; day++) {
+          transaction.llen(getAnalyticsKey(project, year, month, day, 's'));
+        }
+
+        transaction.exec(function(err, response) {
           if(err) {
+            debug.getMonthlyAnalytics(err);
             return res.sendStatus(500);
           }
 
-          return res.status(200).json(_analytics);
+          debug.getMonthlyAnalytics('RAW: ' + JSON.stringify(response));
+          var daysInMonth = (new Date(parseInt(year), parseInt(month)+1, 0)).getUTCDate();
+          response = response.slice(0, daysInMonth);
+
+          var output = [];
+          for(var day = 0; day < response.length; day++) {
+            output.push({
+              day: day,
+              submissions: response[day]
+            });
+          }
+
+          debug.getMonthlyAnalytics(output);
+          return res.status(200).json(output);
         });
       }
     );
 
+    /**
+     * Expose the daily api calls for each day of the month.
+     */
+    app.get(
+      '/project/:projectId/analytics/year/:year/month/:month/day/:day',
+      formioServer.formio.middleware.tokenHandler,
+      formioServer.formio.middleware.permissionHandler,
+      function(req, res, next) {
+        if(!connect() || !req.params.projectId || !req.params.year || !req.params.month || !req.params.day) {
+          return res.status(400).send('Expected params `year`, `month`, and `day`.');
+        }
+
+        var project = req.params.projectId.toString();
+        var year = req.params.year.toString();
+        var month = req.params.month.toString();
+        var day = req.params.day.toString();
+
+        redis.lrange(getAnalyticsKey(project, year, month, day, 's'), 0, -1, function(err, response) {
+          if(err) {
+            debug.getDailyAnalytics(err);
+            return res.sendStatus(500);
+          }
+
+          debug.getDailyAnalytics('RAW: ' + JSON.stringify(response));
+          response = _.map(response, function(_request) {
+            var parts = _request.split(':');
+            return parts[parts.length - 2];
+          });
+          response = {
+            submissions: response
+          };
+
+          debug.getDailyAnalytics(response);
+          return res.status(200).json(response);
+        });
+      }
+    );
   };
 
   /**
@@ -373,6 +346,7 @@ module.exports = function(config) {
     connect: connect,
     hook: hook,
     getCalls: getCalls,
+    getAnalyticsKey: getAnalyticsKey,
     endpoints: endpoints
   };
 };
