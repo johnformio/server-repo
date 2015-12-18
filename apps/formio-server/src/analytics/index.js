@@ -171,24 +171,32 @@ module.exports = function(config) {
    * @param next {function}
    */
   var getCalls = function(year, month, day, project, next) {
-    if (!connect() || !year || !month || !project) {
+    if(!connect() || !year || !month || !project) {
       debug.getCalls('Skipping');
       return next();
     }
 
-    if (!day) {
-      day = '*';
+    var transaction = redis.multi();
+
+    if(!day) {
+      for(var day = 1; day < 32; day++) {
+        transaction.llen(getAnalyticsKey(project, year, month, day, 's'));
+      }
+    }
+    else {
+      transaction.llen(getAnalyticsKey(project, year, month, day, 's'));
     }
 
-    // Only look for submission calls.
-    var key = year.toString() + ':' + month.toString() + ':' + day.toString() + ':' + project.toString() + ':s';
-    redis.llen(key, function(err, value) {
-      if (err) {
-        return next(err);
+    transaction.exec(function(err, response) {
+      if(err) {
+        debug.getCalls(err);
+        return next();
       }
 
-      debug.getCalls(key + ' -> ' + value);
-      next(null, value);
+      debug.getCalls('RAW: ' + JSON.stringify(response));
+      var daysInMonth = (new Date(parseInt(year), parseInt(month)+1, 0)).getUTCDate();
+      response = _.sum(response.slice(0, daysInMonth));
+      return next(null, response);
     });
   };
 
