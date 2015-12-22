@@ -192,9 +192,6 @@ app.formio.init(settings).then(function(formio) {
       });
     }
   });
-
-  // Handle Payeezy form signing requests
-  app.formio.formio.payment = require('./src/payment/payment')(app);
 });
 
 if (config.jslogger) {

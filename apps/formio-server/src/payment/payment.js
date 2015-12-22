@@ -1,10 +1,21 @@
 var Q = require('q');
+var debug = require('debug')('formio:payment');
 
-module.exports = function(app) {
-  var formio = app.formio.formio;
+module.exports = function(app, formio) {
+  var cache = require('../cache/cache')(formio);
 
-  app.post('/payeezy', require('./payeezy.js')(app.formio.config, formio));
-  app.post('/project/:projectId/upgrade', require('./upgrade.js')(formio));
+  app.post('/payeezy',
+    formio.middleware.tokenHandler,
+    require('../middleware/userProject')(cache),
+    require('./payeezy')(app.formio.config, formio)
+  );
+
+  app.post('/project/:projectId/upgrade',
+    formio.middleware.tokenHandler,
+    require('../middleware/userProject')(cache),
+    require('../middleware/restrictOwnerAccess')(formio),
+    require('./upgrade')(formio)
+  );
 
   var paymentFormId;
 
@@ -32,12 +43,14 @@ module.exports = function(app) {
 
     return getPaymentFormId(req.userProject._id)
     .then(function(formId) {
+      debug(formId, req.user._id);
       return Q(formio.resources.submission.model.count({
         form: formId,
         owner: req.user._id
       }))
     })
     .then(function(count) {
+      debug('Payment info count:', count);
       return count > 0;
     });
   };
