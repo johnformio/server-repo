@@ -5,10 +5,12 @@ var request = require('supertest');
 var assert = require('assert');
 var _ = require('lodash');
 var Q = require('q');
+var sinon = require('sinon');
 var moment = require('moment');
 var async = require('async');
 var chance = new (require('chance'))();
 var uuidRegex = /^([a-z]{15})$/;
+var util = require('formio/src/util/util');
 
 module.exports = function(app, template, hook) {
   /**
@@ -734,6 +736,8 @@ module.exports = function(app, template, hook) {
     });
 
     describe('Upgrading Plans', function() {
+      if(!app.formio) return;
+
       it('Anonymous users should not be allowed to upgrade a project', function(done) {
         request(app)
           .post('/project/' + template.project._id + '/upgrade')
@@ -824,17 +828,50 @@ module.exports = function(app, template, hook) {
       });
 
       it('Saving a payment method', function(done) {
+
+        var paymentData = {
+          ccNumber: '4111111111111111',
+          ccExpiryMonth: '12',
+          ccExpiryYear: '50',
+          cardholderName: 'Elon Musk',
+          securityCode: '123'
+        };
+
+        sinon.stub(util, 'request')
+        // .throws(new Error('Request made with unexpected arguments'))
+        .withArgs(sinon.match({
+          method: 'POST',
+          url: 'https://api.demo.globalgatewaye4.firstdata.com/transaction/v19',
+          body: sinon.match({
+            transaction_type: '01', // Pre-Authorization
+            amount: 0,
+            cardholder_name: paymentData.cardholderName,
+            cc_number: '' + paymentData.ccNumber,
+            cc_expiry: paymentData.ccExpiryMonth + paymentData.ccExpiryYear,
+            cc_verification_str2: paymentData.securityCode,
+            customer_ref: new Buffer(template.formio.owner._id.toString(), 'hex').toString('base64'),
+            reference_3: template.formio.owner._id.toString(),
+            user_name: template.formio.owner._id.toString(),
+            client_email: template.formio.owner.data.email,
+            currency_code: 'USD'
+          })
+        }))
+        .returns(Q([{},
+          {
+            transaction_approved: 1,
+            cardholder_name: paymentData.cardholderName,
+            transarmor_token: '1234567899991111',
+            cc_expiry: '1250',
+            credit_card_type: 'visa',
+            transaction_tag: '123456'
+          }
+        ]));
+
         request(app)
           .post('/payeezy')
           .set('x-jwt-token', template.formio.owner.token)
           .send({
-            data: {
-              ccNumber: '4111111111111111',
-              ccExpiryMonth: '12',
-              ccExpiryYear: '50',
-              cardholderName: 'Elon Musk',
-              securityCode: '123'
-            }
+            data: paymentData
           })
           .expect('Content-Type', /text\/plain/)
           .expect(200)
@@ -844,16 +881,18 @@ module.exports = function(app, template, hook) {
             }
             app.formio.resources.form.model.findOne({name: 'paymentAuthorization'})
             .then(function(form) {
-              return app.formio.resources.submission.model.findOne({form: form._id, owner: template.formio.owner._id})
+              return app.formio.resources.submission.model.findOne({form: form._id, owner: template.formio.owner._id});
             })
             .then(function(submission) {
               assert.equal(submission.data.ccNumber, '************1111', 'Only the last 4 digits of the cc number should be stored.');
               assert.equal(submission.data.ccExpiryMonth, '12', 'The expiration month should be stored.');
               assert.equal(submission.data.ccExpiryYear, '50', 'The expiration year should be stored.');
               assert.equal(submission.data.cardholderName, 'Elon Musk', 'The cardholder name should be stored.');
-              assert(submission.data.transarmorToken.substr(-4) === '1111', 'The transarmor token should have the same last 4 digits as CC number.')
+              assert(submission.data.transarmorToken.substr(-4) === '1111', 'The transarmor token should have the same last 4 digits as CC number.');
               assert(submission.data.hasOwnProperty('transactionTag'), 'The submission should store the transactionTag');
               assert.equal(submission.data.securityCode, undefined, 'The security card should not be stored.');
+
+              util.request.restore();
               done();
             });
           });
