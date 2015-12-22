@@ -461,6 +461,20 @@ describe('Bootstrap', function() {
         storeDocument(app.formio.resources.form.model, 'userResource', createTeamResource);
       };
 
+      // Create the initial form to track project upgrade history.
+      var createUpgradeHistoryForm = function() {
+        template.formio.formPayment = {
+          title: 'Project Upgrade History Form',
+          type: 'form',
+          name: 'projectUpgradeHistory',
+          path: 'projectUpgradeHistory',
+          project: template.formio.project._id,
+          components : [] // We don't need components to test the form
+      };
+
+        storeDocument(app.formio.resources.form.model, 'formPayment', createUserResource);
+      };
+
       // Create the initial form to register payment method.
       var createPaymentForm = function() {
         template.formio.formPayment = {
@@ -472,7 +486,7 @@ describe('Bootstrap', function() {
           components : [] // We don't need components to test the form
       };
 
-        storeDocument(app.formio.resources.form.model, 'formPayment', createUserResource);
+        storeDocument(app.formio.resources.form.model, 'formPayment', createUpgradeHistoryForm);
       };
 
       // Set the default Project access.

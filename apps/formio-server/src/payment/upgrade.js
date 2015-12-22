@@ -1,6 +1,7 @@
 var Q = require('q');
 
 module.exports = function(formio) {
+  var cache = require('../cache/cache')(formio);
   var emailer = require('formio/src/util/email')(formio);
 
   return function(req, res, next) {
@@ -21,9 +22,7 @@ module.exports = function(formio) {
     }
 
     // Check user has payment info saved
-    Q(formio.resources.project.model.findOne({
-      _id: req.projectId
-    }))
+    Q.ninvoke(cache, 'loadProject', req, req.projectId)
     .then(function(project) {
       if (project.owner.toString() !== req.user._id.toString()) {
         res.status(401).send('Only project owners can upgrade a project');
@@ -45,34 +44,50 @@ module.exports = function(formio) {
       })
       .then(function(rawResponse) {
         if (rawResponse.ok) {
-          res.sendStatus(200);
-          var emailSettings = {
-            transport: 'default',
-            from: 'no-reply@form.io',
-            emails: ['payment@form.io'],
-            subject: 'Project Upgrade Notification',
-            message: '<p>A project has been upgraded to <strong>{{project.plan}}</strong>!</p>' +
-                      '<p><ul>' +
-                        '<li>Username: {{user.data.name}}</li>' +
-                        '<li>Name: {{user.data.fullName}}</li>' +
-                        '<li>Email: {{user.data.email}}</li>' +
-                        '<li>User ID: {{user._id}}</li><br>' +
-                        '<li>Project Title: {{project.title}}</li>' +
-                        '<li>New Plan: {{project.plan}}</li>' +
-                        '<li>Project ID: {{project._id}}</li>' +
-                      '</ul></p>'
-          };
-          return emailer.send(req, res, emailSettings, {project: project, user: req.user}, function(err) {
-            if (err) {
-              next(err);
-            }
-          });
+          return formio.payment.getUpgradeHistoryFormId(req.userProject._id);
         }
         throw 'Error occurred trying to update the project';
+      })
+      .then(function(formId) {
+        return formio.resources.submission.model.create({
+          form: formId,
+          owner: req.user._id,
+          data: {
+            projectId: project._id,
+            oldPlan: project.plan,
+            newPlan: req.body.plan
+          }
+        });
+      })
+      .then(function() {
+        var emailSettings = {
+          transport: 'default',
+          from: 'no-reply@form.io',
+          emails: ['payment@form.io'],
+          subject: 'Project Upgrade Notification',
+          message: '<p>A project has been upgraded to <strong>{{newPlan}}</strong>!</p>' +
+                    '<p><ul>' +
+                      '<li>Username: {{user.data.name}}</li>' +
+                      '<li>Name: {{user.data.fullName}}</li>' +
+                      '<li>Email: {{user.data.email}}</li>' +
+                      '<li>User ID: {{user._id}}</li><br>' +
+                      '<li>Project Title: {{project.title}}</li>' +
+                      '<li>Old Plan: {{project.plan}}</li>' +
+                      '<li>New Plan: {{newPlan}}</li>' +
+                      '<li>Project ID: {{project._id}}</li>' +
+                    '</ul></p>'
+        };
+        var params = {project: project, user: req.user, newPlan: req.body.plan};
+        return Q.ninvoke(emailer, 'send', req, res, emailSettings, params);
       });
+
+
+    })
+    .then(function() {
+      res.sendStatus(200);
     })
     .catch(function(err) {
-      if(!res.headersSent) {
+      if (!res.headersSent) {
         next(err);
       }
     });

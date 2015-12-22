@@ -18,6 +18,7 @@ module.exports = function(app, formio) {
   );
 
   var paymentFormId;
+  var projectHistoryId;
 
   var getPaymentFormId = function(projectId) {
     if (paymentFormId) {
@@ -33,6 +34,23 @@ module.exports = function(app, formio) {
 
       paymentFormId = form._id.toString();
       return paymentFormId;
+    });
+  };
+
+  var getUpgradeHistoryFormId = function(projectId) {
+    if (projectHistoryId) {
+      return Q(projectHistoryId);
+    }
+
+    return Q(formio.resources.form.model.findOne({
+      project: projectId,
+      name: process.env.UPGRADE_HISTORY_FORM || 'projectUpgradeHistory'
+    }))
+    .then(function(form) {
+      if (!form) throw 'Failed to find `projectUpgradeHistory` form';
+
+      projectHistoryId = form._id.toString();
+      return projectHistoryId;
     });
   };
 
@@ -57,6 +75,7 @@ module.exports = function(app, formio) {
 
   return {
     getPaymentFormId: getPaymentFormId,
+    getUpgradeHistoryFormId: getUpgradeHistoryFormId,
     userHasPaymentInfo: userHasPaymentInfo
   };
 

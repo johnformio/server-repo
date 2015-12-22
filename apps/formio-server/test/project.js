@@ -888,7 +888,7 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
-            app.formio.resources.form.model.findOne({name: 'paymentAuthorization'})
+            Q(app.formio.resources.form.model.findOne({name: 'paymentAuthorization'}))
             .then(function(form) {
               return app.formio.resources.submission.model.findOne({form: form._id, owner: template.formio.owner._id});
             })
@@ -903,6 +903,9 @@ module.exports = function(app, template, hook) {
 
               util.request.restore();
               done();
+            })
+            .catch(function(err) {
+              done(err);
             });
           });
       });
@@ -918,7 +921,27 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
-            confirmProjectPlan(template.project._id, template.formio.owner, 'independent', done);
+            confirmProjectPlan(template.project._id, template.formio.owner, 'independent', function(err) {
+              if (err) {
+                return done(err);
+              }
+              Q(app.formio.resources.form.model.findOne({name: 'projectUpgradeHistory'}))
+              .then(function(form) {
+                return app.formio.resources.submission.model.find({form: form._id, owner: template.formio.owner._id});
+              })
+              .then(function(submissions) {
+                assert.equal(submissions.length, 1, 'There should only be one upgrade history submission.');
+                assert.equal(submissions[0].data.projectId, template.project._id, 'The history entry should have the correct project _id');
+                assert.equal(submissions[0].data.oldPlan, 'basic', 'The history entry should have the correct old plan');
+                assert.equal(submissions[0].data.newPlan, 'independent', 'The history entry should have the correct new plan');
+
+                done();
+              })
+              .catch(function(err) {
+                done(err);
+              });
+
+            });
           });
       });
 
@@ -934,7 +957,28 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
-            confirmProjectPlan(template.project._id, template.formio.owner, 'basic', done);
+            confirmProjectPlan(template.project._id, template.formio.owner, 'basic', function(err) {
+              if (err) {
+                return done(err);
+              }
+              Q(app.formio.resources.form.model.findOne({name: 'projectUpgradeHistory'}))
+              .then(function(form) {
+                return app.formio.resources.submission.model.find({form: form._id, owner: template.formio.owner._id})
+                .sort('-created');
+              })
+              .then(function(submissions) {
+                assert.equal(submissions.length, 2, 'There should only be two upgrade history submissions.');
+                assert.equal(submissions[0].data.projectId, template.project._id, 'The history entry should have the correct project _id');
+                assert.equal(submissions[0].data.oldPlan, 'independent', 'The history entry should have the correct old plan');
+                assert.equal(submissions[0].data.newPlan, 'basic', 'The history entry should have the correct new plan');
+
+                done();
+              })
+              .catch(function(err) {
+                done(err);
+              });
+
+            });
           });
       });
 
