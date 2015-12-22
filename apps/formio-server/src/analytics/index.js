@@ -209,6 +209,36 @@ module.exports = function(config) {
   };
 
   /**
+   * Check if the given value is inclusively between the range of low and high.
+   *
+   * @param {Number} value
+   *   The value to compare.
+   * @param {Number} low
+   *   The lowest inclusive number for acceptance.
+   * @param {Number} high
+   *   The highest inclusive number for acceptance.
+   *
+   * @returns {boolean}
+   *   If the given value is in the range of low to high.
+   */
+  var between = function(value, low, high) {
+    if(!value || !low || !high) {
+      return false;
+    }
+
+    value = parseInt(value);
+    low = parseInt(low);
+    high = parseInt(high);
+
+    if(value >= low && value <= high) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  };
+
+  /**
    *
    * @param app
    * @param formioServer
@@ -224,6 +254,13 @@ module.exports = function(config) {
       function(req, res, next) {
         if(!connect() || !req.params.projectId || !req.params.year) {
           return res.status(400).send('Expected params `year`.');
+        }
+
+        // Param validation.
+        var curr = new Date();
+        req.params.year = parseInt(req.params.year);
+        if(req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
+          return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
         }
 
         var project = req.params.projectId.toString();
@@ -275,9 +312,20 @@ module.exports = function(config) {
           return res.status(400).send('Expected params `year` and `month`.');
         }
 
+        // Param validation.
+        var curr = new Date();
+        req.params.year = parseInt(req.params.year);
+        req.params.month = parseInt(req.params.month);
+        if(req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
+          return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
+        }
+        if(!between(req.params.month, 1, 12)) {
+          return res.status(400).send('Expected a month in the range of 1-12.');
+        }
+
         var project = req.params.projectId.toString();
         var year = req.params.year.toString();
-        var month = req.params.month.toString();
+        var month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
         var transaction = redis.multi();
         for(var day = 1; day < 32; day++) {
           transaction.llen(getAnalyticsKey(project, year, month, day, 's'));
@@ -319,11 +367,25 @@ module.exports = function(config) {
           return res.status(400).send('Expected params `year`, `month`, and `day`.');
         }
 
+        // Param validation.
+        var curr = new Date();
+        req.params.year = parseInt(req.params.year);
+        req.params.month = parseInt(req.params.month);
+        req.params.day = parseInt(req.params.day);
+        if(req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
+          return res.status(400).send('Expected a year in the range of 2015 - ' + curr.getUTCFullYear() + '.');
+        }
+        if(!between(req.params.month, 1, 12)) {
+          return res.status(400).send('Expected a month in the range of 1 - 12.');
+        }
+        if(!between(req.params.day, 1, 31)) {
+          return res.status(400).send('Expected a day in the range of 1 - 31.');
+        }
+
         var project = req.params.projectId.toString();
         var year = req.params.year.toString();
-        var month = req.params.month.toString();
+        var month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
         var day = req.params.day.toString();
-
         redis.lrange(getAnalyticsKey(project, year, month, day, 's'), 0, -1, function(err, response) {
           if(err) {
             debug.getDailyAnalytics(err);
