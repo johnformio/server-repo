@@ -829,6 +829,15 @@ module.exports = function(app, template, hook) {
 
       it('Saving a payment method', function(done) {
 
+        app._server.config.payeezy = {
+          keyId: '123456',
+          host: 'api.demo.globalgatewaye4.firstdata.com',
+          endpoint: '/transaction/v19',
+          gatewayId: 'AJ1234-01',
+          gatewayPassword: '12345678901234567890123456789012',
+          hmacKey: '12345678901234567890123456789012'
+        };
+
         var paymentData = {
           ccNumber: '4111111111111111',
           ccExpiryMonth: '12',
