@@ -20,7 +20,7 @@ var Redis = require('redis');
  * @param done
  */
 module.exports = function(db, config, tools, done) {
-  var Local = Redis.createClient(config.redis.port, config.redis.host);
+  var Local = Redis.createClient(config.redis.port, config.redis.address);
 
   var getOldKeys = function(next) {
     var started = false;
