@@ -11,6 +11,7 @@ var nodeUrl = require('url');
 var fs = require('fs');
 var path = require('path');
 var Q = require('q');
+var semver = require('semver');
 
 module.exports = function(app) {
   var formioServer = app.formio;
@@ -23,6 +24,9 @@ module.exports = function(app) {
 
   // Attach the teams to formioServer.
   formioServer.formio.teams = require('../teams/index')(app, formioServer);
+
+  // Mount the analytics API.
+  formioServer.analytics.endpoints(app, formioServer);
 
   // Handle Payeezy form signing requests and project upgrades
   app.formio.formio.payment = require('../payment/payment')(app, app.formio.formio);
@@ -844,22 +848,25 @@ module.exports = function(app) {
       },
 
       /**
-       * A hook to expose the current formio code version.
+       * A hook to expose the current formio config for the update system.
        *
-       * @param version {String}
-       *   The current formio core code version.
+       * @param {Object} config
+       *   The current formio core config.
        */
-      codeSchema: function(version) {
-        var _debug = require('debug')('formio:settings:codeSchema');
-        var pkg = require('../../package.json');
+      updateConfig: function(config) {
+        var _debug = require('debug')('formio:settings:config');
 
-        _debug(pkg);
-        if(pkg && pkg.schema && pkg.schema !== null) {
-          version = pkg.schema;
+        // Hook the schema var to load the latest public/private schema.
+        var pkg = require('../../package.json');
+        if(pkg && pkg.schema && pkg.schema !== null && semver.gt(pkg.schema, config.schema)) {
+          config.schema = pkg.schema;
         }
 
-        _debug(version);
-        return version;
+        // Hook the config to add redis data for the update script: 3.0.1-rc.2
+        config.redis = formioServer.config.redis;
+
+        _debug(config);
+        return config;
       },
 
       /**

@@ -16,7 +16,9 @@ module.exports = function(formioServer) {
     if (!project._id) {
       return Q.reject('Project has no ID.');
     }
-    return Q.nfcall(formioServer.analytics.getCalls, new Date().getUTCMonth(), project._id.toString())
+
+    var curr = new Date();
+    return Q.nfcall(formioServer.analytics.getCalls, curr.getUTCFullYear(), curr.getUTCMonth(), null, project._id.toString())
     .then(function(used) {
       var limit = formioServer.formio.plans.limits[project.plan];
       var info = {
