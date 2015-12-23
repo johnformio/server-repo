@@ -160,7 +160,7 @@ module.exports = function(app, template, hook) {
       it('A Project Owner should be able to request the monthly analytics', function(done) {
         var curr = new Date();
         request(app)
-          .get('/project/' + template.project._id + '/analytics/year/' + curr.getUTCFullYear() + '/month/' + curr.getUTCMonth())
+          .get('/project/' + template.project._id + '/analytics/year/' + curr.getUTCFullYear() + '/month/' + (curr.getUTCMonth() + 1))
           .set('x-jwt-token', template.formio.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
@@ -169,7 +169,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var daysInMonth = (new Date(parseInt(curr.getUTCFullYear()), parseInt(curr.getUTCMonth())+1, 0)).getUTCDate();
+            var daysInMonth = (new Date(parseInt(curr.getUTCFullYear()), parseInt(curr.getUTCMonth()) + 2, 0)).getUTCDate();
             var response = res.body;
             // Check the response payload for the correct format.
             assert.equal(response instanceof Array, true);
@@ -207,7 +207,7 @@ module.exports = function(app, template, hook) {
       it('A Project Owner should be able to request the monthly analytics', function(done) {
         var curr = new Date();
         request(app)
-          .get('/project/' + template.project._id + '/analytics/year/' + curr.getUTCFullYear() + '/month/' + curr.getUTCMonth() + '/day/' + curr.getUTCDate())
+          .get('/project/' + template.project._id + '/analytics/year/' + curr.getUTCFullYear() + '/month/' + (curr.getUTCMonth() + 1) + '/day/' + curr.getUTCDate())
           .set('x-jwt-token', template.formio.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
