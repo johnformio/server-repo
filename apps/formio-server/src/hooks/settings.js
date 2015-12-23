@@ -28,6 +28,9 @@ module.exports = function(app) {
   // Mount the analytics API.
   formioServer.analytics.endpoints(app, formioServer);
 
+  // Handle Payeezy form signing requests and project upgrades
+  app.formio.formio.payment = require('../payment/payment')(app, app.formio.formio);
+
   return {
     settings: function (settings, req, cb) {
       if (!req.projectId) {
@@ -520,6 +523,11 @@ module.exports = function(app) {
             }
 
             if (_url === '/project/available') {
+              _debug(req.userProject.primary);
+              return req.userProject.primary;
+            }
+
+            if (_url === '/payeezy') {
               _debug(req.userProject.primary);
               return req.userProject.primary;
             }

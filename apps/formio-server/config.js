@@ -10,7 +10,7 @@ var project = process.env.PROJECT || 'formio';
 var plan = process.env.PROJECT_PLAN || 'commercial';
 
 config.reservedSubdomains = ['test', 'www', 'api', 'help', 'support', 'portal'];
-config.formio.reservedForms = ['submission', 'export', 'role', 'current', 'logout', 'import', 'form', 'storage\/s3'];
+config.formio.reservedForms = ['submission', 'export', 'role', 'current', 'logout', 'import', 'form', 'storage\/s3', 'upgrade'];
 
 // Set the App settings.
 var domain = process.env.DOMAIN || 'form.io';
@@ -44,6 +44,17 @@ config.plan = plan;
 config.apiHost = apiHost;
 config.formio.apiHost = apiHost;
 config.formioHost = formioHost;
+
+
+// Payeezy fields
+config.payeezy = {
+  keyId: process.env.PAYEEZY_KEY_ID,
+  host: process.env.PAYEEZY_HOST || 'api.globalgatewaye4.firstdata.com',
+  endpoint: process.env.PAYEEZY_ENDPOINT || '/transaction/v19',
+  gatewayId: process.env.PAYEEZY_GATEWAY_ID,
+  gatewayPassword: process.env.PAYEEZY_GATEWAY_PASSWORD,
+  hmacKey: process.env.PAYEEZY_HMAC_KEY
+};
 
 // The redis configuration.
 config.redis = {

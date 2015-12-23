@@ -105,9 +105,17 @@ module.exports = function(formioServer, cache) {
     }
   };
 
+  /**
+   * Returns an array of all the plan types
+   */
+  var getPlans = function() {
+    return Object.keys(limits);
+  }
+
   return {
     limits: limits,
     checkRequest: checkRequest,
-    getPlan: getPlan
+    getPlan: getPlan,
+    getPlans: getPlans
   };
 };
