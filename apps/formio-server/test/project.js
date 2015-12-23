@@ -1,12 +1,16 @@
+/* eslint-env mocha */
 'use strict';
 
 var request = require('supertest');
 var assert = require('assert');
 var _ = require('lodash');
+var Q = require('q');
+var sinon = require('sinon');
 var moment = require('moment');
 var async = require('async');
 var chance = new (require('chance'))();
 var uuidRegex = /^([a-z]{15})$/;
+var util = require('formio/src/util/util');
 
 module.exports = function(app, template, hook) {
   /**
@@ -604,27 +608,33 @@ module.exports = function(app, template, hook) {
   });
 
   describe('Project Plans', function() {
-    describe('Basic Plan', function() {
-      it('Confirm the project is on the basic plan', function(done) {
-        request(app)
-          .get('/project/' + template.project._id)
-          .set('x-jwt-token', template.formio.owner.token)
-          .expect('Content-Type', /json/)
-          .expect(200)
-          .end(function(err, res) {
-            if (err) {
-              return done(err);
-            }
-
+    var confirmProjectPlan = function confirmProjectPlan(id, user, plan, next) {
+      request(app)
+        .get('/project/' + id)
+        .set('x-jwt-token', user.token)
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .end(function(err, res) {
+          if (err) {
+            return next(err);
+          }
+          try {
             var response = res.body;
             assert.equal(response.hasOwnProperty('plan'), true);
-            assert.equal(response.plan, 'basic');
+            assert.equal(response.plan, plan);
 
             // Store the JWT for future API calls.
-            template.formio.owner.token = res.headers['x-jwt-token'];
-
-            done();
-          });
+            user.token = res.headers['x-jwt-token'];
+          }
+          catch (err) {
+            return next(err);
+          }
+          next();
+        });
+    };
+    describe('Basic Plan', function() {
+      it('Confirm the project is on the basic plan', function(done) {
+        confirmProjectPlan(template.project._id, template.formio.owner, 'basic', done);
       });
 
       it('A Project on the basic plan will have a uuid generated name on creation', function(done) {
@@ -723,6 +733,255 @@ module.exports = function(app, template, hook) {
             done();
           });
       });
+    });
+
+    describe('Upgrading Plans', function() {
+      if(!app.formio) return;
+
+      it('Anonymous users should not be allowed to upgrade a project', function(done) {
+        request(app)
+          .post('/project/' + template.project._id + '/upgrade')
+          .send({plan: 'independent'})
+          .expect('Content-Type', /text\/plain/)
+          .expect(401)
+          .end(function(err, res) {
+            if (err) {
+              return done(err)
+            }
+            confirmProjectPlan(template.project._id, template.formio.owner, 'basic', done);
+          });
+      });
+
+      it('Authenticated users should not be allowed to upgrade a project', function(done) {
+        request(app)
+          .post('/project/' + template.project._id + '/upgrade')
+          .set('x-jwt-token', template.users.user1.token)
+          .send({plan: 'independent'})
+          .expect('Content-Type', /text\/plain/)
+          .expect(401)
+          .end(function(err, res) {
+            if (err) {
+              return done(err)
+            }
+            confirmProjectPlan(template.project._id, template.formio.owner, 'basic', done);
+          });
+      });
+
+      it('Admins should not be allowed to upgrade a project', function(done) {
+        request(app)
+          .post('/project/' + template.project._id + '/upgrade')
+          .set('x-jwt-token', template.users.admin.token)
+          .send({plan: 'independent'})
+          .expect('Content-Type', /text\/plain/)
+          .expect(401)
+          .end(function(err, res) {
+            if (err) {
+              return done(err)
+            }
+            confirmProjectPlan(template.project._id, template.formio.owner, 'basic', done);
+          });
+      });
+
+      it('Upgrading to invalid plan should not be allowed', function(done) {
+        request(app)
+          .post('/project/' + template.project._id + '/upgrade')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({plan: '💩'})
+          .expect('Content-Type', /text\/html/)
+          .expect(400)
+          .end(function(err, res) {
+            if (err) {
+              return done(err)
+            }
+            confirmProjectPlan(template.project._id, template.formio.owner, 'basic', done);
+          });
+      });
+
+      it('Upgrading to commercial should not be allowed', function(done) {
+        request(app)
+          .post('/project/' + template.project._id + '/upgrade')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({plan: 'commerical'})
+          .expect('Content-Type', /text\/html/)
+          .expect(400)
+          .end(function(err, res) {
+            if (err) {
+              return done(err)
+            }
+            confirmProjectPlan(template.project._id, template.formio.owner, 'basic', done);
+          });
+      });
+
+      it('Upgrading without a registered payment method should not be allowed', function(done) {
+        request(app)
+          .post('/project/' + template.project._id + '/upgrade')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({plan: 'independent'})
+          .expect('Content-Type', /text\/html/)
+          .expect(400)
+          .end(function(err, res) {
+            if (err) {
+              return done(err)
+            }
+            confirmProjectPlan(template.project._id, template.formio.owner, 'basic', done);
+          });
+      });
+
+      it('Saving a payment method', function(done) {
+
+        app._server.config.payeezy = {
+          keyId: '123456',
+          host: 'api.demo.globalgatewaye4.firstdata.com',
+          endpoint: '/transaction/v19',
+          gatewayId: 'AJ1234-01',
+          gatewayPassword: '12345678901234567890123456789012',
+          hmacKey: '12345678901234567890123456789012'
+        };
+
+        var paymentData = {
+          ccNumber: '4111111111111111',
+          ccExpiryMonth: '12',
+          ccExpiryYear: '50',
+          cardholderName: 'Elon Musk',
+          securityCode: '123'
+        };
+
+        sinon.stub(util, 'request')
+        // .throws(new Error('Request made with unexpected arguments'))
+        .withArgs(sinon.match({
+          method: 'POST',
+          url: 'https://api.demo.globalgatewaye4.firstdata.com/transaction/v19',
+          body: sinon.match({
+            transaction_type: '01', // Pre-Authorization
+            amount: 0,
+            cardholder_name: paymentData.cardholderName,
+            cc_number: '' + paymentData.ccNumber,
+            cc_expiry: paymentData.ccExpiryMonth + paymentData.ccExpiryYear,
+            cc_verification_str2: paymentData.securityCode,
+            customer_ref: new Buffer(template.formio.owner._id.toString(), 'hex').toString('base64'),
+            reference_3: template.formio.owner._id.toString(),
+            user_name: template.formio.owner._id.toString(),
+            client_email: template.formio.owner.data.email,
+            currency_code: 'USD'
+          })
+        }))
+        .returns(Q([{},
+          {
+            transaction_approved: 1,
+            cardholder_name: paymentData.cardholderName,
+            transarmor_token: '1234567899991111',
+            cc_expiry: '1250',
+            credit_card_type: 'visa',
+            transaction_tag: '123456'
+          }
+        ]));
+
+        request(app)
+          .post('/payeezy')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            data: paymentData
+          })
+          .expect('Content-Type', /text\/plain/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            Q(app.formio.resources.form.model.findOne({name: 'paymentAuthorization'}))
+            .then(function(form) {
+              return app.formio.resources.submission.model.findOne({form: form._id, owner: template.formio.owner._id});
+            })
+            .then(function(submission) {
+              assert.equal(submission.data.ccNumber, '************1111', 'Only the last 4 digits of the cc number should be stored.');
+              assert.equal(submission.data.ccExpiryMonth, '12', 'The expiration month should be stored.');
+              assert.equal(submission.data.ccExpiryYear, '50', 'The expiration year should be stored.');
+              assert.equal(submission.data.cardholderName, 'Elon Musk', 'The cardholder name should be stored.');
+              assert(submission.data.transarmorToken.substr(-4) === '1111', 'The transarmor token should have the same last 4 digits as CC number.');
+              assert(submission.data.hasOwnProperty('transactionTag'), 'The submission should store the transactionTag');
+              assert.equal(submission.data.securityCode, undefined, 'The security card should not be stored.');
+
+              util.request.restore();
+              done();
+            })
+            .catch(function(err) {
+              done(err);
+            });
+          });
+      });
+
+      it('Upgrading with a registered payment method should work', function(done) {
+        request(app)
+          .post('/project/' + template.project._id + '/upgrade')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({plan: 'independent'})
+          .expect('Content-Type', /text\/plain/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            confirmProjectPlan(template.project._id, template.formio.owner, 'independent', function(err) {
+              if (err) {
+                return done(err);
+              }
+              Q(app.formio.resources.form.model.findOne({name: 'projectUpgradeHistory'}))
+              .then(function(form) {
+                return app.formio.resources.submission.model.find({form: form._id, owner: template.formio.owner._id});
+              })
+              .then(function(submissions) {
+                assert.equal(submissions.length, 1, 'There should only be one upgrade history submission.');
+                assert.equal(submissions[0].data.projectId, template.project._id, 'The history entry should have the correct project _id');
+                assert.equal(submissions[0].data.oldPlan, 'basic', 'The history entry should have the correct old plan');
+                assert.equal(submissions[0].data.newPlan, 'independent', 'The history entry should have the correct new plan');
+
+                done();
+              })
+              .catch(function(err) {
+                done(err);
+              });
+
+            });
+          });
+      });
+
+      // Need to downgrade back to basic for the rest of the tests
+      it('Downgrading with a registered payment method should work', function(done) {
+        request(app)
+          .post('/project/' + template.project._id + '/upgrade')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({plan: 'basic'})
+          .expect('Content-Type', /text\/plain/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            confirmProjectPlan(template.project._id, template.formio.owner, 'basic', function(err) {
+              if (err) {
+                return done(err);
+              }
+              Q(app.formio.resources.form.model.findOne({name: 'projectUpgradeHistory'}))
+              .then(function(form) {
+                return app.formio.resources.submission.model.find({form: form._id, owner: template.formio.owner._id})
+                .sort('-created');
+              })
+              .then(function(submissions) {
+                assert.equal(submissions.length, 2, 'There should only be two upgrade history submissions.');
+                assert.equal(submissions[0].data.projectId, template.project._id, 'The history entry should have the correct project _id');
+                assert.equal(submissions[0].data.oldPlan, 'independent', 'The history entry should have the correct old plan');
+                assert.equal(submissions[0].data.newPlan, 'basic', 'The history entry should have the correct new plan');
+
+                done();
+              })
+              .catch(function(err) {
+                done(err);
+              });
+
+            });
+          });
+      });
+
     });
   });
 };
