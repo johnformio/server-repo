@@ -70,6 +70,24 @@ module.exports = function(db, config, tools, done) {
     });
   };
 
+  /**
+   * Update the given value to contain a placeholder request type.
+   *
+   * @param {String} value
+   *   The old value to manipulate.
+   *
+   * @returns {String}
+   *   The new value to add.
+   */
+  var addReqTypeToOldValue = function(value) {
+    var oldValue = value.split(':');
+    var delta = oldValue.pop(); // Remove the very last element which should always be the delta (total req time);
+    var timestamp = oldValue.pop(); // Remove the next last element which should always be the event timestamp.
+
+    oldValue.push('unknown', timestamp, delta); // Add the request type: unknown for all old events as we cant determine what they are.
+    return oldValue.join(':'); // return the new redis value, which is the old with the request type placeholder.
+  };
+
   var storeOldDataWithNewKeys = function(key, values, _callback) {
     var keyParts = key.split(':');
 
@@ -89,7 +107,12 @@ module.exports = function(db, config, tools, done) {
       // Parse out the timestamp and build the new key using it.
       var curr = new Date(parseInt(valueParts[valueParts.length - 2]));
       var newKey = curr.getUTCFullYear() + ':' + curr.getUTCMonth() + ':' + curr.getUTCDate() + ':' + projectId + ':' + submissionType;
-      Local.rpush(newKey, value, function(err) {
+
+      // Update the new value to contain the request type.
+      var newValue = addReqTypeToOldValue(value);
+
+      // Store the new key and value.
+      Local.rpush(newKey, newValue, function(err) {
         if(err) {
           return callback(err);
         }

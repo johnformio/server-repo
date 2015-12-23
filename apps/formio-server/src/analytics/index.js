@@ -81,41 +81,43 @@ module.exports = function(config) {
    *   The Project Id of this request.
    * @param path {String}
    *   The requested url for this request.
+   * @param method {String}
+   *   The http method used for this request.
    * @param start {Number}
    *   The date timestamp this request started.
    */
-  var record = function(project, path, start) {
-    if (!connect()) {
+  var record = function(project, path, method, start) {
+    if(!connect()) {
       debug.record('Skipping, redis not found.');
       return;
     }
-    if (!project) {
+    if(!project) {
       debug.record('Skipping non-project request: ' + path);
       return;
     }
-    if (!path) {
+    if(!method) {
+      debug.record('Skipping request, unknown method: ' + method);
+      return;
+    }
+    if(!path) {
       debug.record('Skipping request, unknown path: ' + path);
       return;
     }
 
     // Update the redis key, dependent on if this is a submission or non-submission request.
     var now = new Date();
-    var key = now.getUTCFullYear() + ':' + now.getUTCMonth() + ':' + now.getUTCDate() + ':' + project;
-    if (!submission.test(path)) {
-      debug.record('Updating key, non-submission request: ' + path);
-      key += ':ns';
-    }
-    else {
-      key += ':s';
-    }
+    var type = submission.test(path) ? 's' : 'ns';
+    var key = getAnalyticsKey(project, now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), type);
 
     debug.record('Start: ' + start);
     debug.record('dt: ' + (now.getTime() - Number.parseInt(start, 10)).toString());
     var delta = start
       ? now.getTime() - start
       : 0;
-    var value = path + ':' + now.getTime() + ':' + delta;
+    method = method.toString().toUpperCase();
+    var value = path + ':' + method + ':' + now.getTime() + ':' + delta;
 
+    // Add this record, to the end of the list at the position of the key.
     redis.rpush(key, value, function(err, length) {
       if (err) {
         debug.record(err);
@@ -155,7 +157,7 @@ module.exports = function(config) {
       var id = req.projectId;
       var path = url.parse(req.url).pathname;
       var start = req._start;
-      record(id, path, start);
+      record(id, path, req.method, start);
     });
 
     next();
@@ -200,8 +202,25 @@ module.exports = function(config) {
     });
   };
 
+  /**
+   * Util function to build the analytics key with the given params.
+   *
+   * @param {String} project
+   *   The project _id.
+   * @param {String} year
+   *   The year in utc time (YYYY).
+   * @param {String} month
+   *   The month in utc time (0-11).
+   * @param {String} day
+   *   The day in utc time (1-31).
+   * @param {String} type
+   *   The type of request (ns/s).
+   *
+   * @returns {String|Null}
+   *   The redis key for the given params.
+   */
   var getAnalyticsKey = function(project, year, month, day, type) {
-    if (!project || !year || !month || !day) {
+    if (!project || !year || !month || !day || !type) {
       return null;
     }
 
