@@ -20,7 +20,22 @@ var Redis = require('redis');
  * @param done
  */
 module.exports = function(db, config, tools, done) {
-  var Local = Redis.createClient(config.redis.port, config.redis.address);
+  var _scriptFinished = false;
+  var Local = Redis.createClient(config.redis.port, config.redis.host, {max_attempts: 3});
+
+  // Dont lock the db on errors.
+  Local.on('error', function(err) {
+    if(err.code === 'CONNECTION_BROKEN') {
+      console.error('Redis error:');
+      console.error(err);
+
+      // Only allow the done fn to be called 1 time.
+      if(!_scriptFinished) {
+        _scriptFinished = true;
+        return done();
+      }
+    }
+  });
 
   var getOldKeys = function(next) {
     var started = false;
@@ -178,15 +193,20 @@ module.exports = function(db, config, tools, done) {
     });
   };
 
-  async.waterfall([
-    getOldKeys,
-    getOldValues,
-    markOldKeysForExpiration
-  ], function(err) {
-    if(err) {
-      return done(err);
-    }
+  Local.on('ready', function() {
+    async.waterfall([
+      getOldKeys,
+      getOldValues,
+      markOldKeysForExpiration
+    ], function(err) {
+      // Only allow the done fn to be called 1 time.
+      if(!_scriptFinished) {
+        if(err) {
+          return done(err);
+        }
 
-    done();
+        done();
+      }
+    });
   });
 };
