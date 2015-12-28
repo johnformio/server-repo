@@ -41,18 +41,20 @@ module.exports = function(formioServer, cache) {
         return next(err || 'Project not found.');
       }
 
-      if (project.hasOwnProperty('primary') && project.primary === true) {
+      if (project.primary && project.primary === true) {
         debug.getPlan('commercial');
         return next(null, 'commercial', project);
       }
 
       // Only allow plans defined within the limits definition.
-      if (project.hasOwnProperty('plan') && project.plan && limits.hasOwnProperty(project.plan)) {
+      if (project.plan && limits.hasOwnProperty(project.plan)) {
+        debug.getPlan('has plan');
         debug.getPlan(project.plan);
         return next(null, project.plan, project);
       }
 
       // Default the project to the basePlan plan if not defined in the limits.
+      debug.getPlan('using default');
       debug.getPlan(basePlan);
       return next(null, basePlan, project);
     });
