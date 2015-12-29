@@ -2458,7 +2458,7 @@ module.exports = function(app, template, hook) {
                 return done(err);
               }
 
-              // Confirm that the settings were not changed.
+              // Confirm that the settings were changed.
               assert.deepEqual(project.settings, temp.settings);
 
               // Store the JWT for future API calls.
