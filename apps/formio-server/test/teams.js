@@ -964,7 +964,7 @@ module.exports = function(app, template, hook) {
 
                 // Confirm that the project wasnt modified.
                 var response = res.body;
-                assert.deepEqual(_.omit(proj, 'modified'), _.omit(response, 'modified'));
+                assert.deepEqual(_.omit(proj, ['modified', 'name']), _.omit(response, ['modified', 'name']));
                 template.projet = response;
 
                 // Store the JWT for future API calls.
