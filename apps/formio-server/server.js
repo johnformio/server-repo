@@ -185,7 +185,7 @@ app.formio.init(settings).then(function(formio) {
   app.storage = require('./src/storage')(app);
 
   formio.db.collection('projects').count(function(err, numProjects) {
-    if (numProjects > 0) {
+    if (!err && numProjects > 0) {
       return start();
     }
     else {

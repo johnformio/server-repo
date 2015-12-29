@@ -49,6 +49,10 @@ module.exports = function(router) {
       };
 
       hubspot.contacts_properties({version: 'v2'}, function(err, properties) {
+        if (err) {
+          return next(null, {});
+        }
+
         var fieldSrc = router.formio.hook.alter('url', '/form/' + req.params.formId + '/components', req);
         var filteredProperties = _.filter(_.sortBy(properties, 'label'), function(property) {
           return !property.readOnlyValue && !property.hidden;

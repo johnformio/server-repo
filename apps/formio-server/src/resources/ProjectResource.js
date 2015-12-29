@@ -147,7 +147,7 @@ module.exports = function(router, formioServer) {
       formio.middleware.condensePermissionTypes,
       formio.middleware.projectAccessFilter,
       formio.middleware.projectPlanFilter,
-      removeProjectSettings,
+      removeProjectSettings
     ],
     afterPut: [
       require('../middleware/projectTemplate')(formio),

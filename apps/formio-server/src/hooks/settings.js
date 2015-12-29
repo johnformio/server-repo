@@ -300,10 +300,9 @@ module.exports = function(app) {
               });
               _debug('Team Permissions: ' + JSON.stringify(teamAccess));
 
+              /* eslint-disable camelcase, max-statements */
               teamAccess.forEach(function(permission) {
                 _debug(permission);
-
-                /* eslint-disable camelcase */
                 /**
                  * For the team_read permission, the following need to be added:
                  *   - read_all permissions on the project
@@ -427,9 +426,8 @@ module.exports = function(app) {
                     access.submission.delete_all.push(id.toString());
                   });
                 }
-
-                /* eslint-enable camelcase */
               });
+              /* eslint-enable camelcase, max-statements */
             }
 
             // Pass the access of this Team to the next function.
@@ -505,6 +503,7 @@ module.exports = function(app) {
        * @returns {Boolean}
        *   If the user has access based on the request.
        */
+      /* eslint-disable max-statements */
       hasAccess: function(_hasAccess, req, access, entity) {
         var _debug = require('debug')('formio:settings:hasAccess');
         var _url = nodeUrl.parse(req.url).pathname;
@@ -589,6 +588,7 @@ module.exports = function(app) {
         // Access was not explicitly granted, therefore it was denied.
         return false;
       },
+      /* eslint-enable max-statements */
 
       /**
        * Hook the available permission types in the PermissionSchema.

@@ -15,7 +15,8 @@ module.exports = function(config, formio) {
     if (!req.body || !req.body.data) {
       return res.status(400).send('No data received');
     }
-    var missingFields = _.filter(['ccNumber', 'ccExpiryMonth', 'ccExpiryYear', 'cardholderName', 'securityCode'], function(prop) {
+    var list = ['ccNumber', 'ccExpiryMonth', 'ccExpiryYear', 'cardholderName', 'securityCode'];
+    var missingFields = _.filter(list, function(prop) {
       return !req.body.data[prop];
     });
     if (missingFields.length !== 0) {

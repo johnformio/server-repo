@@ -135,8 +135,10 @@ module.exports = function(formio) {
     // This should never get called, since GitHub tokens don't expire
     // Returns a promise, or you can provide the next callback arg
     refreshTokens: function(req, res, user, next) {
-      return Q.reject('GitHub tokens don\'t expire for another 200,000 years. Either something went wrong or the end times fallen upon us.')
-      .nodeify(next);
+      return Q.reject(
+        'GitHub tokens don\'t expire for another 200,000 years. Either something went wrong or the end times fallen '
+        + 'upon us.'
+      ).nodeify(next);
     }
   };
 };

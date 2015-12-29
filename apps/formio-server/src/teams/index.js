@@ -58,7 +58,11 @@ module.exports = function(app, formioServer) {
     // A team should never have more than one permission.
     if (type.length > 1) {
       /* eslint-disable no-console */
-      console.error('The given project: ' + JSON.stringify(project) + '\n has a team with more than one permission: ' + team);
+      console.error(
+        'The given project: '
+        + JSON.stringify(project)
+        + '\n has a team with more than one permission: ' + team
+      );
       /* eslint-enable no-console */
 
       // Return the highest access permission.
@@ -97,7 +101,8 @@ module.exports = function(app, formioServer) {
       }
 
       debug.loadTeams('formio project: ' + formio._id);
-      formioServer.formio.resources.form.model.findOne({name: 'team', project: formio._id}, function(err, teamResource) {
+      formioServer.formio.resources.form.model.findOne({name: 'team', project: formio._id})
+      .exec(function(err, teamResource) {
         if (err) {
           debug.loadTeams(err);
           return next(null);
@@ -128,7 +133,8 @@ module.exports = function(app, formioServer) {
       }
 
       debug.loadUsers('formio project: ' + formio._id);
-      formioServer.formio.resources.form.model.findOne({name: 'user', project: formio._id}, function(err, userResource) {
+      formioServer.formio.resources.form.model.findOne({name: 'user', project: formio._id})
+      .exec(function(err, userResource) {
         if (err) {
           debug.loadUsers(err);
           return next(null);
@@ -538,7 +544,7 @@ module.exports = function(app, formioServer) {
 
             return res.status(200).json(teams);
           })
-          .catch(function(err) {
+          .catch(function() {
             return res.sendStatus(400);
           });
       });
@@ -607,7 +613,9 @@ module.exports = function(app, formioServer) {
       // Search for the given team, and check if the current user is a member, but not the owner.
       var query = {
         form: team,
-        'data.members': {$elemMatch: {_id: {$in: [util.idToBson(req.token.user._id), util.idToString(req.token.user._id)]}}},
+        'data.members': {
+          $elemMatch: {_id: {$in: [util.idToBson(req.token.user._id), util.idToString(req.token.user._id)]}}
+        },
         deleted: {$eq: null}
       };
       debug.leaveTeams(JSON.stringify(query));

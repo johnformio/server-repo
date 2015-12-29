@@ -10,7 +10,9 @@ var project = process.env.PROJECT || 'formio';
 var plan = process.env.PROJECT_PLAN || 'commercial';
 
 config.reservedSubdomains = ['test', 'www', 'api', 'help', 'support', 'portal'];
-config.formio.reservedForms = ['submission', 'export', 'role', 'current', 'logout', 'import', 'form', 'storage\/s3', 'upgrade'];
+config.formio.reservedForms = [
+  'submission', 'export', 'role', 'current', 'logout', 'import', 'form', 'storage\/s3', 'upgrade'
+];
 
 // Set the App settings.
 var domain = process.env.DOMAIN || 'form.io';

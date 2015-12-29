@@ -83,14 +83,16 @@ module.exports = function(formioServer, cache) {
         }
 
         // Check the calls made this month.
-        formioServer.analytics.getCalls(curr.getUTCFullYear(), curr.getUTCMonth(), null, project._id, function(err, calls) {
+        var year = curr.getUTCFullYear();
+        var month = curr.getUTCMonth();
+        formioServer.analytics.getCalls(year, month, null, project._id, function(err, calls) {
           if (err) {
             debug.checkRequest(err);
             return cb(err);
           }
 
           debug.checkRequest(
-            'API Calls for y/m/d: ' + curr.getUTCFullYear() + '/' + curr.getUTCMonth() + '/* and project: '
+            'API Calls for y/m/d: ' + year + '/' + month + '/* and project: '
             + project._id + ' -> ' + calls
           );
           if (calls >= _plan) {

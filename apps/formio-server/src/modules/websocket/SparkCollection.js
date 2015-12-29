@@ -99,6 +99,10 @@ SparkCollection.prototype.clear = function() {
   var deferred = Q.defer();
   if (this.redis) {
     this.redis.keys('spark:*', function(err, keys) {
+      if (err) {
+        return deferred.reject(err);
+      }
+
       async.eachSeries(keys, this.redis.del.bind(this.redis), function() {
         deferred.resolve();
       });

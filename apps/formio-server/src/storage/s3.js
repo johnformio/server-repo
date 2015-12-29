@@ -109,7 +109,11 @@ module.exports = function(router) {
         };
 
         /* eslint-disable new-cap */
-        response.data.signature = CryptoJS.HmacSHA1(response.data.policy, project.settings.storage.s3.AWSSecretKey).toString(CryptoJS.enc.Base64);
+        response.data.signature = CryptoJS.HmacSHA1(
+          response.data.policy,
+          project.settings.storage.s3.AWSSecretKey
+        ).toString(CryptoJS.enc.Base64);
+
         /* eslint-enable new-cap */
         debug(response);
         return res.send(response);

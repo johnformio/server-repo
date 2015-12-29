@@ -8,7 +8,9 @@ module.exports = function(formio, done) {
   var hook = require('formio/src/util/hook')(formio);
 
   if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASS) {
-    return done('Cannot set up server. Please set environment variables for ADMIN_EMAIL and ADMIN_PASS and restart the server.');
+    return done(
+      'Cannot set up server. Please set environment variables for ADMIN_EMAIL and ADMIN_PASS and restart the server.'
+    );
   }
 
   var importer = require('formio/src/templates/import')(formio);

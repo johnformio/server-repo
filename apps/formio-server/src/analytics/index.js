@@ -100,7 +100,8 @@ module.exports = function(config) {
       return null;
     }
 
-    return year.toString() + ':' + month.toString() + ':' + day.toString() + ':' + project.toString() + ':' + type.toString();
+    return year.toString() + ':' + month.toString() + ':' + day.toString() + ':' + project.toString() + ':'
+      + type.toString();
   };
 
   /**
