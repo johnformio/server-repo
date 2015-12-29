@@ -53,7 +53,7 @@
   "devDependencies": {
     "chance": "^0.7.7",
     "eslint": "^1.9.0",
-    "eslint-config-formio": "https://github.com/formio/eslint-config-formio.git#f93057cb7c2d14326b536ea1d334df99d34d33a7",
+    "eslint-config-formio": "https://github.com/formio/eslint-config-formio.git#b4a1566c536bc9c01db2d0174f60a22f32cd9803",
     "jscoverage": "^0.6.0",
     "mocha": "^2.3.2",
     "sinon": "^1.17.2",
