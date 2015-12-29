@@ -9,7 +9,7 @@ module.exports = function(router, formioServer) {
   var formio = formioServer.formio;
   var removeProjectSettings = function(req, res, next) {
     if (req.token && req.projectOwner && (req.token.user._id === req.projectOwner)) {
-      debug('Showing project settings to Owner');
+      debug('Allowing the project owner to see/change project settings.');
       return next();
     }
     else if (req.projectId && req.user) {
@@ -20,7 +20,7 @@ module.exports = function(router, formioServer) {
           var roles = _.map(req.user.roles, formio.util.idToString);
 
           if( _.intersection(access, req.user.roles).length !== 0) {
-            debug('Showing project settings to team_admin user');
+            debug('Allowing a team_admin user to see/change project settings.');
             return next();
           }
         }
@@ -29,13 +29,21 @@ module.exports = function(router, formioServer) {
         }
 
         debug('Skipping project settings!');
-        debug(res.resource.item);
+        if (req.method === 'PUT' || req.method === 'POST') {
+          req.body = _.omit(req.body, 'settings');
+          debug('Removing payload settings: ' + JSON.stringify(req.body));
+        }
+
         formio.middleware.filterResourcejsResponse(['settings']).call(this, req, res, next);
       });
     }
     else {
       debug('Skipping project settings!');
-      debug(res.resource.item);
+      if (req.method === 'PUT' || req.method === 'POST') {
+        req.body = _.omit(req.body, 'settings');
+        debug('Removing payload settings: ' + JSON.stringify(req.body));
+      }
+
       formio.middleware.filterResourcejsResponse(['settings']).call(this, req, res, next);
     }
   };
@@ -132,7 +140,8 @@ module.exports = function(router, formioServer) {
       },
       formio.middleware.condensePermissionTypes,
       formio.middleware.projectAccessFilter,
-      formio.middleware.projectPlanFilter
+      formio.middleware.projectPlanFilter,
+      removeProjectSettings,
     ],
     afterPut: [
       require('../middleware/projectTemplate')(formio),
