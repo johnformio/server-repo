@@ -105,5 +105,5 @@ module.exports = function(formio) {
           });
       });
     });
-  }
+  };
 };

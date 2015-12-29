@@ -99,7 +99,7 @@ module.exports = function(formio) {
       ];
 
       // Save preview info to settings if available
-      if(template.preview) {
+      if (template.preview) {
         var settings = _.cloneDeep(project.settings);
         settings.preview = template.preview;
         project.set('settings', settings);
@@ -127,7 +127,10 @@ module.exports = function(formio) {
         role: function(item, done) {
           item.project = project._id;
           hook.alter('roleMachineName', item.machineName, item, function(err, machineName) {
-            if (err) { return done(err); }
+            if (err) {
+              return done(err);
+            }
+
             item.machineName = machineName;
             done(null, item);
           });
@@ -135,14 +138,20 @@ module.exports = function(formio) {
         form: function(item, done) {
           item.project = project._id;
           hook.alter('formMachineName', item.machineName, item, function(err, machineName) {
-            if (err) { return done(err); }
+            if (err) {
+              return done(err);
+            }
+
             item.machineName = machineName;
             done(null, item);
           });
         },
         action: function(item, done) {
           hook.alter('actionMachineName', item.machineName, item, function(err, machineName) {
-            if (err) { return done(err); }
+            if (err) {
+              return done(err);
+            }
+
             item.machineName = machineName;
             done(null, item);
           });
@@ -197,5 +206,5 @@ module.exports = function(formio) {
       // Unknown template.
       return next('Unknown template.');
     }
-  }
+  };
 };

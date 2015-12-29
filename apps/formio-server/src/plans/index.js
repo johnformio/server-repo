@@ -104,7 +104,7 @@ module.exports = function(formioServer, cache) {
           }
         });
       });
-    }
+    };
   };
 
   /**
@@ -112,7 +112,7 @@ module.exports = function(formioServer, cache) {
    */
   var getPlans = function() {
     return Object.keys(limits);
-  }
+  };
 
   return {
     limits: limits,

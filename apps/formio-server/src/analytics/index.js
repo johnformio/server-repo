@@ -48,12 +48,16 @@ module.exports = function(config) {
     else if (config.redis && config.redis.port && config.redis.address) {
       var opts = {};
       if (config.redis.password) {
+        /* eslint-disable */
         opts.auth_pass = config.redis.password;
+        /* eslint-enable */
       }
 
       // Attempt to connect to redis 1 time only.
       redis = Redis.createClient(config.redis.port, config.redis.address, opts);
+      /* eslint-disable */
       redis.max_attempts = 1;
+      /* eslint-enable */
 
       // Attach debugging to specific events, unset redis ref on error/disconnect.
       redis.on('ready', function() {
@@ -75,6 +79,31 @@ module.exports = function(config) {
   };
 
   /**
+   * Util function to build the analytics key with the given params.
+   *
+   * @param {String} project
+   *   The project _id.
+   * @param {String} year
+   *   The year in utc time (YYYY).
+   * @param {String} month
+   *   The month in utc time (0-11).
+   * @param {String} day
+   *   The day in utc time (1-31).
+   * @param {String} type
+   *   The type of request (ns/s).
+   *
+   * @returns {String|Null}
+   *   The redis key for the given params.
+   */
+  var getAnalyticsKey = function(project, year, month, day, type) {
+    if (!project || !year || !month || !day || !type) {
+      return null;
+    }
+
+    return year.toString() + ':' + month.toString() + ':' + day.toString() + ':' + project.toString() + ':' + type.toString();
+  };
+
+  /**
    * Express middleware for tracking request analytics.
    *
    * @param project {String}
@@ -87,19 +116,19 @@ module.exports = function(config) {
    *   The date timestamp this request started.
    */
   var record = function(project, path, method, start) {
-    if(!connect()) {
+    if (!connect()) {
       debug.record('Skipping, redis not found.');
       return;
     }
-    if(!project) {
+    if (!project) {
       debug.record('Skipping non-project request: ' + path);
       return;
     }
-    if(!method) {
+    if (!method) {
       debug.record('Skipping request, unknown method: ' + method);
       return;
     }
-    if(!path) {
+    if (!path) {
       debug.record('Skipping request, unknown path: ' + path);
       return;
     }
@@ -173,15 +202,15 @@ module.exports = function(config) {
    * @param next {function}
    */
   var getCalls = function(year, month, day, project, next) {
-    if(!connect() || !year || !month || !project) {
+    if (!connect() || !year || !month || !project) {
       debug.getCalls('Skipping');
       return next();
     }
 
     var transaction = redis.multi();
 
-    if(!day) {
-      for(var day = 1; day < 32; day++) {
+    if (!day) {
+      for (day = 1; day < 32; day++) {
         transaction.llen(getAnalyticsKey(project, year, month, day, 's'));
       }
     }
@@ -190,7 +219,7 @@ module.exports = function(config) {
     }
 
     transaction.exec(function(err, response) {
-      if(err) {
+      if (err) {
         debug.getCalls(err);
         return next();
       }
@@ -200,31 +229,6 @@ module.exports = function(config) {
       response = _.sum(response.slice(0, daysInMonth));
       return next(null, response);
     });
-  };
-
-  /**
-   * Util function to build the analytics key with the given params.
-   *
-   * @param {String} project
-   *   The project _id.
-   * @param {String} year
-   *   The year in utc time (YYYY).
-   * @param {String} month
-   *   The month in utc time (0-11).
-   * @param {String} day
-   *   The day in utc time (1-31).
-   * @param {String} type
-   *   The type of request (ns/s).
-   *
-   * @returns {String|Null}
-   *   The redis key for the given params.
-   */
-  var getAnalyticsKey = function(project, year, month, day, type) {
-    if (!project || !year || !month || !day || !type) {
-      return null;
-    }
-
-    return year.toString() + ':' + month.toString() + ':' + day.toString() + ':' + project.toString() + ':' + type.toString();
   };
 
   /**
@@ -241,7 +245,7 @@ module.exports = function(config) {
    *   If the given value is in the range of low to high.
    */
   var between = function(value, low, high) {
-    if(!value || !low || !high) {
+    if (!value || !low || !high) {
       return false;
     }
 
@@ -249,7 +253,7 @@ module.exports = function(config) {
     low = parseInt(low);
     high = parseInt(high);
 
-    if(value >= low && value <= high) {
+    if (value >= low && value <= high) {
       return true;
     }
     else {
@@ -271,28 +275,28 @@ module.exports = function(config) {
       formioServer.formio.middleware.tokenHandler,
       formioServer.formio.middleware.permissionHandler,
       function(req, res, next) {
-        if(!connect() || !req.params.projectId || !req.params.year) {
+        if (!connect() || !req.params.projectId || !req.params.year) {
           return res.status(400).send('Expected params `year`.');
         }
 
         // Param validation.
         var curr = new Date();
         req.params.year = parseInt(req.params.year);
-        if(req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
+        if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
           return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
         }
 
         var project = req.params.projectId.toString();
         var year = req.params.year.toString();
         var transaction = redis.multi();
-        for(var month = 0; month < 12; month++) {
-          for(var day = 1; day < 32; day++) {
+        for (var month = 0; month < 12; month++) {
+          for (var day = 1; day < 32; day++) {
             transaction.llen(getAnalyticsKey(project, year, month, day, 's'));
           }
         }
 
         transaction.exec(function(err, response) {
-          if(err) {
+          if (err) {
             debug.getYearlyAnalytics(err);
             return res.sendStatus(500);
           }
@@ -301,7 +305,7 @@ module.exports = function(config) {
           var output = [];
 
           // Slice the response into 12 segments and add the submissions.
-          for(var month = 0; month < 12; month++) {
+          for (var month = 0; month < 12; month++) {
             var monthData = response.slice((month * 31), ((month + 1) * 31));
             var daysInMonth = (new Date(parseInt(year), parseInt(month)+1, 0)).getUTCDate();
 
@@ -310,7 +314,7 @@ module.exports = function(config) {
               month: month,
               days: daysInMonth,
               submissions: _.sum(monthData)
-            })
+            });
           }
 
           debug.getYearlyAnalytics(output);
@@ -327,7 +331,7 @@ module.exports = function(config) {
       formioServer.formio.middleware.tokenHandler,
       formioServer.formio.middleware.permissionHandler,
       function(req, res, next) {
-        if(!connect() || !req.params.projectId || !req.params.year || !req.params.month) {
+        if (!connect() || !req.params.projectId || !req.params.year || !req.params.month) {
           return res.status(400).send('Expected params `year` and `month`.');
         }
 
@@ -335,10 +339,10 @@ module.exports = function(config) {
         var curr = new Date();
         req.params.year = parseInt(req.params.year);
         req.params.month = parseInt(req.params.month);
-        if(req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
+        if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
           return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
         }
-        if(!between(req.params.month, 1, 12)) {
+        if (!between(req.params.month, 1, 12)) {
           return res.status(400).send('Expected a month in the range of 1-12.');
         }
 
@@ -346,12 +350,12 @@ module.exports = function(config) {
         var year = req.params.year.toString();
         var month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
         var transaction = redis.multi();
-        for(var day = 1; day < 32; day++) {
+        for (var day = 1; day < 32; day++) {
           transaction.llen(getAnalyticsKey(project, year, month, day, 's'));
         }
 
         transaction.exec(function(err, response) {
-          if(err) {
+          if (err) {
             debug.getMonthlyAnalytics(err);
             return res.sendStatus(500);
           }
@@ -361,7 +365,7 @@ module.exports = function(config) {
           response = response.slice(0, daysInMonth);
 
           var output = [];
-          for(var day = 0; day < response.length; day++) {
+          for (var day = 0; day < response.length; day++) {
             output.push({
               day: day,
               submissions: response[day]
@@ -382,7 +386,7 @@ module.exports = function(config) {
       formioServer.formio.middleware.tokenHandler,
       formioServer.formio.middleware.permissionHandler,
       function(req, res, next) {
-        if(!connect() || !req.params.projectId || !req.params.year || !req.params.month || !req.params.day) {
+        if (!connect() || !req.params.projectId || !req.params.year || !req.params.month || !req.params.day) {
           return res.status(400).send('Expected params `year`, `month`, and `day`.');
         }
 
@@ -391,13 +395,13 @@ module.exports = function(config) {
         req.params.year = parseInt(req.params.year);
         req.params.month = parseInt(req.params.month);
         req.params.day = parseInt(req.params.day);
-        if(req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
+        if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
           return res.status(400).send('Expected a year in the range of 2015 - ' + curr.getUTCFullYear() + '.');
         }
-        if(!between(req.params.month, 1, 12)) {
+        if (!between(req.params.month, 1, 12)) {
           return res.status(400).send('Expected a month in the range of 1 - 12.');
         }
-        if(!between(req.params.day, 1, 31)) {
+        if (!between(req.params.day, 1, 31)) {
           return res.status(400).send('Expected a day in the range of 1 - 31.');
         }
 
@@ -406,7 +410,7 @@ module.exports = function(config) {
         var month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
         var day = req.params.day.toString();
         redis.lrange(getAnalyticsKey(project, year, month, day, 's'), 0, -1, function(err, response) {
-          if(err) {
+          if (err) {
             debug.getDailyAnalytics(err);
             return res.sendStatus(500);
           }

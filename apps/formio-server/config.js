@@ -45,7 +45,6 @@ config.apiHost = apiHost;
 config.formio.apiHost = apiHost;
 config.formioHost = formioHost;
 
-
 // Payeezy fields
 config.payeezy = {
   keyId: process.env.PAYEEZY_KEY_ID,

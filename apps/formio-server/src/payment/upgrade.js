@@ -1,3 +1,5 @@
+'use strict';
+
 var Q = require('q');
 
 module.exports = function(formio) {
@@ -80,15 +82,13 @@ module.exports = function(formio) {
         var params = {project: project, user: req.user, newPlan: req.body.plan};
         return Q.ninvoke(emailer, 'send', req, res, emailSettings, params);
       });
-
-
     })
     .then(function() {
       res.sendStatus(200);
     })
     .catch(function(err) {
       if (!res.headersSent) {
-        next(err);
+        return next(err);
       }
     });
   };

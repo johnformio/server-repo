@@ -25,7 +25,6 @@ module.exports = function(formio) {
 
   // Handle the request.
   return function(req, res, next) {
-
     // Determine if this is a local domain or not.
     var local = false;
 

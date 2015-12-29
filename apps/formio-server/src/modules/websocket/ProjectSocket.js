@@ -1,9 +1,14 @@
+'use strict';
+
 var jwt = require('jsonwebtoken');
 var Primus = require('primus');
 var Redis = require('redis');
 var Q = require('q');
 var _ = require('lodash');
+/* eslint-disable new-cap */
 var chance = new require('chance')();
+/* eslint-disable new-cap */
+
 module.exports = function(formio) {
   var cache = require('../../cache/cache')(formio);
   var SparkCollection = require('./SparkCollection');
@@ -27,7 +32,9 @@ module.exports = function(formio) {
     };
 
     if (config.redis.password) {
+      /* eslint-disable camelcase */
       redis.auth_pass = config.redis.password;
+      /* eslint-enable camelcase */
     }
 
     // Get the redis server.
@@ -42,7 +49,6 @@ module.exports = function(formio) {
     // Create the place to store all of our sparks.
     this.sparks = new SparkCollection();
     this.sparks.connect(redisServer).then(function() {
-
       var primusConfig = {
         transformer: 'websockets'
       };
@@ -78,13 +84,11 @@ module.exports = function(formio) {
       }.bind(this));
 
       // Trigger when a new connection is made.
-      this.primus.on('connection', function (spark) {
-
+      this.primus.on('connection', function(spark) {
         var projectId = spark.request.project._id.toString();
 
         // Get the sparkId from the project.
         this.sparks.get(projectId).then(function(connection) {
-
           // Close existing connections open for this project.
           if (connection) {
             connection = JSON.parse(connection);
@@ -113,13 +117,10 @@ module.exports = function(formio) {
 
           // Handle data from our socket.
           spark.on('data', function(data) {
-
             // Allow them to bind to certain messages within a project.
             if (data.type === 'bind') {
-
               // Load the existing sparks for this project.
               this.sparks.get(projectId).then(function(connection) {
-
                 // Use the existing connection or create a new one.
                 connection = connection ? JSON.parse(connection) : {
                   token: spark.request.apitoken,
@@ -158,17 +159,15 @@ module.exports = function(formio) {
                   spark.write({
                     type: 'ack',
                     error: err.toString()
-                  })
+                  });
                 });
               }.bind(this));
             }
 
             // A request that was forwarded from another server.
             if (data.type === 'request') {
-
               // Handle this request.
               this.handle(data).then(function(response) {
-
                 // Send the response back to the original server.
                 this.primus.forward(data.address, response, null, function(url) {
                   url.query = {
@@ -343,7 +342,6 @@ module.exports = function(formio) {
 
     // Get the connection for this project.
     this.sparks.get(request.request.params.projectId).then(function(connection) {
-
       if (!connection) {
         deferred.resolve();
         return;
@@ -365,7 +363,6 @@ module.exports = function(formio) {
 
       // If this is supposed to be a synchronous bind.
       if (binding.sync) {
-
         // Only allow up to 1000 concurrent requests...
         if (this.requests.length > 1000) {
           var expired = this.requests.shift();
@@ -379,7 +376,7 @@ module.exports = function(formio) {
         });
 
         // Timeout the promise after 10 seconds.
-        setTimeout(function () {
+        setTimeout(function() {
           var index = _.findIndex(this.requests, {id: request.id});
           if (index !== -1) {
             this.requests.splice(index, 1);
@@ -391,9 +388,8 @@ module.exports = function(formio) {
       // Get the web socket connection.
       var spark = this.primus.spark(connection.sparkId);
       if (!spark) {
-
         // If this spark does not exist, then forward it on...
-        this.forward(connection, request, function (err, result) {
+        this.forward(connection, request, function(err, result) {
           if (err || !result) {
             deferred.resolve();
           }

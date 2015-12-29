@@ -6,7 +6,6 @@ var moment = require('moment');
 var debug = require('debug')('formio:middleware:projectAnalytics');
 
 module.exports = function(formioServer) {
-
   /**
    * Get api call info for a project
    * @param project

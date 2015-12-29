@@ -19,14 +19,14 @@ module.exports = function(formio) {
 
     var cache = require('../cache/cache')(formio);
     cache.loadProject(req, req.projectId, function(err, project) {
-      if(err) {
+      if (err) {
         debug(err);
         return next();
       }
 
       var owner = (formio.util.idToString(req.user._id) === formio.util.idToString(project.owner));
       debug('Owner: ' + owner);
-      if(owner) {
+      if (owner) {
         var prune = require('../util/delete')(formio);
         debug('Prune project w/ projectId: ' + req.projectId);
         prune.project(req.projectId, function(err) {

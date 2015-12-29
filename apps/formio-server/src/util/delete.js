@@ -67,6 +67,56 @@ module.exports = function(formio) {
   };
 
   /**
+   * Flag an Action as deleted. If given a actionId, one action will be flagged; if given a formId, or array of formIds,
+   * then all the Actions for that form, or forms, will be flagged.
+   *
+   * @param actionId {string|ObjectId}
+   *   The Action id to flag as deleted.
+   * @param forms {string|ObjectId|array}
+   *   A list of form ids to flag all Actions as deleted.
+   * @param next
+   *   The callback function to return the results.
+   *
+   * @returns {*}
+   */
+  var deleteAction = function(forms, next) {
+    if (!forms) {
+      debug.action('Skipping');
+      return next();
+    }
+    // Convert the forms to an array if only one was provided.
+    if (forms && !(forms instanceof Array)) {
+      forms = [forms];
+    }
+
+    formio.actions.model.find({form: {$in: forms}, deleted: {$eq: null}}, function(err, actions) {
+      if (err) {
+        debug.action(err);
+        return next(err);
+      }
+      if (!actions || actions.length === 0) {
+        debug.action('No action found with form _id\'s: ' + JSON.stringify(forms));
+        return next();
+      }
+
+      actions.forEach(function(action) {
+        action.deleted = (new Date()).getTime();
+        action.save(function(err, action) {
+          if (err) {
+            debug.action(err);
+            return next(err);
+          }
+
+          debug.action(action);
+        });
+      });
+
+      // Continue once all the forms have been updated.
+      next();
+    });
+  };
+
+  /**
    * Flag a form as deleted. If given a formId, one form will be flagged; if given a projectId, then all the forms for
    * that projectId will be flagged.
    *
@@ -149,56 +199,6 @@ module.exports = function(formio) {
           });
         });
       });
-    });
-  };
-
-  /**
-   * Flag an Action as deleted. If given a actionId, one action will be flagged; if given a formId, or array of formIds,
-   * then all the Actions for that form, or forms, will be flagged.
-   *
-   * @param actionId {string|ObjectId}
-   *   The Action id to flag as deleted.
-   * @param forms {string|ObjectId|array}
-   *   A list of form ids to flag all Actions as deleted.
-   * @param next
-   *   The callback function to return the results.
-   *
-   * @returns {*}
-   */
-  var deleteAction = function(forms, next) {
-    if (!forms) {
-      debug.action('Skipping');
-      return next();
-    }
-    // Convert the forms to an array if only one was provided.
-    if (forms && !(forms instanceof Array)) {
-      forms = [forms];
-    }
-
-    formio.actions.model.find({form: {$in: forms}, deleted: {$eq: null}}, function(err, actions) {
-      if (err) {
-        debug.action(err);
-        return next(err);
-      }
-      if (!actions || actions.length === 0) {
-        debug.action('No action found with form _id\'s: ' + JSON.stringify(forms));
-        return next();
-      }
-
-      actions.forEach(function(action) {
-        action.deleted = (new Date()).getTime();
-        action.save(function(err, action) {
-          if (err) {
-            debug.action(err);
-            return next(err);
-          }
-
-          debug.action(action);
-        });
-      });
-
-      // Continue once all the forms have been updated.
-      next();
     });
   };
 

@@ -35,7 +35,9 @@ module.exports = function(router) {
 
   HubspotContactAction.settingsForm = function(req, res, next) {
     util.connect(router, req, function(err, hubspot) {
-      if (err) { return next(null, {}); }
+      if (err) {
+        return next(null, {});
+      }
 
       // Create the panel for all the fields.
       var fieldPanel = {
@@ -55,28 +57,28 @@ module.exports = function(router) {
         // Create the select items for each hubspot field.
         var optionsSrc = [
           {
-            label: "No mapping",
-            value: ""
+            label: 'No mapping',
+            value: ''
           },
           {
-            label: "Map to a form field",
-            value: "field"
+            label: 'Map to a form field',
+            value: 'field'
           },
           {
-            label: "Set to static or rendered value",
-            value: "value"
+            label: 'Set to static or rendered value',
+            value: 'value'
           },
           {
-            label: "Increment a number",
-            value: "increment"
+            label: 'Increment a number',
+            value: 'increment'
           },
           {
-            label: "Decrement a number",
-            value: "decrement"
+            label: 'Decrement a number',
+            value: 'decrement'
           },
           {
-            label: "Set to current datetime",
-            value: "currentdt"
+            label: 'Set to current datetime',
+            value: 'currentdt'
           }
         ];
         _.each(filteredProperties, function(field) {
@@ -94,7 +96,7 @@ module.exports = function(router) {
                       {
                         type: 'select',
                         key: 'settings[' + field.name + '_action]',
-                        label: "Action",
+                        label: 'Action',
                         input: true,
                         placeholder: 'Select an action to change',
                         template: '<span>{{ item.label || item.value }}</span>',
@@ -102,7 +104,7 @@ module.exports = function(router) {
                         data: {values: optionsSrc},
                         valueProperty: '',
                         multiple: false
-                      },
+                      }
                     ]
                   },
                   {
@@ -131,7 +133,8 @@ module.exports = function(router) {
                 ]
               }
             ]
-          }
+          };
+
           fieldPanel.components.push(fieldOptions);
         });
 
@@ -154,8 +157,11 @@ module.exports = function(router) {
    */
   HubspotContactAction.prototype.resolve = function(handler, method, req, res, next) {
     var actionInfo = this;
+
     // Dont block on the hubspot request.
+    /* eslint-disable */
     next();
+    /* eslint-enable */
 
     util.connect(router, req, function(err, hubspot) {
       if (err) {
@@ -167,28 +173,34 @@ module.exports = function(router) {
       var currentResource = res.resource;
 
       // Limit to _action fields with a value set.
-      var fields = _.pick(actionInfo.settings, function (value, key) {
-        return value && _.endsWith(key, '_action')
+      var fields = _.pick(actionInfo.settings, function(value, key) {
+        return value && _.endsWith(key, '_action');
       });
 
       // Remove _action from the field names so we can map everything out.
-      fields = _.mapKeys(fields, function (value, key) {
+      fields = _.mapKeys(fields, function(value, key) {
         return key.substring(0, key.length - 7);
       });
 
-      var getContactById = function (vid, done) {
+      var getContactById = function(vid, done) {
         debug('vid: ' + vid);
         hubspot.contacts_contact_by_id({vid: vid}, function(err, result) {
-          if (err) { return done(err); }
+          if (err) {
+            return done(err);
+          }
+
           debug(result);
           done(null, result);
         });
       };
 
-      var createOrUpdate = function (email, user, done) {
+      var createOrUpdate = function(email, user, done) {
         debug('searching for ' + email);
         hubspot.contacts_create_update({email: email}, function(err, result) {
-          if (err) { return done(err); }
+          if (err) {
+            return done(err);
+          }
+
           debug(result);
           if (user) {
             // Save off the vid to the user's account.
@@ -202,7 +214,7 @@ module.exports = function(router) {
                   id: result.vid
                 }
               }
-            }, function (err, result) {
+            }, function(err, result) {
               if (err) {
                 debug(err);
                 return;
@@ -210,16 +222,41 @@ module.exports = function(router) {
             });
           }
           done(null, result.vid);
-        })
-      }
+        });
+      };
 
-      var updateContact = function (contact) {
+      var processField = function(action, key, value, current) {
+        switch (action) {
+          case 'field':
+            var parts = value.split('.');
+            if (parts.length > 1) {
+              return req.body.data[parts[0]].data[parts[1]];
+            }
+            return req.body.data[value];
+          case 'value':
+            return nunjucks.renderString(value, currentResource);
+          case 'increment':
+            value = parseInt(value) || 1;
+            current = parseInt(current) || 0;
+            return current + value;
+          case 'decrement':
+            value = parseInt(value) || 1;
+            current = parseInt(current) || 0;
+            return current - value;
+          case 'currentdt':
+            return Date.now();
+        }
+      };
+
+      var updateContact = function(contact) {
+        /* eslint-disable */
         var payload = {
           contact_id: contact.vid,
           properties: {}
         };
+        /* eslint-enable */
 
-        _.each(fields, function (action, key) {
+        _.each(fields, function(action, key) {
           var extension = (action === 'field' ? '_field' : '_value');
           var current = contact.properties.hasOwnProperty(key) ? contact.properties[key].value : null;
           payload.properties[key] = processField(action, key, actionInfo.settings[key + extension], current);
@@ -227,43 +264,20 @@ module.exports = function(router) {
 
         debug(payload);
         hubspot.contacts_properties_update(payload, function(err) {
-          if (err) { return debug(err); }
+          if (err) {
+            debug(err);
+            return;
+          }
         });
-      }
-
-      var processField = function(action, key, value, current) {
-        switch(action) {
-          case 'field':
-            var parts = value.split('.');
-            if (parts.length > 1) {
-              return req.body.data[parts[0]].data[parts[1]];
-            }
-            return req.body.data[value];
-            break;
-          case 'value':
-            return nunjucks.renderString(value, currentResource);
-            break;
-          case 'increment':
-            value = parseInt(value) || 1;
-            current = parseInt(current) || 0;
-            return current + value;
-            break;
-          case 'decrement':
-            value = parseInt(value) || 1;
-            current = parseInt(current) || 0;
-            return current - value;
-            break;
-          case 'currentdt':
-            return Date.now();
-            break;
-        }
-      }
+      };
 
       if (!req.token) {
         return;
       }
-      router.formio.cache.loadSubmission(req, req.token.form._id, req.token.user._id, function (err, user) {
-        if (err) { return debug(err); }
+      router.formio.cache.loadSubmission(req, req.token.form._id, req.token.user._id, function(err, user) {
+        if (err) {
+          return debug(err);
+        }
 
         var email, externalId;
         // First check for an email field in mappings.
@@ -289,17 +303,26 @@ module.exports = function(router) {
 
         if (externalId) {
           debug('externalId: ' + externalId);
-          getContactById(externalId, function (err, contact) {
-            if (err) { return debug(err); }
+          getContactById(externalId, function(err, contact) {
+            if (err) {
+              return debug(err);
+            }
+
             updateContact(contact);
           });
         }
         else if (email) {
           debug('email: ' + email);
-          createOrUpdate(email, user, function (err, contactId) {
-            if (err) { return debug(err); }
-            getContactById(contactId, function (err, contact) {
-              if (err) { return debug(err); }
+          createOrUpdate(email, user, function(err, contactId) {
+            if (err) {
+              return debug(err);
+            }
+
+            getContactById(contactId, function(err, contact) {
+              if (err) {
+                return debug(err);
+              }
+
               updateContact(contact);
             });
           });

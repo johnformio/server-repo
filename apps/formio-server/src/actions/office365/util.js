@@ -10,7 +10,6 @@ nunjucks.configure([], {
 });
 var request = require('request');
 var Q = require('q');
-
 var qRequest = Q.denodeify(request);
 
 module.exports = {
@@ -30,13 +29,12 @@ module.exports = {
    * @returns {Promise.<T>|*}
    */
   request: function(router, req, res, resource, type, authType, payload) {
-
     // Store the current resource.
     var currentResource = res.resource;
 
     // Connect to Office 365.
     var connectPromise;
-    if(authType === 'application') {
+    if (authType === 'application') {
       connectPromise = this.connectWithCertificate(router, req);
     }
     else {
@@ -50,12 +48,13 @@ module.exports = {
 
       // Handle PUT and DELETE methods.
       if (req.method !== 'POST') {
-
         // Get the externalId for this resource.
         externalId = _.result(_.find(currentResource.item.externalIds, {type: type}), 'id');
 
         // Return if there is no external Id to update.
-        if (!externalId) { return; }
+        if (!externalId) {
+          return;
+        }
 
         // Add to the url.
         url += "('" + externalId + "')";
@@ -92,7 +91,6 @@ module.exports = {
 
         // Only add an externalId if none is provided.
         if ((req.method === 'POST') && !externalId && body.Id) {
-
           // Update the resource with the external Id.
           return router.formio.resources.submission.model.update({
             _id: currentResource.item._id
@@ -167,7 +165,7 @@ module.exports = {
    */
   connectWithOAuth: function(router, req, res) {
     var token = req.token;
-    if(!token) {
+    if (!token) {
       return Q.reject('Must be logged in to connect with Office 365 via OAuth.');
     }
     if (req.o365) {
@@ -182,11 +180,13 @@ module.exports = {
       return {
         accessToken: accessToken,
         settings: settings
-      }
+      };
     })
     .catch(function(err) {
+      /* eslint-disable no-console */
       console.error(err);
-      throw err
+      /* eslint-enable no-console */
+      throw err;
     });
 
     return req.o365;

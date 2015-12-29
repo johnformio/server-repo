@@ -64,15 +64,14 @@ module.exports = function(formio) {
       try {
         id = (typeof id === 'string') ? formio.mongoose.Types.ObjectId(id) : id;
       }
-      catch(e) {
+      catch (e) {
         debug.loadProject(e);
         return cb('Invalid Project Id given.');
       }
 
       var query = {_id: id, deleted: {$eq: null}};
       var params = req.params;
-      formio.resources.project.model.findOne(query).exec(function (err, result) {
-
+      formio.resources.project.model.findOne(query).exec(function(err, result) {
         // @todo: Figure out why we have to reset the params after project load.
         req.params = params;
         if (err) {

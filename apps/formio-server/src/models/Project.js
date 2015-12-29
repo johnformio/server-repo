@@ -5,7 +5,7 @@ var EncryptedProperty = require('../plugins/EncryptedProperty');
 
 module.exports = function(router) {
   var formio = router.formio;
-  var cache = require('../cache/cache')(formio);
+  /* eslint-disable new-cap */
   var model = formio.BaseModel({
     schema: new formio.mongoose.Schema({
       title: {
@@ -49,6 +49,7 @@ module.exports = function(router) {
       access: [formio.schemas.PermissionSchema]
     })
   });
+  /* eslint-enable new-cap */
 
   // Encrypt 'settings' property at rest in MongoDB.
   model.schema.plugin(EncryptedProperty, {

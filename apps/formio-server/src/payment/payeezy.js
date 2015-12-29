@@ -1,14 +1,12 @@
+'use strict';
+
 /* eslint camelcase: 0 */
 var crypto = require('crypto');
 var _ = require('lodash');
 var Q = require('q');
-var debug = require('debug')('formio:payeezy');
-
 var util = require('formio/src/util/util');
 
-
 module.exports = function(config, formio) {
-
   return function(req, res, next) {
     if (!req.user || !req.userProject.primary) {
       return res.status(401);
@@ -25,7 +23,6 @@ module.exports = function(config, formio) {
     }
 
     var userId = req.user._id.toString();
-
 
     formio.payment.getPaymentFormId(req.userProject._id)
     .then(function(formId) {

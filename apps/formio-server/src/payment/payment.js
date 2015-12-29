@@ -1,3 +1,5 @@
+'use strict';
+
 var Q = require('q');
 var debug = require('debug')('formio:payment');
 
@@ -30,7 +32,9 @@ module.exports = function(app, formio) {
       name: process.env.PAYEEZY_FORM || 'paymentAuthorization'
     }))
     .then(function(form) {
-      if (!form) throw 'Failed to find `paymentAuthorization` form';
+      if (!form) {
+        throw 'Failed to find `paymentAuthorization` form';
+      }
 
       paymentFormId = form._id.toString();
       return paymentFormId;
@@ -47,7 +51,9 @@ module.exports = function(app, formio) {
       name: process.env.UPGRADE_HISTORY_FORM || 'projectUpgradeHistory'
     }))
     .then(function(form) {
-      if (!form) throw 'Failed to find `projectUpgradeHistory` form';
+      if (!form) {
+        throw 'Failed to find `projectUpgradeHistory` form';
+      }
 
       projectHistoryId = form._id.toString();
       return projectHistoryId;
@@ -65,7 +71,7 @@ module.exports = function(app, formio) {
       return Q(formio.resources.submission.model.count({
         form: formId,
         owner: req.user._id
-      }))
+      }));
     })
     .then(function(count) {
       debug('Payment info count:', count);
@@ -78,5 +84,4 @@ module.exports = function(app, formio) {
     getUpgradeHistoryFormId: getUpgradeHistoryFormId,
     userHasPaymentInfo: userHasPaymentInfo
   };
-
 };

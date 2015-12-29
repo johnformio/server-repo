@@ -1,7 +1,7 @@
 'use strict';
 var Q = require('q');
-module.exports = function(formio) {
 
+module.exports = function(formio) {
   /**
    * Authenticate a user via OAuth. Resolves with null if no user found
    *
@@ -64,6 +64,6 @@ module.exports = function(formio) {
    * Return the public methods.
    */
   return {
-    authenticateOAuth: authenticateOAuth,
+    authenticateOAuth: authenticateOAuth
   };
 };
