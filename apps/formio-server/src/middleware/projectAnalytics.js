@@ -13,6 +13,9 @@ module.exports = function(formioServer) {
    * @return [info, project]
    */
   var getCallInfo = function(project) {
+    if (!project) {
+      return Q.reject('No project');
+    }
     if (!project._id) {
       return Q.reject('Project has no ID.');
     }
