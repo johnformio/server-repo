@@ -173,7 +173,7 @@ module.exports = function(config) {
    * @param next {function}
    */
   var getCalls = function(year, month, day, project, next) {
-    if(!connect() || !year || !month || !project) {
+    if(!connect() || !year || (!month && month !== 0) || !project) {
       debug.getCalls('Skipping');
       return next();
     }
@@ -220,7 +220,7 @@ module.exports = function(config) {
    *   The redis key for the given params.
    */
   var getAnalyticsKey = function(project, year, month, day, type) {
-    if (!project || !year || !month || !day || !type) {
+    if (!project || !year || (!month && month !== 0) || !day || !type) {
       return null;
     }
 
