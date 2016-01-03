@@ -170,7 +170,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var daysInMonth = (new Date(parseInt(curr.getUTCFullYear()), parseInt(curr.getUTCMonth()) + 2, 0)).getUTCDate();
+            var daysInMonth = (new Date(parseInt(curr.getUTCFullYear()), parseInt(curr.getUTCMonth()) + 1, 0)).getUTCDate();
             var response = res.body;
             // Check the response payload for the correct format.
             assert.equal(response instanceof Array, true);
