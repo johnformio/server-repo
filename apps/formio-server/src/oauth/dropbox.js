@@ -53,6 +53,7 @@ module.exports = function(formio) {
     getTokens: function(req, code, state, redirectURI, next) {
       return oauthUtil.settings(req, this.name)
         .then(function(settings) {
+          /* eslint-disable camelcase */
           return util.request({
             method: 'POST',
             json: true,
@@ -65,6 +66,7 @@ module.exports = function(formio) {
               redirect_uri: redirectURI
             }
           });
+          /* eslint-enable camelcase */
         })
         .spread(function(response, body) {
           debug(body);

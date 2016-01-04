@@ -96,7 +96,7 @@ module.exports = function(config) {
    *   The redis key for the given params.
    */
   var getAnalyticsKey = function(project, year, month, day, type) {
-    if (!project || !year || !month || !day || !type) {
+    if (!project || !year || (!month && month !== 0) || !day || !type) {
       return null;
     }
 
@@ -233,31 +233,6 @@ module.exports = function(config) {
   };
 
   /**
-   * Util function to build the analytics key with the given params.
-   *
-   * @param {String} project
-   *   The project _id.
-   * @param {String} year
-   *   The year in utc time (YYYY).
-   * @param {String} month
-   *   The month in utc time (0-11).
-   * @param {String} day
-   *   The day in utc time (1-31).
-   * @param {String} type
-   *   The type of request (ns/s).
-   *
-   * @returns {String|Null}
-   *   The redis key for the given params.
-   */
-  var getAnalyticsKey = function(project, year, month, day, type) {
-    if (!project || !year || (!month && month !== 0) || !day || !type) {
-      return null;
-    }
-
-    return year.toString() + ':' + month.toString() + ':' + day.toString() + ':' + project.toString() + ':' + type.toString();
-  };
-
-  /**
    * Recursively get all the redis keys matching the glob.
    *
    * @param {String} glob
@@ -277,7 +252,7 @@ module.exports = function(config) {
         return cb();
       }
 
-      if(!started) {
+      if (!started) {
         _debug('started=true');
         started = true;
       }
@@ -418,7 +393,7 @@ module.exports = function(config) {
           }
 
           var member = _.any(teams, function(team) {
-            if (user.roles.indexOf(team) !== -1) {
+            if (req.user.roles.indexOf(team) !== -1) {
               return true;
             }
 
@@ -687,7 +662,7 @@ module.exports = function(config) {
       restrictToFormioEmployees,
       function(req, res, next) {
         var _debug = require('debug')('formio:analytics:getFormioYearAnalytics');
-        if(!connect() || !req.params.year) {
+        if (!connect() || !req.params.year) {
           return res.status(400).send('Expected params `year`.');
         }
 
@@ -713,7 +688,7 @@ module.exports = function(config) {
       restrictToFormioEmployees,
       function(req, res, next) {
         var _debug = require('debug')('formio:analytics:getFormioMonthAnalytics');
-        if(!connect() || !req.params.year || !req.params.month) {
+        if (!connect() || !req.params.year || !req.params.month) {
           return res.status(400).send('Expected params `year` and `month`.');
         }
 
@@ -744,7 +719,7 @@ module.exports = function(config) {
       restrictToFormioEmployees,
       function(req, res, next) {
         var _debug = require('debug')('formio:analytics:getFormioDayAnalytics');
-        if(!connect() || !req.params.year || !req.params.month || !req.params.day) {
+        if (!connect() || !req.params.year || !req.params.month || !req.params.day) {
           return res.status(400).send('Expected params `year`, `month`, and `day`.');
         }
 
@@ -753,13 +728,13 @@ module.exports = function(config) {
         req.params.year = parseInt(req.params.year);
         req.params.month = parseInt(req.params.month);
         req.params.day = parseInt(req.params.day);
-        if(req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
+        if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
           return res.status(400).send('Expected a year in the range of 2015 - ' + curr.getUTCFullYear() + '.');
         }
-        if(!between(req.params.month, 1, 12)) {
+        if (!between(req.params.month, 1, 12)) {
           return res.status(400).send('Expected a month in the range of 1 - 12.');
         }
-        if(!between(req.params.day, 1, 31)) {
+        if (!between(req.params.day, 1, 31)) {
           return res.status(400).send('Expected a day in the range of 1 - 31.');
         }
 
