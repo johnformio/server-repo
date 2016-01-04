@@ -228,6 +228,53 @@ module.exports = function(config) {
   };
 
   /**
+   * Recursively get all the redis keys matching the glob.
+   *
+   * @param {String} glob
+   *   The glob pattern to match.
+   * @param {Function} next
+   *   The callback function to invoke when complete.
+   */
+  var getAllKeys = function(glob, next) {
+    var _debug = require('debug')('formio:analytics:getAllKeys');
+    var keys = [];
+
+    // Recursively get all the keys matching the glob.
+    var started = false;
+    (function scan(cursor, cb) {
+      _debug(cursor);
+      if (cursor === '0' && started) {
+        return cb();
+      }
+
+      if(!started) {
+        _debug('started=true');
+        started = true;
+      }
+
+      redis.scan(cursor, 'MATCH', glob, function(err, _keys) {
+        if (err || !_keys) {
+          _debug(cursor + ',' + glob);
+          return cb(err);
+        }
+
+        if (_keys[1] &&_keys[1].length > 0) {
+          _debug(_keys[1]);
+          keys = keys.concat(_keys[1]);
+        }
+
+        return scan(_keys[0], cb);
+      });
+    })('0', function(err) {
+      if (err) {
+        return next(err);
+      }
+
+      next(null, keys);
+    });
+  };
+
+  /**
    * Check if the given value is inclusively between the range of low and high.
    *
    * @param {Number} value
@@ -258,11 +305,105 @@ module.exports = function(config) {
   };
 
   /**
+   * Get the formio analytics using the given glob and a redis transaction, and dump to json.
+   *
+   * @param {String} glob
+   *   The glob pattern to match.
+   * @param {Object} _debug
+   *   The debug object for logging.
+   * @param {Object} res
+   *   The Express response object.
+   */
+  var getFormioAnalytics = function(glob, _debug, res) {
+    // Start the transaction and all the keys in question.
+    var transaction = redis.multi();
+    getAllKeys(glob, function(err, keys) {
+      if (err) {
+        _debug(err);
+        return res.status(500).send(err);
+      }
+
+      // Confirm the keys are unique and add them to the transaction.
+      var wrapped = _(keys)
+        .uniq()
+        .forEach(function(key) {
+          transaction.llen(key);
+        })
+        .value();
+
+      transaction.exec(function(err, response) {
+        if (err) {
+          _debug(err);
+          return res.status(500).send(err);
+        }
+
+        _debug('RAW: ' + JSON.stringify(response));
+        var final = _(response)
+          .zip(wrapped)
+          .value();
+
+        return res.status(200).json(final);
+      });
+    });
+  };
+
+  /**
    *
    * @param app
    * @param formioServer
    */
   var endpoints = function(app, formioServer) {
+    /**
+     * Middleware to restrict an endpoint to formio employees.
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
+    var restrictToFormioEmployees = function(req, res, next) {
+      if (!req.user) {
+        return res.sendStatus(401);
+      }
+
+      var cache = require('../cache/cache')(formioServer.formio);
+      cache.loadProject(req, '553db92f72f702e714dd9778', function(err, project) {
+        if (err || !project) {
+          return res.sendStatus(401);
+        }
+
+        // Owner of Formio
+        if (req.user._id.toString() === project.owner.toString()) {
+          return next();
+        }
+
+        // Admin of Formio.
+        if (req.user.roles.indexOf('55cd5c3ca51a96bef99ef550') !== -1) {
+          return next();
+        }
+
+        // Team member of Formio.
+        formioServer.formio.teams.getProjectTeams(req, '553db92f72f702e714dd9778', function(err, teams, permissions) {
+          if (err || !teams || !permissions) {
+            return res.sendStatus(401);
+          }
+
+          var member = _.any(teams, function(team) {
+            if (user.roles.indexOf(team) !== -1) {
+              return true;
+            }
+
+            return false;
+          });
+
+          if (member) {
+            return next();
+          }
+
+          return res.sendStatus(401);
+        });
+      });
+    };
+
     /**
      * Expose the monthly api calls for each month of the year.
      */
@@ -423,6 +564,183 @@ module.exports = function(config) {
           debug.getDailyAnalytics(response);
           return res.status(200).json(response);
         });
+      }
+    );
+
+    app.post(
+      '/analytics/translate/project',
+      formioServer.formio.middleware.tokenHandler,
+      restrictToFormioEmployees,
+      function(req, res, next) {
+        var _debug = require('debug')('formio:analytics:tranlateProjects');
+        if (!req.body || !(req.body instanceof Array)) {
+          return res.status(500).send('Expected array payload of project _id\'s.');
+        }
+
+        var projects = _(req.body)
+          .uniq()
+          .flattenDeep()
+          .filter()
+          .value();
+        _debug(projects);
+
+        formioServer.formio.resources.project.model.find({_id: {$in: projects}}, function(err, projects) {
+          if (err) {
+            _debug(err);
+            return res.status(500).send(err);
+          }
+
+          projects = _(projects)
+            .map(function(project) {
+              _debug(project);
+              return {
+                _id: project._id.toString(),
+                name: project.name.toString() || '',
+                title: project.title.toString() || '',
+                plan: project.plan.toString(),
+                owner: project.owner.toString(),
+                created: project.created.toString()
+              };
+            })
+            .value();
+
+          return res.status(200).json(projects);
+        });
+      }
+    );
+
+    app.post(
+      '/analytics/translate/owner',
+      formioServer.formio.middleware.tokenHandler,
+      restrictToFormioEmployees,
+      function(req, res, next) {
+        var _debug = require('debug')('formio:analytics:tranlateOwner');
+        if (!req.body || !(req.body instanceof Array)) {
+          return res.status(500).send('Expected array payload of owner _id\'s.');
+        }
+
+        var owners = _(req.body)
+          .uniq()
+          .flattenDeep()
+          .filter()
+          .value();
+        _debug(owners);
+
+        formioServer.formio.resources.submission.model.find({form: '553db94e72f702e714dd9779', _id: {$in: owners}})
+        .exec(function(err, owners) {
+          if (err) {
+            _debug(err);
+            return res.status(500).send(err);
+          }
+
+          owners = _(owners)
+            .map(function(owner) {
+              _debug(owner);
+              return {
+                _id: owner._id.toString(),
+                data: {
+                  email: owner.data.email.toString() || '',
+                  name: owner.data.name.toString() || ''
+                }
+              };
+            })
+            .value();
+
+          return res.status(200).json(owners);
+        });
+      }
+    );
+
+    app.get(
+      '/analytics/project/year/:year',
+      formioServer.formio.middleware.tokenHandler,
+      restrictToFormioEmployees,
+      function(req, res, next) {
+        var _debug = require('debug')('formio:analytics:getFormioYearAnalytics');
+        if(!connect() || !req.params.year) {
+          return res.status(400).send('Expected params `year`.');
+        }
+
+        // Param validation.
+        var curr = new Date();
+        req.params.year = parseInt(req.params.year);
+        if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
+          return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
+        }
+
+        // Build the glob
+        var year = req.params.year.toString();
+        var glob = getAnalyticsKey('*', year, '*', '*', '*');
+
+        // Get the data and respond.
+        getFormioAnalytics(glob, _debug, res);
+      }
+    );
+
+    app.get(
+      '/analytics/project/year/:year/month/:month',
+      formioServer.formio.middleware.tokenHandler,
+      restrictToFormioEmployees,
+      function(req, res, next) {
+        var _debug = require('debug')('formio:analytics:getFormioMonthAnalytics');
+        if(!connect() || !req.params.year || !req.params.month) {
+          return res.status(400).send('Expected params `year` and `month`.');
+        }
+
+        // Param validation.
+        var curr = new Date();
+        req.params.year = parseInt(req.params.year);
+        req.params.month = parseInt(req.params.month);
+        if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
+          return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
+        }
+        if (!between(req.params.month, 1, 12)) {
+          return res.status(400).send('Expected a month in the range of 1-12.');
+        }
+
+        // Build the glob.
+        var year = req.params.year.toString();
+        var month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
+        var glob = getAnalyticsKey('*', year, month, '*', '*');
+
+        // Get the data and respond.
+        getFormioAnalytics(glob, _debug, res);
+      }
+    );
+
+    app.get(
+      '/analytics/project/year/:year/month/:month/day/:day',
+      formioServer.formio.middleware.tokenHandler,
+      restrictToFormioEmployees,
+      function(req, res, next) {
+        var _debug = require('debug')('formio:analytics:getFormioDayAnalytics');
+        if(!connect() || !req.params.year || !req.params.month || !req.params.day) {
+          return res.status(400).send('Expected params `year`, `month`, and `day`.');
+        }
+
+        // Param validation.
+        var curr = new Date();
+        req.params.year = parseInt(req.params.year);
+        req.params.month = parseInt(req.params.month);
+        req.params.day = parseInt(req.params.day);
+        if(req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
+          return res.status(400).send('Expected a year in the range of 2015 - ' + curr.getUTCFullYear() + '.');
+        }
+        if(!between(req.params.month, 1, 12)) {
+          return res.status(400).send('Expected a month in the range of 1 - 12.');
+        }
+        if(!between(req.params.day, 1, 31)) {
+          return res.status(400).send('Expected a day in the range of 1 - 31.');
+        }
+
+        // Build the glob.
+        var year = req.params.year.toString();
+        var month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
+        var day = req.params.day.toString();
+        var glob = getAnalyticsKey('*', year, month, day, '*');
+
+        // Get the data and respond.
+        getFormioAnalytics(glob, _debug, res);
       }
     );
   };
