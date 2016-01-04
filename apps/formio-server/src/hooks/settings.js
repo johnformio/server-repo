@@ -733,18 +733,22 @@ module.exports = function(app) {
           if (req.token && res.resource.item._id) {
             // Only allow tokens for the actual user.
             if (req.token.user._id !== res.resource.item._id.toString()) {
-              filterExternalTokens(req, res, next);
+              return filterExternalTokens(req, res, next);
             }
-            else {
-              // Whitelist which tokens can be seen on the frontend.
-              var allowedTokens = ['dropbox'];
-              res.resource.item.externalTokens = _.filter(res.resource.item.externalTokens, function(token) {
-                return _.indexOf(allowedTokens, token.type) > -1;
-              });
-              next();
-            }
+
+            // Whitelist which tokens can be seen on the frontend.
+            var allowedTokens = ['dropbox'];
+            res.resource.item.externalTokens = _.filter(res.resource.item.externalTokens, function(token) {
+              return _.indexOf(allowedTokens, token.type) > -1;
+            });
+
+            return next();
           }
-        }
+          else {
+            return filterExternalTokens(req, res, next);
+          }
+        };
+
         _.each(['afterGet', 'afterIndex', 'afterPost', 'afterPut', 'afterDelete'], function(handler) {
           routes[handler].push(conditionalFilter);
         });
