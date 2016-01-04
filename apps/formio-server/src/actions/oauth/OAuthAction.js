@@ -255,14 +255,16 @@ module.exports = function(router) {
           provider: provider.name,
           tokens: tokens
         };
+        debug('oauthDeferredAuth: ', req.oauthDeferredAuth);
 
         return Q.ninvoke(formio.cache, 'loadCurrentForm', req)
         .then(function(currentForm) {
           debug('Filling in dummy passwords');
+          var tmpPassword = 'temp_' + chance.string({length: 16});
           util.eachComponent(currentForm.components, function(component) {
             // Fill in password fields with dummy data to pass validation
             if(component.type === 'password' && component.persistent !== false) {
-              req.body.data[component.key] = 'temp_' + chance.string({length: 16});
+              req.body.data[component.key] = tmpPassword;
               debug(component.key, 'is now', req.body.data[component.key]);
             }
           });
@@ -341,6 +343,7 @@ module.exports = function(router) {
       submission.set('externalTokens',
         _(req.oauthDeferredAuth.tokens).concat(submission.externalTokens).uniq('type').value()
       );
+      debug('externalTokens: ', submission.externalTokens);
 
       return submission.save()
       .then(function() {
@@ -430,9 +433,11 @@ module.exports = function(router) {
               clientId: oauthSettings.clientId,
               authURI: provider.authURI,
               state: state,
-              scope: provider.scope,
-              display: provider.display
+              scope: provider.scope
             };
+            if (provider.display) {
+              component.oauth.display = provider.display;
+            }
           }
         }
         next();
