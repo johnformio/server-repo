@@ -1,6 +1,5 @@
 'use strict';
 
-var _ = require('lodash');
 var hubspotApi = require('node-hubspot');
 
 module.exports = {
@@ -26,10 +25,12 @@ module.exports = {
         return next('Hubspot not configured.');
       }
 
+      /* eslint-disable */
       var hubspot = hubspotApi({
         api_key: settings.hubspot.apikey,
         version: 'v3'
       });
+      /* eslint-enable */
 
       next(null, hubspot);
     });

@@ -6,7 +6,6 @@ var moment = require('moment');
 var debug = require('debug')('formio:middleware:projectAnalytics');
 
 module.exports = function(formioServer) {
-
   /**
    * Get api call info for a project
    * @param project
@@ -20,8 +19,9 @@ module.exports = function(formioServer) {
       return Q.reject('Project has no ID.');
     }
 
+    project._id = project._id.toString();
     var curr = new Date();
-    return Q.nfcall(formioServer.analytics.getCalls, curr.getUTCFullYear(), curr.getUTCMonth(), null, project._id.toString())
+    return Q.nfcall(formioServer.analytics.getCalls, curr.getUTCFullYear(), curr.getUTCMonth(), null, project._id)
     .then(function(used) {
       var limit = formioServer.formio.plans.limits[project.plan];
       var info = {

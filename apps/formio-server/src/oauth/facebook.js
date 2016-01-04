@@ -53,6 +53,7 @@ module.exports = function(formio) {
     getTokens: function(req, code, state, redirectURI, next) {
       return oauthUtil.settings(req, this.name)
       .then(function(settings) {
+        /* eslint-disable camelcase */
         return util.request({
           method: 'POST',
           json: true,
@@ -65,6 +66,7 @@ module.exports = function(formio) {
             redirect_uri: url.parse(redirectURI).href // Facebook requires having a trailing slash
           }
         });
+        /* eslint-enable camelcase */
       })
       .spread(function(response, body) {
         if (!body) {
@@ -88,9 +90,11 @@ module.exports = function(formio) {
     // Returns a promise, or you can provide the next callback arg
     getUser: function(tokens, next) {
       var accessToken = _.find(tokens, {type: this.name});
-      if(!accessToken) {
+      if (!accessToken) {
         return Q.reject('No access token found');
       }
+
+      /* eslint-disable camelcase */
       return util.request({
         method: 'GET',
         url: 'https://graph.facebook.com/v2.3/me',
@@ -107,6 +111,7 @@ module.exports = function(formio) {
         return body;
       })
       .nodeify(next);
+      /* eslint-enable camelcase */
     },
 
     // Gets user ID from provider user response from getUser()

@@ -46,7 +46,9 @@ module.exports = function(formio) {
   return function(req, res, next) {
     var isPost = req.method === 'POST';
     var isPut = req.method === 'PUT';
-    if (!isPost && !isPut) return next();
+    if (!isPost && !isPut) {
+      return next();
+    }
 
     formio.plans.getPlan(req, function(err, plan) {
       if (err || !plan) {
@@ -65,7 +67,6 @@ module.exports = function(formio) {
             req.body.name = domain();
           }
           return next();
-          break;
         case 'basic':
         default:
           debug(req.body);
@@ -75,7 +76,6 @@ module.exports = function(formio) {
 
           debug(req.body);
           return next();
-          break;
       }
     });
   };

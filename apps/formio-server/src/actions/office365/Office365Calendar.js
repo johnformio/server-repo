@@ -1,6 +1,5 @@
 'use strict';
 
-var _ = require('lodash');
 var nunjucks = require('nunjucks');
 nunjucks.configure([], {
   watch: false

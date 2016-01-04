@@ -1,14 +1,12 @@
+'use strict';
+
 /* eslint camelcase: 0 */
 var crypto = require('crypto');
 var _ = require('lodash');
 var Q = require('q');
-var debug = require('debug')('formio:payeezy');
-
 var util = require('formio/src/util/util');
 
-
 module.exports = function(config, formio) {
-
   return function(req, res, next) {
     if (!req.user || !req.userProject.primary) {
       return res.status(401);
@@ -17,7 +15,8 @@ module.exports = function(config, formio) {
     if (!req.body || !req.body.data) {
       return res.status(400).send('No data received');
     }
-    var missingFields = _.filter(['ccNumber', 'ccExpiryMonth', 'ccExpiryYear', 'cardholderName', 'securityCode'], function(prop) {
+    var list = ['ccNumber', 'ccExpiryMonth', 'ccExpiryYear', 'cardholderName', 'securityCode'];
+    var missingFields = _.filter(list, function(prop) {
       return !req.body.data[prop];
     });
     if (missingFields.length !== 0) {
@@ -25,7 +24,6 @@ module.exports = function(config, formio) {
     }
 
     var userId = req.user._id.toString();
-
 
     formio.payment.getPaymentFormId(req.userProject._id)
     .then(function(formId) {

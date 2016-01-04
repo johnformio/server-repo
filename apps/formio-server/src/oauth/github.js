@@ -44,6 +44,7 @@ module.exports = function(formio) {
     getTokens: function(req, code, state, redirectURI, next) {
       return oauthUtil.settings(req, this.name)
       .then(function(settings) {
+        /* eslint-disable camelcase */
         return util.request({
           method: 'POST',
           json: true,
@@ -55,6 +56,7 @@ module.exports = function(formio) {
             state: state
           }
         });
+        /* eslint-enable camelcase */
       })
       .spread(function(response, body) {
         if (!body) {
@@ -78,7 +80,7 @@ module.exports = function(formio) {
     // Returns a promise, or you can provide the next callback arg
     getUser: function(tokens, next) {
       var accessToken = _.find(tokens, {type: this.name});
-      if(!accessToken) {
+      if (!accessToken) {
         return Q.reject('No access token found');
       }
       return util.request({
@@ -94,7 +96,7 @@ module.exports = function(formio) {
         if (!userInfo) {
           throw 'No response from GitHub.';
         }
-        if(userInfo.email) {
+        if (userInfo.email) {
           return userInfo;
         }
         else {
@@ -110,11 +112,11 @@ module.exports = function(formio) {
             }
           })
           .spread(function(response, body) {
-            if(!body) {
+            if (!body) {
               throw 'No response from GitHub';
             }
             var primaryEmail = _.find(body, 'primary');
-            if(!primaryEmail) {
+            if (!primaryEmail) {
               throw 'Could not retrieve primary email';
             }
             userInfo.email = primaryEmail.email;
@@ -133,8 +135,10 @@ module.exports = function(formio) {
     // This should never get called, since GitHub tokens don't expire
     // Returns a promise, or you can provide the next callback arg
     refreshTokens: function(req, res, user, next) {
-      return Q.reject('GitHub tokens don\'t expire for another 200,000 years. Either something went wrong or the end times fallen upon us.')
-      .nodeify(next);
+      return Q.reject(
+        'GitHub tokens don\'t expire for another 200,000 years. Either something went wrong or the end times fallen '
+        + 'upon us.'
+      ).nodeify(next);
     }
   };
 };

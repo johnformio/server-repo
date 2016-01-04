@@ -15,11 +15,11 @@ module.exports = function(router, formioServer) {
     else if (req.projectId && req.user) {
       var cache = require('../cache/cache')(formio);
       cache.loadProject(req, req.projectId, function(err, project) {
-        if(!err) {
+        if (!err) {
           var access = _.map(_.pluck(_.filter(project.access, {type: 'team_admin'}), 'roles'), formio.util.idToString);
           var roles = _.map(req.user.roles, formio.util.idToString);
 
-          if( _.intersection(access, req.user.roles).length !== 0) {
+          if ( _.intersection(access, roles).length !== 0) {
             debug('Allowing a team_admin user to see/change project settings.');
             return next();
           }
@@ -96,13 +96,19 @@ module.exports = function(router, formioServer) {
       formio.middleware.projectAnalytics,
       function(req, res, next) {
         // move on as we don't need to wait on results.
+        /* eslint-disable callback-return */
         next();
+        /* eslint-enable callback-return */
 
         if (process.env.hasOwnProperty('HUBSPOT_PROJECT_FIELD')) {
           formio.resources.project.model.findOne({
             name: 'formio',
             primary: true
           }).exec(function(err, project) {
+            if (err) {
+              return;
+            }
+
             var modReq = _.clone(req);
             modReq.projectId = project._id;
             var projectFieldName = process.env.HUBSPOT_PROJECT_FIELD;
@@ -141,7 +147,7 @@ module.exports = function(router, formioServer) {
       formio.middleware.condensePermissionTypes,
       formio.middleware.projectAccessFilter,
       formio.middleware.projectPlanFilter,
-      removeProjectSettings,
+      removeProjectSettings
     ],
     afterPut: [
       require('../middleware/projectTemplate')(formio),
@@ -160,10 +166,10 @@ module.exports = function(router, formioServer) {
   });
 
   router.post('/project/available', function(req, res, next) {
-    if(!req.body || !req.body.name) {
+    if (!req.body || !req.body.name) {
       return res.status(400).send('"name" parameter is required');
     }
-    if(config.reservedSubdomains && _.contains(config.reservedSubdomains, req.body.name)) {
+    if (config.reservedSubdomains && _.contains(config.reservedSubdomains, req.body.name)) {
       return res.status(200).send({available: false});
     }
 

@@ -229,12 +229,12 @@ module.exports = function(router) {
 
     // Only add the payload for post and put.
     if (req.method === 'POST' || req.method === 'PUT') {
-
       // Iterate over all the settings for this action.
-      _.each(this.settings, function (formKey, o365Key) {
-
+      _.each(this.settings, function(formKey, o365Key) {
         // Only continue for fields that are provided in the request.
-        if (!req.body.data.hasOwnProperty(formKey)) { return; }
+        if (!req.body.data.hasOwnProperty(formKey)) {
+          return;
+        }
 
         // Get the data.
         var data = req.body.data[formKey];

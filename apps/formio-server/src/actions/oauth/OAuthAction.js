@@ -7,7 +7,6 @@ var crypto = require('crypto');
 var Q = require('q');
 var chance = require('chance').Chance();
 
-
 module.exports = function(router) {
   var formio = router.formio;
   var oauthUtil = require('../../util/oauth')(formio);
@@ -263,7 +262,7 @@ module.exports = function(router) {
           var tmpPassword = 'temp_' + chance.string({length: 16});
           util.eachComponent(currentForm.components, function(component) {
             // Fill in password fields with dummy data to pass validation
-            if(component.type === 'password' && component.persistent !== false) {
+            if (component.type === 'password' && component.persistent !== false) {
               req.body.data[component.key] = tmpPassword;
               debug(component.key, 'is now', req.body.data[component.key]);
             }
@@ -412,11 +411,11 @@ module.exports = function(router) {
       return Q.ninvoke(formio.hook, 'settings', req)
       .then(function(settings) {
         var component = util.getComponent(res.resource.item.components, self.settings.button);
-        if(!component) {
+        if (!component) {
           return next();
         }
         var state = crypto.randomBytes(64).toString('hex');
-        if(provider.configureOAuthButton) { // Use custom provider configuration
+        if (provider.configureOAuthButton) { // Use custom provider configuration
           provider.configureOAuthButton(component, settings, state);
         }
         else { // Use default configuration, good for most oauth providers
@@ -465,13 +464,13 @@ module.exports = function(router) {
         return tokensPromise.then(function(tokens) {
           return self.authenticate(req, res, provider, tokens);
         })
-        .then(function(){
+        .then(function() {
           next();
         }).catch(this.onError(req, res, next));
       }
       else if (self.settings.association === 'link') {
         var userId, currentUser, newTokens;
-        return tokensPromise.then(function(tokens){
+        return tokensPromise.then(function(tokens) {
           newTokens = tokens;
           return Q.all([
             provider.getUser(tokens),
@@ -504,7 +503,7 @@ module.exports = function(router) {
               deleted: {$eq: null}
             }
           );
-        }).then(function(linkedSubmission){
+        }).then(function(linkedSubmission) {
           if (linkedSubmission) {
             throw {
               status: 400,
@@ -536,7 +535,7 @@ module.exports = function(router) {
           // Update current user response
           return Q.ninvoke(formio.auth, 'currentUser', req, res);
         })
-        .then(function(){
+        .then(function() {
           next();
         }).catch(this.onError(req, res, next));
       }
@@ -554,13 +553,13 @@ module.exports = function(router) {
       .catch(this.onError(req, res, next));
     }
     else {
-      next();
+      return next();
     }
   };
 
   OAuthAction.prototype.onError = function(req, res, next) {
     return function(err) {
-      if(err.status) {
+      if (err.status) {
         debug('Error', err);
         return res.status(err.status).send(err.message);
       }

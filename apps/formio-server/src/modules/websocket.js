@@ -1,4 +1,7 @@
+'use strict';
+
 var _ = require('lodash');
+
 module.exports = function(app, config) {
   var ProjectSocket = require('./websocket/ProjectSocket')(app.formio.formio);
 
@@ -7,7 +10,6 @@ module.exports = function(app, config) {
 
   // Register all traffic coming through submissions.
   app.use('/project/:projectId/form/:formId/submission', function(req, res, next) {
-
     // Create the socket request.
     var request = _.pick(req, [
       'method',

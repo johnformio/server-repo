@@ -2,12 +2,12 @@
 
 require('dotenv').load({silent: true});
 var config = require('./config');
+var jslogger = null;
 if (config.jslogger) {
-  var jslogger = require('jslogger')({key: config.jslogger});
+  jslogger = require('jslogger')({key: config.jslogger});
 }
 var express = require('express');
 var nunjucks = require('nunjucks');
-var debug = require('debug')('formio:server');
 var _ = require('lodash');
 var bodyParser = require('body-parser');
 var methodOverride = require('method-override');
@@ -18,7 +18,7 @@ var analytics = require('./src/analytics/index')(config);
 // Create the app server.
 app.server = require('http').createServer(app);
 app.listen = function() {
-  return app.server.listen.apply(app.server, arguments)
+  return app.server.listen.apply(app.server, arguments);
 };
 
 // Hook each request and add analytics support.
@@ -31,10 +31,13 @@ app.use(function(req, res, next) {
 
   try {
     names = hostname.split('.');
-  } catch(e) {
+  }
+  catch (e) {
+    /* eslint-disable no-console */
     console.error(e);
     console.error(hostname);
     console.error(req);
+    /* eslint-enable no-console */
     return next();
   }
 
@@ -43,7 +46,7 @@ app.use(function(req, res, next) {
     res.end();
   }
   else {
-    next();
+    return next();
   }
 });
 
@@ -57,11 +60,10 @@ app.use(methodOverride('X-HTTP-Method-Override'));
 // Error handler for malformed JSON
 app.use(function(err, req, res, next) {
   if (err instanceof SyntaxError) {
-    res.status(400).send(err.message);
+    return res.status(400).send(err.message);
   }
-  else {
-    next();
-  }
+
+  next();
 });
 
 // Create the formio server.
@@ -135,7 +137,10 @@ app.use(require('./src/middleware/alias')(app.formio.formio));
 if (config.gaTid) {
   var ua = require('universal-analytics');
   app.use(function(req, res, next) {
+    /* eslint-disable callback-return */
     next();
+    /* eslint-enable callback-return */
+
     var visitor = ua(config.gaTid);
     visitor.pageview(req.url).send();
   });
@@ -165,24 +170,29 @@ app.formio.init(settings).then(function(formio) {
         }
 
         // Proceed with db schema sanity check middleware.
-        next();
+        return next();
       });
     }, formio.update.sanityCheck);
 
     // Mount formio at /project/:projectId.
     app.use('/project/:projectId', app.formio);
+    /* eslint-disable no-console */
     console.log(' > Listening to ' + config.protocol + '://' + config.domain + ':' + config.port);
+    /* eslint-enable no-console */
     app.listen(config.port);
   };
 
   app.storage = require('./src/storage')(app);
 
   formio.db.collection('projects').count(function(err, numProjects) {
-    if (numProjects > 0) {
+    if (!err && numProjects > 0) {
       return start();
     }
     else {
+      /* eslint-disable no-console */
       console.log(' > No projects found. Setting up server.');
+      /* eslint-enable no-console */
+
       require('./install')(formio, function(err) {
         if (err) {
           // Throw an error and exit.
@@ -194,11 +204,14 @@ app.formio.init(settings).then(function(formio) {
   });
 });
 
-if (config.jslogger) {
+if (config.jslogger && jslogger) {
   process.on('uncaughtException', function(err) {
+    /* eslint-disable no-console */
     console.log('Uncaught exception:');
     console.log(err);
     console.log(err.stack);
+    /* eslint-enable no-console */
+
     jslogger.log({
       message: err.stack || err.message,
       fileName: err.fileName,

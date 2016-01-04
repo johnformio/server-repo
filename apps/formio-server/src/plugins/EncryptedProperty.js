@@ -77,7 +77,10 @@ module.exports = function(schema, options) {
     try {
       data = JSON.parse(decryptedJSON);
     }
-    catch(e) {}
+    /* eslint-disable no-empty */
+    catch (e) {
+    }
+    /* eslint-enable no-empty */
 
     return data;
   }

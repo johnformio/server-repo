@@ -5,7 +5,6 @@ var _ = require('lodash');
 var debug = require('debug')('formio:oauth');
 
 module.exports = function(formio) {
-
   // Export the oauth providers.
   return {
     providers: {

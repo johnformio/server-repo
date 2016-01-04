@@ -1,3 +1,4 @@
+'use strict';
 
 /**
  * Provides CORS capabilities.
@@ -25,7 +26,7 @@ module.exports = function(router) {
     };
     var fail = {
       origin: 'https://form.io'
-    }
+    };
 
     // Allow CORS if there is no project.
     if (
@@ -60,4 +61,4 @@ module.exports = function(router) {
       }
     });
   };
-}
+};

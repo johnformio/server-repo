@@ -1,6 +1,5 @@
 'use strict';
 
-var _ = require('lodash');
 var debug = require('debug')('formio:middleware:restrictOwnerAccess');
 
 module.exports = function(formio) {
@@ -30,13 +29,10 @@ module.exports = function(formio) {
         return res.sendStatus(500);
       }
 
-
-
       if (project.owner.toString() !== req.user._id.toString()) {
         debug('User is not project owner. Access restricted.');
         return res.sendStatus(401);
       }
-
 
       debug('User is project owner.');
       next();
