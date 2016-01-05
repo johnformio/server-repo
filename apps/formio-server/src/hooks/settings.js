@@ -634,6 +634,10 @@ module.exports = function(app) {
        *   The callback function to invoke with the modified user object.
        */
       user: function(user, next) {
+        if (!user) {
+          return next();
+        }
+
         var _debug = require('debug')('formio:settings:user');
         var util = formioServer.formio.util;
         _debug(user);
@@ -647,6 +651,7 @@ module.exports = function(app) {
         }
         /* eslint-enable no-empty */
 
+        user = user || {};
         user.roles = user.roles || [];
 
         // Convert all the roles to strings
