@@ -123,19 +123,17 @@ module.exports = function(app) {
         actions.office365calendar = require('../actions/office365/Office365Calendar')(formioServer);
         actions.hubspotContact = require('../actions/hubspot/hubspotContact')(formioServer);
         actions.oauth = require('../actions/oauth/OAuthAction')(formioServer);
-				actions.googlesheet = require('../actions/googlesheet/googleSheet')(formioServer);
+        actions.googlesheet = require('../actions/googlesheet/googleSheet')(formioServer);
         return actions;
       },
       emailTransports: function(transports, settings) {
         settings = settings || {};
         var office365 = settings.office365 || {};
         if (office365.tenant && office365.clientId && office365.email && office365.cert && office365.thumbprint) {
-          transports.push(
-            {
-              transport: 'outlook',
-              title: 'Outlook'
-            }
-          );
+          transports.push({
+            transport: 'outlook',
+            title: 'Outlook'
+          });
         }
         return transports;
       },
@@ -464,8 +462,7 @@ module.exports = function(app) {
             type: 'project',
             id: req.projectId
           };
-        }
-        else if (entity && entity.type === 'form') {
+        } else if (entity && entity.type === 'form') {
           // If this is a create form or index form, use the project as the access entity.
           var createForm = ((req.method === 'POST') && (Boolean(req.formId) === false));
           var indexForm = ((req.method === 'GET') && (Boolean(req.formId) === false));
@@ -556,9 +553,7 @@ module.exports = function(app) {
             _debug('false');
             return false;
           }
-        }
-
-        else if (req.token && access.project && access.project.owner) {
+        } else if (req.token && access.project && access.project.owner) {
           var url = req.url.split('/');
 
           // Use submission permissions for access to file signing endpoints.
@@ -648,8 +643,7 @@ module.exports = function(app) {
           user = user.toObject();
         }
         /* eslint-disable no-empty */
-        catch (e) {
-        }
+        catch (e) {}
         /* eslint-enable no-empty */
 
         user = user || {};
@@ -702,8 +696,7 @@ module.exports = function(app) {
             _debug(query);
             return query;
           });
-        }
-        else {
+        } else {
           req.projectId = req.projectId || req.params.projectId || 0;
           query.project = formioServer.formio.mongoose.Types.ObjectId(req.projectId);
           _debug(query);
@@ -749,8 +742,7 @@ module.exports = function(app) {
             });
 
             return next();
-          }
-          else {
+          } else {
             return filterExternalTokens(req, res, next);
           }
         };
@@ -857,7 +849,9 @@ module.exports = function(app) {
         return schema;
       },
       formMachineName: function(machineName, document, done) {
-        formioServer.formio.resources.project.model.findOne({_id: document.project}).exec(function(err, project) {
+        formioServer.formio.resources.project.model.findOne({
+          _id: document.project
+        }).exec(function(err, project) {
           if (err) {
             return done(err);
           }
@@ -866,7 +860,9 @@ module.exports = function(app) {
         });
       },
       roleMachineName: function(machineName, document, done) {
-        formioServer.formio.resources.project.model.findOne({_id: document.project}).exec(function(err, project) {
+        formioServer.formio.resources.project.model.findOne({
+          _id: document.project
+        }).exec(function(err, project) {
           if (err) {
             return done(err);
           }
@@ -875,7 +871,9 @@ module.exports = function(app) {
         });
       },
       actionMachineName: function(machineName, document, done) {
-        formioServer.formio.resources.form.model.findOne({_id: document.form}).exec(function(err, form) {
+        formioServer.formio.resources.form.model.findOne({
+          _id: document.form
+        }).exec(function(err, form) {
           if (err) {
             return done(err);
           }
@@ -956,8 +954,7 @@ module.exports = function(app) {
         try {
           update = require(path.join(__dirname, '../db/updates/', name));
           return update;
-        }
-        catch (e) {
+        } catch (e) {
           _debug(e);
           return null;
         }
