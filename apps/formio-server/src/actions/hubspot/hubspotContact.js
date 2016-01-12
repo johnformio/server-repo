@@ -36,7 +36,8 @@ module.exports = function(router) {
   HubspotContactAction.settingsForm = function(req, res, next) {
     util.connect(router, req, function(err, hubspot) {
       if (err) {
-        return next(null, {});
+        debug('hubspot connect err: ' + (err.message || err));
+        return next(err.message || err);
       }
 
       // Create the panel for all the fields.
@@ -50,7 +51,15 @@ module.exports = function(router) {
 
       hubspot.contacts_properties({version: 'v2'}, function(err, properties) {
         if (err) {
-          return next(null, {});
+          var message = err.message || err;
+          var apiKeyError = /Hubspot API error response: This hapikey \(.*\) doesn't exist!/i;
+
+          if (apiKeyError.test(message)) {
+            message = 'The configured HubSpot API key is not valid, please update it before continuing.';
+          }
+
+          debug('hubspot contacts_properties err: ' + message);
+          return next(message);
         }
 
         var fieldSrc = router.formio.hook.alter('url', '/form/' + req.params.formId + '/components', req);
