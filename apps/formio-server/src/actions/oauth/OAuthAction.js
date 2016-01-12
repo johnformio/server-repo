@@ -20,9 +20,6 @@ module.exports = function(router) {
    */
   var OAuthAction = function(data, req, res) {
     formio.Action.call(this, data, req, res);
-
-    // Disable the default action if the association is existing.
-    req.disableDefaultAction = (data.settings.association === 'existing');
   };
 
   // Derive from Action.
