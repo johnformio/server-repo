@@ -217,13 +217,11 @@ module.exports = function(router) {
             var sheetHeader = 1;
             var firstRow = 1;
             _.each(mappedColumnId, function(value, key) {
-              var headerDataset = {
-                [firstRow]: {
-                  [value]: {
-                    name: [sheetHeader],
-                    val: spreadSheetHeaderTitles[key]
-                  }
-                }
+              var headerDataset = {};
+              headerDataset[firstRow] = {};
+              headerDataset[firstRow][value] = {
+                name: [sheetHeader],
+                val: spreadSheetHeaderTitles[key]
               };
               sheetHeader++;
               spreadsheet.add(headerDataset);
@@ -281,13 +279,12 @@ module.exports = function(router) {
                     return debug(err);
                   }
                 });
-                var deleteDataset = {
-                  [nextrow]: {
-                    [col]: {
-                      name: [columnCount],
-                      val: ''
-                    }
-                  }
+
+                var deleteDataset = {};
+                deleteDataset[nextrow] = {};
+                deleteDataset[nextrow][col] = {
+                  name: [columnCount],
+                  val: ''
                 };
                 columnCount++;
                 spreadsheet.add(deleteDataset);
@@ -300,13 +297,11 @@ module.exports = function(router) {
            *  @addDataset : Handling data to be added in the spreadsheet.
            */
           _.each(mappedColumnId, function(value, key) {
-            var addDataset = {
-              [nextrow]: {
-                [value]: {
-                  name: key,
-                  val: submissionData[key]
-                }
-              }
+            var addDataset = {};
+            addDataset[nextrow] = {};
+            addDataset[nextrow][value] = {
+              name: key,
+              val: submissionData[key]
             };
             spreadsheet.add(addDataset);
           });
