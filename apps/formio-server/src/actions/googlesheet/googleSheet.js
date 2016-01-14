@@ -107,7 +107,6 @@ module.exports = function(router) {
   };
 
   GoogleSheetAction.prototype.resolve = function(handler, method, req, res, next) {
-
     // Getting Spreadsheet ID and Type from Action.
     var spreadsheetID = this.settings.sheetID;
     var worksheetName = this.settings.worksheetName;
