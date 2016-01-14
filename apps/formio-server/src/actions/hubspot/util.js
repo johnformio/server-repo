@@ -1,6 +1,7 @@
 'use strict';
 
 var hubspotApi = require('node-hubspot');
+var debug = require('debug')('formio:hubspot:util');
 
 module.exports = {
   /**
@@ -13,15 +14,19 @@ module.exports = {
   connect: function(router, req, next) {
     router.formio.hook.settings(req, function(err, settings) {
       if (err) {
-        return next(err);
+        debug(err.message || err);
+        return next(err.message || err);
       }
       if (!settings) {
+        debug('No settings found');
         return next('No settings found.');
       }
       if (!settings.hubspot) {
+        debug('No hubspot settings found');
         return next('Hubspot not configured.');
       }
       if (!settings.hubspot.apikey) {
+        debug('No hubspot api key found');
         return next('Hubspot not configured.');
       }
 
