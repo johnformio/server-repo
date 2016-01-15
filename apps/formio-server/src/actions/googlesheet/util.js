@@ -7,6 +7,7 @@ module.exports = {
    */
   checkOauthParameters: function(router, req, next) {
     router.formio.hook.settings(req, function(err, settings) {
+      if(err){ next(); }
       var clientId = settings.googlesheet.clientId;
       var clientSecret = settings.googlesheet.cskey;
       var refreshToken = settings.googlesheet.refreshtoken;
@@ -23,7 +24,7 @@ module.exports = {
       if (!refreshToken) {
         return next('Googlesheet not configured.');
       }
-      next();
+      next(); 
     });
   }
 };
