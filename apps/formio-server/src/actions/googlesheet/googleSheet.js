@@ -174,7 +174,6 @@ module.exports = function(router) {
               if (err) {
                 return debug(err);
               }
-              console.log(col);
             });
 
             var deleteDataset = {};
