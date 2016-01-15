@@ -116,6 +116,10 @@ module.exports = function(router) {
     var mappingSettings = this.settings;
 
     formio.hook.settings(req, function(err, settings) {
+      if (err) {
+        debug(err);
+        return next(err);
+      }
       // Getting OAuth Credentials from Settings.
       var clientId = settings.googlesheet.clientId;
       var clientSecret = settings.googlesheet.cskey;
@@ -140,6 +144,51 @@ module.exports = function(router) {
         return result;
       };
 
+      /*
+       * Delete row function
+       * @nextrow
+       * @getCacheSubmission 
+       */
+      var deleteSpreadSheetRow = function(spreadsheet, cacheData) {
+        var nextrow;
+        var getCacheSubmission;
+        // Getting submission data
+        // var cacheData = res.req.formioCache.submissions;
+        _.each(cacheData, function(value, key) {
+          getCacheSubmission = value;
+        });
+
+        // Traversing elements from ExternalIds array.
+        var externId = _.pluck([getCacheSubmission], 'externalIds[0].id');
+        nextrow = externId[0];
+
+        /**
+         *  Adding blank to the spreadsheet row.
+         *  @deleteDataset : handling data which is to be deleted from the spreadsheet.
+         */
+        var deleteval = mappingSettings;
+        var columnCount = 1;
+        _.each(deleteval, function(value, key) {
+          if (String(key) !== 'sheetID' && String(key) !== 'worksheetName') {
+            var col = spreadSheetCellNo(value, function(err) {
+              if (err) {
+                return debug(err);
+              }
+              console.log(col);
+            });
+
+            var deleteDataset = {};
+            deleteDataset[nextrow] = {};
+            deleteDataset[nextrow][col] = {
+              name: [columnCount],
+              val: ''
+            };
+            columnCount++;
+            spreadsheet.add(deleteDataset);
+          }
+        });
+      };
+
       /**
        * Since, Googlesheet columns can be identified by column numbers but,
        * based on our requirement we need to map fields by alphabets.
@@ -160,6 +209,7 @@ module.exports = function(router) {
         });
       });
 
+      /* eslint-disable camelcase */
       Spreadsheet.load({
         debug: true,
         oauth2: {
@@ -167,6 +217,7 @@ module.exports = function(router) {
           client_secret: clientSecret,
           refresh_token: refreshToken
         },
+        /* eslint-disable camelcase */
         spreadsheetId: spreadsheetID, // fetching data using spreadsheet ID.
         worksheetName: worksheetName
       }, function run(err, spreadsheet, authType) {
@@ -176,22 +227,17 @@ module.exports = function(router) {
          */
         var blankSubmissionStatus = res.resource.status;
         if (blankSubmissionStatus === 400) {
-          next();
           debug(err);
-          return;
+          return next();
         }
         if (err) {
-          next(err);
-          debug(err);
-          return;
+          return debug(err);
         }
         spreadsheet.receive({
           getValues: false
         }, function(err, rows, info) {
           if (err) {
-            next(err);
-            debug(err);
-            return;
+            return debug(err);
           }
 
           // Getting Next row value from spreadsheet.
@@ -233,15 +279,14 @@ module.exports = function(router) {
            * case googlesheet action is attached to the form.
            */
           if (blankSubmissionStatus === 400) {
-            next();
             debug(err);
-            return;
+            return next();
           }
 
           // Getting Current resource and its external Id.
           var updatedRownum = res.resource.item.externalIds;
           if (req.method === 'PUT') {
-            if (updatedRownum != undefined) {
+            if (updatedRownum !== undefined) {
               var extid = _.pluck(updatedRownum, 'id');
               nextrow = extid[0];
             }
@@ -254,41 +299,8 @@ module.exports = function(router) {
            */
           var deleted = res.resource.deleted;
           if (deleted) {
-            var getCacheSubmission;
-            // Getting submission data
             var cacheData = res.req.formioCache.submissions;
-            _.each(cacheData, function(value, key) {
-              getCacheSubmission = value;
-            });
-
-            // Traversing elements from ExternalIds array.
-            var externId = _.pluck([getCacheSubmission], 'externalIds[0].id');
-            nextrow = externId[0];
-
-            /**
-             *  Adding blank to the spreadsheet row.
-             *  @deleteDataset : handling data which is to be deleted from the spreadsheet.
-             */
-            var deleteval = mappingSettings;
-            var columnCount = 1;
-            _.each(deleteval, function(value, key) {
-              if (key != 'sheetID' && key != 'worksheetName') {
-                var col = spreadSheetCellNo(value, function(err) {
-                  if (err) {
-                    return debug(err);
-                  }
-                });
-
-                var deleteDataset = {};
-                deleteDataset[nextrow] = {};
-                deleteDataset[nextrow][col] = {
-                  name: [columnCount],
-                  val: ''
-                };
-                columnCount++;
-                spreadsheet.add(deleteDataset);
-              }
-            });
+            deleteSpreadSheetRow(spreadsheet, cacheData);
           }
 
           /**
@@ -326,9 +338,8 @@ module.exports = function(router) {
                 }
               }, function(err, result) {
                 if (err) {
-                  next(err);
                   debug(err);
-                  return;
+                  return next(err);
                 }
               });
             }
