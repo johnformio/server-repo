@@ -146,14 +146,13 @@ module.exports = function(router) {
 
       /*
        * Delete row function
-       * @nextrow
-       * @getCacheSubmission 
+       * @param nextrow
+       * @param getCacheSubmission
        */
       var deleteSpreadSheetRow = function(spreadsheet, cacheData) {
         var nextrow;
         var getCacheSubmission;
         // Getting submission data
-        // var cacheData = res.req.formioCache.submissions;
         _.each(cacheData, function(value, key) {
           getCacheSubmission = value;
         });
@@ -197,9 +196,9 @@ module.exports = function(router) {
        */
       var mappedColumnId = {};
       _.each(submissionData, function(value, key) {
-        _.each(mappingSettings, function(val, k) {
+        _.each(mappingSettings, function(mapval, k) {
           if (k === key) {
-            mappedColumnId[key] = spreadSheetCellNo(val, function(err) {
+            mappedColumnId[key] = spreadSheetCellNo(mapval, function(err) {
               if (err) {
                 return debug(err);
               }
