@@ -48,6 +48,7 @@
   },
   "devDependencies": {
     "chance": "^0.8.0",
+    "edit-google-spreadsheet": "^0.2.21",
     "eslint": "^1.9.0",
     "eslint-config-formio": "https://github.com/formio/eslint-config-formio.git#9fc99ef78e94585a27b960975937d1ca3465da94",
     "jscoverage": "^0.6.0",
