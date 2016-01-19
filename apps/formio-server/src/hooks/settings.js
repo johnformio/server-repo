@@ -735,7 +735,7 @@ module.exports = function(app) {
       submissionRoutes: function(routes) {
         var filterExternalTokens = formioServer.formio.middleware.filterResourcejsResponse(['externalTokens']);
         var conditionalFilter = function(req, res, next) {
-          if (req.token && res.resource.item._id) {
+          if (req.token && res.resource.item && res.resource.item._id) {
             // Only allow tokens for the actual user.
             if (req.token.user._id !== res.resource.item._id.toString()) {
               return filterExternalTokens(req, res, next);
