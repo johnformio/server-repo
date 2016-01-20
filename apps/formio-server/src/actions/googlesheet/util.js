@@ -21,7 +21,7 @@ module.exports = {
         return next('Client ID is not properly configured. Please re-verify configuration parameters in settngs.');
       }
       if (!clientSecret) {
-        return next('Client Secret Key is not properly configured. Please re-verify configuration parameters in settngs.');
+        return next('Client Secret Key is not properly configured.');
       }
       if (!refreshToken) {
         return next('Refreshtoken is not properly configured. Please re-verify configuration parameters in settngs.');
