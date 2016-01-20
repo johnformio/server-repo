@@ -20,6 +20,7 @@
     "crypto-js": "^3.1.5",
     "debug": "^2.2.0",
     "dotenv": "1.2.0",
+    "edit-google-spreadsheet": "^0.2.21",
     "express": "^4.13.3",
     "formio": "^1.1.9",
     "is-url": "^1.2.1",
@@ -39,13 +40,13 @@
     "redis": "^2.0.1",
     "request": "^2.61.0",
     "resourcejs": "^1.0.0",
+    "spreadsheet-column": "^1.1.1",
     "semver": "^5.1.0",
     "serve-favicon": "^2.3.0",
     "swagger-ui": "^2.1.2",
     "tldjs": "^1.5.3",
     "universal-analytics": "^0.3.9",
-    "ws": "^1.0.1",
-    "edit-google-spreadsheet": "^0.2.21"
+    "ws": "^1.0.1"
   },
   "devDependencies": {
     "chance": "^0.8.0",
