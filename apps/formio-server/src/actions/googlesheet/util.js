@@ -10,7 +10,7 @@ module.exports = {
       if (err) {
         return next();
       }
-      var clientId = settings.googlesheet.clientId;
+      var clientId = settings.googlesheet.google_clientId;
       var clientSecret = settings.googlesheet.cskey;
       var refreshToken = settings.googlesheet.refreshtoken;
 
@@ -18,13 +18,13 @@ module.exports = {
         return next('Googlesheet not configured.');
       }
       if (!clientId) {
-        return next('Googlesheet not configured.');
+        return next('Client ID is not properly configured. Please visit project settings tab and re-verify all configuration parameters.');
       }
       if (!clientSecret) {
-        return next('Googlesheet not configured.');
+        return next('Client Secret Key is not properly configured. Please visit project settings tab and re-verify all configuration parameters.');
       }
       if (!refreshToken) {
-        return next('Googlesheet not configured.');
+        return next('Refreshtoken is not properly configured. Please visit project settings tab and re-verify all configuration parameters.');
       }
       next();
     });

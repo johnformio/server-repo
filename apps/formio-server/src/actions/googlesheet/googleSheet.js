@@ -4,6 +4,7 @@ var Q = require('q');
 var util = require('./util');
 var debug = require('debug')('formio:action:googlesheet');
 var Spreadsheet = require('edit-google-spreadsheet');
+var SpreadsheetColumn = require('spreadsheet-column');
 
 module.exports = function(router) {
   /**
@@ -74,8 +75,7 @@ module.exports = function(router) {
           }
         });
 
-        next(null, [
-          {
+        next(null, [{
             type: 'textfield',
             input: true,
             label: 'SpreadSheet ID',
@@ -121,28 +121,14 @@ module.exports = function(router) {
         return next(err);
       }
       // Getting OAuth Credentials from Settings.
-      var clientId = settings.googlesheet.clientId;
+      var clientId = settings.googlesheet.google_clientId;
       var clientSecret = settings.googlesheet.cskey;
       var refreshToken = settings.googlesheet.refreshtoken;
 
       // Get Submission Data
       var submissionData = req.body.data;
-
-      /**
-       * Convert action form column alphabetical key to relevant column number.
-       * This is being used to identify the column number in spreadsheet to add data in a specific cell.
-       * Ex. A=1, B=2,...Z=26
-       */
-      var spreadSheetCellNo = function toInt(n) {
-        var base = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        var result = 0;
-        var len = _.size(n);
-        _(n).each(function(character) {
-          len = len - 1;
-          result += Math.pow(_.size(base), len) * (_.indexOf(base, character) + 1);
-        }).value();
-        return result;
-      };
+      // @param sc = Spreadsheet Column.
+      var sc = new SpreadsheetColumn();
 
       /*
        * Delete row function
@@ -158,8 +144,18 @@ module.exports = function(router) {
         });
 
         // Traversing elements from ExternalIds array.
-        var externId = _.pluck([getCacheSubmission], 'externalIds[0].id');
-        nextrow = externId[0];
+        var externId = getCacheSubmission.externalIds;
+        var getIdObject = _.find(externId, 'id');
+        var getId = getIdObject.id;
+        /*
+         * exception handline while on delete data action from submissions and the relative data is not available in
+         * spreadsheet.
+         */
+        if (!getId) {
+          debug(err);
+          return next(err);
+        }
+        nextrow = getId;
 
         /**
          *  Adding blank to the spreadsheet row.
@@ -169,12 +165,7 @@ module.exports = function(router) {
         var columnCount = 1;
         _.each(deleteval, function(value, key) {
           if (String(key) !== 'sheetID' && String(key) !== 'worksheetName') {
-            var col = spreadSheetCellNo(value, function(err) {
-              if (err) {
-                return debug(err);
-              }
-            });
-
+            var col = sc.fromStr(value);
             var deleteDataset = {};
             deleteDataset[nextrow] = {};
             deleteDataset[nextrow][col] = {
@@ -198,11 +189,7 @@ module.exports = function(router) {
       _.each(submissionData, function(value, key) {
         _.each(mappingSettings, function(mapval, k) {
           if (k === key) {
-            mappedColumnId[key] = spreadSheetCellNo(mapval, function(err) {
-              if (err) {
-                return debug(err);
-              }
-            });
+            mappedColumnId[key] = sc.fromStr(mapval);
           }
         });
       });
@@ -285,8 +272,9 @@ module.exports = function(router) {
           var updatedRownum = res.resource.item.externalIds;
           if (req.method === 'PUT') {
             if (updatedRownum !== undefined) {
-              var extid = _.pluck(updatedRownum, 'id');
-              nextrow = extid[0];
+              var getIdObject = _.find(updatedRownum, 'id');
+              var getId = getIdObject.id;
+              nextrow = getId;
             }
           }
 
@@ -323,7 +311,7 @@ module.exports = function(router) {
 
             // Store the current resource.
             var externalId = '';
-            if ((req.method === 'POST') && !externalId) {
+            if (req.method === 'POST') {
               formio.resources.submission.model.update({
                 _id: currentResource.item._id
               }, {
