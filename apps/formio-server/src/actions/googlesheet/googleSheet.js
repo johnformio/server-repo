@@ -310,7 +310,6 @@ module.exports = function(router) {
             }
 
             // Store the current resource.
-            var externalId = '';
             if (req.method === 'POST') {
               formio.resources.submission.model.update({
                 _id: currentResource.item._id

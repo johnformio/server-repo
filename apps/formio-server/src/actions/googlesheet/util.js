@@ -18,13 +18,13 @@ module.exports = {
         return next('Googlesheet not configured.');
       }
       if (!clientId) {
-        return next('Client ID is not properly configured. Please visit project settings tab and re-verify all configuration parameters.');
+        return next('Client ID is not properly configured. Please re-verify configuration parameters in settngs.');
       }
       if (!clientSecret) {
-        return next('Client Secret Key is not properly configured. Please visit project settings tab and re-verify all configuration parameters.');
+        return next('Client Secret Key is not properly configured. Please re-verify configuration parameters in settngs.');
       }
       if (!refreshToken) {
-        return next('Refreshtoken is not properly configured. Please visit project settings tab and re-verify all configuration parameters.');
+        return next('Refreshtoken is not properly configured. Please re-verify configuration parameters in settngs.');
       }
       next();
     });
