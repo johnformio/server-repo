@@ -117,7 +117,8 @@ module.exports = function(router, formioServer) {
             options.settings[projectFieldName + '_value'] = '1';
             options.settings['lifecyclestage_action'] = 'value';
             options.settings['lifecyclestage_value'] = 'opportunity';
-
+            options.settings['customer_status_action'] = 'value';
+            options.settings['customer_status_value'] = 'Created Project';
             var ActionClass = formio.actions.actions['hubspotContact'];
             var action = new ActionClass(options, modReq, res);
             action.resolve('after', 'create', modReq, res, function() {});
