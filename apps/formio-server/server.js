@@ -24,32 +24,6 @@ app.listen = function() {
 // Hook each request and add analytics support.
 app.use(analytics.hook);
 
-// Redirect all root traffic to www
-app.use(function(req, res, next) {
-  var hostname = req.get('Host');
-  var names = null;
-
-  try {
-    names = hostname.split('.');
-  }
-  catch (e) {
-    /* eslint-disable no-console */
-    console.error(e);
-    console.error(hostname);
-    console.error(req);
-    /* eslint-enable no-console */
-    return next();
-  }
-
-  if (names && (names.length === 2) && (names[1].search(/^localhost(:[0-9]+)?$/) === -1)) {
-    res.redirect('http://www.' + hostname + req.url);
-    res.end();
-  }
-  else {
-    return next();
-  }
-});
-
 app.use(favicon(__dirname + '/favicon.ico'));
 
 // Add Middleware necessary for REST API's
@@ -109,9 +83,6 @@ app.get('/config.js', function(req, res) {
     formioHost: config.formioHost
   });
 });
-
-// Mount getting started presentation.
-app.use('/start', express.static(__dirname + '/server/start'));
 
 // Include the swagger ui.
 app.use('/swagger', express.static(require('swagger-ui/index').dist));
@@ -174,8 +145,28 @@ app.formio.init(settings).then(function(formio) {
       });
     }, formio.update.sanityCheck);
 
+    // Respond with default server information.
+    app.get('/', function(req, res, next) {
+      if (!Boolean(req.projectId)) {
+        app.formio.formio.resources.project.model.find({
+          primary: true
+        }, function(err, projects) {
+          if (err) { return next(err); }
+          return res.send(_.map(projects, function(currentProject) {
+            var filtered = _.pick(currentProject, ["_id", "name", "title", "description"]);
+            filtered.url = (req.secure || (req.get('X-Forwarded-Proto') === 'https') ? 'https://' : 'http://') + req.headers.host + '/project/' + filtered._id;
+            return filtered;
+          }));
+        })
+      }
+      else {
+        next();
+      }
+    })
+
     // Mount formio at /project/:projectId.
     app.use('/project/:projectId', app.formio);
+
     /* eslint-disable no-console */
     console.log(' > Listening to ' + config.protocol + '://' + config.domain + ':' + config.port);
     /* eslint-enable no-console */
