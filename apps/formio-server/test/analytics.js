@@ -151,6 +151,9 @@ module.exports = function(app, template, hook) {
               assert.equal(_month.hasOwnProperty('submissions'), true);
             });
 
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
             // @TODO: Add verification to check that the given data was correct.
             done();
           });
@@ -196,10 +199,13 @@ module.exports = function(app, template, hook) {
                   assert.equal(response[pos].submissions, 0);
                 }
               }
-            });
 
-            // @TODO: Add more verification to check that the given data was correct.
-            done();
+              // Store the JWT for future API calls.
+              template.formio.owner.token = res.headers['x-jwt-token'];
+
+              // @TODO: Add more verification to check that the given data was correct.
+              done();
+            });
           });
       });
     });
@@ -233,10 +239,13 @@ module.exports = function(app, template, hook) {
               }
 
               assert.equal(response.submissions.length, length);
-            });
 
-            // @TODO: Add more verification to check that the given data was correct.
-            done();
+              // Store the JWT for future API calls.
+              template.formio.owner.token = res.headers['x-jwt-token'];
+
+              // @TODO: Add more verification to check that the given data was correct.
+              done();
+            });
           });
       });
     });

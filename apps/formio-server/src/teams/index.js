@@ -178,7 +178,7 @@ module.exports = function(app, formioServer) {
 
       // Build the search query for teams.
       var query = {
-        form: teamResource,
+        form: util.idToBson(teamResource),
         deleted: {$eq: null}
       };
 
@@ -202,7 +202,7 @@ module.exports = function(app, formioServer) {
         return q.resolve([]);
       }
 
-      debug.getTeams(JSON.stringify(query));
+      debug.getTeams('Query: ' + JSON.stringify(query));
       formioServer.formio.resources.submission.model.find(query, function(err, documents) {
         if (err) {
           debug.getTeams(err);
@@ -210,7 +210,7 @@ module.exports = function(app, formioServer) {
         }
 
         // Coerce results into an array and return the teams as objects.
-        debug.getTeams(documents);
+        debug.getTeams('Teams: ' + JSON.stringify(documents));
         documents = documents || [];
         documents = _.map(documents, function(team) {
           return team.toObject();

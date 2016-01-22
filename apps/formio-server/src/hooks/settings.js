@@ -655,18 +655,30 @@ module.exports = function(app) {
         user.roles = user.roles || [];
 
         // Convert all the roles to strings
-        user.roles = _.map(_.filter(user.roles), util.idToString);
+        user.roles = _(user.roles)
+          .filter()
+          .map(util.idToString)
+          .uniq()
+          .value();
+        debug(user.roles);
 
         formioServer.formio.teams.getTeams(user, true, true)
           .then(function(teams) {
             // Filter the teams to only contain the team ids.
-            _debug(teams);
-            teams = _.map(_.filter(_.pluck(teams, '_id')), util.idToString);
+            _debug('RAW: ' + JSON.stringify(teams));
+            teams = _(teams)
+              .pluck('_id')
+              .filter()
+              .map(util.idToString)
+              .uniq()
+              .forEach(function(team) {
+                // Add the users team ids, to their roles.
+                user.roles.push(team);
+              })
+              .value();
 
-            // Add the users team ids, to their roles.
-            user.roles = _.uniq(user.roles.concat(teams));
-            _debug(user.roles);
-
+            _debug('Teams: ' + JSON.stringify(teams));
+            _debug('Final User Roles: ' + JSON.stringify(user.roles));
             return user;
           })
           .nodeify(next);
