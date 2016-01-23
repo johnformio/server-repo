@@ -151,18 +151,21 @@ app.formio.init(settings).then(function(formio) {
         app.formio.formio.resources.project.model.find({
           primary: true
         }, function(err, projects) {
-          if (err) { return next(err); }
+          if (err) {
+            return next(err);
+          }
           return res.send(_.map(projects, function(currentProject) {
-            var filtered = _.pick(currentProject, ["_id", "name", "title", "description"]);
+            var filtered = _.pick(currentProject, ['_id', 'name', 'title', 'description']);
             filtered.url = (req.secure || (req.get('X-Forwarded-Proto') === 'https') ? 'https://' : 'http://') + req.headers.host + '/project/' + filtered._id;
+            filtered.alias = (req.secure || (req.get('X-Forwarded-Proto') === 'https') ? 'https://' : 'http://') + filtered.name + '.' + req.headers.host;
             return filtered;
           }));
-        })
+        });
       }
       else {
-        next();
+        return next();
       }
-    })
+    });
 
     // Mount formio at /project/:projectId.
     app.use('/project/:projectId', app.formio);
