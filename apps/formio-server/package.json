@@ -41,7 +41,6 @@
     "resourcejs": "^1.0.0",
     "semver": "^5.1.0",
     "serve-favicon": "^2.3.0",
-    "swagger-ui": "^2.1.2",
     "tldjs": "^1.5.3",
     "universal-analytics": "^0.3.9",
     "ws": "^0.8.0"

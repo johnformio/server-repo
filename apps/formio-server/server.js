@@ -79,13 +79,6 @@ app.formio.analytics.connect(); // Try the connection on server start.
 // Import the OAuth providers
 app.formio.formio.oauth = require('./src/oauth/oauth')(app.formio.formio);
 
-// Configure nunjucks.
-nunjucks.configure('views', {
-  autoescape: true,
-  express: app,
-  watch: false
-});
-
 // Make sure to redirect all http requests to https.
 app.use(function(req, res, next) {
   if (!config.https || req.secure || (req.get('X-Forwarded-Proto') === 'https') || req.url === '/health') {
@@ -112,9 +105,6 @@ app.get('/config.js', function(req, res) {
 
 // Mount getting started presentation.
 app.use('/start', express.static(__dirname + '/server/start'));
-
-// Include the swagger ui.
-app.use('/swagger', express.static(require('swagger-ui/index').dist));
 
 // Get the specs for each form.
 app.get('/project/:projectId/spec.html', function(req, res) {
