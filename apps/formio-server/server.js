@@ -106,20 +106,6 @@ app.get('/config.js', function(req, res) {
 // Mount getting started presentation.
 app.use('/start', express.static(__dirname + '/server/start'));
 
-// Get the specs for each form.
-app.get('/project/:projectId/spec.html', function(req, res) {
-  res.render('docs.html', {
-    url: '/project/' + req.params.projectId + '/spec.json'
-  });
-});
-
-// Get the specs for each form.
-app.get('/project/:projectId/form/:formId/spec.html', function(req, res) {
-  res.render('docs.html', {
-    url: '/project/' + req.params.projectId + '/form/' + req.params.formId + '/spec.json'
-  });
-});
-
 // Establish our url alias middleware.
 app.use(require('./src/middleware/alias')(app.formio.formio));
 
