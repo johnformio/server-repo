@@ -6,7 +6,6 @@ var Q = require('q');
 var path = require('path');
 var bodyParser = require('body-parser');
 var methodOverride = require('method-override');
-var nunjucks = require('nunjucks');
 var express = require('express');
 var app = express();
 var debug = require('debug')('formio:server');
@@ -62,13 +61,6 @@ module.exports = function() {
   // Import storage providers.
   app.storage = require('../src/storage')(app);
 
-  // Configure nunjucks.
-  nunjucks.configure('views', {
-    autoescape: true,
-    express: app,
-    watch: false
-  });
-
   // Redirect www to the right server.
   app.use(function(req, res, next) {
     if (req.get('Host').split('.')[0] !== 'www') {
@@ -100,26 +92,6 @@ module.exports = function() {
       appHost: config.formio.host,
       apiHost: config.formio.apiHost,
       formioHost: config.formio.formioHost
-    });
-  });
-
-  // Mount getting started presentation.
-  app.use('/start', express.static(__dirname + '/server/start'));
-
-  // Include the swagger ui.
-  app.use('/swagger', express.static(require('swagger-ui/index').dist));
-
-  // Get the specs for each form.
-  app.get('/project/:projectId/spec.html', function(req, res) {
-    res.render('docs.html', {
-      url: '/project/' + req.params.projectId + '/spec.json'
-    });
-  });
-
-  // Get the specs for each form.
-  app.get('/project/:projectId/form/:formId/spec.html', function(req, res) {
-    res.render('docs.html', {
-      url: '/project/' + req.params.projectId + '/form/' + req.params.formId + '/spec.json'
     });
   });
 

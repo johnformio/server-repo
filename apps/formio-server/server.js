@@ -102,9 +102,6 @@ app.get('/config.js', function(req, res) {
   });
 });
 
-// Mount getting started presentation.
-app.use('/start', express.static(__dirname + '/server/start'));
-
 // Establish our url alias middleware.
 app.use(require('./src/middleware/alias')(app.formio.formio));
 
