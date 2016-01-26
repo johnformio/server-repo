@@ -7,7 +7,6 @@ if (config.jslogger) {
   jslogger = require('jslogger')({key: config.jslogger});
 }
 var express = require('express');
-var nunjucks = require('nunjucks');
 var _ = require('lodash');
 var bodyParser = require('body-parser');
 var methodOverride = require('method-override');
