@@ -21,7 +21,7 @@
     "debug": "^2.2.0",
     "dotenv": "1.2.0",
     "express": "^4.13.3",
-    "formio": "^1.1.13",
+    "formio": "^1.1.15",
     "is-url": "^1.2.1",
     "jslogger": "^1.0.3",
     "jsonwebtoken": "^5.0.5",
@@ -41,7 +41,6 @@
     "resourcejs": "^1.0.0",
     "semver": "^5.1.0",
     "serve-favicon": "^2.3.0",
-    "swagger-ui": "^2.1.2",
     "tldjs": "^1.5.3",
     "universal-analytics": "^0.3.9",
     "ws": "^0.8.0"
