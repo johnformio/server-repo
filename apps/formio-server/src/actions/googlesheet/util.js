@@ -10,7 +10,7 @@ module.exports = {
       if (err) {
         return next();
       }
-      var clientId = settings.googlesheet.google_clientId;
+      var clientId = settings.googlesheet.clientId;
       var clientSecret = settings.googlesheet.cskey;
       var refreshToken = settings.googlesheet.refreshtoken;
 
