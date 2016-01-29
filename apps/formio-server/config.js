@@ -9,7 +9,7 @@ var protocol = process.env.PROTOCOL || 'https';
 var project = process.env.PROJECT || 'formio';
 var plan = process.env.PROJECT_PLAN || 'commercial';
 
-config.reservedSubdomains = ['test', 'www', 'api', 'help', 'support', 'portal'];
+config.reservedSubdomains = ['test', 'www', 'api', 'help', 'support', 'portal', 'app', 'apps'];
 config.formio.reservedForms = [
   'submission', 'export', 'role', 'current', 'logout', 'import', 'form', 'storage\/s3', 'upgrade'
 ];

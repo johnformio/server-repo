@@ -547,7 +547,7 @@ module.exports = function(app) {
           }
           // No project but anonymous.
           else {
-            if (_url === '/spec.json' || _url === '/spec.html') {
+            if (_url === '/spec.json') {
               _debug('true');
               return true;
             }

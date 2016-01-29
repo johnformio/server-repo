@@ -7,7 +7,6 @@ if (config.jslogger) {
   jslogger = require('jslogger')({key: config.jslogger});
 }
 var express = require('express');
-var nunjucks = require('nunjucks');
 var _ = require('lodash');
 var bodyParser = require('body-parser');
 var methodOverride = require('method-override');
@@ -23,32 +22,6 @@ app.listen = function() {
 
 // Hook each request and add analytics support.
 app.use(analytics.hook);
-
-// Redirect all root traffic to www
-app.use(function(req, res, next) {
-  var hostname = req.get('Host');
-  var names = null;
-
-  try {
-    names = hostname.split('.');
-  }
-  catch (e) {
-    /* eslint-disable no-console */
-    console.error(e);
-    console.error(hostname);
-    console.error(req);
-    /* eslint-enable no-console */
-    return next();
-  }
-
-  if (names && (names.length === 2) && (names[1].search(/^localhost(:[0-9]+)?$/) === -1)) {
-    res.redirect('http://www.' + hostname + req.url);
-    res.end();
-  }
-  else {
-    return next();
-  }
-});
 
 app.use(favicon(__dirname + '/favicon.ico'));
 
@@ -79,13 +52,6 @@ app.formio.analytics.connect(); // Try the connection on server start.
 // Import the OAuth providers
 app.formio.formio.oauth = require('./src/oauth/oauth')(app.formio.formio);
 
-// Configure nunjucks.
-nunjucks.configure('views', {
-  autoescape: true,
-  express: app,
-  watch: false
-});
-
 // Make sure to redirect all http requests to https.
 app.use(function(req, res, next) {
   if (!config.https || req.secure || (req.get('X-Forwarded-Proto') === 'https') || req.url === '/health') {
@@ -107,26 +73,6 @@ app.get('/config.js', function(req, res) {
     appHost: config.host,
     apiHost: config.apiHost,
     formioHost: config.formioHost
-  });
-});
-
-// Mount getting started presentation.
-app.use('/start', express.static(__dirname + '/server/start'));
-
-// Include the swagger ui.
-app.use('/swagger', express.static(require('swagger-ui/index').dist));
-
-// Get the specs for each form.
-app.get('/project/:projectId/spec.html', function(req, res) {
-  res.render('docs.html', {
-    url: '/project/' + req.params.projectId + '/spec.json'
-  });
-});
-
-// Get the specs for each form.
-app.get('/project/:projectId/form/:formId/spec.html', function(req, res) {
-  res.render('docs.html', {
-    url: '/project/' + req.params.projectId + '/form/' + req.params.formId + '/spec.json'
   });
 });
 
@@ -174,8 +120,31 @@ app.formio.init(settings).then(function(formio) {
       });
     }, formio.update.sanityCheck);
 
+    // Respond with default server information.
+    app.get('/', function(req, res, next) {
+      if (!Boolean(req.projectId)) {
+        app.formio.formio.resources.project.model.find({
+          primary: true
+        }, function(err, projects) {
+          if (err) {
+            return next(err);
+          }
+          return res.send(_.map(projects, function(currentProject) {
+            var filtered = _.pick(currentProject, ['_id', 'name', 'title', 'description']);
+            filtered.url = (req.secure || (req.get('X-Forwarded-Proto') === 'https') ? 'https://' : 'http://') + req.headers.host + '/project/' + filtered._id;
+            filtered.alias = (req.secure || (req.get('X-Forwarded-Proto') === 'https') ? 'https://' : 'http://') + filtered.name + '.' + req.headers.host;
+            return filtered;
+          }));
+        });
+      }
+      else {
+        return next();
+      }
+    });
+
     // Mount formio at /project/:projectId.
     app.use('/project/:projectId', app.formio);
+
     /* eslint-disable no-console */
     console.log(' > Listening to ' + config.protocol + '://' + config.domain + ':' + config.port);
     /* eslint-enable no-console */
