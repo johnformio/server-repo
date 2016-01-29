@@ -8,7 +8,7 @@ module.exports = {
   checkOauthParameters: function(router, req, next) {
     router.formio.hook.settings(req, function(err, settings) {
       if (err) {
-        return next();
+        return next(err);
       }
       var clientId = settings.googlesheet.clientId;
       var clientSecret = settings.googlesheet.cskey;
