@@ -11,7 +11,8 @@ module.exports = function(formio) {
       github: require('./github')(formio),
       facebook: require('./facebook')(formio),
       office365: require('./office365')(formio),
-      dropbox: require('./dropbox')(formio)
+      dropbox: require('./dropbox')(formio),
+      google: require('./google')(formio)
     },
 
     // Gets user token for a provider, and attempts to refresh it
