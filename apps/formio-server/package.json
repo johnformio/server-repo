@@ -43,7 +43,7 @@
     "serve-favicon": "^2.3.0",
     "tldjs": "^1.5.3",
     "universal-analytics": "^0.3.9",
-    "ws": "^0.8.0"
+    "ws": "^1.0.1"
   },
   "devDependencies": {
     "chance": "^0.8.0",
