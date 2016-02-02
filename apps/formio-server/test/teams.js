@@ -54,6 +54,9 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
+            // Store the JWT for future API calls.
+            template.users.user1.token = res.headers['x-jwt-token'];
+
             done();
           });
       });
