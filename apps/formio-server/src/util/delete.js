@@ -2,37 +2,26 @@
 
 var _ = require('lodash');
 var async = require('async');
-var debug = {
-  submission: require('debug')('formio:util:delete#submission'),
-  form: require('debug')('formio:util:delete#form'),
-  action: require('debug')('formio:util:delete#action'),
-  role: require('debug')('formio:util:delete#role'),
-  project: require('debug')('formio:util:delete#project'),
-  roleAccess: require('debug')('formio:util:delete#roleAccess')
-};
 
 /**
  *
- * @param router
- * @returns {{submission: Function, form: Function}}
+ * @param formio
+ * @returns {{project: deleteProject}}
  */
 module.exports = function(formio) {
   /**
-   * Flag a submission as deleted. If given a subId, one submission will be flagged; if given a formId, then all the
-   * submissions for that formId will be flagged.
+   * Flag all the submission of the given forms as deleted.
    *
-   * @param subId {string|ObjectId}
-   *   The submission id to flag as deleted.
-   * @param forms {array}
+   * @param {Array|String|ObjectId} forms
    *   A list of form ids to flag all submissions as deleted.
-   * @param next
+   * @param {Function} next
    *   The callback function to return the results.
-   *
-   * @returns {*}
    */
   var deleteSubmission = function(forms, next) {
+    var debug = require('debug')('formio:delete:project_submission');
+    var util = formio.util;
     if (!forms) {
-      debug.submission('Skipping');
+      debug('Skipping');
       return next();
     }
     // Convert the forms to an array if only one was provided.
@@ -40,25 +29,32 @@ module.exports = function(formio) {
       forms = [forms];
     }
 
-    formio.resources.submission.model.find({form: {$in: forms}, deleted: {$eq: null}}, function(err, submissions) {
+    forms = _(forms)
+      .map(util.idToBson)
+      .value();
+
+    var query = {form: {$in: forms}, deleted: {$eq: null}};
+    debug(query);
+    formio.resources.submission.model.find(query, function(err, submissions) {
       if (err) {
-        debug.submission(err);
+        debug(err);
         return next(err);
       }
       if (!submissions || submissions.length === 0) {
-        debug.submission('No submissions found for the forms: ' + JSON.stringify(forms));
+        debug('No submissions found for the forms: ' + JSON.stringify(forms));
         return next();
       }
 
       submissions.forEach(function(submission) {
-        submission.deleted = (new Date()).getTime();
+        submission.deleted = Date.now();
+        submission.markModified('deleted');
         submission.save(function(err, submission) {
           if (err) {
-            debug.submission(err);
+            debug(err);
             return next(err);
           }
 
-          debug.submission(submission);
+          debug(submission);
         });
       });
 
@@ -67,21 +63,18 @@ module.exports = function(formio) {
   };
 
   /**
-   * Flag an Action as deleted. If given a actionId, one action will be flagged; if given a formId, or array of formIds,
-   * then all the Actions for that form, or forms, will be flagged.
+   * Flag all Actions in the list of forms as deleted.
    *
-   * @param actionId {string|ObjectId}
-   *   The Action id to flag as deleted.
-   * @param forms {string|ObjectId|array}
+   * @param {String|ObjectId|Array} forms
    *   A list of form ids to flag all Actions as deleted.
-   * @param next
+   * @param {Function} next
    *   The callback function to return the results.
-   *
-   * @returns {*}
    */
   var deleteAction = function(forms, next) {
+    var debug = require('debug')('formio:delete:project_action');
+    var util = formio.util;
     if (!forms) {
-      debug.action('Skipping');
+      debug('Skipping');
       return next();
     }
     // Convert the forms to an array if only one was provided.
@@ -89,25 +82,32 @@ module.exports = function(formio) {
       forms = [forms];
     }
 
-    formio.actions.model.find({form: {$in: forms}, deleted: {$eq: null}}, function(err, actions) {
+    forms = _(forms)
+      .map(util.idToBson)
+      .value();
+
+    var query = {form: {$in: forms}, deleted: {$eq: null}};
+    debug(query);
+    formio.actions.model.find(query, function(err, actions) {
       if (err) {
-        debug.action(err);
+        debug(err);
         return next(err);
       }
       if (!actions || actions.length === 0) {
-        debug.action('No action found with form _id\'s: ' + JSON.stringify(forms));
+        debug('No action found with form _id\'s: ' + JSON.stringify(forms));
         return next();
       }
 
       actions.forEach(function(action) {
-        action.deleted = (new Date()).getTime();
+        action.deleted = Date.now();
+        action.markModified('deleted');
         action.save(function(err, action) {
           if (err) {
-            debug.action(err);
+            debug(err);
             return next(err);
           }
 
-          debug.action(action);
+          debug(action);
         });
       });
 
@@ -117,80 +117,80 @@ module.exports = function(formio) {
   };
 
   /**
-   * Flag a form as deleted. If given a formId, one form will be flagged; if given a projectId, then all the forms for
-   * that projectId will be flagged.
+   * Flag all forms for the given project as deleted.
    *
-   * @param projectId {string|ObjectId}
+   * @param {String|ObjectId} projectId
    *   The project id to flag all forms as deleted.
-   * @param next
+   * @param {Function} next
    *   The callback function to return the results.
-   *
-   * @returns {*}
    */
   var deleteForm = function(projectId, next) {
+    var debug = require('debug')('formio:delete:project_form');
+    var util = formio.util;
     if (!projectId) {
-      debug.form('Skipping');
+      debug('Skipping');
       return next();
     }
 
     // Find all the forms that are associated with the given projectId and have not been deleted.
-    var query = {project: projectId, deleted: {$eq: null}};
-    debug.form('form.find: ' + JSON.stringify(query));
-    formio.resources.form.model.find(query, function(err, formIds) {
+    var query = {project: util.idToBson(projectId), deleted: {$eq: null}};
+    debug(query);
+    formio.resources.form.model.find(query).select('_id').exec(function(err, formIds) {
       if (err) {
-        debug.form(err);
+        debug(err);
         return next(err);
       }
       if (!formIds || formIds.length === 0) {
-        debug.form('No forms found with the project: ' + projectId);
+        debug('No forms found with the project: ' + projectId);
         return next();
       }
 
-      // Filter _ids
-      formIds = _.map(formIds, function(element) {
-        return element._id;
-      });
+      // Force bson ids for searching.
+      formIds = _(formIds)
+        .map(util.idtoBson)
+        .value();
 
       query = {_id: {$in: formIds}, deleted: {$eq: null}};
-      debug.form('form.find: ' + JSON.stringify(query));
+      debug(query);
       formio.resources.form.model.find(query).snapshot().exec(function(err, forms) {
         if (err) {
-          debug.form(err);
+          debug(err);
           return next(err);
         }
         if (!forms || forms.length === 0) {
-          debug.form('No forms found with with _id\'s: ' + JSON.stringify(formIds));
+          debug('No forms found with with _id\'s: ' + JSON.stringify(formIds));
           return next();
         }
 
         // Mark all un-deleted forms as deleted.
         async.eachSeries(forms, function(form, cb) {
-          form.deleted = (new Date()).getTime();
+          form.deleted = Date.now();
+          form.markModified('deleted');
           form.save(function(err, form) {
             if (err) {
               return cb(err);
             }
 
-            debug.form(form);
+            debug(form);
             cb();
           });
         }, function(err) {
           if (err) {
-            debug.form(err);
+            debug(err);
             return next(err);
           }
 
           // Delete all the actions for the given list of forms.
           deleteAction(formIds, function(err) {
             if (err) {
-              debug.form(err);
+              debug(err);
               return next(err);
             }
 
             // Update all submissions related to the newly deleted forms, as being deleted.
             deleteSubmission(formIds, function(err) {
               if (err) {
-                debug.form(err);
+                debug(err);
                 return next(err);
               }
 
@@ -203,47 +203,47 @@ module.exports = function(formio) {
   };
 
   /**
-   * Flag a Role as deleted. If given a roleId, one Role will be flagged; if given a projectId, then all the Roles for
-   * that projectId will be flagged.
+   * Flag all Roles for the given project as deleted.
    *
-   * @param projectId {string|ObjectId}
+   * @param {String|ObjectId} projectId
    *   The Project id to flag all Roles as deleted.
-   * @param next
+   * @param {Function} next
    *   The callback function to return the results.
-   *
-   * @returns {*}
    */
   var deleteRole = function(projectId, next) {
+    var debug = require('debug')('formio:delete:project_role');
+    var util = formio.util;
     if (!projectId) {
-      debug.role('Skipping');
+      debug('Skipping');
       return next();
     }
 
-    var query = {project: projectId, deleted: {$eq: null}};
-    debug.role('role.find: ' + JSON.stringify(query));
+    var query = {project: util.idToBson(projectId), deleted: {$eq: null}};
+    debug(query);
     formio.resources.role.model.find(query, function(err, roles) {
       if (err) {
-        debug.role(err);
+        debug(err);
         return next(err);
       }
       if (!roles || roles.length === 0) {
-        debug.role('No roles found with the project: ' + projectId);
+        debug('No roles found with the project: ' + projectId);
         return next();
       }
 
       async.eachSeries(roles, function(role, cb) {
-        role.deleted = (new Date()).getTime();
+        role.deleted = Date.now();
+        role.markModified('deleted');
         role.save(function(err, role) {
           if (err) {
             return cb(err);
           }
 
-          debug.role(role);
+          debug(role);
           cb();
         });
       }, function(err) {
         if (err) {
-          debug.role(err);
+          debug(err);
           return next(err);
         }
 
@@ -255,51 +255,52 @@ module.exports = function(formio) {
   /**
    * Flag a project as deleted.
    *
-   * @param projectId {string|ObjectId}
+   * @param {String|ObjectId} projectId
    *   The project id to flag as deleted.
-   * @param next
+   * @param {Function} next
    *   The callback function to return the results.
-   *
-   * @returns {*}
    */
   var deleteProject = function(projectId, next) {
+    var debug = require('debug')('formio:delete:project');
+    var util = formio.util;
     if (!projectId) {
-      debug.project('Skipping');
+      debug('Skipping');
       return next();
     }
 
-    var query = {_id: projectId, deleted: {$eq: null}};
-    debug.project('project.findOne: ' + JSON.stringify(query));
+    var query = {_id: util.idToBson(projectId), deleted: {$eq: null}};
+    debug(query);
     formio.resources.project.model.findOne(query, function(err, project) {
       if (err) {
-        debug.project(err);
+        debug(err);
         return next(err.message || err);
       }
       if (!project) {
-        debug.project('No project found with _id: ' + projectId);
+        debug('No project found with _id: ' + projectId);
         return next();
       }
 
-      project.deleted = (new Date()).getTime();
+      project.deleted = Date.now();
+      project.markModified('deleted');
       project.save(function(err, project) {
         if (err) {
-          debug.project(err);
+          debug(err);
           return next(err.message || err);
         }
 
         deleteRole(projectId, function(err) {
           if (err) {
-            debug.project(err);
+            debug(err);
             return next(err.message || err);
           }
 
           deleteForm(projectId, function(err) {
             if (err) {
-              debug.project(err);
+              debug(err);
               return next(err.message || err);
             }
 
-            debug.project(project);
+            debug(project);
             next();
           });
         });
