@@ -10,11 +10,11 @@ module.exports = {
       if (err) {
         return next(err);
       }
-      var clientId = settings.googlesheet.clientId;
-      var clientSecret = settings.googlesheet.cskey;
-      var refreshToken = settings.googlesheet.refreshtoken;
+      var clientId = settings.google.clientId;
+      var clientSecret = settings.google.cskey;
+      var refreshToken = settings.google.refreshtoken;
 
-      if (!settings.googlesheet) {
+      if (!settings.google) {
         return next('Googlesheet not configured.');
       }
       if (!clientId) {

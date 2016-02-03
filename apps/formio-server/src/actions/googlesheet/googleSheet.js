@@ -26,7 +26,7 @@ module.exports = function(router) {
     next(null, {
       name: 'googlesheet',
       title: 'Google Sheets',
-      description: 'Allows you to integrate data into your Google sheets.',
+      description: 'Allows you to integrate data into Google sheets.',
       premium: false,
       priority: 0,
       defaults: {
@@ -43,6 +43,7 @@ module.exports = function(router) {
      */
     util.checkOauthParameters(router, req, function(err, settings) {
       if (err) {
+        console.log(err);
         return next(null, {});
       }
 
@@ -54,7 +55,7 @@ module.exports = function(router) {
         var fieldPanel = {
           type: 'panel',
           theme: 'info',
-          title: 'Google SpreadSheet Fields',
+          title: 'Google Sheet Fields',
           input: false,
           components: []
         };
@@ -63,42 +64,36 @@ module.exports = function(router) {
             fieldPanel.components.push({
               type: 'textfield',
               input: true,
-              label: 'Column [' + field.label + ']',
+              label: (field.label || field.key) + ' Column',
               key: 'settings[' + fieldKey + ']',
-              placeholder: 'Require SpreadSheet Column Key',
-              template: '',
-              dataSrc: 'url',
-              data: '',
-              valueProperty: 'key',
+              placeholder: 'Enter a Column Key. Example: C',
               multiple: false
             });
           }
         });
 
-        next(null, [{
+        next(null, [
+          {
             type: 'textfield',
-            input: true,
-            label: 'SpreadSheet ID',
+            label: 'Sheet ID',
             key: 'settings[sheetID]',
-            placeholder: 'Provide SpreadSheet ID',
-            template: '',
-            dataSrc: 'url',
-            data: '',
-            valueProperty: 'key',
+            placeholder: 'Enter the Sheet ID',
+            input: true,
             validate: {
               required: true
             },
             multiple: false
-          }, {
-            label: 'Enter Worksheet Name',
-            key: 'settings[worksheetName]',
-            inputType: 'text',
-            defaultValue: '',
-            input: true,
-            placeholder: 'Enter Worksheet Name Ex. Sheet1',
+          },
+          {
             type: 'textfield',
-            multiple: false,
-            required: true
+            label: 'Worksheet Name',
+            key: 'settings[worksheetName]',
+            placeholder: 'Enter the Worksheet Name. Example: Sheet1',
+            input: true,
+            validate: {
+              required: true
+            },
+            multiple: false
           },
           fieldPanel
         ]);
@@ -121,9 +116,9 @@ module.exports = function(router) {
         return next(err);
       }
       // Getting OAuth Credentials from Settings.
-      var clientId = settings.googlesheet.clientId;
-      var clientSecret = settings.googlesheet.cskey;
-      var refreshToken = settings.googlesheet.refreshtoken;
+      var clientId = settings.google.clientId;
+      var clientSecret = settings.google.cskey;
+      var refreshToken = settings.google.refreshtoken;
 
       // Get Submission Data
       var submissionData = req.body.data;
