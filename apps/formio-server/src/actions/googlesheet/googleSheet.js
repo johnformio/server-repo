@@ -43,7 +43,6 @@ module.exports = function(router) {
      */
     util.checkOauthParameters(router, req, function(err, settings) {
       if (err) {
-        console.log(err);
         return next(null, {});
       }
 
