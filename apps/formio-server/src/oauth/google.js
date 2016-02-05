@@ -90,12 +90,13 @@ module.exports = function(formio) {
       if (!accessToken) {
         return Q.reject('No access token found');
       }
+      /* eslint-disable camelcase */
       return util.request({
         method: 'GET',
         url: 'https://www.googleapis.com/oauth2/v1/userinfo',
         json: true,
         qs: {
-          access_token: accessToken.token,
+          access_token: accessToken.token
         }
       })
       .spread(function(response, userInfo) {
@@ -113,6 +114,7 @@ module.exports = function(formio) {
         return userInfo;
       })
       .nodeify(next);
+      /* eslint-enable camelcase */
     },
 
     // Gets user ID from provider user response from getUser()
@@ -120,7 +122,7 @@ module.exports = function(formio) {
       return user.id;
     },
 
-    // Dropbox tokens have no expiration date. If it is invalidated it means they have disabled the app.
+    // Google tokens have no expiration date. If it is invalidated it means they have disabled the app.
     refreshTokens: function(req, res, user, next) {
       return Q.reject('Token has been invalidated, please reauthenticate with ' + this.title + '.')
         .nodeify(next);
