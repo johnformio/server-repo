@@ -7,8 +7,12 @@ var Primus = require('primus');
 var chance = new require('chance')();
 var _ = require('lodash');
 var Q = require('q');
+var docker = process.env.DOCKER;
 var config = require('../config');
 module.exports = function(app, template, hook) {
+  // For now don't run with Docker tests...
+  if (docker) { return; }
+
   var ProjectSocket = null;
   if (typeof app !== 'string') {
     ProjectSocket = require('../src/modules/websocket/ProjectSocket')(app.formio);
