@@ -102,7 +102,9 @@ module.exports = function(router) {
 
   GoogleSheetAction.prototype.resolve = function(handler, method, req, res, next) {
     // No feedback needed directly. Call next immediately.
+    /* eslint-disable */
     next();
+    /* eslint-enable */
 
     // Getting Spreadsheet ID and Type from Action.
     var spreadsheetID = this.settings.sheetID;
