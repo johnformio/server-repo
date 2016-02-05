@@ -101,6 +101,9 @@ module.exports = function(router) {
   };
 
   GoogleSheetAction.prototype.resolve = function(handler, method, req, res, next) {
+    // No feedback needed directly. Call next immediately.
+    next();
+
     // Getting Spreadsheet ID and Type from Action.
     var spreadsheetID = this.settings.sheetID;
     var worksheetName = this.settings.worksheetName;
@@ -112,7 +115,6 @@ module.exports = function(router) {
     formio.hook.settings(req, function(err, settings) {
       if (err) {
         debug(err);
-        return next(err);
       }
       // Getting OAuth Credentials from Settings.
       var clientId = settings.google.clientId;
@@ -147,7 +149,6 @@ module.exports = function(router) {
          */
         if (!getId) {
           debug(err);
-          return next(err);
         }
         nextrow = getId;
 
@@ -207,7 +208,6 @@ module.exports = function(router) {
         var blankSubmissionStatus = res.resource.status;
         if (blankSubmissionStatus === 400) {
           debug(err);
-          return next();
         }
         if (err) {
           return debug(err);
@@ -259,7 +259,6 @@ module.exports = function(router) {
            */
           if (blankSubmissionStatus === 400) {
             debug(err);
-            return next();
           }
 
           // Getting Current resource and its external Id.
@@ -318,14 +317,11 @@ module.exports = function(router) {
               }, function(err, result) {
                 if (err) {
                   debug(err);
-                  return next(err);
                 }
               });
             }
           });
         });
-        // Move onto the next middleware.
-        next();
       });
     });
   };
