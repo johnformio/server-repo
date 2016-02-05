@@ -1292,7 +1292,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
-            assert.deepEqual(_.omit('modified', template.project), _.omit('modified', response));
+            assert.deepEqual(_.omit(_.omit(template.project, 'settings'), 'modified'), _.omit(response, 'modified'));
 
             // Store the JWT for future API calls.
             template.formio.user1.token = res.headers['x-jwt-token'];
@@ -1780,7 +1780,30 @@ module.exports = function(app, template, hook) {
 
             tempRole = null;
 
-            done();
+            // Update the temp project data.
+            var oldSettings = template.project.settings;
+            request(app)
+            .get('/project/' + template.project._id)
+            .set('x-jwt-token', template.formio.user1.token)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var _response = res.body;
+              template.project = _response;
+
+              // Add the old project settings back to the template obj.
+              if (oldSettings && !_.has(_response, 'settings')) {
+                template.project.settings = oldSettings;
+              }
+
+              // Store the JWT for future API calls.
+              template.formio.user1.token = res.headers['x-jwt-token'];
+
+              done();
+            });
           });
       });
 
@@ -1796,7 +1819,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
-            assert.deepEqual(_.omit('modified', template.project), _.omit('modified', response));
+            assert.deepEqual(_.omit(_.omit(template.project, 'settings'), 'modified'), _.omit(response, 'modified'));
 
             // Store the JWT for future API calls.
             template.formio.user1.token = res.headers['x-jwt-token'];
@@ -2362,7 +2385,30 @@ module.exports = function(app, template, hook) {
 
             tempRole = null;
 
-            done();
+            // Update the temp project data.
+            var oldSettings = template.project.settings;
+            request(app)
+            .get('/project/' + template.project._id)
+            .set('x-jwt-token', template.formio.user1.token)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var _response = res.body;
+              template.project = _response;
+
+              // Add the old project settings back to the template obj.
+              if (oldSettings && !_.has(_response, 'settings')) {
+                template.project.settings = oldSettings;
+              }
+
+              // Store the JWT for future API calls.
+              template.formio.user1.token = res.headers['x-jwt-token'];
+
+              done();
+            });
           });
       });
 
@@ -2378,7 +2424,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
-            assert.deepEqual(_.omit('modified', template.project), _.omit('modified', response));
+            assert.deepEqual(_.omit(template.project, 'modified'), _.omit(response, 'modified'));
 
             // Store the JWT for future API calls.
             template.formio.user1.token = res.headers['x-jwt-token'];
