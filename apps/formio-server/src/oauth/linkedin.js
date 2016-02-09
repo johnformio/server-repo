@@ -20,7 +20,6 @@ module.exports = function(formio) {
     title: 'LinkedIn ',
 
     authURI: 'https://www.linkedin.com/uas/oauth2/authorization',
-    
     scope:'r_basicprofile',
 
     // List of field data that can be autofilled from user info API request
@@ -91,7 +90,6 @@ module.exports = function(formio) {
         body:null
       })
       .spread(function(response, userInfo) {
-        
         if (!userInfo) {
           var status = response.statusCode;
           throw {
@@ -99,7 +97,6 @@ module.exports = function(formio) {
             message: status + ' response from LinkedIn: ' + response.statusMessage
           };
         }
-      
         debug(userInfo);
         return userInfo;
       })
