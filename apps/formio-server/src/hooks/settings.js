@@ -123,6 +123,7 @@ module.exports = function(app) {
         actions.office365calendar = require('../actions/office365/Office365Calendar')(formioServer);
         actions.hubspotContact = require('../actions/hubspot/hubspotContact')(formioServer);
         actions.oauth = require('../actions/oauth/OAuthAction')(formioServer);
+        actions.googlesheet = require('../actions/googlesheet/googleSheet')(formioServer);
         return actions;
       },
       emailTransports: function(transports, settings) {
