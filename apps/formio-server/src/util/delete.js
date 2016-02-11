@@ -45,20 +45,25 @@ module.exports = function(formio) {
         return next();
       }
 
-      submissions.forEach(function(submission) {
+      async.eachSeries(submissions, function(submission, cb) {
         submission.deleted = Date.now();
         submission.markModified('deleted');
-        submission.save(function(err, submission) {
+        submission.save(function(err) {
           if (err) {
             debug(err);
-            return next(err);
+            return cb(err);
           }
 
-          debug(submission);
+          debug('Final submission: ' + JSON.stringify(submission));
+          cb();
         });
-      });
+      }, function(err) {
+        if (err) {
+          return next(err);
+        }
 
-      next();
+        next();
+      });
     });
   };
 
@@ -98,21 +103,25 @@ module.exports = function(formio) {
         return next();
       }
 
-      actions.forEach(function(action) {
+      async.eachSeries(actions, function(action, cb) {
         action.deleted = Date.now();
         action.markModified('deleted');
-        action.save(function(err, action) {
+        action.save(function(err) {
           if (err) {
             debug(err);
-            return next(err);
+            return cb(err);
           }
 
-          debug(action);
+          debug('Final action:' + JSON.stringify(action));
+          cb();
         });
-      });
+      }, function(err) {
+        if (err) {
+          return next(err);
+        }
 
-      // Continue once all the forms have been updated.
-      next();
+        next();
+      });
     });
   };
 
@@ -166,12 +175,12 @@ module.exports = function(formio) {
         async.eachSeries(forms, function(form, cb) {
           form.deleted = Date.now();
           form.markModified('deleted');
-          form.save(function(err, form) {
+          form.save(function(err) {
             if (err) {
               return cb(err);
             }
 
-            debug(form);
+            debug('Final form: ' + JSON.stringify(form));
             cb();
           });
         }, function(err) {
@@ -233,12 +242,12 @@ module.exports = function(formio) {
       async.eachSeries(roles, function(role, cb) {
         role.deleted = Date.now();
         role.markModified('deleted');
-        role.save(function(err, role) {
+        role.save(function(err) {
           if (err) {
             return cb(err);
           }
 
-          debug(role);
+          debug('Final role: ' + JSON.stringify(role));
           cb();
         });
       }, function(err) {
@@ -282,7 +291,7 @@ module.exports = function(formio) {
 
       project.deleted = Date.now();
       project.markModified('deleted');
-      project.save(function(err, project) {
+      project.save(function(err) {
         if (err) {
           debug(err);
           return next(err.message || err);
@@ -300,7 +309,7 @@ module.exports = function(formio) {
               return next(err.message || err);
             }
 
-            debug(project);
+            debug('Final project: ' + JSON.stringify(project));
             next();
           });
         });
