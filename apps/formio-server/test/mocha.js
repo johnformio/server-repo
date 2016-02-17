@@ -139,7 +139,7 @@ describe('Bootstrap', function() {
       var storeDocument = function(model, document, next) {
         model.create(template.formio[document], function(err, result) {
           if (err) {
-            return done(err);
+            return next(err);
           }
 
           template.formio[document] = result;
@@ -147,58 +147,111 @@ describe('Bootstrap', function() {
         });
       };
 
-      // Attach the auth action for the initialForm.
-      var createActionRegister = function() {
-        template.formio.actionRegister = {
-          title: 'Authentication',
-          name: 'auth',
-          handler: ['before'],
-          method: ['create'],
-          priority: 0,
+      var createProject = function(then) {
+        template.formio.project = {
+          title: 'Form.io Test',
+          name: 'formio',
+          description: 'This is a test version of formio.',
+          primary: true,
           settings: {
-            association: 'new',
-            role: template.formio.roleAuthenticated._id,
-            username: 'user.email',
-            password: 'user.password'
-          },
-          form: template.formio.formRegister._id
+            cors: '*'
+          }
         };
 
-        storeDocument(app.formio.actions.model, 'actionRegister', done);
+        storeDocument(app.formio.resources.project.model, 'project', then);
       };
-
-      // Attach the auth action for the initialForm.
-      var createActionLogin = function() {
-        template.formio.actionLogin = {
-          title: 'Authentication',
-          name: 'auth',
-          handler: ['before'],
-          method: ['create'],
-          priority: 0,
-          settings: {
-            association: 'existing',
-            username: 'user.email',
-            password: 'user.password'
-          },
-          form: template.formio.formLogin._id
-        };
-
-        storeDocument(app.formio.actions.model, 'actionLogin', createActionRegister);
-      };
-
-      // Create the initial form to register users.
-      var createRegisterForm = function() {
-        template.formio.formRegister = {
-          title: 'User Register',
-          name: 'register',
-          path: 'user/register',
-          type: 'form',
+      var createRoleAdministrator = function(then) {
+        template.formio.roleAdministrator = {
+          title: 'Administrator',
+          description: 'A role for Administrative Users.',
           project: template.formio.project._id,
-          access: [
-            {type: 'read_all', roles: [template.formio.roleAnonymous._id]}
-          ],
+          default: false,
+          admin: true
+        };
+
+        storeDocument(app.formio.resources.role.model, 'roleAdministrator', then);
+      };
+      var createRoleAuthenticated = function(then) {
+        template.formio.roleAuthenticated = {
+          title: 'Authenticated',
+          description: 'A role for Authenticated Users.',
+          project: template.formio.project._id,
+          default: false,
+          admin: false
+        };
+
+        storeDocument(app.formio.resources.role.model, 'roleAuthenticated', then);
+      };
+      var createRoleAnonymous = function(then) {
+        template.formio.roleAnonymous = {
+          title: 'Anonymous',
+          description: 'A role for Anonymous Users.',
+          project: template.formio.project._id,
+          default: true,
+          admin: false
+        };
+
+        storeDocument(app.formio.resources.role.model, 'roleAnonymous', then);
+      };
+      var setDefaultProjectAccess = function(then) {
+        app.formio.resources.project.model.findById(template.formio.project._id, function(err, document) {
+          if (err) { return then(err); }
+
+          // Update the default role for this Project.
+          document.defaultAccess = template.formio.roleAnonymous._id;
+          document.access = [{type: 'read_all', roles: [template.formio.roleAnonymous._id]}];
+
+          // Save the changes to the Form.io Project and continue.
+          document.save(function(err) {
+            if (err) {
+              return then(err);
+            }
+
+            // No error occurred, document the changes.
+            template.formio.project.defaultAccess = template.formio.roleAnonymous._id;
+
+            // Call next callback.
+            then();
+          });
+        });
+
+      };
+      var createPaymentForm = function(then) {
+        template.formio.formPayment = {
+          title: 'Payment Authorization',
+          type: 'form',
+          name: 'paymentAuthorization',
+          path: 'payment',
+          project: template.formio.project._id,
+          components : [] // We don't need components to test the form
+        };
+
+        storeDocument(app.formio.resources.form.model, 'formPayment', then);
+      };
+      var createUpgradeHistoryForm = function(then) {
+        template.formio.formPayment = {
+          title: 'Project Upgrade History Form',
+          type: 'form',
+          name: 'projectUpgradeHistory',
+          path: 'projectUpgradeHistory',
+          project: template.formio.project._id,
+          components : [] // We don't need components to test the form
+        };
+
+        storeDocument(app.formio.resources.form.model, 'formPayment', then);
+      };
+      var createUserResource = function(then) {
+        template.formio.userResource = {
+          title: 'Users',
+          name: 'user',
+          path: 'user',
+          type: 'resource',
+          project: template.formio.project._id,
+          access: [],
           submissionAccess: [
-            {type: 'create_own', roles: [template.formio.roleAnonymous._id]}
+            {type: 'read_own', roles: [template.formio.roleAuthenticated._id]},
+            {type: 'update_own', roles: [template.formio.roleAuthenticated._id]},
+            {type: 'delete_own', roles: [template.formio.roleAuthenticated._id]}
           ],
           components: [
             {
@@ -215,7 +268,7 @@ describe('Bootstrap', function() {
               suffix: '',
               prefix: '',
               placeholder: 'email',
-              key: 'user.email',
+              key: 'email',
               label: 'email',
               inputMask: '',
               inputType: 'email',
@@ -235,7 +288,7 @@ describe('Bootstrap', function() {
               suffix: '',
               prefix: '',
               placeholder: 'name',
-              key: 'user.name',
+              key: 'name',
               label: 'name',
               inputMask: '',
               inputType: 'text',
@@ -246,96 +299,17 @@ describe('Bootstrap', function() {
               suffix: '',
               prefix: '',
               placeholder: 'password',
-              key: 'user.password',
+              key: 'password',
               label: 'password',
               inputType: 'password',
               input: true
-            },
-            {
-              theme: 'primary',
-              disableOnInvalid: true,
-              action: 'submit',
-              block: false,
-              rightIcon: '',
-              leftIcon: '',
-              size: 'md',
-              key: 'submit',
-              label: 'Submit',
-              input: true,
-              type: 'button'
             }
           ]
         };
 
-        storeDocument(app.formio.resources.form.model, 'formRegister', createActionLogin);
+        storeDocument(app.formio.resources.form.model, 'userResource', then);
       };
-
-      // Create the initial form to authenticate against our resource.
-      var createLoginForm = function() {
-        template.formio.formLogin = {
-          title: 'User Login',
-          name: 'login',
-          path: 'user/login',
-          type: 'form',
-          project: template.formio.project._id,
-          access: [
-            {type: 'read_all', roles: [template.formio.roleAnonymous._id]}
-          ],
-          submissionAccess: [
-            {type: 'create_own', roles: [template.formio.roleAnonymous._id]}
-          ],
-          components: [
-            {
-              type: 'email',
-              validate: {
-                custom: '',
-                pattern: '',
-                maxLength: '',
-                minLength: '',
-                required: true
-              },
-              defaultValue: '',
-              multiple: false,
-              suffix: '',
-              prefix: '',
-              placeholder: 'email',
-              key: 'user.email',
-              label: 'email',
-              inputMask: '',
-              inputType: 'email',
-              input: true
-            },
-            {
-              type: 'password',
-              suffix: '',
-              prefix: '',
-              placeholder: 'password',
-              key: 'user.password',
-              label: 'password',
-              inputType: 'password',
-              input: true
-            },
-            {
-              theme: 'primary',
-              disableOnInvalid: true,
-              action: 'submit',
-              block: false,
-              rightIcon: '',
-              leftIcon: '',
-              size: 'md',
-              key: 'submit',
-              label: 'Submit',
-              input: true,
-              type: 'button'
-            }
-          ]
-        };
-
-        storeDocument(app.formio.resources.form.model, 'formLogin', createRegisterForm);
-      };
-
-      // Create the initial form for teams.
-      var createTeamResource = function() {
+      var createTeamResource = function(then) {
         template.formio.teamResource = {
           title: 'Team',
           type: 'resource',
@@ -407,22 +381,82 @@ describe('Bootstrap', function() {
           ]
         };
 
-        storeDocument(app.formio.resources.form.model, 'teamResource', createLoginForm);
+        storeDocument(app.formio.resources.form.model, 'teamResource', then);
       };
-
-      // Create the initial resource to for users.
-      var createUserResource = function() {
-        template.formio.userResource = {
-          title: 'Users',
-          name: 'user',
-          path: 'user',
-          type: 'resource',
+      var createLoginForm = function(then) {
+        template.formio.formLogin = {
+          title: 'User Login',
+          name: 'login',
+          path: 'user/login',
+          type: 'form',
           project: template.formio.project._id,
-          access: [],
+          access: [
+            {type: 'read_all', roles: [template.formio.roleAnonymous._id]}
+          ],
           submissionAccess: [
-            {type: 'read_own', roles: [template.formio.roleAuthenticated._id]},
-            {type: 'update_own', roles: [template.formio.roleAuthenticated._id]},
-            {type: 'delete_own', roles: [template.formio.roleAuthenticated._id]}
+            {type: 'create_own', roles: [template.formio.roleAnonymous._id]}
+          ],
+          components: [
+            {
+              type: 'email',
+              validate: {
+                custom: '',
+                pattern: '',
+                maxLength: '',
+                minLength: '',
+                required: true
+              },
+              defaultValue: '',
+              multiple: false,
+              suffix: '',
+              prefix: '',
+              placeholder: 'email',
+              key: 'email',
+              label: 'email',
+              inputMask: '',
+              inputType: 'email',
+              input: true
+            },
+            {
+              type: 'password',
+              suffix: '',
+              prefix: '',
+              placeholder: 'password',
+              key: 'password',
+              label: 'password',
+              inputType: 'password',
+              input: true
+            },
+            {
+              theme: 'primary',
+              disableOnInvalid: true,
+              action: 'submit',
+              block: false,
+              rightIcon: '',
+              leftIcon: '',
+              size: 'md',
+              key: 'submit',
+              label: 'Submit',
+              input: true,
+              type: 'button'
+            }
+          ]
+        };
+
+        storeDocument(app.formio.resources.form.model, 'formLogin', then);
+      };
+      var createRegisterForm = function(then) {
+        template.formio.formRegister = {
+          title: 'User Register',
+          name: 'register',
+          path: 'user/register',
+          type: 'form',
+          project: template.formio.project._id,
+          access: [
+            {type: 'read_all', roles: [template.formio.roleAnonymous._id]}
+          ],
+          submissionAccess: [
+            {type: 'create_own', roles: [template.formio.roleAnonymous._id]}
           ],
           components: [
             {
@@ -474,124 +508,123 @@ describe('Bootstrap', function() {
               label: 'password',
               inputType: 'password',
               input: true
+            },
+            {
+              theme: 'primary',
+              disableOnInvalid: true,
+              action: 'submit',
+              block: false,
+              rightIcon: '',
+              leftIcon: '',
+              size: 'md',
+              key: 'submit',
+              label: 'Submit',
+              input: true,
+              type: 'button'
             }
           ]
         };
 
-        storeDocument(app.formio.resources.form.model, 'userResource', createTeamResource);
+        storeDocument(app.formio.resources.form.model, 'formRegister', then);
       };
-
-      // Create the initial form to track project upgrade history.
-      var createUpgradeHistoryForm = function() {
-        template.formio.formPayment = {
-          title: 'Project Upgrade History Form',
-          type: 'form',
-          name: 'projectUpgradeHistory',
-          path: 'projectUpgradeHistory',
-          project: template.formio.project._id,
-          components : [] // We don't need components to test the form
-      };
-
-        storeDocument(app.formio.resources.form.model, 'formPayment', createUserResource);
-      };
-
-      // Create the initial form to register payment method.
-      var createPaymentForm = function() {
-        template.formio.formPayment = {
-          title: 'Payment Authorization',
-          type: 'form',
-          name: 'paymentAuthorization',
-          path: 'payment',
-          project: template.formio.project._id,
-          components : [] // We don't need components to test the form
-      };
-
-        storeDocument(app.formio.resources.form.model, 'formPayment', createUpgradeHistoryForm);
-      };
-
-      // Set the default Project access.
-      var setDefaultProjectAccess = function() {
-        app.formio.resources.project.model.findById(template.formio.project._id, function(err, document) {
-          if (err) {
-            return done(err);
-          }
-
-          // Update the default role for this Project.
-          document.defaultAccess = template.formio.roleAnonymous._id;
-          document.access = [{type: 'read_all', roles: [template.formio.roleAnonymous._id]}];
-
-          // Save the changes to the Form.io Project and continue.
-          document.save(function(err) {
-            if (err) {
-              return done(err);
-            }
-
-            // No error occurred, document the changes.
-            template.formio.project.defaultAccess = template.formio.roleAnonymous._id;
-
-            // Call next callback.
-            createPaymentForm();
-          });
-        });
-
-      };
-
-      // Create the initial anonymous role for Form.io.
-      var createRoleAnonymous = function() {
-        template.formio.roleAnonymous = {
-          title: 'Anonymous',
-          description: 'A role for Anonymous Users.',
-          project: template.formio.project._id,
-          default: true,
-          admin: false
-        };
-
-        storeDocument(app.formio.resources.role.model, 'roleAnonymous', setDefaultProjectAccess);
-      };
-
-      // Create the initial authenticated role for Form.io.
-      var createRoleAuthenticated = function() {
-        template.formio.roleAuthenticated = {
-          title: 'Authenticated',
-          description: 'A role for Authenticated Users.',
-          project: template.formio.project._id,
-          default: false,
-          admin: false
-        };
-
-        storeDocument(app.formio.resources.role.model, 'roleAuthenticated', createRoleAnonymous);
-      };
-
-      // Create the initial adminstrator role for Form.io.
-      var createRoleAdministrator = function() {
-        template.formio.roleAdministrator = {
-          title: 'Administrator',
-          description: 'A role for Administrative Users.',
-          project: template.formio.project._id,
-          default: false,
-          admin: true
-        };
-
-        storeDocument(app.formio.resources.role.model, 'roleAdministrator', createRoleAuthenticated);
-      };
-
-      // Create the initial Project for Form.io.
-      var createProject = function() {
-        template.formio.project = {
-          title: 'Form.io Test',
-          name: 'formio',
-          description: 'This is a test version of formio.',
-          primary: true,
+      var createActionLogin = function(then) {
+        template.formio.actionLogin = {
+          name: 'login',
+          title: 'Login',
+          form: template.formio.formLogin._id,
+          priority: 2,
+          method: ['create'],
+          handler: ['before'],
           settings: {
-            cors: '*'
+            resources: [template.formio.userResource._id],
+            username: 'email',
+            password: 'password'
           }
         };
 
-        storeDocument(app.formio.resources.project.model, 'project', createRoleAdministrator);
+        template.formio.actionLoginNoSubmit = {
+          name: 'nosubmit',
+          title: 'Skip Form Submission',
+          form: template.formio.formLogin._id,
+          priority: 0,
+          method: ['create'],
+          handler: ['before'],
+          settings: {}
+        };
+
+        async.series([
+          async.apply(storeDocument, app.formio.actions.model, 'actionLogin'),
+          async.apply(storeDocument, app.formio.actions.model, 'actionLoginNoSubmit')
+        ], then);
+      };
+      var createActionRegister = function(then) {
+
+        // Create a register action for this form.
+        template.formio.actionRegisterResource = {
+          name: 'resource',
+          title: 'Submit to another Resource',
+          form: template.formio.formRegister._id,
+          priority: 10,
+          method: ['create'],
+          handler: ['before'],
+          settings: {
+            resource: template.formio.userResource._id,
+            role: template.formio.roleAuthenticated._id,
+            fields: {
+              name: 'name',
+              email: 'email',
+              password: 'password'
+            }
+          }
+        };
+
+        template.formio.actionRegisterLogin = {
+          name: 'login',
+          title: 'Login',
+          form: template.formio.formRegister._id,
+          priority: 2,
+          method: ['create'],
+          handler: ['before'],
+          settings: {
+            resources: [template.formio.userResource._id],
+            username: 'email',
+            password: 'password'
+          }
+        };
+
+        template.formio.actionRegisterNoSubmit = {
+          name: 'nosubmit',
+          title: 'Skip Form Submission',
+          form: template.formio.formRegister._id,
+          priority: 0,
+          method: ['create'],
+          handler: ['before'],
+          settings: {}
+        };
+
+        async.series([
+          async.apply(storeDocument, app.formio.actions.model, 'actionRegisterResource'),
+          async.apply(storeDocument, app.formio.actions.model, 'actionRegisterLogin'),
+          async.apply(storeDocument, app.formio.actions.model, 'actionRegisterNoSubmit')
+        ], then);
       };
 
-      // Create the initial Form.io Project.
-      createProject();
+      // Create the project.
+      async.series([
+        async.apply(createProject),
+        async.apply(createRoleAdministrator),
+        async.apply(createRoleAuthenticated),
+        async.apply(createRoleAnonymous),
+        async.apply(setDefaultProjectAccess),
+        async.apply(createPaymentForm),
+        async.apply(createUpgradeHistoryForm),
+        async.apply(createUserResource),
+        async.apply(createTeamResource),
+        async.apply(createLoginForm),
+        async.apply(createRegisterForm),
+        async.apply(createActionLogin),
+        async.apply(createActionRegister)
+      ], done);
     });
   });
 
@@ -615,9 +648,9 @@ describe('Bootstrap', function() {
         .post('/project/' + template.formio.project._id + '/form/' + template.formio.formRegister._id + '/submission')
         .send({
           data: {
-            'user.name': template.formio.owner.data.name,
-            'user.email': template.formio.owner.data.email,
-            'user.password': template.formio.owner.data.password
+            'name': template.formio.owner.data.name,
+            'email': template.formio.owner.data.email,
+            'password': template.formio.owner.data.password
           }
         })
         .expect(200)
@@ -658,8 +691,8 @@ describe('Bootstrap', function() {
         .post('/project/' + template.formio.project._id + '/form/' + template.formio.formLogin._id + '/submission')
         .send({
           data: {
-            'user.email': template.formio.owner.data.email,
-            'user.password': template.formio.owner.data.password
+            'email': template.formio.owner.data.email,
+            'password': template.formio.owner.data.password
           }
         })
         .expect('Content-Type', /json/)
