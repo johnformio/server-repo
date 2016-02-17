@@ -69,8 +69,8 @@ module.exports = function(app, template, hook) {
         .set('x-jwt-token', template.formio.owner.token)
         .send({
           data: {
-            'user.email': testUser.email,
-            'user.password': testUser.password
+            'email': testUser.email,
+            'password': testUser.password
           }
         })
         .expect(200)

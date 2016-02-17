@@ -241,10 +241,6 @@ module.exports = function(router) {
       var processField = function(action, key, value, current) {
         switch (action) {
           case 'field':
-            var parts = value.split('.');
-            if (parts.length > 1) {
-              return req.body.data[parts[0]].data[parts[1]];
-            }
             return req.body.data[value];
           case 'value':
             return nunjucks.renderString(value, currentResource);

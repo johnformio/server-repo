@@ -274,7 +274,7 @@ module.exports = function(app, template, hook) {
               input: true,
               inputType: 'email',
               label: 'Email',
-              key: 'oauthUser.email',
+              key: 'email',
               type: 'email',
               validate: {
                 required: true
@@ -284,7 +284,7 @@ module.exports = function(app, template, hook) {
               input: true,
               inputType: 'password',
               label: 'password',
-              key: 'oauthUser.password',
+              key: 'password',
               type: 'password',
               validate: {
                 required: true
@@ -361,7 +361,7 @@ module.exports = function(app, template, hook) {
               input: true,
               inputType: 'email',
               label: 'Email',
-              key: 'oauthUser.email',
+              key: 'email',
               type: 'email',
               validate: {
                 required: true
@@ -371,7 +371,7 @@ module.exports = function(app, template, hook) {
               input: true,
               inputType: 'password',
               label: 'password',
-              key: 'oauthUser.password',
+              key: 'password',
               type: 'password',
               validate: {
                 required: true
@@ -594,21 +594,22 @@ module.exports = function(app, template, hook) {
 
       // We attach Auth actions because oauth is supposed to override
       // them and prevent them from returning errors.
-      it('Create AuthAction for Register Form', function(done) {
+      it('Create AuthRegisterAction for Register Form', function(done) {
         var authRegisterAction = {
-          title: 'Authentication',
-          name: 'auth',
-          handler: ['before'],
-          method: ['create'],
-          priority: 0,
+          title: "Submit to another Resource",
+          name: "resource",
+          handler: ["before"],
+          method: ["create"],
+          priority: 10,
           settings: {
-            association: 'new',
+            resource: template.forms.oauthUserResource._id.toString(),
             role: template.roles.authenticated._id.toString(),
-            username: 'oauthUser.email',
-            password: 'oauthUser.password'
+            fields: {
+              email: "email",
+              password: "password"
+            }
           }
         };
-
         request(app)
           .post(hook.alter('url', '/form/' + template.forms.oauthRegisterForm._id + '/action', template))
           .set('x-jwt-token', template.users.admin.token)
@@ -637,18 +638,95 @@ module.exports = function(app, template, hook) {
             done();
           });
       });
+      it('Create AuthLoginAction for Register Form', function(done) {
+        var authRegisterLoginAction = {
+          "name": "login",
+          "title": "Login",
+          "priority": 2,
+          "method": ["create"],
+          "handler": ["before"],
+          "settings": {
+            "resources": [template.forms.oauthUserResource._id.toString()],
+            "username": "email",
+            "password": "password"
+          }
+        };
+        request(app)
+          .post(hook.alter('url', '/form/' + template.forms.oauthRegisterForm._id + '/action', template))
+          .set('x-jwt-token', template.users.admin.token)
+          .send(authRegisterLoginAction)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
 
-      it('Create AuthAction for Login Form', function(done) {
-        var authLoginAction = {
-          title: 'Authentication',
-          name: 'auth',
-          handler: ['before'],
-          method: ['create'],
+            var response = res.body;
+            assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
+            assert.equal(response.title, authRegisterLoginAction.title);
+            assert.equal(response.name, authRegisterLoginAction.name);
+            assert.deepEqual(response.handler, authRegisterLoginAction.handler);
+            assert.deepEqual(response.method, authRegisterLoginAction.method);
+            assert.equal(response.priority, authRegisterLoginAction.priority);
+            assert.deepEqual(response.settings, authRegisterLoginAction.settings);
+            assert.equal(response.form, template.forms.oauthRegisterForm._id);
+            template.actions.authRegisterLoginAction = response;
+
+            // Store the JWT for future API calls.
+            template.users.admin.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+      it('Create AuthNoSubmitAction for Register Form', function(done) {
+        var authRegisterNoSubmitAction = {
+          name: "nosubmit",
+          title: "Skip Form Submission",
           priority: 0,
-          settings: {
-            association: 'existing',
-            username: 'oauthUser.email',
-            password: 'oauthUser.password'
+          handler: ["before"],
+          method: ["create"],
+          settings: {}
+        };
+        request(app)
+          .post(hook.alter('url', '/form/' + template.forms.oauthRegisterForm._id + '/action', template))
+          .set('x-jwt-token', template.users.admin.token)
+          .send(authRegisterNoSubmitAction)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
+            assert.equal(response.title, authRegisterNoSubmitAction.title);
+            assert.equal(response.name, authRegisterNoSubmitAction.name);
+            assert.deepEqual(response.handler, authRegisterNoSubmitAction.handler);
+            assert.deepEqual(response.method, authRegisterNoSubmitAction.method);
+            assert.equal(response.priority, authRegisterNoSubmitAction.priority);
+            assert.equal(response.form, template.forms.oauthRegisterForm._id);
+            template.actions.authRegisterNoSubmitAction = response;
+
+            // Store the JWT for future API calls.
+            template.users.admin.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('Create AuthLoginAction for Login Form', function(done) {
+        var authLoginAction = {
+          "name": "login",
+          "title": "Login",
+          "priority": 2,
+          "method": ["create"],
+          "handler": ["before"],
+          "settings": {
+            "resources": [template.forms.oauthUserResource._id.toString()],
+            "username": "email",
+            "password": "password"
           }
         };
 
@@ -680,6 +758,43 @@ module.exports = function(app, template, hook) {
             done();
           });
       });
+      it('Create AuthNoSubmitAction for Login Form', function(done) {
+        var authLoginNoSubmitAction = {
+          name: "nosubmit",
+          title: "Skip Form Submission",
+          priority: 0,
+          handler: ["before"],
+          method: ["create"],
+          settings: {}
+        };
+
+        request(app)
+          .post(hook.alter('url', '/form/' + template.forms.oauthLoginForm._id + '/action', template))
+          .set('x-jwt-token', template.users.admin.token)
+          .send(authLoginNoSubmitAction)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
+            assert.equal(response.title, authLoginNoSubmitAction.title);
+            assert.equal(response.name, authLoginNoSubmitAction.name);
+            assert.deepEqual(response.handler, authLoginNoSubmitAction.handler);
+            assert.deepEqual(response.method, authLoginNoSubmitAction.method);
+            assert.equal(response.priority, authLoginNoSubmitAction.priority);
+            assert.equal(response.form, template.forms.oauthLoginForm._id);
+            authLoginNoSubmitAction = response;
+
+            // Store the JWT for future API calls.
+            template.users.admin.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
 
       it('Create OAuthAction for test1 provider for Register Form', function(done) {
         var oauthRegisterAction1 = {
@@ -694,7 +809,7 @@ module.exports = function(app, template, hook) {
             resource: template.forms.oauthUserResource.name,
             role: template.roles.authenticated._id.toString(),
             button: 'oauthSignup1',
-            'autofill-test1-email': 'oauthUser.email'
+            'autofill-test1-email': 'email'
           }
         };
 
@@ -827,7 +942,7 @@ module.exports = function(app, template, hook) {
             resource: template.forms.oauthUserResource.name,
             role: template.roles.authenticated._id.toString(),
             button: 'oauthSignup2',
-            'autofill-test2-email': 'oauthUser.email'
+            'autofill-test2-email': 'email'
           }
         };
 
