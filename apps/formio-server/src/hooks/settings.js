@@ -87,13 +87,13 @@ module.exports = function(app) {
           req.body.project = req.projectId || req.params.projectId;
         }
       },
-      email: function(transport, settings, projectSettings, req, res) {
+      email: function(transport, settings, projectSettings, req, res, params) {
         if ((transport === 'outlook') && projectSettings.office365.email) {
-          o365Util.request(formioServer, req, res, 'sendmail', 'Office365Mail', {
+          o365Util.request(formioServer, req, res, 'sendmail', 'Office365Mail', 'application', {
             Message: {
-              Subject: nunjucks.renderString(settings.subject, req.body),
-              Body: o365Util.getBody(settings.message, req.body),
-              ToRecipients: o365Util.getRecipients(settings.emails, req.body),
+              Subject: nunjucks.renderString(settings.subject, params),
+              Body: o365Util.getBody(settings.message, params),
+              ToRecipients: o365Util.getRecipients(settings.emails, params),
               From: o365Util.getRecipient(projectSettings.office365.email)
             }
           });
