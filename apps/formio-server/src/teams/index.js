@@ -269,8 +269,11 @@ module.exports = function(app, formioServer) {
       });
       debug.getProjectTeams(permissions);
 
-      // Separate the teams from their roles for a flat list.
-      teams = _.flatten(_.pluck(teams, 'roles')) || [];
+      // Separate the teams from their roles for a flat list, and convert to strings for comparison.
+      teams = _.pluck(teams, 'roles');
+      teams = _.flatten(teams);
+      teams = teams || [];
+      teams = _.map(teams, formioServer.formio.util.idToString);
       debug.getProjectTeams(teams);
 
       next(null, teams, permissions);

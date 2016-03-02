@@ -9,7 +9,8 @@ var debug = {
   getCalls: require('debug')('formio:analytics:getCalls'),
   getYearlyAnalytics: require('debug')('formio:analytics:getYearlyAnalytics'),
   getMonthlyAnalytics: require('debug')('formio:analytics:getMonthlyAnalytics'),
-  getDailyAnalytics: require('debug')('formio:analytics:getDailyAnalytics')
+  getDailyAnalytics: require('debug')('formio:analytics:getDailyAnalytics'),
+  restrictToFormioEmployees: require('debug')('formio:analytics:restrictToFormioEmployees')
 };
 var url = require('url');
 var submission = /(\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}\/submission)/i;
@@ -367,12 +368,15 @@ module.exports = function(config) {
      */
     var restrictToFormioEmployees = function(req, res, next) {
       if (!req.user) {
+        debug.restrictToFormioEmployees('No req.user: ' + JSON.stringify(req.user));
         return res.sendStatus(401);
       }
 
       var cache = require('../cache/cache')(formioServer.formio);
       cache.loadProject(req, '553db92f72f702e714dd9778', function(err, project) {
         if (err || !project) {
+          debug.restrictToFormioEmployees('err: ' + err);
+          debug.restrictToFormioEmployees('project: ' + project);
           return res.sendStatus(401);
         }
 
@@ -389,10 +393,17 @@ module.exports = function(config) {
         // Team member of Formio.
         formioServer.formio.teams.getProjectTeams(req, '553db92f72f702e714dd9778', function(err, teams, permissions) {
           if (err || !teams || !permissions) {
+            debug.restrictToFormioEmployees('err: ' + err);
+            debug.restrictToFormioEmployees('teams: ' + teams);
+            debug.restrictToFormioEmployees('permissions: ' + permissions);
             return res.sendStatus(401);
           }
 
+          debug.restrictToFormioEmployees('req.user: ' + JSON.stringify(req.user));
+          debug.restrictToFormioEmployees('teams: ' + JSON.stringify(teams));
+
           var member = _.any(teams, function(team) {
+            debug.restrictToFormioEmployees('req.user.roles.indexOf(' + team + '): ' + req.user.roles.indexOf(team));
             if (req.user.roles.indexOf(team) !== -1) {
               return true;
             }
@@ -404,6 +415,8 @@ module.exports = function(config) {
             return next();
           }
 
+          debug.restrictToFormioEmployees('Denied');
+          debug.restrictToFormioEmployees('Member: ' + member);
           return res.sendStatus(401);
         });
       });
