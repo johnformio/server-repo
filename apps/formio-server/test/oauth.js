@@ -269,6 +269,7 @@ module.exports = function(app, template, hook) {
           type: 'form',
           access: [],
           submissionAccess: [],
+          noSave: true,
           components: [
             {
               input: true,
@@ -502,6 +503,36 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      // We attach Auth actions because oauth is supposed to override
+      // them and prevent them from returning errors.
+      it('Create AuthUserRole for OAuth User Resource', function(done) {
+        request(app)
+          .post(hook.alter('url', '/form/' + template.forms.oauthUserResource._id + '/action', template))
+          .set('x-jwt-token', template.users.admin.token)
+          .send({
+            title: 'Role Assignment',
+            name: 'role',
+            priority: 1,
+            handler: ['after'],
+            method: ['create'],
+            settings: {
+              association: 'new',
+              type: 'add',
+              role: template.roles.authenticated._id.toString()
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            template.users.admin.token = res.headers['x-jwt-token'];
+            done();
+          });
+      });
+
       it('Set up submission create_own access for Anonymous users for Register Form', function(done) {
         request(app)
           .put(hook.alter('url', '/form/' + template.forms.oauthRegisterForm._id, template))
@@ -592,18 +623,15 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      // We attach Auth actions because oauth is supposed to override
-      // them and prevent them from returning errors.
       it('Create AuthRegisterAction for Register Form', function(done) {
         var authRegisterAction = {
-          title: "Submit to another Resource",
-          name: "resource",
+          title: "Save Submission",
+          name: "save",
           handler: ["before"],
-          method: ["create"],
-          priority: 10,
+          method: ["create", "update"],
+          priority: 11,
           settings: {
             resource: template.forms.oauthUserResource._id.toString(),
-            role: template.roles.authenticated._id.toString(),
             fields: {
               email: "email",
               password: "password"
@@ -679,42 +707,6 @@ module.exports = function(app, template, hook) {
             done();
           });
       });
-      it('Create AuthNoSubmitAction for Register Form', function(done) {
-        var authRegisterNoSubmitAction = {
-          name: "nosubmit",
-          title: "Skip Form Submission",
-          priority: 0,
-          handler: ["before"],
-          method: ["create"],
-          settings: {}
-        };
-        request(app)
-          .post(hook.alter('url', '/form/' + template.forms.oauthRegisterForm._id + '/action', template))
-          .set('x-jwt-token', template.users.admin.token)
-          .send(authRegisterNoSubmitAction)
-          .expect('Content-Type', /json/)
-          .expect(201)
-          .end(function(err, res) {
-            if (err) {
-              return done(err);
-            }
-
-            var response = res.body;
-            assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
-            assert.equal(response.title, authRegisterNoSubmitAction.title);
-            assert.equal(response.name, authRegisterNoSubmitAction.name);
-            assert.deepEqual(response.handler, authRegisterNoSubmitAction.handler);
-            assert.deepEqual(response.method, authRegisterNoSubmitAction.method);
-            assert.equal(response.priority, authRegisterNoSubmitAction.priority);
-            assert.equal(response.form, template.forms.oauthRegisterForm._id);
-            template.actions.authRegisterNoSubmitAction = response;
-
-            // Store the JWT for future API calls.
-            template.users.admin.token = res.headers['x-jwt-token'];
-
-            done();
-          });
-      });
 
       it('Create AuthLoginAction for Login Form', function(done) {
         var authLoginAction = {
@@ -751,43 +743,6 @@ module.exports = function(app, template, hook) {
             assert.deepEqual(response.settings, authLoginAction.settings);
             assert.equal(response.form, template.forms.oauthLoginForm._id);
             authLoginAction = response;
-
-            // Store the JWT for future API calls.
-            template.users.admin.token = res.headers['x-jwt-token'];
-
-            done();
-          });
-      });
-      it('Create AuthNoSubmitAction for Login Form', function(done) {
-        var authLoginNoSubmitAction = {
-          name: "nosubmit",
-          title: "Skip Form Submission",
-          priority: 0,
-          handler: ["before"],
-          method: ["create"],
-          settings: {}
-        };
-
-        request(app)
-          .post(hook.alter('url', '/form/' + template.forms.oauthLoginForm._id + '/action', template))
-          .set('x-jwt-token', template.users.admin.token)
-          .send(authLoginNoSubmitAction)
-          .expect('Content-Type', /json/)
-          .expect(201)
-          .end(function(err, res) {
-            if (err) {
-              return done(err);
-            }
-
-            var response = res.body;
-            assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
-            assert.equal(response.title, authLoginNoSubmitAction.title);
-            assert.equal(response.name, authLoginNoSubmitAction.name);
-            assert.deepEqual(response.handler, authLoginNoSubmitAction.handler);
-            assert.deepEqual(response.method, authLoginNoSubmitAction.method);
-            assert.equal(response.priority, authLoginNoSubmitAction.priority);
-            assert.equal(response.form, template.forms.oauthLoginForm._id);
-            authLoginNoSubmitAction = response;
 
             // Store the JWT for future API calls.
             template.users.admin.token = res.headers['x-jwt-token'];
