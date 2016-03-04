@@ -730,12 +730,9 @@ module.exports = function(app) {
         cache.projects = {};
         return cache;
       },
-      submissionRequest: function(actualPayload, requestedPayload) {
-        // Whitelist the requested payload data that is processed by formio
-        if (requestedPayload.oauth && (typeof requestedPayload.oauth === 'object')) {
-          actualPayload.oauth = requestedPayload.oauth;
-        }
-        return actualPayload;
+      submissionParams: function(params) {
+        params.push('oauth');
+        return params;
       },
       submissionRequestQuery: function(query, req) {
         query.projectId = req.projectId;
@@ -748,7 +745,7 @@ module.exports = function(app) {
       submissionRoutes: function(routes) {
         var filterExternalTokens = formioServer.formio.middleware.filterResourcejsResponse(['externalTokens']);
         var conditionalFilter = function(req, res, next) {
-          if (req.token && res.resource.item && res.resource.item._id) {
+          if (req.token && res.resource && res.resource.item && res.resource.item._id) {
             // Only allow tokens for the actual user.
             if (req.token.user._id !== res.resource.item._id.toString()) {
               return filterExternalTokens(req, res, next);

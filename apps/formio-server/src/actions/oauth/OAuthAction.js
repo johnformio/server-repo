@@ -208,7 +208,7 @@ module.exports = function(router) {
         req.user = result.user;
         req.token = result.token.decoded;
         res.token = result.token.token;
-        req.skipResourceAction = true;
+        req.skipSave = true;
         req['x-jwt-token'] = result.token.token;
 
         // Update external tokens with new tokens
@@ -348,6 +348,13 @@ module.exports = function(router) {
       });
     })
     .then(function(result) {
+      if (!result) {
+        throw {
+          status: 404,
+          message: 'The given user was not found.'
+        };
+      }
+
       req.user = result.user;
       req.token = result.token.decoded;
       res.token = result.token.token;
@@ -468,6 +475,7 @@ module.exports = function(router) {
       }
       else if (self.settings.association === 'link') {
         var userId, currentUser, newTokens;
+        req.skipSave = true;
         return tokensPromise.then(function(tokens) {
           newTokens = tokens;
           return Q.all([

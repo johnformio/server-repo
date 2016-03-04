@@ -527,6 +527,35 @@ describe('Bootstrap', function() {
 
         storeDocument(app.formio.resources.form.model, 'formRegister', then);
       };
+
+      var createActionSave = function(then) {
+        template.formio.actionUserSave = {
+          name: 'save',
+          title: 'Save Submission',
+          form: template.formio.userResource._id,
+          priority: 10,
+          method: ['create', 'update'],
+          handler: ['before'],
+          settings: {}
+        };
+
+        // Create a register action for this form.
+        template.formio.actionTeamSave = {
+          name: 'save',
+          title: 'Save Submission',
+          form: template.formio.teamResource._id,
+          priority: 10,
+          method: ['create', 'update'],
+          handler: ['before'],
+          settings: {}
+        };
+
+        async.series([
+          async.apply(storeDocument, app.formio.actions.model, 'actionUserSave'),
+          async.apply(storeDocument, app.formio.actions.model, 'actionTeamSave')
+        ], then);
+      };
+
       var createActionLogin = function(then) {
         template.formio.actionLogin = {
           name: 'login',
@@ -542,34 +571,37 @@ describe('Bootstrap', function() {
           }
         };
 
-        template.formio.actionLoginNoSubmit = {
-          name: 'nosubmit',
-          title: 'Skip Form Submission',
-          form: template.formio.formLogin._id,
-          priority: 0,
-          method: ['create'],
-          handler: ['before'],
-          settings: {}
-        };
-
         async.series([
-          async.apply(storeDocument, app.formio.actions.model, 'actionLogin'),
-          async.apply(storeDocument, app.formio.actions.model, 'actionLoginNoSubmit')
+          async.apply(storeDocument, app.formio.actions.model, 'actionLogin')
         ], then);
       };
       var createActionRegister = function(then) {
 
         // Create a register action for this form.
-        template.formio.actionRegisterResource = {
-          name: 'resource',
-          title: 'Submit to another Resource',
-          form: template.formio.formRegister._id,
-          priority: 10,
+        template.formio.actionUserRole = {
+          title: 'Role Assignment',
+          name: 'role',
+          form: template.formio.userResource._id,
+          priority: 1,
+          handler: ['after'],
           method: ['create'],
+          settings: {
+            association: 'new',
+            type: 'add',
+            role: template.formio.roleAuthenticated._id.toString()
+          }
+        };
+
+        // Create a register action for this form.
+        template.formio.actionRegisterSave = {
+          name: 'save',
+          title: 'Save Submission',
+          form: template.formio.formRegister._id,
+          priority: 11,
+          method: ['create', 'update'],
           handler: ['before'],
           settings: {
-            resource: template.formio.userResource._id,
-            role: template.formio.roleAuthenticated._id,
+            resource: template.formio.userResource._id.toString(),
             fields: {
               name: 'name',
               email: 'email',
@@ -592,20 +624,10 @@ describe('Bootstrap', function() {
           }
         };
 
-        template.formio.actionRegisterNoSubmit = {
-          name: 'nosubmit',
-          title: 'Skip Form Submission',
-          form: template.formio.formRegister._id,
-          priority: 0,
-          method: ['create'],
-          handler: ['before'],
-          settings: {}
-        };
-
         async.series([
-          async.apply(storeDocument, app.formio.actions.model, 'actionRegisterResource'),
-          async.apply(storeDocument, app.formio.actions.model, 'actionRegisterLogin'),
-          async.apply(storeDocument, app.formio.actions.model, 'actionRegisterNoSubmit')
+          async.apply(storeDocument, app.formio.actions.model, 'actionUserRole'),
+          async.apply(storeDocument, app.formio.actions.model, 'actionRegisterSave'),
+          async.apply(storeDocument, app.formio.actions.model, 'actionRegisterLogin')
         ], then);
       };
 
@@ -622,6 +644,7 @@ describe('Bootstrap', function() {
         async.apply(createTeamResource),
         async.apply(createLoginForm),
         async.apply(createRegisterForm),
+        async.apply(createActionSave),
         async.apply(createActionLogin),
         async.apply(createActionRegister)
       ], done);

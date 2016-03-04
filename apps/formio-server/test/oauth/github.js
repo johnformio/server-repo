@@ -31,6 +31,7 @@ module.exports = function(app, template, hook) {
           type: 'form',
           access: [],
           submissionAccess: [],
+          noSave: true,
           components: [
             {
               input: true,
@@ -73,6 +74,38 @@ module.exports = function(app, template, hook) {
             assert.deepEqual(response.submissionAccess, []);
             assert.deepEqual(response.components, githubOauthRegisterForm.components);
             template.forms.githubOauthRegisterForm = response;
+
+            // Store the JWT for future API calls.
+            template.users.admin.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('Create Save Submission Action for Register Form', function(done) {
+        request(app)
+          .post(hook.alter('url', '/form/' + template.forms.githubOauthRegisterForm._id + '/action', template))
+          .set('x-jwt-token', template.users.admin.token)
+          .send({
+            title: "Save Submission",
+            name: "save",
+            handler: ["before"],
+            method: ["create", "update"],
+            priority: 11,
+            settings: {
+              resource: template.forms.oauthUserResource._id.toString(),
+              fields: {
+                email: "email",
+                password: "password"
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
 
             // Store the JWT for future API calls.
             template.users.admin.token = res.headers['x-jwt-token'];
@@ -124,7 +157,7 @@ module.exports = function(app, template, hook) {
             resource: template.forms.oauthUserResource.name,
             role: template.roles.authenticated._id.toString(),
             button: 'githubSignup',
-            'autofill-github-email': 'oauthUser.email'
+            'autofill-github-email': 'email'
           }
         };
 
