@@ -893,6 +893,9 @@ module.exports = function(app) {
         });
       },
       machineNameExport: function(machineName) {
+        if (!machineName) {
+          return 'export';
+        }
         return machineName.split(':').slice(-1)[0];
       },
 
