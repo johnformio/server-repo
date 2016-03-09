@@ -21,8 +21,9 @@ module.exports = function(db, config, tools, done) {
   // Ensure that the machine name is unique.
   var setMachineName = function(action, machineName, index, done) {
     index = index || 0;
+    var uniqueName = machineName;
     if (index) {
-      var uniqueName = machineName + index;
+      uniqueName += index;
     }
     actionCollection.findOne({machineName: uniqueName}, function(err, foundAction) {
       if (foundAction && foundAction._id) {
