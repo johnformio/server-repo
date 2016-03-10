@@ -38,6 +38,9 @@ module.exports = function(router) {
         default: router.config.plan || 'commercial',
         index: true
       },
+      steps: {
+        type: [String]
+      },
       primary: {
         type: Boolean,
         default: false
