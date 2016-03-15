@@ -209,6 +209,7 @@ module.exports = function(router) {
         req.token = result.token.decoded;
         res.token = result.token.token;
         req.skipSave = true;
+        req.noValidate = true;
         req['x-jwt-token'] = result.token.token;
 
         // Update external tokens with new tokens
