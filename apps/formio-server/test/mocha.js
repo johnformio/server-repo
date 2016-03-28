@@ -758,6 +758,7 @@ describe('Bootstrap', function() {
       describe('Formio-Server', function() {
         require('./project')(app, template, hook);
         require('./websockets')(app, template, hook);
+        require('./aggregation')(app, template, hook);
       });
 
       var originalSettingsHook;
