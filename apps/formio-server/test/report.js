@@ -20,19 +20,5 @@ module.exports = function(app, template, hook) {
         .expect(401)
         .end(done);
     });
-
-    it('Should allow the owner to see all submissions.', function(done) {
-      request(app)
-        .get('/project/' + template.project._id + '/report')
-        .set('x-jwt-token', template.formio.owner.token)
-        .expect(200)
-        .end(function(err, response) {
-          if (err) {
-            return done(err);
-          }
-
-          done();
-        });
-    });
   });
 };
