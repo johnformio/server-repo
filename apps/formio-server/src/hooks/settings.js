@@ -127,7 +127,7 @@ module.exports = function(app) {
         if (mail.to.indexOf(',') === -1) {
           matches = mail.html.match(tokenRegex);
         }
-        if (matches.length > 1) {
+        if (matches && matches.length > 1) {
           var parts = matches[1].split('=');
           var field = parts[0];
           var resources = parts[1];
