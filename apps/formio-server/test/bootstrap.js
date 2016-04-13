@@ -101,6 +101,9 @@ module.exports = function() {
   // Hook the app and bootstrap the formio hooks.
   app.modules = require('../src/modules/modules')(app, config);
   var _settings = require('../src/hooks/settings')(app, app.formio);
+  var emailHooks = require('./emailHooks');
+  _settings.on.email = emailHooks.email;
+  _settings.getLastEmail = emailHooks.getLastEmail;
 
   // Start the api server.
   require(_bootstrap)(app, app.formio, _settings, '/project/:projectId', config.formio)
