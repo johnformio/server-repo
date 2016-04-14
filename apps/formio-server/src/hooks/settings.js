@@ -116,7 +116,6 @@ module.exports = function(app) {
         return _.assign(models, require('../models/models')(formioServer));
       },
       email: function(mail, req, res, params, cb) {
-
         // Search for tokens within an email and replace it with a SSO token.
         // The token regular expression.
         var tokenRegex = new RegExp(/\[\[\s*token\(\s*([^\)]+\s*)\)\s*\]\]/i);
@@ -926,8 +925,7 @@ module.exports = function(app) {
         return routes;
       },
       roleSearch: function(search, model, value) {
-        search.project = model.project;
-        return search;
+        return this.formSearch(search, model, value);
       },
       roleSchema: function(schema) {
         schema.add({
@@ -950,13 +948,7 @@ module.exports = function(app) {
         });
       },
       roleMachineName: function(machineName, document, done) {
-        formioServer.formio.resources.project.model.findOne({_id: document.project}).exec(function(err, project) {
-          if (err) {
-            return done(err);
-          }
-
-          done(null, project.machineName + ':' + machineName);
-        });
+        this.formMachineName(machineName, document, done);
       },
       actionMachineName: function(machineName, document, done) {
         formioServer.formio.resources.form.model.findOne({_id: document.form}).exec(function(err, form) {

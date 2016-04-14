@@ -252,17 +252,14 @@ module.exports = function(router) {
         };
         debug('oauthDeferredAuth: ', req.oauthDeferredAuth);
 
-        return Q.ninvoke(formio.cache, 'loadCurrentForm', req)
-        .then(function(currentForm) {
-          debug('Filling in dummy passwords');
-          var tmpPassword = 'temp_' + chance.string({length: 16});
-          util.eachComponent(currentForm.components, function(component) {
-            // Fill in password fields with dummy data to pass validation
-            if (component.type === 'password' && component.persistent !== false) {
-              req.submission.data[component.key] = tmpPassword;
-              debug(component.key, 'is now', req.submission.data[component.key]);
-            }
-          });
+        debug('Filling in dummy passwords');
+        var tmpPassword = 'temp_' + chance.string({length: 16});
+        util.eachComponent(resource.components, function(component) {
+          // Fill in password fields with dummy data to pass validation
+          if (component.type === 'password' && component.persistent !== false) {
+            req.submission.data[component.key] = tmpPassword;
+            debug(component.key, 'is now', req.submission.data[component.key]);
+          }
         });
       }
     });
