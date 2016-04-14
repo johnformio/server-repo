@@ -1,13 +1,9 @@
 'use strict';
-
-var nunjucks = require('nunjucks');
-nunjucks.configure([], {
-  watch: false
-});
-var util = require('./util');
 var moment = require('moment');
 
 module.exports = function(router) {
+  var util = require('./util')(router);
+
   /**
    * Office365CalendarAction class.
    *   This class is used to create the Office 365 Contact action.
@@ -204,7 +200,7 @@ module.exports = function(router) {
     // Only add the payload for post and put.
     if (req.method === 'POST' || req.method === 'PUT') {
       payload = {
-        Subject: nunjucks.renderString(this.settings.subject, req.body),
+        Subject: router.formio.nunjucks.render(this.settings.subject, req.body),
         Body: util.getBody(this.settings.body, req.body),
         Start: req.body.data[this.settings.start],
         StartTimeZone: this.settings.timezone,
@@ -212,7 +208,7 @@ module.exports = function(router) {
         EndTimeZone: this.settings.timezone,
         Location: util.getLocation(req.body.data[this.settings.location]),
         Attendees: util.getAttendees(this.settings.attendees, req.body),
-        WebLink: nunjucks.renderString(this.settings.weblink, req.body),
+        WebLink: router.formio.nunjucks.render(this.settings.weblink, req.body),
         Categories: util.getArray(this.settings.categories, req.body)
       };
     }

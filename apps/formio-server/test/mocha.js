@@ -539,6 +539,23 @@ describe('Bootstrap', function() {
           settings: {}
         };
 
+        // Create an email template.
+        template.formio.actionUserEmail = {
+          name: 'email',
+          title: 'Email',
+          form: template.formio.userResource._id,
+          priority: 0,
+          method: ['create'],
+          handler: ['after'],
+          settings: {
+            transport: 'test',
+            from: 'no-reply@form.io',
+            emails: '{{ data.email }}',
+            subject: 'New user {{ _id }} created',
+            message: 'Email: {{ data.email }}, token=[[token(data.email=user,admin)]]'
+          }
+        };
+
         // Create a register action for this form.
         template.formio.actionTeamSave = {
           name: 'save',
@@ -552,6 +569,7 @@ describe('Bootstrap', function() {
 
         async.series([
           async.apply(storeDocument, app.formio.actions.model, 'actionUserSave'),
+          async.apply(storeDocument, app.formio.actions.model, 'actionUserEmail'),
           async.apply(storeDocument, app.formio.actions.model, 'actionTeamSave')
         ], then);
       };
@@ -709,6 +727,53 @@ describe('Bootstrap', function() {
         });
     });
 
+    if (!docker) {
+      it('Should have sent an email to the user with a valid auth token', function(done) {
+        var email = template.hooks.getLastEmail();
+        assert.equal(email.from, 'no-reply@form.io');
+        assert.equal(email.to, template.formio.owner.data.email);
+        assert.equal(email.subject, 'New user ' + template.formio.owner._id.toString() + ' created');
+
+        // Get the token.
+        var matches = email.html.match(/token=([^\s]+)/);
+        assert.equal(matches.length, 2);
+        var token = matches[1];
+
+        // This user should be able to authenticate using this token.
+        request(app)
+          .get('/project/' + template.formio.project._id + '/current')
+          .set('x-jwt-token', token)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
+            assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
+            assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
+            assert(response.hasOwnProperty('data'), 'The response should contain a submission `data` object.');
+            assert(response.data.hasOwnProperty('email'), 'The submission `data` should contain the `email`.');
+            assert.equal(response.data.email, template.formio.owner.data.email);
+            assert(!response.data.hasOwnProperty('password'), 'The submission `data` should not contain the `password`.');
+            assert(response.hasOwnProperty('form'), 'The response should contain the resource `form`.');
+            assert.equal(response.form, template.formio.userResource._id);
+            assert(res.headers.hasOwnProperty('x-jwt-token'), 'The response should contain a `x-jwt-token` header.');
+
+            // Update our template.users.admins data.
+            var tempPassword = template.formio.owner.data.password;
+            template.formio.owner = response;
+            template.formio.owner.data.password = tempPassword;
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+    }
+
     it('A Form.io User should be able to login', function(done) {
       request(app)
         .post('/project/' + template.formio.project._id + '/form/' + template.formio.formLogin._id + '/submission')
@@ -772,6 +837,7 @@ describe('Bootstrap', function() {
         // Set up formio specific hooks
         var formioHook = require(path.join(_formio, 'src/util/hook'))({hooks: require('./formioHooks.js')(_test)});
 
+        require(path.join(_test, 'unit'))(app, template, formioHook);
         require(path.join(_test, 'auth'))(app, template, formioHook);
         require(path.join(_test, 'roles'))(app, template, formioHook);
         require(path.join(_test, 'form'))(app, template, formioHook);

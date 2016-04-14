@@ -1,13 +1,10 @@
 'use strict';
 
 var _ = require('lodash');
-var nunjucks = require('nunjucks');
-nunjucks.configure([], {
-  watch: false
-});
 var debug = require('debug')('formio:settings');
 var o365Util = require('../actions/office365/util');
 var nodeUrl = require('url');
+var jwt = require('jsonwebtoken');
 var fs = require('fs');
 var path = require('path');
 var semver = require('semver');
@@ -91,7 +88,7 @@ module.exports = function(app) {
         if ((transport === 'outlook') && projectSettings.office365.email) {
           o365Util.request(formioServer, req, res, 'sendmail', 'Office365Mail', 'application', {
             Message: {
-              Subject: nunjucks.renderString(settings.subject, params),
+              Subject: formioServer.formio.nunjucks.render(settings.subject, params),
               Body: o365Util.getBody(settings.message, params),
               ToRecipients: o365Util.getRecipients(settings.emails, params),
               From: o365Util.getRecipient(projectSettings.office365.email)
@@ -117,6 +114,83 @@ module.exports = function(app) {
 
         // Add additional models.
         return _.assign(models, require('../models/models')(formioServer));
+      },
+      email: function(mail, req, res, params, cb) {
+        // Search for tokens within an email and replace it with a SSO token.
+        // The token regular expression.
+        var tokenRegex = new RegExp(/\[\[\s*token\(\s*([^\)]+\s*)\)\s*\]\]/i);
+
+        // If the email is only going to one person, and they wish to have a token within the email, then
+        // we can generate a token for this user.
+        var matches = [];
+        if (mail.to.indexOf(',') === -1) {
+          matches = mail.html.match(tokenRegex);
+        }
+        if (matches && matches.length > 1) {
+          var parts = matches[1].split('=');
+          var field = parts[0];
+          var resources = parts[1];
+          var query = formioServer.formio.hook.alter('formQuery', {
+            name: {'$in': resources.split(',')},
+            deleted: {$eq: null}
+          }, req);
+
+          // Find the forms to search the record within.
+          formioServer.formio.resources.form.model.find(query).exec(function(err, result) {
+            if (err || !result) {
+              return cb(err);
+            }
+
+            var forms = [];
+            var formObjs = {};
+            result.forEach(function(form) {
+              formObjs[form._id.toString()] = form;
+              forms.push(form._id);
+            });
+
+            var query = {
+              form: {'$in': forms},
+              deleted: {$eq: null}
+            };
+
+            // Set the username field to the email address this is getting sent to.
+            query[field] = mail.to;
+
+            // Find the submission.
+            formioServer.formio.resources.submission.model
+              .findOne(query)
+              .select('_id, form')
+              .exec(function(err, submission) {
+                if (err || !submission) {
+                  return cb(null, mail);
+                }
+
+                // Create a new JWT token for the SSO.
+                var token = formioServer.formio.hook.alter('token', {
+                  user: {
+                    _id: submission._id.toString()
+                  },
+                  form: {
+                    _id: submission.form.toString()
+                  }
+                }, formObjs[submission.form.toString()]);
+
+                // Create a token that expires in 30 minutes.
+                token = jwt.sign(token, formioServer.formio.config.jwt.secret, {
+                  expiresInMinutes: 30
+                });
+
+                // Replace the string token with the one generated here.
+                mail.html = mail.html.replace(tokenRegex, token);
+
+                // TO-DO: Generate the token for this user.
+                return cb(null, mail);
+              });
+          }.bind(this));
+        }
+        else {
+          return cb(null, mail);
+        }
       },
       actions: function(actions) {
         actions.office365contact = require('../actions/office365/Office365Contact')(formioServer);
@@ -851,8 +925,7 @@ module.exports = function(app) {
         return routes;
       },
       roleSearch: function(search, model, value) {
-        search.project = model.project;
-        return search;
+        return this.formSearch(search, model, value);
       },
       roleSchema: function(schema) {
         schema.add({
@@ -875,13 +948,7 @@ module.exports = function(app) {
         });
       },
       roleMachineName: function(machineName, document, done) {
-        formioServer.formio.resources.project.model.findOne({_id: document.project}).exec(function(err, project) {
-          if (err) {
-            return done(err);
-          }
-
-          done(null, project.machineName + ':' + machineName);
-        });
+        this.formMachineName(machineName, document, done);
       },
       actionMachineName: function(machineName, document, done) {
         formioServer.formio.resources.form.model.findOne({_id: document.form}).exec(function(err, form) {
