@@ -137,8 +137,8 @@ module.exports = function(app) {
 
           // Find the forms to search the record within.
           formioServer.formio.resources.form.model.find(query).exec(function(err, result) {
-            if (!result) {
-              return cb(null, mail);
+            if (err || !result) {
+              return cb(err);
             }
 
             var forms = [];
@@ -161,7 +161,7 @@ module.exports = function(app) {
               .findOne(query)
               .select('_id, form')
               .exec(function(err, submission) {
-                if (!submission) {
+                if (err || !submission) {
                   return cb(null, mail);
                 }
 
