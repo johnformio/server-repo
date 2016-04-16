@@ -11,7 +11,7 @@ var plan = process.env.PROJECT_PLAN || 'commercial';
 
 config.reservedSubdomains = ['test', 'www', 'api', 'help', 'support', 'portal', 'app', 'apps'];
 config.formio.reservedForms = [
-  'submission', 'export', 'role', 'current', 'logout', 'import', 'form', 'storage\/s3', 'upgrade'
+  'submission', 'exists', 'export', 'role', 'current', 'logout', 'import', 'form', 'storage\/s3', 'upgrade'
 ];
 
 // Set the App settings.
