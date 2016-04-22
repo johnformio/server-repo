@@ -43,6 +43,18 @@ module.exports = function(formio) {
     req.body.settings.cors = '*';
   };
 
+  /**
+   * Ensure a name gets set if not sent.
+   *
+   * @param req
+   */
+  var generateNameIfMissing = function(req) {
+    if (!req.body.hasOwnProperty('name')) {
+      debug('No project name sent. Setting to random.');
+      req.body.name = domain();
+    }
+  };
+
   return function(req, res, next) {
     var isPost = req.method === 'POST';
     var isPut = req.method === 'PUT';
@@ -60,12 +72,11 @@ module.exports = function(formio) {
       switch (plan.toString()) {
         case 'commercial':
         case 'team':
+          generateNameIfMissing(req);
+          return next();
         case 'independent':
-          // Ensure a name gets set if not sent.
-          if (!req.body.hasOwnProperty('name')) {
-            debug('No project name sent. Setting to random.');
-            req.body.name = domain();
-          }
+          generateNameIfMissing(req);
+          filterCorsChanges(req);
           return next();
         case 'basic':
         default:
