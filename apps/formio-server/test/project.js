@@ -742,6 +742,8 @@ module.exports = function(app, template, hook) {
       before(function(done) {
         // Confirm the dummy project is on the independent plan.
         app.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
+          if (err) return done(err);
+
           project.plan = 'independent';
           project.save(function(err) {
             if (err) {
@@ -813,6 +815,8 @@ module.exports = function(app, template, hook) {
       before(function(done) {
         // Confirm the dummy project is on the basic plan.
         app.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
+          if (err) return done(err);
+
           project.plan = 'basic';
           project.save(function(err) {
             if (err) {
