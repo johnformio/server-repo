@@ -207,12 +207,14 @@ module.exports = function(router) {
          * Validating and error handling blank formio form submission in
          * case googlesheet action is attached to the form.
          */
-        var blankSubmissionStatus = res.resource.status;
-        if (blankSubmissionStatus === 400) {
-          debug(err);
-        }
-        if (err) {
-          return debug(err);
+        if (res.resource) {
+          var blankSubmissionStatus = res.resource.status;
+          if (blankSubmissionStatus === 400) {
+            debug(err);
+          }
+          if (err) {
+            return debug(err);
+          }
         }
         spreadsheet.receive({
           getValues: false
@@ -223,8 +225,7 @@ module.exports = function(router) {
 
           // Getting Next row value from spreadsheet.
           var nextrow = info.nextRow;
-          // Getting External ID
-          var currentResource = res.resource;
+
           /**
            * Creating spreadsheet headers if data coming to it first time.
            * Formatting headers to display it in Title Case.
@@ -255,21 +256,15 @@ module.exports = function(router) {
             nextrow = nextrow + 1;
           }
 
-          /**
-           * Validating and error handling blank formio form submission in
-           * case googlesheet action is attached to the form.
-           */
-          if (blankSubmissionStatus === 400) {
-            debug(err);
-          }
-
           // Getting Current resource and its external Id.
-          var updatedRownum = res.resource.item.externalIds;
-          if (req.method === 'PUT') {
-            if (updatedRownum !== undefined) {
-              var getIdObject = _.find(updatedRownum, 'id');
-              var getId = getIdObject.id;
-              nextrow = getId;
+          if (res.resource) {
+            var updatedRownum = res.resource.item.externalIds;
+            if (req.method === 'PUT') {
+              if (updatedRownum !== undefined) {
+                var getIdObject = _.find(updatedRownum, 'id');
+                var getId = getIdObject.id;
+                nextrow = getId;
+              }
             }
           }
 
@@ -278,10 +273,12 @@ module.exports = function(router) {
            *  @getCacheSubmission : Getting form submission data from cache.
            *  @cacheData : Handling single submission from cache data.
            */
-          var deleted = res.resource.deleted;
-          if (deleted) {
-            var cacheData = res.req.formioCache.submissions;
-            deleteSpreadSheetRow(spreadsheet, cacheData);
+          if (res.resource) {
+            var deleted = res.resource.deleted;
+            if (deleted) {
+              var cacheData = res.req.formioCache.submissions;
+              deleteSpreadSheetRow(spreadsheet, cacheData);
+            }
           }
 
           /**
@@ -305,9 +302,9 @@ module.exports = function(router) {
             }
 
             // Store the current resource.
-            if (req.method === 'POST') {
+            if (req.method === 'POST' && res.resource) {
               formio.resources.submission.model.update({
-                _id: currentResource.item._id
+                _id: res.resource.item._id
               }, {
                 $push: {
                   // Add the external ids.
