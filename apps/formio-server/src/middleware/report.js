@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * This file serves as an aggregation mechanism for projecst.
  */
@@ -11,7 +13,7 @@ var _ = require('lodash');
 var debug = require('debug')('formio:middleware:report');
 
 module.exports = function(formio) {
-  var report = function(req, res, filter) {
+  var report = function(req, res, next, filter) {
     // A user is always required for this operation.
     if (!req.user || !req.user.roles || !req.user.roles.length) {
       debug('Unauthorized');
@@ -38,7 +40,7 @@ module.exports = function(formio) {
         var result = node.match(/^ObjectId\(\'(.{24})\'\)$/m);
         this.update(mongoose.Types.ObjectId(result[1]));
       }
-    })
+    });
 
     // Get the user roles.
     var userRoles = _.map(req.user.roles, function(role) {
@@ -102,13 +104,13 @@ module.exports = function(formio) {
   };
 
   // Use post to crete aggregation criteria.
-  router.post('/', function(req, res) {
+  router.post('/', function(req, res, next) {
     debug('POST', req.body);
-    report(req, res, req.body);
+    report(req, res, next, req.body);
   });
 
   // Allow them to provide the query via headers on a GET request.
-  router.get('/', function(req, res) {
+  router.get('/', function(req, res, next) {
     var pipeline = [];
     if (req.headers.hasOwnProperty('x-query')) {
       debug('GET', req.headers['x-query']);
@@ -121,7 +123,7 @@ module.exports = function(formio) {
     }
 
     // create the report.
-    report(req, res, pipeline);
+    report(req, res, next, pipeline);
   });
 
   return router;
