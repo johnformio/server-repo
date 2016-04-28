@@ -5,32 +5,45 @@ var express = require('express');
 var router = express.Router();
 var JSONStream = require('JSONStream');
 var through = require('through');
+var traverse = require('traverse');
 var formioUtils = require('formio-utils');
 var _ = require('lodash');
+var debug = require('debug')('formio:middleware:report');
 
 module.exports = function(formio) {
   var report = function(req, res, filter) {
     // A user is always required for this operation.
     if (!req.user || !req.user.roles || !req.user.roles.length) {
+      debug('Unauthorized');
       return res.status(401).send('Unauthorized');
     }
 
     if (!req.body) {
+      debug('No pipeline');
       return res.status(400).send('Must include an aggregation pipeline');
     }
+
+    var mongoose = formio.mongoose;
+    var submissions = mongoose.connections[0].collections.submissions.collection;
 
     // Make sure the filter is an array.
     if (!filter || !filter.length) {
       filter = [];
     }
+    debug('filter', filter);
+
+    // Convert ObjectIds to actual object ids.
+    traverse(filter).forEach(function(node) {
+      if (typeof node === 'string' && node.match(/^ObjectId\(\'(.{24})\'\)$/)) {
+        var result = node.match(/^ObjectId\(\'(.{24})\'\)$/m);
+        this.update(mongoose.Types.ObjectId(result[1]));
+      }
+    })
 
     // Get the user roles.
     var userRoles = _.map(req.user.roles, function(role) {
       return formio.mongoose.Types.ObjectId(role);
     });
-
-    var mongoose = formio.mongoose;
-    var submissions = mongoose.connections[0].collections.submissions.collection;
 
     // Find all forms that this user has "read_all" access to or owns and only give them
     // aggregate access to those forms.
@@ -65,6 +78,7 @@ module.exports = function(formio) {
 
       // Start out the filter to only include those forms.
       var pipeline = [{'$match': {form: {'$in': formIds}}}].concat(filter);
+      debug('final pipeline', pipeline);
 
       // Create the submission aggregate stream.
       submissions.aggregate(pipeline)
@@ -89,6 +103,7 @@ module.exports = function(formio) {
 
   // Use post to crete aggregation criteria.
   router.post('/', function(req, res) {
+    debug('POST', req.body);
     report(req, res, req.body);
   });
 
@@ -96,6 +111,7 @@ module.exports = function(formio) {
   router.get('/', function(req, res) {
     var pipeline = [];
     if (req.headers.hasOwnProperty('x-query')) {
+      debug('GET', req.headers['x-query']);
       try {
         pipeline = JSON.parse(req.headers['x-query']);
       }
