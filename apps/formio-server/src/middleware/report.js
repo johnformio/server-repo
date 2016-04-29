@@ -34,6 +34,21 @@ module.exports = function(formio) {
     }
     debug('filter', filter);
 
+    // Ensure there are no disallowed stages in the aggregation.
+    // We may want to include additional stages but better to start with less.
+    var allowedStages = ['$match', '$limit', '$sort', '$skip', '$group'];
+    var hasDisallowedStage = false;
+    filter.forEach(function(stage) {
+      for (var key in stage) {
+        if (allowedStages.indexOf(key) === -1) {
+          hasDisallowedStage = true;
+        }
+      }
+    });
+    if (hasDisallowedStage) {
+      return res.status(400).send('Disallowed stage used in aggregation.');
+    }
+
     // Convert ObjectIds to actual object ids.
     traverse(filter).forEach(function(node) {
       if (typeof node === 'string' && node.match(/^ObjectId\(\'(.{24})\'\)$/)) {
