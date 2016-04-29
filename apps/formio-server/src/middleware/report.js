@@ -36,7 +36,7 @@ module.exports = function(formio) {
 
     // Ensure there are no disallowed stages in the aggregation.
     // We may want to include additional stages but better to start with less.
-    var allowedStages = ['$match', '$limit', '$sort', '$skip', '$group'];
+    var allowedStages = ['$match', '$limit', '$sort', '$skip', '$group', '$unwind'];
     var hasDisallowedStage = false;
     filter.forEach(function(stage) {
       for (var key in stage) {

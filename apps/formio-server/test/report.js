@@ -76,23 +76,6 @@ module.exports = function(app, template, hook) {
         });
     });
 
-    it('Should not allow $unwind in aggregation.', function(done) {
-      request(app)
-        .get('/project/' + template.project._id + '/report')
-        .set('x-jwt-token', template.users.admin.token)
-        .set('x-query', JSON.stringify([{
-          '$unwind': {}
-        }]))
-        .expect(400)
-        .end(function (err, res) {
-          if (err) {
-            return done(err);
-          }
-          assert(res.text, 'Disallowed stage used in aggregation.');
-          done();
-        });
-    });
-
     it('Should not allow $sample in aggregation.', function(done) {
       request(app)
         .get('/project/' + template.project._id + '/report')
