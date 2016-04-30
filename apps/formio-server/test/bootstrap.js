@@ -108,6 +108,7 @@ module.exports = function() {
   // Start the api server.
   require(_bootstrap)(app, app.formio, _settings, '/project/:projectId', config.formio)
     .then(function(state) {
+      app.use('/project/:projectId/report', require('../src/middleware/report')(app.formio));
       app.listen(config.port);
       bootstrap.resolve({
         app: state.app,

@@ -145,6 +145,9 @@ app.formio.init(settings).then(function(formio) {
     // Mount formio at /project/:projectId.
     app.use('/project/:projectId', app.formio);
 
+    // Mount the aggregation system.
+    app.use('/project/:projectId/report', require('./src/middleware/report')(app.formio.formio));
+
     /* eslint-disable no-console */
     console.log(' > Listening to ' + config.protocol + '://' + config.domain + ':' + config.port);
     /* eslint-enable no-console */
