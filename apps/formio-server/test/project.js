@@ -32,6 +32,31 @@ module.exports = function(app, template, hook) {
     });
   };
 
+  var confirmProjectPlan = function confirmProjectPlan(id, user, plan, next) {
+    request(app)
+      .get('/project/' + id)
+      .set('x-jwt-token', user.token)
+      .expect('Content-Type', /json/)
+      .expect(200)
+      .end(function(err, res) {
+        if (err) {
+          return next(err);
+        }
+        try {
+          var response = res.body;
+          assert.equal(response.hasOwnProperty('plan'), true);
+          assert.equal(response.plan, plan);
+
+          // Store the JWT for future API calls.
+          user.token = res.headers['x-jwt-token'];
+        }
+        catch (err) {
+          return next(err);
+        }
+        next();
+      });
+  };
+
   describe('Projects', function() {
     var tempProject = {
       title: chance.word(),
@@ -161,7 +186,6 @@ module.exports = function(app, template, hook) {
               reset: moment().startOf('month').add(1, 'month').toISOString()
             });
           }
-
 
           // Check that the response does not contain these properties.
           not(response, ['__v', 'deleted', 'settings_encrypted', 'primary']);
@@ -608,30 +632,6 @@ module.exports = function(app, template, hook) {
   });
 
   describe('Project Plans', function() {
-    var confirmProjectPlan = function confirmProjectPlan(id, user, plan, next) {
-      request(app)
-        .get('/project/' + id)
-        .set('x-jwt-token', user.token)
-        .expect('Content-Type', /json/)
-        .expect(200)
-        .end(function(err, res) {
-          if (err) {
-            return next(err);
-          }
-          try {
-            var response = res.body;
-            assert.equal(response.hasOwnProperty('plan'), true);
-            assert.equal(response.plan, plan);
-
-            // Store the JWT for future API calls.
-            user.token = res.headers['x-jwt-token'];
-          }
-          catch (err) {
-            return next(err);
-          }
-          next();
-        });
-    };
     describe('Basic Plan', function() {
       it('Confirm the project is on the basic plan', function(done) {
         confirmProjectPlan(template.project._id, template.formio.owner, 'basic', done);
@@ -735,8 +735,98 @@ module.exports = function(app, template, hook) {
       });
     });
 
+    describe('Independent Plan', function() {
+      // Cannot run these tests without access to formio instance
+      if (!app.formio) return;
+
+      before(function(done) {
+        // Confirm the dummy project is on the independent plan.
+        app.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
+          if (err) return done(err);
+
+          project.plan = 'independent';
+          project.save(function(err) {
+            if (err) {
+              return done(err);
+            }
+
+            done();
+          });
+        });
+      });
+
+      it('Confirm the project is on the independent plan', function(done) {
+        confirmProjectPlan(template.project._id, template.formio.owner, 'independent', done);
+      });
+
+      it('A Project on the Independent plan will not be able to set cors options on creation', function(done) {
+        request(app)
+          .get('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('cors'), true);
+            assert.equal(response.settings.cors, '*');
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Independent plan will not be able to set cors options on project update', function(done) {
+        var attempt = '*,www.example.com';
+
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({settings: {cors: attempt}})
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('cors'), true);
+            assert.equal(response.settings.cors, '*');
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+    });
+
     describe('Upgrading Plans', function() {
       if(!app.formio) return;
+
+      before(function(done) {
+        // Confirm the dummy project is on the basic plan.
+        app.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
+          if (err) return done(err);
+
+          project.plan = 'basic';
+          project.save(function(err) {
+            if (err) {
+              return done(err);
+            }
+
+            done();
+          });
+        });
+      });
 
       it('Anonymous users should not be allowed to upgrade a project', function(done) {
         request(app)
