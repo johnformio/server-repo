@@ -79,6 +79,9 @@ app.get('/config.js', function(req, res) {
 // Establish our url alias middleware.
 app.use(require('./src/middleware/alias')(app.formio.formio));
 
+// Handle our API Keys.
+app.use(require('./src/middleware/apiKey')(app.formio.formio));
+
 // Adding google analytics to our api.
 if (config.gaTid) {
   var ua = require('universal-analytics');
