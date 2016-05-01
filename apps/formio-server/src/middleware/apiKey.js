@@ -35,6 +35,7 @@ module.exports = function(formio) {
         !currentProject.settings.keys ||
         (currentProject.settings.keys.length === 0) ||
         !token ||
+        (token.length < 20) ||
         !_.find(currentProject.settings.keys, {key: token})
       ) {
         return next();

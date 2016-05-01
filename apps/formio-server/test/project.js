@@ -268,6 +268,10 @@ module.exports = function(app, template, hook) {
         keys: [
           {
             name: 'Test Key',
+            key: '123testing123testing'
+          },
+          {
+            name: 'Bad Key',
             key: '123testing'
           }
         ],
@@ -323,10 +327,18 @@ module.exports = function(app, template, hook) {
         .end(done);
     });
 
-    it('Should not be able to access the forms without a token.', function(done) {
+    it('Should not allow short tokens.', function(done) {
       request(app)
         .get('/project/' + template.project._id + '/form')
         .set('x-token', '123testing')
+        .expect(401)
+        .end(done);
+    });
+
+    it('Should be able to access all the forms with a valid token.', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/form')
+        .set('x-token', '123testing123testing')
         .expect(200)
         .end(function(err, res) {
           if (err) {
@@ -352,10 +364,18 @@ module.exports = function(app, template, hook) {
         .end(done);
     });
 
-    it('Should allow you to report with a token', function(done) {
+    it('Should not allow you to report with a short token', function(done) {
       request(app)
         .get('/project/' + template.project._id + '/report')
         .set('x-token', '123testing')
+        .expect(401)
+        .end(done);
+    });
+
+    it('Should allow you to report with a valid token', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/report')
+        .set('x-token', '123testing123testing')
         .expect(200)
         .end(done);
     });
