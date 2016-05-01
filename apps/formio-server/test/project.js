@@ -251,65 +251,39 @@ module.exports = function(app, template, hook) {
         });
     });
 
-    it('A Form.io User should be able to Update their Project', function(done) {
+    it('A user without authentication should not be able to update a project.', function(done) {
       var newDescription = 'An updated Project Description.';
-
       request(app)
         .put('/project/' + template.project._id)
-        .set('x-jwt-token', template.formio.owner.token)
         .send({
           description: newDescription
         })
-        .expect('Content-Type', /json/)
-        .expect(200)
-        .end(function(err, res) {
-          if (err) {
-            return done(err);
-          }
-
-          var response = res.body;
-          assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
-          assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
-          assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
-          assert(response.hasOwnProperty('access'), 'The response should contain an the `access`.');
-          assert.equal(response.access[0].type, 'create_all');
-          assert.notEqual(response.access[0].roles, [], 'The create_all Administrator `role` should not be empty.');
-          assert.equal(response.access[1].type, 'read_all');
-          assert.notEqual(response.access[1].roles, [], 'The read_all Administrator `role` should not be empty.');
-          assert.equal(response.access[2].type, 'update_all');
-          assert.notEqual(response.access[2].roles, [], 'The update_all Administrator `role` should not be empty.');
-          assert.equal(response.access[3].type, 'delete_all');
-          assert.notEqual(response.access[3].roles, [], 'The delete_all Administrator `role` should not be empty.');
-          assert.notEqual(response.defaultAccess, [], 'The Projects default `role` should not be empty.');
-          assert.equal(response.name, template.project.name);
-          assert.equal(response.description, newDescription);
-
-          // Check plan and api calls info
-          if (app.formio) {
-            var plan = process.env.PROJECT_PLAN;
-            assert.equal(response.plan, plan, 'The plan should match the default new project plan.');
-            assert.deepEqual(response.apiCalls, {
-              used: 0,
-              remaining: app.formio.plans.limits[response.plan],
-              limit: app.formio.plans.limits[response.plan],
-              reset: moment().startOf('month').add(1, 'month').toISOString()
-            });
-          }
-
-          // Check that the response does not contain these properties.
-          not(response, ['__v', 'deleted', 'settings_encrypted']);
-
-          template.project = response;
-
-          // Store the JWT for future API calls.
-          template.formio.owner.token = res.headers['x-jwt-token'];
-
-          done();
-        });
+        .expect(401)
+        .end(done);
     });
 
     it('A Form.io User should be able to update the settings of their Project', function(done) {
-      var newSettings = {cors: '*', email: {gmail: {auth: {user: 'test@example.com', pass: 'test123'}}}};
+      var newSettings = {
+        cors: '*',
+        keys: [
+          {
+            name: 'Test Key',
+            key: '123testing123testing'
+          },
+          {
+            name: 'Bad Key',
+            key: '123testing'
+          }
+        ],
+        email: {
+          gmail: {
+            auth: {
+              user: 'test@example.com',
+              pass: 'test123'
+            }
+          }
+        }
+      };
 
       request(app)
         .put('/project/' + template.project._id)
@@ -336,6 +310,74 @@ module.exports = function(app, template, hook) {
 
           done();
         });
+    });
+
+    it('Should not be able to access the forms without a token', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/form')
+        .expect(401)
+        .end(done);
+    });
+
+    it('Should not be able to access the forms without a valid token', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/form')
+        .set('x-token', 'badtoken')
+        .expect(401)
+        .end(done);
+    });
+
+    it('Should not allow short tokens.', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/form')
+        .set('x-token', '123testing')
+        .expect(401)
+        .end(done);
+    });
+
+    it('Should be able to access all the forms with a valid token.', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/form')
+        .set('x-token', '123testing123testing')
+        .expect(200)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+          template.formio.owner.token = res.headers['x-jwt-token'];
+          done();
+        });
+    });
+
+    it('Should not allow you to report without a token', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/report')
+        .expect(401)
+        .end(done);
+    });
+
+    it('Should not allow you to report without a token', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/report')
+        .set('x-token', 'badtoken')
+        .expect(401)
+        .end(done);
+    });
+
+    it('Should not allow you to report with a short token', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/report')
+        .set('x-token', '123testing')
+        .expect(401)
+        .end(done);
+    });
+
+    it('Should allow you to report with a valid token', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/report')
+        .set('x-token', '123testing123testing')
+        .expect(200)
+        .end(done);
     });
 
     it('A Form.io User should be able to Read the Index of their User-Created Projects', function(done) {

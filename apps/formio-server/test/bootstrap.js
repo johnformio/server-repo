@@ -98,6 +98,9 @@ module.exports = function() {
   // Establish our url alias middleware.
   app.use(require('../src/middleware/alias')(app.formio.formio));
 
+  // Add api key support.
+  app.use(require('../src/middleware/apiKey')(app.formio.formio));
+
   // Hook the app and bootstrap the formio hooks.
   app.modules = require('../src/modules/modules')(app, config);
   var _settings = require('../src/hooks/settings')(app, app.formio);
