@@ -1,10 +1,6 @@
 'use strict';
 
-var config = require('../../config');
 var _ = require('lodash');
-var debug = {
-  alias: require('debug')('formio:apiKey')
-};
 
 /**
  * Provides URL alias capabilities.
@@ -16,17 +12,14 @@ module.exports = function(formio) {
 
   // Handle the request.
   return function(req, res, next) {
-
     // Get the API Token
     var token = req.headers.hasOwnProperty('x-token') ? req.headers['x-token'] : req.query['token'];
 
     // Load the current project.
-    cache.loadCurrentProject(req, function (err, currentProject) {
+    cache.loadCurrentProject(req, function(err, currentProject) {
       if (err || !currentProject) {
         return next();
       }
-
-      console.log(currentProject.settings.keys);
 
       // Skip the middleware if there are no apiKeys within the project.
       if (
