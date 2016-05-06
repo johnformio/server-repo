@@ -93,8 +93,14 @@ module.exports = function(formio) {
         forms[form._id.toString()] = form;
       });
 
+      // Get the submission query.
+      var submissionQuery = {form: {'$in': formIds}};
+      if (!req.query.deleted) {
+        submissionQuery.deleted = {$eq: null};
+      }
+
       // Start out the filter to only include those forms.
-      var pipeline = [{'$match': {form: {'$in': formIds}}}].concat(filter);
+      var pipeline = [{'$match': submissionQuery}].concat(filter);
       debug('final pipeline', pipeline);
 
       // Create the submission aggregate stream.
