@@ -4,6 +4,10 @@ var assert = require('assert');
 var async = require('async');
 var chance = new (require('chance'))();
 module.exports = function(app, template, hook) {
+  if (process.env.DOCKER) {
+    return;
+  }
+
   describe('Emails', function() {
     var emailTest = require('./helper')(app, template, hook);
     var user1Token = '';
