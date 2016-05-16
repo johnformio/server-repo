@@ -61,7 +61,7 @@ module.exports = function(app, template, hook) {
     var tempProject = {
       title: chance.word(),
       description: chance.sentence(),
-      template: _.omit(_.omit(template, 'users'), 'formio')
+      template: _.omit(template, ['users', 'formio'])
     };
     var originalProject = _.cloneDeep(tempProject, true);
 

@@ -85,16 +85,20 @@ module.exports = function(app) {
         }
       },
       email: function(transport, settings, projectSettings, req, res, params) {
+        var transporter = {};
         if ((transport === 'outlook') && projectSettings.office365.email) {
-          o365Util.request(formioServer, req, res, 'sendmail', 'Office365Mail', 'application', {
-            Message: {
-              Subject: formioServer.formio.nunjucks.render(settings.subject, params),
-              Body: o365Util.getBody(settings.message, params),
-              ToRecipients: o365Util.getRecipients(settings.emails, params),
-              From: o365Util.getRecipient(projectSettings.office365.email)
-            }
-          });
+          transporter.sendMail = function(mail) {
+            o365Util.request(formioServer, req, res, 'sendmail', 'Office365Mail', 'application', {
+              Message: {
+                Subject: mail.subject,
+                Body: o365Util.getBodyObject(mail.html),
+                ToRecipients: o365Util.getRecipientsObject(_.map(mail.to.split(','), _.trim)),
+                From: o365Util.getRecipient(projectSettings.office365.email)
+              }
+            });
+          };
         }
+        return transporter;
       }
     },
     alter: {
