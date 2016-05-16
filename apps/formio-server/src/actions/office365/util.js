@@ -282,10 +282,16 @@ module.exports = function(router) {
      * @param value
      * @returns {{EmailAddress: *}}
      */
-    getRecipient: function(value) {
-      return {
+    getRecipient: function(value, required) {
+      var recipient = {
         EmailAddress: this.getEmail(value)
       };
+
+      if (required) {
+        recipient.type = 'Required';
+      }
+
+      return recipient;
     },
 
     /**
@@ -295,11 +301,10 @@ module.exports = function(router) {
      * @param params
      * @returns {Array}
      */
-    getRecipients: function(value, params) {
+    getRecipientsObject: function(emails, required) {
       var recipients = [];
-      _.each(value, function(recipient) {
-        var email = router.formio.nunjucks.render(recipient, params);
-        recipients.push(this.getRecipient(email));
+      _.each(emails, function(email) {
+        recipients.push(this.getRecipient(email, required));
       }.bind(this));
       return recipients;
     },
@@ -311,24 +316,32 @@ module.exports = function(router) {
      * @param params
      * @returns {Array}
      */
-    getAttendees: function(value, params) {
-      var attendees = [];
-      _.each(value, function(attendee) {
-        var email = router.formio.nunjucks.render(attendee, params);
-        attendees.push({
-          EmailAddress: this.getEmail(email),
-          Type: 'Required'
-        });
-      }.bind(this));
-
-      return attendees;
+    getRecipients: function(value, params) {
+      return this.getRecipientsObject(router.formio.nunjucks.renderObj(value, params), true);
     },
 
-    getBody: function(value, params) {
+    /**
+     * Returns a content body object provided the HTML body.
+     *
+     * @param body The HTML body of the content.
+     * @returns {{ContentType: string, Content: *}}
+     */
+    getBodyObject: function(body) {
       return {
         ContentType: 'HTML',
-        Content: router.formio.nunjucks.render(value, params)
+        Content: body
       };
+    },
+
+    /**
+     * Returns the body object provided the non compiled HTML body.
+     *
+     * @param value
+     * @param params
+     * @returns {*|{ContentType, Content}|{ContentType: string, Content: *}}
+     */
+    getBody: function(value, params) {
+      return this.getBodyObject(router.formio.nunjucks.render(value, params));
     }
   };
 };
