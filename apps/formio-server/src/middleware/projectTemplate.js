@@ -200,7 +200,7 @@ module.exports = function(formio) {
     // Check for template that is already provided.
     else if (formio.templates.hasOwnProperty(template)) {
       // Import the template.
-      importTemplate(formio.templates[template]);
+      importTemplate(_.cloneDeep(formio.templates[template]));
     }
     else {
       // Unknown template.
