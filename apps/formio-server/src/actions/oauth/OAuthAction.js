@@ -377,7 +377,7 @@ module.exports = function(router) {
    * @param res
    * @param next
    */
-  OAuthAction.prototype.initialize = function(req, res, next) {
+  OAuthAction.prototype.initialize = function(method, req, res, next) {
     var self = this;
     var provider = formio.oauth.providers[this.settings.provider];
     if (!req.body.oauth || !req.body.oauth[provider.name]) {
