@@ -111,7 +111,6 @@ module.exports = function(router) {
     var actionSettings = _.get(this, 'settings');
     var sheetId = _.get(this, 'settings.sheetID');
     var sheetName = _.get(this, 'settings.worksheetName');
-    var requestData = _.get(req, 'body.data');
 
     // Load the project settings.
     formio.hook.settings(req, function(err, settings) {
@@ -119,6 +118,8 @@ module.exports = function(router) {
         debug(err);
         return;
       }
+
+      var requestData = _.get(req, 'body.data');
 
       // Map each piece of submission data to a column using the custom mapping in the action settings.
       var columnIds = {};
@@ -148,23 +149,38 @@ module.exports = function(router) {
         // Perform different sheet actions based on the request type.
         if (req.method === 'POST') {
           async.waterfall([
-            function getRowCount(callback) {
-              //spreadsheet.metadata(function(err, metadata){
-              //  if (err) {
-              //    return callback(err);
-              //  }
-              //
-              //  var rows = _.get(metadata, 'rowCount') || 0;
-              //  callback(null, rows)
-              //});
-              spreadsheet.receive({
-                getValues: false
-              }, function(err, rows, info) {
+            function getAvailableRows(callback) {
+              spreadsheet.metadata(function(err, metadata) {
                 if (err) {
                   return callback(err);
                 }
 
-                callback(null, (info.nextRow - 1));
+                var rows = parseInt(_.get(metadata, 'rowCount') || 0);
+                callback(null, rows)
+              });
+            },
+            function getRowCount(rows, callback) {
+              spreadsheet.receive({
+                getValues: false
+              }, function(err, rowData, info) {
+                if (err) {
+                  return callback(err);
+                }
+
+                // Determine how many rows are filled out currently.
+                var currentRows = (info.nextRow - 1);
+                if (currentRows < rows) {
+                  return callback(null, currentRows);
+                }
+
+                // There are not enough rows left to fill out without deleting data, so add 100 more.
+                spreadsheet.metadata({rowCount: (currentRows + 100)}, function(err) {
+                  if (err) {
+                    return callback(err);
+                  }
+
+                  callback(null, currentRows);
+                });
               });
             },
             function addColumnLabels(rows, callback) {
@@ -267,13 +283,13 @@ module.exports = function(router) {
 
           // Build our new row of the spreadsheet, by iterating each column label.
           var data = {};
-          var requestData = _.get(res, 'resource.item.data');
+          var submission = _.get(res, 'resource.item.data');
 
           // Iterate the columns to get the column label and its position.
           _.each(columnIds, function(value, key) {
             data[value] = {
               name: key,
-              val: _.get(requestData, key)
+              val: _.get(submission, key)
             };
           });
 
