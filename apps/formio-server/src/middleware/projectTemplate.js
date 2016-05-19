@@ -10,7 +10,7 @@ module.exports = function(formio) {
   var hook = require('formio/src/util/hook')(formio);
   return function(req, res, next) {
     // If we are creating a project without a template, use the default template.
-    if (res.resource.statue === 201 && !req.templateMode) {
+    if (res.resource.status === 201 && !req.templateMode) {
       req.templateMode = 'create';
     }
     // If the Project was not created, skip this bootstrapping process.
@@ -200,7 +200,7 @@ module.exports = function(formio) {
     // Check for template that is already provided.
     else if (formio.templates.hasOwnProperty(template)) {
       // Import the template.
-      importTemplate(formio.templates[template]);
+      importTemplate(_.cloneDeep(formio.templates[template]));
     }
     else {
       // Unknown template.

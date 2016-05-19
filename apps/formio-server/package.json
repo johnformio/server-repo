@@ -12,6 +12,7 @@
   "main": "./server.js",
   "schema": "3.0.4-rc.1",
   "dependencies": {
+    "JSONStream": "^1.1.1",
     "adal-node": "^0.1.15",
     "async": "^1.5.0",
     "aws-sdk": "^2.2.20",
@@ -22,7 +23,8 @@
     "dotenv": "1.2.0",
     "edit-google-spreadsheet": "^0.2.21",
     "express": "^4.13.3",
-    "formio": "^1.7.10",
+    "formio": "^1.7.19",
+    "formio-utils": "^0.1.5",
     "is-url": "^1.2.1",
     "jslogger": "^1.0.3",
     "jsonwebtoken": "^5.0.5",
@@ -42,7 +44,9 @@
     "semver": "^5.1.0",
     "serve-favicon": "^2.3.0",
     "spreadsheet-column": "^1.1.1",
+    "through": "^2.3.8",
     "tldjs": "^1.5.3",
+    "traverse": "^0.6.6",
     "universal-analytics": "^0.3.9",
     "ws": "^1.0.1"
   },

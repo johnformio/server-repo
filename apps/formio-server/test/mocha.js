@@ -27,12 +27,12 @@ if (!docker) {
     .then(function(state) {
       _server = state.server;
       app = state.app;
-      template = state.template;
+      template = _.cloneDeep(state.template);
     });
 }
 else {
   app = 'http://api.localhost:3000';
-  template = require(path.join(_test, 'template'))();
+  template = _.cloneDeep(require(path.join(_test, 'template'))());
   ready = Q();
 }
 
@@ -822,6 +822,7 @@ describe('Bootstrap', function() {
     describe('Final Tests', function() {
       describe('Formio-Server', function() {
         require('./project')(app, template, hook);
+        require('./email')(app, template, hook);
         require('./websockets')(app, template, hook);
       });
 
@@ -858,6 +859,7 @@ describe('Bootstrap', function() {
         require('./misc')(app, template, hook);
         require('./oauth')(app, template, hook);
         require('./s3')(app, template, hook);
+        require('./report')(app, template, hook);
       });
     });
   });

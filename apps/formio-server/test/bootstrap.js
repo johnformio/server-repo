@@ -98,16 +98,17 @@ module.exports = function() {
   // Establish our url alias middleware.
   app.use(require('../src/middleware/alias')(app.formio.formio));
 
+  // Add api key support.
+  app.use(require('../src/middleware/apiKey')(app.formio.formio));
+
   // Hook the app and bootstrap the formio hooks.
   app.modules = require('../src/modules/modules')(app, config);
   var _settings = require('../src/hooks/settings')(app, app.formio);
-  var emailHooks = require('./emailHooks');
-  _settings.on.email = emailHooks.email;
-  _settings.getLastEmail = emailHooks.getLastEmail;
 
   // Start the api server.
   require(_bootstrap)(app, app.formio, _settings, '/project/:projectId', config.formio)
     .then(function(state) {
+      app.use('/project/:projectId/report', require('../src/middleware/report')(app.formio));
       app.listen(config.port);
       bootstrap.resolve({
         app: state.app,

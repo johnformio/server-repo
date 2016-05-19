@@ -79,6 +79,9 @@ app.get('/config.js', function(req, res) {
 // Establish our url alias middleware.
 app.use(require('./src/middleware/alias')(app.formio.formio));
 
+// Handle our API Keys.
+app.use(require('./src/middleware/apiKey')(app.formio.formio));
+
 // Adding google analytics to our api.
 if (config.gaTid) {
   var ua = require('universal-analytics');
@@ -144,6 +147,9 @@ app.formio.init(settings).then(function(formio) {
 
     // Mount formio at /project/:projectId.
     app.use('/project/:projectId', app.formio);
+
+    // Mount the aggregation system.
+    app.use('/project/:projectId/report', require('./src/middleware/report')(app.formio.formio));
 
     /* eslint-disable no-console */
     console.log(' > Listening to ' + config.protocol + '://' + config.domain + ':' + config.port);

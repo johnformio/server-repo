@@ -49,6 +49,23 @@ module.exports = function(formio) {
     },
 
     /**
+     * Loads current project.
+     * @param req
+     * @param cb
+     */
+    loadCurrentProject: function(req, cb) {
+      var projectId = req.projectId;
+      if (req.params.projectId) {
+        projectId = req.params.projectId;
+      }
+      if (!projectId) {
+        return cb('No project found.');
+      }
+      req.projectId = projectId;
+      this.loadProject(req, projectId, cb);
+    },
+
+    /**
      * Load an Project provided the Project ID.
      * @param req
      * @param id

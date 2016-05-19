@@ -207,7 +207,7 @@ module.exports = function(router) {
         End: req.body.data[this.settings.end],
         EndTimeZone: this.settings.timezone,
         Location: util.getLocation(req.body.data[this.settings.location]),
-        Attendees: util.getAttendees(this.settings.attendees, req.body),
+        Attendees: util.getRecipients(this.settings.attendees, req.body),
         WebLink: router.formio.nunjucks.render(this.settings.weblink, req.body),
         Categories: util.getArray(this.settings.categories, req.body)
       };
