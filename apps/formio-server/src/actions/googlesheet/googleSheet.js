@@ -251,7 +251,43 @@ module.exports = function(router) {
           });
         }
         else if (req.method === 'PUT') {
-          // Only proceed with deleting a row, if applicable to this request.
+          // Only proceed with updating a row, if applicable to this request.
+          if (!_.has(res, 'resource.item') || !_.has(res, 'resource.item.externalIds')) {
+            return;
+          }
+
+          // The row number to update.
+          var row = _.find(res.resource.item.externalIds, function(item) {
+            return item.type === actionName;
+          });
+          row = _.get(row, 'id');
+          if (!row) {
+            return;
+          }
+
+          // Build our new row of the spreadsheet, by iterating each column label.
+          var data = {};
+          var requestData = _.get(res, 'resource.item.data');
+
+          // Iterate the columns to get the column label and its position.
+          _.each(columnIds, function(value, key) {
+            data[value] = {
+              name: key,
+              val: _.get(requestData, key)
+            };
+          });
+
+          // Finally, add all of the data to the row and commit the changes.
+          var final = {};
+          final[row] = data;
+          spreadsheet.add(final);
+          spreadsheet.send(function(err) {
+            if (err) {
+              debug(err);
+            }
+
+            return;
+          });
         }
         else if (req.method === 'DELETE') {
           // Only proceed with deleting a row, if applicable to this request.
