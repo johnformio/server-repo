@@ -1,19 +1,22 @@
 'use strict';
+
 var _ = require('lodash');
 var Q = require('q');
 var util = require('./util');
 var debug = require('debug')('formio:action:googlesheet');
 var Spreadsheet = require('edit-google-spreadsheet');
-var SpreadsheetColumn = require('spreadsheet-column');
+var SpreadsheetColumn = (new (require('spreadsheet-column'))());
+var async = require('async');
 
 module.exports = function(router) {
+  var formio = router.formio;
+
   /**
-   * googleSheet class.
-   * This class is used to create the Google Sheet action.
+   * GoogleSheetAction class.
+   *  This class is used to create the Google Sheet action.
    *
    * @constructor
    */
-  var formio = router.formio;
   var GoogleSheetAction = function(data, req, res) {
     formio.Action.call(this, data, req, res);
   };
@@ -21,7 +24,6 @@ module.exports = function(router) {
   // Derive from Action.
   GoogleSheetAction.prototype = Object.create(formio.Action.prototype);
   GoogleSheetAction.prototype.constructor = GoogleSheetAction;
-
   GoogleSheetAction.info = function(req, res, next) {
     next(null, {
       name: 'googlesheet',
@@ -36,7 +38,7 @@ module.exports = function(router) {
     });
   };
 
-  // Google spreadsheet form settings.
+  // The actions settings form.
   GoogleSheetAction.settingsForm = function(req, res, next) {
     /**
      * Verifying settings form data and restricting action form loading if any of the settings field data is missing.
@@ -49,7 +51,7 @@ module.exports = function(router) {
       // Creating the field for Google Sheet Action.
       Q.all([
         Q.ninvoke(formio.cache, 'loadCurrentForm', req)
-      ]).spread(function(availableProviders, form) {
+      ]).spread(function(availableProviders) {
         // Create the panel for all the fields.
         var fieldPanel = {
           type: 'panel',
@@ -100,227 +102,163 @@ module.exports = function(router) {
     });
   };
 
+  // The actions core execution logic.
   GoogleSheetAction.prototype.resolve = function(handler, method, req, res, next) {
     // No feedback needed directly. Call next immediately.
-    /* eslint-disable */
-    next();
-    /* eslint-enable */
+    next(); // eslint-disable-line callback-return
 
-    // Getting Spreadsheet ID and Type from Action.
-    var spreadsheetID = this.settings.sheetID;
-    var worksheetName = this.settings.worksheetName;
-    var appName = this.name;
+    var actionName = _.get(this, 'name');
+    var actionSettings = _.get(this, 'settings');
+    var sheetId = _.get(this, 'settings.sheetID');
+    var sheetName = _.get(this, 'settings.worksheetName');
+    var requestData = _.get(req, 'body.data');
 
-    // Get the Mapping Settings.
-    var mappingSettings = this.settings;
-
+    // Load the project settings.
     formio.hook.settings(req, function(err, settings) {
       if (err) {
         debug(err);
+        return;
       }
-      // Getting OAuth Credentials from Settings.
-      var clientId = settings.google.clientId;
-      var clientSecret = settings.google.cskey;
-      var refreshToken = settings.google.refreshtoken;
 
-      // Get Submission Data
-      var submissionData = req.body.data;
-      // @param sc = Spreadsheet Column.
-      var sc = new SpreadsheetColumn();
-
-      /*
-       * Delete row function
-       * @param nextrow
-       * @param getCacheSubmission
-       */
-      var deleteSpreadSheetRow = function(spreadsheet, cacheData) {
-        var nextrow;
-        var getCacheSubmission;
-        // Getting submission data
-        _.each(cacheData, function(value, key) {
-          getCacheSubmission = value;
-        });
-
-        // Traversing elements from ExternalIds array.
-        var externId = getCacheSubmission.externalIds;
-        var getIdObject = _.find(externId, 'id');
-        var getId = getIdObject.id;
-        /*
-         * exception handline while on delete data action from submissions and the relative data is not available in
-         * spreadsheet.
-         */
-        if (!getId) {
-          debug(err);
-        }
-        nextrow = getId;
-
-        /**
-         *  Adding blank to the spreadsheet row.
-         *  @deleteDataset : handling data which is to be deleted from the spreadsheet.
-         */
-        var deleteval = mappingSettings;
-        var columnCount = 1;
-        _.each(deleteval, function(value, key) {
-          if (String(key) !== 'sheetID' && String(key) !== 'worksheetName') {
-            var col = sc.fromStr(value);
-            var deleteDataset = {};
-            deleteDataset[nextrow] = {};
-            deleteDataset[nextrow][col] = {
-              name: [columnCount],
-              val: ''
-            };
-            columnCount++;
-            spreadsheet.add(deleteDataset);
-          }
-        });
-      };
-
-      /**
-       * Since, Googlesheet columns can be identified by column numbers but,
-       * based on our requirement we need to map fields by alphabets.
-       * We are re-arranging the existing key values for spreadsheet,
-       * Because by default the key values are in alphabetical order in our database,
-       * and we need to rearrange them as per our requirements.
-       */
-      var mappedColumnId = {};
-      _.each(submissionData, function(value, key) {
-        _.each(mappingSettings, function(mapval, k) {
-          if (k === key) {
-            mappedColumnId[key] = sc.fromStr(mapval);
+      // Map each piece of submission data to a column using the custom mapping in the action settings.
+      var columnIds = {};
+      _.each(requestData, function(value, key) {
+        _.each(actionSettings, function(_value, _key) {
+          if (_key === key) {
+            columnIds[key] = SpreadsheetColumn.fromStr(_value);
           }
         });
       });
 
-      /* eslint-disable camelcase */
       Spreadsheet.load({
         debug: true,
         oauth2: {
-          client_id: clientId,
-          client_secret: clientSecret,
-          refresh_token: refreshToken
+          client_id: _.get(settings, 'google.clientId'), // eslint-disable-line camelcase
+          client_secret: _.get(settings, 'google.cskey'), // eslint-disable-line camelcase
+          refresh_token: _.get(settings, 'google.refreshtoken') // eslint-disable-line camelcase
         },
-        /* eslint-disable camelcase */
-        spreadsheetId: spreadsheetID, // fetching data using spreadsheet ID.
-        worksheetName: worksheetName
-      }, function run(err, spreadsheet, authType) {
-        /**
-         * Validating and error handling blank formio form submission in
-         * case googlesheet action is attached to the form.
-         */
-        if (res.resource) {
-          var blankSubmissionStatus = res.resource.status;
-          if (blankSubmissionStatus === 400) {
-            debug(err);
-          }
-          if (err) {
-            return debug(err);
-          }
+        spreadsheetId: sheetId,
+        worksheetName: sheetName
+      }, function run(err, spreadsheet) {
+        if (err) {
+          debug(err);
+          return;
         }
-        spreadsheet.receive({
-          getValues: false
-        }, function(err, rows, info) {
-          if (err) {
-            return debug(err);
-          }
 
-          // Getting Next row value from spreadsheet.
-          var nextrow = info.nextRow;
-
-          /**
-           * Creating spreadsheet headers if data coming to it first time.
-           * Formatting headers to display it in Title Case.
-           */
-          var spreadSheetHeaderTitles = {};
-          _.each(mappedColumnId, function(value, key) {
-            // Converting raw data into title case.
-            spreadSheetHeaderTitles[key] = _.startCase(key);
-          });
-
-          /**
-           *  Setting up the first row of the spreadsheet as header.
-           *  @sheetHeader - is a spreadsheet header column number.
-           */
-          if (nextrow === 1) {
-            var sheetHeader = 1;
-            var firstRow = 1;
-            _.each(mappedColumnId, function(value, key) {
-              var headerDataset = {};
-              headerDataset[firstRow] = {};
-              headerDataset[firstRow][value] = {
-                name: [sheetHeader],
-                val: spreadSheetHeaderTitles[key]
-              };
-              sheetHeader++;
-              spreadsheet.add(headerDataset);
-            });
-            nextrow = nextrow + 1;
-          }
-
-          // Getting Current resource and its external Id.
-          if (res.resource) {
-            var updatedRownum = res.resource.item.externalIds;
-            if (req.method === 'PUT') {
-              if (updatedRownum !== undefined) {
-                var getIdObject = _.find(updatedRownum, 'id');
-                var getId = getIdObject.id;
-                nextrow = getId;
-              }
-            }
-          }
-
-          /**
-           *  Deleting Record from spreadsheet.
-           *  @getCacheSubmission : Getting form submission data from cache.
-           *  @cacheData : Handling single submission from cache data.
-           */
-          if (res.resource) {
-            var deleted = res.resource.deleted;
-            if (deleted) {
-              var cacheData = res.req.formioCache.submissions;
-              deleteSpreadSheetRow(spreadsheet, cacheData);
-            }
-          }
-
-          /**
-           *  Adding the nextrow submission to Spreadsheet.
-           *  @addDataset : Handling data to be added in the spreadsheet.
-           */
-          _.each(mappedColumnId, function(value, key) {
-            var addDataset = {};
-            addDataset[nextrow] = {};
-            addDataset[nextrow][value] = {
-              name: key,
-              val: submissionData[key]
-            };
-            spreadsheet.add(addDataset);
-          });
-
-          spreadsheet.send(function(err) {
-            if (err) {
-              debug(err);
-              return;
-            }
-
-            // Store the current resource.
-            if (req.method === 'POST' && res.resource) {
-              formio.resources.submission.model.update({
-                _id: res.resource.item._id
-              }, {
-                $push: {
-                  // Add the external ids.
-                  externalIds: {
-                    type: appName,
-                    id: nextrow
-                  }
-                }
-              }, function(err, result) {
+        // Perform different sheet actions based on the request type.
+        if (req.method === 'POST') {
+          async.waterfall([
+            function getRowCount(callback) {
+              //spreadsheet.metadata(function(err, metadata){
+              //  if (err) {
+              //    return callback(err);
+              //  }
+              //
+              //  var rows = _.get(metadata, 'rowCount') || 0;
+              //  callback(null, rows)
+              //});
+              spreadsheet.receive({
+                getValues: false
+              }, function(err, rows, info) {
                 if (err) {
-                  debug(err);
+                  return callback(err);
                 }
+
+                callback(null, (info.nextRow - 1));
+              });
+            },
+            function addColumnLabels(rows, callback) {
+              // Build a map of pretty display column labels and the columnId
+              var columnLabels = {};
+              _.each(columnIds, function(value, key) {
+                columnLabels[key] = _.startCase(key);
+              });
+
+              // If there are no rows, add the column labels before any data.
+              if (rows === 0) {
+                // Build row 1 of the spreadsheet, by iterating each column label.
+                var data = {};
+                var column = 1;
+
+                // Iterate the columns to get the column label and its position.
+                _.each(columnIds, function(value, key) {
+                  data[value] = {
+                    name: [column],
+                    val: columnLabels[key]
+                  };
+
+                  column += 1;
+                });
+
+                // Finally, add all of the row 1 data to the spreadsheet.
+                spreadsheet.add({1: data});
+
+                // Iterate the row count, and continue.
+                rows += 1;
+              }
+
+              callback(null, rows);
+            },
+            function addNewRow(rows, callback) {
+              var row = rows + 1;
+
+              // Build our new row of the spreadsheet, by iterating each column label.
+              var data = {};
+
+              // Iterate the columns to get the column label and its position.
+              _.each(columnIds, function(value, key) {
+                data[value] = {
+                  name: key,
+                  val: _.get(requestData, key)
+                };
+              });
+
+              // Finally, add all of the new row data to the spreadsheet.
+              var final = {};
+              final[row] = data;
+              spreadsheet.add(final);
+
+              // Commit all spreadsheet changes, and update the formio submission with an externalId ref to the sheet.
+              spreadsheet.send(function(err) {
+                if (err) {
+                  return callback(err);
+                }
+
+                if (!res.resource) {
+                  return callback('No resource given in the response.');
+                }
+
+                // Store the current resource.
+                formio.resources.submission.model.update(
+                  {_id: res.resource.item._id},
+                  {
+                    $push: {
+                      externalIds: {
+                        type: actionName,
+                        id: row
+                      }
+                    }
+                  },
+                  callback
+                );
               });
             }
+          ], function(err) {
+            if (err) {
+              debug(err);
+            }
+
+            // Done with sheet integration.
+            return;
           });
-        });
+        }
+        else if (req.method === 'PUT') {
+          // Only proceed with deleting a row, if applicable to this request.
+        }
+        else if (req.method === 'DELETE') {
+          // Only proceed with deleting a row, if applicable to this request.
+          var deleted = _.get(req, 'formioCache.submissions.' + _.get(req, subId));
+        }
       });
     });
   };
