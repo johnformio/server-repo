@@ -217,8 +217,6 @@ module.exports = function(router) {
               var final = {};
               final[row] = data;
               spreadsheet.add(final);
-
-              // Commit all spreadsheet changes, and update the formio submission with an externalId ref to the sheet.
               spreadsheet.send(function(err) {
                 if (err) {
                   return callback(err);
@@ -228,7 +226,7 @@ module.exports = function(router) {
                   return callback('No resource given in the response.');
                 }
 
-                // Store the current resource.
+                // Update the formio submission with an externalId ref to the sheet.
                 formio.resources.submission.model.update(
                   {_id: res.resource.item._id},
                   {
@@ -257,7 +255,40 @@ module.exports = function(router) {
         }
         else if (req.method === 'DELETE') {
           // Only proceed with deleting a row, if applicable to this request.
-          var deleted = _.get(req, 'formioCache.submissions.' + _.get(req, subId));
+          var deleted = _.get(req, 'formioCache.submissions.' + _.get(req, 'subId'));
+          if (!deleted) {
+            return;
+          }
+
+          // The row number to delete.
+          var row = _.find(deleted.externalIds, function(item) {
+            return item.type === actionName;
+          });
+          row = _.get(row, 'id');
+          if (!row) {
+            return;
+          }
+
+          // Build our blank row of data, by iterating each column label.
+          var data = [];
+
+          // Get the number of fields from the action settings; subtract 2 for the sheetId and worksheet name.
+          var fields = ((Object.keys(actionSettings)).length - 2) || 0;
+          for (var a = 0; a < fields; a++) {
+            data.push('');
+          }
+
+          // Finally, update our determined row with empty data.
+          var final = {};
+          final[row] = data;
+          spreadsheet.add(final);
+          spreadsheet.send(function(err) {
+            if (err) {
+              debug(err);
+            }
+
+            return;
+          });
         }
       });
     });
