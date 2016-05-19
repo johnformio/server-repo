@@ -114,12 +114,11 @@ module.exports = function(router) {
 
     // Load the project settings.
     formio.hook.settings(req, function(err, settings) {
+      var requestData = _.get(req, 'body.data');
       if (err) {
         debug(err);
         return;
       }
-
-      var requestData = _.get(req, 'body.data');
 
       // Map each piece of submission data to a column using the custom mapping in the action settings.
       var columnIds = {};
@@ -130,6 +129,217 @@ module.exports = function(router) {
           }
         });
       });
+
+      /**
+       * Util function to add a row to the given spreadsheet.
+       *
+       * @param {Object} spreadsheet
+       *   A loaded Google Spreadsheet.
+       */
+      var addRow = function(spreadsheet) {
+        async.waterfall([
+          function getAvailableRows(callback) {
+            spreadsheet.metadata(function(err, metadata) {
+              if (err) {
+                return callback(err);
+              }
+
+              var rows = parseInt(_.get(metadata, 'rowCount') || 0);
+              callback(null, rows);
+            });
+          },
+          function getRowCount(rows, callback) {
+            spreadsheet.receive({
+              getValues: false
+            }, function(err, rowData, info) {
+              if (err) {
+                return callback(err);
+              }
+
+              // Determine how many rows are filled out currently.
+              var currentRows = (info.nextRow - 1);
+              if (currentRows < rows) {
+                return callback(null, currentRows);
+              }
+
+              // There are not enough rows left to fill out without deleting data, so add 100 more.
+              spreadsheet.metadata({rowCount: (currentRows + 100)}, function(err) {
+                if (err) {
+                  return callback(err);
+                }
+
+                callback(null, currentRows);
+              });
+            });
+          },
+          function addColumnLabels(rows, callback) {
+            // Build a map of pretty display column labels and the columnId
+            var columnLabels = {};
+            _.each(columnIds, function(value, key) {
+              columnLabels[key] = _.startCase(key);
+            });
+
+            // If there are no rows, add the column labels before adding row 1.
+            if (rows === 0) {
+              var rowData = {};
+              var column = 1;
+
+              // Iterate the columns to get the column label and its position.
+              _.each(columnIds, function(value, key) {
+                rowData[value] = {
+                  name: [column],
+                  val: columnLabels[key]
+                };
+
+                column += 1;
+              });
+
+              // Add the columns as row 1, and continue adding data to row 2.
+              spreadsheet.add({1: rowData});
+              rows += 1;
+            }
+
+            callback(null, rows);
+          },
+          function addNewRow(rows, callback) {
+            var rowId = rows + 1;
+
+            // Build our new row of the spreadsheet, by iterating each column label.
+            var rowData = {};
+            _.each(columnIds, function(value, key) {
+              rowData[value] = {
+                name: key,
+                val: _.get(requestData, key)
+              };
+            });
+
+            // Finally, add all of the new row data to the spreadsheet.
+            var update = {};
+            update[rowId] = rowData;
+            spreadsheet.add(update);
+            spreadsheet.send(function(err) {
+              if (err) {
+                return callback(err);
+              }
+
+              if (!res.resource) {
+                return callback('No resource given in the response.');
+              }
+
+              // Update the formio submission with an externalId ref to the sheet.
+              formio.resources.submission.model.update(
+                {_id: res.resource.item._id},
+                {
+                  $push: {
+                    externalIds: {
+                      type: actionName,
+                      id: rowId
+                    }
+                  }
+                },
+                callback
+              );
+            });
+          }
+        ], function(err) {
+          if (err) {
+            debug(err);
+          }
+
+          // Done with sheet integration.
+          return;
+        });
+      };
+
+      /**
+       * Util function to update a row in the given spreadsheet.
+       *
+       * @param {Object} spreadsheet
+       *   A loaded Google Spreadsheet.
+       */
+      var updateRow = function(spreadsheet) {
+        // Only proceed with updating a row, if applicable to this request.
+        if (!_.has(res, 'resource.item') || !_.has(res, 'resource.item.externalIds')) {
+          return;
+        }
+
+        // The row number to update.
+        var rowId = _.find(res.resource.item.externalIds, function(item) {
+          return item.type === actionName;
+        });
+        rowId = _.get(rowId, 'id');
+        if (!rowId) {
+          return;
+        }
+
+        // Build our new row of the spreadsheet, by iterating each column label.
+        var rowData = {};
+        var submission = _.get(res, 'resource.item.data');
+
+        // Iterate the columns to get the column label and its position.
+        _.each(columnIds, function(value, key) {
+          rowData[value] = {
+            name: key,
+            val: _.get(submission, key)
+          };
+        });
+
+        // Finally, add all of the data to the row and commit the changes.
+        var update = {};
+        update[rowId] = rowData;
+        spreadsheet.add(update);
+        spreadsheet.send(function(err) {
+          if (err) {
+            debug(err);
+          }
+
+          return;
+        });
+      };
+
+      /**
+       * Util function to delete a row from the given spreadsheet.
+       *
+       * @param {Object} spreadsheet
+       *   A loaded Google Spreadsheet.
+       */
+      var deleteRow = function(spreadsheet) {
+        // Only proceed with deleting a row, if applicable to this request.
+        var deleted = _.get(req, 'formioCache.submissions.' + _.get(req, 'subId'));
+        if (!deleted) {
+          return;
+        }
+
+        // The row number to delete.
+        var rowId = _.find(deleted.externalIds, function(item) {
+          return item.type === actionName;
+        });
+        rowId = _.get(rowId, 'id');
+        if (!rowId) {
+          return;
+        }
+
+        // Build our blank row of data, by iterating each column label.
+        var rowData = [];
+
+        // Get the number of fields from the action settings; subtract 2 for the sheetId and worksheet name.
+        var fields = ((Object.keys(actionSettings)).length - 2) || 0;
+        for (var a = 0; a < fields; a++) {
+          rowData.push('');
+        }
+
+        // Finally, update our determined row with empty data.
+        var update = {};
+        update[rowId] = rowData;
+        spreadsheet.add(update);
+        spreadsheet.send(function(err) {
+          if (err) {
+            debug(err);
+          }
+
+          return;
+        });
+      };
 
       Spreadsheet.load({
         debug: true,
@@ -148,199 +358,13 @@ module.exports = function(router) {
 
         // Perform different sheet actions based on the request type.
         if (req.method === 'POST') {
-          async.waterfall([
-            function getAvailableRows(callback) {
-              spreadsheet.metadata(function(err, metadata) {
-                if (err) {
-                  return callback(err);
-                }
-
-                var rows = parseInt(_.get(metadata, 'rowCount') || 0);
-                callback(null, rows)
-              });
-            },
-            function getRowCount(rows, callback) {
-              spreadsheet.receive({
-                getValues: false
-              }, function(err, rowData, info) {
-                if (err) {
-                  return callback(err);
-                }
-
-                // Determine how many rows are filled out currently.
-                var currentRows = (info.nextRow - 1);
-                if (currentRows < rows) {
-                  return callback(null, currentRows);
-                }
-
-                // There are not enough rows left to fill out without deleting data, so add 100 more.
-                spreadsheet.metadata({rowCount: (currentRows + 100)}, function(err) {
-                  if (err) {
-                    return callback(err);
-                  }
-
-                  callback(null, currentRows);
-                });
-              });
-            },
-            function addColumnLabels(rows, callback) {
-              // Build a map of pretty display column labels and the columnId
-              var columnLabels = {};
-              _.each(columnIds, function(value, key) {
-                columnLabels[key] = _.startCase(key);
-              });
-
-              // If there are no rows, add the column labels before any data.
-              if (rows === 0) {
-                // Build row 1 of the spreadsheet, by iterating each column label.
-                var data = {};
-                var column = 1;
-
-                // Iterate the columns to get the column label and its position.
-                _.each(columnIds, function(value, key) {
-                  data[value] = {
-                    name: [column],
-                    val: columnLabels[key]
-                  };
-
-                  column += 1;
-                });
-
-                // Finally, add all of the row 1 data to the spreadsheet.
-                spreadsheet.add({1: data});
-
-                // Iterate the row count, and continue.
-                rows += 1;
-              }
-
-              callback(null, rows);
-            },
-            function addNewRow(rows, callback) {
-              var row = rows + 1;
-
-              // Build our new row of the spreadsheet, by iterating each column label.
-              var data = {};
-
-              // Iterate the columns to get the column label and its position.
-              _.each(columnIds, function(value, key) {
-                data[value] = {
-                  name: key,
-                  val: _.get(requestData, key)
-                };
-              });
-
-              // Finally, add all of the new row data to the spreadsheet.
-              var final = {};
-              final[row] = data;
-              spreadsheet.add(final);
-              spreadsheet.send(function(err) {
-                if (err) {
-                  return callback(err);
-                }
-
-                if (!res.resource) {
-                  return callback('No resource given in the response.');
-                }
-
-                // Update the formio submission with an externalId ref to the sheet.
-                formio.resources.submission.model.update(
-                  {_id: res.resource.item._id},
-                  {
-                    $push: {
-                      externalIds: {
-                        type: actionName,
-                        id: row
-                      }
-                    }
-                  },
-                  callback
-                );
-              });
-            }
-          ], function(err) {
-            if (err) {
-              debug(err);
-            }
-
-            // Done with sheet integration.
-            return;
-          });
+          addRow(spreadsheet);
         }
         else if (req.method === 'PUT') {
-          // Only proceed with updating a row, if applicable to this request.
-          if (!_.has(res, 'resource.item') || !_.has(res, 'resource.item.externalIds')) {
-            return;
-          }
-
-          // The row number to update.
-          var row = _.find(res.resource.item.externalIds, function(item) {
-            return item.type === actionName;
-          });
-          row = _.get(row, 'id');
-          if (!row) {
-            return;
-          }
-
-          // Build our new row of the spreadsheet, by iterating each column label.
-          var data = {};
-          var submission = _.get(res, 'resource.item.data');
-
-          // Iterate the columns to get the column label and its position.
-          _.each(columnIds, function(value, key) {
-            data[value] = {
-              name: key,
-              val: _.get(submission, key)
-            };
-          });
-
-          // Finally, add all of the data to the row and commit the changes.
-          var final = {};
-          final[row] = data;
-          spreadsheet.add(final);
-          spreadsheet.send(function(err) {
-            if (err) {
-              debug(err);
-            }
-
-            return;
-          });
+          updateRow(spreadsheet);
         }
         else if (req.method === 'DELETE') {
-          // Only proceed with deleting a row, if applicable to this request.
-          var deleted = _.get(req, 'formioCache.submissions.' + _.get(req, 'subId'));
-          if (!deleted) {
-            return;
-          }
-
-          // The row number to delete.
-          var row = _.find(deleted.externalIds, function(item) {
-            return item.type === actionName;
-          });
-          row = _.get(row, 'id');
-          if (!row) {
-            return;
-          }
-
-          // Build our blank row of data, by iterating each column label.
-          var data = [];
-
-          // Get the number of fields from the action settings; subtract 2 for the sheetId and worksheet name.
-          var fields = ((Object.keys(actionSettings)).length - 2) || 0;
-          for (var a = 0; a < fields; a++) {
-            data.push('');
-          }
-
-          // Finally, update our determined row with empty data.
-          var final = {};
-          final[row] = data;
-          spreadsheet.add(final);
-          spreadsheet.send(function(err) {
-            if (err) {
-              debug(err);
-            }
-
-            return;
-          });
+          deleteRow(spreadsheet);
         }
       });
     });
