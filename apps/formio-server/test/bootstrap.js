@@ -105,6 +105,9 @@ module.exports = function() {
   app.modules = require('../src/modules/modules')(app, config);
   var _settings = require('../src/hooks/settings')(app, app.formio);
 
+  // Ensure that we create projects within the helper.
+  app.hasProjects = true;
+
   // Start the api server.
   require(_bootstrap)(app, app.formio, _settings, '/project/:projectId', config.formio)
     .then(function(state) {
