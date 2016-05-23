@@ -1,7 +1,6 @@
 'use strict';
 
 var async = require('async');
-var util = require('../../util/util');
 var _ = require('lodash');
 
 /**
@@ -21,15 +20,18 @@ module.exports = function(db, config, tools, done) {
   var roleCollection = db.collection('roles');
   var projectCollection = db.collection('projects');
 
-  var getProjectName = function(next) {
-    projectCollection.findOne({deleted: {$eq: false}}, function(err, project) {
+  var getProjectName = function(id, next) {
+    projectCollection.findOne({deleted: {$eq: null}, _id: tools.util.idToBson(id)}, function(err, project) {
       if (err) {
         return next(err);
       }
+      if (!project) {
+        return next('No project found w/ _id: ' + tools.util.idToString(id));
+      }
 
-      return next(null, project.name || '');
-    })
-  }
+      return next(null, project.name);
+    });
+  };
 
   async.waterfall([
     // Get all projects in the system.
@@ -40,6 +42,7 @@ module.exports = function(db, config, tools, done) {
         }
 
         var projectIds = _.pluck(projects, '_id');
+        projectIds = _.map(projectIds, tools.util.idToString);
         callback(err, projectIds);
       });
     },
@@ -52,6 +55,7 @@ module.exports = function(db, config, tools, done) {
         }
 
         var roleIds = _.pluck(roles, 'project');
+        roleIds = _.map(roleIds, tools.util.idToString);
         callback(null, projectIds, roleIds);
       });
     },
@@ -62,13 +66,13 @@ module.exports = function(db, config, tools, done) {
       async.each(todo, function(project, next) {
 
         // get each projects name for the role machine name.
-        getProjectName(function(err, name) {
+        getProjectName(project, function(err, name) {
           if (err) {
             return next(err);
           }
 
           roleCollection.insertOne({
-            project: project,
+            project: tools.util.idToBson(project),
             title: 'Default',
             description: 'The Default Role.',
             deleted: null,
@@ -86,7 +90,7 @@ module.exports = function(db, config, tools, done) {
       }, function(err) {
         if (err) {
           return callback(err);
-        };
+        }
 
         callback(null, projectIds);
       });
@@ -100,6 +104,7 @@ module.exports = function(db, config, tools, done) {
         }
 
         var roleIds = _.pluck(roles, 'project');
+        roleIds = _.map(roleIds, tools.util.idToString);
         callback(null, projectIds, roleIds);
       });
     },
@@ -110,13 +115,13 @@ module.exports = function(db, config, tools, done) {
       async.each(todo, function(project, next) {
 
         // get each projects name for the role machine name.
-        getProjectName(function(err, name) {
+        getProjectName(project, function(err, name) {
           if (err) {
             return next(err);
           }
 
           roleCollection.insertOne({
-            project: project,
+            project: tools.util.idToBson(project),
             title: 'Administrator',
             description: 'The Administrator Role.',
             deleted: null,
@@ -134,7 +139,7 @@ module.exports = function(db, config, tools, done) {
       }, function(err) {
         if (err) {
           return callback(err);
-        };
+        }
 
         callback();
       });
