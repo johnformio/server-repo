@@ -9,7 +9,7 @@ module.exports = function(app, template, hook) {
   }
 
   describe('Emails', function() {
-    var emailTest = require('./helper')(app, template, hook);
+    var emailTest = new template.Helper(template.formio.owner);
     var user1Token = '';
     var user2Token = '';
     it('Bootstrap project and forms', function(done) {

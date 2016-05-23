@@ -38,7 +38,28 @@ module.exports = function(app, template, hook) {
         });
     });
 
-    it('Should not allow $project in aggregation.', function(done) {
+    it('Should not allow $project with anything other than integers in aggregation.', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/report')
+        .set('x-jwt-token', template.users.admin.token)
+        .set('x-query', JSON.stringify([{
+          '$project': {
+            "_id": 0,
+            form: 1,
+            owner: 'test'
+          }
+        }]))
+        .expect(400)
+        .end(function (err, res) {
+          if (err) {
+            return done(err);
+          }
+          assert(res.text, 'Disallowed stage used in aggregation.');
+          done();
+        });
+    });
+
+    it('Should allow $project with only integers in aggregation.', function(done) {
       request(app)
         .get('/project/' + template.project._id + '/report')
         .set('x-jwt-token', template.users.admin.token)
@@ -49,12 +70,11 @@ module.exports = function(app, template, hook) {
             owner: 1
           }
         }]))
-        .expect(400)
+        .expect(200)
         .end(function (err, res) {
           if (err) {
             return done(err);
           }
-          assert(res.text, 'Disallowed stage used in aggregation.');
           done();
         });
     });
