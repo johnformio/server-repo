@@ -40,7 +40,18 @@ module.exports = function(formio) {
     var hasDisallowedStage = false;
     filter.forEach(function(stage) {
       for (var key in stage) {
-        if (allowedStages.indexOf(key) === -1) {
+        // Only allow boolean values for $project
+        if (key === '$project') {
+          for (var param in stage[key]) {
+            var paramType = typeof stage[key][param];
+            if (['number', 'boolean'].indexOf(paramType) === -1) {
+              hasDisallowedStage = true;
+              break;
+            }
+          }
+        }
+        // Make sure that this is an allowed stage.
+        else if (allowedStages.indexOf(key) === -1) {
           hasDisallowedStage = true;
         }
       }
