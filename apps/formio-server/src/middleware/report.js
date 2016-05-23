@@ -38,7 +38,7 @@ module.exports = function(formio) {
       // Ensure there are no disallowed stages in the aggregation.
       // We may want to include additional stages but better to start with less.
       var allowedStages = ['$match', '$limit', '$sort', '$skip', '$group', '$unwind'];
-      // jshint maxdepth:10
+      /* eslint-disable */
       for (var i in filter) {
         var stage = filter[i];
         for (var key in stage) {
@@ -56,6 +56,7 @@ module.exports = function(formio) {
           }
         }
       }
+      /* eslint-enable */
       return false;
     };
 
