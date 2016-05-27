@@ -974,7 +974,13 @@ module.exports = function(app) {
           return string.charAt(0).toLowerCase() + string.slice(1);
         };
 
-        return lcFirst(_.map(machineName.split(':'), ucFirst).slice(1).join(''));
+        var parts = machineName.split(':');
+        if (!parts || parts.length <= 1) {
+          return machineName;
+        }
+
+        // Return a camel cased name without the project name.
+        return lcFirst(_.map(parts.slice(1), ucFirst).join(''));
       },
       exportComponent: function(_export, _map, options, component) {
         if (component.type === 'resource') {
