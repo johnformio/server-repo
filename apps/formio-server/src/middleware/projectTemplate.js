@@ -122,6 +122,9 @@ module.exports = function(formio) {
       var _debug = require('debug')('formio:middleware:projectTemplate#importTemplate');
       _debug(template);
 
+      // Set the project on the template.
+      template.project = project;
+
       // Import the template within formio.
       formio.import.template(template, {
         role: function(item, done) {
