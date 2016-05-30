@@ -51,13 +51,14 @@ module.exports = function(formio, done) {
       console.log(' > Importing formio project.');
       /* eslint-enable no-console */
       importer.project = importer.createInstall(formio.mongoose.models.project, parseProject);
-      var items = [''];
+      var items = {};
+      items[template.name] = '';
       importer.project(template, items, function(err) {
         if (err) {
           return done(err);
         }
 
-        project = items[0];
+        project = items[template.name];
         done();
       });
     },
@@ -158,7 +159,8 @@ module.exports = function(formio, done) {
           {
             type: 'read_all',
             roles: [
-              template.roles.administrator._id
+              template.roles.administrator._id,
+              template.roles.anonymous._id
             ]
           },
           {
