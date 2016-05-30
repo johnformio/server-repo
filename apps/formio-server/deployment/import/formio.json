@@ -1,5 +1,6 @@
 {
   "title": "Formio",
+  "version": "2.0.0",
   "description": "The admin project template for docker installs.",
   "name": "formio",
   "primary": true,
@@ -29,50 +30,51 @@
       "type": "form",
       "name": "userLogin",
       "path": "user/login",
+      "display": "form",
+      "tags": [],
       "components": [
         {
-          "input": true,
-          "tableView": true,
-          "inputType": "email",
-          "label": "Email",
-          "lockKey": true,
-          "key": "user.email",
-          "placeholder": "Enter your email address",
-          "prefix": "",
-          "suffix": "",
-          "defaultValue": "",
-          "protected": false,
+          "validate": {
+            "required": true
+          },
+          "type": "email",
+          "persistent": true,
           "unique": false,
-          "persistent": true,
-          "type": "email"
+          "protected": false,
+          "placeholder": "Enter your email address",
+          "key": "email",
+          "label": "Email",
+          "inputType": "email",
+          "tableView": true,
+          "input": true
         },
         {
-          "input": true,
-          "tableView": false,
-          "inputType": "password",
-          "label": "Password",
-          "lockKey": true,
-          "key": "user.password",
-          "placeholder": "Enter your password.",
-          "prefix": "",
-          "suffix": "",
+          "validate": {
+            "required": true
+          },
+          "type": "password",
+          "persistent": true,
           "protected": true,
-          "persistent": true,
-          "type": "password"
+          "placeholder": "Enter your password",
+          "key": "password",
+          "label": "Password",
+          "inputType": "password",
+          "tableView": false,
+          "input": true
         },
         {
-          "input": true,
-          "label": "Submit",
-          "tableView": false,
-          "key": "submit",
-          "size": "md",
-          "leftIcon": "",
-          "rightIcon": "",
-          "block": false,
-          "action": "submit",
-          "disableOnInvalid": true,
+          "type": "button",
           "theme": "primary",
-          "type": "button"
+          "disableOnInvalid": true,
+          "action": "submit",
+          "block": false,
+          "rightIcon": "",
+          "leftIcon": "",
+          "size": "md",
+          "key": "submit",
+          "tableView": false,
+          "label": "Submit",
+          "input": true
         }
       ],
       "access": [
@@ -83,25 +85,31 @@
           ]
         }
       ],
-      "submissionAccess": [
-        {
-          "type": "create_own",
-          "roles": [
-            "anonymous"
-          ]
-        }
-      ]
+      "submissionAccess": []
     }
   },
   "actions": {
-    "action0": {
+    "userSave": {
+      "title": "Save Submission",
+      "name": "save",
+      "form": "user",
+      "priority": 10,
+      "method": [
+        "create",
+        "update"
+      ],
+      "handler": [
+        "before"
+      ]
+    },
+    "userRole": {
       "title": "Role Assignment",
       "name": "role",
       "form": "user",
       "settings": {
-        "association": "new",
+        "role": "administrator",
         "type": "add",
-        "role": "administrator"
+        "association": "existing"
       },
       "priority": 1,
       "method": [
@@ -111,16 +119,18 @@
         "after"
       ]
     },
-    "action1": {
-      "title": "Authentication",
-      "name": "auth",
+    "userLoginLogin": {
+      "title": "Login",
+      "name": "login",
       "form": "userLogin",
       "settings": {
-        "association": "existing",
-        "password": "user.password",
-        "username": "user.email"
+        "password": "password",
+        "username": "email",
+        "resources": [
+          "user"
+        ]
       },
-      "priority": 0,
+      "priority": 2,
       "method": [
         "create"
       ],
@@ -135,57 +145,65 @@
       "type": "resource",
       "name": "user",
       "path": "user",
+      "display": "form",
+      "tags": [],
       "components": [
         {
-          "input": true,
-          "tableView": true,
-          "inputType": "email",
-          "label": "Email",
-          "key": "email",
-          "placeholder": "Enter your email address",
-          "prefix": "",
-          "suffix": "",
-          "defaultValue": "",
-          "protected": false,
+          "validate": {
+            "required": true
+          },
+          "type": "email",
+          "persistent": true,
           "unique": false,
-          "persistent": true,
-          "type": "email"
-        },
-        {
-          "input": true,
-          "tableView": false,
-          "inputType": "password",
-          "label": "Password",
-          "key": "password",
-          "placeholder": "Enter your password.",
-          "prefix": "",
+          "protected": false,
+          "defaultValue": "",
           "suffix": "",
-          "protected": true,
-          "persistent": true,
-          "type": "password"
+          "prefix": "",
+          "placeholder": "Enter your email address",
+          "key": "email",
+          "label": "Email",
+          "inputType": "email",
+          "tableView": true,
+          "input": true
         },
         {
-          "input": true,
-          "label": "Submit",
+          "validate": {
+            "required": true
+          },
+          "type": "password",
+          "persistent": true,
+          "protected": true,
+          "suffix": "",
+          "prefix": "",
+          "placeholder": "Enter your password",
+          "key": "password",
+          "label": "Password",
+          "inputType": "password",
           "tableView": false,
-          "key": "submit",
-          "size": "md",
-          "leftIcon": "",
-          "rightIcon": "",
-          "block": false,
-          "action": "submit",
-          "disableOnInvalid": true,
+          "input": true
+        },
+        {
+          "type": "button",
           "theme": "primary",
-          "type": "button"
+          "disableOnInvalid": true,
+          "action": "submit",
+          "block": false,
+          "rightIcon": "",
+          "leftIcon": "",
+          "size": "md",
+          "key": "submit",
+          "tableView": false,
+          "label": "Submit",
+          "input": true
         }
       ],
       "access": [
         {
           "type": "read_all",
           "roles": [
-            "anonymous",
+            "administrator",
             "authenticated",
-            "administrator"
+            "anonymous"
           ]
         }
       ],
@@ -228,6 +246,10 @@
         },
         {
           "type": "delete_own",
+          "roles": []
+        },
+        {
+          "type": "self",
           "roles": []
         }
       ]
