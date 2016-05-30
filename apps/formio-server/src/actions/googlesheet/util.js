@@ -1,5 +1,8 @@
 /*jslint node: true */
 'use strict';
+
+var _ = require('lodash');
+
 module.exports = {
   /**
    * Verifying setting form data and restricting action form loading
@@ -10,22 +13,20 @@ module.exports = {
       if (err) {
         return next(err);
       }
-      var clientId = settings.google.clientId;
-      var clientSecret = settings.google.cskey;
-      var refreshToken = settings.google.refreshtoken;
 
-      if (!settings.google) {
-        return next('Googlesheet not configured.');
+      if (!_.has(settings, 'google')) {
+        return next('The Google Drive Data Connection must be configured to use the Google Sheets Action.');
       }
-      if (!clientId) {
-        return next('Client ID is not properly configured. Please re-verify configuration parameters in settngs.');
+      if (!_.has(settings, 'google.clientId')) {
+        return next('The Google Drive Client Id is required to use the Google Sheets Action.');
       }
-      if (!clientSecret) {
-        return next('Client Secret Key is not properly configured.');
+      if (!_.has(settings, 'google.cskey')) {
+        return next('The Google Drive Client Secret Key is required to use the Google Sheets Action.');
       }
-      if (!refreshToken) {
-        return next('Refreshtoken is not properly configured. Please re-verify configuration parameters in settngs.');
+      if (!_.has(settings, 'google.refreshtoken')) {
+        return next('The Google Drive Refresh Token is required to use the Google Sheets Action.');
       }
+
       next();
     });
   }

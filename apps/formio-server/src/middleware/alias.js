@@ -71,7 +71,7 @@ module.exports = function(formio) {
     }
 
     // Quick confirmation that we have an projectName.
-    if (!projectName || projectName === 'api') {
+    if (!projectName || projectName === 'api' || Number.isInteger(parseInt(projectName, 10))) {
       return skip(req, res, next);
     }
 

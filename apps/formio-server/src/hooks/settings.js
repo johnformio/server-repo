@@ -1,13 +1,10 @@
 'use strict';
 
 var _ = require('lodash');
-var nunjucks = require('nunjucks');
-nunjucks.configure([], {
-  watch: false
-});
 var debug = require('debug')('formio:settings');
 var o365Util = require('../actions/office365/util');
 var nodeUrl = require('url');
+var jwt = require('jsonwebtoken');
 var fs = require('fs');
 var path = require('path');
 var semver = require('semver');
@@ -88,16 +85,20 @@ module.exports = function(app) {
         }
       },
       email: function(transport, settings, projectSettings, req, res, params) {
+        var transporter = {};
         if ((transport === 'outlook') && projectSettings.office365.email) {
-          o365Util.request(formioServer, req, res, 'sendmail', 'Office365Mail', 'application', {
-            Message: {
-              Subject: nunjucks.renderString(settings.subject, params),
-              Body: o365Util.getBody(settings.message, params),
-              ToRecipients: o365Util.getRecipients(settings.emails, params),
-              From: o365Util.getRecipient(projectSettings.office365.email)
-            }
-          });
+          transporter.sendMail = function(mail) {
+            o365Util.request(formioServer, req, res, 'sendmail', 'Office365Mail', 'application', {
+              Message: {
+                Subject: mail.subject,
+                Body: o365Util.getBodyObject(mail.html),
+                ToRecipients: o365Util.getRecipientsObject(_.map(mail.to.split(','), _.trim)),
+                From: o365Util.getRecipient(projectSettings.office365.email)
+              }
+            });
+          };
         }
+        return transporter;
       }
     },
     alter: {
@@ -117,6 +118,83 @@ module.exports = function(app) {
 
         // Add additional models.
         return _.assign(models, require('../models/models')(formioServer));
+      },
+      email: function(mail, req, res, params, cb) {
+        // Search for tokens within an email and replace it with a SSO token.
+        // The token regular expression.
+        var tokenRegex = new RegExp(/\[\[\s*token\(\s*([^\)]+\s*)\)\s*\]\]/i);
+
+        // If the email is only going to one person, and they wish to have a token within the email, then
+        // we can generate a token for this user.
+        var matches = [];
+        if (mail.to.indexOf(',') === -1) {
+          matches = mail.html.match(tokenRegex);
+        }
+        if (matches && matches.length > 1) {
+          var parts = matches[1].split('=');
+          var field = parts[0];
+          var resources = parts[1];
+          var query = formioServer.formio.hook.alter('formQuery', {
+            name: {'$in': resources.split(',')},
+            deleted: {$eq: null}
+          }, req);
+
+          // Find the forms to search the record within.
+          formioServer.formio.resources.form.model.find(query).exec(function(err, result) {
+            if (err || !result) {
+              return cb(err);
+            }
+
+            var forms = [];
+            var formObjs = {};
+            result.forEach(function(form) {
+              formObjs[form._id.toString()] = form;
+              forms.push(form._id);
+            });
+
+            var query = {
+              form: {'$in': forms},
+              deleted: {$eq: null}
+            };
+
+            // Set the username field to the email address this is getting sent to.
+            query[field] = mail.to;
+
+            // Find the submission.
+            formioServer.formio.resources.submission.model
+              .findOne(query)
+              .select('_id, form')
+              .exec(function(err, submission) {
+                if (err || !submission) {
+                  return cb(null, mail);
+                }
+
+                // Create a new JWT token for the SSO.
+                var token = formioServer.formio.hook.alter('token', {
+                  user: {
+                    _id: submission._id.toString()
+                  },
+                  form: {
+                    _id: submission.form.toString()
+                  }
+                }, formObjs[submission.form.toString()]);
+
+                // Create a token that expires in 30 minutes.
+                token = jwt.sign(token, formioServer.formio.config.jwt.secret, {
+                  expiresInMinutes: 30
+                });
+
+                // Replace the string token with the one generated here.
+                mail.html = mail.html.replace(tokenRegex, token);
+
+                // TO-DO: Generate the token for this user.
+                return cb(null, mail);
+              });
+          }.bind(this));
+        }
+        else {
+          return cb(null, mail);
+        }
       },
       actions: function(actions) {
         actions.office365contact = require('../actions/office365/Office365Contact')(formioServer);
@@ -730,12 +808,9 @@ module.exports = function(app) {
         cache.projects = {};
         return cache;
       },
-      submissionRequest: function(actualPayload, requestedPayload) {
-        // Whitelist the requested payload data that is processed by formio
-        if (requestedPayload.oauth && (typeof requestedPayload.oauth === 'object')) {
-          actualPayload.oauth = requestedPayload.oauth;
-        }
-        return actualPayload;
+      submissionParams: function(params) {
+        params.push('oauth');
+        return params;
       },
       submissionRequestQuery: function(query, req) {
         query.projectId = req.projectId;
@@ -748,7 +823,7 @@ module.exports = function(app) {
       submissionRoutes: function(routes) {
         var filterExternalTokens = formioServer.formio.middleware.filterResourcejsResponse(['externalTokens']);
         var conditionalFilter = function(req, res, next) {
-          if (req.token && res.resource.item && res.resource.item._id) {
+          if (req.token && res.resource && res.resource.item && res.resource.item._id) {
             // Only allow tokens for the actual user.
             if (req.token.user._id !== res.resource.item._id.toString()) {
               return filterExternalTokens(req, res, next);
@@ -854,8 +929,7 @@ module.exports = function(app) {
         return routes;
       },
       roleSearch: function(search, model, value) {
-        search.project = model.project;
-        return search;
+        return this.formSearch(search, model, value);
       },
       roleSchema: function(schema) {
         schema.add({
@@ -878,13 +952,7 @@ module.exports = function(app) {
         });
       },
       roleMachineName: function(machineName, document, done) {
-        formioServer.formio.resources.project.model.findOne({_id: document.project}).exec(function(err, project) {
-          if (err) {
-            return done(err);
-          }
-
-          done(null, project.machineName + ':' + machineName);
-        });
+        this.formMachineName(machineName, document, done);
       },
       actionMachineName: function(machineName, document, done) {
         formioServer.formio.resources.form.model.findOne({_id: document.form}).exec(function(err, form) {
@@ -896,7 +964,40 @@ module.exports = function(app) {
         });
       },
       machineNameExport: function(machineName) {
-        return machineName.split(':').slice(-1)[0];
+        if (!machineName) {
+          return 'export';
+        }
+        var ucFirst = function(string) {
+          return string.charAt(0).toUpperCase() + string.slice(1);
+        };
+        var lcFirst = function(string) {
+          return string.charAt(0).toLowerCase() + string.slice(1);
+        };
+
+        var parts = machineName.split(':');
+        if (!parts || parts.length <= 1) {
+          return machineName;
+        }
+
+        // Return a camel cased name without the project name.
+        return lcFirst(_.map(parts.slice(1), ucFirst).join(''));
+      },
+      exportComponent: function(_export, _map, options, component) {
+        if (component.type === 'resource') {
+          component.project = 'project';
+        }
+      },
+      importComponent: function(template, components, component) {
+        if (!component) {
+          return false;
+        }
+        if (component.hasOwnProperty('project')) {
+          if (template.project._id) {
+            component.project = template.project._id.toString();
+            return true;
+          }
+        }
+        return false;
       },
 
       /**

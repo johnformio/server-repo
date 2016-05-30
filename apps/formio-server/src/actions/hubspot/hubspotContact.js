@@ -3,7 +3,6 @@
 var _ = require('lodash');
 var util = require('./util');
 var debug = require('debug')('formio:action:hubspot');
-var nunjucks = require('nunjucks');
 
 module.exports = function(router) {
   /**
@@ -243,7 +242,7 @@ module.exports = function(router) {
           case 'field':
             return req.body.data[value];
           case 'value':
-            return nunjucks.renderString(value, currentResource);
+            return router.formio.nunjucks.render(value, currentResource);
           case 'increment':
             value = parseInt(value) || 1;
             current = parseInt(current) || 0;

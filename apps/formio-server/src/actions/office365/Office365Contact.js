@@ -1,9 +1,10 @@
 'use strict';
 
 var _ = require('lodash');
-var util = require('./util');
 
 module.exports = function(router) {
+  var util = require('./util')(router);
+
   // The available fields.
   var office365Fields = {
     AssistantName: {

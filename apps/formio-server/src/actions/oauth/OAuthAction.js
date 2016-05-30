@@ -32,7 +32,7 @@ module.exports = function(router) {
       description: 'Provides OAuth authentication behavior to this form.',
       priority: 20,
       defaults: {
-        handler: ['after', 'before'],
+        handler: ['after'],
         method: ['form', 'create']
       }
     });
@@ -208,7 +208,8 @@ module.exports = function(router) {
         req.user = result.user;
         req.token = result.token.decoded;
         res.token = result.token.token;
-        req.skipResourceAction = true;
+        req.skipSave = true;
+        req.noValidate = true;
         req['x-jwt-token'] = result.token.token;
 
         // Update external tokens with new tokens
@@ -230,21 +231,18 @@ module.exports = function(router) {
             message: provider.title + ' account has not yet been linked.'
           };
         }
-        // Add some default resourceData so DefaultAction creates the resource
-        // even with empty submission data
-        req.resourceData = req.resourceData || {};
-        req.resourceData[resource.name] = {data: {}};
+
+        // Add a default submission object.
+        req.submission = req.submission || {data: {}};
 
         // Find and fill in all the autofill fields
         var regex = new RegExp('autofill-' + provider.name + '-(.+)');
         _.each(self.settings, function(value, key) {
           var match = key.match(regex);
           if (match && value && userInfo[match[1]]) {
-            req.body.data[value] = userInfo[match[1]];
+            req.submission.data[value] = userInfo[match[1]];
           }
         });
-
-        debug('resourceData:', req.resourceData);
 
         // Add info so the after handler knows to auth
         req.oauthDeferredAuth = {
@@ -254,17 +252,25 @@ module.exports = function(router) {
         };
         debug('oauthDeferredAuth: ', req.oauthDeferredAuth);
 
-        return Q.ninvoke(formio.cache, 'loadCurrentForm', req)
-        .then(function(currentForm) {
-          debug('Filling in dummy passwords');
-          var tmpPassword = 'temp_' + chance.string({length: 16});
-          util.eachComponent(currentForm.components, function(component) {
-            // Fill in password fields with dummy data to pass validation
-            if (component.type === 'password' && component.persistent !== false) {
-              req.body.data[component.key] = tmpPassword;
-              debug(component.key, 'is now', req.body.data[component.key]);
+        debug('Filling in dummy passwords');
+        var tmpPassword = 'temp_' + chance.string({length: 16});
+        var fillPasswords = function(_form) {
+          util.eachComponent(_form.components, function(component) {
+            if (
+              (component.type === 'password') &&
+              (component.persistent !== false) &&
+              (!req.submission.data[component.key])
+            ) {
+              req.submission.data[component.key] = tmpPassword;
+              debug(component.key, 'is now', req.submission.data[component.key]);
             }
           });
+        };
+
+        return Q.ninvoke(formio.cache, 'loadCurrentForm', req)
+        .then(function(currentForm) {
+          fillPasswords(currentForm);
+          fillPasswords(resource);
         });
       }
     });
@@ -348,6 +354,13 @@ module.exports = function(router) {
       });
     })
     .then(function(result) {
+      if (!result) {
+        throw {
+          status: 404,
+          message: 'The given user was not found.'
+        };
+      }
+
       req.user = result.user;
       req.token = result.token.decoded;
       res.token = result.token.token;
@@ -355,6 +368,116 @@ module.exports = function(router) {
       // Manually invoke formio.auth.currentUser to trigger resourcejs middleware.
       return Q.ninvoke(formio.auth, 'currentUser', req, res);
     });
+  };
+
+  /**
+   * Initialize the OAuth handler.
+   *
+   * @param req
+   * @param res
+   * @param next
+   */
+  OAuthAction.prototype.initialize = function(method, req, res, next) {
+    var self = this;
+    var provider = formio.oauth.providers[this.settings.provider];
+    if (!req.body.oauth || !req.body.oauth[provider.name]) {
+      return next();
+    }
+
+    // There is an oauth provided so we can skip other authentications
+    req.skipAuth = true;
+
+    // Get the response from OAuth.
+    var oauthResponse = req.body.oauth[provider.name];
+
+    if (!oauthResponse.code || !oauthResponse.state || !oauthResponse.redirectURI) {
+      return next('No authorization code provided.');
+    }
+
+    // Do not execute the form CRUD methods.
+    req.skipResource = true;
+
+    var tokensPromise = provider.getTokens(req, oauthResponse.code, oauthResponse.state, oauthResponse.redirectURI);
+    if (self.settings.association === 'new' || self.settings.association === 'existing') {
+      return tokensPromise.then(function(tokens) {
+          return self.authenticate(req, res, provider, tokens);
+        })
+        .then(function() {
+          next();
+        }).catch(this.onError(req, res, next));
+    }
+    else if (self.settings.association === 'link') {
+      var userId, currentUser, newTokens;
+      req.skipSave = true;
+      return tokensPromise.then(function(tokens) {
+          newTokens = tokens;
+          return Q.all([
+            provider.getUser(tokens),
+            Q.ninvoke(formio.auth, 'currentUser', req, res)
+          ]);
+        })
+        .then(function(results) {
+          userId = provider.getUserId(results[0]);
+          currentUser = res.resource.item;
+          debug('userId:', userId);
+          debug('currentUser:', currentUser);
+
+          if (!currentUser) {
+            throw {
+              status: 401,
+              message: 'Must be logged in to link ' + provider.title + ' account.'
+            };
+          }
+
+          // Check if this account has already been linked
+          return formio.resources.submission.model.findOne(
+            {
+              form: currentUser.form,
+              externalIds: {
+                $elemMatch: {
+                  type: provider.name,
+                  id: userId
+                }
+              },
+              deleted: {$eq: null}
+            }
+          );
+        }).then(function(linkedSubmission) {
+          if (linkedSubmission) {
+            throw {
+              status: 400,
+              message: 'This ' + provider.title + ' account has already been linked.'
+            };
+          }
+          // Need to get the raw user data so we can see the old externalTokens
+          return formio.resources.submission.model.findOne({
+            _id: currentUser._id
+          });
+        }).then(function(user) {
+          return formio.resources.submission.model.update({
+            _id: user._id
+          }, {
+            $push: {
+              // Add the external ids
+              externalIds: {
+                type: provider.name,
+                id: userId
+              }
+            },
+            $set: {
+              // Update external tokens with new tokens
+              externalTokens: _(newTokens).concat(user.externalTokens || []).uniq('type').value()
+            }
+          });
+        })
+        .then(function() {
+          // Update current user response
+          return Q.ninvoke(formio.auth, 'currentUser', req, res);
+        })
+        .then(function() {
+          next();
+        }).catch(this.onError(req, res, next));
+    }
   };
 
   /**
@@ -440,103 +563,6 @@ module.exports = function(router) {
         next();
       })
       .catch(next);
-    }
-    else if (
-      handler === 'before' &&
-      method === 'create' &&
-      req.body.oauth &&
-      req.body.oauth[provider.name]
-    ) {
-      req.skipAuth = true;
-      var oauthResponse = req.body.oauth[provider.name];
-
-      if (!oauthResponse.code || !oauthResponse.state || !oauthResponse.redirectURI) {
-        return next('No authorization code provided.');
-      }
-
-      // Do not execute the form CRUD methods.
-      req.skipResource = true;
-
-      var tokensPromise = provider.getTokens(req, oauthResponse.code, oauthResponse.state, oauthResponse.redirectURI);
-      if (self.settings.association === 'new' || self.settings.association === 'existing') {
-        return tokensPromise.then(function(tokens) {
-          return self.authenticate(req, res, provider, tokens);
-        })
-        .then(function() {
-          next();
-        }).catch(this.onError(req, res, next));
-      }
-      else if (self.settings.association === 'link') {
-        var userId, currentUser, newTokens;
-        return tokensPromise.then(function(tokens) {
-          newTokens = tokens;
-          return Q.all([
-            provider.getUser(tokens),
-            Q.ninvoke(formio.auth, 'currentUser', req, res)
-          ]);
-        })
-        .then(function(results) {
-          userId = provider.getUserId(results[0]);
-          currentUser = res.resource.item;
-          debug('userId:', userId);
-          debug('currentUser:', currentUser);
-
-          if (!currentUser) {
-            throw {
-              status: 401,
-              message: 'Must be logged in to link ' + provider.title + ' account.'
-            };
-          }
-
-          // Check if this account has already been linked
-          return formio.resources.submission.model.findOne(
-            {
-              form: currentUser.form,
-              externalIds: {
-                $elemMatch: {
-                  type: provider.name,
-                  id: userId
-                }
-              },
-              deleted: {$eq: null}
-            }
-          );
-        }).then(function(linkedSubmission) {
-          if (linkedSubmission) {
-            throw {
-              status: 400,
-              message: 'This ' + provider.title + ' account has already been linked.'
-            };
-          }
-          // Need to get the raw user data so we can see the old externalTokens
-          return formio.resources.submission.model.findOne({
-            _id: currentUser._id
-          });
-        }).then(function(user) {
-          return formio.resources.submission.model.update({
-            _id: user._id
-          }, {
-            $push: {
-              // Add the external ids
-              externalIds: {
-                type: provider.name,
-                id: userId
-              }
-            },
-            $set: {
-              // Update external tokens with new tokens
-              externalTokens: _(newTokens).concat(user.externalTokens || []).uniq('type').value()
-            }
-          });
-        })
-        .then(function() {
-          // Update current user response
-          return Q.ninvoke(formio.auth, 'currentUser', req, res);
-        })
-        .then(function() {
-          next();
-        }).catch(this.onError(req, res, next));
-      }
     }
     else if (
       handler === 'after' &&
