@@ -159,7 +159,8 @@ module.exports = function(formio, done) {
           {
             type: 'read_all',
             roles: [
-              template.roles.administrator._id
+              template.roles.administrator._id,
+              template.roles.anonymous._id
             ]
           },
           {
