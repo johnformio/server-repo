@@ -77,15 +77,15 @@
           "input": true
         }
       ],
-      "access": [
+      "access": [],
+      "submissionAccess": [
         {
-          "type": "read_all",
+          "type": "create_own",
           "roles": [
             "anonymous"
           ]
         }
-      ],
-      "submissionAccess": []
+      ]
     }
   },
   "actions": {
@@ -209,7 +209,7 @@
       ],
       "submissionAccess": [
         {
-          "type": "create_all",
+          "type": "create_own",
           "roles": [
             "administrator"
           ]
@@ -238,15 +238,21 @@
         },
         {
           "type": "read_own",
-          "roles": []
+          "roles": [
+            "authenticated"
+          ]
         },
         {
           "type": "update_own",
-          "roles": []
+          "roles": [
+            "authenticated"
+          ]
         },
         {
           "type": "delete_own",
-          "roles": []
+          "roles": [
+            "authenticated"
+          ]
         },
         {
           "type": "self",
