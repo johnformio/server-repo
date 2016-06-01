@@ -71,6 +71,9 @@ module.exports = function(app) {
           case 'current':
             app.get('/current', formio.auth.currentUser);
             return false;
+          case 'access':
+            app.get('/access', formio.middleware.accessHandler);
+            return false;
           case 'perms':
             app.use(formio.middleware.permissionHandler);
             return true;
