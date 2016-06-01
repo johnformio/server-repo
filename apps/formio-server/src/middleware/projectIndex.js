@@ -1,5 +1,7 @@
 'use strict';
 
+var _ = require('lodash');
+
 module.exports = function(formio) {
   return function(req, res, next) {
     if (!Boolean(req.projectId)) {
