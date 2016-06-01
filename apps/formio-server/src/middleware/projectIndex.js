@@ -1,8 +1,5 @@
 'use strict';
 
-var _ = require('lodash');
-var debug = require('debug')('formio:middleware:projectIndex');
-
 module.exports = function(formio) {
   return function(req, res, next) {
     if (!Boolean(req.projectId)) {
@@ -24,5 +21,5 @@ module.exports = function(formio) {
     else {
       return next();
     }
-  }
-}
+  };
+};

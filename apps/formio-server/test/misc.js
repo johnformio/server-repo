@@ -33,7 +33,7 @@ module.exports = function(app, template, hook) {
       request(app)
         .get('/project//')
         .set('x-jwt-token', template.formio.owner.token)
-        .expect(404)
+        .expect(401)
         .end(function(err, res) {
           if(err) {
             return done(err);
