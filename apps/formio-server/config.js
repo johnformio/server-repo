@@ -10,9 +10,11 @@ var project = process.env.PROJECT || 'formio';
 var plan = process.env.PROJECT_PLAN || 'commercial';
 
 config.reservedSubdomains = ['test', 'www', 'api', 'help', 'support', 'portal', 'app', 'apps'];
+/* eslint-disable max-statements */
 config.formio.reservedForms = [
   'submission', 'report', 'exists', 'export', 'role', 'current', 'logout', 'import', 'form', 'storage\/s3', 'upgrade', 'access'
 ];
+/* eslint-enable max-statements */
 
 // Set the App settings.
 var domain = process.env.DOMAIN || 'form.io';
