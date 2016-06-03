@@ -71,6 +71,9 @@ module.exports = function(app) {
           case 'current':
             app.get('/current', formio.auth.currentUser);
             return false;
+          case 'access':
+            app.get('/access', formio.middleware.accessHandler);
+            return false;
           case 'perms':
             app.use(formio.middleware.permissionHandler);
             return true;
@@ -181,7 +184,7 @@ module.exports = function(app) {
 
                 // Create a token that expires in 30 minutes.
                 token = jwt.sign(token, formioServer.formio.config.jwt.secret, {
-                  expiresInMinutes: 30
+                  expiresIn: 30 * 60
                 });
 
                 // Replace the string token with the one generated here.
@@ -967,7 +970,37 @@ module.exports = function(app) {
         if (!machineName) {
           return 'export';
         }
-        return machineName.split(':').slice(-1)[0];
+        var ucFirst = function(string) {
+          return string.charAt(0).toUpperCase() + string.slice(1);
+        };
+        var lcFirst = function(string) {
+          return string.charAt(0).toLowerCase() + string.slice(1);
+        };
+
+        var parts = machineName.split(':');
+        if (!parts || parts.length <= 1) {
+          return machineName;
+        }
+
+        // Return a camel cased name without the project name.
+        return lcFirst(_.map(parts.slice(1), ucFirst).join(''));
+      },
+      exportComponent: function(_export, _map, options, component) {
+        if (component.type === 'resource') {
+          component.project = 'project';
+        }
+      },
+      importComponent: function(template, components, component) {
+        if (!component) {
+          return false;
+        }
+        if (component.hasOwnProperty('project')) {
+          if (template.project._id) {
+            component.project = template.project._id.toString();
+            return true;
+          }
+        }
+        return false;
       },
 
       /**
