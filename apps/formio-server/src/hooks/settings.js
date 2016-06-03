@@ -1069,14 +1069,17 @@ module.exports = function(app) {
         var update = null;
 
         // Attempt to resolve the private update.
+        var _path = path.join(__dirname, '../db/updates/', name);
+        debug('load: ' + _path);
         try {
-          update = require(path.join(__dirname, '../db/updates/', name));
-          return update;
+          update = require(_path);
         }
         catch (e) {
           _debug(e);
-          return null;
+          update = null;
         }
+
+        return update;
       }
     }
   };
