@@ -872,7 +872,7 @@ describe('Bootstrap', function() {
             process.env.ADMIN_EMAIL = 'test@example.com';
             process.env.ADMIN_PASS = 'password';
             // Clear the database, reset the schema and perform a fresh install.
-            console.log(app.formio.db);
+            console.log(app.formio);
             app.formio.db.dropDatabase();
             console.log('install');
             require('../install')(app.formio, done);
