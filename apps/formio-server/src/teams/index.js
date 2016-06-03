@@ -103,7 +103,7 @@ module.exports = function(app, formioServer) {
       debug.loadTeams('formio project: ' + formio._id);
       formioServer.formio.resources.form.model.findOne({name: 'team', project: formio._id})
       .exec(function(err, teamResource) {
-        if (err) {
+        if (err || !teamResource) {
           debug.loadTeams(err);
           return next(null);
         }
