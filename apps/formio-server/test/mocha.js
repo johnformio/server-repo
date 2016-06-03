@@ -865,12 +865,14 @@ describe('Bootstrap', function() {
 
     describe('Install Tests', function() {
       before(function(done) {
-        // Ensure the admin email and password are set for install process.
-        process.env.ADMIN_EMAIL = 'test@example.com';
-        process.env.ADMIN_PASS = 'password';
-        // Clear the database, reset the schema and perform a fresh install.
-        app.formio.db.dropDatabase();
-        require('../install')(app.formio, done);
+        return ready.then(function() {
+          // Ensure the admin email and password are set for install process.
+          process.env.ADMIN_EMAIL = 'test@example.com';
+          process.env.ADMIN_PASS = 'password';
+          // Clear the database, reset the schema and perform a fresh install.
+          app.formio.db.dropDatabase();
+          require('../install')(app.formio, done);
+        });
       });
 
       require('./install')(app, template, hook);
