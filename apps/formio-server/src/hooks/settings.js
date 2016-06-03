@@ -184,7 +184,7 @@ module.exports = function(app) {
 
                 // Create a token that expires in 30 minutes.
                 token = jwt.sign(token, formioServer.formio.config.jwt.secret, {
-                  expiresInMinutes: 30
+                  expiresIn: 30 * 60
                 });
 
                 // Replace the string token with the one generated here.
