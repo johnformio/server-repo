@@ -1,12 +1,14 @@
 /* eslint-env mocha */
 'use strict';
 
+// THIS FILE IS NOT BEING USED AS WE COULDN'T GET IT TO REQIURE CORRECTLY IN mocha.js //
+
 var request = require('supertest');
 var assert = require('assert');
 var _ = require('lodash');
 var chance = new (require('chance'))();
 
-module.exports = function(app, template, hook) {
+module.exports = function(app, originaltemplate, hook) {
   var template = {};
   var project = null;
   var forms = {};
