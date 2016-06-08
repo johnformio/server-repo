@@ -23,7 +23,7 @@
     "dotenv": "1.2.0",
     "edit-google-spreadsheet": "^0.2.21",
     "express": "^4.13.3",
-    "formio": "^1.8.12",
+    "formio": "https://github.com/formio/formio.git#f1d1c4dd535c3cc2836015daa69ec3f04e35d700",
     "formio-utils": "^0.1.5",
     "is-url": "^1.2.1",
     "jslogger": "^1.0.3",
