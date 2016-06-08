@@ -7,5 +7,5 @@ deployment/aws-eb/versions
 test/screenshots/*.png
 *~
 npm-debug.log
-.covreporter
+covreporter
 
