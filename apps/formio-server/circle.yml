@@ -1,6 +1,6 @@
 machine:
   node:
-    version: 4.2.3
+    version: 4.2.5
   python:
     version: 2.7.3
   services:
@@ -16,8 +16,7 @@ machine:
 
 dependencies:
   pre:
-    - if [[ ! -d mongodb-linux-x86_64-ubuntu1204-3.2.6 ]]; then wget http://downloads.mongodb.org/linux/mongodb-linux-x86_64-ubuntu1204-3.2.6.tgz && tar xvzf mongodb-linux-x86_64-ubuntu1204-3.2.6.tgz; fi
-    - sudo /etc/init.d/mongodb stop
+    - sudo /etc/init.d/mongodb stop && wget http://downloads.mongodb.org/linux/mongodb-linux-x86_64-ubuntu1204-3.2.6.tgz && tar xvzf mongodb-linux-x86_64-ubuntu1204-3.2.6.tgz
     - sudo cp mongodb-linux-x86_64-ubuntu1204-3.2.6/bin/* /usr/bin
     - sudo /etc/init.d/mongodb start
     - pip install awscli
@@ -38,6 +37,8 @@ dependencies:
 
 test:
   pre:
+    - node --version
+    - mongo --version
     - sudo bash -c "echo \"127.0.0.1 formio.localhost\" >> /etc/hosts"
     - sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
     - sudo pkill redis-server
