@@ -112,6 +112,8 @@ module.exports = function() {
   require(_bootstrap)(app, app.formio, _settings, '/project/:projectId', config.formio)
     .then(function(state) {
       app.use('/project/:projectId/report', require('../src/middleware/report')(app.formio));
+      app.get('/health', require('../src/middleware/health')(app.formio));
+      app.get('/', require('../src/middleware/projectIndex')(app.formio));
       app.listen(config.port);
       bootstrap.resolve({
         app: state.app,

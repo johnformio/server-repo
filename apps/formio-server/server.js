@@ -102,48 +102,10 @@ var settings = require('./src/hooks/settings')(app);
 app.formio.init(settings).then(function(formio) {
   var start = function() {
     // The formio app sanity endpoint.
-    app.get('/health', function(req, res, next) {
-      if (!formio.resources) {
-        return res.status(500).send('No Resources');
-      }
-      if (!formio.resources.project.model) {
-        return res.status(500).send('No Project model');
-      }
-
-      formio.resources.project.model.findOne({primary: true}, function(err, result) {
-        if (err) {
-          return res.status(500).send(err);
-        }
-        if (!result) {
-          return res.status(500).send('No Primary Project not found');
-        }
-
-        // Proceed with db schema sanity check middleware.
-        return next();
-      });
-    }, formio.update.sanityCheck);
+    app.get('/health', require('./src/middleware/health')(app.formio.formio), formio.update.sanityCheck);
 
     // Respond with default server information.
-    app.get('/', function(req, res, next) {
-      if (!req.projectId) {
-        app.formio.formio.resources.project.model.find({
-          primary: true
-        }, function(err, projects) {
-          if (err) {
-            return next(err);
-          }
-          return res.send(_.map(projects, function(currentProject) {
-            var filtered = _.pick(currentProject, ['_id', 'name', 'title', 'description']);
-            filtered.url = (req.secure || (req.get('X-Forwarded-Proto') === 'https') ? 'https://' : 'http://') + req.headers.host + '/project/' + filtered._id;
-            filtered.alias = (req.secure || (req.get('X-Forwarded-Proto') === 'https') ? 'https://' : 'http://') + filtered.name + '.' + req.headers.host;
-            return filtered;
-          }));
-        });
-      }
-      else {
-        return next();
-      }
-    });
+    app.get('/', require('./src/middleware/projectIndex')(app.formio.formio));
 
     // Mount formio at /project/:projectId.
     app.use('/project/:projectId', app.formio);
