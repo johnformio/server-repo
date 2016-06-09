@@ -34,7 +34,7 @@
     "moment": "^2.10.6",
     "node-hubspot": "git+https://github.com/formio/node-hubspot.git",
     "node-uuid": "^1.4.3",
-    "omega-supreme": "git://github.com/formio/omega-supreme.git#master",
+    "omega-supreme": "git://github.com/formio/omega-supreme.git",
     "on-finished": "^2.3.0",
     "primus": "^4.0.4",
     "q": "^1.4.1",
