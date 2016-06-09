@@ -591,7 +591,7 @@ module.exports = function(app) {
         var _url = nodeUrl.parse(req.url).pathname;
 
         // Check requests not pointed at specific projects.
-        if (!entity && !Boolean(req.projectId)) {
+        if (!entity && !req.projectId) {
           // No project but authenticated.
           if (req.token) {
             if (req.method === 'POST' && _url === '/project') {
