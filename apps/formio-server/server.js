@@ -125,7 +125,7 @@ app.formio.init(settings).then(function(formio) {
 
     // Respond with default server information.
     app.get('/', function(req, res, next) {
-      if (!Boolean(req.projectId)) {
+      if (!req.projectId) {
         app.formio.formio.resources.project.model.find({
           primary: true
         }, function(err, projects) {

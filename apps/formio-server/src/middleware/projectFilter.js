@@ -9,7 +9,7 @@ module.exports = function(req, res, next) {
   var projectId = req.projectId || req.params.projectId;
 
   // Bad request if projectSupport is enabled and no projectId is present.
-  if (!Boolean(projectId)) {
+  if (!projectId) {
     return res.sendStatus(404);
   }
 
