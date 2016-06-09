@@ -4,11 +4,9 @@
 			"eslint**"
 		]
 	},
-	"test": [
-		"test/**"
-	],
 	"ignore": [
-		"src/db/updates/**"
+		"src/db/updates/**",
+		"test/**"
 	],
 	"critics": {
 		"lint": {

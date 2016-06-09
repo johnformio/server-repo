@@ -5,12 +5,12 @@
   },
   "scripts": {
     "start": "PROTOCOL=http DOMAIN=localhost PORT=3000 node server.js",
-    "test": "env TEST_SUITE=1 PROTOCOL=http DOMAIN=localhost PORT=3000 MONGO_COLLECTION=formio-test PROJECT_PLAN=basic mocha -r jscoverage --covout=html -b -t 60000 test/mocha.js",
+    "test": "env TEST_SUITE=1 PROTOCOL=http DOMAIN=localhost PORT=3000 MONGO_COLLECTION=formio-test PROJECT_PLAN=basic mocha -b -t 60000 test/mocha.js",
     "docker": "env DOCKER=1 TEST_SUITE=1 PROTOCOL=http DOMAIN=localhost PORT=3000 mocha -b -t 30000 test/mocha.js",
-    "lint": "eslint src *.js"
+    "lint": "eslint *.js src/**/**.js"
   },
   "main": "./server.js",
-  "schema": "3.0.4-rc.1",
+  "schema": "3.0.4",
   "dependencies": {
     "JSONStream": "^1.1.1",
     "adal-node": "^0.1.15",
@@ -23,7 +23,7 @@
     "dotenv": "1.2.0",
     "edit-google-spreadsheet": "^0.2.21",
     "express": "^4.13.3",
-    "formio": "^1.8.13",
+    "formio": "^1.8.17",
     "formio-utils": "^0.1.5",
     "is-url": "^1.2.1",
     "jslogger": "^1.0.3",
@@ -34,9 +34,9 @@
     "moment": "^2.10.6",
     "node-hubspot": "git+https://github.com/formio/node-hubspot.git",
     "node-uuid": "^1.4.3",
-    "omega-supreme": "git://github.com/formio/omega-supreme.git#master",
+    "omega-supreme": "git://github.com/formio/omega-supreme.git",
     "on-finished": "^2.3.0",
-    "primus": "^4.0.4",
+    "primus": "5.0.x",
     "q": "^1.4.1",
     "redis": "^2.0.1",
     "request": "^2.61.0",
@@ -52,10 +52,9 @@
   },
   "devDependencies": {
     "chance": "^0.8.0",
-    "eslint": "^1.9.0",
-    "eslint-config-formio": "https://github.com/formio/eslint-config-formio.git#9fc99ef78e94585a27b960975937d1ca3465da94",
-    "jscoverage": "^0.6.0",
-    "mocha": "^2.3.2",
+    "eslint": "^2.11.1",
+    "eslint-config-formio": "^1.1.0",
+    "mocha": "^2.5.3",
     "sinon": "^1.17.2",
     "supertest": "^1.1.0"
   }

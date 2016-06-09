@@ -1,6 +1,6 @@
 machine:
   node:
-    version: 4.2.3
+    version: 4.4.5
   python:
     version: 2.7.3
   services:
@@ -16,9 +16,8 @@ machine:
 
 dependencies:
   pre:
-    - if [[ ! -d mongodb-linux-x86_64-ubuntu1204-3.0.5 ]]; then wget http://downloads.mongodb.org/linux/mongodb-linux-x86_64-ubuntu1204-3.0.5.tgz && tar xvzf mongodb-linux-x86_64-ubuntu1204-3.0.5.tgz; fi
-    - sudo /etc/init.d/mongodb stop
-    - sudo cp mongodb-linux-x86_64-ubuntu1204-3.0.5/bin/* /usr/bin
+    - sudo /etc/init.d/mongodb stop && wget http://downloads.mongodb.org/linux/mongodb-linux-x86_64-ubuntu1204-3.2.6.tgz && tar xvzf mongodb-linux-x86_64-ubuntu1204-3.2.6.tgz
+    - sudo cp mongodb-linux-x86_64-ubuntu1204-3.2.6/bin/* /usr/bin
     - sudo /etc/init.d/mongodb start
     - pip install awscli
     - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test && sudo apt-get update
@@ -27,7 +26,6 @@ dependencies:
     - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.6 10
     - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 20
     - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 20
-    - npm install -g mocha
   override:
     - echo $TAG_NAME
     - ./serverSetup.sh
@@ -38,6 +36,8 @@ dependencies:
 
 test:
   pre:
+    - node --version
+    - mongo --version
     - sudo bash -c "echo \"127.0.0.1 formio.localhost\" >> /etc/hosts"
     - sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
     - sudo pkill redis-server
@@ -45,7 +45,6 @@ test:
     - redis-server &> $CIRCLE_ARTIFACTS/redis.log:
           background: true
     - DEBUG=formio:*,formio:*:* npm test &> $CIRCLE_ARTIFACTS/formio-server.log
-    - mv ./covreporter/ $CIRCLE_ARTIFACTS/coverage
   post:
     - redis-server &> $CIRCLE_ARTIFACTS/docker-redis.log:
           background: true
