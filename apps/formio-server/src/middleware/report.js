@@ -118,6 +118,8 @@ module.exports = function(formio) {
       var pipeline = [{'$match': submissionQuery}].concat(filter);
       debug('final pipeline', pipeline);
 
+      res.setHeader('Content-Type', 'application/json');
+
       // Create the submission aggregate stream.
       submissions.aggregate(pipeline)
         .stream()
