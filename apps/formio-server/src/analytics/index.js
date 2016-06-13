@@ -15,6 +15,7 @@ var debug = {
 var url = require('url');
 var submission = /(\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}\/submission)/i;
 var _ = require('lodash');
+var BSON = new RegExp('^[0-9a-fA-F]{24}$');
 
 /**
  *
@@ -132,6 +133,10 @@ module.exports = function(config) {
     }
     if (!path) {
       debug.record('Skipping request, unknown path: ' + path);
+      return;
+    }
+    if (!_.isString(project) || !BSON.test(project)) {
+      debug.record('Skipping malformed project request: ' + project);
       return;
     }
 
