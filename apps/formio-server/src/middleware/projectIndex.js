@@ -4,7 +4,7 @@ var _ = require('lodash');
 
 module.exports = function(formio) {
   return function(req, res, next) {
-    if (!Boolean(req.projectId)) {
+    if (!req.projectId) {
       formio.resources.project.model.find({
         primary: true
       }, function(err, projects) {
