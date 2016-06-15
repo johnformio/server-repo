@@ -639,6 +639,10 @@ module.exports = function(app) {
           }
         }
 
+        else if (req.projectId && req.token && req.url === '/project/' + req.projectId + '/report') {
+          return true;
+        }
+
         else if (req.token && access.project && access.project.owner) {
           var url = req.url.split('/');
 

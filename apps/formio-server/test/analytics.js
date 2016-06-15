@@ -126,6 +126,52 @@ module.exports = function(app, template, hook) {
             });
           });
       });
+
+      it('A request to a undefined project endpoint should not be tracked as a non-submission request', function(done) {
+        request(app)
+          .get('/project/undefined')
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(400)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var curr = new Date();
+            var key = curr.getUTCFullYear() + ':' + curr.getUTCMonth() + ':' + curr.getUTCDate() +  ':undefined:ns';
+            redis.llen(key, function(err, calls) {
+              if (err) {
+                return done(err);
+              }
+
+              assert.equal(calls, 0);
+              done();
+            });
+          });
+      });
+
+      it('A request to a malformed project endpoint should not be tracked as a non-submission request', function(done) {
+        request(app)
+          .get('/project/submission')
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(400)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var curr = new Date();
+            var key = curr.getUTCFullYear() + ':' + curr.getUTCMonth() + ':' + curr.getUTCDate() +  ':submission:ns';
+            redis.llen(key, function(err, calls) {
+              if (err) {
+                return done(err);
+              }
+
+              assert.equal(calls, 0);
+              done();
+            });
+          });
+      });
     });
 
     describe('Yearly Analytics - /project/:projectId/analytics/year/:year', function() {
