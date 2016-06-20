@@ -180,19 +180,6 @@ module.exports = function(formio, done) {
         project.save();
         done();
       });
-    },
-    setSchema: function(done) {
-      formio.db.collection('schema', function(err, collection) {
-        if (err) {
-          return done(err);
-        }
-        collection.insertOne({key: 'formio', isLocked: false, version: formio.config.schema}, function(err) {
-          if (err) {
-            return done(err);
-          }
-          done();
-        });
-      });
     }
   };
 
@@ -201,8 +188,7 @@ module.exports = function(formio, done) {
     steps.importProject,
     steps.importItems,
     steps.createRootAccount,
-    steps.updateProject,
-    steps.setSchema
+    steps.updateProject
   ], function(err, result) {
     if (err) {
       /* eslint-disable no-console */
