@@ -10,18 +10,21 @@ var through = require('through');
 var traverse = require('traverse');
 var formioUtils = require('formio-utils');
 var _ = require('lodash');
-var debug = require('debug')('formio:middleware:report');
+var debug = {
+  report: require('debug')('formio:middleware:report'),
+  error: require('debug')('formio:error')
+};
 
 module.exports = function(formio) {
   var report = function(req, res, next, filter) {
     // A user is always required for this operation.
     if (!req.user || !req.user.roles || !req.user.roles.length) {
-      debug('Unauthorized');
+      debug.report('Unauthorized');
       return res.status(401).send('Unauthorized');
     }
 
     if (!req.body) {
-      debug('No pipeline');
+      debug.report('No pipeline');
       return res.status(400).send('Must include an aggregation pipeline');
     }
 
@@ -32,7 +35,7 @@ module.exports = function(formio) {
     if (!filter || !filter.length) {
       filter = [];
     }
-    debug('filter', filter);
+    debug.report('filter', filter);
 
     var hasDisallowedStage = function() {
       // Ensure there are no disallowed stages in the aggregation.
@@ -116,7 +119,7 @@ module.exports = function(formio) {
 
       // Start out the filter to only include those forms.
       var pipeline = [{'$match': submissionQuery}].concat(filter);
-      debug('final pipeline', pipeline);
+      debug.report('final pipeline', pipeline);
 
       res.setHeader('Content-Type', 'application/json');
 
@@ -143,7 +146,7 @@ module.exports = function(formio) {
 
   // Use post to crete aggregation criteria.
   router.post('/', function(req, res, next) {
-    debug('POST', req.body);
+    debug.report('POST', req.body);
     report(req, res, next, req.body);
   });
 
@@ -151,11 +154,12 @@ module.exports = function(formio) {
   router.get('/', function(req, res, next) {
     var pipeline = [];
     if (req.headers.hasOwnProperty('x-query')) {
-      debug('GET', req.headers['x-query']);
+      debug.report('GET', req.headers['x-query']);
       try {
         pipeline = JSON.parse(req.headers['x-query']);
       }
       catch (err) {
+        debug.error(err);
         return res.status(400).send('Invalid query');
       }
     }

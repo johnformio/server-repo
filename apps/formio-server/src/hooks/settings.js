@@ -1,7 +1,10 @@
 'use strict';
 
 var _ = require('lodash');
-var debug = require('debug')('formio:settings');
+var debug = {
+  settings: require('debug')('formio:settings'),
+  error: require('debug')('formio:error')
+};
 var o365Util = require('../actions/office365/util');
 var nodeUrl = require('url');
 var jwt = require('jsonwebtoken');
@@ -559,7 +562,7 @@ module.exports = function(app) {
         }
 
         var url = nodeUrl.parse(req.url).pathname.split('/');
-        debug(url);
+        debug.settings(url);
         if (url[5] === 'storage' && url[6] === 's3') {
           entity = {
             type: 'submission',
@@ -732,10 +735,9 @@ module.exports = function(app) {
         try {
           user = user.toObject();
         }
-        /* eslint-disable no-empty */
         catch (e) {
+          debug.error(e);
         }
-        /* eslint-enable no-empty */
 
         user = user || {};
         user.roles = user.roles || [];
@@ -746,7 +748,7 @@ module.exports = function(app) {
           .map(util.idToString)
           .uniq()
           .value();
-        debug(user.roles);
+        debug.settings(user.roles);
 
         formioServer.formio.teams.getTeams(user, true, true)
           .then(function(teams) {
@@ -1074,12 +1076,13 @@ module.exports = function(app) {
 
         // Attempt to resolve the private update.
         var _path = path.join(__dirname, '../db/updates/', name);
-        debug('load: ' + _path);
+        debug.settings('load: ' + _path);
         try {
           update = require(_path);
         }
         catch (e) {
           _debug(e);
+          debug.error(e);
           update = null;
         }
 

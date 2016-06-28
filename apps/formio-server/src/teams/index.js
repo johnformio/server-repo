@@ -3,6 +3,7 @@
 var _ = require('lodash');
 var Q = require('q');
 var debug = {
+  error: require('debug')('formio:error'),
   teamUsers: require('debug')('formio:teams:teamUsers'),
   teamAll: require('debug')('formio:teams:teamAll'),
   teamProjects: require('debug')('formio:teams:teamProjects'),
@@ -371,10 +372,9 @@ module.exports = function(app, formioServer) {
       try {
         team = team.toObject();
       }
-      /* eslint-disable no-empty */
       catch (e) {
+        debug.error(e);
       }
-      /* eslint-enable no-empty */
 
       team = team || {};
       team.data = team.data || {};
