@@ -736,7 +736,7 @@ module.exports = function(app) {
           user = user.toObject();
         }
         catch (e) {
-          debug.error(e);
+          //debug.error(e);
         }
 
         user = user || {};
