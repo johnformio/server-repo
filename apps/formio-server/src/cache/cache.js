@@ -1,7 +1,8 @@
 'use strict';
 
 var debug = {
-  loadProject: require('debug')('formio:cache:loadProject')
+  loadProject: require('debug')('formio:cache:loadProject'),
+  error: require('debug')('formio:error')
 };
 
 module.exports = function(formio) {
@@ -82,6 +83,7 @@ module.exports = function(formio) {
         id = (typeof id === 'string') ? formio.mongoose.Types.ObjectId(id) : id;
       }
       catch (e) {
+        debug.error(e);
         debug.loadProject(e);
         return cb('Invalid Project Id given.');
       }

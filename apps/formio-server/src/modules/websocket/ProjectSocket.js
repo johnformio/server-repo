@@ -8,6 +8,7 @@ var _ = require('lodash');
 /* eslint-disable new-cap */
 var chance = new require('chance')();
 /* eslint-disable new-cap */
+var debug = require('debug')('formio:error');
 
 module.exports = function(formio) {
   var cache = require('../../cache/cache')(formio);
@@ -43,6 +44,7 @@ module.exports = function(formio) {
       redisServer = Redis.createClient(redis);
     }
     catch (err) {
+      debug.error(err);
       redisServer = null;
     }
 

@@ -3,6 +3,7 @@
 var async = require('async');
 var fs = require('fs');
 var _ = require('lodash');
+var debug = require('debug')('formio:error');
 
 module.exports = function(formio, done) {
   var hook = require('formio/src/util/hook')(formio);
@@ -34,6 +35,7 @@ module.exports = function(formio, done) {
         });
       }
       catch (err) {
+        debug(err);
         return done(err);
       }
     },

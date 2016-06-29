@@ -6,7 +6,10 @@
  *  https://github.com/joegoldbeck/mongoose-encryption/issues/12
  */
 var crypto = require('crypto');
-var debug = require('debug')('formio:plugins:EncryptedProperty');
+var debug = {
+  plugin: require('debug')('formio:plugins:EncryptedProperty'),
+  error: require('debug')('formio:error')
+};
 
 /**
  * Mongoose encrypted property plugin. Encrypt a single field on the given schema.
@@ -77,10 +80,9 @@ module.exports = function(schema, options) {
     try {
       data = JSON.parse(decryptedJSON);
     }
-    /* eslint-disable no-empty */
     catch (e) {
+      debug.error(e);
     }
-    /* eslint-enable no-empty */
 
     return data;
   }
@@ -97,7 +99,7 @@ module.exports = function(schema, options) {
       // Decrypt the value
       if (this[encryptedName]) {
         var plaintext = decrypt(options.secret, this[encryptedName]);
-        debug('plaintext: ' + JSON.stringify(plaintext));
+        debug.plugin('plaintext: ' + JSON.stringify(plaintext));
         return plaintext;
       }
 
@@ -106,7 +108,7 @@ module.exports = function(schema, options) {
     .set(function(value) {
       // Encrypt and set the value
       var ciphertext = encrypt(options.secret, value);
-      debug('Encrypting: ' + JSON.stringify(value));
+      debug.plugin('Encrypting: ' + JSON.stringify(value));
       this[encryptedName] = ciphertext;
     });
 
@@ -118,10 +120,10 @@ module.exports = function(schema, options) {
 
       if (temp) {
         ret[options.plainName] = temp;
-        debug('JSON Transform: ' + JSON.stringify(ret[options.plainName]));
+        debug.plugin('JSON Transform: ' + JSON.stringify(ret[options.plainName]));
       }
 
-      debug(ret);
+      debug.plugin(ret);
       return ret;
     }
   });
@@ -134,10 +136,10 @@ module.exports = function(schema, options) {
 
       if (temp) {
         ret[options.plainName] = temp;
-        debug('Object Transform: ' + JSON.stringify(ret[options.plainName]));
+        debug.plugin('Object Transform: ' + JSON.stringify(ret[options.plainName]));
       }
 
-      debug(ret);
+      debug.plugin(ret);
       return ret;
     }
   });
