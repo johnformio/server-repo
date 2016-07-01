@@ -107,7 +107,7 @@ module.exports = function(router) {
                     components: [
                       {
                         type: 'select',
-                        key: 'settings[' + field.name + '_action]',
+                        key: field.name + '_action',
                         label: 'Action',
                         input: true,
                         placeholder: 'Select an action to change',
@@ -123,14 +123,14 @@ module.exports = function(router) {
                     components: [
                       {
                         type: 'textfield',
-                        key: 'settings[' + field.name + '_value]',
+                        key: field.name + '_value',
                         label: 'Value',
                         input: true,
                         multiple: false
                       },
                       {
                         type: 'select',
-                        key: 'settings[' + field.name + '_field]',
+                        key: field.name + '_field',
                         label: 'Field',
                         input: true,
                         placeholder: 'Select the field for ' + field.label,
