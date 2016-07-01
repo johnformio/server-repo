@@ -66,7 +66,7 @@ module.exports = function(router) {
               type: 'textfield',
               input: true,
               label: (field.label || field.key) + ' Column',
-              key: 'settings[' + fieldKey + ']',
+              key: fieldKey,
               placeholder: 'Enter a Column Key. Example: C',
               multiple: false
             });
@@ -77,7 +77,7 @@ module.exports = function(router) {
           {
             type: 'textfield',
             label: 'Sheet ID',
-            key: 'settings[sheetID]',
+            key: 'sheetID',
             placeholder: 'Enter the Sheet ID',
             input: true,
             validate: {
@@ -88,7 +88,7 @@ module.exports = function(router) {
           {
             type: 'textfield',
             label: 'Worksheet Name',
-            key: 'settings[worksheetName]',
+            key: 'worksheetName',
             placeholder: 'Enter the Worksheet Name. Example: Sheet1',
             input: true,
             validate: {
