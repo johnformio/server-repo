@@ -28,10 +28,6 @@ app.use(favicon(__dirname + '/favicon.ico'));
 // Add Middleware necessary for REST API's
 app.use(bodyParser.urlencoded({extended: true, limit: '16mb'}));
 app.use(bodyParser.json({limit: '16mb'}));
-app.use(function (error, req, res, next){
-  //Catch json error
-  next();
-});
 app.use(methodOverride('X-HTTP-Method-Override'));
 
 // Error handler for malformed JSON
