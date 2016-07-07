@@ -26,8 +26,8 @@ app.use(analytics.hook);
 app.use(favicon(__dirname + '/favicon.ico'));
 
 // Add Middleware necessary for REST API's
-app.use(bodyParser.urlencoded({extended: true}));
-app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true, limit: '16mb'}));
+app.use(bodyParser.json({limit: '16mb'}));
 app.use(methodOverride('X-HTTP-Method-Override'));
 
 // Error handler for malformed JSON
