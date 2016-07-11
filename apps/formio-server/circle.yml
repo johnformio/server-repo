@@ -44,13 +44,24 @@ test:
     - docker --version
     - sudo bash -c "echo \"127.0.0.1 formio.localhost\" >> /etc/hosts"
     - sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
-    - sudo pkill redis-server
   override:
+    # Test Formio locally
+    - sudo pkill redis-server
     - redis-server &> $CIRCLE_ARTIFACTS/redis.log:
           background: true
     - DEBUG=formio:*,formio:*:* npm test &> $CIRCLE_ARTIFACTS/formio-server.log
-  post:
-    - redis-server &> $CIRCLE_ARTIFACTS/docker-redis.log:
+    # Test Formio in a docker environment.
+    - docker run -d -e "MONGO1=$MONGO" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "DEBUG=formio:*,formio:*:*" -e "PROJECT_PLAN=basic" --name formio-server --net=host $IMAGE_PATH:$SHORT_SHA
+    - sleep 5
+    - docker logs formio-server
+    - wget --tries=10 --retry-connrefused --wait=6 -v http://api.localhost:3000/health
+    - npm run-script docker
+    - docker logs formio-server &> $CIRCLE_ARTIFACTS/docker-server.log
+    # Test Formio in a customer docker environment.
+    - docker stop formio-server
+    - docker rm formio-server
+    - sudo pkill redis-server
+    - redis-server &> $CIRCLE_ARTIFACTS/docker-customer-redis.log:
           background: true
     - sudo service mongodb stop
     - sudo pkill redis-server
@@ -61,7 +72,7 @@ test:
     - docker logs formio-server
     - wget --tries=10 --retry-connrefused --wait=6 -v http://api.localhost:3000/health
     - npm run-script docker
-    - docker logs formio-server &> $CIRCLE_ARTIFACTS/docker-formio-server.log
+    - docker logs formio-server &> $CIRCLE_ARTIFACTS/docker-customer-server.log
 
 deployment:
   release:
