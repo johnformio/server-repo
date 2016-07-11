@@ -77,7 +77,16 @@
           "input": true
         }
       ],
-      "access": [],
+      "access": [
+        {
+          "type": "read_all",
+          "roles": [
+            "administrator",
+            "authenticated",
+            "anonymous"
+          ]
+        }
+      ],
       "submissionAccess": [
         {
           "type": "create_own",
