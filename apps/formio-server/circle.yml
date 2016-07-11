@@ -38,6 +38,7 @@ test:
   pre:
     - node --version
     - mongo --version
+    - docker --version
     - sudo bash -c "echo \"127.0.0.1 formio.localhost\" >> /etc/hosts"
     - sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
     - sudo pkill redis-server
@@ -48,7 +49,10 @@ test:
   post:
     - redis-server &> $CIRCLE_ARTIFACTS/docker-redis.log:
           background: true
-    - docker run -d -e "MONGO1=$MONGO" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "DEBUG=formio:*,formio:*:*" -e "PROJECT_PLAN=basic" --name formio-server --net=host $IMAGE_PATH:$SHORT_SHA
+    - docker network create formio
+    - docker run -itd --name formio-mongo --net=formio -p 27017:27017 mongo
+    - docker run -itd --name formio-redis --net=formio -p 6379:6379 redis
+    - docker run -itd -e "DEBUG=formio:*,formio:*:*" -e "PROJECT_PLAN=basic" -e "MONGO1=mongodb://mongo:27017" -e "MONGO_COLLECTION=formio-docker" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "JWT_SECRET=CHANGEME" -e "JWT_EXPIRE_TIME=240" -e "DB_SECRET=CHANGEME" -e "ADMIN_EMAIL=admin@example.com" -e "ADMIN_PASS=CHANGEME" --net=formio --name formio-server --link formio-mongo:mongo -p 127.0.0.1:3000:3000 $IMAGE_PATH:$SHORT_SHA
     - sleep 5
     - docker logs formio-server
     - wget --tries=10 --retry-connrefused --wait=6 -v http://api.localhost:3000/health
