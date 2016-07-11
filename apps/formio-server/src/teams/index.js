@@ -167,7 +167,7 @@ module.exports = function(app, formioServer) {
     loadTeams(function(teamResource) {
       // Skip the teams functionality if no user or resource is found.
       if (!teamResource) {
-        return q.reject('No team resource found.');
+        return q.resolve([]);
       }
       if (!user || user.hasOwnProperty('_id') && !user._id) {
         debug.getTeams(user);
