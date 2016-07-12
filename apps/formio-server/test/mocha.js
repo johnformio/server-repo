@@ -12,6 +12,7 @@ var _test = path.join(_formio, 'test');
 var async = require('async');
 var chance = new (require('chance'))();
 var docker = process.env.DOCKER;
+var customer = process.env.CUSTOMER;
 var app = null;
 var template = null;
 var hook = require(path.join(_formio, 'src/util/hook'))({hooks: require('./hooks')});
@@ -30,15 +31,21 @@ if (!docker) {
       template = _.cloneDeep(state.template);
     });
 }
-else {
+else if (customer) {
+  app = 'http://api.localhost:3000';
+  ready = Q.defer();
+}
+else if (docker) {
   app = 'http://api.localhost:3000';
   template = _.cloneDeep(require(path.join(_test, 'template'))());
   ready = Q();
 }
+else {
+  console.error('Unknown environment..');
+  process.exit();
+}
 
 var emptyDatabase = function(done) {
-  if (docker) return done();
-
   /**
    * Remove all documents using a mongoose model.
    *
@@ -84,14 +91,14 @@ var emptyDatabase = function(done) {
 
   // Clear out all test data, starting with Projects.
   dropProjects();
-}
+};
 
 describe('Install Process', function () {
   before(function() {
     return ready;
   });
 
-  if (docker) {
+  if (docker || customer) {
     return;
   }
   var originalADMIN_EMAIL = process.env.ADMIN_EMAIL;
@@ -347,6 +354,7 @@ describe('Bootstrap', function() {
       return ready;
     });
 
+    if (!docker && !customer)
     it('Attach Formio properties', function(done) {
       template.formio = {
         owner: {
@@ -375,11 +383,11 @@ describe('Bootstrap', function() {
       done();
     });
 
+    if (!docker && !customer)
     it('Should reset the database', emptyDatabase);
 
+    if (!docker && !customer)
     it('Should be able to bootstrap Form.io', function(done) {
-      if (docker) return done();
-
       /**
        * Store a document using a mongoose model.
        *
@@ -921,9 +929,99 @@ describe('Bootstrap', function() {
         async.apply(createActionRegister)
       ], done);
     });
+
+    if (customer)
+    it('Load the formio template', function(done) {
+      /**
+       * Util function to get a formio entity.
+       *
+       * @param [String] id
+       * @param [String] name
+       * @param [String] path
+       * @param [String] url
+       *
+       * @returns {Promise}
+       */
+      var getEntity = function(id, name, path, url) {
+        var q = Q.defer();
+
+        request(url || app)
+          .get(path || '')
+          .expect(200)
+          .expect('content-type', /json/)
+          .end(function(err, res) {
+            if (err) {
+              return q.reject(err);
+            }
+
+            if (res.body instanceof Array) {
+              for (var i = 0; i < res.body.length; i++) {
+                var entity = res.body[i];
+                if (
+                  (id && entity._id === id) ||
+                  (name && entity.name === name)
+                ) {
+                  return q.resolve(entity);
+                }
+              }
+
+              return q.resolve();
+            }
+
+            if (
+              (id && res.body._id === id) ||
+              (name && res.body.name === name)
+            ) {
+              return q.resolve(res.body);
+            }
+
+            return q.resolve();
+          });
+
+        return q.promise;
+      };
+
+      template = template || {};
+      template.formio = template.formio || {};
+      template.formio.owner = {
+        data: {
+          email: 'admin@example.com',
+          password: 'CHANGEME'
+        }
+      };
+
+      var loadProject = (getEntity(null, 'formio')).then(function(project) {
+        template.formio.project = project;
+
+        var loadUserResource = (getEntity(null, 'user', '/project/' + project._id + '/form')).then(function(form) {
+          template.formio.userResource = form;
+        });
+
+        var loadLoginForm = (getEntity(null, 'userLogin', '/project/' + project._id + '/form')).then(function(form) {
+          template.formio.formLogin = form;
+        });
+
+        // When all steps are done, continue.
+        Q.all([
+          loadProject,
+          loadUserResource,
+          loadLoginForm
+        ])
+        .then(function() {
+          console.log('template');
+          console.log(template);
+          return done();
+        })
+        .catch(function(err) {
+          console.log(err);
+          process.exit();
+        });
+      });
+    });
   });
 
   describe('Initial access tests', function() {
+    if (!customer)
     it('A user can access the register form', function(done) {
       request(app)
         .get('/project/' + template.formio.project._id + '/form/' + template.formio.formRegister._id)
@@ -938,6 +1036,7 @@ describe('Bootstrap', function() {
         });
     });
 
+    if (!customer)
     it('Should be able to register a new user for Form.io', function(done) {
       request(app)
         .post('/project/' + template.formio.project._id + '/form/' + template.formio.formRegister._id + '/submission')
@@ -981,52 +1080,51 @@ describe('Bootstrap', function() {
         });
     });
 
-    if (!docker) {
-      it('Should have sent an email to the user with a valid auth token', function(done) {
-        var email = template.hooks.getLastEmail();
-        assert.equal(email.from, 'no-reply@form.io');
-        assert.equal(email.to, template.formio.owner.data.email);
-        assert.equal(email.subject, 'New user ' + template.formio.owner._id.toString() + ' created');
+    if (!customer && !docker)
+    it('Should have sent an email to the user with a valid auth token', function(done) {
+      var email = template.hooks.getLastEmail();
+      assert.equal(email.from, 'no-reply@form.io');
+      assert.equal(email.to, template.formio.owner.data.email);
+      assert.equal(email.subject, 'New user ' + template.formio.owner._id.toString() + ' created');
 
-        // Get the token.
-        var matches = email.html.match(/token=([^\s]+)/);
-        assert.equal(matches.length, 2);
-        var token = matches[1];
+      // Get the token.
+      var matches = email.html.match(/token=([^\s]+)/);
+      assert.equal(matches.length, 2);
+      var token = matches[1];
 
-        // This user should be able to authenticate using this token.
-        request(app)
-          .get('/project/' + template.formio.project._id + '/current')
-          .set('x-jwt-token', token)
-          .expect(200)
-          .end(function(err, res) {
-            if (err) {
-              return done(err);
-            }
+      // This user should be able to authenticate using this token.
+      request(app)
+        .get('/project/' + template.formio.project._id + '/current')
+        .set('x-jwt-token', token)
+        .expect(200)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
 
-            var response = res.body;
-            assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
-            assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
-            assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
-            assert(response.hasOwnProperty('data'), 'The response should contain a submission `data` object.');
-            assert(response.data.hasOwnProperty('email'), 'The submission `data` should contain the `email`.');
-            assert.equal(response.data.email, template.formio.owner.data.email);
-            assert(!response.data.hasOwnProperty('password'), 'The submission `data` should not contain the `password`.');
-            assert(response.hasOwnProperty('form'), 'The response should contain the resource `form`.');
-            assert.equal(response.form, template.formio.userResource._id);
-            assert(res.headers.hasOwnProperty('x-jwt-token'), 'The response should contain a `x-jwt-token` header.');
+          var response = res.body;
+          assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
+          assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
+          assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
+          assert(response.hasOwnProperty('data'), 'The response should contain a submission `data` object.');
+          assert(response.data.hasOwnProperty('email'), 'The submission `data` should contain the `email`.');
+          assert.equal(response.data.email, template.formio.owner.data.email);
+          assert(!response.data.hasOwnProperty('password'), 'The submission `data` should not contain the `password`.');
+          assert(response.hasOwnProperty('form'), 'The response should contain the resource `form`.');
+          assert.equal(response.form, template.formio.userResource._id);
+          assert(res.headers.hasOwnProperty('x-jwt-token'), 'The response should contain a `x-jwt-token` header.');
 
-            // Update our template.users.admins data.
-            var tempPassword = template.formio.owner.data.password;
-            template.formio.owner = response;
-            template.formio.owner.data.password = tempPassword;
+          // Update our template.users.admins data.
+          var tempPassword = template.formio.owner.data.password;
+          template.formio.owner = response;
+          template.formio.owner.data.password = tempPassword;
 
-            // Store the JWT for future API calls.
-            template.formio.owner.token = res.headers['x-jwt-token'];
+          // Store the JWT for future API calls.
+          template.formio.owner.token = res.headers['x-jwt-token'];
 
-            done();
-          });
-      });
-    }
+          done();
+        });
+    });
 
     it('A Form.io User should be able to login', function(done) {
       request(app)
@@ -1049,8 +1147,10 @@ describe('Bootstrap', function() {
           assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
           assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
           assert(response.hasOwnProperty('data'), 'The response should contain a submission `data` object.');
-          assert(response.data.hasOwnProperty('name'), 'The submission `data` should contain the `name`.');
-          assert.equal(response.data.name, template.formio.owner.data.name);
+          if (!customer) {
+            assert(response.data.hasOwnProperty('name'), 'The submission `data` should contain the `name`.');
+            assert.equal(response.data.name, template.formio.owner.data.name);
+          }
           assert(response.data.hasOwnProperty('email'), 'The submission `data` should contain the `email`.');
           assert.equal(response.data.email, template.formio.owner.data.email);
           assert(!response.hasOwnProperty('password'), 'The submission `data` should not contain the `password`.');
