@@ -317,7 +317,6 @@ describe('Install Process', function () {
     });
 
     it('allows logging in using the root account', function(done) {
-      console.log('/project/' + project._id + '/form/' + forms.userLogin._id + '/submission');
       request(app)
         .post('/project/' + project._id + '/form/' + forms.userLogin._id + '/submission')
         .send({
@@ -1008,8 +1007,6 @@ describe('Bootstrap', function() {
           loadLoginForm
         ])
         .then(function() {
-          console.log('template');
-          console.log(template);
           return done();
         })
         .catch(function(err) {

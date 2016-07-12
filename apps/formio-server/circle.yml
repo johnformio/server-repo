@@ -66,7 +66,7 @@ test:
     - sudo service mongodb stop
     - docker run -itd --name formio-mongo -p 27017:27017 mongo
     - docker run -itd --name formio-redis -p 6379:6379 redis
-    - docker run -itd -e "DEBUG=formio:*,formio:*:*" -e "PROJECT_PLAN=basic" -e "MONGO1=mongodb://mongo:27017" -e "MONGO_COLLECTION=formio-docker" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "JWT_SECRET=CHANGEME" -e "JWT_EXPIRE_TIME=240" -e "DB_SECRET=CHANGEME" -e "ADMIN_EMAIL=admin@example.com" -e "ADMIN_PASS=CHANGEME" --name formio-server --link formio-mongo:mongo -p 127.0.0.1:3000:3000 $IMAGE_PATH:$SHORT_SHA
+    - docker run -itd -e "DEBUG=formio:*,formio:*:*" -e "PROJECT_PLAN=basic" -e "MONGO1=mongodb://mongo:27017/formio-docker" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "JWT_SECRET=CHANGEME" -e "JWT_EXPIRE_TIME=240" -e "DB_SECRET=CHANGEME" -e "ADMIN_EMAIL=admin@example.com" -e "ADMIN_PASS=CHANGEME" --name formio-server --link formio-mongo:mongo -p 127.0.0.1:3000:3000 $IMAGE_PATH:$SHORT_SHA
     - sleep 5
     - docker logs formio-server
     - wget --tries=10 --retry-connrefused --wait=6 -v http://api.localhost:3000/health
