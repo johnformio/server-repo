@@ -44,6 +44,8 @@ test:
     - docker --version
     - sudo bash -c "echo \"127.0.0.1 formio.localhost\" >> /etc/hosts"
     - sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
+    - sudo bash -c "echo \"127.0.0.1 dockertest.localhost\" >> /etc/hosts"
+    - npm i --g formio-cli
   override:
     # Test Formio locally
     - sudo pkill redis-server
@@ -61,17 +63,15 @@ test:
     - docker stop formio-server
     - docker rm formio-server
     - sudo pkill redis-server
-    - redis-server &> $CIRCLE_ARTIFACTS/docker-customer-redis.log:
-          background: true
     - sudo service mongodb stop
-    - sudo pkill redis-server
     - docker run -itd --name formio-mongo -p 27017:27017 mongo
     - docker run -itd --name formio-redis -p 6379:6379 redis
     - docker run -itd -e "DEBUG=formio:*,formio:*:*" -e "PROJECT_PLAN=basic" -e "MONGO1=mongodb://mongo:27017" -e "MONGO_COLLECTION=formio-docker" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "JWT_SECRET=CHANGEME" -e "JWT_EXPIRE_TIME=240" -e "DB_SECRET=CHANGEME" -e "ADMIN_EMAIL=admin@example.com" -e "ADMIN_PASS=CHANGEME" --name formio-server --link formio-mongo:mongo -p 127.0.0.1:3000:3000 $IMAGE_PATH:$SHORT_SHA
     - sleep 5
     - docker logs formio-server
     - wget --tries=10 --retry-connrefused --wait=6 -v http://api.localhost:3000/health
-    - npm run-script docker
+    - formio deploy --src-username dockertest@form.io --src-password testdockertest --dst-username admin@example.com --dst-password CHANGEME https://dockertest.form.io http://dockertest.localhost:3000
+    - npm run-script customer
     - docker logs formio-server &> $CIRCLE_ARTIFACTS/docker-customer-server.log
 
 deployment:
