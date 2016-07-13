@@ -23,13 +23,20 @@ process.on('uncaughtException', function(err) {
   console.log(err.stack);
 });
 
-if (!docker) {
-  ready = require('./bootstrap')()
+if (!docker && !customer) {
+  ready = require('../server')()
     .then(function(state) {
-      _server = state.server;
+      //_server = state.server;
       app = state.app;
-      template = _.cloneDeep(state.template);
+      //template = _.cloneDeep(state.template);
     });
+
+  //ready = require('./bootstrap')()
+  //  .then(function(state) {
+  //    _server = state.server;
+  //    app = state.app;
+  //    template = _.cloneDeep(state.template);
+  //  });
 }
 else if (customer) {
   app = 'http://api.localhost:3000';
@@ -111,7 +118,7 @@ describe('Install Process', function () {
     var token = null;
 
     before(function (done) {
-      if (!app.formio) return;
+      if (!app.formio) return done();
 
       process.env.ADMIN_EMAIL = 'test@example.com';
       process.env.ADMIN_PASS = 'password';
