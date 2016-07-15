@@ -226,6 +226,20 @@ module.exports = function(app) {
       url: function(url, req) {
         return '/project/' + req.projectId + url;
       },
+      skip: function(_default, req) {
+        if (req.method !== 'GET') {
+          return false;
+        }
+
+        if (
+          req.url === '/'
+          && (req.hasOwnProperty('projectId') === false || req.projectId === undefined || req.projectId === '')
+        ) {
+          return true;
+        }
+
+        return false;
+      },
       fieldUrl: function(url, form, field) {
         return '/project/' + form.project + url;
       },
@@ -580,6 +594,8 @@ module.exports = function(app) {
        *   If the request has access to perform the given action
        * @param req {Object}
        *   The Express request Object.
+       * @param res {Object}
+       *   The Express response Object.
        * @param access {Object}
        *   The calculated access object.
        * @param entity {Object}
@@ -589,7 +605,7 @@ module.exports = function(app) {
        *   If the user has access based on the request.
        */
       /* eslint-disable max-statements */
-      hasAccess: function(_hasAccess, req, access, entity) {
+      hasAccess: function(_hasAccess, req, res, access, entity) {
         var _debug = require('debug')('formio:settings:hasAccess');
         var _url = nodeUrl.parse(req.url).pathname;
 
@@ -625,8 +641,9 @@ module.exports = function(app) {
               return true;
             }
 
-            // This req is unauthorized.
+            // This req is unauthorized/unknown.
             _debug('false');
+            res.sendStatus(404);
             return false;
           }
           // No project but anonymous.
