@@ -262,6 +262,29 @@ module.exports = function(app, template, hook) {
         .end(done);
     });
 
+    it('A user without authentication should not be able to update the owner of a project.', function(done) {
+      request(app)
+        .put('/project/' + template.project._id)
+        .send({
+          owner: template.project._id
+        })
+        .expect(401)
+        .end(done);
+    });
+
+    it('A user without authentication should not be able to update the owner of a project via alias', function(done) {
+      var primary = app.formio && app.formio.config && app.formio.config.formioHost
+        ? app.formio.config.formioHost
+        : 'http://formio.localhost:3000';
+      request(primary)
+        .put('/')
+        .send({
+          owner: template.project._id
+        })
+        .expect(401)
+        .end(done);
+    });
+
     it('A Form.io User should be able to update the settings of their Project', function(done) {
       var newSettings = {
         cors: '*',
