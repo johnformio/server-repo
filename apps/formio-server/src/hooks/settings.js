@@ -594,18 +594,18 @@ module.exports = function(app) {
        *   If the request has access to perform the given action
        * @param req {Object}
        *   The Express request Object.
-       * @param res {Object}
-       *   The Express response Object.
        * @param access {Object}
        *   The calculated access object.
        * @param entity {Object}
        *   The access entity object.
+       * @param res {Object}
+       *   The Express response Object.
        *
        * @returns {Boolean}
        *   If the user has access based on the request.
        */
       /* eslint-disable max-statements */
-      hasAccess: function(_hasAccess, req, res, access, entity) {
+      hasAccess: function(_hasAccess, req, access, entity, res) {
         var _debug = require('debug')('formio:settings:hasAccess');
         var _url = nodeUrl.parse(req.url).pathname;
 
@@ -643,7 +643,9 @@ module.exports = function(app) {
 
             // This req is unauthorized/unknown.
             _debug('false');
-            res.sendStatus(404);
+            if (res) {
+              res.sendStatus(404);
+            }
             return false;
           }
           // No project but anonymous.
