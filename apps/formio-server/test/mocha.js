@@ -26,8 +26,8 @@ process.on('uncaughtException', function(err) {
 if (!docker && !customer) {
   ready = require('../server')()
     .then(function(state) {
-      //_server = state.server;
       app = state.app;
+      _server = state.app._server;
       //template = _.cloneDeep(state.template);
     });
 
@@ -73,27 +73,27 @@ var emptyDatabase = function(done) {
 
   // Remove all test documents for roles.
   var dropRoles = function() {
-    dropDocuments(app.formio.resources.role.model, done);
+    dropDocuments(app.formio.formio.resources.role.model, done);
   };
 
   // Remove all test documents for actions.
   var dropActions = function() {
-    dropDocuments(app.formio.actions.model, dropRoles);
+    dropDocuments(app.formio.formio.actions.model, dropRoles);
   };
 
   // Remove all test documents for submissions.
   var dropSubmissions = function() {
-    dropDocuments(app.formio.resources.submission.model, dropActions);
+    dropDocuments(app.formio.formio.resources.submission.model, dropActions);
   };
 
   // Remove all test documents for forms.
   var dropForms = function() {
-    dropDocuments(app.formio.resources.form.model, dropSubmissions);
+    dropDocuments(app.formio.formio.resources.form.model, dropSubmissions);
   };
 
   // Remove all test documents for Projects.
   var dropProjects = function() {
-    dropDocuments(app.formio.resources.project.model, dropForms);
+    dropDocuments(app.formio.formio.resources.project.model, dropForms);
   };
 
   // Clear out all test data, starting with Projects.
@@ -124,12 +124,12 @@ describe('Install Process', function () {
       process.env.ADMIN_PASS = 'password';
       // Clear the database, reset the schema and perform a fresh install.
       emptyDatabase(function() {
-        require('../install')(app.formio, done);
+        require('../install')(app.formio.formio, done);
       })
     });
 
     it('creates three roles', function(done) {
-      app.formio.mongoose.models.role.find()
+      app.formio.formio.mongoose.models.role.find()
         .exec(function(err, results) {
           if (err) {
             return done(err);
@@ -150,7 +150,7 @@ describe('Install Process', function () {
     });
 
     it('installs one project named formio', function(done) {
-      app.formio.resources.project.model.find({})
+      app.formio.formio.resources.project.model.find({})
         .exec(function(err, results) {
           if (err) {
             return done(err);
@@ -185,7 +185,7 @@ describe('Install Process', function () {
     });
 
     it('creates one resource named user', function(done) {
-      app.formio.resources.form.model.find({
+      app.formio.formio.resources.form.model.find({
           type: 'resource'
         })
         .exec(function(err, results) {
@@ -212,7 +212,7 @@ describe('Install Process', function () {
     });
 
     it('creates one form named user login', function(done) {
-      app.formio.resources.form.model.find({
+      app.formio.formio.resources.form.model.find({
           type: 'form'
         })
         .exec(function(err, results) {
@@ -232,7 +232,7 @@ describe('Install Process', function () {
     });
 
     it('creates three actions', function(done) {
-      app.formio.mongoose.models.action.find()
+      app.formio.formio.mongoose.models.action.find()
         .exec(function(err, results) {
           if (err) {
             return done(err);
@@ -261,7 +261,7 @@ describe('Install Process', function () {
     });
 
     it('creates the administrative account', function(done) {
-      app.formio.resources.submission.model.find()
+      app.formio.formio.resources.submission.model.find()
         .exec(function(err, results) {
           if (err) {
             return done(err);
@@ -426,7 +426,7 @@ describe('Bootstrap', function() {
           }
         };
 
-        storeDocument(app.formio.resources.project.model, 'project', then);
+        storeDocument(app.formio.formio.resources.project.model, 'project', then);
       };
       var createRoleAdministrator = function(then) {
         template.formio.roleAdministrator = {
@@ -437,7 +437,7 @@ describe('Bootstrap', function() {
           admin: true
         };
 
-        storeDocument(app.formio.resources.role.model, 'roleAdministrator', then);
+        storeDocument(app.formio.formio.resources.role.model, 'roleAdministrator', then);
       };
       var createRoleAuthenticated = function(then) {
         template.formio.roleAuthenticated = {
@@ -448,7 +448,7 @@ describe('Bootstrap', function() {
           admin: false
         };
 
-        storeDocument(app.formio.resources.role.model, 'roleAuthenticated', then);
+        storeDocument(app.formio.formio.resources.role.model, 'roleAuthenticated', then);
       };
       var createRoleAnonymous = function(then) {
         template.formio.roleAnonymous = {
@@ -459,10 +459,10 @@ describe('Bootstrap', function() {
           admin: false
         };
 
-        storeDocument(app.formio.resources.role.model, 'roleAnonymous', then);
+        storeDocument(app.formio.formio.resources.role.model, 'roleAnonymous', then);
       };
       var setDefaultProjectAccess = function(then) {
-        app.formio.resources.project.model.findById(template.formio.project._id, function(err, document) {
+        app.formio.formio.resources.project.model.findById(template.formio.project._id, function(err, document) {
           if (err) { return then(err); }
 
           // Update the default role for this Project.
@@ -494,7 +494,7 @@ describe('Bootstrap', function() {
           components : [] // We don't need components to test the form
         };
 
-        storeDocument(app.formio.resources.form.model, 'formPayment', then);
+        storeDocument(app.formio.formio.resources.form.model, 'formPayment', then);
       };
       var createUpgradeHistoryForm = function(then) {
         template.formio.formPayment = {
@@ -506,7 +506,7 @@ describe('Bootstrap', function() {
           components : [] // We don't need components to test the form
         };
 
-        storeDocument(app.formio.resources.form.model, 'formPayment', then);
+        storeDocument(app.formio.formio.resources.form.model, 'formPayment', then);
       };
       var createUserResource = function(then) {
         template.formio.userResource = {
@@ -575,7 +575,7 @@ describe('Bootstrap', function() {
           ]
         };
 
-        storeDocument(app.formio.resources.form.model, 'userResource', then);
+        storeDocument(app.formio.formio.resources.form.model, 'userResource', then);
       };
       var createTeamResource = function(then) {
         template.formio.teamResource = {
@@ -649,7 +649,7 @@ describe('Bootstrap', function() {
           ]
         };
 
-        storeDocument(app.formio.resources.form.model, 'teamResource', then);
+        storeDocument(app.formio.formio.resources.form.model, 'teamResource', then);
       };
       var createLoginForm = function(then) {
         template.formio.formLogin = {
@@ -711,7 +711,7 @@ describe('Bootstrap', function() {
           ]
         };
 
-        storeDocument(app.formio.resources.form.model, 'formLogin', then);
+        storeDocument(app.formio.formio.resources.form.model, 'formLogin', then);
       };
       var createRegisterForm = function(then) {
         template.formio.formRegister = {
@@ -793,7 +793,7 @@ describe('Bootstrap', function() {
           ]
         };
 
-        storeDocument(app.formio.resources.form.model, 'formRegister', then);
+        storeDocument(app.formio.formio.resources.form.model, 'formRegister', then);
       };
 
       var createActionSave = function(then) {
