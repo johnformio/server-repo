@@ -45,6 +45,7 @@ module.exports = function() {
 
   // Create the formio server.
   app.formio = require('formio')(config.formio);
+  app.use(app.formio.formio.middleware.restrictRequestTypes);
 
   // Attach the formio-server config.
   app.formio.config = _.omit(config, 'formio');
