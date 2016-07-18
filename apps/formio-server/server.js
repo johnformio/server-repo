@@ -15,7 +15,7 @@ var favicon = require('serve-favicon');
 var analytics = require('./src/analytics/index')(config);
 var Q = require('q');
 
-module.exports = function() {
+module.exports = function(hooks) {
   var q = Q.defer();
 
   // Create the app server.
@@ -101,7 +101,7 @@ module.exports = function() {
   }
 
   app.modules = require('./src/modules/modules')(app, config);
-  var settings = require('./src/hooks/settings')(app);
+  var settings = _.merge(require('./src/hooks/settings')(app), hooks);
 
   // Start the api server.
   app.formio.init(settings).then(function(formio) {

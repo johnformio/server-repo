@@ -14,9 +14,8 @@ var chance = new (require('chance'))();
 var docker = process.env.DOCKER;
 var customer = process.env.CUSTOMER;
 var app = null;
-var template = null;
-var hook = require(path.join(_formio, 'src/util/hook'))({hooks: require('./hooks')});
-var _server = null;
+var hook = null;
+var template = require(path.join(_test, 'template'))();
 var ready;
 
 process.on('uncaughtException', function(err) {
@@ -24,19 +23,14 @@ process.on('uncaughtException', function(err) {
 });
 
 if (!docker && !customer) {
-  ready = require('../server')()
+  // Merge all the test hooks.
+  var hooks = _.merge(require(path.join(_test, 'hooks')), require('./hooks'));
+  ready = require('../server')(hooks)
     .then(function(state) {
       app = state.app;
-      _server = state.app._server;
-      //template = _.cloneDeep(state.template);
+      hook = require(path.join(_formio, 'src/util/hook'))(app.formio);
+      template.Helper = require(path.join(_test, 'helper'))(app, template);
     });
-
-  //ready = require('./bootstrap')()
-  //  .then(function(state) {
-  //    _server = state.server;
-  //    app = state.app;
-  //    template = _.cloneDeep(state.template);
-  //  });
 }
 else if (customer) {
   app = 'http://api.localhost:3000';
@@ -125,7 +119,7 @@ describe('Install Process', function () {
       // Clear the database, reset the schema and perform a fresh install.
       emptyDatabase(function() {
         require('../install')(app.formio.formio, done);
-      })
+      });
     });
 
     it('creates three roles', function(done) {
@@ -292,8 +286,8 @@ describe('Install Process', function () {
             return done(err);
           }
           var response = res.body;
-          assert.equal(res.body.length, 1);
-          project = res.body[0];
+          assert.equal(response.length, 1);
+          project = response[0];
           assert.equal(project.name, 'formio');
           assert.equal(project.title, 'Formio');
           assert(project.alias);
@@ -836,9 +830,9 @@ describe('Bootstrap', function() {
         };
 
         async.series([
-          async.apply(storeDocument, app.formio.actions.model, 'actionUserSave'),
-          async.apply(storeDocument, app.formio.actions.model, 'actionUserEmail'),
-          async.apply(storeDocument, app.formio.actions.model, 'actionTeamSave')
+          async.apply(storeDocument, app.formio.formio.actions.model, 'actionUserSave'),
+          async.apply(storeDocument, app.formio.formio.actions.model, 'actionUserEmail'),
+          async.apply(storeDocument, app.formio.formio.actions.model, 'actionTeamSave')
         ], then);
       };
 
@@ -858,7 +852,7 @@ describe('Bootstrap', function() {
         };
 
         async.series([
-          async.apply(storeDocument, app.formio.actions.model, 'actionLogin')
+          async.apply(storeDocument, app.formio.formio.actions.model, 'actionLogin')
         ], then);
       };
       var createActionRegister = function(then) {
@@ -911,9 +905,9 @@ describe('Bootstrap', function() {
         };
 
         async.series([
-          async.apply(storeDocument, app.formio.actions.model, 'actionUserRole'),
-          async.apply(storeDocument, app.formio.actions.model, 'actionRegisterSave'),
-          async.apply(storeDocument, app.formio.actions.model, 'actionRegisterLogin')
+          async.apply(storeDocument, app.formio.formio.actions.model, 'actionUserRole'),
+          async.apply(storeDocument, app.formio.formio.actions.model, 'actionRegisterSave'),
+          async.apply(storeDocument, app.formio.formio.actions.model, 'actionRegisterLogin')
         ], then);
       };
 
@@ -1086,7 +1080,7 @@ describe('Bootstrap', function() {
 
     if (!customer && !docker)
     it('Should have sent an email to the user with a valid auth token', function(done) {
-      var email = template.hooks.getLastEmail();
+      var email = app.formio.hooks.getLastEmail();
       assert.equal(email.from, 'no-reply@form.io');
       assert.equal(email.to, template.formio.owner.data.email);
       assert.equal(email.subject, 'New user ' + template.formio.owner._id.toString() + ' created');
