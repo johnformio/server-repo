@@ -223,7 +223,7 @@ module.exports = function(app) {
         }
         return transports;
       },
-      url: function(url, req) {
+      whitelist: function(url, req) {
         return '/project/' + req.projectId + url;
       },
       skip: function(_default, req) {
