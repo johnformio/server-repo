@@ -9,9 +9,13 @@ var _ = require('lodash');
 var Q = require('q');
 var docker = process.env.DOCKER;
 var config = require('../config');
+var path = require('path');
+
 module.exports = function(app, template, hook) {
   // For now don't run with Docker tests...
-  if (docker) { return; }
+  if (docker) {
+    return;
+  }
 
   var ProjectSocket = null;
   if (typeof app !== 'string') {
@@ -50,7 +54,8 @@ module.exports = function(app, template, hook) {
     };
 
     it('Should be able to create a new project.', function(done) {
-      var defaultTemplate = require('../node_modules/formio/src/templates/empty.json');
+      var _formio = path.dirname(require.resolve('formio'));
+      var defaultTemplate = require(path.join(_formio, 'src/templates/empty.json'));
       request(app)
         .post('/project')
         .send({
