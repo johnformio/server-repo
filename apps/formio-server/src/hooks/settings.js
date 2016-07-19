@@ -108,6 +108,16 @@ module.exports = function(app) {
       }
     },
     alter: {
+      formio: function(app) {
+        if (app.formio && app.formio.formio) {
+          return app.formio.formio;
+        }
+        else if (app.formio) {
+          return app.formio;
+        }
+
+        return app;
+      },
       resources: function(resources) {
         return _.assign(resources, require('../resources/resources')(app, formioServer));
       },

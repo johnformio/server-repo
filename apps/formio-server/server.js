@@ -1,22 +1,34 @@
 'use strict';
 
 require('dotenv').load({silent: true});
-var config = require('./config');
-var jslogger = null;
-if (config.jslogger) {
-  jslogger = require('jslogger')({key: config.jslogger});
-}
 var express = require('express');
 var _ = require('lodash');
 var bodyParser = require('body-parser');
 var methodOverride = require('method-override');
-var app = express();
 var favicon = require('serve-favicon');
-var analytics = require('./src/analytics/index')(config);
 var Q = require('q');
 
-module.exports = function(hooks) {
+module.exports = function(options) {
+  options = options || {};
   var q = Q.defer();
+
+  // Use the express application.
+  var app = options.app || express();
+
+  // Use the given config.
+  var config = options.config || require('./config');
+
+  // Add jslogger if configured.
+  var jslogger = null;
+  if (config.jslogger) {
+    jslogger = require('jslogger')({key: config.jslogger});
+  }
+
+  // Load the analytics hooks.
+  var analytics = require('./src/analytics/index')(config);
+
+  // Ensure that we create projects within the helper.
+  app.hasProjects = true;
 
   // Create the app server.
   app.server = require('http').createServer(app);
@@ -44,7 +56,7 @@ module.exports = function(hooks) {
   });
 
   // Create the formio server.
-  app.formio = require('formio')(config.formio);
+  app.formio = options.server || require('formio')(config.formio);
   app.use(app.formio.formio.middleware.restrictRequestTypes);
 
   // Attach the formio-server config.
@@ -91,9 +103,7 @@ module.exports = function(hooks) {
   if (config.gaTid) {
     var ua = require('universal-analytics');
     app.use(function(req, res, next) {
-      /* eslint-disable callback-return */
-      next();
-      /* eslint-enable callback-return */
+      next(); // eslint-disable-line callback-return
 
       var visitor = ua(config.gaTid);
       visitor.pageview(req.url).send();
@@ -101,10 +111,12 @@ module.exports = function(hooks) {
   }
 
   app.modules = require('./src/modules/modules')(app, config);
-  var settings = _.merge(require('./src/hooks/settings')(app), hooks);
+  var hooks = _.merge(require('./src/hooks/settings')(app), options.hooks);
 
   // Start the api server.
-  app.formio.init(settings).then(function(formio) {
+  app.formio.init(hooks).then(function(formio) {
+    //app.formio.formio = _.merge(formio, app.formio.formio);
+
     var start = function() {
       // The formio app sanity endpoint.
       app.get('/health', require('./src/middleware/health')(app.formio.formio), formio.update.sanityCheck);
