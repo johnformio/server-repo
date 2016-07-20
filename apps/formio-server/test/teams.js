@@ -378,7 +378,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('Upgrade the project to a team project plan', function(done) {
-        app.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
+        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
           if(err) {
             return done(err);
           }
@@ -588,7 +588,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('Upgrade the project to a commercial project plan', function(done) {
-        app.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
+        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
           if(err) {
             return done(err);
           }
@@ -678,7 +678,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('Revert the project to a team project plan', function(done) {
-        app.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
+        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
           if(err) {
             return done(err);
           }
@@ -1895,7 +1895,7 @@ module.exports = function(app, template, hook) {
             var response = res.body;
             assert.equal(response.hasOwnProperty('settings'), false);
 
-            app.formio.resources.project.model.findOne({_id: template.project._id}, function(err, project) {
+            app.formio.formio.resources.project.model.findOne({_id: template.project._id}, function(err, project) {
               if(err) {
                 return done(err);
               }
@@ -1941,7 +1941,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('An update the project data, should not overwrite the project settings', function(done) {
-        app.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
+        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
           if(err) {
             return done(err);
           }
@@ -2502,7 +2502,7 @@ module.exports = function(app, template, hook) {
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.deepEqual(response.settings, temp.settings);
 
-            app.formio.resources.project.model.findOne({_id: template.project._id}, function(err, project) {
+            app.formio.formio.resources.project.model.findOne({_id: template.project._id}, function(err, project) {
               if(err) {
                 return done(err);
               }

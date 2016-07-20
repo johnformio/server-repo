@@ -63,7 +63,7 @@ module.exports = function(app, template, hook) {
       description: chance.sentence(),
       template: _.omit(template, ['users', 'formio'])
     };
-    var originalProject = _.cloneDeep(tempProject, true);
+    var originalProject = _.cloneDeep(tempProject);
 
     // Update the template with current data for future tests.
     var mapProjectToTemplate = function(project, template, callback) {
