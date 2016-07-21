@@ -9,7 +9,7 @@ var sinon = require('sinon');
 module.exports = function(app, template, hook) {
   describe('Dropbox setup', function() {
     var testUser = {
-      email: 'testUser@example.com',
+      email: 'dropboxUser@example.com',
       password: 'password'
     }
 
@@ -322,7 +322,7 @@ module.exports = function(app, template, hook) {
         });
     });
 
-    it('Clears the dropbox auth_token', function(done) {
+    it('Clears the dropbox access_token', function(done) {
       request(app)
         .post('/project/' + template.project._id + '/dropbox/auth')
         .set('x-jwt-token', template.formio.owner.token)
@@ -372,8 +372,6 @@ module.exports = function(app, template, hook) {
           }
           var response = res.body;
           assert.deepEqual(response, {});
-
-          template.formio.owner.token = res.headers['x-jwt-token'];
 
           delete template.users.tempUser;
 

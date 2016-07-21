@@ -159,7 +159,7 @@ module.exports = function(router) {
                 'pragma',
                 'etag',
                 'accept-ranges'
-              ]
+              ];
               headers.forEach(function(header) {
                 if (response.headers.hasOwnProperty(header)) {
                   res.setHeader(header, response.headers[header]);
