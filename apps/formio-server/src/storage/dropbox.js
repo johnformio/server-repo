@@ -27,9 +27,15 @@ module.exports = function(router) {
     },
     restrictOwnerAccess,
     function(req, res) {
+      if (
+        !router.formio.config.dropbox ||
+        !router.formio.config.dropbox.clientId
+      ) {
+        return res.status(400).send('Dropbox Auth not configured');
+      }
       res.send({
         response_type: 'code',
-        client_id: router.formio.config.oauth.dropbox.clientId,
+        client_id: router.formio.config.dropbox.clientId,
         state: crypto.randomBytes(64).toString('hex')
       });
     }
@@ -52,14 +58,12 @@ module.exports = function(router) {
     function(req, res) {
       if (req.body.code) {
         // Send code to dropbox for token.
-        request({
-          method: 'POST',
-          uri: 'https://api.dropboxapi.com/1/oauth2/token',
+        request.post('https://api.dropboxapi.com/1/oauth2/token', {
           form: {
             code: req.body.code,
             grant_type: 'authorization_code',
-            client_id: router.formio.config.oauth.dropbox.clientId,
-            client_secret: router.formio.config.oauth.dropbox.clientSecret,
+            client_id: router.formio.config.dropbox.clientId,
+            client_secret: router.formio.config.dropbox.clientSecret,
             redirect_uri: req.body.redirect_uri
           }
         },
@@ -123,7 +127,7 @@ module.exports = function(router) {
     },
     router.formio.formio.middleware.permissionHandler,
     function(req, res) {
-      debug('Signing GET request');
+      debug('Getting dropbox file');
       cache.loadProject(req, req.projectId, function(err, project) {
         if (err) {
           return res.status(400).send('Project not found.');
@@ -135,10 +139,8 @@ module.exports = function(router) {
         }
         var path = req.query.path_lower;
         var name = path.split('/').slice(-1)[0];
-        request(
+        request.post('https://content.dropboxapi.com/2/files/download',
           {
-            method: 'POST',
-            uri: 'https://content.dropboxapi.com/2/files/download',
             headers: {
               'Authorization': 'Bearer ' + project.settings.storage.dropbox.access_token,
               'Dropbox-API-Arg': JSON.stringify({
@@ -149,14 +151,21 @@ module.exports = function(router) {
           },
           function(error, response, body) {
             if (response.statusCode === 200) {
-              res.setHeader('content-type', response.headers['content-type']);
-              res.setHeader('content-length', response.headers['content-length']);
+              var headers = [
+                'content-type',
+                'content-length',
+                'original-content-length',
+                'cache-control',
+                'pragma',
+                'etag',
+                'accept-ranges'
+              ]
+              headers.forEach(function(header) {
+                if (response.headers.hasOwnProperty(header)) {
+                  res.setHeader(header, response.headers[header]);
+                }
+              });
               res.setHeader('content-disposition', 'filename=' + name);
-              res.setHeader('original-content-length', response.headers['original-content-length']);
-              res.setHeader('cache-control', response.headers['cache-control']);
-              res.setHeader('pragma', response.headers['pragma']);
-              res.setHeader('etag', response.headers['etag']);
-              res.setHeader('accept-ranges', response.headers['accept-ranges']);
               res.send(body);
             }
             else {
@@ -200,31 +209,30 @@ module.exports = function(router) {
         var fileInfo = req.body;
 
         // Stream project to dropbox here.
-        request({
-          method: 'POST',
-          uri: 'https://content.dropboxapi.com/2/files/upload',
-          headers: {
-            'Authorization': 'Bearer ' + project.settings.storage.dropbox.access_token,
-            'Content-Type': 'application/octet-stream',
-            'Dropbox-API-Arg': JSON.stringify({
-              path: '/' + fileInfo.dir + fileInfo.name,
-              mode: 'add',
-              autorename: true,
-              mute: false
-            })
+        request.post('https://content.dropboxapi.com/2/files/upload',
+          {
+            headers: {
+              'Authorization': 'Bearer ' + project.settings.storage.dropbox.access_token,
+              'Content-Type': 'application/octet-stream',
+              'Dropbox-API-Arg': JSON.stringify({
+                path: '/' + fileInfo.dir + fileInfo.name,
+                mode: 'add',
+                autorename: true,
+                mute: false
+              })
+            },
+            body: req.file.buffer
           },
-          body: req.file.buffer
-        },
-        function(error, response, body) {
-          if (response.statusCode === 200) {
-            var result = JSON.parse(body);
-            // return token to app
-            res.send(result);
-          }
-          else {
-            res.status(400).send(error);
-          }
-        });
+          function(error, response, body) {
+            if (response.statusCode === 200) {
+              var result = JSON.parse(body);
+              // return token to app
+              res.send(result);
+            }
+            else {
+              res.status(400).send(error);
+            }
+          });
       });
     }
   );

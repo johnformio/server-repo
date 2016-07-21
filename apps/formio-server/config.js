@@ -110,12 +110,9 @@ if (process.env.SENDGRID_USERNAME) {
   config.formio.email.password = process.env.SENDGRID_PASSWORD;
 }
 
-config.oauth = {
-  dropbox: {
-    clientId: process.env.DROPBOX_CLIENTID || '',
-    clientSecret: process.env.DROPBOX_CLIENTSECRET || ''
-  }
-};
+config.formio.dropbox = {};
+config.formio.dropbox.clientId = process.env.DROPBOX_CLIENTID || '';
+config.formio.dropbox.clientSecret = process.env.DROPBOX_CLIENTSECRET || '';
 
 // Add the JWT data.
 config.formio.jwt = {};

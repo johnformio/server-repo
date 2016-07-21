@@ -563,7 +563,7 @@ module.exports = function(app) {
 
         var url = nodeUrl.parse(req.url).pathname.split('/');
         debug.settings(url);
-        if (url[5] === 'storage' && url[6] === 's3') {
+        if (url[5] === 'storage' && ['s3', 'dropbox'].indexOf(url[6]) !== -1) {
           entity = {
             type: 'submission',
             id: ''
