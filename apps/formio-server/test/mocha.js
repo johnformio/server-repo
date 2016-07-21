@@ -4,7 +4,6 @@
 var request = require('supertest');
 var assert = require('assert');
 var _ = require('lodash');
-var Q = require('q');
 var express = require('express');
 var path = require('path');
 var async = require('async');
@@ -13,40 +12,11 @@ var docker = process.env.DOCKER;
 var customer = process.env.CUSTOMER;
 var app = null;
 var hook = null;
-var template = require('formio/test/template')();
-var ready;
+var template = _.cloneDeep(require('formio/test/template')());
 
 process.on('uncaughtException', function(err) {
   console.log(err.stack);
 });
-
-if (!docker) { //  && !customer
-  // Merge all the test hooks.
-  var hooks = _.merge(require('./hooks'), require('formio/test/hooks'));
-  ready = require('../server')({
-    hooks: hooks
-  })
-  .then(function(state) {
-    app = state.app;
-    hook = require('formio/src/util/hook')(app.formio.formio);
-    template.Helper = require('formio/test/helper')(app);
-
-    // Add the hooks to the template for consistency in formio-server and formio tests.
-    template.hooks = app.formio.formio.hooks || hooks;
-  });
-}
-else if (customer) {
-  app = 'http://api.localhost:3000';
-  ready = Q();
-}
-else if (docker) {
-  app = 'http://api.localhost:3000';
-  ready = Q();
-}
-else {
-  console.error('Unknown environment..');
-  process.exit();
-}
 
 var emptyDatabase = template.emptyDatabase = function(done) {
   if (docker) {
@@ -108,15 +78,37 @@ var emptyDatabase = template.emptyDatabase = function(done) {
 };
 
 describe('Tests', function() {
-  before(function() {
-    return ready;
+  before(function(done) {
+    if (!docker) { //  && !customer
+      var hooks = _.merge(require('formio/test/hooks'), require('./hooks')); // Merge all the test hooks.
+      require('../server')({
+        hooks: hooks
+      })
+      .then(function(state) {
+        app = state.app;
+        hook = require('formio/src/util/hook')(app.formio.formio);
+
+        // Establish the helper library.
+        template.Helper = require('formio/test/helper')(app);
+        template.hooks = app.formio.formio.hooks || {};
+        return done();
+      });
+    }
+    else if (customer) {
+      app = 'http://api.localhost:3000';
+      return done();
+    }
+    else if (docker) {
+      app = 'http://api.localhost:3000';
+      return done();
+    }
+    else {
+      console.error('Unknown environment..');
+      process.exit();
+    }
   });
 
   describe('Install Process', function() {
-    before(function() {
-      return ready;
-    });
-
     if (docker) { // || customer
       return;
     }
@@ -369,10 +361,6 @@ describe('Tests', function() {
    */
   describe('Bootstrap', function() {
     describe('Recreate Formio', function() {
-      before(function() {
-        return ready;
-      });
-
       //if (docker) //  && !customer
       it('Attach Formio properties', function(done) {
         template.formio = {

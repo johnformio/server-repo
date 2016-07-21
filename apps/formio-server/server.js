@@ -115,8 +115,6 @@ module.exports = function(options) {
 
   // Start the api server.
   app.formio.init(hooks).then(function(formio) {
-    //app.formio.formio = _.merge(formio, app.formio.formio);
-
     var start = function() {
       // The formio app sanity endpoint.
       app.get('/health', require('./src/middleware/health')(app.formio.formio), formio.update.sanityCheck);
@@ -130,10 +128,6 @@ module.exports = function(options) {
       // Mount the aggregation system.
       app.use('/project/:projectId/report', require('./src/middleware/report')(app.formio.formio));
 
-      /* eslint-disable no-console */
-      console.log(' > Listening to ' + config.protocol + '://' + config.domain + ':' + config.port);
-      /* eslint-enable no-console */
-      //app.listen(config.port);
       return q.resolve({
         app: app,
         config: config

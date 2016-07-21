@@ -41,7 +41,7 @@ module.exports = function(formio, done) {
     },
     importProject: function(done) {
       var parseProject = function(template, item) {
-        var project = _.clone(template);
+        var project = _.cloneDeep(template);
         delete project.roles;
         delete project.forms;
         delete project.actions;
