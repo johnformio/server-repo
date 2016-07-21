@@ -1178,7 +1178,7 @@ describe('Tests', function() {
         describe('Formio-Server', function() {
           require('./project')(app, template, hook);
           require('./email')(app, template, hook);
-          require('./websockets')(app, template, hook);
+          //require('./websockets')(app, template, hook);
         });
 
         describe('Formio', function() {

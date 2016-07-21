@@ -33,6 +33,10 @@ module.exports = function(app) {
   return {
     settings: function(settings, req, cb) {
       if (!req.projectId) {
+        if (settings) {
+          return cb(null, settings);
+        }
+
         return cb('No project ID provided.');
       }
 
