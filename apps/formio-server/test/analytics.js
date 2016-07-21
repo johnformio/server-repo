@@ -8,9 +8,11 @@ var async = require('async');
 
 module.exports = function(app, template, hook) {
   describe('Analytics', function() {
-    if (!app.formio || !app._server || !app._server.analytics || !app._server.analytics.connect()) return;
+    if (!app.formio || !app.formio.analytics || !app.formio.analytics.connect()) {
+      return;
+    }
 
-    var redis = app._server.analytics.getRedis();
+    var redis = app.formio.analytics.getRedis();
     describe('Bootstrap', function() {
       it('Should clear all the redis data', function(done) {
         redis.flushall(function(err, val) {
@@ -58,7 +60,7 @@ module.exports = function(app, template, hook) {
 
       it('The projects submission based requests should be 0', function(done) {
         var curr = new Date();
-        app._server.analytics.getCalls(curr.getUTCFullYear(), curr.getUTCMonth(), curr.getUTCDate(), template.project._id, function(err, calls) {
+        app.formio.analytics.getCalls(curr.getUTCFullYear(), curr.getUTCMonth(), curr.getUTCDate(), template.project._id, function(err, calls) {
           if (err) {
             return done(err);
           }
@@ -80,7 +82,7 @@ module.exports = function(app, template, hook) {
             }
 
             var curr = new Date();
-            app._server.analytics.getCalls(curr.getUTCFullYear(), curr.getUTCMonth(), curr.getUTCDate(), template.project._id, function(err, calls) {
+            app.formio.analytics.getCalls(curr.getUTCFullYear(), curr.getUTCMonth(), curr.getUTCDate(), template.project._id, function(err, calls) {
               if (err) {
                 return done(err);
               }
@@ -95,8 +97,8 @@ module.exports = function(app, template, hook) {
 
       it('A project which has exceeded its API limit should still fulfill requests (throttled)', function(done) {
         // Override the basic project limits for tests.
-        var old = app._server.formio.plans.limits['basic'];
-        app._server.formio.plans.limits['basic'] = 1;
+        var old = app.formio.formio.plans.limits['basic'];
+        app.formio.formio.plans.limits['basic'] = 1;
 
         request(app)
           .get('/project/' + template.project._id + '/form/' + template.resources.user._id + '/submission/' + template.users.user1._id)
@@ -115,10 +117,10 @@ module.exports = function(app, template, hook) {
               }
 
               assert.equal(length, 2);
-              assert.equal(length > app._server.formio.plans.limits['basic'], true);
+              assert.equal(length > app.formio.formio.plans.limits['basic'], true);
 
               // Reset the basic plan limits.
-              app._server.formio.plans.limits['basic'] = old;
+              app.formio.formio.plans.limits['basic'] = old;
 
               // Store the JWT for future API calls.
               template.formio.owner.token = res.headers['x-jwt-token'];
@@ -230,7 +232,7 @@ module.exports = function(app, template, hook) {
             });
 
             // Check the request count for the current day.
-            var key = app._server.analytics.getAnalyticsKey(template.project._id, curr.getUTCFullYear(), curr.getUTCMonth(), curr.getUTCDate(), 's');
+            var key = app.formio.analytics.getAnalyticsKey(template.project._id, curr.getUTCFullYear(), curr.getUTCMonth(), curr.getUTCDate(), 's');
             redis.llen(key, function(err, len) {
               if(err) {
                 return done(err);
@@ -278,7 +280,7 @@ module.exports = function(app, template, hook) {
               assert.equal(_.isString(_timestamp), true);
             });
 
-            var key = app._server.analytics.getAnalyticsKey(template.project._id, curr.getUTCFullYear(), curr.getUTCMonth(), curr.getUTCDate(), 's');
+            var key = app.formio.analytics.getAnalyticsKey(template.project._id, curr.getUTCFullYear(), curr.getUTCMonth(), curr.getUTCDate(), 's');
             redis.llen(key, function(err, length) {
               if(err) {
                 return done(err);
@@ -298,8 +300,8 @@ module.exports = function(app, template, hook) {
 
     describe('Crash Redis', function() {
       it('The API server will run smoothly without analytics', function(done) {
-        var old = app._server.analytics.redis;
-        app._server.analytics.redis = null;
+        var old = app.formio.analytics.redis;
+        app.formio.analytics.redis = null;
 
         request(app)
           .get('/project/' + template.project._id)
@@ -320,7 +322,7 @@ module.exports = function(app, template, hook) {
             template.formio.owner.token = res.headers['x-jwt-token'];
 
             // Reset the redis ref.
-            app._server.analytics.redis = old;
+            app.formio.analytics.redis = old;
 
             done();
           });
