@@ -33,7 +33,7 @@ module.exports = function(app) {
   return {
     settings: function(settings, req, cb) {
       if (!req.projectId) {
-        if (settings) {
+        if (settings !== undefined) {
           return cb(null, settings);
         }
 

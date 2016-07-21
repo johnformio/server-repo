@@ -18,7 +18,7 @@ module.exports = function(app, template, hook) {
   // Does NOT fail if user has more tokens than expected ones
   // Returns a promise
   var checkExternalTokens = function(user, expected) {
-    return Q(app.formio.resources.submission.model.findOne({_id: user._id}))
+    return Q(app.formio.formio.resources.submission.model.findOne({_id: user._id}))
     .then(function(user) {
       user = user.toObject();
       _.each(expected, function(expectedToken){
@@ -92,7 +92,7 @@ module.exports = function(app, template, hook) {
       TEST_ACCESS_TOKEN_2.exp = new Date(Date.now()); // Expires immediately to test refreshing
 
       // Create a dummy oauth provider
-      app.formio.oauth.providers.test1 = {
+      app.formio.formio.oauth.providers.test1 = {
         name: 'test1',
         title: 'Test1',
         authURI: 'http://test1.com/oauth/authorize',
@@ -119,7 +119,7 @@ module.exports = function(app, template, hook) {
       };
 
       // Create another dummy oauth provider
-      app.formio.oauth.providers.test2 = {
+      app.formio.formio.oauth.providers.test2 = {
         name: 'test2',
         title: 'Test2',
         authURI: 'http://test2.com/oauth/authorize',
@@ -1057,18 +1057,18 @@ module.exports = function(app, template, hook) {
             _.each(response.components, function(component, i) {
               if (component.action === 'oauth') {
                 if (component.key === 'oauthSignup1') {
-                  assert.equal(component.oauth.provider, app.formio.oauth.providers.test1.name);
+                  assert.equal(component.oauth.provider, app.formio.formio.oauth.providers.test1.name);
                   assert.equal(component.oauth.clientId, oauthSettings.oauth.test1.clientId);
-                  assert.equal(component.oauth.authURI, app.formio.oauth.providers.test1.authURI);
-                  assert.equal(component.oauth.scope, app.formio.oauth.providers.test1.scope);
-                  assert.equal(component.oauth.display, app.formio.oauth.providers.test1.display);
+                  assert.equal(component.oauth.authURI, app.formio.formio.oauth.providers.test1.authURI);
+                  assert.equal(component.oauth.scope, app.formio.formio.oauth.providers.test1.scope);
+                  assert.equal(component.oauth.display, app.formio.formio.oauth.providers.test1.display);
                 }
                 if (component.key === 'oauthSignup2') {
-                  assert.equal(component.oauth.provider, app.formio.oauth.providers.test2.name);
+                  assert.equal(component.oauth.provider, app.formio.formio.oauth.providers.test2.name);
                   assert.equal(component.oauth.clientId, oauthSettings.oauth.test2.clientId);
-                  assert.equal(component.oauth.authURI, app.formio.oauth.providers.test2.authURI);
-                  assert.equal(component.oauth.scope, app.formio.oauth.providers.test2.scope);
-                  assert.equal(component.oauth.display, app.formio.oauth.providers.test2.display);
+                  assert.equal(component.oauth.authURI, app.formio.formio.oauth.providers.test2.authURI);
+                  assert.equal(component.oauth.scope, app.formio.formio.oauth.providers.test2.scope);
+                  assert.equal(component.oauth.display, app.formio.formio.oauth.providers.test2.display);
                 }
                 assert.deepEqual(_.omit(component, 'oauth'), flattenedComponents[i],
                   'OAuth button should only have oauth prop added');
@@ -1122,7 +1122,7 @@ module.exports = function(app, template, hook) {
             assert(response.externalIds[0].hasOwnProperty('_id'), 'The externalId should contain an `_id`.');
             assert(response.externalIds[0].hasOwnProperty('modified'), 'The externalId should contain a `modified` timestamp.');
             assert(response.externalIds[0].hasOwnProperty('created'), 'The externalId should contain a `created` timestamp.');
-            assert.equal(response.externalIds[0].type, app.formio.oauth.providers.test1.name, 'The externalId should be for test1 oauth.');
+            assert.equal(response.externalIds[0].type, app.formio.formio.oauth.providers.test1.name, 'The externalId should be for test1 oauth.');
             assert.equal(response.externalIds[0].id, TEST_USER_1.id, 'The externalId should match test user 1\'s id.');
             assert(!response.hasOwnProperty('deleted'), 'The response should not contain `deleted`');
             assert(!response.hasOwnProperty('__v'), 'The response should not contain `__v`');
@@ -1178,7 +1178,7 @@ module.exports = function(app, template, hook) {
             assert(response.externalIds[0].hasOwnProperty('_id'), 'The externalId should contain an `_id`.');
             assert(response.externalIds[0].hasOwnProperty('modified'), 'The externalId should contain a `modified` timestamp.');
             assert(response.externalIds[0].hasOwnProperty('created'), 'The externalId should contain a `created` timestamp.');
-            assert.equal(response.externalIds[0].type, app.formio.oauth.providers.test2.name, 'The externalId should be for test2 oauth.');
+            assert.equal(response.externalIds[0].type, app.formio.formio.oauth.providers.test2.name, 'The externalId should be for test2 oauth.');
             assert.equal(response.externalIds[0].id, TEST_USER_2.id, 'The externalId should match test user 2\'s id.');
             assert(!response.hasOwnProperty('deleted'), 'The response should not contain `deleted`');
             assert(!response.hasOwnProperty('__v'), 'The response should not contain `__v`');
@@ -1233,7 +1233,7 @@ module.exports = function(app, template, hook) {
             assert(response.externalIds[0].hasOwnProperty('_id'), 'The externalId should contain an `_id`.');
             assert(response.externalIds[0].hasOwnProperty('modified'), 'The externalId should contain a `modified` timestamp.');
             assert(response.externalIds[0].hasOwnProperty('created'), 'The externalId should contain a `created` timestamp.');
-            assert.equal(response.externalIds[0].type, app.formio.oauth.providers.test1.name, 'The externalId should be for test1 oauth.');
+            assert.equal(response.externalIds[0].type, app.formio.formio.oauth.providers.test1.name, 'The externalId should be for test1 oauth.');
             assert.equal(response.externalIds[0].id, TEST_USER_1.id, 'The externalId should match test user 1\'s id.');
             assert(!response.hasOwnProperty('deleted'), 'The response should not contain `deleted`');
             assert(!response.hasOwnProperty('__v'), 'The response should not contain `__v`');
@@ -1284,7 +1284,7 @@ module.exports = function(app, template, hook) {
             assert(response.externalIds[0].hasOwnProperty('_id'), 'The externalId should contain an `_id`.');
             assert(response.externalIds[0].hasOwnProperty('modified'), 'The externalId should contain a `modified` timestamp.');
             assert(response.externalIds[0].hasOwnProperty('created'), 'The externalId should contain a `created` timestamp.');
-            assert.equal(response.externalIds[0].type, app.formio.oauth.providers.test2.name, 'The externalId should be for test2 oauth.');
+            assert.equal(response.externalIds[0].type, app.formio.formio.oauth.providers.test2.name, 'The externalId should be for test2 oauth.');
             assert.equal(response.externalIds[0].id, TEST_USER_2.id, 'The externalId should match test user 2\'s id.');
             assert(!response.hasOwnProperty('deleted'), 'The response should not contain `deleted`');
             assert(!response.hasOwnProperty('__v'), 'The response should not contain `__v`');
@@ -1335,7 +1335,7 @@ module.exports = function(app, template, hook) {
             assert(response.externalIds[0].hasOwnProperty('_id'), 'The externalId should contain an `_id`.');
             assert(response.externalIds[0].hasOwnProperty('modified'), 'The externalId should contain a `modified` timestamp.');
             assert(response.externalIds[0].hasOwnProperty('created'), 'The externalId should contain a `created` timestamp.');
-            assert.equal(response.externalIds[0].type, app.formio.oauth.providers.test1.name, 'The externalId should be for test1 oauth.');
+            assert.equal(response.externalIds[0].type, app.formio.formio.oauth.providers.test1.name, 'The externalId should be for test1 oauth.');
             assert.equal(response.externalIds[0].id, TEST_USER_1.id, 'The externalId should match test user 1\'s id.');
             assert(!response.hasOwnProperty('deleted'), 'The response should not contain `deleted`');
             assert(!response.hasOwnProperty('__v'), 'The response should not contain `__v`');
@@ -1365,7 +1365,7 @@ module.exports = function(app, template, hook) {
           email: 'user3@test3.com'
         };
         // Extend and modify dummy oauth provider to return 3rd unlinked test user
-        app.formio.oauth.providers.test2 = _.create(app.formio.oauth.providers.test2, {
+        app.formio.formio.oauth.providers.test2 = _.create(app.formio.formio.oauth.providers.test2, {
           getTokens: function(req, code, state, redirectURI, next) {
             assert.equal(code, TEST_AUTH_CODE_3, 'OAuth Action should request access token with expected test code.');
             assert.equal(redirectURI, TEST_REDIRECT_URI_3, 'OAuth Action should request access token with expected redirect uri.');
@@ -1413,7 +1413,7 @@ module.exports = function(app, template, hook) {
           email: 'user1@test2.com'
         };
         // Extend and modify dummy oauth provider to return 4th unlinked test user
-        app.formio.oauth.providers.test2 = _.create(app.formio.oauth.providers.test2, {
+        app.formio.formio.oauth.providers.test2 = _.create(app.formio.formio.oauth.providers.test2, {
           getTokens: function(req, code, state, redirectURI, next) {
             assert.equal(code, TEST_AUTH_CODE_4, 'OAuth Action should request access token with expected test code.');
             assert.equal(redirectURI, TEST_REDIRECT_URI_4, 'OAuth Action should request access token with expected redirect uri.');
@@ -1461,7 +1461,7 @@ module.exports = function(app, template, hook) {
               id: '' + TEST_USER_1.id
             }), undefined, 'The response should have a test1 external id');
             assert.notEqual(_.find(response.externalIds, {
-              type: app.formio.oauth.providers.test2.name,
+              type: app.formio.formio.oauth.providers.test2.name,
               id: '' + TEST_USER_4.id
             }), undefined, 'The response should have a test2 external id');
             assert(res.headers.hasOwnProperty('x-jwt-token'), 'The response should contain a `x-jwt-token` header.');
@@ -1487,7 +1487,7 @@ module.exports = function(app, template, hook) {
           email: 'user5@test5.com'
         };
         // Extend and modify dummy oauth provider to return 5th unlinked test user
-        app.formio.oauth.providers.test2 = _.create(app.formio.oauth.providers.test2, {
+        app.formio.formio.oauth.providers.test2 = _.create(app.formio.formio.oauth.providers.test2, {
           getTokens: function(req, code, state, redirectURI, next) {
             assert.equal(code, TEST_AUTH_CODE_5, 'OAuth Action should request access token with expected test code.');
             assert.equal(redirectURI, TEST_REDIRECT_URI_5, 'OAuth Action should request access token with expected redirect uri.');
@@ -1544,14 +1544,14 @@ module.exports = function(app, template, hook) {
 
     describe('getUserToken', function() {
       it('should return an unexpired access token', function() {
-        return app.formio.oauth.getUserToken({}, {}, 'test1', template.users.oauthUser1._id)
+        return app.formio.formio.oauth.getUserToken({}, {}, 'test1', template.users.oauthUser1._id)
         .then(function(token) {
           assert.deepEqual(token, TEST_ACCESS_TOKEN_1.token, 'Returned token should match correct token.');
         });
       });
 
       it('should refresh an expired token and return the new token', function() {
-        return app.formio.oauth.getUserToken({}, {}, 'test2', template.users.oauthUser2._id)
+        return app.formio.formio.oauth.getUserToken({}, {}, 'test2', template.users.oauthUser2._id)
         .then(function(token) {
           assert.deepEqual(token, REFRESHED_TEST_ACCESS_TOKEN_2.token, 'Returned token should match correct token.');
           checkExternalTokens(template.users.oauthUser2, [REFRESHED_TEST_ACCESS_TOKEN_2]);
