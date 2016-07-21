@@ -7,6 +7,7 @@ var multer  = require('multer');
 var storage = multer.memoryStorage();
 var upload = multer({storage: storage});
 
+/* eslint-disable camelcase */
 module.exports = function(router) {
   var restrictOwnerAccess = require('../middleware/restrictOwnerAccess')(router.formio.formio);
   var cache = require('../cache/cache')(router.formio.formio);
@@ -80,7 +81,6 @@ module.exports = function(router) {
                 project.settings = settings;
                 project.save();
               }
-
             });
           }
           else {
@@ -103,7 +103,6 @@ module.exports = function(router) {
             project.settings = settings;
             project.save();
           }
-
         });
       }
     }
@@ -191,7 +190,10 @@ module.exports = function(router) {
         }
 
         debug('Project Loaded: ' + req.projectId);
-        if (!project.settings.storage || !project.settings.storage.dropbox || !project.settings.storage.dropbox.access_token) {
+        if (!project.settings.storage ||
+          !project.settings.storage.dropbox ||
+          !project.settings.storage.dropbox.access_token
+        ) {
           return res.status(400).send('Storage settings not set.');
         }
 
