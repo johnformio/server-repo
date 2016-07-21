@@ -1076,8 +1076,8 @@ describe('Bootstrap', function() {
     describe('Final Tests', function() {
       describe('Formio-Server', function() {
         require('./project')(app, template, hook);
-        //require('./email')(app, template, hook);
-        //require('./websockets')(app, template, hook);
+        require('./email')(app, template, hook);
+        require('./websockets')(app, template, hook);
       });
 
       var originalSettingsHook;
@@ -1092,16 +1092,16 @@ describe('Bootstrap', function() {
         // Set up formio specific hooks
         var formioHook = require(path.join(_formio, 'src/util/hook'))({hooks: require('./formioHooks.js')(_test)});
 
-        //require(path.join(_test, 'unit'))(app, template, formioHook);
-        //require(path.join(_test, 'auth'))(app, template, formioHook);
-        //require(path.join(_test, 'roles'))(app, template, formioHook);
-        //require(path.join(_test, 'form'))(app, template, formioHook);
-        //require(path.join(_test, 'resource'))(app, template, formioHook);
-        //require(path.join(_test, 'nested'))(app, template, formioHook);
-        //require(path.join(_test, 'actions'))(app, template, formioHook);
-        //require(path.join(_test, 'submission'))(app, template, formioHook);
-        //require('./analytics')(app, template, formioHook);
-        //require('./teams')(app, template, formioHook);
+        require(path.join(_test, 'unit'))(app, template, formioHook);
+        require(path.join(_test, 'auth'))(app, template, formioHook);
+        require(path.join(_test, 'roles'))(app, template, formioHook);
+        require(path.join(_test, 'form'))(app, template, formioHook);
+        require(path.join(_test, 'resource'))(app, template, formioHook);
+        require(path.join(_test, 'nested'))(app, template, formioHook);
+        require(path.join(_test, 'actions'))(app, template, formioHook);
+        require(path.join(_test, 'submission'))(app, template, formioHook);
+        require('./analytics')(app, template, formioHook);
+        require('./teams')(app, template, formioHook);
       });
 
       describe('Formio-Server tests that depend on Formio tests', function() {
@@ -1110,11 +1110,11 @@ describe('Bootstrap', function() {
           // Restore settings hook
           app.formio.hooks.settings = originalSettingsHook;
         });
-        //require('./misc')(app, template, hook);
-        //require('./oauth')(app, template, hook);
-        //require('./s3')(app, template, hook);
+        require('./misc')(app, template, hook);
+        require('./oauth')(app, template, hook);
+        require('./s3')(app, template, hook);
         require('./dropbox')(app, template, hook);
-        //require('./report')(app, template, hook);
+        require('./report')(app, template, hook);
       });
     });
   });
