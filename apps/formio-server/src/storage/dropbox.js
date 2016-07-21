@@ -5,7 +5,7 @@ var debug = require('debug')('formio:storage:dropbox');
 var request = require('request');
 var multer  = require('multer');
 var storage = multer.memoryStorage();
-var upload = multer({ storage: storage });
+var upload = multer({storage: storage});
 
 module.exports = function(router) {
   var restrictOwnerAccess = require('../middleware/restrictOwnerAccess')(router.formio.formio);
