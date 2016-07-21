@@ -21,6 +21,8 @@ config.formio.reservedForms = [
   'import',
   'form',
   'storage\/s3',
+  'storage\/dropbox',
+  'dropbox\/auth',
   'upgrade',
   'access'
 ];
@@ -107,6 +109,13 @@ if (process.env.SENDGRID_USERNAME) {
   config.formio.email.username = process.env.SENDGRID_USERNAME;
   config.formio.email.password = process.env.SENDGRID_PASSWORD;
 }
+
+config.oauth = {
+  dropbox: {
+    clientId: process.env.DROPBOX_CLIENTID || '',
+    clientSecret: process.env.DROPBOX_CLIENTSECRET || ''
+  }
+};
 
 // Add the JWT data.
 config.formio.jwt = {};

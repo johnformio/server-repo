@@ -650,8 +650,8 @@ module.exports = function(app) {
           var url = req.url.split('/');
 
           // Use submission permissions for access to file signing endpoints.
-          if (url[5] === 'storage' && url[6] === 's3') {
-            _debug('Checking s3 signing access');
+          if (url[5] === 'storage' && ['s3', 'dropbox'].indexOf(url[6]) !== -1) {
+            _debug('Checking storage access');
             var _access = formioServer.formio.access.hasAccess(req, access, {
               type: 'submission',
               id: req.submissionId
