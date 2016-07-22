@@ -81,18 +81,6 @@ module.exports = function(options) {
   // CORS Support
   app.use(require('cors')());
 
-  // Host the dynamic app configuration.
-  app.get('/config.js', function(req, res) {
-    res.set('Content-Type', 'text/javascript');
-    res.render('js/config.js', {
-      forceSSL: config.https ? 'true' : 'false',
-      domain: config.domain,
-      appHost: config.host,
-      apiHost: config.apiHost,
-      formioHost: config.formioHost
-    });
-  });
-
   // Establish our url alias middleware.
   app.use(require('./src/middleware/alias')(app.formio.formio));
 
