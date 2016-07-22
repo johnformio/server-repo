@@ -7,10 +7,11 @@ var _ = require('lodash');
 var Q = require('q');
 var util = require('formio/src/util/util');
 var uuidRegex = /^([a-z]{15})$/;
+var docker = process.env.DOCKER;
 
 module.exports = function(app, template, hook) {
   // Cannot run these tests without access to formio instance
-  if (!app.formio) {
+  if (docker) {
     return;
   }
 

@@ -79,8 +79,8 @@ var emptyDatabase = template.emptyDatabase = function(done) {
 
 describe('Tests', function() {
   before(function(done) {
+    var hooks = _.merge(require('formio/test/hooks'), require('./hooks')); // Merge all the test hooks.
     if (!docker) { //  && !customer
-      var hooks = _.merge(require('formio/test/hooks'), require('./hooks')); // Merge all the test hooks.
       require('../server')({
         hooks: hooks
       })
@@ -100,6 +100,8 @@ describe('Tests', function() {
     }
     else if (docker) {
       app = 'http://api.localhost:3000';
+      hook = require('formio/src/util/hook')({hooks: hooks});
+      template.hooks = hooks;
       return done();
     }
     else {
@@ -122,7 +124,7 @@ describe('Tests', function() {
       var token = null;
 
       before(function(done) {
-        if (!app.formio) {
+        if (docker) {
           return done();
         }
 
@@ -385,15 +387,18 @@ describe('Tests', function() {
           },
           userResource: {
             _id: '553db94e72f702e714dd9779'
+          },
+          teamResource: {
+            _id: '55479ce7685637ab440a0765'
           }
         };
         done();
       });
 
-      //if (!docker)
+      if (!docker)
       it('Should reset the database', emptyDatabase);
 
-      //if (!docker)
+      if (!docker)
       it('Should be able to bootstrap Form.io', function(done) {
         /**
          * Store a document using a mongoose model.
@@ -603,7 +608,7 @@ describe('Tests', function() {
                   pattern: '',
                   maxLength: '',
                   minLength: '',
-                  required: false
+                  required: true
                 },
                 persistent: true,
                 unique: false,
@@ -624,6 +629,7 @@ describe('Tests', function() {
                 refreshDelay: 0,
                 refresh: false,
                 multiple: true,
+                unique: true,
                 searchFields: '',
                 searchExpression: '',
                 template: '<span>{{ item.data.name }}</span>',
@@ -1195,12 +1201,6 @@ describe('Tests', function() {
         });
 
         describe('Formio-Server tests that depend on Formio tests', function() {
-          before(function() {
-            if (!app.formio) {
-              return;
-            }
-          });
-
           require('./misc')(app, template, hook);
           require('./oauth')(app, template, hook);
           require('./s3')(app, template, hook);

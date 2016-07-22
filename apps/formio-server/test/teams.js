@@ -6,14 +6,10 @@ var assert = require('assert');
 var _ = require('lodash');
 var async = require('async');
 var chance = new (require('chance'))();
+var docker = process.env.DOCKER;
 
 module.exports = function(app, template, hook) {
   describe('Teams', function() {
-    // Cannot run these tests without access to formio instance
-    if (!app.formio) {
-      return;
-    }
-
     describe('Single Team Tests', function() {
       it('An anonymous user should not be able to access /team/members without a search query', function(done) {
         request(app)
@@ -141,8 +137,10 @@ module.exports = function(app, template, hook) {
           .set('x-jwt-token', template.formio.owner.token)
           .send({
             data: {
-              name: 'test',
-              members: []
+              name: chance.word(),
+              members: [
+                {_id: template.users.user1._id}
+              ]
             }
           })
           .expect('Content-Type', /json/)
@@ -169,7 +167,7 @@ module.exports = function(app, template, hook) {
           .send({
             data: {
               members: [
-                {_id: template.users.user1._id}
+                {_id: template.users.user2._id}
               ]
             }
           })
@@ -182,7 +180,7 @@ module.exports = function(app, template, hook) {
 
             var response = res.body;
             assert.equal(response.data.members.length, 1);
-            assert.equal(response.data.members[0]._id, template.users.user1._id);
+            assert.equal(response.data.members[0]._id, template.users.user2._id);
 
             // Store the JWT for future API calls.
             template.formio.owner.token = res.headers['x-jwt-token'];
@@ -377,6 +375,7 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      if (!docker)
       it('Upgrade the project to a team project plan', function(done) {
         app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
           if(err) {
@@ -587,6 +586,7 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      if (!docker)
       it('Upgrade the project to a commercial project plan', function(done) {
         app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
           if(err) {
@@ -677,6 +677,7 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      if (!docker)
       it('Revert the project to a team project plan', function(done) {
         app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
           if(err) {
@@ -1895,6 +1896,10 @@ module.exports = function(app, template, hook) {
             var response = res.body;
             assert.equal(response.hasOwnProperty('settings'), false);
 
+            if (docker) {
+              return done()
+            }
+
             app.formio.formio.resources.project.model.findOne({_id: template.project._id}, function(err, project) {
               if(err) {
                 return done(err);
@@ -1940,6 +1945,7 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      if (!docker)
       it('An update the project data, should not overwrite the project settings', function(done) {
         app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
           if(err) {
@@ -2501,6 +2507,10 @@ module.exports = function(app, template, hook) {
             var response = res.body;
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.deepEqual(response.settings, temp.settings);
+
+            if (docker) {
+              return done();
+            }
 
             app.formio.formio.resources.project.model.findOne({_id: template.project._id}, function(err, project) {
               if(err) {

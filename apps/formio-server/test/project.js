@@ -11,6 +11,7 @@ var async = require('async');
 var chance = new (require('chance'))();
 var uuidRegex = /^([a-z]{15})$/;
 var util = require('formio/src/util/util');
+var docker = process.env.DOCKER;
 
 module.exports = function(app, template, hook) {
   /**
@@ -599,9 +600,8 @@ module.exports = function(app, template, hook) {
         });
     });
 
+    if (!docker)
     it('A Deleted Project should still remain in the Database', function(done) {
-      if (!app.formio && !app.formio.formio) return done();
-
       app.formio.formio.resources.project.model.find({project: template.project._id, deleted: {$eq: null}})
         .exec(function(err, results) {
           if (err) {
@@ -617,9 +617,8 @@ module.exports = function(app, template, hook) {
         });
     });
 
+    if (!docker)
     it('A Deleted Project should not have any active Forms', function(done) {
-      if (!app.formio && !app.formio.formio) return done();
-
       app.formio.formio.resources.form.model.find({project: template.project._id, deleted: {$eq: null}})
         .exec(function(err, results) {
           if (err) {
@@ -635,9 +634,8 @@ module.exports = function(app, template, hook) {
         });
     });
 
+    if (!docker)
     it('A Deleted Project should not have any active Roles', function(done) {
-      if (!app.formio && !app.formio.formio) return done();
-
       app.formio.formio.resources.role.model.find({project: template.project._id, deleted: {$eq: null}})
         .exec(function(err, results) {
           if (err) {
@@ -801,9 +799,7 @@ module.exports = function(app, template, hook) {
     });
 
     describe('Independent Plan', function() {
-      // Cannot run these tests without access to formio instance
-      if (!app.formio && !app.formio.formio) return;
-
+      if (!docker)
       before(function(done) {
         // Confirm the dummy project is on the independent plan.
         app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
@@ -820,6 +816,7 @@ module.exports = function(app, template, hook) {
         });
       });
 
+      if (!docker)
       it('Confirm the project is on the independent plan', function(done) {
         confirmProjectPlan(template.project._id, template.formio.owner, 'independent', done);
       });
@@ -875,8 +872,7 @@ module.exports = function(app, template, hook) {
     });
 
     describe('Upgrading Plans', function() {
-      if(!app.formio) return;
-
+      if (!docker)
       before(function(done) {
         // Confirm the dummy project is on the basic plan.
         app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
@@ -982,6 +978,7 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      if (!docker)
       it('Saving a payment method', function(done) {
         app.formio.config.payeezy = {
           keyId: '123456',
@@ -1063,6 +1060,7 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      if (!docker)
       it('Upgrading with a registered payment method should work', function(done) {
         request(app)
           .post('/project/' + template.project._id + '/upgrade')
@@ -1099,6 +1097,7 @@ module.exports = function(app, template, hook) {
       });
 
       // Need to downgrade back to basic for the rest of the tests
+      if (!docker)
       it('Downgrading with a registered payment method should work', function(done) {
         request(app)
           .post('/project/' + template.project._id + '/upgrade')
@@ -1134,7 +1133,6 @@ module.exports = function(app, template, hook) {
             });
           });
       });
-
     });
   });
 };

@@ -5,10 +5,11 @@ var request = require('supertest');
 var assert = require('assert');
 var _ = require('lodash');
 var async = require('async');
+var docker = process.env.DOCKER;
 
 module.exports = function(app, template, hook) {
   describe('Analytics', function() {
-    if (!app.formio || !app.formio.analytics || !app.formio.analytics.connect()) {
+    if (docker) {
       return;
     }
 
