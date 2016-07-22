@@ -59,6 +59,7 @@ config.plan = plan;
 config.apiHost = apiHost;
 config.formio.apiHost = apiHost;
 config.formioHost = formioHost;
+config.formio.formioHost = formioHost;
 
 // Payeezy fields
 config.payeezy = {
