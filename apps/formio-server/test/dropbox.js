@@ -7,6 +7,10 @@ var mockRequest = require('request');
 var sinon = require('sinon');
 
 module.exports = function(app, template, hook) {
+  if (process.env.DOCKER) {
+    return;
+  }
+
   describe('Dropbox setup', function() {
     var testUser = {
       email: 'dropboxUser@example.com',
