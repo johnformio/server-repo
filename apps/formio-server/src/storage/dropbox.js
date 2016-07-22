@@ -27,15 +27,12 @@ module.exports = function(router) {
     },
     restrictOwnerAccess,
     function(req, res) {
-      if (
-        !router.formio.config.dropbox ||
-        !router.formio.config.dropbox.clientId
-      ) {
+      if (!process.env.DROPBOX_CLIENTID) {
         return res.status(400).send('Dropbox Auth not configured');
       }
       res.send({
         response_type: 'code',
-        client_id: router.formio.config.dropbox.clientId,
+        client_id: process.env.DROPBOX_CLIENTID,
         state: crypto.randomBytes(64).toString('hex')
       });
     }
@@ -62,8 +59,8 @@ module.exports = function(router) {
           form: {
             code: req.body.code,
             grant_type: 'authorization_code',
-            client_id: router.formio.config.dropbox.clientId,
-            client_secret: router.formio.config.dropbox.clientSecret,
+            client_id: process.env.DROPBOX_CLIENTID,
+            client_secret: process.env.DROPBOX_CLIENTSECRET,
             redirect_uri: req.body.redirect_uri
           }
         },
