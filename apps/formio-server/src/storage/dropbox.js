@@ -206,7 +206,7 @@ module.exports = function(router) {
         var fileInfo = req.body;
 
         // Restrict file uploads to 150MB as this is a limit in Dropbox unless we use a different endpoint.
-        if (Buffer.byteLength(req.file.buffer) > 153600) {
+        if (Buffer.byteLength(req.file.buffer) > 157286400) {
           return res.status(413).send('File too large');
         }
 
