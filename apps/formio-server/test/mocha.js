@@ -1113,6 +1113,7 @@ describe('Bootstrap', function() {
         require('./misc')(app, template, hook);
         require('./oauth')(app, template, hook);
         require('./s3')(app, template, hook);
+        require('./dropbox')(app, template, hook);
         require('./report')(app, template, hook);
       });
     });

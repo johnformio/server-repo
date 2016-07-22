@@ -327,8 +327,6 @@ module.exports = function(app, template, hook) {
           var response = res.body;
           assert.deepEqual(response, {});
 
-          template.formio.owner.token = res.headers['x-jwt-token'];
-
           delete template.users.tempUser;
 
           done();
