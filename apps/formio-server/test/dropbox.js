@@ -326,6 +326,23 @@ module.exports = function(app, template, hook) {
         });
     });
 
+    it('Restricts access to upload a dropbox file larger than 150M', function(done) {
+      const file = new Buffer(120000);
+      request(app)
+        .post('/project/' + template.project._id + '/form/' + template.forms.uploadForm._id + '/storage/dropbox')
+        .set('x-jwt-token', template.users.tempUser.token)
+        .field('name', 'abc123')
+        .field('dir', '')
+        .attach('file', file, 'test.txt')
+        .expect(413)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+          done();
+        });
+    });
+
     it('Clears the dropbox access_token', function(done) {
       request(app)
         .post('/project/' + template.project._id + '/dropbox/auth')

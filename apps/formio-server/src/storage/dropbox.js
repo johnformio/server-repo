@@ -208,6 +208,11 @@ module.exports = function(router) {
 
         var fileInfo = req.body;
 
+        // Restrict file uploads to 150MB as this is a limit in Dropbox unless we use a different endpoint.
+        if (Buffer.byteLength(req.file.buffer) > 153600) {
+          return res.status(413).send('File too large');
+        }
+
         // Stream project to dropbox here.
         request.post('https://content.dropboxapi.com/2/files/upload',
           {
