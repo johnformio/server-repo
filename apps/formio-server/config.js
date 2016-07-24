@@ -8,6 +8,15 @@ var config = {formio: {}};
 var protocol = process.env.PROTOCOL || 'https';
 var project = process.env.PROJECT || 'formio';
 var plan = process.env.PROJECT_PLAN || 'commercial';
+var fs = require('fs');
+
+try {
+  fs.statSync('/.dockerenv');
+  config.docker = true;
+}
+catch (e) {
+  config.docker = false;
+}
 
 config.reservedSubdomains = ['test', 'www', 'api', 'help', 'support', 'portal', 'app', 'apps'];
 config.formio.reservedForms = [
@@ -80,8 +89,13 @@ if (process.env.MONGO_PORT_27017_TCP_ADDR) {
   config.formio.mongo = 'mongodb://' + mongoAddr + ':' + mongoPort + '/' + mongoCollection;
 }
 else {
-  // New docker network linking. Assumes linked with 'mongo' alias.
-  config.formio.mongo = 'mongodb://mongo/' + mongoCollection;
+  if (config.docker) {
+    // New docker network linking. Assumes linked with 'mongo' alias.
+    config.formio.mongo = 'mongodb://mongo/' + mongoCollection;
+  }
+  else {
+    config.formio.mongo = 'mongodb://localhost:27017/' + mongoCollection;
+  }
 }
 
 if (process.env.REDIS_ADDR || process.env.REDIS_PORT_6379_TCP_ADDR) {
@@ -93,10 +107,17 @@ if (process.env.REDIS_ADDR || process.env.REDIS_PORT_6379_TCP_ADDR) {
   };
 }
 else {
-  // New docker network linking. Assumes linked with 'redis' alias.
-  config.redis = {
-    url: 'redis://redis'
-  };
+  if (config.docker) {
+    // New docker network linking. Assumes linked with 'redis' alias.
+    config.redis = {
+      url: 'redis://redis'
+    };
+  }
+  else {
+    config.redis = {
+      url: 'redis://localhost:6379'
+    };
+  }
 }
 
 if (process.env.REDIS_PASS) {
@@ -140,7 +161,7 @@ config.jslogger = process.env.JS_LOGGER || null;
 // Allow the config to be displayed when debugged.
 var sanitized = _.clone(config, true);
 sanitized = _.pick(sanitized, [
-  'https', 'domain', 'port', 'host', 'project', 'plan', 'formioHost', 'apiHost', 'debug', 'redis'
+  'https', 'domain', 'port', 'host', 'project', 'plan', 'formioHost', 'apiHost', 'debug', 'redis', 'docker'
 ]);
 sanitized.formio = _.pick(_.clone(config.formio), ['domain', 'schema', 'mongo']);
 
