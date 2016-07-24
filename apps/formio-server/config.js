@@ -96,7 +96,7 @@ else {
   // New docker network linking. Assumes linked with 'redis' alias.
   config.redis = {
     url: 'redis://redis'
-  }
+  };
 }
 
 if (process.env.REDIS_PASS) {
