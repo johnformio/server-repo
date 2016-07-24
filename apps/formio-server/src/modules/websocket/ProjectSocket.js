@@ -28,7 +28,7 @@ module.exports = function(formio) {
     this.requests = [];
 
     var redis = {
-      url: config.redis.url,
+      url: config.redis.url
     };
 
     if (config.redis.password) {
