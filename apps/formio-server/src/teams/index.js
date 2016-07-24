@@ -30,7 +30,7 @@ module.exports = function(app, formioServer) {
   var resetTeams = function() {
     _teamResource = null;
     _userResource = null;
-  }
+  };
 
   /**
    * Get the given teams permissions within the given project.
