@@ -57,9 +57,14 @@ var emptyDatabase = function(done) {
     });
   };
 
+  var resetTeams = function() {
+    app.formio.teams.resetTeams();
+    done();
+  }
+
   // Remove all test documents for roles.
   var dropRoles = function() {
-    dropDocuments(app.formio.resources.role.model, done);
+    dropDocuments(app.formio.resources.role.model, resetTeams);
   };
 
   // Remove all test documents for actions.
@@ -344,7 +349,7 @@ describe('Install Process', function () {
 
   after(function(done) {
     emptyDatabase(done);
-  })
+  });
 });
 
 /**
@@ -383,8 +388,6 @@ describe('Bootstrap', function() {
       };
       done();
     });
-
-    it('Should reset the database', emptyDatabase);
 
     it('Should be able to bootstrap Form.io', function(done) {
       if (docker) return done();
