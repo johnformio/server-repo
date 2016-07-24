@@ -44,7 +44,7 @@ test:
   override:
     - redis-server &> $CIRCLE_ARTIFACTS/redis.log:
           background: true
-    - DEBUG=formio:*,formio:*:* npm test &> $CIRCLE_ARTIFACTS/formio-server.log
+    - DEBUG=formio:*,formio:*:* MONGO1=$MONGO REDIS_ADDR=localhost npm test &> $CIRCLE_ARTIFACTS/formio-server.log
   post:
     - redis-server &> $CIRCLE_ARTIFACTS/docker-redis.log:
           background: true
