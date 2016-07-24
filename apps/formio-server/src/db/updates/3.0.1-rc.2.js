@@ -21,7 +21,7 @@ var Redis = require('redis');
  */
 module.exports = function(db, config, tools, done) {
   var _scriptFinished = false;
-  var Local = Redis.createClient(config.redis.port, config.redis.address, {max_attempts: 3});
+  var Local = Redis.createClient(config.redis.url, {max_attempts: 3});
 
   // Dont lock the db on errors.
   Local.on('error', function(err) {

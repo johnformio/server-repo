@@ -30,7 +30,7 @@ dependencies:
     - echo $TAG_NAME
     - ./serverSetup.sh
     - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-    - docker build -t $IMAGE_PATH:$SHORT_SHA -f deployment/docker/formio-server/Dockerfile .
+    - docker build -t $IMAGE_PATH -f deployment/docker/formio-server/Dockerfile .
   post:
     - ./deployment/scripts/importDb.sh formio
 
@@ -59,14 +59,13 @@ deployment:
   release:
     tag: /^\d+\.\d+\.\d+$/
     commands:
-      - docker tag $IMAGE_PATH:$SHORT_SHA $IMAGE_PATH:$TAG
+      - docker tag $IMAGE_PATH $IMAGE_PATH:$TAG
       - docker push $IMAGE_PATH
       - docker push $IMAGE_PATH:$TAG
       - ./deployment/scripts/createVersion.sh $TAG
   build:
     tag: /build-.*/
     commands:
-      - docker tag $IMAGE_PATH:$SHORT_SHA $IMAGE_PATH:$TAG
-      - docker push $IMAGE_PATH
+      - docker tag $IMAGE_PATH $IMAGE_PATH:$TAG
       - docker push $IMAGE_PATH:$TAG
       - ./deployment/scripts/createVersion.sh $TAG

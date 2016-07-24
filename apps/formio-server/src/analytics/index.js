@@ -47,7 +47,7 @@ module.exports = function(config) {
       return true;
     }
     // Redis is not currently connected, attempt to configure the connection.
-    else if (config.redis && config.redis.port && config.redis.address) {
+    else if (config.redis && config.redis.url) {
       var opts = {};
       if (config.redis.password) {
         /* eslint-disable */
@@ -56,7 +56,7 @@ module.exports = function(config) {
       }
 
       // Attempt to connect to redis 1 time only.
-      redis = Redis.createClient(config.redis.port, config.redis.address, opts);
+      redis = Redis.createClient(config.redis.url, opts);
       /* eslint-disable */
       redis.max_attempts = 1;
       /* eslint-enable */

@@ -71,16 +71,39 @@ config.payeezy = {
   hmacKey: process.env.PAYEEZY_HMAC_KEY
 };
 
-// The redis configuration.
-config.redis = {
-  port: process.env.REDIS_PORT || 6379,
-  address: process.env.REDIS_ADDR || 'localhost'
-};
+// Using docker, support legacy linking and network links.
+var mongoCollection = process.env.MONGO_COLLECTION || 'formio';
+if (process.env.MONGO_PORT_27017_TCP_ADDR) {
+  // This is compatible with docker legacy linking.
+  var mongoAddr = process.env.MONGO_PORT_27017_TCP_ADDR || 'mongo';
+  var mongoPort = process.env.MONGO_PORT_27017_TCP_PORT || 27017;
+  config.formio.mongo = 'mongodb://' + mongoAddr + ':' + mongoPort + '/' + mongoCollection;
+}
+else {
+  // New docker network linking. Assumes linked with 'mongo' alias.
+  config.formio.mongo = 'mongodb://mongo/' + mongoCollection;
+}
+
+if (process.env.REDIS_ADDR || process.env.REDIS_PORT_6379_TCP_ADDR) {
+  // This is compatible with docker legacy linking.
+  var addr = process.env.REDIS_ADDR || process.env.REDIS_PORT_6379_TCP_ADDR;
+  var port = process.env.REDIS_PORT || process.env.REDIS_PORT_6379_TCP_PORT;
+  config.redis = {
+    url: 'redis://' + addr + ':' + port
+  };
+}
+else {
+  // New docker network linking. Assumes linked with 'redis' alias.
+  config.redis = {
+    url: 'redis://redis'
+  }
+}
 
 if (process.env.REDIS_PASS) {
   config.redis.password = process.env.REDIS_PASS;
 }
 
+// Allow manually setting mongo connection.
 if (process.env.MONGO1) {
   config.formio.mongo = [];
   config.formio.mongo.push(process.env.MONGO1);
@@ -90,13 +113,6 @@ if (process.env.MONGO1) {
   if (process.env.MONGO3) {
     config.formio.mongo.push(process.env.MONGO3);
   }
-}
-else {
-  // This is compatible with docker linking.
-  var mongoAddr = process.env.MONGO_PORT_27017_TCP_ADDR || 'localhost';
-  var mongoPort = process.env.MONGO_PORT_27017_TCP_PORT || 27017;
-  var mongoCollection = process.env.MONGO_COLLECTION || 'formio';
-  config.formio.mongo = 'mongodb://' + mongoAddr + ':' + mongoPort + '/' + mongoCollection;
 }
 
 // This secret is used to encrypt certain DB fields at rest in the mongo database
@@ -124,7 +140,7 @@ config.jslogger = process.env.JS_LOGGER || null;
 // Allow the config to be displayed when debugged.
 var sanitized = _.clone(config, true);
 sanitized = _.pick(sanitized, [
-  'https', 'domain', 'port', 'host', 'project', 'plan', 'formioHost', 'apiHost', 'debug'
+  'https', 'domain', 'port', 'host', 'project', 'plan', 'formioHost', 'apiHost', 'debug', 'redis'
 ]);
 sanitized.formio = _.pick(_.clone(config.formio), ['domain', 'schema', 'mongo']);
 
