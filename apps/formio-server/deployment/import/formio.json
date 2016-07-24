@@ -19,17 +19,13 @@
       "title": "Anonymous",
       "description": "The Anonymous Role.",
       "default": true
-    },
-    "manager": {
-      "title": "Manager",
-      "description": "Manager"
     }
   },
   "forms": {
-    "userLoginForm": {
-      "title": "User Login Form",
+    "userLogin": {
+      "title": "User Login",
       "type": "form",
-      "name": "userLoginForm",
+      "name": "userLogin",
       "path": "user/login",
       "display": "form",
       "tags": [],
@@ -87,8 +83,7 @@
           "roles": [
             "administrator",
             "authenticated",
-            "anonymous",
-            "manager"
+            "anonymous"
           ]
         },
         {
@@ -311,8 +306,7 @@
           "roles": [
             "administrator",
             "authenticated",
-            "anonymous",
-            "manager"
+            "anonymous"
           ]
         },
         {
@@ -453,8 +447,7 @@
           "roles": [
             "administrator",
             "authenticated",
-            "anonymous",
-            "manager"
+            "anonymous"
           ]
         }
       ],
@@ -606,7 +599,6 @@
           "type": "read_all",
           "roles": [
             "anonymous",
-            "manager",
             "administrator",
             "authenticated"
           ]
@@ -634,8 +626,7 @@
           "roles": [
             "anonymous",
             "authenticated",
-            "administrator",
-            "manager"
+            "administrator"
           ]
         },
         {
@@ -744,7 +735,6 @@
         {
           "type": "read_all",
           "roles": [
-            "manager",
             "administrator",
             "authenticated",
             "anonymous"
@@ -853,10 +843,10 @@
         "before"
       ]
     },
-    "userLoginFormLogin": {
+    "userLoginLogin": {
       "title": "Login",
       "name": "login",
-      "form": "userLoginForm",
+      "form": "userLogin",
       "settings": {
         "resources": [
           "user"
@@ -1185,8 +1175,7 @@
           "roles": [
             "administrator",
             "authenticated",
-            "anonymous",
-            "manager"
+            "anonymous"
           ]
         },
         {
@@ -1342,8 +1331,7 @@
           "roles": [
             "administrator",
             "authenticated",
-            "anonymous",
-            "manager"
+            "anonymous"
           ]
         },
         {
@@ -1469,7 +1457,6 @@
         {
           "type": "read_all",
           "roles": [
-            "manager",
             "administrator",
             "authenticated",
             "anonymous"
