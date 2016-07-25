@@ -48,7 +48,7 @@ test:
   post:
     - redis-server &> $CIRCLE_ARTIFACTS/docker-redis.log:
           background: true
-    - docker run -d -e "MONGO1=mongodb://localhost:27017/formio" -e "REDIS_ADDR=localhost" -e "REDIS_PORT=6379" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "DEBUG=formio:*,formio:*:*" -e "PROJECT_PLAN=basic" -e "DROPBOX_CLIENTID=NOTREAL" --name formio-server --net=host $IMAGE_PATH
+    - docker run -d -e "MONGO1=$MONGO" -e "REDIS_ADDR=localhost" -e "REDIS_PORT=6379" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "DEBUG=formio:*,formio:*:*" -e "PROJECT_PLAN=basic" -e "DROPBOX_CLIENTID=NOTREAL" --name formio-server --net=host $IMAGE_PATH
     - sleep 5
     - docker logs formio-server
     - wget --tries=10 --retry-connrefused --wait=6 -v http://api.localhost:3000/health
