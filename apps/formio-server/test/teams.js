@@ -131,16 +131,14 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      it('A Formio User should be able to create a Team', function(done) {
+      it('A Formio User should be able to create a Team without users', function(done) {
         request(app)
           .post('/project/' + template.formio.project._id + '/form/' + template.formio.teamResource._id + '/submission')
           .set('x-jwt-token', template.formio.owner.token)
           .send({
             data: {
               name: chance.word(),
-              members: [
-                {_id: template.users.user1._id}
-              ]
+              members: []
             }
           })
           .expect('Content-Type', /json/)
@@ -166,8 +164,9 @@ module.exports = function(app, template, hook) {
           .set('x-jwt-token', template.formio.owner.token)
           .send({
             data: {
+              name: template.team1.data.name,
               members: [
-                {_id: template.users.user2._id}
+                {_id: template.users.user1._id}
               ]
             }
           })
@@ -180,7 +179,7 @@ module.exports = function(app, template, hook) {
 
             var response = res.body;
             assert.equal(response.data.members.length, 1);
-            assert.equal(response.data.members[0]._id, template.users.user2._id);
+            assert.equal(response.data.members[0]._id, template.users.user1._id);
 
             // Store the JWT for future API calls.
             template.formio.owner.token = res.headers['x-jwt-token'];
@@ -198,6 +197,7 @@ module.exports = function(app, template, hook) {
           .set('x-jwt-token', template.users.user1.token)
           .send({
             data: {
+              name: template.team1.data.name,
               members: [
                 {_id: template.users.user1._id},
                 {_id: template.users.user2._id}
@@ -868,7 +868,7 @@ module.exports = function(app, template, hook) {
           .set('x-jwt-token', template.formio.user1.token)
           .send({
             data: {
-              name: 'test2',
+              name: chance.word(),
               members: []
             }
           })
@@ -897,7 +897,10 @@ module.exports = function(app, template, hook) {
           .set('x-jwt-token', template.formio.owner.token)
           .send({
             data: {
-              members: [template.formio.owner.token]
+              name: template.team2.data.name,
+              members: [
+                {_id: template.formio.owner._id}
+              ]
             }
           })
           .expect('Content-Type', /text/)
@@ -966,7 +969,7 @@ module.exports = function(app, template, hook) {
                 var proj = _.clone(template.project);
                 proj.access.push({type: 'team_read', roles: []});
 
-                // Confirm that the project wasnt modified.
+                // Confirm that the project wasn't modified.
                 var response = res.body;
                 assert.deepEqual(_.omit(proj, ['modified', 'name']), _.omit(response, ['modified', 'name']));
                 template.projet = response;
@@ -1012,6 +1015,7 @@ module.exports = function(app, template, hook) {
           .set('x-jwt-token', template.formio.owner.token)
           .send({
             data: {
+              name: template.team1.data.name,
               members: [
                 {_id: template.formio.user1._id}
               ]
