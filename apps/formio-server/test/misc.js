@@ -21,7 +21,7 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
-          assert.equal(res.text, 'Unexpected token �');
+          assert.equal(res.text, 'Unexpected token � in JSON at position 75');
 
           done();
         });
