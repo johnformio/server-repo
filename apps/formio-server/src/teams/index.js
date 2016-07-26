@@ -25,6 +25,14 @@ module.exports = function(app, formioServer) {
   var _userResource = null;
 
   /**
+   * Reset Cache for testing
+   */
+  var resetTeams = function() {
+    _teamResource = null;
+    _userResource = null;
+  };
+
+  /**
    * Get the given teams permissions within the given project.
    *
    * @param project {Object}
@@ -674,6 +682,7 @@ module.exports = function(app, formioServer) {
     getTeams: getTeams,
     getProjectTeams: getProjectTeams,
     getDisplayableTeams: getDisplayableTeams,
-    filterTeamsForDisplay: filterTeamsForDisplay
+    filterTeamsForDisplay: filterTeamsForDisplay,
+    resetTeams: resetTeams
   };
 };

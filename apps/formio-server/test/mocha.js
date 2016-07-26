@@ -57,9 +57,14 @@ var emptyDatabase = function(done) {
     });
   };
 
+  var resetTeams = function() {
+    app.formio.teams.resetTeams();
+    done();
+  }
+
   // Remove all test documents for roles.
   var dropRoles = function() {
-    dropDocuments(app.formio.resources.role.model, done);
+    dropDocuments(app.formio.resources.role.model, resetTeams);
   };
 
   // Remove all test documents for actions.
@@ -170,7 +175,7 @@ describe('Install Process', function () {
       done();
     });
 
-    it('creates one resource named user', function(done) {
+    it('creates a resource named user', function(done) {
       app.formio.resources.form.model.find({
           type: 'resource'
         })
@@ -179,9 +184,12 @@ describe('Install Process', function () {
             return done(err);
           }
 
-          assert.equal(results.length, 1);
-          assert.equal(results[0].name, 'user');
+          assert.equal(results.length, 3);
           template.resources = {};
+          results.forEach(function(result) {
+            template.resources[result.name] = result;
+          })
+          assert.equal(template.resources.user.name, 'user');
           template.resources[results[0].name] = results[0];
           assert.equal(template.resources.user.title, 'User');
           assert.equal(template.resources.user.machineName, 'formio:user');
@@ -197,7 +205,7 @@ describe('Install Process', function () {
         });
     });
 
-    it('creates one form named user login', function(done) {
+    it('creates a form named user login', function(done) {
       app.formio.resources.form.model.find({
           type: 'form'
         })
@@ -206,10 +214,12 @@ describe('Install Process', function () {
             return done(err);
           }
 
-          assert.equal(results.length, 1);
-          assert.equal(results[0].name, 'userLogin');
+          assert.equal(results.length, 5);
           template.forms = {};
-          template.forms[results[0].name] = results[0];
+          results.forEach(function(result) {
+            template.forms[result.name] = result;
+          })
+          assert.equal(template.forms.userLogin.name, 'userLogin');
           assert.equal(template.forms.userLogin.title, 'User Login');
           assert.equal(template.forms.userLogin.machineName, 'formio:userLogin');
           assert.equal(template.forms.userLogin.project._id, template.project._id._id);
@@ -224,23 +234,23 @@ describe('Install Process', function () {
             return done(err);
           }
 
-          assert.equal(results.length, 3);
+          assert.equal(results.length, 14);
           template.actions = {};
           results.forEach(function(action) {
-            template.actions[action.name] = action;
+            template.actions[action.machineName] = action;
           });
 
-          assert.equal(template.actions.save.title, 'Save Submission');
-          assert.equal(template.actions.save.machineName, 'formio:user:userSave');
-          assert.equal(template.actions.save.form._id, template.resources.user._id._id);
+          assert.equal(template.actions['formio:user:userSave'].title, 'Save Submission');
+          assert.equal(template.actions['formio:user:userSave'].machineName, 'formio:user:userSave');
+          assert.equal(template.actions['formio:user:userSave'].form._id, template.resources.user._id._id);
 
-          assert.equal(template.actions.role.title, 'Role Assignment');
-          assert.equal(template.actions.role.machineName, 'formio:user:userRole');
-          assert.equal(template.actions.role.form._id, template.resources.user._id._id);
+          assert.equal(template.actions['formio:user:userRole'].title, 'Role Assignment');
+          assert.equal(template.actions['formio:user:userRole'].machineName, 'formio:user:userRole');
+          assert.equal(template.actions['formio:user:userRole'].form._id, template.resources.user._id._id);
 
-          assert.equal(template.actions.login.title, 'Login');
-          assert.equal(template.actions.login.machineName, 'formio:userLogin:userLoginLogin');
-          assert.equal(template.actions.login.form._id, template.forms.userLogin._id._id);
+          assert.equal(template.actions['formio:userLogin:userLoginLogin'].title, 'Login');
+          assert.equal(template.actions['formio:userLogin:userLoginLogin'].machineName, 'formio:userLogin:userLoginLogin');
+          assert.equal(template.actions['formio:userLogin:userLoginLogin'].form._id, template.forms.userLogin._id._id);
 
           done();
         });
@@ -281,7 +291,7 @@ describe('Install Process', function () {
           assert.equal(res.body.length, 1);
           project = res.body[0];
           assert.equal(project.name, 'formio');
-          assert.equal(project.title, 'Formio');
+          assert.equal(project.title, 'Form.IO');
           assert(project.alias);
           assert(project.url);
           assert(project.form);
@@ -299,7 +309,7 @@ describe('Install Process', function () {
             return done(err);
           }
           var response = res.body;
-          assert.equal(response.length, 2);
+          assert.equal(response.length, 8);
           response.forEach(function(form) {
             forms[form.name] = form;
           });
@@ -335,6 +345,10 @@ describe('Install Process', function () {
       process.env.ADMIN_PASS = originalADMIN_PASS;
       done();
     });
+  });
+
+  after(function(done) {
+    emptyDatabase(done);
   });
 });
 
@@ -374,8 +388,6 @@ describe('Bootstrap', function() {
       };
       done();
     });
-
-    it('Should reset the database', emptyDatabase);
 
     it('Should be able to bootstrap Form.io', function(done) {
       if (docker) return done();
