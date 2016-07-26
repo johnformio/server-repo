@@ -8,6 +8,15 @@ var config = {formio: {}};
 var protocol = process.env.PROTOCOL || 'https';
 var project = process.env.PROJECT || 'formio';
 var plan = process.env.PROJECT_PLAN || 'commercial';
+var fs = require('fs');
+
+try {
+  fs.statSync('/.dockerenv');
+  config.docker = true;
+}
+catch (e) {
+  config.docker = false;
+}
 
 config.reservedSubdomains = ['test', 'www', 'api', 'help', 'support', 'portal', 'app', 'apps'];
 config.formio.reservedForms = [
@@ -21,6 +30,8 @@ config.formio.reservedForms = [
   'import',
   'form',
   'storage\/s3',
+  'storage\/dropbox',
+  'dropbox\/auth',
   'upgrade',
   'access'
 ];
@@ -69,16 +80,51 @@ config.payeezy = {
   hmacKey: process.env.PAYEEZY_HMAC_KEY
 };
 
-// The redis configuration.
-config.redis = {
-  port: process.env.REDIS_PORT || 6379,
-  address: process.env.REDIS_ADDR || 'localhost'
-};
+// Using docker, support legacy linking and network links.
+var mongoCollection = process.env.MONGO_COLLECTION || 'formio';
+if (process.env.MONGO_PORT_27017_TCP_ADDR) {
+  // This is compatible with docker legacy linking.
+  var mongoAddr = process.env.MONGO_PORT_27017_TCP_ADDR || 'mongo';
+  var mongoPort = process.env.MONGO_PORT_27017_TCP_PORT || 27017;
+  config.formio.mongo = 'mongodb://' + mongoAddr + ':' + mongoPort + '/' + mongoCollection;
+}
+else {
+  if (config.docker) {
+    // New docker network linking. Assumes linked with 'mongo' alias.
+    config.formio.mongo = 'mongodb://mongo/' + mongoCollection;
+  }
+  else {
+    config.formio.mongo = 'mongodb://localhost:27017/' + mongoCollection;
+  }
+}
+
+if (process.env.REDIS_ADDR || process.env.REDIS_PORT_6379_TCP_ADDR) {
+  // This is compatible with docker legacy linking.
+  var addr = process.env.REDIS_ADDR || process.env.REDIS_PORT_6379_TCP_ADDR;
+  var redisPort = process.env.REDIS_PORT || process.env.REDIS_PORT_6379_TCP_PORT;
+  config.redis = {
+    url: 'redis://' + addr + ':' + redisPort
+  };
+}
+else {
+  if (config.docker) {
+    // New docker network linking. Assumes linked with 'redis' alias.
+    config.redis = {
+      url: 'redis://redis'
+    };
+  }
+  else {
+    config.redis = {
+      url: 'redis://localhost:6379'
+    };
+  }
+}
 
 if (process.env.REDIS_PASS) {
   config.redis.password = process.env.REDIS_PASS;
 }
 
+// Allow manually setting mongo connection.
 if (process.env.MONGO1) {
   config.formio.mongo = [];
   config.formio.mongo.push(process.env.MONGO1);
@@ -88,13 +134,6 @@ if (process.env.MONGO1) {
   if (process.env.MONGO3) {
     config.formio.mongo.push(process.env.MONGO3);
   }
-}
-else {
-  // This is compatible with docker linking.
-  var mongoAddr = process.env.MONGO_PORT_27017_TCP_ADDR || 'localhost';
-  var mongoPort = process.env.MONGO_PORT_27017_TCP_PORT || 27017;
-  var mongoCollection = process.env.MONGO_COLLECTION || 'formio';
-  config.formio.mongo = 'mongodb://' + mongoAddr + ':' + mongoPort + '/' + mongoCollection;
 }
 
 // This secret is used to encrypt certain DB fields at rest in the mongo database
@@ -109,6 +148,10 @@ if (process.env.SENDGRID_USERNAME) {
   config.formio.email.password = process.env.SENDGRID_PASSWORD;
 }
 
+config.formio.dropbox = {};
+config.formio.dropbox.clientId = process.env.DROPBOX_CLIENTID || '';
+config.formio.dropbox.clientSecret = process.env.DROPBOX_CLIENTSECRET || '';
+
 // Add the JWT data.
 config.formio.jwt = {};
 config.formio.jwt.secret = process.env.JWT_SECRET || 'abc123';
@@ -118,7 +161,7 @@ config.jslogger = process.env.JS_LOGGER || null;
 // Allow the config to be displayed when debugged.
 var sanitized = _.clone(config, true);
 sanitized = _.pick(sanitized, [
-  'https', 'domain', 'port', 'host', 'project', 'plan', 'formioHost', 'apiHost', 'debug'
+  'https', 'domain', 'port', 'host', 'project', 'plan', 'formioHost', 'apiHost', 'debug', 'redis', 'docker'
 ]);
 sanitized.formio = _.pick(_.clone(config.formio), ['domain', 'schema', 'mongo']);
 

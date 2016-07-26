@@ -9,6 +9,7 @@ var JSONStream = require('JSONStream');
 var through = require('through');
 var traverse = require('traverse');
 var formioUtils = require('formio-utils');
+var paginate = require('node-paginate-anything');
 var _ = require('lodash');
 var debug = {
   report: require('debug')('formio:middleware:report'),
@@ -37,13 +38,26 @@ module.exports = function(formio) {
     }
     debug.report('filter', filter);
 
-    var hasDisallowedStage = function() {
+    // Convert ObjectIds to actual object ids.
+    traverse(filter).forEach(function(node) {
+      if (typeof node === 'string' && node.match(/^ObjectId\(\'(.{24})\'\)$/)) {
+        var result = node.match(/^ObjectId\(\'(.{24})\'\)$/m);
+        this.update(mongoose.Types.ObjectId(result[1]));
+      }
+    });
+
+    var query = {};
+    var stages = [];
+    var limitStage = null;
+    var skipStage = null;
+    var filterStages = function() {
       // Ensure there are no disallowed stages in the aggregation.
       // We may want to include additional stages but better to start with less.
       var allowedStages = ['$match', '$limit', '$sort', '$skip', '$group', '$unwind'];
       /* eslint-disable */
       for (var i in filter) {
         var stage = filter[i];
+        var includeStage = false;
         for (var key in stage) {
           // Only allow boolean values for $project
           if (key === '$project') {
@@ -52,28 +66,36 @@ module.exports = function(formio) {
                 return true;
               }
             }
+            includeStage = true;
+          }
+          else if (key === '$match') {
+            _.merge(query, stage[key]);
+          }
+          else if (key === '$limit') {
+            limitStage = stage;
+          }
+          else if (key === '$skip') {
+            skipStage = stage;
           }
           // Make sure that this is an allowed stage.
           else if (allowedStages.indexOf(key) === -1) {
             return true;
           }
+          else {
+            includeStage = true;
+          }
+        }
+        if (includeStage) {
+          stages.push(filter[i]);
         }
       }
       /* eslint-enable */
       return false;
     };
 
-    if (hasDisallowedStage()) {
+    if (filterStages()) {
       return res.status(400).send('Disallowed stage used in aggregation.');
     }
-
-    // Convert ObjectIds to actual object ids.
-    traverse(filter).forEach(function(node) {
-      if (typeof node === 'string' && node.match(/^ObjectId\(\'(.{24})\'\)$/)) {
-        var result = node.match(/^ObjectId\(\'(.{24})\'\)$/m);
-        this.update(mongoose.Types.ObjectId(result[1]));
-      }
-    });
 
     // Get the user roles.
     var userRoles = _.map(req.user.roles, function(role) {
@@ -111,36 +133,83 @@ module.exports = function(formio) {
         forms[form._id.toString()] = form;
       });
 
-      // Get the submission query.
-      var submissionQuery = {form: {'$in': formIds}};
+      // Make sure to not include deleted submissions.
       if (!req.query.deleted) {
-        submissionQuery.deleted = {$eq: null};
+        query.deleted = {$eq: null};
       }
 
+      // Start with the query, then add the remaining stages.
+      stages = [{'$match': query}].concat(stages);
+
+      // Add the skip stage first if applicable.
+      if (skipStage) {
+        stages = stages.concat([skipStage]);
+      }
+
+      // Next add the limit stage if applicable.
+      if (limitStage) {
+        stages = stages.concat([limitStage]);
+      }
+
+      // Ensure they cannot pull data out of their realm.
+      stages = stages.concat([{'$match': {form: {'$in': formIds}}}]);
+
       // Start out the filter to only include those forms.
-      var pipeline = [{'$match': submissionQuery}].concat(filter);
-      debug.report('final pipeline', pipeline);
+      debug.report('final pipeline', stages);
 
       res.setHeader('Content-Type', 'application/json');
 
-      // Create the submission aggregate stream.
-      submissions.aggregate(pipeline)
-        .stream()
-        .pipe(through(function(doc) {
-          if (doc && doc.form) {
-            var formId = doc.form.toString();
-            if (forms.hasOwnProperty(formId)) {
-              _.each(formioUtils.flattenComponents(forms[doc.form.toString()].components), function(component) {
-                if (component.protected && doc.data && doc.data.hasOwnProperty(component.key)) {
-                  delete doc.data[component.key];
-                }
-              });
+      // Method to perform the aggregation.
+      var performAggregation = function() {
+        submissions.aggregate(stages)
+          .stream()
+          .pipe(through(function(doc) {
+            if (doc && doc.form) {
+              var formId = doc.form.toString();
+              if (forms.hasOwnProperty(formId)) {
+                _.each(formioUtils.flattenComponents(forms[doc.form.toString()].components), function(component) {
+                  if (component.protected && doc.data && doc.data.hasOwnProperty(component.key)) {
+                    delete doc.data[component.key];
+                  }
+                });
+              }
             }
+            this.queue(doc);
+          }))
+          .pipe(JSONStream.stringify())
+          .pipe(res);
+      };
+
+      // If a limit is provided, then we need to include some pagination stuff.
+      if (limitStage) {
+        // Find the total count based on the query.
+        submissions.find(query).count(function(err, count) {
+          var skip = skipStage ? skipStage['$skip'] : 0;
+          var limit = limitStage['$limit'];
+          if (!req.headers.range) {
+            req.headers['range-unit'] = 'items';
+            req.headers.range = skip + '-' + (skip + (limit - 1));
           }
-          this.queue(doc);
-        }))
-        .pipe(JSONStream.stringify())
-        .pipe(res);
+
+          // Get the page range.
+          var pageRange = paginate(req, res, count, limit) || {
+            limit: limit,
+            skip: skip
+          };
+
+          // Alter the skip and limit stages.
+          if (skipStage) {
+            skipStage['$skip'] = pageRange.skip;
+          }
+          limitStage['$limit'] = pageRange.limit;
+
+          // Perform the aggregation command.
+          performAggregation();
+        });
+      }
+      else {
+        performAggregation();
+      }
     });
   };
 

@@ -186,7 +186,7 @@ module.exports = function(app, template, hook) {
         .set('x-query', JSON.stringify([{
           '$limit': 25
         }]))
-        .expect(200)
+        .expect(206)
         .end(function (err, res) {
           if (err) {
             return done(err);

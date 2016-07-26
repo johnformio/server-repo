@@ -24,7 +24,7 @@ module.exports = function(router) {
       debug('Signing GET request');
       cache.loadProject(req, req.projectId, function(err, project) {
         if (err) {
-          return res.status(500).send('Project not found.');
+          return res.status(400).send('Project not found.');
         }
 
         debug('Project Loaded: ' + req.projectId);
@@ -72,7 +72,7 @@ module.exports = function(router) {
       debug('Signing POST request');
       cache.loadProject(req, req.projectId, function(err, project) {
         if (err) {
-          return res.status(500).send('Project not found.');
+          return res.status(400).send('Project not found.');
         }
 
         debug('Project Loaded: ' + req.projectId);
