@@ -182,10 +182,8 @@ module.exports = function(formio) {
 
       // If a limit is provided, then we need to include some pagination stuff.
       if (limitStage) {
-
         // Find the total count based on the query.
         submissions.find(query).count(function(err, count) {
-
           var skip = skipStage ? skipStage['$skip'] : 0;
           var limit = limitStage['$limit'];
           if (!req.headers.range) {
