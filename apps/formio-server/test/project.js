@@ -12,6 +12,7 @@ var chance = new (require('chance'))();
 var uuidRegex = /^([a-z]{15})$/;
 var util = require('formio/src/util/util');
 var docker = process.env.DOCKER;
+var customer = process.env.CUSTOMER;
 
 module.exports = function(app, template, hook) {
   /**
@@ -416,11 +417,22 @@ module.exports = function(app, template, hook) {
           }
 
           var response = res.body;
-          assert.equal(response.length, 1);
-          assert.equal(response[0].name, template.project.name);
+          if (!customer) {
+            assert.equal(response.length, 1);
+            assert.equal(response[0].name, template.project.name);
+          }
+          else {
+            var found = false;
+            response.forEach(function(project) {
+              if (project.name === template.project.name) {
+                found = true;
+              }
+            });
+            assert.equal(found, true);
+          }
 
           // Check plan and api calls info
-          if (app.formio) {
+          if (!docker && !customer) {
             var plan = process.env.PROJECT_PLAN;
             assert.equal(response[0].plan, plan, 'The plan should match the default new project plan.');
             assert.deepEqual(response[0].apiCalls, {
@@ -963,6 +975,7 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      if (!customer)
       it('Upgrading without a registered payment method should not be allowed', function(done) {
         request(app)
           .post('/project/' + template.project._id + '/upgrade')

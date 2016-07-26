@@ -19,7 +19,7 @@ process.on('uncaughtException', function(err) {
 });
 
 var emptyDatabase = template.emptyDatabase = function(done) {
-  if (docker) {
+  if (docker || customer) {
     return done();
   }
 
@@ -49,7 +49,7 @@ var emptyDatabase = template.emptyDatabase = function(done) {
   };
 
   var resetTeams = function() {
-    if (docker) {
+    if (docker || customer) {
       return done;
     }
 
@@ -89,7 +89,7 @@ var emptyDatabase = template.emptyDatabase = function(done) {
 describe('Tests', function() {
   before(function(done) {
     var hooks = _.merge(require('formio/test/hooks'), require('./hooks')); // Merge all the test hooks.
-    if (!docker) { //  && !customer
+    if (!docker && !customer) {
       require('../server')({
         hooks: hooks
       })
@@ -105,6 +105,8 @@ describe('Tests', function() {
     }
     else if (customer) {
       app = 'http://api.localhost:3000';
+      hook = require('formio/src/util/hook')({hooks: hooks});
+      template.hooks = hooks;
       return done();
     }
     else if (docker) {
@@ -120,7 +122,7 @@ describe('Tests', function() {
   });
 
   describe('Install Process', function() {
-    if (docker) { // || customer
+    if (docker || customer) {
       return;
     }
     var originalADMIN_EMAIL = process.env.ADMIN_EMAIL;
@@ -133,10 +135,6 @@ describe('Tests', function() {
       var token = null;
 
       before(function(done) {
-        if (docker) {
-          return done();
-        }
-
         process.env.ADMIN_EMAIL = 'test@example.com';
         process.env.ADMIN_PASS = 'password';
         // Clear the database, reset the schema and perform a fresh install.
@@ -379,7 +377,7 @@ describe('Tests', function() {
    */
   describe('Bootstrap', function() {
     describe('Recreate Formio', function() {
-      //if (docker) //  && !customer
+      if (!customer)
       it('Attach Formio properties', function(done) {
         template.formio = {
           owner: {
@@ -411,10 +409,10 @@ describe('Tests', function() {
         done();
       });
 
-      if (!docker)
+      if (!docker && !customer)
       it('Should reset the database', emptyDatabase);
 
-      if (!docker)
+      if (!docker && !customer)
       it('Should be able to bootstrap Form.io', function(done) {
         /**
          * Store a document using a mongoose model.
@@ -1041,10 +1039,99 @@ describe('Tests', function() {
       //      });
       //  });
       //});
+
+      if (customer)
+      it('Discover the formio install', function(done) {
+        var getPrimary = function(cb) {
+          request(app)
+            .get('/')
+            .expect(200)
+            .expect('Content-Type', /json/)
+            .end(function(err, res) {
+              if (err) {
+                return cb(err);
+              }
+
+              var response = res.body;
+              response.forEach(function(project) {
+                if (project.name === 'formio') {
+                  template.formio.primary = project;
+                }
+              });
+
+              cb();
+            });
+        };
+        var getProject = function(cb) {
+          request(app)
+            .get('/project/' + template.formio.primary._id)
+            .expect(200)
+            .expect('Content-Type', /json/)
+            .end(function(err, res) {
+              if (err) {
+                return cb(err);
+              }
+
+              var response = res.body;
+              template.formio.project = response;
+
+              cb();
+            });
+        };
+        var getForms = function(cb) {
+          request(app)
+            .get('/project/' + template.formio.project._id + '/form?limit=9999999')
+            .expect(200)
+            .expect('Content-Type', /json/)
+            .end(function(err, res) {
+              if (err) {
+                return cb(err);
+              }
+
+              var response = res.body;
+              response.forEach(function(form) {
+                if (form.name === 'userRegistrationForm') {
+                  template.formio.formRegister = form;
+                }
+                else if (form.name === 'userLogin') {
+                  template.formio.formLogin = form;
+                }
+                else if (form.name === 'user') {
+                  template.formio.userResource = form;
+                }
+                else if (form.name === 'team') {
+                  template.formio.teamResource = form;
+                }
+              });
+
+              cb();
+            });
+        };
+
+        template.formio = {
+          owner: {
+            data: {
+              name: chance.word(),
+              email: process.env.ADMIN_EMAIL || '',
+              password: process.env.ADMIN_PASS || ''
+            }
+          }
+        };
+        async.series([
+          getPrimary,
+          getProject,
+          getForms
+        ], function(err) {
+          if (err) {
+            return done(err);
+          }
+
+          done();
+        });
+      });
     });
 
     describe('Initial access tests', function() {
-      //if (!customer)
       it('A user can access the register form', function(done) {
         request(app)
           .get('/project/' + template.formio.project._id + '/form/' + template.formio.formRegister._id)
@@ -1059,7 +1146,7 @@ describe('Tests', function() {
           });
       });
 
-      //if (!customer)
+      if (!customer)
       it('Should be able to register a new user for Form.io', function(done) {
         request(app)
           .post('/project/' + template.formio.project._id + '/form/' + template.formio.formRegister._id + '/submission')
@@ -1103,7 +1190,7 @@ describe('Tests', function() {
           });
       });
 
-      if (!docker) // !customer &&
+      if (!docker && !customer)
       it('Should have sent an email to the user with a valid auth token', function(done) {
         var email = app.formio.formio.hooks.getLastEmail();
         assert.equal(email.from, 'no-reply@form.io');
@@ -1170,10 +1257,10 @@ describe('Tests', function() {
             assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
             assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
             assert(response.hasOwnProperty('data'), 'The response should contain a submission `data` object.');
-            //if (!customer) {
+            if (!customer) {
               assert(response.data.hasOwnProperty('name'), 'The submission `data` should contain the `name`.');
               assert.equal(response.data.name, template.formio.owner.data.name);
-            //}
+            }
             assert(response.data.hasOwnProperty('email'), 'The submission `data` should contain the `email`.');
             assert.equal(response.data.email, template.formio.owner.data.email);
             assert(!response.hasOwnProperty('password'), 'The submission `data` should not contain the `password`.');
