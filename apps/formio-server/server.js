@@ -120,7 +120,7 @@ app.formio.init(settings).then(function(formio) {
     app.listen(config.port);
   };
 
-  app.storage = require('./src/storage')(app);
+  app.storage = require('./src/storage/index.js')(app);
 
   formio.db.collection('projects').count(function(err, numProjects) {
     if (!err && numProjects > 0) {

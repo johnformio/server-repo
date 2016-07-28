@@ -29,6 +29,7 @@ dependencies:
   override:
     - echo $TAG_NAME
     - ./serverSetup.sh
+    - npm run build
     - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
     - docker build -t $IMAGE_PATH -f deployment/docker/formio-server/Dockerfile .
   post:
