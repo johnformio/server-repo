@@ -51,4 +51,6 @@ compressedAst.mangle_names();
 var stream = UglifyJS.OutputStream();
 compressedAst.print(stream);
 
+stream = stream.toString().replace(new RegExp(__dirname, 'gi'), '');
+
 fs.writeFile(path.resolve(outputDir + '/server.js'), stream);
