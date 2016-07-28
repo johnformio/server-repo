@@ -139,7 +139,7 @@ module.exports = function(formio) {
       }
 
       // Start with the query, then add the remaining stages.
-      stages = [{'$match': query}].concat(stages);
+      stages = [{'$match': {form: {'$in': formIds}}}].concat([{'$match': query}]).concat(stages);
 
       // Add the skip stage first if applicable.
       if (skipStage) {
@@ -150,9 +150,6 @@ module.exports = function(formio) {
       if (limitStage) {
         stages = stages.concat([limitStage]);
       }
-
-      // Ensure they cannot pull data out of their realm.
-      stages = stages.concat([{'$match': {form: {'$in': formIds}}}]);
 
       // Start out the filter to only include those forms.
       debug.report('final pipeline', stages);
@@ -184,6 +181,9 @@ module.exports = function(formio) {
       if (limitStage) {
         // Find the total count based on the query.
         submissions.find(query).count(function(err, count) {
+          if (err) {
+            return next(err);
+          }
           var skip = skipStage ? skipStage['$skip'] : 0;
           var limit = limitStage['$limit'];
           if (!req.headers.range) {
