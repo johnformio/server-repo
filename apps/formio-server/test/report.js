@@ -16,6 +16,23 @@ module.exports = function(app, template, hook) {
         .end(done);
     });
 
+    var count = 0;
+    it('Should allow aggregation for users with permission', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/report')
+        .set('x-jwt-token', template.users.admin.token)
+        .expect(200)
+        .end(function (err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          count = res.body.length;
+
+          done();
+        });
+    });
+
     it('Should not allow $lookup in aggregation.', function(done) {
       request(app)
         .get('/project/' + template.project._id + '/report')
@@ -180,17 +197,22 @@ module.exports = function(app, template, hook) {
     });
 
     it('Should allow $limit in aggregation.', function(done) {
+      count = (count - 1 > 0)
+        ? count--
+        : count;
+
       request(app)
         .get('/project/' + template.project._id + '/report')
         .set('x-jwt-token', template.users.admin.token)
         .set('x-query', JSON.stringify([{
-          '$limit': 25
+          '$limit': count
         }]))
         .expect(206)
         .end(function (err, res) {
           if (err) {
             return done(err);
           }
+
           done();
         });
     });

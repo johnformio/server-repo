@@ -7,6 +7,7 @@ var _ = require('lodash');
 var async = require('async');
 var chance = new (require('chance'))();
 var docker = process.env.DOCKER;
+var customer = process.env.CUSTOMER;
 
 module.exports = function(app, template, hook) {
   describe('Teams', function() {
@@ -68,17 +69,19 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
-            assert.notEqual(response.length, 0);
+            if (!customer) {
+              var response = res.body;
+              assert.notEqual(response.length, 0);
 
-            var found = false;
-            _.forEach(response, function(user) {
-              if (user._id === template.formio.owner._id) {
-                found = true;
-              }
-            });
+              var found = false;
+              _.forEach(response, function(user) {
+                if (user._id === template.formio.owner._id) {
+                  found = true;
+                }
+              });
 
-            assert.equal(found, true);
+              assert.equal(found, true);
+            }
 
             // Store the JWT for future API calls.
             template.formio.owner.token = res.headers['x-jwt-token'];
@@ -98,13 +101,16 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
-            assert.notEqual(response.length, 0);
 
-            _.forEach(response, function(user) {
-              assert.deepEqual(Object.keys(user), ['_id', 'data']);
-              assert.deepEqual(Object.keys(user.data), ['name']);
-            });
+            if (!customer) {
+              var response = res.body;
+              assert.notEqual(response.length, 0);
+
+              _.forEach(response, function(user) {
+                assert.deepEqual(Object.keys(user), ['_id', 'data']);
+                assert.deepEqual(Object.keys(user.data), ['name']);
+              });
+            }
 
             // Store the JWT for future API calls.
             template.formio.owner.token = res.headers['x-jwt-token'];
