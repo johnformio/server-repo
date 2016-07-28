@@ -59,7 +59,7 @@ module.exports = function(app, template, hook) {
 
       it('A Formio user should be able to access /team/members with a search query', function(done) {
         request(app)
-          .get('/team/members?name=' + template.formio.owner.data.name)
+          .get('/team/members?name=' + template.formio.owner.data.name + '&limit=99999999')
           .set('x-jwt-token', template.formio.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
