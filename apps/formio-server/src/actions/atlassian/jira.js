@@ -2,6 +2,7 @@
 
 var _ = require('lodash');
 var debug = require('debug')('formio:actions:jira');
+var async = require('async');
 
 module.exports = function(router) {
   var atlassian = require('./util')(router);
@@ -25,7 +26,7 @@ module.exports = function(router) {
       name: 'jira',
       title: 'Jira (Premium)',
       premium: true,
-      description: 'Allows you to trigger an external interface.',
+      description: 'Allows you to create issues within Jira.',
       priority: 0,
       defaults: {
         handler: ['after'],
@@ -35,33 +36,83 @@ module.exports = function(router) {
   };
 
   JiraAction.settingsForm = function(req, res, next) {
-    // Get the project settings.
-    formio.hook.settings(req, function(err, settings) {
-      if (err) {
-        debug(err);
-        return;
-      }
+    var jira = null;
+    var settingsForm = [];
 
-      if (!atlassian.settings.check(settings)) {
-        debug('Failed settings check, cant continue.');
-        return;
-      }
+    async.series([
+      function getSettings(cb) {
+        // Get the project settings.
+        formio.hook.settings(req, function(err, settings) {
+          if (err) {
+            return cb(err);
+          }
 
-      // Load the jira projects.
-      var jira = atlassian.getJira(settings);
-      jira.project.getAllProjects({}, function(err, response) {
-        if (err) {
-          debug(err);
-          return;
-        }
+          if (!atlassian.settings.check(settings)) {
+            return cb('Failed settings check, cant continue.');
+          }
 
-        var jiraProjects = response;
+          jira = atlassian.getJira(settings);
+          cb();
+        });
+      },
+      function getJiraProjects(cb) {
+        // Get all the projects in jira.
+        jira.project.getAllProjects({}, function(err, projects) {
+          if (err) {
+            return cb(err);
+          }
 
+          settingsForm.push({
+            type: 'select',
+            input: true,
+            label: 'Project',
+            key: 'project',
+            placeholder: 'Select the project for all issues created',
+            template: '<span>{{ item.name }}</span>',
+            dataSrc: 'values',
+            data: {
+              values: projects || []
+            },
+            multiple: false,
+            validate: {
+              required: true
+            }
+          });
+
+          cb();
+        });
+      },
+      function getJiraIssueTypes(cb) {
+        jira.issueType.getAllIssueTypes({}, function(err, types) {
+          if (err) {
+            return cb(err);
+          }
+
+          settingsForm.push({
+            type: 'select',
+            input: true,
+            label: 'Issue Type',
+            key: 'type',
+            placeholder: 'Select the Issue Type for all issues created',
+            template: '<span>{{ item.name }}</span>',
+            dataSrc: 'values',
+            data: {
+              values: types || []
+            },
+            multiple: false,
+            validate: {
+              required: true
+            }
+          });
+
+          cb();
+        });
+      },
+      function getFormComponents(cb) {
         // Load the current form, to get all the components.
         formio.cache.loadCurrentForm(req, function(err, form) {
           if (err) {
-            debug(err);
-            return;
+            return cb(err);
           }
 
           // Filter non-input components.
@@ -72,42 +123,33 @@ module.exports = function(router) {
             }
           });
 
-          next(null, [
-            {
-              type: 'select',
-              input: true,
-              label: 'Project',
-              key: 'project',
-              placeholder: 'Select the project for all issues created',
-              template: '<span>{{ item.name }}</span>',
-              dataSrc: 'values',
-              data: {
-                values: jiraProjects || []
-              },
-              multiple: false,
-              validate: {
-                required: true
-              }
+          settingsForm.push({
+            type: 'select',
+            input: true,
+            label: 'Summary',
+            key: 'summary',
+            placeholder: 'Select the Form Component which will provide the Issue Summary',
+            template: '<span>{{ item.label }}</span>',
+            dataSrc: 'values',
+            data: {
+              values: components || []
             },
-            {
-              type: 'select',
-              input: true,
-              label: 'Summary',
-              key: 'summary',
-              placeholder: 'Select the Form Component which will provide the Issue Summary',
-              template: '<span>{{ item.label }}</span>',
-              dataSrc: 'values',
-              data: {
-                values: components || []
-              },
-              multiple: false,
-              validate: {
-                required: true
-              }
+            multiple: false,
+            validate: {
+              required: true
             }
-          ]);
+          });
+
+          cb()
         });
-      });
+      }
+    ], function(err) {
+      if (err) {
+        debug(err);
+        return;
+      }
+
+      return next(null, settingsForm);
     });
   };
 
@@ -153,11 +195,34 @@ module.exports = function(router) {
       // Make the request.
       switch (req.method.toLowerCase()) {
         case 'post':
-          atlassian.issue.create(options, req.body);
+          jira.issue.createIssue({}, function(err, issue) {
+            if (err) {
+              debug(err);
+              return;
+            }
+
+            return;
+          });
           break;
         case 'put':
+          jira.issue.editIssue({}, function(err, issue) {
+            if (err) {
+              debug(err);
+              return;
+            }
+
+            return;
+          });
           break;
         case 'delete':
+          jira.issue.deleteIssue({}, function(err, issue) {
+            if (err) {
+              debug(err);
+              return;
+            }
+
+            return;
+          });
           break;
       }
     });
