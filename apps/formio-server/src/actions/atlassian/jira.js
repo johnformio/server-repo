@@ -47,6 +47,7 @@ module.exports = function(router) {
         return;
       }
 
+      // Load the jira projects.
       var jira = atlassian.getJira(settings);
       jira.project.getAllProjects({}, function(err, response) {
         if (err) {
@@ -54,34 +55,58 @@ module.exports = function(router) {
           return;
         }
 
-        next(null, [
-          {
-            type: 'select',
-            input: true,
-            label: 'Project',
-            key: 'project',
-            placeholder: 'Select the project for all issues created',
-            template: '<span>{{ item.name }}</span>',
-            dataSrc: 'values',
-            data: {
-              values: response || []
-            },
-            multiple: false,
-            validate: {
-              required: true
-            }
-          },
-          {
-            label: 'Summary',
-            key: 'summary',
-            inputType: 'text',
-            defaultValue: '',
-            input: true,
-            placeholder: 'Summary for the issue',
-            type: 'textfield',
-            multiple: false
+        var jiraProjects = response;
+
+        // Load the current form, to get all the components.
+        formio.cache.loadCurrentForm(req, function(err, form) {
+          if (err) {
+            debug(err);
+            return;
           }
-        ]);
+
+          // Filter non-input components.
+          var components = [];
+          formio.util.eachComponent(form.components, function(component) {
+            if (!formio.util.isLayoutComponent(component) && component.input === true && component.type !== 'button') {
+              components.push(component);
+            }
+          });
+
+          next(null, [
+            {
+              type: 'select',
+              input: true,
+              label: 'Project',
+              key: 'project',
+              placeholder: 'Select the project for all issues created',
+              template: '<span>{{ item.name }}</span>',
+              dataSrc: 'values',
+              data: {
+                values: jiraProjects || []
+              },
+              multiple: false,
+              validate: {
+                required: true
+              }
+            },
+            {
+              type: 'select',
+              input: true,
+              label: 'Summary',
+              key: 'summary',
+              placeholder: 'Select the Form Component which will provide the Issue Summary',
+              template: '<span>{{ item.label }}</span>',
+              dataSrc: 'values',
+              data: {
+                values: components || []
+              },
+              multiple: false,
+              validate: {
+                required: true
+              }
+            }
+          ]);
+        });
       });
     });
   };
