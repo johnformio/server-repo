@@ -62,6 +62,8 @@ module.exports = function(router) {
             return cb(err);
           }
 
+          debug('projects:');
+          debug(projects);
           settingsForm.push({
             type: 'select',
             input: true,
@@ -69,10 +71,11 @@ module.exports = function(router) {
             key: 'project',
             placeholder: 'Select the project for all issues created',
             template: '<span>{{ item.name }}</span>',
-            dataSrc: 'values',
+            dataSrc: 'json',
             data: {
-              values: projects || []
+              json: JSON.stringify(projects || [])
             },
+            valueProperty: 'key',
             multiple: false,
             validate: {
               required: true
@@ -88,6 +91,8 @@ module.exports = function(router) {
             return cb(err);
           }
 
+          debug('types:');
+          debug(types);
           settingsForm.push({
             type: 'select',
             input: true,
@@ -95,10 +100,11 @@ module.exports = function(router) {
             key: 'type',
             placeholder: 'Select the Issue Type for all issues created',
             template: '<span>{{ item.name }}</span>',
-            dataSrc: 'values',
+            dataSrc: 'json',
             data: {
-              values: types || []
+              json: JSON.stringify(types || [])
             },
+            valueProperty: 'id',
             multiple: false,
             validate: {
               required: true
@@ -123,6 +129,8 @@ module.exports = function(router) {
             }
           });
 
+          debug('components:');
+          debug(components);
           settingsForm.push({
             type: 'select',
             input: true,
@@ -130,10 +138,11 @@ module.exports = function(router) {
             key: 'summary',
             placeholder: 'Select the Form Component which will provide the Issue Summary',
             template: '<span>{{ item.label }}</span>',
-            dataSrc: 'values',
+            dataSrc: 'json',
             data: {
-              values: components || []
+              json: JSON.stringify(components || [])
             },
+            valueProperty: 'key',
             multiple: false,
             validate: {
               required: true
