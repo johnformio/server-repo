@@ -75,7 +75,7 @@ module.exports = function(router) {
             data: {
               json: JSON.stringify(projects || [])
             },
-            valueProperty: 'key',
+            valueProperty: 'id',
             multiple: false,
             validate: {
               required: true
@@ -178,62 +178,90 @@ module.exports = function(router) {
     // Dont block on the external request.
     next();
 
-    // Get the project settings.
-    formio.hook.settings(req, function(err, settings) {
+    var jira = null;
+    var settings = this.settings;
+
+    async.series([
+      function getSettings(cb) {
+        // Get the project settings.
+        formio.hook.settings(req, function(err, settings) {
+          if (err) {
+            return cb(err);
+          }
+
+          if (!atlassian.settings.check(settings)) {
+            return cb('Failed settings check, cant continue.');
+          }
+
+          jira = atlassian.getJira(settings);
+          cb();
+        });
+      },
+      function checkConfiguration(cb) {
+        debug('settings:');
+        debug(settings);
+        if (!settings) {
+          return cb('No settings configured.');
+        }
+        if (!_.has(settings, 'project')) {
+          return cb('No project configured for the Jira action.');
+        }
+        if (!_.has(settings, 'type')) {
+          return cb('No issue type configured for the Jira action.');
+        }
+        if (!_.has(settings, 'summary')) {
+          return cb('No summary form component configured for the Jira action.');
+        }
+
+        cb();
+      },
+      function execute(cb) {
+        switch (req.method.toLowerCase()) {
+          case 'post':
+            jira.issue.createIssue({
+              fields: {
+                project: {
+                  id: _.get(settings, 'project')
+                },
+                issuetype: {
+                  id: _.get(settings, 'type')
+                },
+                summary: _.get(_.get(req, 'body.data'), _.get(settings, 'summary'))
+              }
+            }, function(err, issue) {
+              if (err) {
+                debug(err);
+                return;
+              }
+
+              debug(issue);
+
+              // Update the submission with an externalId ref to the issue.
+              formio.resources.submission.model.update(
+                {_id: res.resource.item._id},
+                {
+                  $push: {
+                    externalIds: {
+                      type: 'jira',
+                      id: _.get(issue, 'id')
+                    }
+                  }
+                },
+                cb
+              );
+            });
+            break;
+          default:
+            cb('Unknown method: ' + req.method.toLowerCase());
+        }
+      }
+    ], function(err, results) {
       if (err) {
         debug(err);
         return;
       }
 
-      if (!atlassian.settings.check(settings)) {
-        debug('Failed settings check, cant continue.');
-        return;
-      }
-
-      // Exit if the Action settings are not correct.
-      if (!this.settings || ! _.has(this.settings, 'summary')) {
-        debug('No summary mapping configured in the jira action.');
-        return;
-      }
-
-      var options = {
-        username: _.get(settings, 'atlassian.username'),
-        password: _.get(settings, 'atlassian.password')
-      };
-
-      // Make the request.
-      switch (req.method.toLowerCase()) {
-        case 'post':
-          jira.issue.createIssue({}, function(err, issue) {
-            if (err) {
-              debug(err);
-              return;
-            }
-
-            return;
-          });
-          break;
-        case 'put':
-          jira.issue.editIssue({}, function(err, issue) {
-            if (err) {
-              debug(err);
-              return;
-            }
-
-            return;
-          });
-          break;
-        case 'delete':
-          jira.issue.deleteIssue({}, function(err, issue) {
-            if (err) {
-              debug(err);
-              return;
-            }
-
-            return;
-          });
-          break;
-      }
+      return;
     });
   };
 
