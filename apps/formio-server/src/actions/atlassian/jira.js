@@ -181,6 +181,110 @@ module.exports = function(router) {
     var jira = null;
     var settings = this.settings;
 
+    var issue = {
+      create: function(cb) {
+      jira.issue.createIssue({
+        fields: {
+          project: {
+            id: _.get(settings, 'project')
+          },
+          issuetype: {
+            id: _.get(settings, 'type')
+          },
+          summary: _.get(_.get(req, 'body.data'), _.get(settings, 'summary'))
+        }
+      }, function(err, issue) {
+        if (err) {
+          debug(err);
+          return;
+        }
+
+        debug(issue);
+
+        // Update the submission with an externalId ref to the issue.
+        formio.resources.submission.model.update(
+          {_id: res.resource.item._id},
+          {
+            $push: {
+              externalIds: {
+                type: 'jira',
+                id: _.get(issue, 'id')
+              }
+            }
+          },
+          cb
+        );
+      });
+    },
+      update: function(cb) {
+        // Only update submissions that have been connected to jira.
+        if (!_.has(res, 'resource.item') || !_.has(res, 'resource.item.externalIds')) {
+          return;
+        }
+
+        // Get the id for the issue.
+        var issueId = _.find(res.resource.item.externalIds, function(item) {
+          return item.type === 'jira';
+        });
+        issueId = issueId
+          ? _.get(issueId, 'id')
+          : undefined;
+
+        // Only continue if a issue id exists.
+        if (issueId === undefined) {
+          return;
+        }
+
+        debug('issueId: ' + issueId);
+        jira.issue.editIssue({
+          issue: {
+            fields: {
+              summary: _.get(_.get(req, 'body.data'), _.get(settings, 'summary'))
+            }
+          },
+          issueId: issueId
+        }, function(err, issue) {
+          if (err) {
+            return cb(err);
+          }
+
+          debug(issue);
+          cb();
+        });
+      },
+      delete: function(cb) {
+        var deleted = _.get(req, 'formioCache.submissions.' + _.get(req, 'subId'));
+        if (!deleted) {
+          return;
+        }
+
+        // Get the id for the issue.
+        var issueId = _.find(_.get(deleted, 'externalIds'), function(item) {
+          return item.type === 'jira';
+        });
+        issueId = issueId
+          ? _.get(issueId, 'id')
+          : undefined;
+
+        // Only continue if a issue id exists.
+        if (issueId === undefined) {
+          return;
+        }
+
+        debug('issueId: ' + issueId);
+        jira.issue.deleteIssue({
+          issueId: issueId
+        }, function(err, issue) {
+          if (err) {
+            return cb(err);
+          }
+
+          debug(issue);
+          cb();
+        })
+      }
+    };
+
     async.series([
       function getSettings(cb) {
         // Get the project settings.
@@ -218,38 +322,13 @@ module.exports = function(router) {
       function execute(cb) {
         switch (req.method.toLowerCase()) {
           case 'post':
-            jira.issue.createIssue({
-              fields: {
-                project: {
-                  id: _.get(settings, 'project')
-                },
-                issuetype: {
-                  id: _.get(settings, 'type')
-                },
-                summary: _.get(_.get(req, 'body.data'), _.get(settings, 'summary'))
-              }
-            }, function(err, issue) {
-              if (err) {
-                debug(err);
-                return;
-              }
-
-              debug(issue);
-
-              // Update the submission with an externalId ref to the issue.
-              formio.resources.submission.model.update(
-                {_id: res.resource.item._id},
-                {
-                  $push: {
-                    externalIds: {
-                      type: 'jira',
-                      id: _.get(issue, 'id')
-                    }
-                  }
-                },
-                cb
-              );
-            });
+            return issue.create(cb);
+            break;
+          case 'put':
+            return issue.update(cb);
+            break;
+          case 'delete':
+            return issue.delete(cb);
             break;
           default:
             cb('Unknown method: ' + req.method.toLowerCase());
