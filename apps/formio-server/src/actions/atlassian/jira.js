@@ -30,7 +30,7 @@ module.exports = function(router) {
       priority: 0,
       defaults: {
         handler: ['after'],
-        method: ['create']
+        method: ['create', 'update', 'delete']
       }
     });
   };
