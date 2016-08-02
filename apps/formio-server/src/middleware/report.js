@@ -179,8 +179,26 @@ module.exports = function(formio) {
 
       // If a limit is provided, then we need to include some pagination stuff.
       if (limitStage) {
+        // Determine the count query by limiting based on the formIds.
+        var countQuery = _.cloneDeep(query);
+
+        // Add the filtered formIds to the query.
+        if (
+          query.hasOwnProperty('form') &&
+          query.form.hasOwnProperty('$in') &&
+          (query.form['$in'].length > 0)
+        ) {
+          countQuery.form['$in'] = formIds.concat(query.form['$in']);
+        }
+        else if (query.form) {
+          countQuery.form = {'$in': formIds.push(query.form)};
+        }
+        else {
+          countQuery.form = {'$in': formIds};
+        }
+
         // Find the total count based on the query.
-        submissions.find(query).count(function(err, count) {
+        submissions.find(countQuery).count(function(err, count) {
           if (err) {
             return next(err);
           }
