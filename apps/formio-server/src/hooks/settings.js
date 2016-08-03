@@ -685,7 +685,8 @@ module.exports = function(app) {
             if (
               (req.method === 'POST' || req.method === 'PUT') &&
               req.body.hasOwnProperty('owner') &&
-              req.body.owner) {
+              req.body.owner
+            ) {
               req.assignOwner = true;
             }
 

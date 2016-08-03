@@ -7,7 +7,8 @@ var debug = {
   updateIssue: require('debug')('formio:atlassian:updateIssue'),
   deleteIssue: require('debug')('formio:atlassian:deleteIssue'),
   checkSettings: require('debug')('formio:atlassian:checkSettings'),
-  checkOAuth: require('debug')('formio:atlassian:checkOAuth')
+  checkOAuth: require('debug')('formio:atlassian:checkOAuth'),
+  OAuthAuthorize: require('debug')('formio:atlassian:OAuthAuthorize')
 };
 
 module.exports = function(router) {
@@ -66,33 +67,65 @@ module.exports = function(router) {
     return true;
   };
 
-  router.use('/atlassian/oauth/authorize', function(req, res, next) {
-    if (!checkOAuth(_.get(req, 'body'))) {
-      return res.sendStatus(404);
-    }
+  var storeOAuthReply = function(data) {
 
-    JiraClient.oauth_util.getAuthorizeURL({
-      consumer_key: _.get(req, 'body.oauth.consumer_key'),
-      private_key: _.get(req, 'body.oauth.consumer_key')
-    }, function(err, handshake) {
+  };
+
+  var authorizeOAuth = function(req, res, next) {
+    formio.hook.settings(req, function(err, settings) {
       if (err) {
-        return res.sendStatus(404);
+        debug.OAuthAuthorize(err);
+        return res.sendStatus(400);
       }
 
-      // Start the dance with the handshake.
-      return res.json(handshake);
+      if (!_.has(settings, 'atlassian') || !checkOAuth(_.get(settings, 'atlassian'))) {
+        debug.OAuthAuthorize('No atlassian Settings');
+        return res.sendStatus(400);
+      }
+
+      JiraClient.oauth_util.getAuthorizeURL({
+        host: _.get(settings, 'atlassian.url'),
+        oauth: {
+          consumer_key: _.get(settings, 'atlassian.oauth.consumer_key'),
+          private_key: _.get(settings, 'atlassian.oauth.private_key')
+        }
+      }, function(err, handshake) {
+        if (err) {
+          debug.OAuthAuthorize(err);
+          return res.sendStatus(400);
+        }
+
+        // Start the dance with the handshake.
+        debug.OAuthAuthorize(handshake);
+        return res.json(handshake);
+      });
     });
-  });
+  };
 
   return {
+    authorizeOAuth: authorizeOAuth,
     getJira: function(settings) {
-      return new JiraClient({
-        host: _.get(settings, 'atlassian.url'),
-        basic_auth: {
+      var opts = {
+        host: _.get(settings, 'atlassian.url')
+      };
+
+      // If oauth settings are available, use them over basic auth
+      if (checkOAuth(settings)) {
+        opts.oauth = {
+          consumer_key: _.get(settings, 'atlassian.oauth.consumer_key'),
+          private_key: _.get(settings, 'atlassian.oauth.private_key'),
+          token: _.get(settings, 'atlassian.oauth.token'),
+          token_secret: _.get(settings, 'atlassian.oauth.token_secret')
+        };
+      }
+      else if (checkSettings(settings)) {
+        opts.basic_auth = {
           username: _.get(settings, 'atlassian.username'),
           password: _.get(settings, 'atlassian.password')
-        }
-      });
+        };
+      }
+
+      return new JiraClient(opts);
     },
     settings: {
       check: checkSettings
