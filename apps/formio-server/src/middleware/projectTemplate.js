@@ -95,7 +95,7 @@ module.exports = function(formio) {
       });
 
       if (template.access) {
-        _.each(template.access, function (access) {
+        _.each(template.access, function(access) {
           accessList[access.type] = access.roles;
         });
       }
