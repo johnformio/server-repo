@@ -28,6 +28,7 @@
     "is-url": "^1.2.1",
     "jslogger": "^1.0.3",
     "jsonwebtoken": "^5.0.5",
+    "kickbox": "^2.0.0",
     "lodash": "^3.10.1",
     "method-override": "^2.3.5",
     "metroplex": "0.0.9",
