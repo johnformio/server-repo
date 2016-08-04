@@ -95,7 +95,7 @@ module.exports = function(app) {
         if (
           (component.type === 'email') &&
           component.kickbox &&
-          component.kickbox.enable
+          component.kickbox.enabled
         ) {
           // Load the project settings.
           cache.loadProject(req, req.projectId, function(err, project) {
