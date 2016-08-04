@@ -46,19 +46,10 @@ module.exports = function(project, component, req, res, next) {
           if (response.body.disposable) {
             return res.status(400).send(email + ' is an invalid email address. ' + msgEnd);
           }
-          else {
-            next();
-          }
-          break;
-        default:
-          // We good...
-          next();
           break;
       }
     }
-    else {
-      // We good.
-      next();
-    }
+
+    return next();
   });
 };
