@@ -197,5 +197,12 @@ module.exports = function(router, formioServer) {
     atlassian.authorizeOAuth
   );
 
+  router.post(
+    '/project/:projectId/atlassian/oauth/finalize',
+    formio.middleware.tokenHandler,
+    formio.middleware.restrictOwnerAccess,
+    atlassian.storeOAuthReply
+  );
+
   return resource;
 };

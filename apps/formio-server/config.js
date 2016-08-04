@@ -34,7 +34,8 @@ config.formio.reservedForms = [
   'dropbox\/auth',
   'upgrade',
   'access',
-  'atlassian\/oauth\/authorize'
+  'atlassian\/oauth\/authorize',
+  'atlassian\/oauth\/finalize'
 ];
 
 // Set the App settings.

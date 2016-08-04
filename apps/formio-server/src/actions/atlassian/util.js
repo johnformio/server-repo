@@ -8,11 +8,13 @@ var debug = {
   deleteIssue: require('debug')('formio:atlassian:deleteIssue'),
   checkSettings: require('debug')('formio:atlassian:checkSettings'),
   checkOAuth: require('debug')('formio:atlassian:checkOAuth'),
-  OAuthAuthorize: require('debug')('formio:atlassian:OAuthAuthorize')
+  authorizeOAuth: require('debug')('formio:atlassian:authorizeOAuth'),
+  storeOAuthReply: require('debug')('formio:atlassian:storeOAuthReply')
 };
 
 module.exports = function(router) {
   var formio = router.formio;
+  var cache = require('../../cache/cache')(formio);
 
   /**
    * Check to see if the connection settings are present.
@@ -48,6 +50,35 @@ module.exports = function(router) {
     return true;
   };
 
+  var checkOAuthSetting = function(settings) {
+    if (!settings) {
+      debug.checkSettings('No Project settings found');
+      return false;
+    }
+    if (!settings.atlassian) {
+      debug.checkSettings('No Atlassian settings configured.');
+      return false;
+    }
+    if (!_.has(settings, 'atlassian.oauth.consumer_key')) {
+      debug.checkSettings('No Atlassian OAuth Consumer Key is configured.');
+      return false;
+    }
+    if (!_.has(settings, 'atlassian.oauth.private_key')) {
+      debug.checkSettings('No Atlassian OAuth Private Key is configured.');
+      return false;
+    }
+    if (!_.has(settings, 'atlassian.oauth.token')) {
+      debug.checkSettings('No Atlassian OAuth Token is configured.');
+      return false;
+    }
+    if (!_.has(settings, 'atlassian.oauth.token_secret')) {
+      debug.checkSettings('No Atlassian OAuth Token Secret is configured.');
+      return false;
+    }
+
+    return true;
+  };
+
   var checkOAuth = function(settings) {
     if (!settings) {
       debug.checkOAuth('No OAuth settings found');
@@ -67,19 +98,95 @@ module.exports = function(router) {
     return true;
   };
 
-  var storeOAuthReply = function(data) {
+  var checkOAuthFinal = function(settings) {
+    if (!checkOAuth(settings)) {
+      return false;
+    }
 
+    if (!_.has(settings, 'oauth.token')) {
+      debug.checkOAuth('No OAuth token is configured');
+      return false;
+    }
+
+    if (!_.has(settings, 'oauth.token_secret')) {
+      debug.checkOAuth('No OAuth token secret is configured');
+      return false;
+    }
+
+    return true;
+  };
+
+  var storeOAuthReply = function(req, res, next) {
+    formio.hook.settings(req, function(err, settings) {
+      if (err) {
+        debug.storeOAuthReply(err);
+        return res.sendStatus(400);
+      }
+
+      if (!_.has(settings, 'atlassian') || !checkOAuthFinal(_.get(settings, 'atlassian'))) {
+        debug.storeOAuthReply('No atlassian Settings');
+        return res.sendStatus(400);
+      }
+
+      if (!_.has(req, 'body.oauth_verifier')) {
+        debug.storeOAuthReply('No oauth_verifier given');
+        return res.sendStatus(400);
+      }
+
+      JiraClient.oauth_util.swapRequestTokenWithAccessToken({
+        host: _.get(settings, 'atlassian.url'),
+        oauth: {
+          consumer_key: _.get(settings, 'atlassian.oauth.consumer_key'),
+          private_key: _.get(settings, 'atlassian.oauth.private_key'),
+          token: _.get(settings, 'atlassian.oauth.token'),
+          token_secret: _.get(settings, 'atlassian.oauth.token_secret'),
+          oauth_verifier: _.get(req, 'body.oauth_verifier')
+        }
+      }, function(err, accessToken) {
+        if (err) {
+          debug.storeOAuthReply(err);
+          return res.sendStatus(400);
+        }
+
+        // Persist the real oauth token for any following requests.
+        if (!req.projectId) {
+          return res.sendStatus(400);
+        }
+
+        cache.loadProject(req, formio.util.idToBson(req.projectId), function(err, project) {
+          if (err) {
+            debug.authorizeOAuth(err);
+            return res.sendStatus(400);
+          }
+
+          var settings = _.cloneDeep(project.toObject().settings);
+          _.set(settings, 'atlassian.oauth.token', accessToken);
+          project.set('settings', settings);
+          project.markModified('settings');
+          project.save(function(err) {
+            if (err) {
+              debug.authorizeOAuth(err);
+              return res.sendStatus(400);
+            }
+
+            return res.json({
+              access_token: accessToken
+            });
+          });
+        });
+      });
+    });
   };
 
   var authorizeOAuth = function(req, res, next) {
     formio.hook.settings(req, function(err, settings) {
       if (err) {
-        debug.OAuthAuthorize(err);
+        debug.authorizeOAuth(err);
         return res.sendStatus(400);
       }
 
       if (!_.has(settings, 'atlassian') || !checkOAuth(_.get(settings, 'atlassian'))) {
-        debug.OAuthAuthorize('No atlassian Settings');
+        debug.authorizeOAuth('No atlassian Settings');
         return res.sendStatus(400);
       }
 
@@ -91,18 +198,41 @@ module.exports = function(router) {
         }
       }, function(err, handshake) {
         if (err) {
-          debug.OAuthAuthorize(err);
+          debug.authorizeOAuth(err);
           return res.sendStatus(400);
         }
 
-        // Start the dance with the handshake.
-        debug.OAuthAuthorize(handshake);
-        return res.json(handshake);
+        if (!req.projectId) {
+          return res.sendStatus(400);
+        }
+
+        cache.loadProject(req, formio.util.idToBson(req.projectId), function(err, project) {
+          if (err) {
+            debug.authorizeOAuth(err);
+            return res.sendStatus(400);
+          }
+
+          var settings = _.cloneDeep(project.toObject().settings);
+          _.set(settings, 'atlassian.oauth.token', handshake.token);
+          _.set(settings, 'atlassian.oauth.token_secret', handshake.token_secret);
+          project.set('settings', settings);
+          project.markModified('settings');
+          project.save(function(err) {
+            if (err) {
+              debug.authorizeOAuth(err);
+              return res.sendStatus(400);
+            }
+
+            debug.authorizeOAuth(handshake);
+            res.json(handshake);
+          });
+        });
       });
     });
   };
 
   return {
+    storeOAuthReply: storeOAuthReply,
     authorizeOAuth: authorizeOAuth,
     getJira: function(settings) {
       var opts = {
@@ -110,7 +240,7 @@ module.exports = function(router) {
       };
 
       // If oauth settings are available, use them over basic auth
-      if (checkOAuth(settings)) {
+      if (checkOAuthSetting(settings)) {
         opts.oauth = {
           consumer_key: _.get(settings, 'atlassian.oauth.consumer_key'),
           private_key: _.get(settings, 'atlassian.oauth.private_key'),
