@@ -100,20 +100,22 @@ module.exports = function(app) {
           // Load the project settings.
           cache.loadProject(req, req.projectId, function(err, project) {
             if (err) {
-              return cb(err);
+              return next(err);
             }
             if (!project) {
-              return cb('Could not find project');
+              return next('Could not find project');
             }
 
             // Validate with kickbox.
             kickboxValidate(project, component, req, res, next);
           });
+
+          // Return true so that we can handle this request.
+          return true;
         }
-        else {
-          next();
-        }
-        return true;
+
+        // Return false to move on with the request.
+        return false;
       },
       email: function(transport, settings, projectSettings, req, res, params) {
         var transporter = {};
