@@ -133,7 +133,7 @@ module.exports = function(router) {
         return res.sendStatus(400);
       }
 
-      /** eslint-disable camelcase **/
+      /* eslint-disable camelcase */
       JiraClient.oauth_util.swapRequestTokenWithAccessToken({
         host: _.get(settings, 'atlassian.url'),
         oauth: {
@@ -176,7 +176,7 @@ module.exports = function(router) {
           });
         });
       });
-      /** eslint-enable camelcase **/
+      /* eslint-enable camelcase */
     });
   };
 
@@ -231,7 +231,7 @@ module.exports = function(router) {
           });
         });
       });
-      /** eslint-enable camelcase **/
+      /* eslint-enable camelcase */
     });
   };
 
@@ -243,7 +243,7 @@ module.exports = function(router) {
         host: _.get(settings, 'atlassian.url')
       };
 
-      /** eslint-disable camelcase **/
+      /* eslint-disable camelcase */
       // If oauth settings are available, use them over basic auth
       if (checkOAuthSetting(settings)) {
         opts.oauth = {

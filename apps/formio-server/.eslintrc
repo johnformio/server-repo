@@ -1,6 +1,6 @@
 {
   "root": true,
-  "extends": "eslint-config-formio",
+  "extends": "./node_modules/eslint-config-formio/index.js",
   "env": {
     "node": true
   },
