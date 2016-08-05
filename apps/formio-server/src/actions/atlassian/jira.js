@@ -330,6 +330,10 @@ module.exports = function(router) {
         jira.issue.deleteIssue({
           issueId: issueId
         }, function(err, issue) {
+          if (err) {
+            debug(err);
+          }
+
           debug(issue);
           cb();
         });
