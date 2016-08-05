@@ -255,7 +255,12 @@ module.exports = function(router) {
         };
       }
 
-      return new JiraClient(opts);
+      try {
+        return new JiraClient(opts);
+      }
+      catch (e) {
+        return false;
+      }
     },
     settings: {
       check: checkSettings

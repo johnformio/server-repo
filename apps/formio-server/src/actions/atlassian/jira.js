@@ -52,105 +52,124 @@ module.exports = function(router) {
           }
 
           jira = atlassian.getJira(settings);
+          if (!jira) {
+            return cb('Could not connect to jira.');
+          }
+
           cb();
         });
       },
       function getJiraProjects(cb) {
-        // Get all the projects in jira.
-        jira.project.getAllProjects({}, function(err, projects) {
-          if (err) {
-            return cb(err);
-          }
-
-          debug('projects:');
-          debug(projects);
-          settingsForm.push({
-            type: 'select',
-            input: true,
-            label: 'Project',
-            key: 'project',
-            placeholder: 'Select the project for all issues created',
-            template: '<span>{{ item.name }}</span>',
-            dataSrc: 'json',
-            data: {
-              json: JSON.stringify(projects || [])
-            },
-            valueProperty: 'id',
-            multiple: false,
-            validate: {
-              required: true
+        try {
+          // Get all the projects in jira.
+          jira.project.getAllProjects({}, function(err, projects) {
+            if (err) {
+              return cb(err);
             }
-          });
 
-          cb();
-        });
+            debug('projects:');
+            debug(projects);
+            settingsForm.push({
+              type: 'select',
+              input: true,
+              label: 'Project',
+              key: 'project',
+              placeholder: 'Select the project for all issues created',
+              template: '<span>{{ item.name }}</span>',
+              dataSrc: 'json',
+              data: {
+                json: JSON.stringify(projects || [])
+              },
+              valueProperty: 'id',
+              multiple: false,
+              validate: {
+                required: true
+              }
+            });
+
+            cb();
+          });
+        }
+        catch (e) {
+          return cb('Could not load the settings form.');
+        }
       },
       function getJiraIssueTypes(cb) {
-        jira.issueType.getAllIssueTypes({}, function(err, types) {
-          if (err) {
-            return cb(err);
-          }
-
-          debug('types:');
-          debug(types);
-          settingsForm.push({
-            type: 'select',
-            input: true,
-            label: 'Issue Type',
-            key: 'type',
-            placeholder: 'Select the Issue Type for all issues created',
-            template: '<span>{{ item.name }}</span>',
-            dataSrc: 'json',
-            data: {
-              json: JSON.stringify(types || [])
-            },
-            valueProperty: 'id',
-            multiple: false,
-            validate: {
-              required: true
+        try {
+          jira.issueType.getAllIssueTypes({}, function(err, types) {
+            if (err) {
+              return cb(err);
             }
-          });
 
-          cb();
-        });
+            debug('types:');
+            debug(types);
+            settingsForm.push({
+              type: 'select',
+              input: true,
+              label: 'Issue Type',
+              key: 'type',
+              placeholder: 'Select the Issue Type for all issues created',
+              template: '<span>{{ item.name }}</span>',
+              dataSrc: 'json',
+              data: {
+                json: JSON.stringify(types || [])
+              },
+              valueProperty: 'id',
+              multiple: false,
+              validate: {
+                required: true
+              }
+            });
+
+            cb();
+          });
+        }
+        catch (e) {
+          return cb('Could not load the settings form.');
+        }
       },
       function getFormComponents(cb) {
-        // Load the current form, to get all the components.
-        formio.cache.loadCurrentForm(req, function(err, form) {
-          if (err) {
-            return cb(err);
-          }
-
-          // Filter non-input components.
-          var components = [];
-          formio.util.eachComponent(form.components, function(component) {
-            if (!formio.util.isLayoutComponent(component) && component.input === true && component.type !== 'button') {
-              components.push(component);
+        try {
+          // Load the current form, to get all the components.
+          formio.cache.loadCurrentForm(req, function(err, form) {
+            if (err) {
+              return cb(err);
             }
-          });
 
-          debug('components:');
-          debug(components);
-          settingsForm.push({
-            type: 'select',
-            input: true,
-            label: 'Summary',
-            key: 'summary',
-            placeholder: 'Select the Form Component which will provide the Issue Summary',
-            template: '<span>{{ item.label }}</span>',
-            dataSrc: 'json',
-            data: {
-              json: JSON.stringify(components || [])
-            },
-            valueProperty: 'key',
-            multiple: false,
-            validate: {
-              required: true
-            }
-          });
+            // Filter non-input components.
+            var components = [];
+            formio.util.eachComponent(form.components, function(component) {
+              if (!formio.util.isLayoutComponent(component) && component.input === true && component.type !== 'button') {
+                components.push(component);
+              }
+            });
 
-          cb()
-        });
+            debug('components:');
+            debug(components);
+            settingsForm.push({
+              type: 'select',
+              input: true,
+              label: 'Summary',
+              key: 'summary',
+              placeholder: 'Select the Form Component which will provide the Issue Summary',
+              template: '<span>{{ item.label }}</span>',
+              dataSrc: 'json',
+              data: {
+                json: JSON.stringify(components || [])
+              },
+              valueProperty: 'key',
+              multiple: false,
+              validate: {
+                required: true
+              }
+            });
+
+            cb()
+          });
+        }
+        catch (e) {
+          return cb('Could not load the settings form.');
+        }
       }
     ], function(err) {
       if (err) {
@@ -298,6 +317,10 @@ module.exports = function(router) {
           }
 
           jira = atlassian.getJira(settings);
+          if (!jira) {
+            return cb('Could not connect to jira.');
+          }
+
           cb();
         });
       },
