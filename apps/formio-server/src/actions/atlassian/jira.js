@@ -139,7 +139,11 @@ module.exports = function(router) {
             // Filter non-input components.
             var components = [];
             formio.util.eachComponent(form.components, function(component) {
-              if (!formio.util.isLayoutComponent(component) && component.input === true && component.type !== 'button') {
+              if (
+                !formio.util.isLayoutComponent(component) &&
+                component.input === true &&
+                component.type !== 'button'
+              ) {
                 components.push(component);
               }
             });
@@ -164,7 +168,7 @@ module.exports = function(router) {
               }
             });
 
-            cb()
+            cb();
           });
         }
         catch (e) {
@@ -195,7 +199,7 @@ module.exports = function(router) {
    */
   JiraAction.prototype.resolve = function(handler, method, req, res, next) {
     // Dont block on the external request.
-    next();
+    next(); // eslint-disable-line callback-return
 
     var jira = null;
     var settings = this.settings;
@@ -300,7 +304,7 @@ module.exports = function(router) {
 
           debug(issue);
           cb();
-        })
+        });
       }
     };
 
@@ -345,16 +349,16 @@ module.exports = function(router) {
       function execute(cb) {
         switch (req.method.toLowerCase()) {
           case 'post':
-            return issue.create(cb);
+            issue.create(cb);
             break;
           case 'put':
-            return issue.update(cb);
+            issue.update(cb);
             break;
           case 'delete':
-            return issue.delete(cb);
+            issue.delete(cb);
             break;
           default:
-            cb('Unknown method: ' + req.method.toLowerCase());
+            return cb('Unknown method: ' + req.method.toLowerCase());
         }
       }
     ], function(err, results) {
