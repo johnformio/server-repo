@@ -37,7 +37,28 @@ module.exports = function(router) {
 
   JiraAction.settingsForm = function(req, res, next) {
     var jira = null;
-    var settingsForm = [];
+    var settingsForm = [
+      {
+        conditional: {
+          eq: '',
+          when: null,
+          show: ''
+        },
+        type: 'checkbox',
+        validate: {
+          required: false
+        },
+        persistent: true,
+        protected: false,
+        defaultValue: false,
+        key: 'block',
+        label: 'Block request for Jira feedback',
+        hideLabel: true,
+        tableView: true,
+        inputType: 'checkbox',
+        input: true
+      }
+    ];
 
     async.series([
       function getSettings(cb) {
@@ -198,64 +219,75 @@ module.exports = function(router) {
    *   The callback function to execute upon completion.
    */
   JiraAction.prototype.resolve = function(handler, method, req, res, next) {
-    // Dont block on the external request.
-    next(); // eslint-disable-line callback-return
-
     var jira = null;
     var settings = this.settings;
 
+    // Only block on the external request, if configured
+    if (!_.has(settings, 'block') || settings.block === false) {
+      return next();
+    }
+
     var issue = {
       create: function(cb) {
-      jira.issue.createIssue({
-        fields: {
-          project: {
-            id: _.get(settings, 'project')
-          },
-          issuetype: {
-            id: _.get(settings, 'type')
-          },
-          summary: _.get(_.get(req, 'body.data'), _.get(settings, 'summary'))
-        }
-      }, function(err, issue) {
-        if (err) {
-          debug(err);
-          return;
-        }
+        jira.issue.createIssue({
+          fields: {
+            project: {
+              id: _.get(settings, 'project')
+            },
+            issuetype: {
+              id: _.get(settings, 'type')
+            },
+            summary: _.get(_.get(req, 'body.data'), _.get(settings, 'summary'))
+          }
+        }, function(err, issue) {
+          if (err) {
+            debug(err);
+            return cb(err);
+          }
 
-        debug(issue);
+          debug(issue);
 
-        // Update the submission with an externalId ref to the issue.
-        formio.resources.submission.model.update(
-          {_id: res.resource.item._id},
-          {
-            $push: {
-              externalIds: {
-                type: 'jira',
-                id: _.get(issue, 'id')
+          // Update the submission with an externalId ref to the issue.
+          formio.resources.submission.model.update(
+            {_id: res.resource.item._id},
+            {
+              $push: {
+                externalIds: {
+                  type: 'jira',
+                  id: _.get(issue, 'id')
+                }
               }
-            }
-          },
-          cb
-        );
-      });
-    },
-      update: function(cb) {
-        // Only update submissions that have been connected to jira.
-        if (!_.has(res, 'resource.item') || !_.has(res, 'resource.item.externalIds')) {
-          return;
-        }
-
-        // Get the id for the issue.
-        var issueId = _.find(res.resource.item.externalIds, function(item) {
-          return item.type === 'jira';
+            },
+            cb
+          );
         });
-        issueId = issueId
-          ? _.get(issueId, 'id')
-          : undefined;
+      },
+      update: function(cb) {
+        var issueId = undefined;
+
+        // Only update submissions that have been connected to jira.
+        if (_.has(res, 'resource.item')) {
+          var item = res.resource.item.toObject();
+          if (!_.has(item, 'externalIds')) {
+            return cb('No Jira issue is connected to this submission');
+          }
+          else {
+            // Get the id for the issue.
+            issueId = _.find(item.externalIds, function(item) {
+              return item.type === 'jira';
+            });
+            issueId = issueId
+              ? _.get(issueId, 'id')
+              : undefined;
+          }
+        }
+        else {
+          return cb('No resource to check.');
+        }
 
         // Only continue if a issue id exists.
         if (issueId === undefined) {
-          return;
+          return cb('No Jira issue id set on this submission');
         }
 
         debug('issueId: ' + issueId);
@@ -278,7 +310,7 @@ module.exports = function(router) {
       delete: function(cb) {
         var deleted = _.get(req, 'formioCache.submissions.' + _.get(req, 'subId'));
         if (!deleted) {
-          return;
+          return cb();
         }
 
         // Get the id for the issue.
@@ -291,17 +323,13 @@ module.exports = function(router) {
 
         // Only continue if a issue id exists.
         if (issueId === undefined) {
-          return;
+          return cb('No Jira issue id set on this submission');
         }
 
         debug('issueId: ' + issueId);
         jira.issue.deleteIssue({
           issueId: issueId
         }, function(err, issue) {
-          if (err) {
-            return cb(err);
-          }
-
           debug(issue);
           cb();
         });
@@ -364,7 +392,20 @@ module.exports = function(router) {
     ], function(err, results) {
       if (err) {
         debug(err);
+
+        if (_.has(err, 'errorMessages')) {
+          err = JSON.stringify(err.errorMessages);
+        }
+
+        if (_.has(settings, 'block') && settings.block === true) {
+          return next(err);
+        }
+
         return;
+      }
+
+      if (_.has(settings, 'block') && settings.block === true) {
+        return next(null, results);
       }
 
       return;
