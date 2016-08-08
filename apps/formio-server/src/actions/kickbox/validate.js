@@ -29,24 +29,20 @@ module.exports = function(project, component, req, res, next) {
     }
     var msgEnd = 'Please provide a different email address.';
     if (response.body && response.body.result) {
-      switch (response.body.result) {
-        case 'undeliverable':
-          switch (response.body.reason) {
-            case 'rejected_email':
-              return res.status(400).send(email + ' was rejected. ' + msgEnd);
-            case 'invalid_domain':
-              return res.status(400).send(email + ' is not a valid domain. ' + msgEnd);
-            case 'invalid_smtp':
-              return res.status(400).send(email + ' is not a valid mail server. ' + msgEnd);
-            default:
-              return res.status(400).send(email + ' was rejected. ' + msgEnd);
-          }
-          break;
-        case 'risky':
-          if (response.body.disposable) {
-            return res.status(400).send(email + ' is an invalid email address. ' + msgEnd);
-          }
-          break;
+      if (response.body.result === 'undeliverable') {
+        switch (response.body.reason) {
+          case 'rejected_email':
+            return res.status(400).send(email + ' was rejected. ' + msgEnd);
+          case 'invalid_domain':
+            return res.status(400).send(email + ' is not a valid domain. ' + msgEnd);
+          case 'invalid_smtp':
+            return res.status(400).send(email + ' is not a valid mail server. ' + msgEnd);
+          default:
+            return res.status(400).send(email + ' was rejected. ' + msgEnd);
+        }
+      }
+      else if ((response.body.result === 'risky') && response.body.disposable) {
+        return res.status(400).send(email + ' is an invalid email address. ' + msgEnd);
       }
     }
 
