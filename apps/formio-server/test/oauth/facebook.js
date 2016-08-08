@@ -231,11 +231,11 @@ module.exports = function(app, template, hook) {
             var flattenedComponents = util.flattenComponents(template.forms.facebookOauthRegisterForm.components);
             _.each(response.components, function(component, i) {
               if (component.action === 'oauth') {
-                assert.equal(component.oauth.provider, app.formio.oauth.providers.facebook.name);
+                assert.equal(component.oauth.provider, app.formio.formio.oauth.providers.facebook.name);
                 assert.equal(component.oauth.clientId, oauthSettings.facebook.clientId);
-                assert.equal(component.oauth.authURI, app.formio.oauth.providers.facebook.authURI);
-                assert.equal(component.oauth.scope, app.formio.oauth.providers.facebook.scope);
-                assert.equal(component.oauth.display, app.formio.oauth.providers.facebook.display);
+                assert.equal(component.oauth.authURI, app.formio.formio.oauth.providers.facebook.authURI);
+                assert.equal(component.oauth.scope, app.formio.formio.oauth.providers.facebook.scope);
+                assert.equal(component.oauth.display, app.formio.formio.oauth.providers.facebook.display);
                 assert.deepEqual(_.omit(component, 'oauth'), flattenedComponents[i],
                   'OAuth button should only have oauth prop added');
               }
@@ -339,7 +339,7 @@ module.exports = function(app, template, hook) {
             assert(response.externalIds[0].hasOwnProperty('_id'), 'The externalId should contain an `_id`.');
             assert(response.externalIds[0].hasOwnProperty('modified'), 'The externalId should contain a `modified` timestamp.');
             assert(response.externalIds[0].hasOwnProperty('created'), 'The externalId should contain a `created` timestamp.');
-            assert.equal(response.externalIds[0].type, app.formio.oauth.providers.facebook.name, 'The externalId should be for facebook oauth.');
+            assert.equal(response.externalIds[0].type, app.formio.formio.oauth.providers.facebook.name, 'The externalId should be for facebook oauth.');
             assert.equal(response.externalIds[0].id, TEST_USER.id, 'The externalId should match test user 1\'s id.');
             assert(!response.hasOwnProperty('deleted'), 'The response should not contain `deleted`');
             assert(!response.hasOwnProperty('__v'), 'The response should not contain `__v`');
@@ -390,7 +390,7 @@ module.exports = function(app, template, hook) {
             assert(response.externalIds[0].hasOwnProperty('_id'), 'The externalId should contain an `_id`.');
             assert(response.externalIds[0].hasOwnProperty('modified'), 'The externalId should contain a `modified` timestamp.');
             assert(response.externalIds[0].hasOwnProperty('created'), 'The externalId should contain a `created` timestamp.');
-            assert.equal(response.externalIds[0].type, app.formio.oauth.providers.facebook.name, 'The externalId should be for facebook oauth.');
+            assert.equal(response.externalIds[0].type, app.formio.formio.oauth.providers.facebook.name, 'The externalId should be for facebook oauth.');
             assert.equal(response.externalIds[0].id, TEST_USER.id, 'The externalId should match test user 1\'s id.');
             assert(!response.hasOwnProperty('deleted'), 'The response should not contain `deleted`');
             assert(!response.hasOwnProperty('__v'), 'The response should not contain `__v`');

@@ -233,11 +233,11 @@ module.exports = function(app, template, hook) {
             var flattenedComponents = util.flattenComponents(template.forms.office365OauthRegisterForm.components);
             _.each(response.components, function(component, i) {
               if (component.action === 'oauth') {
-                assert.equal(component.oauth.provider, app.formio.oauth.providers.office365.name);
+                assert.equal(component.oauth.provider, app.formio.formio.oauth.providers.office365.name);
                 assert.equal(component.oauth.clientId, office365Settings.clientId);
-                assert.equal(component.oauth.authURI, app.formio.oauth.providers.office365.getAuthURI(office365Settings.tenant));
-                assert.equal(component.oauth.scope, app.formio.oauth.providers.office365.scope);
-                assert.equal(component.oauth.display, app.formio.oauth.providers.office365.display);
+                assert.equal(component.oauth.authURI, app.formio.formio.oauth.providers.office365.getAuthURI(office365Settings.tenant));
+                assert.equal(component.oauth.scope, app.formio.formio.oauth.providers.office365.scope);
+                assert.equal(component.oauth.display, app.formio.formio.oauth.providers.office365.display);
                 assert.deepEqual(_.omit(component, 'oauth'), flattenedComponents[i],
                   'OAuth button should only have oauth prop added');
               }
@@ -342,7 +342,7 @@ module.exports = function(app, template, hook) {
             assert(response.externalIds[0].hasOwnProperty('_id'), 'The externalId should contain an `_id`.');
             assert(response.externalIds[0].hasOwnProperty('modified'), 'The externalId should contain a `modified` timestamp.');
             assert(response.externalIds[0].hasOwnProperty('created'), 'The externalId should contain a `created` timestamp.');
-            assert.equal(response.externalIds[0].type, app.formio.oauth.providers.office365.name, 'The externalId should be for office365 oauth.');
+            assert.equal(response.externalIds[0].type, app.formio.formio.oauth.providers.office365.name, 'The externalId should be for office365 oauth.');
             assert.equal(response.externalIds[0].id, TEST_USER.Id, 'The externalId should match test user 1\'s id.');
             assert(!response.hasOwnProperty('deleted'), 'The response should not contain `deleted`');
             assert(!response.hasOwnProperty('__v'), 'The response should not contain `__v`');
@@ -393,7 +393,7 @@ module.exports = function(app, template, hook) {
             assert(response.externalIds[0].hasOwnProperty('_id'), 'The externalId should contain an `_id`.');
             assert(response.externalIds[0].hasOwnProperty('modified'), 'The externalId should contain a `modified` timestamp.');
             assert(response.externalIds[0].hasOwnProperty('created'), 'The externalId should contain a `created` timestamp.');
-            assert.equal(response.externalIds[0].type, app.formio.oauth.providers.office365.name, 'The externalId should be for office365 oauth.');
+            assert.equal(response.externalIds[0].type, app.formio.formio.oauth.providers.office365.name, 'The externalId should be for office365 oauth.');
             assert.equal(response.externalIds[0].id, TEST_USER.Id, 'The externalId should match test user 1\'s id.');
             assert(!response.hasOwnProperty('deleted'), 'The response should not contain `deleted`');
             assert(!response.hasOwnProperty('__v'), 'The response should not contain `__v`');
