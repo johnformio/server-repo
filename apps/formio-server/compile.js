@@ -34,7 +34,7 @@ var optimizer = new NodeOptimizer({
   ]
 });
 
-var mergedJs = optimizer.merge('server.js');
+var mergedJs = optimizer.merge('main.js');
 
 // compress and mangle the result
 var toplevelAst = UglifyJS.parse(mergedJs);
