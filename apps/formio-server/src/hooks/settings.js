@@ -32,6 +32,10 @@ module.exports = function(app) {
   return {
     settings: function(settings, req, cb) {
       if (!req.projectId) {
+        if (settings !== undefined) {
+          return cb(null, settings);
+        }
+
         return cb('No project ID provided.');
       }
 
@@ -107,6 +111,16 @@ module.exports = function(app) {
       }
     },
     alter: {
+      formio: function(app) {
+        if (app.formio && app.formio.formio) {
+          return app.formio.formio;
+        }
+        else if (app.formio) {
+          return app.formio;
+        }
+
+        return app;
+      },
       resources: function(resources) {
         return _.assign(resources, require('../resources/resources')(app, formioServer));
       },
@@ -222,7 +236,7 @@ module.exports = function(app) {
         }
         return transports;
       },
-      url: function(url, req) {
+      whitelist: function(url, req) {
         return '/project/' + req.projectId + url;
       },
       skip: function(_default, req) {
