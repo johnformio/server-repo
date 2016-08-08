@@ -189,7 +189,7 @@ module.exports = function(app, template, hook) {
         .get('/project/' + template.project._id + '/report')
         .set('x-jwt-token', template.users.admin.token)
         .set('x-query', JSON.stringify([{
-          '$limit': 25
+          '$limit': 10
         }]))
         .expect(206)
         .end(function (err, res) {
