@@ -53,4 +53,4 @@ compressedAst.print(stream);
 
 stream = stream.toString().replace(new RegExp(__dirname, 'gi'), '');
 
-fs.writeFile(path.resolve(outputDir + '/server.js'), stream);
+fs.writeFile(path.resolve(outputDir + '/main.js'), stream);
