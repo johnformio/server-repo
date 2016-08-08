@@ -3,7 +3,6 @@
 
 var request = require('supertest');
 var assert = require('assert');
-var _ = require('lodash');
 var async = require('async');
 var chance = new (require('chance'))();
 
