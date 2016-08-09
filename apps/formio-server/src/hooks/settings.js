@@ -248,6 +248,7 @@ module.exports = function(app) {
         actions.hubspotContact = require('../actions/hubspot/hubspotContact')(formioServer);
         actions.oauth = require('../actions/oauth/OAuthAction')(formioServer);
         actions.googlesheet = require('../actions/googlesheet/googleSheet')(formioServer);
+        actions.jira = require('../actions/atlassian/jira')(formioServer);
         return actions;
       },
       emailTransports: function(transports, settings) {
@@ -724,7 +725,8 @@ module.exports = function(app) {
             if (
               (req.method === 'POST' || req.method === 'PUT') &&
               req.body.hasOwnProperty('owner') &&
-              req.body.owner) {
+              req.body.owner
+            ) {
               req.assignOwner = true;
             }
 
