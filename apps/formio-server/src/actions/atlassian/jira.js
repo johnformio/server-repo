@@ -159,35 +159,60 @@ module.exports = function(router) {
 
             // Filter non-input components.
             var components = [];
+            var emailComponents = [];
             formio.util.eachComponent(form.components, function(component) {
               if (
                 !formio.util.isLayoutComponent(component) &&
                 component.input === true &&
-                component.type !== 'button'
+                component.type !== 'button' &&
+                component.type !== 'email'
               ) {
                 components.push(component);
+              }
+
+              if (component.type === 'email') {
+                emailComponents.push(component);
               }
             });
 
             debug('components:');
             debug(components);
-            settingsForm.push({
-              type: 'select',
-              input: true,
-              label: 'Summary',
-              key: 'summary',
-              placeholder: 'Select the Form Component which will provide the Issue Summary',
-              template: '<span>{{ item.label }}</span>',
-              dataSrc: 'json',
-              data: {
-                json: JSON.stringify(components || [])
+            settingsForm.push(
+              {
+                type: 'select',
+                input: true,
+                label: 'User Summary Input Field',
+                key: 'summary',
+                placeholder: 'Select the Form Component which will provide the Users Issue Summary',
+                template: '<span>{{ item.label }}</span>',
+                dataSrc: 'json',
+                data: {
+                  json: JSON.stringify(components || [])
+                },
+                valueProperty: 'key',
+                multiple: false,
+                validate: {
+                  required: true
+                }
               },
-              valueProperty: 'key',
-              multiple: false,
-              validate: {
-                required: true
+              {
+                type: 'select',
+                input: true,
+                label: 'User Email Input Field',
+                key: 'user',
+                placeholder: 'Select the Form Component which will provide the Users Email Address',
+                template: '<span>{{ item.label }}</span>',
+                dataSrc: 'json',
+                data: {
+                  json: JSON.stringify(emailComponents || [])
+                },
+                valueProperty: 'key',
+                multiple: false,
+                validate: {
+                  required: false
+                }
               }
-            });
+            );
 
             cb();
           });
@@ -221,6 +246,8 @@ module.exports = function(router) {
   JiraAction.prototype.resolve = function(handler, method, req, res, next) {
     var jira = null;
     var settings = this.settings;
+    var iterations = 0;
+    var _issue = undefined;
 
     // Only block on the external request, if configured
     if (!_.has(settings, 'block') || settings.block === false) {
@@ -245,7 +272,9 @@ module.exports = function(router) {
             return cb(err);
           }
 
+          debug('New Issue:');
           debug(issue);
+          _issue = issue;
 
           // Update the submission with an externalId ref to the issue.
           formio.resources.submission.model.update(
@@ -263,8 +292,6 @@ module.exports = function(router) {
         });
       },
       update: function(cb) {
-        var issueId = undefined;
-
         // Only update submissions that have been connected to jira.
         if (_.has(res, 'resource.item')) {
           var item = res.resource.item.toObject();
@@ -273,11 +300,11 @@ module.exports = function(router) {
           }
           else {
             // Get the id for the issue.
-            issueId = _.find(item.externalIds, function(item) {
+            _issue = _.find(item.externalIds, function(item) {
               return item.type === 'jira';
             });
-            issueId = issueId
-              ? _.get(issueId, 'id')
+            _issue = _issue
+              ? _.get(_issue, 'id')
               : undefined;
           }
         }
@@ -286,18 +313,18 @@ module.exports = function(router) {
         }
 
         // Only continue if a issue id exists.
-        if (issueId === undefined) {
+        if (_issue === undefined) {
           return cb('No Jira issue id set on this submission');
         }
 
-        debug('issueId: ' + issueId);
+        debug('issueId: ' + _issue);
         jira.issue.editIssue({
           issue: {
             fields: {
               summary: _.get(_.get(req, 'body.data'), _.get(settings, 'summary'))
             }
           },
-          issueId: issueId
+          issueId: _issue
         }, function(err, issue) {
           if (err) {
             return cb(err);
@@ -314,21 +341,21 @@ module.exports = function(router) {
         }
 
         // Get the id for the issue.
-        var issueId = _.find(_.get(deleted, 'externalIds'), function(item) {
+        _issue = _.find(_.get(deleted, 'externalIds'), function(item) {
           return item.type === 'jira';
         });
-        issueId = issueId
-          ? _.get(issueId, 'id')
+        _issue = _issue
+          ? _.get(_issue, 'id')
           : undefined;
 
         // Only continue if a issue id exists.
-        if (issueId === undefined) {
+        if (_issue === undefined) {
           return cb('No Jira issue id set on this submission');
         }
 
-        debug('issueId: ' + issueId);
+        debug('issueId: ' + _issue);
         jira.issue.deleteIssue({
-          issueId: issueId
+          issueId: _issue
         }, function(err, issue) {
           if (err) {
             debug(err);
@@ -392,6 +419,88 @@ module.exports = function(router) {
           default:
             return cb('Unknown method: ' + req.method.toLowerCase());
         }
+      },
+      function assignUsers(cb) {
+        // Only attempt to assign users on post/put methods.
+        if (req.method.toLowerCase() === 'delete' || req.method.toLowerCase() === 'get') {
+          debug('Skipping user assignment (' + req.method.toLowerCase() + ')');
+          return cb(null, _issue);
+        }
+
+        // Only attempt to assign users, if the user field is configured.
+        if (!_.has(settings, 'user')) {
+          return cb(null, _issue);
+        }
+
+        /**
+         * Assign the given user to the current issue.
+         *
+         * @param user
+         * @param callback
+         */
+        var assign = function(user, callback) {
+          jira.issue.assignIssue({
+            issueId: _issue,
+            assignee: _.get(user, 'name')
+          }, function(err, response) {
+            if (err) {
+              return callback(err);
+            }
+
+            debug('Response:');
+            debug(response);
+
+            return callback();
+          });
+        };
+
+        jira.user.search({username: _.get(_.get(req, 'body.data'), _.get(settings, 'user'))}, function(err, users) {
+          if (err) {
+            return cb(err);
+          }
+
+          if (!(users instanceof Array)) {
+            return cb('Could not get jira users');
+          }
+
+          // If no users were returned, attempt to create one.
+          if (users.length === 0) {
+            var email = _.get(_.get(req, 'body.data'), _.get(settings, 'user'));
+            var username = email;
+            if (email.toString().indexOf('@') !== -1) {
+              username = _.first(email.split('@'));
+            }
+
+            jira.user.createUser({
+              user: {
+                name: username,
+                displayName: username,
+                emailAddress: email
+              }
+            }, function(err, user) {
+              if (err) {
+                return cb(err);
+              }
+
+              debug('New user:');
+              debug(user);
+              return assign(user, cb);
+            });
+          }
+
+          // Check if we have our user
+          else if (users.length === 1) {
+            users = _.first(users);
+            debug('One user found');
+            debug(users);
+            return assign(users, cb);
+          }
+          else {
+            debug('Too many users to select one..');
+            debug(users);
+            return cb('Could not determine which user to assign the issue to.');
+          }
+        });
       }
     ], function(err, results) {
       if (err) {
@@ -408,6 +517,8 @@ module.exports = function(router) {
         return;
       }
 
+      debug('results:');
+      debug(results);
       if (_.has(settings, 'block') && settings.block === true) {
         return next(null, results);
       }
