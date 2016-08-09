@@ -181,7 +181,7 @@ describe('Tests', function() {
             assert.equal(template.project.machineName, 'formio');
             assert.equal(template.project.accessObject.create_all.length, 1);
             assert.notEqual(template.project.accessObject.create_all.indexOf(template.roles.Administrator._id), -1);
-            assert.equal(template.project.accessObject.read_all.length, 2);
+            assert.equal(template.project.accessObject.read_all.length, 3);
             assert.notEqual(template.project.accessObject.read_all.indexOf(template.roles.Administrator._id), -1);
             assert.notEqual(template.project.accessObject.read_all.indexOf(template.roles.Anonymous._id), -1);
             assert.equal(template.project.accessObject.update_all.length, 1);
@@ -222,7 +222,7 @@ describe('Tests', function() {
           template.resources.user.access.forEach(function(access) {
             template.resources.user.accessObject[access.type] = access.roles;
           });
-          assert.equal(template.project.accessObject.read_all.length, 2);
+          assert.equal(template.project.accessObject.read_all.length, 3);
           assert.notEqual(template.project.accessObject.read_all.indexOf(template.roles.Administrator._id), -1);
           assert.notEqual(template.project.accessObject.read_all.indexOf(template.roles.Anonymous._id), -1);
           done();
