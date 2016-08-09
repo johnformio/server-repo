@@ -7,4 +7,4 @@ if [[ $DD_API_KEY ]]; then
 fi
 
 # Start the server as usual.
-node server
+node main

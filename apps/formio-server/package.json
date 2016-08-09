@@ -4,10 +4,15 @@
     "node": ">=4.2.0"
   },
   "scripts": {
-    "start": "PROTOCOL=http DOMAIN=localhost PORT=3000 node server.js",
-    "test": "env TEST_SUITE=1 PROTOCOL=http DOMAIN=localhost PORT=3000 MONGO_COLLECTION=formio-test PROJECT_PLAN=basic DROPBOX_CLIENTID=clientid123 DROPBOX_CLIENTSECRET=clientsecret123 mocha -b -t 60000 test/mocha.js",
-    "docker": "env DOCKER=1 TEST_SUITE=1 PROTOCOL=http DOMAIN=localhost PORT=3000 DROPBOX_CLIENTID=NOTREAL DROPBOX_CLIENTSECRET=clientsecret123 mocha -b -t 30000 test/mocha.js",
-    "lint": "eslint *.js src/**/**.js"
+    "start": "PROTOCOL=http DOMAIN=localhost PORT=3000 node main.js",
+    "test": "TEST_SUITE=1 PROTOCOL=http DOMAIN=localhost PORT=3000 MONGO_COLLECTION=formio-test PROJECT_PLAN=basic ADMIN_EMAIL=admin@example.com ADMIN_PASS=CHANGEME DROPBOX_CLIENTID=clientid123 DROPBOX_CLIENTSECRET=clientsecret123 mocha -b -t 60000 test/mocha.js",
+    "docker": "DOCKER=1 TEST_SUITE=1 PROTOCOL=http DOMAIN=localhost PORT=3000 DROPBOX_CLIENTID=NOTREAL DROPBOX_CLIENTSECRET=clientsecret123 mocha -b -t 30000 test/mocha.js",
+    "clean": "rm -rf build",
+    "compile": "node compile",
+    "customer": "DOCKER=1 CUSTOMER=1 TEST_SUITE=1 PROTOCOL=http DOMAIN=localhost PORT=3000 ADMIN_EMAIL=dockertest@form.io ADMIN_PASS=testdockertest DROPBOX_CLIENTID=NOTREAL DROPBOX_CLIENTSECRET=clientsecret123 mocha -b -t 30000 test/mocha.js",
+    "build": "npm run lint; npm run clean; npm run compile",
+    "builddocker": "docker build -f deployment/docker/formio-server/Dockerfile .",
+    "lint": "eslint ."
   },
   "main": "./server.js",
   "schema": "3.0.4",
@@ -23,12 +28,13 @@
     "dotenv": "1.2.0",
     "edit-google-spreadsheet": "^0.2.21",
     "express": "^4.13.3",
-    "formio": "^1.9.9",
+    "formio": "^1.9.10",
     "formio-utils": "^0.1.5",
     "is-url": "^1.2.1",
     "jira-connector": "^2.3.0",
     "jslogger": "^1.0.3",
     "jsonwebtoken": "^5.0.5",
+    "kickbox": "^2.0.0",
     "lodash": "^3.10.1",
     "method-override": "^2.3.5",
     "metroplex": "0.0.9",
@@ -39,6 +45,7 @@
     "node-uuid": "^1.4.3",
     "omega-supreme": "git://github.com/formio/omega-supreme.git",
     "on-finished": "^2.3.0",
+    "pkginfo": "^0.4.0",
     "primus": "5.0.x",
     "q": "^1.4.1",
     "redis": "^2.0.1",
@@ -58,7 +65,9 @@
     "eslint": "^2.11.1",
     "eslint-config-formio": "^1.1.0",
     "mocha": "^2.5.3",
+    "node-optimize": "^1.2.1",
     "sinon": "^1.17.2",
-    "supertest": "^1.1.0"
+    "supertest": "^1.1.0",
+    "uglify-js": "^2.7.0"
   }
 }
