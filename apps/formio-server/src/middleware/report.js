@@ -216,9 +216,9 @@ module.exports = function(formio) {
 
         // Get the page range.
         var pageRange = paginate(req, res, count, limit) || {
-          limit: limit,
-          skip: skip
-        };
+            limit: limit,
+            skip: skip
+          };
 
         // Alter the skip and limit stages.
         if (skipStage) {
