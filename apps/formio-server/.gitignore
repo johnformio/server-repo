@@ -7,3 +7,4 @@ deployment/aws-eb/versions
 test/screenshots/*.png
 *~
 npm-debug.log
+build

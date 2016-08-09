@@ -4,7 +4,8 @@ var Q = require('q');
 var async = require('async');
 
 /**
- * Keep track of spark mappings accross multiple servers.
+ * Keep track of spark mappings across multiple servers.
+ *
  * @constructor
  */
 var SparkCollection = function() {
@@ -15,6 +16,7 @@ var SparkCollection = function() {
 
 /**
  * Connect to the Spark collection.
+ *
  * @param redis
  * @returns {*|promise}
  */
