@@ -1,125 +1,125 @@
-'use strict';
-
-require('dotenv').load({silent: true});
-var config = require('../config');
-var Q = require('q');
-var path = require('path');
-var bodyParser = require('body-parser');
-var methodOverride = require('method-override');
-var express = require('express');
-var app = express();
-var debug = require('debug')('formio:server');
-var analytics = require('../src/analytics/index')(config);
-var _ = require('lodash');
-
-// Create the app server.
-app.server = require('http').createServer(app);
-app.listen = function() {
-  return app.server.listen.apply(app.server, arguments)
-};
-
-// Build the paths for bootstrapping the formio test suite.
-var _formio = path.dirname(require.resolve('formio'));
-var _test = path.join(_formio, 'test');
-var _bootstrap = path.join(_test, 'bootstrap');
-
-module.exports = function() {
-  var bootstrap = Q.defer();
-
-  // Hook each request and add analytics support.
-  app.use(analytics.hook);
-
-  // Add Middleware necessary for REST API's
-  app.use(bodyParser.urlencoded({extended: true}));
-  app.use(bodyParser.json());
-  app.use(methodOverride('X-HTTP-Method-Override'));
-
-  // Error handler for malformed JSON
-  app.use(function(err, req, res, next) {
-    if (err instanceof SyntaxError) {
-      res.status(400).send(err.message);
-    }
-    else {
-      next();
-    }
-  });
-
-  // Bootstrap the formio test environment.
-  app.formio = require('formio')(config.formio);
-
-  // Attach the formio-server config.
-  app.formio.config = _.omit(config, 'formio');
-
-  // Attach the analytics to the formio server.
-  app.formio.analytics = analytics;
-  // Try the connection on server start.
-  app.formio.analytics.connect();
-
-  // Import the OAuth providers
-  app.formio.formio.oauth = require('../src/oauth/oauth')(app.formio.formio);
-
-  // Import storage providers.
-  app.storage = require('../src/storage')(app);
-
-  // Redirect www to the right server.
-  app.use(function(req, res, next) {
-    if (req.get('Host').split('.')[0] !== 'www') {
-      return next();
-    }
-    var parts = req.get('Host').split('.');
-    parts.shift(); // Remove www
-    res.redirect('http://' + parts.join('.') + req.url);
-  });
-
-  // Make sure to redirect all http requests to https.
-  app.use(function(req, res, next) {
-    if (!config.https || req.secure || (req.get('X-Forwarded-Proto') === 'https') || req.url === '/health') {
-      return next();
-    }
-
-    res.redirect('https://' + req.get('Host') + req.url);
-  });
-
-  // CORS Support
-  app.use(require('cors')());
-
-  // Host the dynamic app configuration.
-  app.get('/config.js', function(req, res) {
-    res.set('Content-Type', 'text/javascript');
-    res.render('js/config.js', {
-      forceSSL: config.formio.https ? 'true' : 'false',
-      domain: config.formio.domain,
-      appHost: config.formio.host,
-      apiHost: config.formio.apiHost,
-      formioHost: config.formio.formioHost
-    });
-  });
-
-  // Establish our url alias middleware.
-  app.use(require('../src/middleware/alias')(app.formio.formio));
-
-  // Add api key support.
-  app.use(require('../src/middleware/apiKey')(app.formio.formio));
-
-  // Hook the app and bootstrap the formio hooks.
-  app.modules = require('../src/modules/modules')(app, config);
-  var _settings = require('../src/hooks/settings')(app, app.formio);
-
-  // Ensure that we create projects within the helper.
-  app.hasProjects = true;
-
-  // Start the api server.
-  require(_bootstrap)(app, app.formio, _settings, '/project/:projectId', config.formio)
-    .then(function(state) {
-      app.use('/project/:projectId/report', require('../src/middleware/report')(app.formio));
-      app.get('/health', require('../src/middleware/health')(app.formio));
-      app.get('/', require('../src/middleware/projectIndex')(app.formio));
-      app.listen(config.port);
-      bootstrap.resolve({
-        app: state.app,
-        template: state.template
-      });
-    });
-
-  return bootstrap.promise;
-};
+//'use strict';
+//
+//require('dotenv').load({silent: true});
+//var config = require('../config');
+//var Q = require('q');
+//var path = require('path');
+//var bodyParser = require('body-parser');
+//var methodOverride = require('method-override');
+//var express = require('express');
+//var app = express();
+//var debug = require('debug')('formio:server');
+//var analytics = require('../src/analytics/index')(config);
+//var _ = require('lodash');
+//
+//// Create the app server.
+//app.server = require('http').createServer(app);
+//app.listen = function() {
+//  return app.server.listen.apply(app.server, arguments)
+//};
+//
+//// Build the paths for bootstrapping the formio test suite.
+//var _formio = path.dirname(require.resolve('formio'));
+//var _test = path.join(_formio, 'test');
+//var _bootstrap = path.join(_test, 'bootstrap');
+//
+//module.exports = function() {
+//  var bootstrap = Q.defer();
+//
+//  // Hook each request and add analytics support.
+//  app.use(analytics.hook);
+//
+//  // Add Middleware necessary for REST API's
+//  app.use(bodyParser.urlencoded({extended: true}));
+//  app.use(bodyParser.json());
+//  app.use(methodOverride('X-HTTP-Method-Override'));
+//
+//  // Error handler for malformed JSON
+//  app.use(function(err, req, res, next) {
+//    if (err instanceof SyntaxError) {
+//      res.status(400).send(err.message);
+//    }
+//    else {
+//      next();
+//    }
+//  });
+//
+//  // Bootstrap the formio test environment.
+//  app.formio = require('formio')(config.formio);
+//
+//  // Attach the formio-server config.
+//  app.formio.config = _.omit(config, 'formio');
+//
+//  // Attach the analytics to the formio server.
+//  app.formio.analytics = analytics;
+//  // Try the connection on server start.
+//  app.formio.analytics.connect();
+//
+//  // Import the OAuth providers
+//  app.formio.formio.oauth = require('../src/oauth/oauth')(app.formio.formio);
+//
+//  // Import storage providers.
+//  app.storage = require('../src/storage')(app);
+//
+//  // Redirect www to the right server.
+//  app.use(function(req, res, next) {
+//    if (req.get('Host').split('.')[0] !== 'www') {
+//      return next();
+//    }
+//    var parts = req.get('Host').split('.');
+//    parts.shift(); // Remove www
+//    res.redirect('http://' + parts.join('.') + req.url);
+//  });
+//
+//  // Make sure to redirect all http requests to https.
+//  app.use(function(req, res, next) {
+//    if (!config.https || req.secure || (req.get('X-Forwarded-Proto') === 'https') || req.url === '/health') {
+//      return next();
+//    }
+//
+//    res.redirect('https://' + req.get('Host') + req.url);
+//  });
+//
+//  // CORS Support
+//  app.use(require('cors')());
+//
+//  // Host the dynamic app configuration.
+//  app.get('/config.js', function(req, res) {
+//    res.set('Content-Type', 'text/javascript');
+//    res.render('js/config.js', {
+//      forceSSL: config.formio.https ? 'true' : 'false',
+//      domain: config.formio.domain,
+//      appHost: config.formio.host,
+//      apiHost: config.formio.apiHost,
+//      formioHost: config.formio.formioHost
+//    });
+//  });
+//
+//  // Establish our url alias middleware.
+//  app.use(require('../src/middleware/alias')(app.formio.formio));
+//
+//  // Add api key support.
+//  app.use(require('../src/middleware/apiKey')(app.formio.formio));
+//
+//  // Hook the app and bootstrap the formio hooks.
+//  app.modules = require('../src/modules/modules')(app, config);
+//  var _settings = require('../src/hooks/settings')(app, app.formio);
+//
+//  // Ensure that we create projects within the helper.
+//  app.hasProjects = true;
+//
+//  // Start the api server.
+//  require(_bootstrap)(app, app.formio, _settings, '/project/:projectId', config.formio)
+//    .then(function(state) {
+//      app.use('/project/:projectId/report', require('../src/middleware/report')(app.formio));
+//      app.get('/health', require('../src/middleware/health')(app.formio));
+//      app.get('/', require('../src/middleware/projectIndex')(app.formio));
+//      app.listen(config.port);
+//      bootstrap.resolve({
+//        app: state.app,
+//        template: state.template
+//      });
+//    });
+//
+//  return bootstrap.promise;
+//};

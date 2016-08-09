@@ -11,6 +11,8 @@ var async = require('async');
 var chance = new (require('chance'))();
 var uuidRegex = /^([a-z]{15})$/;
 var util = require('formio/src/util/util');
+var docker = process.env.DOCKER;
+var customer = process.env.CUSTOMER;
 
 module.exports = function(app, template, hook) {
   /**
@@ -63,7 +65,7 @@ module.exports = function(app, template, hook) {
       description: chance.sentence(),
       template: _.omit(template, ['users', 'formio'])
     };
-    var originalProject = _.cloneDeep(tempProject, true);
+    var originalProject = _.cloneDeep(tempProject);
 
     // Update the template with current data for future tests.
     var mapProjectToTemplate = function(project, template, callback) {
@@ -181,8 +183,8 @@ module.exports = function(app, template, hook) {
             assert.equal(response.plan, plan, 'The plan should match the default new project plan.');
             assert.deepEqual(response.apiCalls, {
               used: 0,
-              remaining: app.formio.plans.limits[response.plan],
-              limit: app.formio.plans.limits[response.plan],
+              remaining: app.formio.formio.plans.limits[response.plan],
+              limit: app.formio.formio.plans.limits[response.plan],
               reset: moment().startOf('month').add(1, 'month').toISOString()
             });
           }
@@ -233,8 +235,8 @@ module.exports = function(app, template, hook) {
             assert.equal(response.plan, plan, 'The plan should match the default new project plan.');
             assert.deepEqual(response.apiCalls, {
               used: 0,
-              remaining: app.formio.plans.limits[response.plan],
-              limit: app.formio.plans.limits[response.plan],
+              remaining: app.formio.formio.plans.limits[response.plan],
+              limit: app.formio.formio.plans.limits[response.plan],
               reset: moment().startOf('month').add(1, 'month').toISOString()
             });
           }
@@ -272,18 +274,18 @@ module.exports = function(app, template, hook) {
         .end(done);
     });
 
-    it('A user without authentication should not be able to update the owner of a project via alias', function(done) {
-      var primary = app.formio && app.formio.config && app.formio.config.formioHost
-        ? app.formio.config.formioHost
-        : 'http://formio.localhost:3000';
-      request(primary)
-        .put('/')
-        .send({
-          owner: template.project._id
-        })
-        .expect(401)
-        .end(done);
-    });
+    //it('A user without authentication should not be able to update the owner of a project via alias', function(done) {
+    //  var primary = app.formio && app.formio.formio && app.formio.formio.config && app.formio.formio.config.formioHost
+    //    ? app.formio.formio.config.formioHost
+    //    : 'http://formio.localhost:3000';
+    //  request(primary)
+    //    .put('/')
+    //    .send({
+    //      owner: template.project._id
+    //    })
+    //    .expect(401)
+    //    .end(done);
+    //});
 
     it('A Form.io User should be able to update the settings of their Project', function(done) {
       var newSettings = {
@@ -415,17 +417,28 @@ module.exports = function(app, template, hook) {
           }
 
           var response = res.body;
-          assert.equal(response.length, 1);
-          assert.equal(response[0].name, template.project.name);
+          if (!customer) {
+            assert.equal(response.length, 1);
+            assert.equal(response[0].name, template.project.name);
+          }
+          else {
+            var found = false;
+            response.forEach(function(project) {
+              if (project.name === template.project.name) {
+                found = true;
+              }
+            });
+            assert.equal(found, true);
+          }
 
           // Check plan and api calls info
-          if (app.formio) {
+          if (!docker && !customer) {
             var plan = process.env.PROJECT_PLAN;
             assert.equal(response[0].plan, plan, 'The plan should match the default new project plan.');
             assert.deepEqual(response[0].apiCalls, {
               used: 0,
-              remaining: app.formio.plans.limits[response[0].plan],
-              limit: app.formio.plans.limits[response[0].plan],
+              remaining: app.formio.formio.plans.limits[response[0].plan],
+              limit: app.formio.formio.plans.limits[response[0].plan],
               reset: moment().startOf('month').add(1, 'month').toISOString()
             });
           }
@@ -599,10 +612,9 @@ module.exports = function(app, template, hook) {
         });
     });
 
+    if (!docker)
     it('A Deleted Project should still remain in the Database', function(done) {
-      if (!app.formio) return done();
-
-      app.formio.resources.project.model.find({project: template.project._id, deleted: {$eq: null}})
+      app.formio.formio.resources.project.model.find({project: template.project._id, deleted: {$eq: null}})
         .exec(function(err, results) {
           if (err) {
             return done(err);
@@ -617,10 +629,9 @@ module.exports = function(app, template, hook) {
         });
     });
 
+    if (!docker)
     it('A Deleted Project should not have any active Forms', function(done) {
-      if (!app.formio) return done();
-
-      app.formio.resources.form.model.find({project: template.project._id, deleted: {$eq: null}})
+      app.formio.formio.resources.form.model.find({project: template.project._id, deleted: {$eq: null}})
         .exec(function(err, results) {
           if (err) {
             return done(err);
@@ -635,10 +646,9 @@ module.exports = function(app, template, hook) {
         });
     });
 
+    if (!docker)
     it('A Deleted Project should not have any active Roles', function(done) {
-      if (!app.formio) return done();
-
-      app.formio.resources.role.model.find({project: template.project._id, deleted: {$eq: null}})
+      app.formio.formio.resources.role.model.find({project: template.project._id, deleted: {$eq: null}})
         .exec(function(err, results) {
           if (err) {
             return done(err);
@@ -801,12 +811,10 @@ module.exports = function(app, template, hook) {
     });
 
     describe('Independent Plan', function() {
-      // Cannot run these tests without access to formio instance
-      if (!app.formio) return;
-
+      if (!docker)
       before(function(done) {
         // Confirm the dummy project is on the independent plan.
-        app.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
+        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
           if (err) return done(err);
 
           project.plan = 'independent';
@@ -820,6 +828,7 @@ module.exports = function(app, template, hook) {
         });
       });
 
+      if (!docker)
       it('Confirm the project is on the independent plan', function(done) {
         confirmProjectPlan(template.project._id, template.formio.owner, 'independent', done);
       });
@@ -875,11 +884,10 @@ module.exports = function(app, template, hook) {
     });
 
     describe('Upgrading Plans', function() {
-      if(!app.formio) return;
-
+      if (!docker)
       before(function(done) {
         // Confirm the dummy project is on the basic plan.
-        app.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
+        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
           if (err) return done(err);
 
           project.plan = 'basic';
@@ -967,6 +975,7 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      if (!customer)
       it('Upgrading without a registered payment method should not be allowed', function(done) {
         request(app)
           .post('/project/' + template.project._id + '/upgrade')
@@ -982,9 +991,9 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      if (!docker)
       it('Saving a payment method', function(done) {
-
-        app._server.config.payeezy = {
+        app.formio.config.payeezy = {
           keyId: '123456',
           host: 'api.demo.globalgatewaye4.firstdata.com',
           endpoint: '/transaction/v19',
@@ -1002,7 +1011,6 @@ module.exports = function(app, template, hook) {
         };
 
         sinon.stub(util, 'request')
-        // .throws(new Error('Request made with unexpected arguments'))
         .withArgs(sinon.match({
           method: 'POST',
           url: 'https://api.demo.globalgatewaye4.firstdata.com/transaction/v19',
@@ -1043,9 +1051,9 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
-            Q(app.formio.resources.form.model.findOne({name: 'paymentAuthorization'}))
+            Q(app.formio.formio.resources.form.model.findOne({name: 'paymentAuthorization'}))
             .then(function(form) {
-              return app.formio.resources.submission.model.findOne({form: form._id, owner: template.formio.owner._id});
+              return app.formio.formio.resources.submission.model.findOne({form: form._id, owner: template.formio.owner._id});
             })
             .then(function(submission) {
               assert.equal(submission.data.ccNumber, '************1111', 'Only the last 4 digits of the cc number should be stored.');
@@ -1065,6 +1073,7 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      if (!docker)
       it('Upgrading with a registered payment method should work', function(done) {
         request(app)
           .post('/project/' + template.project._id + '/upgrade')
@@ -1080,9 +1089,9 @@ module.exports = function(app, template, hook) {
               if (err) {
                 return done(err);
               }
-              Q(app.formio.resources.form.model.findOne({name: 'projectUpgradeHistory'}))
+              Q(app.formio.formio.resources.form.model.findOne({name: 'projectUpgradeHistory'}))
               .then(function(form) {
-                return app.formio.resources.submission.model.find({form: form._id, owner: template.formio.owner._id});
+                return app.formio.formio.resources.submission.model.find({form: form._id, owner: template.formio.owner._id});
               })
               .then(function(submissions) {
                 assert.equal(submissions.length, 1, 'There should only be one upgrade history submission.');
@@ -1101,6 +1110,7 @@ module.exports = function(app, template, hook) {
       });
 
       // Need to downgrade back to basic for the rest of the tests
+      if (!docker)
       it('Downgrading with a registered payment method should work', function(done) {
         request(app)
           .post('/project/' + template.project._id + '/upgrade')
@@ -1116,9 +1126,9 @@ module.exports = function(app, template, hook) {
               if (err) {
                 return done(err);
               }
-              Q(app.formio.resources.form.model.findOne({name: 'projectUpgradeHistory'}))
+              Q(app.formio.formio.resources.form.model.findOne({name: 'projectUpgradeHistory'}))
               .then(function(form) {
-                return app.formio.resources.submission.model.find({form: form._id, owner: template.formio.owner._id})
+                return app.formio.formio.resources.submission.model.find({form: form._id, owner: template.formio.owner._id})
                 .sort('-created');
               })
               .then(function(submissions) {
@@ -1136,7 +1146,6 @@ module.exports = function(app, template, hook) {
             });
           });
       });
-
     });
   });
 };

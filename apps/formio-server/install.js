@@ -25,7 +25,7 @@ module.exports = function(formio, done) {
       /* eslint-enable no-console */
 
       try {
-        fs.readFile('./deployment/import/formio.json', function(err, data) {
+        fs.readFile('./project.json', function(err, data) {
           if (err) {
             return done(err);
           }
@@ -41,7 +41,7 @@ module.exports = function(formio, done) {
     },
     importProject: function(done) {
       var parseProject = function(template, item) {
-        var project = _.clone(template);
+        var project = _.cloneDeep(template);
         delete project.roles;
         delete project.forms;
         delete project.actions;
