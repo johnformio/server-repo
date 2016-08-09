@@ -9,7 +9,6 @@ var o365Util = require('../actions/office365/util');
 var kickboxValidate = require('../actions/kickbox/validate');
 var nodeUrl = require('url');
 var jwt = require('jsonwebtoken');
-var fs = require('fs');
 var path = require('path');
 var semver = require('semver');
 
@@ -34,6 +33,10 @@ module.exports = function(app) {
   return {
     settings: function(settings, req, cb) {
       if (!req.projectId) {
+        if (settings !== undefined) {
+          return cb(null, settings);
+        }
+
         return cb('No project ID provided.');
       }
 
@@ -135,6 +138,16 @@ module.exports = function(app) {
       }
     },
     alter: {
+      formio: function(app) {
+        if (app.formio && app.formio.formio) {
+          return app.formio.formio;
+        }
+        else if (app.formio) {
+          return app.formio;
+        }
+
+        return app;
+      },
       resources: function(resources) {
         return _.assign(resources, require('../resources/resources')(app, formioServer));
       },
@@ -250,7 +263,7 @@ module.exports = function(app) {
         }
         return transports;
       },
-      url: function(url, req) {
+      whitelist: function(url, req) {
         return '/project/' + req.projectId + url;
       },
       skip: function(_default, req) {
@@ -1065,7 +1078,8 @@ module.exports = function(app) {
         var _debug = require('debug')('formio:settings:config');
 
         // Hook the schema var to load the latest public/private schema.
-        var pkg = require('../../package.json');
+        require('pkginfo')(module);
+        var pkg = module.exports;
         if (pkg && pkg.schema && pkg.schema !== null && semver.gt(pkg.schema, config.schema)) {
           config.schema = pkg.schema;
         }
@@ -1090,24 +1104,13 @@ module.exports = function(app) {
         files = files || [];
 
         _debug(files);
-        _debug('Private updates: ' + path.join(__dirname, '../db/updates'));
-        fs.readdir(path.join(__dirname, '../db/updates'), function(err, _files) {
-          if (err) {
-            _debug(err);
-            return next(err);
-          }
-
-          _debug(_files);
-          _files = _files.map(function(name) {
-            _debug('Update found: ' + name);
-            return name.split('.js')[0];
-          });
-
-          // Add the private updates to the original file list and continue.
-          files = files.concat(_files);
-          _debug('All files: ' + JSON.stringify(files));
-          next(null, files);
-        });
+        //_debug('Private updates: ' + path.join(__dirname, '../db/updates'));
+        var _files = require('../db/updates/index.js');
+        _files = Object.keys(_files);
+        // Add the private updates to the original file list and continue.
+        files = files.concat(_files);
+        _debug(files);
+        next(null, files);
       },
 
       /**
@@ -1121,7 +1124,8 @@ module.exports = function(app) {
         var update = null;
 
         // Attempt to resolve the private update.
-        var _path = path.join(__dirname, '../db/updates/', name);
+        var _files = require('../db/updates/index.js');
+        var _path = path.join(__dirname, '../db/updates/', _files[name]);
         debug.settings('load: ' + _path);
         try {
           update = require(_path);

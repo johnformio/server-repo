@@ -5,9 +5,7 @@ var Primus = require('primus');
 var Redis = require('redis');
 var Q = require('q');
 var _ = require('lodash');
-/* eslint-disable new-cap */
-var chance = new require('chance')();
-/* eslint-disable new-cap */
+var chance = new require('chance')(); // eslint-disable-line new-cap
 var debug = require('debug')('formio:error');
 
 module.exports = function(formio) {
@@ -231,8 +229,11 @@ module.exports = function(formio) {
   /**
    * Authorize the project socket.
    *
-   * @param req
-   * @param authorized
+   * @param {Object} req
+   *   The express request object.
+   * @param {Function} authorized
+   *   The callback function to invoke with the results of authorize.
+   *
    * @returns {*}
    */
   ProjectSocket.prototype.authorize = function(req, authorized) {
@@ -293,9 +294,8 @@ module.exports = function(formio) {
   /**
    * Forward a message onto another server.
    *
-   * @param sparkId
+   * @param connection
    * @param msg
-   * @param token
    * @param fn
    */
   ProjectSocket.prototype.forward = function(connection, msg, fn) {
@@ -323,6 +323,9 @@ module.exports = function(formio) {
 
   /**
    * Handle a request to a websocket connection.
+   *
+   * @param request
+   * @returns {*|promise}
    */
   ProjectSocket.prototype.handle = function(request) {
     // Allow for a deferred execution.
@@ -446,6 +449,9 @@ module.exports = function(formio) {
 
   /**
    * Send a request through a websocket.
+   *
+   * @param request
+   * @returns {*|promise}
    */
   ProjectSocket.prototype.send = function(request) {
     return this.handle(this.newRequest(request));
