@@ -46,6 +46,7 @@ module.exports = function(formio, done) {
         delete project.forms;
         delete project.actions;
         delete project.resources;
+        delete project.access;
         return project;
       };
 
@@ -162,6 +163,7 @@ module.exports = function(formio, done) {
             type: 'read_all',
             roles: [
               template.roles.administrator._id,
+              template.roles.authenticated._id,
               template.roles.anonymous._id
             ]
           },

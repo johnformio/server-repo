@@ -84,19 +84,38 @@ module.exports = function(formio) {
     var updateProject = function(template) {
       // Give the project owner all the administrator roles.
       var adminRoles = [];
-      _.each(template.roles, function(role) {
+      var roles = {};
+      var accessList = {};
+      // Normalize roles and access for processing.
+      _.each(template.roles, function(role, name) {
+        roles[name] = role._id;
         if (role.admin) {
           adminRoles.push(role._id);
         }
       });
 
-      // Add the access for the project.
-      project.access = [
-        {type: 'create_all', roles: adminRoles},
-        {type: 'read_all', roles: adminRoles},
-        {type: 'update_all', roles: adminRoles},
-        {type: 'delete_all', roles: adminRoles}
-      ];
+      if (template.access) {
+        _.each(template.access, function(access) {
+          accessList[access.type] = access.roles;
+        });
+      }
+
+        // Set project access
+      _.each(['create_all', 'read_all', 'update_all', 'delete_all'], function(permission) {
+        var access = {
+          type: permission,
+          roles: []
+        };
+        access.roles = _.clone(adminRoles);
+        if (accessList[permission]) {
+          _.each(accessList[permission], function(role) {
+            if (access.roles.indexOf(roles[role]) === -1) {
+              access.roles.push(roles[role]);
+            }
+          });
+        }
+        project.access.push(access);
+      });
 
       // Save preview info to settings if available
       if (template.preview) {
