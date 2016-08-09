@@ -197,15 +197,11 @@ module.exports = function(app, template, hook) {
     });
 
     it('Should allow $limit in aggregation.', function(done) {
-      count = (count - 1 > 0)
-        ? count--
-        : count;
-
       request(app)
         .get('/project/' + template.project._id + '/report')
         .set('x-jwt-token', template.users.admin.token)
         .set('x-query', JSON.stringify([{
-          '$limit': count
+          '$limit': 10
         }]))
         .expect(206)
         .end(function (err, res) {
