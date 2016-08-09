@@ -3,7 +3,6 @@
 
 var request = require('supertest');
 var assert = require('assert');
-var _ = require('lodash');
 var async = require('async');
 var chance = new (require('chance'))();
 
@@ -26,9 +25,7 @@ module.exports = function(app, template, hook) {
           if (err) {
             return done(err);
           }
-
           count = res.body.length;
-
           done();
         });
     });
@@ -197,11 +194,12 @@ module.exports = function(app, template, hook) {
     });
 
     it('Should allow $limit in aggregation.', function(done) {
+      count = (count > 0) ? (count - 1) : 1;
       request(app)
         .get('/project/' + template.project._id + '/report')
         .set('x-jwt-token', template.users.admin.token)
         .set('x-query', JSON.stringify([{
-          '$limit': 10
+          '$limit': count
         }]))
         .expect(206)
         .end(function (err, res) {
@@ -209,6 +207,7 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
+          assert.equal(res.body.length, count);
           done();
         });
     });
