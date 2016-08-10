@@ -69,7 +69,7 @@ module.exports = function(router) {
           }
 
           if (!atlassian.settings.check(settings)) {
-            return cb('Failed settings check, cant continue.');
+            return cb('Failed Atlassian settings check. Configure the Atlassian Data Connection before continuing.');
           }
 
           jira = atlassian.getJira(settings);
@@ -224,7 +224,7 @@ module.exports = function(router) {
     ], function(err) {
       if (err) {
         debug(err);
-        return;
+        return next(err);
       }
 
       return next(null, settingsForm);
