@@ -246,7 +246,6 @@ module.exports = function(router) {
   JiraAction.prototype.resolve = function(handler, method, req, res, next) {
     var jira = null;
     var settings = this.settings;
-    var iterations = 0;
     var _issue = undefined;
 
     // Only block on the external request, if configured
@@ -268,8 +267,11 @@ module.exports = function(router) {
           }
         }, function(err, issue) {
           if (err) {
-            debug(err);
             return cb(err);
+          }
+
+          if (_.has(issue, 'errorMessages')) {
+            return cb(issue);
           }
 
           debug('New Issue:');
@@ -328,6 +330,10 @@ module.exports = function(router) {
         }, function(err, issue) {
           if (err) {
             return cb(err);
+          }
+
+          if (_.has(issue, 'errorMessages')) {
+            return cb(issue);
           }
 
           debug(issue);
@@ -421,17 +427,6 @@ module.exports = function(router) {
         }
       },
       function assignUsers(cb) {
-        // Only attempt to assign users on post/put methods.
-        if (req.method.toLowerCase() === 'delete' || req.method.toLowerCase() === 'get') {
-          debug('Skipping user assignment (' + req.method.toLowerCase() + ')');
-          return cb(null, _issue);
-        }
-
-        // Only attempt to assign users, if the user field is configured.
-        if (!_.has(settings, 'user')) {
-          return cb(null, _issue);
-        }
-
         /**
          * Assign the given user to the current issue.
          *
@@ -441,7 +436,7 @@ module.exports = function(router) {
         var assign = function(user, callback) {
           jira.issue.assignIssue({
             issueId: _issue,
-            assignee: _.get(user, 'name')
+            assignee: _.get(user, 'name') || null
           }, function(err, response) {
             if (err) {
               return callback(err);
@@ -453,6 +448,24 @@ module.exports = function(router) {
             return callback();
           });
         };
+
+        // Only attempt to assign users on post/put methods.
+        if (req.method.toLowerCase() === 'delete' || req.method.toLowerCase() === 'get') {
+          debug('Skipping user assignment (' + req.method.toLowerCase() + ')');
+          return cb(null, _issue);
+        }
+
+        // Only attempt to assign users, if the user field is configured.
+        if (!_.has(settings, 'user')) {
+          return cb(null, _issue);
+        }
+
+        // If no data was supplied for the user, but the assignment setting is enabled, skip this.
+        if (!_.has(_.get(req, 'body.data'), _.get(settings, 'user'))) {
+          return assign(null, function() {
+            return cb(null, _issue);
+          });
+        }
 
         jira.user.search({username: _.get(_.get(req, 'body.data'), _.get(settings, 'user'))}, function(err, users) {
           if (err) {
@@ -504,10 +517,8 @@ module.exports = function(router) {
       }
     ], function(err, results) {
       if (err) {
-        debug(err);
-
-        if (_.has(err, 'errorMessages')) {
-          err = JSON.stringify(err.errorMessages);
+        if (typeof err !== 'string') {
+          err = JSON.stringify(err);
         }
 
         if (_.has(settings, 'block') && settings.block === true) {
