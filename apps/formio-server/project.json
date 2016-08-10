@@ -1295,7 +1295,7 @@
           "valueProperty": "",
           "dataSrc": "url",
           "data": {
-            "url": "https://api.form.io/team/members",
+            "url": "{{formioBase}}/team/members",
             "json": "",
             "values": [
               {
@@ -1465,5 +1465,15 @@
       ],
       "submissionAccess": []
     }
-  }
+  },
+  "access": [
+    {
+      "type": "read_all",
+      "roles": [
+        "administrator",
+        "authenticated",
+        "anonymous"
+      ]
+    }
+  ]
 }

@@ -178,38 +178,57 @@ module.exports = function(formio) {
       };
 
       // If a limit is provided, then we need to include some pagination stuff.
-      if (limitStage) {
-        // Find the total count based on the query.
-        submissions.find(query).count(function(err, count) {
-          if (err) {
-            return next(err);
-          }
-          var skip = skipStage ? skipStage['$skip'] : 0;
-          var limit = limitStage['$limit'];
-          if (!req.headers.range) {
-            req.headers['range-unit'] = 'items';
-            req.headers.range = skip + '-' + (skip + (limit - 1));
-          }
+      if (!limitStage) {
+        return performAggregation();
+      }
 
-          // Get the page range.
-          var pageRange = paginate(req, res, count, limit) || {
-            limit: limit,
-            skip: skip
-          };
+      // Determine the count query by limiting based on the formIds.
+      var countQuery = _.cloneDeep(query);
 
-          // Alter the skip and limit stages.
-          if (skipStage) {
-            skipStage['$skip'] = pageRange.skip;
-          }
-          limitStage['$limit'] = pageRange.limit;
-
-          // Perform the aggregation command.
-          performAggregation();
-        });
+      // Add the filtered formIds to the query.
+      if (
+        query.hasOwnProperty('form') &&
+        query.form.hasOwnProperty('$in') &&
+        (query.form['$in'].length > 0)
+      ) {
+        countQuery.form['$in'] = formIds.concat(query.form['$in']);
+      }
+      else if (query.form) {
+        countQuery.form = {'$in': formIds.push(query.form)};
       }
       else {
-        performAggregation();
+        countQuery.form = {'$in': formIds};
       }
+
+      // Find the total count based on the query.
+      submissions.find(countQuery).count(function(err, count) {
+        if (err) {
+          debug.error(err);
+          return next(err);
+        }
+
+        var skip = skipStage ? skipStage['$skip'] : 0;
+        var limit = limitStage['$limit'];
+        if (!req.headers.range) {
+          req.headers['range-unit'] = 'items';
+          req.headers.range = skip + '-' + (skip + (limit - 1));
+        }
+
+        // Get the page range.
+        var pageRange = paginate(req, res, count, limit) || {
+          limit: limit,
+          skip: skip
+        };
+
+        // Alter the skip and limit stages.
+        if (skipStage) {
+          skipStage['$skip'] = pageRange.skip;
+        }
+        limitStage['$limit'] = pageRange.limit;
+
+        // Perform the aggregation command.
+        performAggregation();
+      });
     });
   };
 
