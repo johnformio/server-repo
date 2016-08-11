@@ -125,7 +125,7 @@ module.exports = function(router) {
 
       if (!_.has(settings, 'atlassian') || !checkOAuthFinal(_.get(settings, 'atlassian'))) {
         debug.storeOAuthReply('No atlassian Settings');
-        return res.sendStatus(400);
+        return res.status(400).send('No atlassian Settings');
       }
 
       if (!_.has(req, 'body.oauth_verifier')) {
@@ -133,50 +133,57 @@ module.exports = function(router) {
         return res.sendStatus(400);
       }
 
-      /* eslint-disable camelcase */
-      JiraClient.oauth_util.swapRequestTokenWithAccessToken({
-        host: _.get(settings, 'atlassian.url'),
-        oauth: {
-          consumer_key: _.get(settings, 'atlassian.oauth.consumer_key'),
-          private_key: _.get(settings, 'atlassian.oauth.private_key'),
-          token: _.get(settings, 'atlassian.oauth.token'),
-          token_secret: _.get(settings, 'atlassian.oauth.token_secret'),
-          oauth_verifier: _.get(req, 'body.oauth_verifier')
-        }
-      }, function(err, accessToken) {
-        if (err) {
-          debug.storeOAuthReply(err);
-          return res.sendStatus(400);
-        }
-
-        // Persist the real oauth token for any following requests.
-        if (!req.projectId) {
-          return res.sendStatus(400);
-        }
-
-        cache.loadProject(req, formio.util.idToBson(req.projectId), function(err, project) {
+      try {
+        /* eslint-disable camelcase */
+        JiraClient.oauth_util.swapRequestTokenWithAccessToken({
+          host: _.get(settings, 'atlassian.url'),
+          oauth: {
+            consumer_key: _.get(settings, 'atlassian.oauth.consumer_key'),
+            private_key: _.get(settings, 'atlassian.oauth.private_key'),
+            token: _.get(settings, 'atlassian.oauth.token'),
+            token_secret: _.get(settings, 'atlassian.oauth.token_secret'),
+            oauth_verifier: _.get(req, 'body.oauth_verifier')
+          }
+        }, function(err, accessToken) {
           if (err) {
-            debug.authorizeOAuth(err);
+            debug.storeOAuthReply(err);
             return res.sendStatus(400);
           }
 
-          var settings = _.cloneDeep(project.toObject().settings);
-          _.set(settings, 'atlassian.oauth.token', accessToken);
-          project.set('settings', settings);
-          project.markModified('settings');
-          project.save(function(err) {
+          // Persist the real oauth token for any following requests.
+          if (!req.projectId) {
+            return res.sendStatus(400);
+          }
+
+          cache.loadProject(req, formio.util.idToBson(req.projectId), function(err, project) {
             if (err) {
               debug.authorizeOAuth(err);
               return res.sendStatus(400);
             }
 
-            return res.json({
-              access_token: accessToken
+            var settings = _.cloneDeep(project.toObject().settings);
+            _.set(settings, 'atlassian.oauth.token', accessToken);
+            project.set('settings', settings);
+            project.markModified('settings');
+            project.save(function(err) {
+              if (err) {
+                debug.authorizeOAuth(err);
+                return res.sendStatus(400);
+              }
+
+              return res.json({
+                access_token: accessToken
+              });
             });
           });
         });
-      });
-      /* eslint-enable camelcase */
+        /* eslint-enable camelcase */
+      }
+      catch (e) {
+        debug.storeOAuthReply('Error:');
+        debug.storeOAuthReply(e);
+        return res.status(400).send('Could not swap OAuth Access Token.');
+      }
     });
   };
 
@@ -189,49 +196,56 @@ module.exports = function(router) {
 
       if (!_.has(settings, 'atlassian') || !checkOAuth(_.get(settings, 'atlassian'))) {
         debug.authorizeOAuth('No atlassian Settings');
-        return res.sendStatus(400);
+        return res.status(400).send('No atlassian Settings');
       }
 
-      /* eslint-disable camelcase */
-      JiraClient.oauth_util.getAuthorizeURL({
-        host: _.get(settings, 'atlassian.url'),
-        oauth: {
-          consumer_key: _.get(settings, 'atlassian.oauth.consumer_key'),
-          private_key: _.get(settings, 'atlassian.oauth.private_key')
-        }
-      }, function(err, handshake) {
-        if (err) {
-          debug.authorizeOAuth(err);
-          return res.sendStatus(400);
-        }
-
-        if (!req.projectId) {
-          return res.sendStatus(400);
-        }
-
-        cache.loadProject(req, formio.util.idToBson(req.projectId), function(err, project) {
+      try {
+        /* eslint-disable camelcase */
+        JiraClient.oauth_util.getAuthorizeURL({
+          host: _.get(settings, 'atlassian.url'),
+          oauth: {
+            consumer_key: _.get(settings, 'atlassian.oauth.consumer_key'),
+            private_key: _.get(settings, 'atlassian.oauth.private_key')
+          }
+        }, function(err, handshake) {
           if (err) {
             debug.authorizeOAuth(err);
             return res.sendStatus(400);
           }
 
-          var settings = _.cloneDeep(project.toObject().settings);
-          _.set(settings, 'atlassian.oauth.token', handshake.token);
-          _.set(settings, 'atlassian.oauth.token_secret', handshake.token_secret);
-          project.set('settings', settings);
-          project.markModified('settings');
-          project.save(function(err) {
+          if (!req.projectId) {
+            return res.sendStatus(400);
+          }
+
+          cache.loadProject(req, formio.util.idToBson(req.projectId), function(err, project) {
             if (err) {
               debug.authorizeOAuth(err);
               return res.sendStatus(400);
             }
 
-            debug.authorizeOAuth(handshake);
-            res.json(handshake);
+            var settings = _.cloneDeep(project.toObject().settings);
+            _.set(settings, 'atlassian.oauth.token', handshake.token);
+            _.set(settings, 'atlassian.oauth.token_secret', handshake.token_secret);
+            project.set('settings', settings);
+            project.markModified('settings');
+            project.save(function(err) {
+              if (err) {
+                debug.authorizeOAuth(err);
+                return res.sendStatus(400);
+              }
+
+              debug.authorizeOAuth(handshake);
+              res.json(handshake);
+            });
           });
         });
-      });
-      /* eslint-enable camelcase */
+        /* eslint-enable camelcase */
+      }
+      catch (e) {
+        debug.authorizeOAuth('Error:');
+        debug.authorizeOAuth(e);
+        return res.status(400).send('Invalid OAuth settings given.');
+      }
     });
   };
 
