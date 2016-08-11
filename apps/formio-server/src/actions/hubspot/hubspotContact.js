@@ -61,7 +61,7 @@ module.exports = function(router) {
           return next(message);
         }
 
-        var fieldSrc = router.formio.hook.alter('url', '/form/' + req.params.formId + '/components', req);
+        var fieldSrc = router.formio.hook.alter('path', '/form/' + req.params.formId + '/components', req);
         var filteredProperties = _.filter(_.sortBy(properties, 'label'), function(property) {
           return !property.readOnlyValue && !property.hidden;
         });

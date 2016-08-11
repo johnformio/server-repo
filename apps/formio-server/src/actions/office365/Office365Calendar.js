@@ -33,7 +33,7 @@ module.exports = function(router) {
 
   Office365CalendarAction.settingsForm = function(req, res, next) {
     // Create the select items for each office 365 field.
-    var dataSrc = router.formio.hook.alter('url', '/form/' + req.params.formId + '/components', req);
+    var dataSrc = router.formio.hook.alter('path', '/form/' + req.params.formId + '/components', req);
 
     // The Microsoft Timezones JSON.
     var timeZones = 'https://gist.githubusercontent.com/travist/1c7b4ba5289e38dc3a9e/raw/306d24a1efefcb0d70e8978d7272a575625c1843/timezones.json';

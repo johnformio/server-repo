@@ -264,7 +264,7 @@ module.exports = function(app) {
         }
         return transports;
       },
-      whitelist: function(url, req) {
+      path: function(url, req) {
         return '/project/' + req.projectId + url;
       },
       skip: function(_default, req) {

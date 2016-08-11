@@ -155,7 +155,7 @@ module.exports = function(router) {
     };
 
     // Create the select items for each office 365 field.
-    var dataSrc = router.formio.hook.alter('url', '/form/' + req.params.formId + '/components', req);
+    var dataSrc = router.formio.hook.alter('path', '/form/' + req.params.formId + '/components', req);
     _.each(office365Fields, function(field, fieldKey) {
       fieldPanel.components.push({
         type: 'select',

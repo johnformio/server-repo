@@ -51,8 +51,8 @@ module.exports = function(router) {
    * @param next
    */
   OAuthAction.settingsForm = function(req, res, next) {
-    var fieldsSrc = formio.hook.alter('url', '/form/' + req.params.formId + '/components', req);
-    var resourceSrc = formio.hook.alter('url', '/form?type=resource', req);
+    var fieldsSrc = formio.hook.alter('path', '/form/' + req.params.formId + '/components', req);
+    var resourceSrc = formio.hook.alter('path', '/form?type=resource', req);
     formio.resources.role.model.find(formio.hook.alter('roleQuery', {}, req))
       .sort({title: 1})
       .exec(function(err, roles) {
