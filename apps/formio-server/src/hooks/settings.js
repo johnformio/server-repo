@@ -221,6 +221,7 @@ module.exports = function(app) {
         actions.hubspotContact = require('../actions/hubspot/hubspotContact')(formioServer);
         actions.oauth = require('../actions/oauth/OAuthAction')(formioServer);
         actions.googlesheet = require('../actions/googlesheet/googleSheet')(formioServer);
+        actions.sqlconnector = require('../actions/SQLConnector')(formioServer);
         return actions;
       },
       emailTransports: function(transports, settings) {
