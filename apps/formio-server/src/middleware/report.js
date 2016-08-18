@@ -182,8 +182,27 @@ module.exports = function(formio) {
         return performAggregation();
       }
 
+      // Determine the count query by limiting based on the formIds.
+      var countQuery = _.cloneDeep(query);
+
+      // Add the filtered formIds to the query.
+      if (
+        query.hasOwnProperty('form') &&
+        query.form.hasOwnProperty('$in') &&
+        (query.form['$in'].length > 0)
+      ) {
+        countQuery.form['$in'] = formIds.concat(query.form['$in']);
+      }
+      else if (query.form) {
+        formIds.push(query.form);
+        countQuery.form = {'$in': formIds};
+      }
+      else {
+        countQuery.form = {'$in': formIds};
+      }
+
       // Find the total count based on the query.
-      submissions.find(query).count(function(err, count) {
+      submissions.find(countQuery).count(function(err, count) {
         if (err) {
           debug.error(err);
           return next(err);

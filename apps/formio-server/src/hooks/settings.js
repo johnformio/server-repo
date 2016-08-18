@@ -6,6 +6,7 @@ var debug = {
   error: require('debug')('formio:error')
 };
 var o365Util = require('../actions/office365/util');
+var kickboxValidate = require('../actions/kickbox/validate');
 var nodeUrl = require('url');
 var jwt = require('jsonwebtoken');
 var path = require('path');
@@ -92,6 +93,32 @@ module.exports = function(app) {
         if (req.method === 'PUT' || req.method === 'POST') {
           req.body.project = req.projectId || req.params.projectId;
         }
+      },
+      validateEmail: function(component, req, res, next) {
+        if (
+          (component.type === 'email') &&
+          component.kickbox &&
+          component.kickbox.enabled
+        ) {
+          // Load the project settings.
+          cache.loadProject(req, req.projectId, function(err, project) {
+            if (err) {
+              return next(err);
+            }
+            if (!project) {
+              return next('Could not find project');
+            }
+
+            // Validate with kickbox.
+            kickboxValidate(project, component, req, res, next);
+          });
+
+          // Return true so that we can handle this request.
+          return true;
+        }
+
+        // Return false to move on with the request.
+        return false;
       },
       email: function(transport, settings, projectSettings, req, res, params) {
         var transporter = {};
@@ -222,6 +249,7 @@ module.exports = function(app) {
         actions.oauth = require('../actions/oauth/OAuthAction')(formioServer);
         actions.googlesheet = require('../actions/googlesheet/googleSheet')(formioServer);
         actions.sqlconnector = require('../actions/SQLConnector')(formioServer);
+        actions.jira = require('../actions/atlassian/jira')(formioServer);
         return actions;
       },
       emailTransports: function(transports, settings) {
@@ -237,7 +265,7 @@ module.exports = function(app) {
         }
         return transports;
       },
-      whitelist: function(url, req) {
+      path: function(url, req) {
         return '/project/' + req.projectId + url;
       },
       skip: function(_default, req) {
@@ -698,7 +726,8 @@ module.exports = function(app) {
             if (
               (req.method === 'POST' || req.method === 'PUT') &&
               req.body.hasOwnProperty('owner') &&
-              req.body.owner) {
+              req.body.owner
+            ) {
               req.assignOwner = true;
             }
 

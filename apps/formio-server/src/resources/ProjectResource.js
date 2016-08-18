@@ -60,6 +60,9 @@ module.exports = function(router, formioServer) {
   // Load the team owner filter for use.
   formio.middleware.projectAccessFilter = require('../middleware/projectAccessFilter')(formio);
 
+  // Load the restrictive middleware to use
+  formio.middleware.restrictOwnerAccess = require('../middleware/restrictOwnerAccess')(formio);
+
   var hiddenFields = ['deleted', '__v', 'machineName', 'primary'];
   var resource = Resource(
     router,
@@ -184,6 +187,22 @@ module.exports = function(router, formioServer) {
       return res.status(200).json({available: !project});
     });
   });
+
+  // Expose the atlassian oauth endpoints.
+  var atlassian = require('../actions/atlassian/util')(formioServer);
+  router.post(
+    '/project/:projectId/atlassian/oauth/authorize',
+    formio.middleware.tokenHandler,
+    formio.middleware.restrictOwnerAccess,
+    atlassian.authorizeOAuth
+  );
+
+  router.post(
+    '/project/:projectId/atlassian/oauth/finalize',
+    formio.middleware.tokenHandler,
+    formio.middleware.restrictOwnerAccess,
+    atlassian.storeOAuthReply
+  );
 
   return resource;
 };
