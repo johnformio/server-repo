@@ -14,6 +14,24 @@ module.exports = function(router) {
   var required = formio.plans.limits.team;
   var util = formio.util;
 
+  // Building blocks for sql statements.
+  var sql = {
+    mysql: {
+      post: 'INSERT',
+      get: 'SELECT',
+      put: 'UPDATE',
+      delete: 'DELETE FROM',
+      index: 'SELECT'
+    },
+    mssql: {
+      post: '',
+      get: '',
+      put: '',
+      delete: '',
+      index: ''
+    }
+  };
+
   /**
    * Verifies that the current request has the applicable project plan to proceed.
    *
@@ -37,6 +55,54 @@ module.exports = function(router) {
       .catch(function(err) {
         throw err;
       });
+  };
+
+  var getExpressRoute = function(method, path, data, type) {
+    method = method.toString().toLowerCase();
+
+    switch (method) {
+      case 'post':
+      case 'index':
+        return {
+          method: method,
+          endpoint: '/' + path.toString(),
+          query: _.get(sql, '' + type + '.' + method)
+        };
+      case 'get':
+      case 'put':
+      case 'delete':
+        return {
+          method: method,
+          endpoint: '/' + path.toString() + '/:id',
+          query: _.get(sql, '' + type + '.' + method)
+        };
+      default:
+        return undefined;
+    }
+  };
+
+  var actionsToRoutes = function(actions) {
+    var routes = [];
+    var path, methods, fields, data, route;
+    _.each(actions, function(action) {
+      // Pluck out the core info from the action.
+      path = _.get(action, 'settings.table');
+      methods = _.get(action, 'method');
+      data = {};
+      route = {};
+
+      // Iterate over each field to get the data mapping.
+      fields = _.get(action, 'settings.fields');
+      _.each(fields, function(field) {
+        data[field.column] = _.get(field, 'field.key')
+      });
+
+      _.each(methods, function(method) {
+        routes.push(getExpressRoute(method, path, data, type));
+      });
+    });
+
+    return routes;
   };
 
   /**
