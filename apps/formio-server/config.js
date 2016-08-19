@@ -35,7 +35,8 @@ config.formio.reservedForms = [
   'upgrade',
   'access',
   'atlassian\/oauth\/authorize',
-  'atlassian\/oauth\/finalize'
+  'atlassian\/oauth\/finalize',
+  'sqlconnector'
 ];
 
 // Set the App settings.
