@@ -7,6 +7,7 @@ var debug = {
   getConnectorActions: require('debug')('formio:sqlconnector:getConnectorActions'),
   verifyPlan: require('debug')('formio:sqlconnector:verifyPlan')
 };
+var squel = require('squel');
 
 module.exports = function(router) {
   var formio = router.formio;
@@ -15,21 +16,9 @@ module.exports = function(router) {
   var util = formio.util;
 
   // Building blocks for sql statements.
-  var sql = {
-    mysql: {
-      post: 'INSERT',
-      get: 'SELECT',
-      put: 'UPDATE',
-      delete: 'DELETE FROM',
-      index: 'SELECT'
-    },
-    mssql: {
-      post: '',
-      get: '',
-      put: '',
-      delete: '',
-      index: ''
-    }
+  var idFn = {
+    mysql: 'LAST_INSERT_ID()',
+    mssql: 'SCOPE_IDENTITY()'
   };
 
   /**
@@ -43,7 +32,6 @@ module.exports = function(router) {
     return Q.nfcall(formio.plans.getPlan, req)
       .then(function(plan) {
         // Check that this plan is acceptable for the sql connector.
-
         if (plan < required) {
           debug.verifyPlan('The given plan is not high enough for sql connector access.. ' + plan + ' / ' + required);
           throw new Error('The current project must be upgraded to access the SQL Connector');
@@ -57,11 +45,36 @@ module.exports = function(router) {
       });
   };
 
-  var getExpressRoute = function(method, path, data, type) {
+  var getExpressRoute = function(method, path, primary, data, type) {
     method = method.toString().toLowerCase();
+    var route = {
+      method: method,
+      endpoint: '/' + path.toString()
+    };
 
+    var _sql;
     switch (method) {
       case 'post':
+        _sql = squel
+          .insert()
+          .into(path.toString());
+
+        data.forEach(function(value, column) {
+          _sql.set(column, value);
+        });
+
+        // Get the primary insert string.
+        route.query = _sql.toString();
+
+        _sql = squel
+          .select()
+          .from(path.toString())
+          .where(primary.toString() + '=' + _.get(idFn, type))
+          .toString();
+
+        // Get the select string for the new record.
+        route.query += '; ' +  _sql.toString();
+        break;
       case 'index':
         return {
           method: method,
@@ -76,17 +89,20 @@ module.exports = function(router) {
           endpoint: '/' + path.toString() + '/:id',
           query: _.get(sql, '' + type + '.' + method)
         };
-      default:
-        return undefined;
+      //default:
+      //  return undefined;
     }
+
+    return route;
   };
 
   var actionsToRoutes = function(actions) {
     var routes = [];
-    var path, methods, fields, data, route;
+    var path, primary, methods, fields, data, route;
     _.each(actions, function(action) {
       // Pluck out the core info from the action.
       path = _.get(action, 'settings.table');
+      primary = _.get(action, 'settings.primary') || 'id';
       methods = _.get(action, 'method');
       data = {};
       route = {};
@@ -98,7 +114,7 @@ module.exports = function(router) {
       });
 
       _.each(methods, function(method) {
-        routes.push(getExpressRoute(method, path, data, type));
+        routes.push(getExpressRoute(method, path, primary, data, type));
       });
     });
 
@@ -154,7 +170,10 @@ module.exports = function(router) {
         return Q.fcall(getConnectorActions, req)
       })
       .then(function(actions) {
-        return res.status(200).json(actions);
+        return Q.fcall(actionsToRoutes, actions);
+      })
+      .then(function(routes) {
+        return res.status(200).json(routes);
       })
       .catch(function(err) {
         debug.generateQueries(err);

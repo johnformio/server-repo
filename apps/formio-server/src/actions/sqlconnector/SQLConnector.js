@@ -42,8 +42,6 @@ module.exports = function(router) {
       }
 
       settings = settings || {};
-
-
       if (!settings.sqlconnector) {
         return next('No project settings were found for the SQL Connector.');
       }
@@ -73,7 +71,25 @@ module.exports = function(router) {
             validate: {
               required: true
             }
-          })
+          });
+          return cb();
+        },
+        function addTablePrimaryKey(cb) {
+          form.push({
+            label: 'Primary Key',
+            key: 'primary',
+            inputType: 'text',
+            defaultValue: 'id',
+            input: true,
+            placeholder: 'What is the primary key for this table? (Must be self incrementing/updating)',
+            prefix: '',
+            suffix: '',
+            type: 'textfield',
+            multiple: false,
+            validate: {
+              required: true
+            }
+          });
           return cb();
         },
         function getFormComponents(cb) {
