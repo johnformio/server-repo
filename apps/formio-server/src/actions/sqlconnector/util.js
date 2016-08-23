@@ -5,6 +5,8 @@ var Q = require('q');
 var debug = {
   generateQueries: require('debug')('formio:sqlconnector:generateQueries'),
   getConnectorActions: require('debug')('formio:sqlconnector:getConnectorActions'),
+  actionsToRoutes: require('debug')('formio:sqlconnector:actionsToRoutes'),
+  getExpressRoute: require('debug')('formio:sqlconnector:getExpressRoute'),
   verifyPlan: require('debug')('formio:sqlconnector:verifyPlan')
 };
 var squel = require('squel');
@@ -54,18 +56,22 @@ module.exports = function(router) {
 
     var _sql;
     switch (method) {
-      case 'post':
+      case 'create':
         _sql = squel
           .insert()
           .into(path.toString());
 
-        data.forEach(function(value, column) {
-          _sql.set(column, value);
+        debug.getExpressRoute('data:');
+        debug.getExpressRoute(data);
+        _.each(data, function(value, column) {
+          _sql.set(column, '{{ data.' + value + ' }}');
         });
 
         // Get the primary insert string.
         route.query = _sql.toString();
 
+        debug.getExpressRoute('type:');
+        debug.getExpressRoute(type);
         _sql = squel
           .select()
           .from(path.toString())
@@ -76,49 +82,91 @@ module.exports = function(router) {
         route.query += '; ' +  _sql.toString();
         break;
       case 'index':
-        return {
-          method: method,
-          endpoint: '/' + path.toString(),
-          query: _.get(sql, '' + type + '.' + method)
-        };
-      case 'get':
-      case 'put':
+        _sql = squel
+          .select()
+          .from(path.toString());
+
+        route.query = _sql.toString();
+        break;
+      case 'read':
+        _sql = squel
+          .select()
+          .from(path.toString())
+          .where(primary.toString() + ' = {{ params.id }}');
+
+        route.query = _sql.toString();
+        break;
+      case 'update':
+        _sql = squel
+          .update()
+          .table(path.toString());
+
+        debug.getExpressRoute('data:');
+        debug.getExpressRoute(data);
+        _.each(data, function(value, column) {
+          _sql.set(column, '{{ data.' + value + ' }}');
+        });
+
+        _sql.where(primary.toString() + ' = {{ params.id }}');
+
+        // Get the primary insert string.
+        route.query = _sql.toString();
+
+        _sql = squel
+          .select()
+          .from(path.toString())
+          .where(primary.toString() + ' = {{ params.id }}')
+          .toString();
+
+        // Get the select string for the updated record.
+        route.query += '; ' +  _sql.toString();
+        break;
       case 'delete':
-        return {
-          method: method,
-          endpoint: '/' + path.toString() + '/:id',
-          query: _.get(sql, '' + type + '.' + method)
-        };
-      //default:
-      //  return undefined;
+        _sql = squel
+          .delete()
+          .from(path.toString())
+          .where(primary.toString() + ' = {{ params.id }}');
+
+        route.query = _sql.toString();
+        break;
     }
 
     return route;
   };
 
-  var actionsToRoutes = function(actions) {
-    var routes = [];
-    var path, primary, methods, fields, data, route;
-    _.each(actions, function(action) {
-      // Pluck out the core info from the action.
-      path = _.get(action, 'settings.table');
-      primary = _.get(action, 'settings.primary') || 'id';
-      methods = _.get(action, 'method');
-      data = {};
-      route = {};
+  var actionsToRoutes = function(req, actions) {
+    return Q.ninvoke(cache, 'loadCurrentProject', req)
+      .then(function(project) {
+        debug.actionsToRoutes(project);
+        var type = _.get(project, 'settings.sqlconnector.type');
 
-      // Iterate over each field to get the data mapping.
-      fields = _.get(action, 'settings.fields');
-      _.each(fields, function(field) {
-        data[field.column] = _.get(field, 'field.key')
+        var routes = [];
+        var path, primary, methods, fields, data, route;
+        _.each(actions, function(action) {
+          // Pluck out the core info from the action.
+          path = _.get(action, 'settings.table');
+          primary = _.get(action, 'settings.primary') || 'id';
+          methods = _.get(action, 'method');
+          data = {};
+          route = {};
+
+          // Iterate over each field to get the data mapping.
+          fields = _.get(action, 'settings.fields');
+          _.each(fields, function(field) {
+            data[field.column] = _.get(field, 'field.key')
+          });
+
+          _.each(methods, function(method) {
+            routes.push(getExpressRoute(method, path, primary, data, type));
+          });
+        });
+
+        return Q(routes);
+      })
+      .catch(function(err) {
+        debug.actionsToRoutes(err);
+        throw err;
       });
-
-      _.each(methods, function(method) {
-        routes.push(getExpressRoute(method, path, primary, data, type));
-      });
-    });
-
-    return routes;
   };
 
   /**
@@ -170,7 +218,7 @@ module.exports = function(router) {
         return Q.fcall(getConnectorActions, req)
       })
       .then(function(actions) {
-        return Q.fcall(actionsToRoutes, actions);
+        return Q.fcall(actionsToRoutes, req, actions);
       })
       .then(function(routes) {
         return res.status(200).json(routes);
