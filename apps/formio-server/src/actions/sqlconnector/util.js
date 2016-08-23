@@ -50,13 +50,13 @@ module.exports = function(router) {
   var getExpressRoute = function(method, path, primary, data, type) {
     method = method.toString().toLowerCase();
     var route = {
-      method: method,
       endpoint: '/' + path.toString()
     };
 
     var _sql;
     switch (method) {
       case 'create':
+        route.method = 'POST';
         _sql = squel
           .insert()
           .into(path.toString());
@@ -82,6 +82,7 @@ module.exports = function(router) {
         route.query += '; ' +  _sql.toString();
         break;
       case 'index':
+        route.method = 'GET';
         _sql = squel
           .select()
           .from(path.toString());
@@ -89,6 +90,7 @@ module.exports = function(router) {
         route.query = _sql.toString();
         break;
       case 'read':
+        route.method = 'GET';
         _sql = squel
           .select()
           .from(path.toString())
@@ -97,6 +99,7 @@ module.exports = function(router) {
         route.query = _sql.toString();
         break;
       case 'update':
+        route.method = 'PUT';
         _sql = squel
           .update()
           .table(path.toString());
@@ -122,6 +125,7 @@ module.exports = function(router) {
         route.query += '; ' +  _sql.toString();
         break;
       case 'delete':
+        route.method = 'DELETE';
         _sql = squel
           .delete()
           .from(path.toString())
