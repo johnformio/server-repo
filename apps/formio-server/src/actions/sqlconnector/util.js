@@ -91,6 +91,7 @@ module.exports = function(router) {
         break;
       case 'read':
         route.method = 'GET';
+        route.endpoint += '/:id';
         _sql = squel
           .select()
           .from(path.toString())
@@ -100,6 +101,7 @@ module.exports = function(router) {
         break;
       case 'update':
         route.method = 'PUT';
+        route.endpoint += '/:id';
         _sql = squel
           .update()
           .table(path.toString());
@@ -126,6 +128,7 @@ module.exports = function(router) {
         break;
       case 'delete':
         route.method = 'DELETE';
+        route.endpoint += '/:id';
         _sql = squel
           .delete()
           .from(path.toString())
