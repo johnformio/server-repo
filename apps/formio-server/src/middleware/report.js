@@ -194,7 +194,8 @@ module.exports = function(formio) {
         countQuery.form['$in'] = formIds.concat(query.form['$in']);
       }
       else if (query.form) {
-        countQuery.form = {'$in': formIds.push(query.form)};
+        formIds.push(query.form);
+        countQuery.form = {'$in': formIds};
       }
       else {
         countQuery.form = {'$in': formIds};
