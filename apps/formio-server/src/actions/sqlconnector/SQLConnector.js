@@ -3,6 +3,8 @@
 var _ = require('lodash');
 var async = require('async');
 var debug = require('debug')('formio:action:sqlconnector');
+var Q = require('q');
+var request = require('request');
 
 module.exports = function(router) {
   var Action = router.formio.Action;
@@ -227,7 +229,51 @@ module.exports = function(router) {
    * @param next
    *   The callback function to execute upon completion.
    */
-  SQLConnector.prototype.resolve = function(handler, method, req, res, next) {};
+  SQLConnector.prototype.resolve = function(handler, method, req, res, next) {
+    try {
+      method = req.method.toString().toLowerCase();
+      var options = {
+        method: method
+      };
+
+      var cache = require('../../cache/cache')(formio);
+      var project = cache.currentProject(req);
+      if (project === null) {
+        throw new Error('No Project found.');
+      }
+
+      options.url = _.get(project, 'settings.sqlconnector.host') + '/' + this.settings.table;
+      options.url += _.has(req, 'subId')
+        ? '/' + _.get(req, 'subId')
+        : '';
+
+      if (['post', 'put'].indexOf(method) !== 1) {
+        options.json = true;
+        var item = _.get(res, 'resource.item').toObject();
+
+        // Remove protected fields.
+        formio.util.removeProtectedFields(req.currentForm, method, item);
+        options.body = item;
+      }
+
+      debug(options);
+      request(options, function(err, response, body) {
+        if (err) {
+          debug(err);
+          return res.sendStatus(400);
+        }
+
+        // TODO Add project dashboard messaging for errors.
+        debug(response);
+        debug(body);
+        return next();
+      });
+    }
+    catch (err) {
+      debug(err);
+      return next(err);
+    }
+  };
 
   // Return the SQLConnector.
   return SQLConnector;
