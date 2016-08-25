@@ -48,7 +48,7 @@ module.exports = function(router) {
         return next('No project settings were found for the SQL Connector.');
       }
 
-      var missingSetting = _.find(['host', 'type', 'database', 'user', 'password'], function(prop) {
+      var missingSetting = _.find(['host', 'type', 'user', 'password'], function(prop) {
         return !settings.sqlconnector[prop];
       });
       if (missingSetting) {
@@ -249,7 +249,9 @@ module.exports = function(router) {
 
       if (['post', 'put'].indexOf(method) !== 1) {
         options.json = true;
-        var item = _.get(res, 'resource.item').toObject();
+        var item = _.has(res, 'resource.item')
+          ? _.get(res, 'resource.item')
+          : _.get(req, 'body');
 
         // Remove protected fields.
         formio.util.removeProtectedFields(req.currentForm, method, item);
