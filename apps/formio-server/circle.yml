@@ -47,6 +47,7 @@ test:
     - sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
     - sudo bash -c "echo \"127.0.0.1 dockertest.localhost\" >> /etc/hosts"
     - npm i --g formio-cli
+    - npm i --g eslint-cli
     - sudo pkill redis-server
   override:
     # Test Formio locally.
