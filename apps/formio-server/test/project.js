@@ -75,7 +75,7 @@ module.exports = function(app, template, hook) {
           form = forms[a];
 
           request(app)
-            .get('/project/' + template.project._id + '/form/' + form._id + '/actions?limit=999999')
+            .get('/project/' + template.project._id + '/form/' + form._id + '/actions?limit=9999')
             .set('x-jwt-token', template.formio.owner.token)
             .expect('Content-Type', /json/)
             .expect(200)
@@ -97,7 +97,7 @@ module.exports = function(app, template, hook) {
 
       var mapForms = function(cb) {
         request(app)
-          .get('/project/' + template.project._id + '/form?limit=999999')
+          .get('/project/' + template.project._id + '/form?limit=9999')
           .set('x-jwt-token', template.formio.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
@@ -117,7 +117,7 @@ module.exports = function(app, template, hook) {
 
       var mapRoles = function(cb) {
         request(app)
-          .get('/project/' + template.project._id + '/role?limit=999999')
+          .get('/project/' + template.project._id + '/role?limit=9999')
           .set('x-jwt-token', template.formio.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
