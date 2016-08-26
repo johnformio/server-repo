@@ -19,10 +19,6 @@ module.exports = function(formio) {
       return res.status(400).send('Invalid plan');
     }
 
-    if (req.body.plan === 'commercial') {
-      return res.status(400).send('Upgrading to commercial is not allowed');
-    }
-
     // Check user has payment info saved
     Q.ninvoke(cache, 'loadProject', req, req.projectId)
     .then(function(project) {

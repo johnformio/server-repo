@@ -960,21 +960,6 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      it('Upgrading to commercial should not be allowed', function(done) {
-        request(app)
-          .post('/project/' + template.project._id + '/upgrade')
-          .set('x-jwt-token', template.formio.owner.token)
-          .send({plan: 'commerical'})
-          .expect('Content-Type', /text\/html/)
-          .expect(400)
-          .end(function(err, res) {
-            if (err) {
-              return done(err)
-            }
-            confirmProjectPlan(template.project._id, template.formio.owner, 'basic', done);
-          });
-      });
-
       if (!customer)
       it('Upgrading without a registered payment method should not be allowed', function(done) {
         request(app)
@@ -1074,7 +1059,7 @@ module.exports = function(app, template, hook) {
       });
 
       if (!docker)
-      it('Upgrading with a registered payment method should work', function(done) {
+      it('Upgrading to independent with a registered payment method should work', function(done) {
         request(app)
           .post('/project/' + template.project._id + '/upgrade')
           .set('x-jwt-token', template.formio.owner.token)
@@ -1091,7 +1076,7 @@ module.exports = function(app, template, hook) {
               }
               Q(app.formio.formio.resources.form.model.findOne({name: 'projectUpgradeHistory'}))
               .then(function(form) {
-                return app.formio.formio.resources.submission.model.find({form: form._id, owner: template.formio.owner._id});
+                return app.formio.formio.resources.submission.model.find({form: form._id, owner: template.formio.owner._id}).sort('-created');
               })
               .then(function(submissions) {
                 assert.equal(submissions.length, 1, 'There should only be one upgrade history submission.');
@@ -1109,9 +1094,149 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      if (!docker)
+      it('Upgrading to team with a registered payment method should work', function(done) {
+        request(app)
+          .post('/project/' + template.project._id + '/upgrade')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({plan: 'team'})
+          .expect('Content-Type', /text\/plain/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            confirmProjectPlan(template.project._id, template.formio.owner, 'team', function(err) {
+              if (err) {
+                return done(err);
+              }
+              Q(app.formio.formio.resources.form.model.findOne({name: 'projectUpgradeHistory'}))
+              .then(function(form) {
+                return app.formio.formio.resources.submission.model.find({form: form._id, owner: template.formio.owner._id}).sort('-created');
+              })
+              .then(function(submissions) {
+                assert.equal(submissions.length, 2, 'There should be two upgrades history submission.');
+                assert.equal(submissions[0].data.projectId, template.project._id, 'The history entry should have the correct project _id');
+                assert.equal(submissions[0].data.oldPlan, 'independent', 'The history entry should have the correct old plan');
+                assert.equal(submissions[0].data.newPlan, 'team', 'The history entry should have the correct new plan');
+
+                done();
+              })
+              .catch(function(err) {
+                done(err);
+              });
+            });
+          });
+      });
+
+      if (!docker)
+      it('Upgrading to commercial with a registered payment method should work', function(done) {
+        request(app)
+          .post('/project/' + template.project._id + '/upgrade')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({plan: 'commercial'})
+          .expect('Content-Type', /text\/plain/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            confirmProjectPlan(template.project._id, template.formio.owner, 'commercial', function(err) {
+              if (err) {
+                return done(err);
+              }
+              Q(app.formio.formio.resources.form.model.findOne({name: 'projectUpgradeHistory'}))
+              .then(function(form) {
+                return app.formio.formio.resources.submission.model.find({form: form._id, owner: template.formio.owner._id}).sort('-created');
+              })
+              .then(function(submissions) {
+                assert.equal(submissions.length, 3, 'There should be three upgrades history submission.');
+                assert.equal(submissions[0].data.projectId, template.project._id, 'The history entry should have the correct project _id');
+                assert.equal(submissions[0].data.oldPlan, 'team', 'The history entry should have the correct old plan');
+                assert.equal(submissions[0].data.newPlan, 'commercial', 'The history entry should have the correct new plan');
+
+                done();
+              })
+              .catch(function(err) {
+                done(err);
+              });
+            });
+          });
+      });
+
+      if (!docker)
+      it('Downgrading to team with a registered payment method should work', function(done) {
+        request(app)
+          .post('/project/' + template.project._id + '/upgrade')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({plan: 'team'})
+          .expect('Content-Type', /text\/plain/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            confirmProjectPlan(template.project._id, template.formio.owner, 'team', function(err) {
+              if (err) {
+                return done(err);
+              }
+              Q(app.formio.formio.resources.form.model.findOne({name: 'projectUpgradeHistory'}))
+              .then(function(form) {
+                return app.formio.formio.resources.submission.model.find({form: form._id, owner: template.formio.owner._id}).sort('-created');
+              })
+              .then(function(submissions) {
+                assert.equal(submissions.length, 4, 'There should be four upgrades history submission.');
+                assert.equal(submissions[0].data.projectId, template.project._id, 'The history entry should have the correct project _id');
+                assert.equal(submissions[0].data.oldPlan, 'commercial', 'The history entry should have the correct old plan');
+                assert.equal(submissions[0].data.newPlan, 'team', 'The history entry should have the correct new plan');
+
+                done();
+              })
+              .catch(function(err) {
+                done(err);
+              });
+            });
+          });
+      });
+
+      if (!docker)
+      it('Downgrading to independent with a registered payment method should work', function(done) {
+        request(app)
+          .post('/project/' + template.project._id + '/upgrade')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({plan: 'independent'})
+          .expect('Content-Type', /text\/plain/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            confirmProjectPlan(template.project._id, template.formio.owner, 'independent', function(err) {
+              if (err) {
+                return done(err);
+              }
+              Q(app.formio.formio.resources.form.model.findOne({name: 'projectUpgradeHistory'}))
+              .then(function(form) {
+                return app.formio.formio.resources.submission.model.find({form: form._id, owner: template.formio.owner._id}).sort('-created');
+              })
+              .then(function(submissions) {
+                assert.equal(submissions.length, 5, 'There should be five upgrades history submission.');
+                assert.equal(submissions[0].data.projectId, template.project._id, 'The history entry should have the correct project _id');
+                assert.equal(submissions[0].data.oldPlan, 'team', 'The history entry should have the correct old plan');
+                assert.equal(submissions[0].data.newPlan, 'independent', 'The history entry should have the correct new plan');
+
+                done();
+              })
+              .catch(function(err) {
+                done(err);
+              });
+            });
+          });
+      });
+
       // Need to downgrade back to basic for the rest of the tests
       if (!docker)
-      it('Downgrading with a registered payment method should work', function(done) {
+      it('Downgrading to basic with a registered payment method should work', function(done) {
         request(app)
           .post('/project/' + template.project._id + '/upgrade')
           .set('x-jwt-token', template.formio.owner.token)
@@ -1128,11 +1253,10 @@ module.exports = function(app, template, hook) {
               }
               Q(app.formio.formio.resources.form.model.findOne({name: 'projectUpgradeHistory'}))
               .then(function(form) {
-                return app.formio.formio.resources.submission.model.find({form: form._id, owner: template.formio.owner._id})
-                .sort('-created');
+                return app.formio.formio.resources.submission.model.find({form: form._id, owner: template.formio.owner._id}).sort('-created');
               })
               .then(function(submissions) {
-                assert.equal(submissions.length, 2, 'There should only be two upgrade history submissions.');
+                assert.equal(submissions.length, 6, 'There should only be six upgrade history submissions.');
                 assert.equal(submissions[0].data.projectId, template.project._id, 'The history entry should have the correct project _id');
                 assert.equal(submissions[0].data.oldPlan, 'independent', 'The history entry should have the correct old plan');
                 assert.equal(submissions[0].data.newPlan, 'basic', 'The history entry should have the correct new plan');
