@@ -218,6 +218,43 @@ module.exports = function(router) {
   };
 
   /**
+   * Add an externalId to the local resource with the remote id.
+   *
+   * @param {string} localId
+   *   The BSON id for the local resource.
+   * @param {string} remoteId
+   *   The external resource id.
+   */
+  var addExternalId = function(localId, remoteId) {
+    var _find = {_id: localId};
+    var _update = {
+      $push: {
+        externalIds: {
+          type: 'sqlconnector',
+          id: remoteId
+        }
+      }
+    };
+
+    return Q.ninvoke(formio.resources.submission.model, 'update', _find, _update);
+  };
+
+  var getSubmissionId = function(res) {
+    var id;
+    // If an item was included in the response
+    if (_.has(res, 'resource.item')) {
+      var external = _.find(_.get(res, 'resource.item.externalIds'), function(item) {
+        return item.type === 'sqlconnector';
+      });
+      id = external
+        ? _.get(external, 'id')
+        : undefined;
+    }
+
+    return id;
+  };
+
+  /**
    * Trigger the Resquel request.
    *
    * @param handler
@@ -230,31 +267,54 @@ module.exports = function(router) {
    *   The callback function to execute upon completion.
    */
   SQLConnector.prototype.resolve = function(handler, method, req, res, next) {
+    // Dont block on this action, lots of stuff to do.
+    next();
+
     try {
       method = req.method.toString().toLowerCase();
       var options = {
         method: method
       };
 
+      var primary = this.settings.primary;
       var cache = require('../../cache/cache')(formio);
       var project = cache.currentProject(req);
       if (project === null) {
-        throw new Error('No Project found.');
+        debug('No project found.');
+        return;
       }
 
-      options.url = _.get(project, 'settings.sqlconnector.host') + '/' + this.settings.table;
-      options.url += _.has(req, 'subId')
-        ? '/' + _.get(req, 'subId')
-        : '';
+      // Add basic auth if available.
+      options.auth = {
+        user: _.get(project, 'settings.sqlconnector.user'),
+        password: _.get(project, 'settings.sqlconnector.password')
+      };
 
+      // Build the base url.
+      options.url = _.get(project, 'settings.sqlconnector.host') + '/' + this.settings.table;
+
+      // If this was not a post request, determine which existing resource we are modifying.
+      if (method !== 'post') {
+        var externalId = getSubmissionId(res);
+        if (externalId === undefined) {
+          debug('No externalId was found in the existing submission.');
+          return;
+        }
+
+        options.url += '/' + externalId;
+      }
+
+      // If this is a create/update, determine what to send in the request body.
       if (['post', 'put'].indexOf(method) !== 1) {
         options.json = true;
         var item = _.has(res, 'resource.item')
           ? _.get(res, 'resource.item')
           : _.get(req, 'body');
 
-        // Remove protected fields.
+        // Remove protected fields from the external request.
         formio.util.removeProtectedFields(req.currentForm, method, item);
+        debug('body:');
+        debug(body);
         options.body = item;
       }
 
@@ -262,18 +322,54 @@ module.exports = function(router) {
       request(options, function(err, response, body) {
         if (err) {
           debug(err);
-          return res.sendStatus(400);
+          return;
         }
 
-        // TODO Add project dashboard messaging for errors.
-        debug(response);
         debug(body);
-        return next();
+
+        // Begin link phase for new resources.
+        if (method !== 'post') {
+          return;
+        }
+
+        // Attempt to modify linked resources.
+        return Q()
+          .then(function() {
+            var results = _.get(response, 'body.rows');
+            if (!(results instanceof Array)) {
+              // No clue what to do here.
+              throw new Error('Expected array of results, got ' + typeof results);
+            }
+            if (results.length === 1) {
+              return results[0];
+            }
+
+            throw new Error('More than one result: ' + results.length);
+          })
+          .then(function(remoteItem) {
+            // Get the localId
+            var localId = _.get(res, 'resource.item._id');
+            if (!localId) {
+              throw new Error('Unknown local item id: ' + localId);
+            }
+            // Get the remoteId
+            var remoteId = _.get(remoteItem, primary);
+            if (!remoteId && remoteId !== 0) {
+              throw new Error('Unknown remote item id: ' + remoteId);
+            }
+
+            if (method === 'post') {
+              return addExternalId(localId, remoteId);
+            }
+          })
+          .catch(function(err) {
+            // Do nothing on errors.
+            debug(err);
+          });
       });
     }
     catch (err) {
       debug(err);
-      return next(err);
     }
   };
 
