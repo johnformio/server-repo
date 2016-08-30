@@ -305,16 +305,16 @@ module.exports = function(router) {
       }
 
       // If this is a create/update, determine what to send in the request body.
-      if (['post', 'put'].indexOf(method) !== 1) {
+      if (['post', 'put'].indexOf(method) !== -1) {
         options.json = true;
         var item = _.has(res, 'resource.item')
-          ? _.get(res, 'resource.item')
+          ? (_.get(res, 'resource.item')).toObject()
           : _.get(req, 'body');
 
         // Remove protected fields from the external request.
         formio.util.removeProtectedFields(req.currentForm, method, item);
         debug('body:');
-        debug(body);
+        debug(item);
         options.body = item;
       }
 
