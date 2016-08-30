@@ -239,17 +239,38 @@ module.exports = function(router) {
     return Q.ninvoke(formio.resources.submission.model, 'update', _find, _update);
   };
 
-  var getSubmissionId = function(res) {
+  /**
+   * Get the externalId for the current submission.
+   *
+   * @param {object} res
+   *   The express response object.
+   *
+   * @returns {string|undefined}
+   *   The external id for the sqlconnector in the submission if defined.
+   */
+  var getSubmissionId = function(req, res) {
     var id;
+    var external;
+
     // If an item was included in the response
-    if (_.has(res, 'resource.item')) {
-      var external = _.find(_.get(res, 'resource.item.externalIds'), function(item) {
+    if (_.has(res, 'resource.item') && req.method !== 'DELETE') {
+      external = _.find(_.get(res, 'resource.item.externalIds'), function(item) {
         return item.type === 'sqlconnector';
       });
-      id = external
-        ? _.get(external, 'id')
-        : undefined;
     }
+    else if (req.method === 'DELETE') {
+      var deleted = _.get(req, 'formioCache.submissions.' + _.get(req, 'subId'));
+      if (!deleted) {
+        return undefined;
+      }
+      external = _.find(_.get(deleted, 'externalIds'), function(item) {
+        return item.type === 'sqlconnector';
+      });
+    }
+
+    id = external
+      ? _.get(external, 'id')
+      : undefined;
 
     return id;
   };
@@ -295,7 +316,7 @@ module.exports = function(router) {
 
       // If this was not a post request, determine which existing resource we are modifying.
       if (method !== 'post') {
-        var externalId = getSubmissionId(res);
+        var externalId = getSubmissionId(req, res);
         if (externalId === undefined) {
           debug('No externalId was found in the existing submission.');
           return;
