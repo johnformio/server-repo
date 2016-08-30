@@ -33,6 +33,10 @@ module.exports = function(router) {
     // Get the plan
     return Q.nfcall(formio.plans.getPlan, req)
       .then(function(plan) {
+        // Get the plan and ignore the project response.
+        plan = plan[0];
+        plan = _.get(formio.plans.limits, plan);
+
         // Check that this plan is acceptable for the sql connector.
         if (plan < required) {
           debug.verifyPlan('The given plan is not high enough for sql connector access.. ' + plan + ' / ' + required);
@@ -232,6 +236,10 @@ module.exports = function(router) {
       })
       .catch(function(err) {
         debug.generateQueries(err);
+        if (err.message === 'The current project must be upgraded to access the SQL Connector') {
+          return res.status(402).send('The current project must be upgraded to access the SQL Connector');
+        }
+
         return res.sendStatus(400);
       })
       .done();

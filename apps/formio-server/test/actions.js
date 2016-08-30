@@ -195,14 +195,14 @@ module.exports = function(app, template, hook) {
         request(app)
           .get('/project/' + project._id + '/sqlconnector')
           .set('x-jwt-token', template.formio.owner.token)
-          .expect('Content-Type', /json/)
-          .expect(400)
+          .expect('Content-Type', /text/)
+          .expect(402)
           .end(function(err, res) {
             if (err) {
               return done(err);
             }
 
-            var response = res.body;
+            var response = res.text;
             assert.equal(response, 'The current project must be upgraded to access the SQL Connector');
             done();
           });
@@ -238,14 +238,14 @@ module.exports = function(app, template, hook) {
         request(app)
           .get('/project/' + project._id + '/sqlconnector')
           .set('x-jwt-token', template.formio.owner.token)
-          .expect('Content-Type', /json/)
-          .expect(400)
+          .expect('Content-Type', /text/)
+          .expect(402)
           .end(function(err, res) {
             if (err) {
               return done(err);
             }
 
-            var response = res.body;
+            var response = res.text;
             assert.equal(response, 'The current project must be upgraded to access the SQL Connector');
             done();
           });
