@@ -48,7 +48,7 @@ module.exports = function(router) {
         return next('No project settings were found for the SQL Connector.');
       }
 
-      var missingSetting = _.find(['host', 'type', 'user', 'password'], function(prop) {
+      var missingSetting = _.find(['host', 'type'], function(prop) {
         return !settings.sqlconnector[prop];
       });
       if (missingSetting) {
