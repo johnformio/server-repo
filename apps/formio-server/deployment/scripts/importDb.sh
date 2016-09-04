@@ -2,8 +2,7 @@
 
 DB=$1
 EB_BUCKET=formiobot-docker
-FILE=formio.tgz
+FILE=formio.archive
 
 aws s3 cp s3://$EB_BUCKET/$FILE .
-tar -xzvf $FILE
-mongorestore --drop --db $DB formio
+mongorestore --drop --db $DB --gzip --archive=$FILE
