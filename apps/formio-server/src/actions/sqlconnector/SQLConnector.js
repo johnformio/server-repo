@@ -306,10 +306,12 @@ module.exports = function(router) {
       }
 
       // Add basic auth if available.
-      options.auth = {
-        user: _.get(project, 'settings.sqlconnector.user'),
-        password: _.get(project, 'settings.sqlconnector.password')
-      };
+      if (_.has(project, 'settings.sqlconnector.user')) {
+        _.set(options, 'auth.user', _.get(project, 'settings.sqlconnector.user'));
+      }
+      if (_.has(project, 'settings.sqlconnector.password')) {
+        _.set(options, 'auth.password', _.get(project, 'settings.sqlconnector.password'));
+      }
 
       // Build the base url.
       options.url = _.get(project, 'settings.sqlconnector.host') + '/' + this.settings.table;
