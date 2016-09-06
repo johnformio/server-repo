@@ -354,10 +354,6 @@ module.exports = function(app, template, hook) {
     });
 
     describe('Formio Analytics', function() {
-      before(function() {
-
-      });
-
       describe('/analytics/translate/project', function() {
         it('A Formio team member should be able to translate project info', function(done) {
           request(app)
@@ -383,6 +379,25 @@ module.exports = function(app, template, hook) {
         });
 
         it('A non Formio team member should not be able to translate project info', function(done) {
+          request(app)
+            .post('/analytics/translate/project')
+            .set('x-jwt-token', template.users.user1.token)
+            .send([template.project._id])
+            .expect('Content-Type', /text/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.text;
+              assert(response, 'Unauthorized');
+
+              done();
+            });
+        });
+
+        it('An anonymous user should not be able to translate project info', function(done) {
           request(app)
             .post('/analytics/translate/project')
             .send([template.project._id])
@@ -431,6 +446,25 @@ module.exports = function(app, template, hook) {
         });
 
         it('A non Formio team member should not be able to translate user info', function(done) {
+          request(app)
+            .post('/analytics/translate/owner')
+            .set('x-jwt-token', template.users.user1.token)
+            .send([template.formio.owner._id])
+            .expect('Content-Type', /text/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.text;
+              assert(response, 'Unauthorized');
+
+              done();
+            });
+        });
+
+        it('An anonymous user should not be able to translate project info', function(done) {
           request(app)
             .post('/analytics/translate/owner')
             .send([template.formio.owner._id])
