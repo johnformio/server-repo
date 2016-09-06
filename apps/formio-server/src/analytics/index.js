@@ -364,6 +364,8 @@ module.exports = function(config) {
    * @param formioServer
    */
   var endpoints = function(app, formioServer) {
+    var cache = require('../cache/cache')(formioServer.formio);
+
     /**
      * Middleware to restrict an endpoint to formio employees.
      *
@@ -377,12 +379,19 @@ module.exports = function(config) {
         return res.sendStatus(401);
       }
 
-      var cache = require('../cache/cache')(formioServer.formio);
-      cache.loadProject(req, '553db92f72f702e714dd9778', function(err, project) {
+      cache.loadProjectByName(req, 'formio', function(err, project) {
         if (err || !project) {
           debug.restrictToFormioEmployees('err: ' + err);
           debug.restrictToFormioEmployees('project: ' + project);
           return res.sendStatus(401);
+        }
+
+        try {
+          project = project.toObject();
+        }
+        catch (err) {
+          // project was already a plain js object.
+          debug.restrictToFormioEmployees(err);
         }
 
         // Owner of Formio
@@ -717,27 +726,54 @@ module.exports = function(config) {
           .value();
         _debug(owners);
 
-        formioServer.formio.resources.submission.model.find({form: '553db94e72f702e714dd9779', _id: {$in: owners}})
-        .exec(function(err, owners) {
-          if (err) {
-            _debug(err);
-            return res.status(500).send(err);
+        cache.loadProjectByName(req, 'formio', function(err, project) {
+          if (err || !project) {
+            return res.sendStatus(401);
           }
 
-          owners = _(owners)
-            .map(function(owner) {
-              _debug(owner);
-              return {
-                _id: owner._id.toString(),
-                data: {
-                  email: owner.data.email.toString() || '',
-                  name: owner.data.name.toString() || ''
-                }
-              };
-            })
-            .value();
+          try {
+            project = project.toObject();
+          }
+          catch (err) {
+            // project was already a plain js object.
+          }
 
-          return res.status(200).json(owners);
+          formioServer.formio.resources.form.model.findOne({project: project._id, name: 'user'}).exec(function(err, form) {
+            if (err || !form) {
+              _debug(err);
+              return res.status(500).send(err);
+            }
+
+            try {
+              form = form.toObject();
+            }
+            catch (err) {
+              // n/a
+            }
+
+            formioServer.formio.resources.submission.model.find({form: form._id, _id: {$in: owners}})
+            .exec(function(err, owners) {
+              if (err) {
+                _debug(err);
+                return res.status(500).send(err);
+              }
+
+              owners = _(owners)
+                .map(function(owner) {
+                  _debug(owner);
+                  return {
+                    _id: owner._id.toString(),
+                    data: {
+                      email: owner.data.email.toString() || '',
+                      name: owner.data.name.toString() || ''
+                    }
+                  };
+                })
+                .value();
+
+              return res.status(200).json(owners);
+            });
+          });
         });
       }
     );

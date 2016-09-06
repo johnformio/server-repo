@@ -353,6 +353,139 @@ module.exports = function(app, template, hook) {
       });
     });
 
+    describe('Formio Analytics', function() {
+      before(function() {
+
+      });
+
+      describe('/analytics/translate/project', function() {
+        it('A Formio team member should be able to translate project info', function(done) {
+          request(app)
+            .post('/analytics/translate/project')
+            .set('x-jwt-token', template.formio.owner.token)
+            .send([template.formio.project._id])
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.body;
+              assert(response instanceof Array);
+              assert.equal(response.length, 1);
+              assert.equal(response[0].name, 'formio');
+              assert.equal(response[0].owner, template.formio.owner._id.toString());
+              assert.equal(response[0]._id, template.formio.project._id.toString());
+
+              done();
+            });
+        });
+
+        it('A non Formio team member should not be able to translate project info', function(done) {
+          request(app)
+            .post('/analytics/translate/project')
+            .send([template.project._id])
+            .expect('Content-Type', /text/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.text;
+              assert(response, 'Unauthorized');
+
+              done();
+            });
+        });
+      });
+
+      describe('/analytics/translate/owner', function() {
+        it('A Formio team member should be able to translate user info', function(done) {
+          request(app)
+            .post('/analytics/translate/owner')
+            .set('x-jwt-token', template.formio.owner.token)
+            .send([template.formio.owner._id])
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.body;
+              assert(response instanceof Array);
+              assert.equal(response.length, 1);
+              assert.equal(Object.keys(response[0]).length, 2);
+              assert(response[0].hasOwnProperty('_id'));
+              assert.equal(response[0]._id, template.formio.owner._id);
+              assert(response[0].hasOwnProperty('data'));
+              assert.deepEqual(response[0].data, {
+                email: template.formio.owner.data.email,
+                name: template.formio.owner.data.name
+              });
+
+              done();
+            });
+        });
+
+        it('A non Formio team member should not be able to translate user info', function(done) {
+          request(app)
+            .post('/analytics/translate/owner')
+            .send([template.formio.owner._id])
+            .expect('Content-Type', /text/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.text;
+              assert(response, 'Unauthorized');
+
+              done();
+            });
+        });
+      });
+
+      describe('/analytics/project/year/:year', function() {
+
+      });
+
+      describe('/analytics/project/year/:year/month/:month', function() {
+
+      });
+
+      describe('/analytics/project/year/:year/month/:month/day/:day', function() {
+
+      });
+
+      describe('/analytics/created/projects/year/:year', function() {
+
+      });
+
+      describe('/analytics/created/projects/year/:year/month/:month', function() {
+
+      });
+
+      describe('/analytics/created/projects/year/:year/month/:month/day/:day', function() {
+
+      });
+
+      describe('/analytics/created/users/year/:year', function() {
+
+      });
+
+      describe('/analytics/created/users/year/:year/month/:month', function() {
+
+      });
+
+      describe('/analytics/created/users/year/:year/month/:month/day/:day', function() {
+
+      });
+    });
+
     describe('Crash Redis', function() {
       it('The API server will run smoothly without analytics', function(done) {
         var old = app.formio.analytics.redis;
