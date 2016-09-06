@@ -47,6 +47,7 @@ test:
     - sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
     - sudo bash -c "echo \"127.0.0.1 dockertest.localhost\" >> /etc/hosts"
     - npm i --g formio-cli
+    - npm i --g eslint-cli
     - sudo pkill redis-server
   override:
     # Test Formio locally.
@@ -56,6 +57,7 @@ test:
     # Test Formio in a docker environment.
     - redis-server &> $CIRCLE_ARTIFACTS/docker-redis.log:
           background: true
+    - ./deployment/scripts/restoreDb.sh formio
     - docker network ls
     - docker run -itd -e "MONGO1=$MONGO" -e "REDIS_ADDR=localhost" -e "REDIS_PORT=6379" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "DEBUG=*,*:*,*:*:*" -e "PROJECT_PLAN=basic" -e "DROPBOX_CLIENTID=NOTREAL" --name="formio-server" --net="host" $IMAGE_PATH
     - docker ps -a

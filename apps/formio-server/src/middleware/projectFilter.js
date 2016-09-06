@@ -15,5 +15,8 @@ module.exports = function(req, res, next) {
 
   req.modelQuery = req.modelQuery || this.model;
   req.modelQuery = req.modelQuery.find({project: projectId});
+
+  req.countQuery = req.countQuery || this.model;
+  req.countQuery = req.countQuery.find({project: projectId});
   next();
 };

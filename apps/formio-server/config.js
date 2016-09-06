@@ -127,16 +127,12 @@ if (process.env.REDIS_PASS) {
   config.redis.password = process.env.REDIS_PASS;
 }
 
-// Allow manually setting mongo connection.
-if (process.env.MONGO1) {
-  config.formio.mongo = [];
-  config.formio.mongo.push(process.env.MONGO1);
-  if (process.env.MONGO2) {
-    config.formio.mongo.push(process.env.MONGO2);
-  }
-  if (process.env.MONGO3) {
-    config.formio.mongo.push(process.env.MONGO3);
-  }
+if (process.env.MONGO) {
+  config.formio.mongo = process.env.MONGO;
+}
+// For reverse compatibility....
+else if (process.env.MONGO1) {
+  config.formio.mongo = process.env.MONGO1;
 }
 
 // This secret is used to encrypt certain DB fields at rest in the mongo database
