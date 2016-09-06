@@ -52,6 +52,27 @@ module.exports = function(router) {
   };
 
   var getExpressRoute = function(method, path, primary, data, type) {
+    debug.getExpressRoute('type:');
+    debug.getExpressRoute(type);
+    var isMssql = function() {
+      return type === 'mssql';
+    };
+    var isMysql = function() {
+      return type === 'mysql';
+    };
+    var isPostgresql = function() {
+      return type === 'postgres';
+    };
+
+    // Only let valid types through.
+    var valid = ['mssql', 'mysql', 'postgres'];
+    if (valid.indexOf(type) === -1) {
+      type = 'mysql';
+    }
+
+    // Make an instanced type of squel.
+    var _squel = squel.useFlavour(type);
+
     method = method.toString().toLowerCase();
     var route = {
       endpoint: '/' + path.toString()
@@ -61,33 +82,42 @@ module.exports = function(router) {
     switch (method) {
       case 'create':
         route.method = 'POST';
-        _sql = squel
+        _sql = _squel
           .insert()
           .into(path.toString());
 
         debug.getExpressRoute('data:');
         debug.getExpressRoute(data);
         _.each(data, function(value, column) {
+          if (isPostgresql()) {
+            column = '"' + column + '"';
+          }
+
           _sql.set(column, '{{ data.' + value + ' }}');
         });
 
-        // Get the primary insert string.
-        route.query = _sql.toString();
+        if (isPostgresql()) {
+          _sql.returning('*');
+          route.query = _sql.toString();
+        }
+        else {
+          // Get the primary insert string.
+          route.query = _sql.toString();
 
-        debug.getExpressRoute('type:');
-        debug.getExpressRoute(type);
-        _sql = squel
-          .select()
-          .from(path.toString())
-          .where(primary.toString() + '=' + _.get(idFn, type))
-          .toString();
+          _sql = _squel
+            .select()
+            .from(path.toString())
+            .where(primary.toString() + '=' + _.get(idFn, type))
+            .toString();
 
-        // Get the select string for the new record.
-        route.query += '; ' +  _sql.toString();
+          // Get the select string for the new record.
+          route.query += '; ' +  _sql.toString();
+        }
+
         break;
       case 'index':
         route.method = 'GET';
-        _sql = squel
+        _sql = _squel
           .select()
           .from(path.toString());
 
@@ -96,7 +126,7 @@ module.exports = function(router) {
       case 'read':
         route.method = 'GET';
         route.endpoint += '/:id';
-        _sql = squel
+        _sql = _squel
           .select()
           .from(path.toString())
           .where(primary.toString() + ' = {{ params.id }}');
@@ -106,34 +136,45 @@ module.exports = function(router) {
       case 'update':
         route.method = 'PUT';
         route.endpoint += '/:id';
-        _sql = squel
+        _sql = _squel
           .update()
           .table(path.toString());
 
         debug.getExpressRoute('data:');
         debug.getExpressRoute(data);
         _.each(data, function(value, column) {
+          if (isPostgresql()) {
+            column = '"' + column + '"';
+          }
+
           _sql.set(column, '{{ data.' + value + ' }}');
         });
 
         _sql.where(primary.toString() + ' = {{ params.id }}');
 
-        // Get the primary insert string.
-        route.query = _sql.toString();
+        if (isPostgresql()) {
+          _sql.returning('*');
+          route.query = _sql.toString();
+        }
+        else {
+          // Get the primary insert string.
+          route.query = _sql.toString();
 
-        _sql = squel
-          .select()
-          .from(path.toString())
-          .where(primary.toString() + ' = {{ params.id }}')
-          .toString();
+          _sql = _squel
+            .select()
+            .from(path.toString())
+            .where(primary.toString() + ' = {{ params.id }}')
+            .toString();
 
-        // Get the select string for the updated record.
-        route.query += '; ' +  _sql.toString();
+          // Get the select string for the updated record.
+          route.query += '; ' +  _sql.toString();
+        }
+
         break;
       case 'delete':
         route.method = 'DELETE';
         route.endpoint += '/:id';
-        _sql = squel
+        _sql = _squel
           .delete()
           .from(path.toString())
           .where(primary.toString() + ' = {{ params.id }}');
