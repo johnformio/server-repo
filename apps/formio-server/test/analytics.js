@@ -207,6 +207,24 @@ module.exports = function(app, template, hook) {
             done();
           });
       });
+
+      it('An anonymous user should not be able to request the yearly analytics', function(done) {
+        var curr = new Date();
+        request(app)
+          .get('/project/' + template.project._id + '/analytics/year/' + curr.getUTCFullYear())
+          .expect('Content-Type', /text/)
+          .expect(401)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.text;
+            assert.equal(response, 'Unauthorized');
+
+            done();
+          });
+      });
     });
 
     describe('Monthly Analytics - /project/:projectId/analytics/year/:year/month/:month', function() {
@@ -257,9 +275,27 @@ module.exports = function(app, template, hook) {
             });
           });
       });
+
+      it('An anonymous user should not be able to request the monthly analytics', function(done) {
+        var curr = new Date();
+        request(app)
+          .get('/project/' + template.project._id + '/analytics/year/' + curr.getUTCFullYear() + '/month/' + (curr.getUTCMonth() + 1))
+          .expect('Content-Type', /text/)
+          .expect(401)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.text;
+            assert.equal(response, 'Unauthorized');
+
+            done();
+          });
+      });
     });
 
-    describe('Daily Analytics - /project/:projectId/analytics/year/:year/month/:month/day/:day', function(done) {
+    describe('Daily Analytics - /project/:projectId/analytics/year/:year/month/:month/day/:day', function() {
       it('A Project Owner should be able to request the monthly analytics', function(done) {
         var curr = new Date();
         request(app)
@@ -295,6 +331,24 @@ module.exports = function(app, template, hook) {
               // @TODO: Add more verification to check that the given data was correct.
               done();
             });
+          });
+      });
+
+      it('An anonymous user should not be able to request the monthly analytics', function(done) {
+        var curr = new Date();
+        request(app)
+          .get('/project/' + template.project._id + '/analytics/year/' + curr.getUTCFullYear() + '/month/' + (curr.getUTCMonth() + 1) + '/day/' + curr.getUTCDate())
+          .expect('Content-Type', /text/)
+          .expect(401)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.text;
+            assert.equal(response, 'Unauthorized');
+
+            done();
           });
       });
     });
