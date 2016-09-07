@@ -690,6 +690,8 @@ module.exports = function(app, template, hook) {
                 assert(project.hasOwnProperty('owner'));
                 assert(project.hasOwnProperty('name'));
                 assert(project.hasOwnProperty('description'));
+                assert(project.hasOwnProperty('created'));
+                assert(project.hasOwnProperty('deleted'));
               });
 
               done();
@@ -754,6 +756,8 @@ module.exports = function(app, template, hook) {
                 assert(project.hasOwnProperty('owner'));
                 assert(project.hasOwnProperty('name'));
                 assert(project.hasOwnProperty('description'));
+                assert(project.hasOwnProperty('created'));
+                assert(project.hasOwnProperty('deleted'));
               });
 
               done();
@@ -818,6 +822,8 @@ module.exports = function(app, template, hook) {
                 assert(project.hasOwnProperty('owner'));
                 assert(project.hasOwnProperty('name'));
                 assert(project.hasOwnProperty('description'));
+                assert(project.hasOwnProperty('created'));
+                assert(project.hasOwnProperty('deleted'));
               });
 
               done();
@@ -877,6 +883,13 @@ module.exports = function(app, template, hook) {
               assert(response.length > 0);
               response.forEach(function(user) {
                 assert(typeof user === 'object');
+                assert(user.hasOwnProperty('_id'));
+                assert(user.hasOwnProperty('data'));
+                assert(user.data.hasOwnProperty('email'));
+                assert(user.data.hasOwnProperty('name'));
+                assert(user.data.hasOwnProperty('fullName'));
+                assert(user.hasOwnProperty('created'));
+                assert(user.hasOwnProperty('deleted'));
               });
 
               done();

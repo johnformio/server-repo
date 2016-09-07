@@ -367,6 +367,43 @@ module.exports = function(config) {
     var cache = require('../cache/cache')(formioServer.formio);
 
     /**
+     * Get the formio user form for consumption elsewhere.
+     *
+     * @param req
+     * @param next
+     */
+    var getFormioUserForm = function(req, next) {
+      cache.loadProjectByName(req, 'formio', function(err, project) {
+        if (err || !project) {
+          return next('Could not load Form.io project.');
+        }
+
+        try {
+          project = project.toObject();
+        }
+        catch (err) {
+          // do nothing
+        }
+
+        formioServer.formio.resources.form.model.findOne({project: project._id, name: 'user'})
+        .exec(function(err, form) {
+          if (err) {
+            return next('Could not load Form.io user resource.');
+          }
+
+          try {
+            form = form.toObject();
+          }
+          catch (e) {
+            // do nothing
+          }
+
+         return next(null, form);
+        });
+      });
+    };
+
+    /**
      * Middleware to restrict an endpoint to formio employees.
      *
      * @param req
@@ -471,36 +508,44 @@ module.exports = function(config) {
     /**
      * Get the formio users created using the given query.
      *
-     * @param {Object} query
-     * @param {Object} res
+     * @param query
+     * @param _debug
+     * @param req
+     * @param res
      */
-    var getFormioUsersCreated = function(query, _debug, res) {
-      if (!query.form) {
-        query.form = '553db94e72f702e714dd9779';
-      }
-
-      _debug(query);
-      formioServer.formio.resources.submission.model.find(query, function(err, users) {
+    var getFormioUsersCreated = function(query, _debug, req, res) {
+      getFormioUserForm(req, function(err, form) {
         if (err) {
           return res.status(500).send(err);
         }
 
-        var final = _(users)
-          .map(function(user) {
-            return {
-              _id: user._id,
-              data: {
-                email: (user.data && user.data.email) || '',
-                name: (user.data && user.data.name) || '',
-                fullName: (user.data && user.data.fullName) || ''
-              },
-              created: user.created,
-              deleted: user.deleted || null
-            };
-          })
-          .value();
+        // Attach the user form _id.
+        query.form = form._id;
+        _debug(query);
 
-        res.status(200).json(final);
+        // Get the submissions.
+        formioServer.formio.resources.submission.model.find(query, function(err, users) {
+          if (err) {
+            return res.status(500).send(err);
+          }
+
+          var final = _(users)
+            .map(function(user) {
+              return {
+                _id: user._id,
+                data: {
+                  email: (user.data && user.data.email) || '',
+                  name: (user.data && user.data.name) || '',
+                  fullName: (user.data && user.data.fullName) || ''
+                },
+                created: user.created,
+                deleted: user.deleted || null
+              };
+            })
+            .value();
+
+          res.status(200).json(final);
+        });
       });
     };
 
@@ -997,7 +1042,7 @@ module.exports = function(config) {
         };
 
         // Get the data and respond.
-        getFormioUsersCreated(query, _debug, res);
+        getFormioUsersCreated(query, _debug, req, res);
       }
     );
 
@@ -1031,7 +1076,7 @@ module.exports = function(config) {
         };
 
         // Get the data and respond.
-        getFormioUsersCreated(query, _debug, res);
+        getFormioUsersCreated(query, _debug, req, res);
       }
     );
 
@@ -1069,7 +1114,7 @@ module.exports = function(config) {
         };
 
         // Get the data and respond.
-        getFormioUsersCreated(query, _debug, res);
+        getFormioUsersCreated(query, _debug, req, res);
       }
     );
   };
