@@ -669,19 +669,254 @@ module.exports = function(app, template, hook) {
       });
 
       describe('/analytics/created/projects/year/:year', function() {
+        it('A Formio team member should be able to check created projects analytics', function(done) {
+          request(app)
+            .get('/analytics/created/projects/year/' + curr.getUTCFullYear())
+            .set('x-jwt-token', template.formio.owner.token)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
 
+              var response = res.body;
+              assert(response instanceof Array);
+              response.forEach(function(project) {
+                assert(typeof project === 'object');
+                assert(project.hasOwnProperty('_id'));
+                assert(project.hasOwnProperty('title'));
+                assert(project.hasOwnProperty('plan'));
+                assert(project.hasOwnProperty('owner'));
+                assert(project.hasOwnProperty('name'));
+                assert(project.hasOwnProperty('description'));
+              });
+
+              done();
+            });
+        });
+
+        it('An Formio user user should not be able to check created projects analytics', function(done) {
+          request(app)
+            .get('/analytics/created/projects/year/' + curr.getUTCFullYear())
+            .set('x-jwt-token', template.users.user1.token)
+            .expect('Content-Type', /text/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.text;
+              assert.equal(response, 'Unauthorized');
+
+              done();
+            });
+        });
+
+        it('An anonymous user should not be able to check created projects analytics', function(done) {
+          request(app)
+            .get('/analytics/created/projects/year/' + curr.getUTCFullYear())
+            .expect('Content-Type', /text/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.text;
+              assert.equal(response, 'Unauthorized');
+
+              done();
+            });
+        });
       });
 
       describe('/analytics/created/projects/year/:year/month/:month', function() {
+        it('A Formio team member should be able to check created projects analytics', function(done) {
+          request(app)
+            .get('/analytics/created/projects/year/' + curr.getUTCFullYear() + '/month/' + (curr.getUTCMonth() + 1))
+            .set('x-jwt-token', template.formio.owner.token)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
 
+              var response = res.body;
+              assert(response instanceof Array);
+              response.forEach(function(project) {
+                assert(typeof project === 'object');
+                assert(project.hasOwnProperty('_id'));
+                assert(project.hasOwnProperty('title'));
+                assert(project.hasOwnProperty('plan'));
+                assert(project.hasOwnProperty('owner'));
+                assert(project.hasOwnProperty('name'));
+                assert(project.hasOwnProperty('description'));
+              });
+
+              done();
+            });
+        });
+
+        it('An Formio user user should not be able to check created projects analytics', function(done) {
+          request(app)
+            .get('/analytics/created/projects/year/' + curr.getUTCFullYear() + '/month/' + (curr.getUTCMonth() + 1))
+            .set('x-jwt-token', template.users.user1.token)
+            .expect('Content-Type', /text/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.text;
+              assert.equal(response, 'Unauthorized');
+
+              done();
+            });
+        });
+
+        it('An anonymous user should not be able to check created projects analytics', function(done) {
+          request(app)
+            .get('/analytics/created/projects/year/' + curr.getUTCFullYear() + '/month/' + (curr.getUTCMonth() + 1))
+            .expect('Content-Type', /text/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.text;
+              assert.equal(response, 'Unauthorized');
+
+              done();
+            });
+        });
       });
 
       describe('/analytics/created/projects/year/:year/month/:month/day/:day', function() {
+        it('A Formio team member should be able to check created projects analytics', function(done) {
+          request(app)
+            .get('/analytics/created/projects/year/' + curr.getUTCFullYear() + '/month/' + (curr.getUTCMonth() + 1) + '/day/' + curr.getUTCDate())
+            .set('x-jwt-token', template.formio.owner.token)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
 
+              var response = res.body;
+              assert(response instanceof Array);
+              response.forEach(function(project) {
+                assert(typeof project === 'object');
+                assert(project.hasOwnProperty('_id'));
+                assert(project.hasOwnProperty('title'));
+                assert(project.hasOwnProperty('plan'));
+                assert(project.hasOwnProperty('owner'));
+                assert(project.hasOwnProperty('name'));
+                assert(project.hasOwnProperty('description'));
+              });
+
+              done();
+            });
+        });
+
+        it('An Formio user user should not be able to check created projects analytics', function(done) {
+          request(app)
+            .get('/analytics/created/projects/year/' + curr.getUTCFullYear() + '/month/' + (curr.getUTCMonth() + 1) + '/day/' + curr.getUTCDate())
+            .set('x-jwt-token', template.users.user1.token)
+            .expect('Content-Type', /text/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.text;
+              assert.equal(response, 'Unauthorized');
+
+              done();
+            });
+        });
+
+        it('An anonymous user should not be able to check created projects analytics', function(done) {
+          request(app)
+            .get('/analytics/created/projects/year/' + curr.getUTCFullYear() + '/month/' + (curr.getUTCMonth() + 1) + '/day/' + curr.getUTCDate())
+            .expect('Content-Type', /text/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.text;
+              assert.equal(response, 'Unauthorized');
+
+              done();
+            });
+        });
       });
 
       describe('/analytics/created/users/year/:year', function() {
+        it('A Formio team member should be able to check created users analytics', function(done) {
+          request(app)
+            .get('/analytics/created/users/year/' + curr.getUTCFullYear())
+            .set('x-jwt-token', template.formio.owner.token)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
 
+              var response = res.body;
+              assert(response instanceof Array);
+              assert(response.length > 0);
+              response.forEach(function(user) {
+                assert(typeof user === 'object');
+              });
+
+              done();
+            });
+        });
+
+        it('An Formio user user should not be able to check created users analytics', function(done) {
+          request(app)
+            .get('/analytics/created/users/year/' + curr.getUTCFullYear())
+            .set('x-jwt-token', template.users.user1.token)
+            .expect('Content-Type', /text/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.text;
+              assert.equal(response, 'Unauthorized');
+
+              done();
+            });
+        });
+
+        it('An anonymous user should not be able to check created users analytics', function(done) {
+          request(app)
+            .get('/analytics/created/users/year/' + curr.getUTCFullYear())
+            .expect('Content-Type', /text/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.text;
+              assert.equal(response, 'Unauthorized');
+
+              done();
+            });
+        });
       });
 
       describe('/analytics/created/users/year/:year/month/:month', function() {
