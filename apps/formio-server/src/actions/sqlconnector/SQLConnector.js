@@ -287,9 +287,9 @@ module.exports = function(router) {
    * @param next
    *   The callback function to execute upon completion.
    */
-  SQLConnector.prototype.resolve = function(handler, method, req, res, next) {
+  SQLConnector.prototype.resolve = function(handler, method, req, res, next) { // eslint-disable-line max-statements
     // Dont block on this action, lots of stuff to do.
-    next();
+    next(); // eslint-disable-line callback-return
 
     try {
       method = req.method.toString().toLowerCase();

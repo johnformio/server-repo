@@ -54,10 +54,10 @@ module.exports = function(router) {
   var getExpressRoute = function(method, path, primary, data, type) {
     debug.getExpressRoute('type:');
     debug.getExpressRoute(type);
-    var isMssql = function() {
+    var isMssql = function() { // eslint-disable-line no-unused-vars
       return type === 'mssql';
     };
-    var isMysql = function() {
+    var isMysql = function() { // eslint-disable-line no-unused-vars
       return type === 'mysql';
     };
     var isPostgresql = function() {
@@ -193,19 +193,18 @@ module.exports = function(router) {
         var type = _.get(project, 'settings.sqlconnector.type');
 
         var routes = [];
-        var path, primary, methods, fields, data, route;
+        var path, primary, methods, fields, data;
         _.each(actions, function(action) {
           // Pluck out the core info from the action.
           path = _.get(action, 'settings.table');
           primary = _.get(action, 'settings.primary') || 'id';
           methods = _.get(action, 'method');
           data = {};
-          route = {};
 
           // Iterate over each field to get the data mapping.
           fields = _.get(action, 'settings.fields');
           _.each(fields, function(field) {
-            data[field.column] = _.get(field, 'field.key')
+            data[field.column] = _.get(field, 'field.key');
           });
 
           _.each(methods, function(method) {
@@ -267,7 +266,7 @@ module.exports = function(router) {
   var generateQueries = function(req, res, next) {
     return Q.fcall(verifyPlan, req)
       .then(function() {
-        return Q.fcall(getConnectorActions, req)
+        return Q.fcall(getConnectorActions, req);
       })
       .then(function(actions) {
         return Q.fcall(actionsToRoutes, req, actions);
