@@ -204,5 +204,14 @@ module.exports = function(router, formioServer) {
     atlassian.storeOAuthReply
   );
 
+  // Expose the sql connector endpoint
+  var sqlconnector = require('../actions/sqlconnector/util')(formioServer);
+  router.get(
+    '/project/:projectId/sqlconnector',
+    formio.middleware.tokenHandler,
+    formio.middleware.restrictOwnerAccess,
+    sqlconnector.generateQueries
+  );
+
   return resource;
 };
