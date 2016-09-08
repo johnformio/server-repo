@@ -17,11 +17,9 @@ var customer = process.env.CUSTOMER;
 module.exports = function(app, template, hook) {
   describe('Closed Source Actions', function() {
     describe('SQL Connector', function() {
-      before(function() {
-        if (!docker && !customer && !template.hasOwnProperty('Helper')) {
-          template.Helper = require('formio/test/helper')(app);
-        }
-      });
+      if (docker || customer) {
+        return;
+      }
 
       var helper;
       it('Create the test project', function(done) {
@@ -214,7 +212,6 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      if (!docker && !customer)
       it('Update the project to the independent plan', function(done) {
         app.formio.formio.resources.project.model.findOne({_id: project._id, deleted: {$eq: null}}, function(err, project) {
           if (err) {
@@ -239,7 +236,6 @@ module.exports = function(app, template, hook) {
         });
       });
 
-      if (!docker && !customer)
       it('A project on the independent plan cannot access the /sqlconnector endpoint', function(done) {
         request(app)
           .get('/project/' + project._id + '/sqlconnector')
@@ -257,7 +253,6 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      if (!docker && !customer)
       it('Update the project to the team plan', function(done) {
         app.formio.formio.resources.project.model.findOne({_id: project._id, deleted: {$eq: null}}, function(err, project) {
           if (err) {
@@ -282,7 +277,6 @@ module.exports = function(app, template, hook) {
         });
       });
 
-      if (!docker && !customer)
       it('A project on the team plan can access the /sqlconnector endpoint', function(done) {
         request(app)
           .get('/project/' + project._id + '/sqlconnector')
