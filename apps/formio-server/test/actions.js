@@ -17,6 +17,12 @@ var customer = process.env.CUSTOMER;
 module.exports = function(app, template, hook) {
   describe('Closed Source Actions', function() {
     describe('SQL Connector', function() {
+      before(function() {
+        if (!docker && !customer && !template.hasOwnProperty('Helper')) {
+          template.Helper = require('formio/test/helper')(app);
+        }
+      });
+
       var helper;
       it('Create the test project', function(done) {
         helper = new template.Helper(template.formio.owner);
