@@ -1,7 +1,10 @@
 'use strict';
+
 var kickbox = require('kickbox');
-module.exports = function(project, component, req, res, next) {
-  if (!req.body || !req.body.data || !req.body.data[component.key]) {
+var _ = require('lodash');
+
+module.exports = function(project, component, path, req, res, next) {
+  if (!_.has(req.body, 'data.' + path)) {
     return next();
   }
 
@@ -16,7 +19,7 @@ module.exports = function(project, component, req, res, next) {
   }
 
   // Get the email address from the component.
-  var email = req.body.data && req.body.data.hasOwnProperty(component.key) ? req.body.data[component.key] : '';
+  var email = _.get(req.body, 'data.' + path) || '';
   if (!email) {
     return res.status(400).send('Invalid email address provided to ' + component.key + '.');
   }
