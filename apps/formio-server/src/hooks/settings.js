@@ -94,7 +94,7 @@ module.exports = function(app) {
           req.body.project = req.projectId || req.params.projectId;
         }
       },
-      validateEmail: function(component, req, res, next) {
+      validateEmail: function(component, path, req, res, next) {
         if (
           (component.type === 'email') &&
           component.kickbox &&
@@ -110,7 +110,7 @@ module.exports = function(app) {
             }
 
             // Validate with kickbox.
-            kickboxValidate(project, component, req, res, next);
+            kickboxValidate(project, component, path, req, res, next);
           });
 
           // Return true so that we can handle this request.
