@@ -1285,6 +1285,7 @@
             "required": false
           },
           "persistent": true,
+          "authenticate": true,
           "unique": true,
           "protected": false,
           "refreshDelay": 0,
