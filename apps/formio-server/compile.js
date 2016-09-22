@@ -27,11 +27,7 @@ var copyFile = function(file) {
 ].forEach(copyFile);
 
 var optimizer = new NodeOptimizer({
-  ignore: [],
-  // Include dynamically required files.
-  include: [
-    './src/db/updates'
-  ]
+  ignore: []
 });
 
 var mergedJs = optimizer.merge('main.js');
