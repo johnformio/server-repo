@@ -783,7 +783,8 @@ module.exports = function(config) {
             // project was already a plain js object.
           }
 
-          formioServer.formio.resources.form.model.findOne({project: project._id, name: 'user'}).exec(function(err, form) {
+          formioServer.formio.resources.form.model.findOne({project: project._id, name: 'user'})
+          .exec(function(err, form) {
             if (err || !form) {
               _debug(err);
               return res.status(500).send(err);
