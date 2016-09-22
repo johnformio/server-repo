@@ -1316,6 +1316,7 @@ describe('Tests', function() {
         require('./s3')(app, template, hook);
         require('./dropbox')(app, template, hook);
         require('./report')(app, template, hook);
+        require('./actions')(app, template, hook);
       });
     });
   });
