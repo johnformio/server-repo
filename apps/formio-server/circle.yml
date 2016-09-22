@@ -63,7 +63,8 @@ test:
     - docker ps -a
     - docker logs formio-server
     - sleep 5
-    - wget --tries=20 --retry-connrefused --wait=6 -v http://api.localhost:3000/health
+    - wget --tries=50 --retry-connrefused --wait=6 -v http://api.localhost:3000/health
+    - docker logs formio-server
     - npm run docker
     - docker logs formio-server &> $CIRCLE_ARTIFACTS/docker-server.log
     # Test Formio in a customer docker environment.
