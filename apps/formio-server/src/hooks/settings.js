@@ -1133,8 +1133,9 @@ module.exports = function(app) {
             _debug('Using ' + name);
             update = _files[name];
           }
-
-          _debug('update not found (' + name + '): ' + Object.keys(_files).join(', '));
+          else {
+            _debug('update not found (' + name + '): ' + Object.keys(_files).join(', '));
+          }
         }
         catch (e) {
           _debug(e);
