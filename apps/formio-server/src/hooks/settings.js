@@ -9,7 +9,6 @@ var o365Util = require('../actions/office365/util');
 var kickboxValidate = require('../actions/kickbox/validate');
 var nodeUrl = require('url');
 var jwt = require('jsonwebtoken');
-var path = require('path');
 var semver = require('semver');
 
 module.exports = function(app) {
@@ -1107,7 +1106,6 @@ module.exports = function(app) {
         files = files || [];
 
         _debug(files);
-        //_debug('Private updates: ' + path.join(__dirname, '../db/updates'));
         var _files = require('../db/updates/index.js');
         _files = Object.keys(_files);
         // Add the private updates to the original file list and continue.
