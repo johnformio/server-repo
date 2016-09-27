@@ -905,8 +905,8 @@ module.exports = function(app, template, hook) {
 
       it('A Team Owner should not be able to edit a team they do not own', function(done) {
         request(app)
-          .put('/project/' + template.formio.project._id + '/form/' + template.formio.teamResource._id + '/submission/' + template.team2._id)
-          .set('x-jwt-token', template.formio.owner.token)
+          .put('/project/' + template.formio.project._id + '/form/' + template.formio.teamResource._id + '/submission/' + template.team1._id)
+          .set('x-jwt-token', template.formio.user1.token)
           .send({
             data: {
               name: template.team2.data.name,
@@ -923,7 +923,7 @@ module.exports = function(app, template, hook) {
             }
 
             // Store the JWT for future API calls.
-            template.formio.owner.token = res.headers['x-jwt-token'];
+            template.formio.user1.token = res.headers['x-jwt-token'];
 
             done();
           });
@@ -931,8 +931,8 @@ module.exports = function(app, template, hook) {
 
       it('A Team Owner should not be able to delete a team they do not own', function(done) {
         request(app)
-          .delete('/project/' + template.formio.project._id + '/form/' + template.formio.teamResource._id + '/submission/' + template.team2._id)
-          .set('x-jwt-token', template.formio.owner.token)
+          .delete('/project/' + template.formio.project._id + '/form/' + template.formio.teamResource._id + '/submission/' + template.team1._id)
+          .set('x-jwt-token', template.formio.user1.token)
           .expect('Content-Type', /text/)
           .expect(401)
           .end(function(err, res) {
@@ -941,18 +941,18 @@ module.exports = function(app, template, hook) {
             }
 
             // Store the JWT for future API calls.
-            template.formio.owner.token = res.headers['x-jwt-token'];
+            template.formio.user1.token = res.headers['x-jwt-token'];
 
             done();
           });
       });
 
       it('A Project Owner should not be able to add a Team they do not own to their project', function(done) {
-        var teamAccess = {type: 'team_read', roles: [template.team2._id]};
+        var teamAccess = {type: 'team_read', roles: [template.team1._id]};
 
         request(app)
-          .get('/project/' + template.project._id)
-          .set('x-jwt-token', template.formio.owner.token)
+          .get('/project/' + template.project2._id)
+          .set('x-jwt-token', template.formio.user1.token)
           .expect('Content-Type', /json/)
           .expect(200)
           .end(function(err, res) {
@@ -965,11 +965,11 @@ module.exports = function(app, template, hook) {
             oldResponse.access.push(teamAccess);
 
             // Store the JWT for future API calls.
-            template.formio.owner.token = res.headers['x-jwt-token'];
+            template.formio.user1.token = res.headers['x-jwt-token'];
 
             request(app)
-              .put('/project/' + template.project._id)
-              .set('x-jwt-token', template.formio.owner.token)
+              .put('/project/' + template.project2._id)
+              .set('x-jwt-token', template.formio.user1.token)
               .send({ access: oldResponse.access })
               .expect('Content-Type', /json/)
               .expect(200)
@@ -992,10 +992,10 @@ module.exports = function(app, template, hook) {
                   assert.deepEqual(found.roles, []);
                 }
 
-                template.projet = response;
+                template.project2 = response;
 
                 // Store the JWT for future API calls.
-                template.formio.owner.token = res.headers['x-jwt-token'];
+                template.formio.user1.token = res.headers['x-jwt-token'];
 
                 done();
               });

@@ -1194,6 +1194,17 @@ describe('Tests', function() {
       });
 
       if (!docker && !customer)
+      it('Make our test user the owner of formio', function(done) {
+        app.formio.formio.resources.project.model.update({_id: template.formio.project._id}, {$set: {owner: template.formio.owner._id}}, function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          done();
+        });
+      });
+
+      if (!docker && !customer)
       it('Should have sent an email to the user with a valid auth token', function(done) {
         var email = app.formio.formio.hooks.getLastEmail();
         assert.equal(email.from, 'no-reply@form.io');
