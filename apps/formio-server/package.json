@@ -28,7 +28,7 @@
     "dotenv": "1.2.0",
     "edit-google-spreadsheet": "^0.2.21",
     "express": "^4.13.3",
-    "formio": "git+https://github.com/formio/formio.git#bugfix/for-132",
+    "formio": "^1.11.0",
     "formio-utils": "^0.1.9",
     "is-url": "^1.2.1",
     "jira-connector": "^2.3.0",
