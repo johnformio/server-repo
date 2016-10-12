@@ -63,7 +63,8 @@ test:
     - docker ps -a
     - docker logs formio-server
     - sleep 5
-    - wget --tries=10 --retry-connrefused --wait=6 -v http://api.localhost:3000/health
+    - wget --tries=50 --retry-connrefused --wait=6 -v http://api.localhost:3000/health
+    - docker logs formio-server
     - npm run docker
     - docker logs formio-server &> $CIRCLE_ARTIFACTS/docker-server.log
     # Test Formio in a customer docker environment.
@@ -80,7 +81,7 @@ test:
     - docker network inspect formio
     - docker logs formio-server2
     - sleep 5
-    - wget --tries=10 --retry-connrefused --wait=6 -v http://api.localhost:3000/health
+    - wget --tries=20 --retry-connrefused --wait=6 -v http://api.localhost:3000/health
     - formio deploy --src-username dockertest@form.io --src-password testdockertest --dst-username dockertest@form.io --dst-password testdockertest https://dockertest.form.io http://dockertest.localhost:3000
     - npm run customer
     - docker logs formio-server2 &> $CIRCLE_ARTIFACTS/docker-customer-server.log
