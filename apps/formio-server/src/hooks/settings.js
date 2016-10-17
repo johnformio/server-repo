@@ -249,6 +249,7 @@ module.exports = function(app) {
         actions.googlesheet = require('../actions/googlesheet/googleSheet')(formioServer);
         actions.sqlconnector = require('../actions/sqlconnector/SQLConnector')(formioServer);
         actions.jira = require('../actions/atlassian/jira')(formioServer);
+        actions.group = require('../actions/GroupAction')(formioServer);
         return actions;
       },
       emailTransports: function(transports, settings) {
