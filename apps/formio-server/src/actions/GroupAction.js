@@ -2,7 +2,8 @@
 
 var _ = require('lodash');
 var debug = {
-  settingsForm: require('debug')('formio:actions:GroupAction#settingsForm')
+  settingsForm: require('debug')('formio:actions:GroupAction#settingsForm'),
+  resolve: require('debug')('formio:actions:GroupAction#resolve')
 };
 
 module.exports = function(router) {
@@ -28,7 +29,7 @@ module.exports = function(router) {
       title: 'Group Assignment (Premium)',
       premium: true,
       description: 'Provides the Group Assignment capabilities.',
-      priority: 1,
+      priority: 5,
       defaults: {
         handler: ['after'],
         method: ['create']
@@ -91,7 +92,85 @@ module.exports = function(router) {
    *   The callback function to execute upon completion.
    */
   GroupAction.prototype.resolve = function(handler, method, req, res, next) {
+    try {
+      var group = _.get(this.settings, 'group');
+      var user = _.get(this.settings, 'user');
 
+      // Check for required settings.
+      if (!group) {
+        debug.resolve('Cant resolve the action, because no group was set.');
+        return res.status(400).send('Can not resolve the action, because no group was set.');
+      }
+
+      // Check for the user, either just created (with this) or defined in the submission.
+      var userDefined = user && _.has(req.submission, 'data.' + user);
+      var thisUser = !user && _.has(res, 'resource.item');
+      if (!userDefined && !thisUser) {
+        return res.status(400).send('A User reference is required for group assignment.');
+      }
+
+      // Search for the user within the cache.
+      var searchUser = userDefined
+        ? _.get(req.submission, 'data.' + user)
+        : _.get(res, 'resource.item._id');
+
+      router.formio.resources.form.model.aggregate(
+        {$match: {project: router.formio.util.idToBson(_.get(req, 'projectId'))}},
+        {$project: {_id: 1}},
+        {$lookup: {from: 'submissions', localField: '_id', foreignField: 'form', as: 'submissions'}},
+        {$match: {submissions: {$exists: true, $ne: []}}},
+        {$unwind: '$submissions'},
+        {$match: {'submissions._id': router.formio.util.idToBson(searchUser)}},
+        function(err, submission) {
+          if (err || !submission || submission.length !== 1) {
+            debug.resolve(err || 'Submission: ' + (!submission ? 'none' : submission.length));
+            return res.status(400).send('Could not load the user for group assignment.');
+          }
+
+          // We only want to deal with the single result.
+          submission = submission.pop();
+          submission = _.get(submission, 'submissions'); // unwrap the submission obj from the unwind op.
+
+          // TODO: Make sure the group id is a valid bson _id, within the current projects scope and the assignee has
+          // TODO: write/admin access to it.
+          // Add the new role and make sure its unique.
+          var newRoles = submission.roles || [];
+          newRoles.map(router.formio.util.idToString);
+          newRoles.push(router.formio.util.idToString(group));
+          newRoles = _.uniq(newRoles);
+          newRoles.map(router.formio.util.idToBson);
+
+          router.formio.resources.submission.model.update(
+            {
+              _id: router.formio.util.idToBson(submission._id),
+              deleted: {$eq: null}
+            },
+            {
+              $set: {
+                roles: newRoles
+              }
+            },
+            function(err) {
+              if (err) {
+                debug.resolve(err);
+                return res.status(400).send('Could not add the given group role to the user.');
+              }
+
+              // Attempt to update the response item, if present.
+              if (thisUser) {
+                _.set(res, 'resource.item.roles');
+              }
+
+              return next();
+            }
+          )
+        }
+      )
+    }
+    catch (e) {
+      debug.resolve(e);
+      return next();
+    }
   };
 
   // Return the GroupAction.

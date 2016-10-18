@@ -289,7 +289,14 @@ module.exports = function(app, template, hook) {
             path: chance.word(),
             type: 'resource',
             access: [],
-            submissionAccess: [],
+            submissionAccess: [
+              {
+                type: 'create_own',
+                roles: [
+                  template.roles.authenticated._id
+                ]
+              }
+            ],
             components: [
               {
                 input: true,
@@ -556,6 +563,7 @@ module.exports = function(app, template, hook) {
         });
       });
 
+      // TODO: Add tests to verify that only valid groups can be assigned.
       describe('Group Resource Assignment', function() {
         before(function() {
           submissions = [];
@@ -660,6 +668,7 @@ module.exports = function(app, template, hook) {
         });
       });
 
+      // TODO: Add tests to verify that only valid groups can be assigned.
       describe('Self Assignment', function() {
         before(function() {
           submissions = [];
