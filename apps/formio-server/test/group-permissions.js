@@ -57,32 +57,323 @@ module.exports = function(app, template, hook) {
 
   describe('Group Permissions', function() {
     describe('Group Assignment Action', function() {
-      var form = null;
-      var group = null;
-      var groupUser = null;
+      var form = {
+        input: null
+      };
+      var resource = {
+        group: null,
+        groupUser: null
+      };
+      var action = {
+        groupAssignment: null
+      };
       var submissions = [];
 
       describe('Bootstrap', function() {
-        it('Create the form', function(done) {
+        it('Create the input form', function(done) {
+          form.input = {
+            title: 'form',
+            name: chance.word(),
+            path: chance.word(),
+            type: 'form',
+            access: [],
+            submissionAccess: [],
+            components: [
+              {
+                type: 'textfield',
+                validate: {
+                  custom: '',
+                  pattern: '',
+                  maxLength: '',
+                  minLength: '',
+                  required: false
+                },
+                defaultValue: '',
+                multiple: false,
+                suffix: '',
+                prefix: '',
+                placeholder: 'foo',
+                key: 'foo',
+                label: 'foo',
+                inputMask: '',
+                inputType: 'text',
+                input: true
+              }
+            ]
+          };
 
+          request(app)
+            .post('/project/' + template.project._id + '/form')
+            .set('x-jwt-token', template.users.admin.token)
+            .send(form.input)
+            .expect('Content-Type', /json/)
+            .expect(201)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.body;
+              assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
+              assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
+              assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
+              assert(response.hasOwnProperty('access'), 'The response should contain an the `access`.');
+              assert.equal(response.title, form.input.title);
+              assert.equal(response.name, form.input.name);
+              assert.equal(response.path, form.input.path);
+              assert.equal(response.type, form.input.type);
+              assert.deepEqual(response.submissionAccess, form.input.submissionAccess);
+              assert.deepEqual(response.components, form.input.components);
+
+              form.input = response;
+
+              // Store the JWT for future API calls.
+              template.users.admin.token = res.headers['x-jwt-token'];
+
+              done();
+            });
+        });
+
+        it('Create the group resource', function(done) {
+          resource.group = {
+            title: 'groupResource',
+            name: chance.word(),
+            path: chance.word(),
+            type: 'resource',
+            access: [],
+            submissionAccess: [],
+            components: [
+              {
+                type: 'textfield',
+                validate: {
+                  custom: '',
+                  pattern: '',
+                  maxLength: '',
+                  minLength: '',
+                  required: false
+                },
+                defaultValue: '',
+                multiple: false,
+                suffix: '',
+                prefix: '',
+                placeholder: 'name',
+                key: 'name',
+                label: 'name',
+                inputMask: '',
+                inputType: 'text',
+                input: true
+              }
+            ]
+          };
+
+          request(app)
+            .post('/project/' + template.project._id + '/form')
+            .set('x-jwt-token', template.users.admin.token)
+            .send(resource.group)
+            .expect('Content-Type', /json/)
+            .expect(201)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.body;
+              assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
+              assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
+              assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
+              assert(response.hasOwnProperty('access'), 'The response should contain an the `access`.');
+              assert.equal(response.title, resource.group.title);
+              assert.equal(response.name, resource.group.name);
+              assert.equal(response.path, resource.group.path);
+              assert.equal(response.type, resource.group.type);
+              assert.deepEqual(response.submissionAccess, resource.group.submissionAccess);
+              assert.deepEqual(response.components, resource.group.components);
+              resource.group = response;
+
+              // Store the JWT for future API calls.
+              template.users.admin.token = res.headers['x-jwt-token'];
+
+              done();
+            });
+        });
+
+        it('Create the group user resource', function(done) {
+          resource.groupUser = {
+            title: 'groupUser',
+            name: chance.word(),
+            path: chance.word(),
+            type: 'resource',
+            access: [],
+            submissionAccess: [],
+            components: [
+              {
+                input: true,
+                tableView: true,
+                label: 'Group',
+                key: 'group',
+                placeholder: '',
+                resource: resource.group,
+                project: template.project._id,
+                defaultValue: '',
+                template: '<span>{{ item.data }}</span>',
+                selectFields: '',
+                searchFields: '',
+                multiple: false,
+                protected: false,
+                persistent: true,
+                validate: {
+                  required: false
+                },
+                defaultPermission: '',
+                type: 'resource',
+                tags: [],
+                conditional: {
+                  show: '',
+                  when: null,
+                  eq: ''
+                }
+              }, {
+                input: true,
+                tableView: true,
+                label: 'User',
+                key: 'user',
+                placeholder: '',
+                resource: template.users.user1.form,
+                project: template.project._id,
+                defaultValue: '',
+                template: '<span>{{ item.data }}</span>',
+                selectFields: '',
+                searchFields: '',
+                multiple: false,
+                protected: false,
+                persistent: true,
+                validate: {
+                  required: false
+                },
+                defaultPermission: '',
+                type: 'resource',
+                tags: [],
+                conditional: {
+                  show: '',
+                  when: null,
+                  eq: ''
+                }
+              }
+            ]
+          };
+
+          request(app)
+            .post('/project/' + template.project._id + '/form')
+            .set('x-jwt-token', template.users.admin.token)
+            .send(resource.groupUser)
+            .expect('Content-Type', /json/)
+            .expect(201)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.body;
+              assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
+              assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
+              assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
+              assert(response.hasOwnProperty('access'), 'The response should contain an the `access`.');
+              assert.equal(response.title, resource.groupUser.title);
+              assert.equal(response.name, resource.groupUser.name);
+              assert.equal(response.path, resource.groupUser.path);
+              assert.equal(response.type, resource.groupUser.type);
+              assert.deepEqual(response.submissionAccess, resource.groupUser.submissionAccess);
+              assert.deepEqual(response.components, resource.groupUser.components);
+              resource.groupUser = response;
+
+              // Store the JWT for future API calls.
+              template.users.admin.token = res.headers['x-jwt-token'];
+
+              done();
+            })
+        });
+
+        it('Create the group resource assignment action', function(done) {
+          action.groupAssignment = {
+            title: 'Group Assignment',
+            name: 'group',
+            handler: ['after'],
+            method: ['create'],
+            settings: {
+              group: 'group',
+              user: 'user'
+            }
+          };
+
+          request(app)
+            .post('/project/' + template.project._id + '/form/' + resource.groupUser._id + '/action')
+            .set('x-jwt-token', template.users.admin.token)
+            .send(action.groupAssignment)
+            .expect('Content-Type', /json/)
+            .expect(201)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.body;
+              assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
+              assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
+              assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
+              assert(response.hasOwnProperty('access'), 'The response should contain an the `access`.');
+              assert.equal(response.title, action.groupAssignment.title);
+              assert.equal(response.name, action.groupAssignment.name);
+              assert.equal(response.path, action.groupAssignment.path);
+              assert.equal(response.type, action.groupAssignment.type);
+              assert.deepEqual(response.submissionAccess, action.groupAssignment.submissionAccess);
+              assert.deepEqual(response.components, action.groupAssignment.components);
+              action.groupAssignment = response;
+
+              // Store the JWT for future API calls.
+              template.users.admin.token = res.headers['x-jwt-token'];
+
+              done();
+            })
         });
       });
 
       describe('Group Resource Assignment', function() {
-        it('Create the group', function(done) {
+        it('Create a group', function(done) {
 
         });
 
-        it('Create the group proxy resource', function(done) {
-
-        });
-
-        it('Create the group resource assignment action', function(done) {
+        it('Create a group', function(done) {
 
         });
 
         it('A submission to the group proxy will assign group access to the user resource', function(done) {
+          var submission = {
+            data: {
+              group: resource.group._id,
+              user: ''
+            }
+          };
 
+          request(app)
+            .post('/project/' + template.project._id + '/form/' + form.input._id + '/submission')
+            .set('x-jwt-token', template.users.admin.token)
+            .post(submission)
+            .expect('Content-Type', /json/)
+            .expect(201)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.body;
+              submission = response;
+              submissions.push(submission);
+
+              // Store the JWT for future API calls.
+              template.users.admin.token = res.headers['x-jwt-token'];
+
+              done();
+            });
         });
 
         it('A user can not assign group access that they do not have access to', function(done) {
