@@ -55,6 +55,25 @@ module.exports = function(app, template, hook) {
     });
   };
 
+  var userHasGroupRole = function(user, role, done) {
+    // Check that the user had the role added to their user obj.
+    request(app)
+      .get('/project/' + template.project._id + '/form/' + user.form + '/submission/' + user._id)
+      .set('x-jwt-token', user.token)
+      .expect('Content-Type', /json/)
+      .expect(200)
+      .end(function(err, res) {
+        if (err) {
+          return done(err);
+        }
+
+        var response = res.body;
+        assert(response.roles.indexOf(role) !== -1);
+
+        done();
+      });
+  };
+
   describe('Group Permissions', function() {
     describe('Group Assignment Action', function() {
       var form = {
@@ -338,26 +357,36 @@ module.exports = function(app, template, hook) {
       });
 
       describe('Group Resource Assignment', function() {
-        it('Create a group', function(done) {
+        var group = {
+          read: null,
+          write: null,
+          admin: null,
+          none: null
+        };
 
+        before(function() {
+          submissions = [];
         });
 
-        it('Create a group', function(done) {
-
-        });
-
-        it('A submission to the group proxy will assign group access to the user resource', function(done) {
-          var submission = {
+        it('Create a group w/ read access permissions', function(done) {
+          group.read = {
             data: {
-              group: resource.group._id,
-              user: ''
-            }
+              name: 'Group1'
+            },
+            access: [
+              {
+                type: 'read',
+                resources: [
+                  template.users.user1._id
+                ]
+              }
+            ]
           };
 
           request(app)
-            .post('/project/' + template.project._id + '/form/' + form.input._id + '/submission')
+            .post('/project/' + template.project._id + '/form/' + resource.group._id + '/submission')
             .set('x-jwt-token', template.users.admin.token)
-            .post(submission)
+            .post(group.read)
             .expect('Content-Type', /json/)
             .expect(201)
             .end(function(err, res) {
@@ -366,8 +395,7 @@ module.exports = function(app, template, hook) {
               }
 
               var response = res.body;
-              submission = response;
-              submissions.push(submission);
+              group.read = response;
 
               // Store the JWT for future API calls.
               template.users.admin.token = res.headers['x-jwt-token'];
@@ -376,12 +404,209 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user can not assign group access that they do not have access to', function(done) {
+        it('Create a group w/ write access permissions', function(done) {
+          group.write = {
+            data: {
+              name: 'Group2'
+            },
+            access: [
+              {
+                type: 'write',
+                resources: [
+                  template.users.user1._id
+                ]
+              }
+            ]
+          };
 
+          request(app)
+            .post('/project/' + template.project._id + '/form/' + resource.group._id + '/submission')
+            .set('x-jwt-token', template.users.admin.token)
+            .post(group.write)
+            .expect('Content-Type', /json/)
+            .expect(201)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.body;
+              group.write = response;
+
+              // Store the JWT for future API calls.
+              template.users.admin.token = res.headers['x-jwt-token'];
+
+              done();
+            });
+        });
+
+        it('Create a group w/ admin access permissions', function(done) {
+          group.admin = {
+            data: {
+              name: 'Group3'
+            },
+            access: [
+              {
+                type: 'admin',
+                resources: [
+                  template.users.user1._id
+                ]
+              }
+            ]
+          };
+
+          request(app)
+            .post('/project/' + template.project._id + '/form/' + resource.group._id + '/submission')
+            .set('x-jwt-token', template.users.admin.token)
+            .post(group.admin)
+            .expect('Content-Type', /json/)
+            .expect(201)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.body;
+              group.admin = response;
+
+              // Store the JWT for future API calls.
+              template.users.admin.token = res.headers['x-jwt-token'];
+
+              done();
+            });
+        });
+
+        it('Create a group w/ no access permissions', function(done) {
+          group.none = {
+            data: {
+              name: 'Group4'
+            },
+            access: []
+          };
+
+          request(app)
+            .post('/project/' + template.project._id + '/form/' + resource.group._id + '/submission')
+            .set('x-jwt-token', template.users.admin.token)
+            .post(group.none)
+            .expect('Content-Type', /json/)
+            .expect(201)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.body;
+              group.none = response;
+
+              // Store the JWT for future API calls.
+              template.users.admin.token = res.headers['x-jwt-token'];
+
+              done();
+            });
+        });
+
+        it('A submission to the group user proxy will not assign group access with no resource permissions', function(done) {
+          request(app)
+            .post('/project/' + template.project._id + '/form/' + form.input._id + '/submission')
+            .set('x-jwt-token', template.users.user1.token)
+            .post({
+              data: {
+                group: group.none._id,
+                user: template.users.user1
+              }
+            })
+            .expect('Content-Type', /text/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              assert.deepEqual(res.body, {});
+              assert.equal(res.text, 'Unauthorized');
+              done()
+            });
+        });
+
+        it('A submission to the group user proxy will not assign group access with read resource permissions', function(done) {
+          request(app)
+            .post('/project/' + template.project._id + '/form/' + form.input._id + '/submission')
+            .set('x-jwt-token', template.users.user1.token)
+            .post({
+              data: {
+                group: group.read._id,
+                user: template.users.user1
+              }
+            })
+            .expect('Content-Type', /text/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              assert.deepEqual(res.body, {});
+              assert.equal(res.text, 'Unauthorized');
+              done()
+            });
+        });
+
+        it('A submission to the group user proxy will assign group access with write resource permissions', function(done) {
+          request(app)
+            .post('/project/' + template.project._id + '/form/' + form.input._id + '/submission')
+            .set('x-jwt-token', template.users.user1.token)
+            .post({
+              data: {
+                group: group.write._id,
+                user: template.users.user1
+              }
+            })
+            .expect('Content-Type', /json/)
+            .expect(201)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.body;
+              submissions.push(response);
+              userHasGroupRole(template.users.user1, group.write._id, done);
+            });
+        });
+
+        it('A submission to the group user proxy will assign group access with admin resource permissions', function(done) {
+          request(app)
+            .post('/project/' + template.project._id + '/form/' + form.input._id + '/submission')
+            .set('x-jwt-token', template.users.user1.token)
+            .post({
+              data: {
+                group: group.admin._id,
+                user: template.users.user1
+              }
+            })
+            .expect('Content-Type', /json/)
+            .expect(201)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.body;
+              submissions.push(response);
+              userHasGroupRole(template.users.user1, group.admin._id, done);
+            });
+        });
+
+        after(function(done) {
+          deleteSubmissions(submissions, done);
         });
       });
 
       describe('Self Assignment', function() {
+        before(function() {
+          submissions = [];
+        });
+
         it('Create the group resource assignment action', function(done) {
 
         });
@@ -390,9 +615,10 @@ module.exports = function(app, template, hook) {
 
         });
 
-        it('A user can not assign group access that they do not have access to', function(done) {
-
-        });
+        // @TODO: Finish permission check
+        //it('A user can not assign group access that they do not have access to via the self user', function(done) {
+        //
+        //});
       });
     });
 
