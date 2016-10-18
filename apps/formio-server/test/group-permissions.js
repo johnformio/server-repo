@@ -1367,7 +1367,7 @@ module.exports = function(app, template, hook) {
               var response = res.body;
               var found = false;
               response.access.forEach(function(permission) {
-                if (permission.type === 'read' && permission.resources.indexOf(group._id) !== -1) {
+                if (permission.type === 'write' && permission.resources.indexOf(group._id) !== -1) {
                   found = true;
                 }
               });
@@ -1485,44 +1485,266 @@ module.exports = function(app, template, hook) {
       });
 
       describe('admin access', function() {
-        before(function(done) {
-          // Clear the submission group access
+        before(function() {
+          submissions = [];
+        });
+
+        var submission;
+        it('Create a submission', function(done) {
+          request(app)
+            .post('/project/' + template.project._id + '/form/' + form._id + '/submission')
+            .set('x-jwt-token', template.users.admin.token)
+            .send({
+              data: {
+                foo: chance.word()
+              }
+            })
+            .expect('Content-Type', /json/)
+            .expect(201)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.body;
+              submission = response;
+              submissions.push(response);
+
+              // Store the JWT for future API calls.
+              template.users.admin.token = res.headers['x-jwt-token'];
+
+              done();
+            });
         });
 
         it('A user without group access, should not be able to read a submission', function(done) {
+          request(app)
+            .get('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .set('x-jwt-token', template.users.user1.token)
+            .expect('Content-Type', /text/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
 
+              assert.deepEqual(res.body, {});
+              assert.equal(res.text, 'Unauthorized');
+
+              // Store the JWT for future API calls.
+              template.users.user1.token = res.headers['x-jwt-token'];
+
+              done();
+            });
         });
 
         it('A user without group access, should not be able to read a submission through the index', function(done) {
+          request(app)
+            .get('/project/' + template.project._id + '/form/' + form._id + '/submission')
+            .set('x-jwt-token', template.users.user1.token)
+            .expect('Content-Type', /text/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
 
+              assert.deepEqual(res.body, {});
+              assert.equal(res.text, 'Unauthorized');
+
+              // Store the JWT for future API calls.
+              template.users.user1.token = res.headers['x-jwt-token'];
+
+              done();
+            });
         });
 
         it('A user without group access, should not be able to update a submission', function(done) {
+          request(app)
+            .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .set('x-jwt-token', template.users.user1.token)
+            .send({
+              data: {
+                foo: chance.word()
+              }
+            })
+            .expect('Content-Type', /text/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
 
+              assert.deepEqual(res.body, {});
+              assert.equal(res.text, 'Unauthorized');
+
+              // Store the JWT for future API calls.
+              template.users.user1.token = res.headers['x-jwt-token'];
+
+              done();
+            });
         });
 
         it('A user without group access, should not be able to delete a submission', function(done) {
+          request(app)
+            .delete('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .set('x-jwt-token', template.users.user1.token)
+            .expect('Content-Type', /text/)
+            .expect(401)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
 
+              assert.deepEqual(res.body, {});
+              assert.equal(res.text, 'Unauthorized');
+
+              // Store the JWT for future API calls.
+              template.users.user1.token = res.headers['x-jwt-token'];
+
+              done();
+            });
         });
 
         it('An Administrative user can grant admin access for the group', function(done) {
+          request(app)
+            .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .set('x-jwt-token', template.users.admin.token)
+            .send({
+              access: [
+                {
+                  type: 'admin',
+                  resources: [
+                    group._id
+                  ]
+                }
+              ]
+            })
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
 
+              var response = res.body;
+              var found = false;
+              response.access.forEach(function(permission) {
+                if (permission.type === 'admin' && permission.resources.indexOf(group._id) !== -1) {
+                  found = true;
+                }
+              });
+              assert.equal(found, true);
+              submission = response;
+
+              // Store the JWT for future API calls.
+              template.users.admin.token = res.headers['x-jwt-token'];
+
+              done();
+            });
         });
 
         it('A user with group access, should be able to read a submission', function(done) {
+          request(app)
+            .get('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .set('x-jwt-token', template.users.user1.token)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
 
+              var response = res.body;
+              assert.equal(data.foo, response.foo);
+
+              // Store the JWT for future API calls.
+              template.users.user1.token = res.headers['x-jwt-token'];
+
+              done();
+            });
         });
 
         it('A user with group access, should be able to read a submission through the index', function(done) {
+          request(app)
+            .get('/project/' + template.project._id + '/form/' + form._id + '/submission')
+            .set('x-jwt-token', template.users.user1.token)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
 
+              var response = res.body;
+              var found = false;
+              assert(response instanceof Array);
+              response.forEach(function(sub) {
+                if (sub._id === submission._id) {
+                  found = true;
+                }
+              });
+              assert.equal(found, true);
+
+              // Store the JWT for future API calls.
+              template.users.user1.token = res.headers['x-jwt-token'];
+
+              done();
+            });
         });
 
         it('A user with group access, should be able to update a submission', function(done) {
+          var update = chance.word();
 
+          request(app)
+            .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .set('x-jwt-token', template.users.user1.token)
+            .send({
+              data: {
+                foo: update
+              }
+            })
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.body;
+              assert.equal(response.data.foo, update);
+
+              // Store the JWT for future API calls.
+              template.users.user1.token = res.headers['x-jwt-token'];
+
+              done();
+            });
         });
 
         it('A user with group access, should be able to delete a submission', function(done) {
+          request(app)
+            .delete('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .set('x-jwt-token', template.users.user1.token)
+            .expect('Content-Type', /text/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
 
+              var response = res.body
+              assert.deepEqual(response, {});
+              assert.equal(res.text, 'Ok');
+
+              // Store the JWT for future API calls.
+              template.users.user1.token = res.headers['x-jwt-token'];
+
+              done();
+            });
+        });
+
+        after(function(done) {
+          deleteSubmissions(submissions, done);
         });
       });
     });
