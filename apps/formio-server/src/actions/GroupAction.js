@@ -5,7 +5,7 @@ var _ = require('lodash');
 var debug = {
   settingsForm: require('debug')('formio:actions:GroupAction#settingsForm'),
   resolve: require('debug')('formio:actions:GroupAction#resolve'),
-  loadGroup: require('debug')('formio:actions:GroupAction#loadGroup'),
+  canAssignGroup: require('debug')('formio:actions:GroupAction#canAssignGroup'),
   loadFilteredSubmission: require('debug')('formio:actions:GroupAction#loadFilteredSubmission')
 };
 
@@ -137,13 +137,42 @@ module.exports = function(router) {
         return deferred.promise;
       };
 
+      /**
+       * Check if the current user has request to edit the given group.
+       *
+       * @param gid
+       * @returns {*}
+       */
       var canAssignGroup = function(gid) {
         return loadFilteredSubmission('group', gid)
         .then(function(group) {
+          var context = _.cloneDeep(req);
+          context.formioCache = hook.alter('cacheInit', {
+            names: {},
+            aliases: {},
+            forms: {},
+            submissions: {}
+          });
+          context.method = 'PUT'; // the user must have update access to the group for assignment access.
+          context.formId = router.formio.util.idToString(group.form);
+          context.subId = router.formio.util.idToString(group._id);
 
-        })
-        .catch(function(err) {
-          throw new Error(err);
+          debug.loadFilteredSubmission(group);
+          debug.loadFilteredSubmission('context.formId: ' + context.formId);
+          debug.loadFilteredSubmission('context.subId: ' + context.subId);
+
+          var deferred = Q.defer();
+          router.formio.middleware.permissionHandler(context, res, function(err) {
+            if (err) {
+              debug.canAssignGroup(err);
+              //return res.status(401).send(err);
+              deferred.reject(err);
+            }
+
+            deferred.resolve(true);
+          });
+
+          return deferred.promise;
         });
       };
 
@@ -184,38 +213,39 @@ module.exports = function(router) {
 
       loadFilteredSubmission('user', searchUser)
       .then(function(user) {
-        // TODO: Make sure the group id is a valid bson _id, within the current projects scope and the assignee has
-        // TODO: write/admin access to it.
-        // Add the new role and make sure its unique.
-        var newRoles = user.roles || [];
-        newRoles.map(router.formio.util.idToString);
-        newRoles.push(router.formio.util.idToString(group));
-        newRoles = _.uniq(newRoles);
-        newRoles.map(router.formio.util.idToBson);
+        return canAssignGroup(group)
+        .then(function() {
+          // Add the new role and make sure its unique.
+          var newRoles = user.roles || [];
+          newRoles.map(router.formio.util.idToString);
+          newRoles.push(router.formio.util.idToString(group));
+          newRoles = _.uniq(newRoles);
+          newRoles.map(router.formio.util.idToBson);
 
-        router.formio.resources.submission.model.update(
-          {
-            _id: router.formio.util.idToBson(user._id),
-            deleted: {$eq: null}
-          },
-          {
-            $set: {
-              roles: newRoles
-            }
-          },
-          function(err) {
-            if (err) {
-              throw new Error('Could not add the given group role to the user.');
-            }
+          router.formio.resources.submission.model.update(
+            {
+              _id: router.formio.util.idToBson(user._id),
+              deleted: {$eq: null}
+            },
+            {
+              $set: {
+                roles: newRoles
+              }
+            },
+            function(err) {
+              if (err) {
+                throw new Error('Could not add the given group role to the user.');
+              }
 
-            // Attempt to update the response item, if present.
-            if (thisUser) {
-              _.set(res, 'resource.item.roles');
-            }
+              // Attempt to update the response item, if present.
+              if (thisUser) {
+                _.set(res, 'resource.item.roles');
+              }
 
-            return next();
-          }
-        )
+              return next();
+            }
+          )
+        })
       })
       .catch(function(err) {
         debug.resolve(err);
