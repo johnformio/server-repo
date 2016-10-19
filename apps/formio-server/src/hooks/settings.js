@@ -796,6 +796,7 @@ module.exports = function(app) {
         // Force the user reference to be an object rather than a mongoose document.
         try {
           user = user.toObject();
+          user._id = user._id.toString();
         }
         catch (e) {
           //debug.error(e);

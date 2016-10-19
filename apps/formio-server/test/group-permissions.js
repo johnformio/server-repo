@@ -103,7 +103,14 @@ module.exports = function(app, template, hook) {
             path: chance.word(),
             type: 'form',
             access: [],
-            submissionAccess: [],
+            submissionAccess: [
+              {
+                type: 'create_all',
+                roles: [
+                  template.roles.authenticated._id
+                ]
+              }
+            ],
             components: [
               {
                 type: 'textfield',
@@ -382,7 +389,7 @@ module.exports = function(app, template, hook) {
               template.users.admin.token = res.headers['x-jwt-token'];
 
               done();
-            })
+            });
         });
 
         it('Create the group resource assignment action', function(done) {
@@ -720,7 +727,7 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A submission to the form assign group access with write resource permissions', function(done) {
+        it('A submission to the form will assign group access with write resource permissions', function(done) {
           request(app)
             .post('/project/' + template.project._id + '/form/' + form.input._id + '/submission')
             .set('x-jwt-token', template.users.user1.token)
@@ -738,11 +745,12 @@ module.exports = function(app, template, hook) {
               }
 
               var response = res.body;
-              userHasGroupRole(response, group.write._id, done);
+              submissions.push(response);
+              userHasGroupRole(template.users.user1, group.write._id, done);
             });
         });
 
-        it('A submission to the form assign group access with write resource permissions', function(done) {
+        it('A submission to the form will assign group access with write resource permissions', function(done) {
           request(app)
             .post('/project/' + template.project._id + '/form/' + form.input._id + '/submission')
             .set('x-jwt-token', template.users.user1.token)
@@ -760,7 +768,8 @@ module.exports = function(app, template, hook) {
               }
 
               var response = res.body;
-              userHasGroupRole(response, group.admin._id, done);
+              submissions.push(response);
+              userHasGroupRole(template.users.user1, group.admin._id, done);
             });
         });
       });
@@ -768,6 +777,8 @@ module.exports = function(app, template, hook) {
 
     describe('Submissions', function() {
       var form = null;
+      var assignForm = null;
+      var assignAction = null;
       var groupResource = null;
       var group = null;
       var submissions = [];
@@ -808,7 +819,7 @@ module.exports = function(app, template, hook) {
           request(app)
             .post('/project/' + template.project._id + '/form')
             .set('x-jwt-token', template.users.admin.token)
-            .send(form.input)
+            .send(form)
             .expect('Content-Type', /json/)
             .expect(201)
             .end(function(err, res) {
@@ -928,37 +939,167 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('Assign the group to the user', function(done) {
+        it('Create the group assignment form', function(done) {
+          assignForm = {
+            title: 'assignForm',
+            name: chance.word(),
+            path: chance.word(),
+            type: 'form',
+            access: [],
+            submissionAccess: [
+              {
+                type: 'create_all',
+                roles: [
+                  template.roles.administrator._id
+                ]
+              }
+            ],
+            components: [
+              {
+                input: true,
+                tableView: true,
+                label: 'Group',
+                key: 'group',
+                placeholder: '',
+                resource: groupResource,
+                project: template.project._id,
+                defaultValue: '',
+                template: '<span>{{ item.data }}</span>',
+                selectFields: '',
+                searchFields: '',
+                multiple: false,
+                protected: false,
+                persistent: true,
+                validate: {
+                  required: false
+                },
+                defaultPermission: '',
+                type: 'resource',
+                tags: [],
+                conditional: {
+                  show: '',
+                  when: null,
+                  eq: ''
+                }
+              }, {
+                input: true,
+                tableView: true,
+                label: 'User',
+                key: 'user',
+                placeholder: '',
+                resource: template.users.user1.form,
+                project: template.project._id,
+                defaultValue: '',
+                template: '<span>{{ item.data }}</span>',
+                selectFields: '',
+                searchFields: '',
+                multiple: false,
+                protected: false,
+                persistent: true,
+                validate: {
+                  required: false
+                },
+                defaultPermission: '',
+                type: 'resource',
+                tags: [],
+                conditional: {
+                  show: '',
+                  when: null,
+                  eq: ''
+                }
+              }
+            ]
+          };
+
           request(app)
-            .get('/project/' + template.project._id + '/form/' + template.users.user1.form + '/submission/' + template.users.user1._id)
+            .post('/project/' + template.project._id + '/form')
             .set('x-jwt-token', template.users.admin.token)
+            .send(assignForm)
             .expect('Content-Type', /json/)
-            .expect(200)
+            .expect(201)
             .end(function(err, res) {
               if (err) {
                 return done(err);
               }
 
               var response = res.body;
-              var newRoles = response.roles || [];
-              newRoles.push(group._id);
+              assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
+              assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
+              assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
+              assert(response.hasOwnProperty('access'), 'The response should contain an the `access`.');
+              assert.equal(response.title, assignForm.title);
+              assert.equal(response.name, assignForm.name);
+              assert.equal(response.path, assignForm.path);
+              assert.equal(response.type, assignForm.type);
+              assert.deepEqual(response.submissionAccess, assignForm.submissionAccess);
+              assert.deepEqual(response.components, assignForm.components);
+              assignForm = response;
 
-              request(app)
-                .put('/project/' + template.project._id + '/form/' + template.users.user1.form + '/submission/' + template.users.user1._id)
-                .set('x-jwt-token', template.users.admin.token)
-                .send({
-                  roles: newRoles
-                })
-                .expect('Content-Type', /json/)
-                .expect(200)
-                .end(function(err, res) {
-                  if (err) {
-                    return done(err);
-                  }
+              // Store the JWT for future API calls.
+              template.users.admin.token = res.headers['x-jwt-token'];
 
-                  var response = res.body;
-                  userHasGroupRole(response, group._id, done);
-                });
+              done();
+            });
+        });
+
+        it('Create the group assignment action', function(done) {
+          assignAction = {
+            title: 'Group Assignment',
+            name: 'group',
+            handler: ['after'],
+            method: ['create'],
+            settings: {
+              group: 'group',
+              user: 'user'
+            }
+          };
+
+          request(app)
+            .post('/project/' + template.project._id + '/form/' + assignForm._id + '/action')
+            .set('x-jwt-token', template.users.admin.token)
+            .send(assignAction)
+            .expect('Content-Type', /json/)
+            .expect(201)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              var response = res.body;
+              assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
+              assert.equal(response.title, assignAction.title);
+              assert.equal(response.name, assignAction.name);
+              assert.deepEqual(response.handler, assignAction.handler);
+              assert.deepEqual(response.method, assignAction.method);
+              assert.deepEqual(response.settings, assignAction.settings);
+              assert.equal(response.form, assignForm._id);
+              assignAction = response;
+
+              // Store the JWT for future API calls.
+              template.users.admin.token = res.headers['x-jwt-token'];
+
+              done();
+            });
+        });
+
+        it('Assign the group to the user via submission', function(done) {
+          request(app)
+            .post('/project/' + template.project._id + '/form/' + assignForm._id + '/submission')
+            .set('x-jwt-token', template.users.admin.token)
+            .send({
+              data: {
+                user: template.users.user1,
+                group: group
+              }
+            })
+            .expect('Content-Type', /json/)
+            .expect(201)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              userHasGroupRole(template.users.user1, group._id, done);
             });
         });
       });
@@ -1159,7 +1300,7 @@ module.exports = function(app, template, hook) {
               }
 
               var response = res.body;
-              assert.equal(data.foo, response.foo);
+              assert.equal(submission.data.foo, response.data.foo);
 
               // Store the JWT for future API calls.
               template.users.user1.token = res.headers['x-jwt-token'];

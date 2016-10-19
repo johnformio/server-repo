@@ -146,7 +146,7 @@ module.exports = function(router) {
       var canAssignGroup = function(gid) {
         return loadFilteredSubmission('group', gid)
         .then(function(group) {
-          var context = _.cloneDeep(req);
+          var context = _.clone(req);
           context.formioCache = hook.alter('cacheInit', {
             names: {},
             aliases: {},
@@ -165,7 +165,6 @@ module.exports = function(router) {
           router.formio.middleware.permissionHandler(context, res, function(err) {
             if (err) {
               debug.canAssignGroup(err);
-              //return res.status(401).send(err);
               deferred.reject(err);
             }
 
@@ -244,7 +243,7 @@ module.exports = function(router) {
 
               return next();
             }
-          )
+          );
         })
       })
       .catch(function(err) {
