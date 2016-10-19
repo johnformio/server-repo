@@ -1,9 +1,12 @@
 'use strict';
 
+var Q = require('q');
 var _ = require('lodash');
 var debug = {
   settingsForm: require('debug')('formio:actions:GroupAction#settingsForm'),
-  resolve: require('debug')('formio:actions:GroupAction#resolve')
+  resolve: require('debug')('formio:actions:GroupAction#resolve'),
+  loadGroup: require('debug')('formio:actions:GroupAction#loadGroup'),
+  loadFilteredSubmission: require('debug')('formio:actions:GroupAction#loadFilteredSubmission')
 };
 
 module.exports = function(router) {
@@ -93,9 +96,64 @@ module.exports = function(router) {
    */
   GroupAction.prototype.resolve = function(handler, method, req, res, next) {
     try {
+      /**
+       * Load the submission with the given _id, but using the current project as a filter restriction.
+       *
+       * @param name
+       * @param id
+       * @returns {*}
+       */
+      var loadFilteredSubmission = function(name, id) {
+        var deferred = Q.defer();
+
+        var filter = {};
+        filter[name] = {$exists: true, $ne: []};
+
+        var match = {};
+        match[name + '._id'] = router.formio.util.idToBson(id);
+
+        router.formio.resources.form.model.aggregate(
+          {$match: {project: router.formio.util.idToBson(_.get(req, 'projectId'))}},
+          {$project: {_id: 1}},
+          {$lookup: {from: 'submissions', localField: '_id', foreignField: 'form', as: name}},
+          {$match: filter},
+          {$unwind: '$' + name},
+          {$match: match},
+          function(err, submissions) {
+            if (err || !submissions || submissions.length !== 1) {
+              debug.loadFilteredSubmission(err || 'Submission: ' + (!submissions ? 'none' : submissions.length));
+              deferred.reject('Could not the ' + name + ' for assignment.');
+            }
+
+            // We only want to deal with the single result.
+            debug.loadFilteredSubmission(submissions);
+            submissions = submissions.pop();
+
+            // unwrap the submission obj from the unwind op.
+            deferred.resolve(_.get(submissions, name));
+          }
+        );
+
+        return deferred.promise;
+      };
+
+      var canAssignGroup = function(gid) {
+        return loadFilteredSubmission('group', gid)
+        .then(function(group) {
+
+        })
+        .catch(function(err) {
+          throw new Error(err);
+        });
+      };
+
+      var user = _.get(this.settings, 'user');
       var group = _.get(this.settings, 'group');
       group = _.get(req.submission, 'data.' + group); // Set the group to its search value.
-      var user = _.get(this.settings, 'user');
+      // If the _id is present in a resource object, then pluck only the _id.
+      if (_.has(group, '_id')) {
+        group = _.get(group, '_id');
+      }
 
       // Check for required settings.
       if (!group) {
@@ -124,58 +182,45 @@ module.exports = function(router) {
         searchUser = _.get(searchUser, '_id');
       }
 
-      router.formio.resources.form.model.aggregate(
-        {$match: {project: router.formio.util.idToBson(_.get(req, 'projectId'))}},
-        {$project: {_id: 1}},
-        {$lookup: {from: 'submissions', localField: '_id', foreignField: 'form', as: 'submissions'}},
-        {$match: {submissions: {$exists: true, $ne: []}}},
-        {$unwind: '$submissions'},
-        {$match: {'submissions._id': router.formio.util.idToBson(searchUser)}},
-        function(err, submission) {
-          if (err || !submission || submission.length !== 1) {
-            debug.resolve(err || 'Submission: ' + (!submission ? 'none' : submission.length));
-            return res.status(400).send('Could not load the user for group assignment.');
-          }
+      loadFilteredSubmission('user', searchUser)
+      .then(function(user) {
+        // TODO: Make sure the group id is a valid bson _id, within the current projects scope and the assignee has
+        // TODO: write/admin access to it.
+        // Add the new role and make sure its unique.
+        var newRoles = user.roles || [];
+        newRoles.map(router.formio.util.idToString);
+        newRoles.push(router.formio.util.idToString(group));
+        newRoles = _.uniq(newRoles);
+        newRoles.map(router.formio.util.idToBson);
 
-          // We only want to deal with the single result.
-          submission = submission.pop();
-          submission = _.get(submission, 'submissions'); // unwrap the submission obj from the unwind op.
-
-          // TODO: Make sure the group id is a valid bson _id, within the current projects scope and the assignee has
-          // TODO: write/admin access to it.
-          // Add the new role and make sure its unique.
-          var newRoles = submission.roles || [];
-          newRoles.map(router.formio.util.idToString);
-          newRoles.push(router.formio.util.idToString(group));
-          newRoles = _.uniq(newRoles);
-          newRoles.map(router.formio.util.idToBson);
-
-          router.formio.resources.submission.model.update(
-            {
-              _id: router.formio.util.idToBson(submission._id),
-              deleted: {$eq: null}
-            },
-            {
-              $set: {
-                roles: newRoles
-              }
-            },
-            function(err) {
-              if (err) {
-                debug.resolve(err);
-                return res.status(400).send('Could not add the given group role to the user.');
-              }
-
-              // Attempt to update the response item, if present.
-              if (thisUser) {
-                _.set(res, 'resource.item.roles');
-              }
-
-              return next();
+        router.formio.resources.submission.model.update(
+          {
+            _id: router.formio.util.idToBson(user._id),
+            deleted: {$eq: null}
+          },
+          {
+            $set: {
+              roles: newRoles
             }
-          )
-        }
-      )
+          },
+          function(err) {
+            if (err) {
+              throw new Error('Could not add the given group role to the user.');
+            }
+
+            // Attempt to update the response item, if present.
+            if (thisUser) {
+              _.set(res, 'resource.item.roles');
+            }
+
+            return next();
+          }
+        )
+      })
+      .catch(function(err) {
+        debug.resolve(err);
+        return res.status(400).send(err);
+      });
     }
     catch (e) {
       debug.resolve(e);
