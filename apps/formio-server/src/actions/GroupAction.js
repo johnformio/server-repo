@@ -94,11 +94,14 @@ module.exports = function(router) {
   GroupAction.prototype.resolve = function(handler, method, req, res, next) {
     try {
       var group = _.get(this.settings, 'group');
+      group = _.get(req.submission, 'data.' + group); // Set the group to its search value.
       var user = _.get(this.settings, 'user');
 
       // Check for required settings.
       if (!group) {
         debug.resolve('Cant resolve the action, because no group was set.');
+        debug.resolve(this.settings);
+        debug.resolve(req.submission);
         return res.status(400).send('Can not resolve the action, because no group was set.');
       }
 
@@ -108,11 +111,18 @@ module.exports = function(router) {
       if (!userDefined && !thisUser) {
         return res.status(400).send('A User reference is required for group assignment.');
       }
+      debug.resolve('userDefined: ' + userDefined);
+      debug.resolve('thisUser: ' + thisUser);
 
       // Search for the user within the cache.
       var searchUser = userDefined
         ? _.get(req.submission, 'data.' + user)
         : _.get(res, 'resource.item._id');
+      debug.resolve('searchUser: ' + JSON.stringify(searchUser));
+      // If the _id is present in a resource object, then pluck only the _id.
+      if (_.has(searchUser, '_id')) {
+        searchUser = _.get(searchUser, '_id');
+      }
 
       router.formio.resources.form.model.aggregate(
         {$match: {project: router.formio.util.idToBson(_.get(req, 'projectId'))}},
