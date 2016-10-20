@@ -106,14 +106,14 @@ module.exports = function(router) {
       var loadFilteredSubmission = function(name, id) {
         var deferred = Q.defer();
 
-        var filter = {};
+        var filter = {deleted: {$eq: null}};
         filter[name] = {$exists: true, $ne: []};
 
         var match = {};
         match[name + '._id'] = router.formio.util.idToBson(id);
 
         router.formio.resources.form.model.aggregate(
-          {$match: {project: router.formio.util.idToBson(_.get(req, 'projectId'))}},
+          {$match: {project: router.formio.util.idToBson(_.get(req, 'projectId')), deleted: {$eq: null}}},
           {$project: {_id: 1}},
           {$lookup: {from: 'submissions', localField: '_id', foreignField: 'form', as: name}},
           {$match: filter},

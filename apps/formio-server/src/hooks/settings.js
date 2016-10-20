@@ -586,6 +586,78 @@ module.exports = function(app) {
         return handlers;
       },
 
+      resourceAccessFilter: function(query, req, callback) {
+        var _debug = require('debug')('formio:settings:resourceAccessFilter');
+
+        if (!_.has(req, 'projectId') || !_.has(req, 'formId')) {
+          _debug('Required items not available.');
+          return callback(null, query);
+        }
+
+        // Get all the possible groups in the project
+        formioServer.formio.resources.form.model.aggregate(
+          // Get all the forms for the current project.
+          {$match: {
+            project: formioServer.formio.util.idToBson(_.get(req, 'projectId')),
+            _id: formioServer.formio.util.idToBson(_.get(req, 'formId')),
+            deleted: {$eq: null}
+          }},
+          {$project: {'form._id': '$_id', _id: 0}},
+
+          // Get all the group assignment actions for the forms in the pipeline
+          {$lookup: {from: 'actions', localField: 'form._id', foreignField: 'form', as: 'action'}},
+          {$match: {action: {$exists: true, $ne: []}}},
+          {$unwind: '$action'},
+          {$match: {'action.deleted': {$eq: null}, 'action.name': 'group', 'action.settings.user': {$exists: true}}},
+          {$project: {form: 1, action: {_id: '$action._id', settings: '$action.settings'}}},
+
+          // Get all the groups that the current user is a member of
+          {$lookup: {from: 'submissions', localField: 'form._id', foreignField: 'form', as: 'submission'}},
+          {$unwind: '$submission'},
+          {$match: {$or:[
+            {'submission.data.user': {$exists: true, $in: [
+              formioServer.formio.util.idToBson(req.token.user._id),
+              formioServer.formio.util.idToString(req.token.user._id)
+            ]}},
+            {'submission.owner': formioServer.formio.util.idToBson(req.token.user._id)},
+            {'submission.owner': formioServer.formio.util.idToString(req.token.user._id)}
+          ]}},
+          {$project: {form: 1, action: 1, submission: {
+            _id: '$submission._id',
+            data: {
+              user: {
+                $cond: [
+                  {$anyElementTrue: [['$submission.data.user._id']]},
+                  '$submission.data.user._id',
+                  '$submission.data.user'
+                ]
+              },
+              group: '$submission.data.group._id'
+            }
+          }}},
+          {$group: {
+            _id: '$submission.data.group',
+            users: {$push: '$submission.data.user'}
+          }},
+          function(err, groups) {
+            if (err) {
+              _debug(err);
+              return callback(err);
+            }
+
+            _debug(groups)
+            groups.forEach(function(group) {
+              query.push(
+                formioServer.formio.util.idToBson(group._id),
+                formioServer.formio.util.idToString(group._id)
+              );
+            });
+
+            return callback(null, query);
+          }
+        );
+      },
+
       /**
        * Hook they access entity and perform additional logic.
        *
