@@ -1300,7 +1300,7 @@ module.exports = function(app, template, hook) {
               }
 
               var response = res.body;
-              assert.equal(submission.data.foo, response.data.foo);
+              assert.equal(response.data.foo, submission.data.foo);
 
               // Store the JWT for future API calls.
               template.users.user1.token = res.headers['x-jwt-token'];
@@ -1609,7 +1609,7 @@ module.exports = function(app, template, hook) {
               }
 
               var response = res.body;
-              assert.equal(data.foo, response.foo);
+              assert.equal(response.data.foo, submission.data.foo);
 
               // Store the JWT for future API calls.
               template.users.user1.token = res.headers['x-jwt-token'];
@@ -1681,15 +1681,17 @@ module.exports = function(app, template, hook) {
             .send({
               owner: template.users.user2._id
             })
-            .expect('Content-Type', /text/)
-            .expect(401)
+            .expect('Content-Type', /json/)
+            .expect(200)
             .end(function(err, res) {
               if (err) {
                 return done(err);
               }
 
-              assert.deepEqual(res.body, {});
-              assert.equal(res.text, 'Unauthorized');
+              var response = res.body;
+              assert.equal(response.owner, submission.owner);
+              assert.notEqual(response.owner, template.users.user1._id);
+              assert.notEqual(response.owner, template.users.user2._id);
 
               // Store the JWT for future API calls.
               template.users.user1.token = res.headers['x-jwt-token'];
@@ -1719,9 +1721,9 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        after(function(done) {
-          deleteSubmissions(submissions, done);
-        });
+        //after(function(done) {
+        //  deleteSubmissions(submissions, done);
+        //});
       });
 
       describe('admin access', function() {
@@ -1920,7 +1922,7 @@ module.exports = function(app, template, hook) {
               }
 
               var response = res.body;
-              assert.equal(data.foo, response.foo);
+              assert.equal(response.data.foo, submission.data.foo);
 
               // Store the JWT for future API calls.
               template.users.user1.token = res.headers['x-jwt-token'];
