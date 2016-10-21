@@ -1408,9 +1408,9 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        //after(function(done) {
-        //  deleteSubmissions(submissions, done);
-        //});
+        after(function(done) {
+          deleteSubmissions(submissions, done);
+        });
       });
 
       describe('write access', function() {
