@@ -214,11 +214,15 @@ module.exports = function(router) {
       .then(function(user) {
         return canAssignGroup(group)
         .then(function() {
+          var deferred = Q.defer();
+
           // Add the new role and make sure its unique.
           var newRoles = user.roles || [];
           newRoles.map(router.formio.util.idToString);
           newRoles.push(router.formio.util.idToString(group));
           newRoles = _.uniq(newRoles);
+          debug.canAssignGroup('newRoles:');
+          debug.canAssignGroup(newRoles);
           newRoles.map(router.formio.util.idToBson);
 
           router.formio.resources.submission.model.update(
@@ -233,18 +237,24 @@ module.exports = function(router) {
             },
             function(err) {
               if (err) {
+                debug.canAssignGroup(err);
                 throw new Error('Could not add the given group role to the user.');
               }
 
               // Attempt to update the response item, if present.
               if (thisUser) {
-                _.set(res, 'resource.item.roles');
+                _.set(res, 'resource.item.roles', newRoles);
+                debug.canAssignGroup(res.resource.item);
               }
 
-              return next();
+              debug.canAssignGroup('Updated: ' + user._id);
+              return deferred.fulfill();
             }
           );
+
+          return deferred.promise;
         })
+        .then(next)
       })
       .catch(function(err) {
         debug.resolve(err);
