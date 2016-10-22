@@ -1721,9 +1721,9 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        //after(function(done) {
-        //  deleteSubmissions(submissions, done);
-        //});
+        after(function(done) {
+          deleteSubmissions(submissions, done);
+        });
       });
 
       describe('admin access', function() {
@@ -2016,7 +2016,7 @@ module.exports = function(app, template, hook) {
           request(app)
             .delete('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
             .set('x-jwt-token', template.users.user1.token)
-            .expect('Content-Type', /text/)
+            .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
               if (err) {
@@ -2025,7 +2025,6 @@ module.exports = function(app, template, hook) {
 
               var response = res.body;
               assert.deepEqual(response, {});
-              assert.equal(res.text, 'Ok');
 
               // Store the JWT for future API calls.
               template.users.user1.token = res.headers['x-jwt-token'];
