@@ -254,7 +254,7 @@ module.exports = function(router) {
 
           return deferred.promise;
         })
-        .then(next)
+        .then(next);
       })
       .catch(function(err) {
         debug.resolve(err);

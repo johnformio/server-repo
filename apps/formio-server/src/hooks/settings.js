@@ -586,15 +586,20 @@ module.exports = function(app) {
         return handlers;
       },
 
+      /**
+       * Update the submission resource access query, to include groups the user is a member of, or owns.
+       *
+       * @param query
+       * @param req
+       * @param callback
+       * @returns {*}
+       */
       resourceAccessFilter: function(query, req, callback) {
         var _debug = require('debug')('formio:settings:resourceAccessFilter');
         if (!req.projectId || !_.get(req, 'token.user._id')) {
           _debug('Required items not available.');
           return callback(null, query);
         }
-
-        _debug(_.get(req, 'projectId'))
-        _debug(req.token.user._id)
 
         // Get all the possible groups in the project
         formioServer.formio.resources.form.model.aggregate(
@@ -653,40 +658,12 @@ module.exports = function(app) {
               return callback(err, query);
             }
 
-            // If this is an index request, allow all the roles to be included.
-            //if (!req.subId) {
-              _debug(groups);
-              groups.forEach(function(group) {
-                query.push(formioServer.formio.util.idToBson(group._id));
-              });
+            _debug(groups);
+            groups.forEach(function(group) {
+              query.push(formioServer.formio.util.idToBson(group._id));
+            });
 
-              return callback(null, query, groups);
-            //}
-
-            //// If this is a specific submission request, limit the groups to those which are present in the submission.
-            //formioServer.formio.cache.loadSubmission(req, req.formId, req.subId, function(err, submission) {
-            //  if (err) {
-            //    // Try to recover from failure, but passing the original query on.
-            //    _debug(err);
-            //    return callback(err, query);
-            //  }
-            //
-            //  // Build the list of potential groups.
-            //  var potential = [];
-            //  submission.forEach(function(permission) {
-            //    permission.resources.map(formioServer.formio.util.idToString);
-            //    potential = potential.concat(permission.resources);
-            //  });
-            //
-            //  // If the group is defined in the submission, include it in the permissions check.
-            //  groups.forEach(function(group) {
-            //    if (potential.indexOf(formioServer.formio.util.idToString(group._id)) !== -1) {
-            //      query.push(formioServer.formio.util.idToBson(group._id));
-            //    }
-            //  });
-            //
-            //  return callback(null, query);
-            //});
+            return callback(null, query, groups);
           }
         );
       },
