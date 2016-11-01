@@ -324,11 +324,10 @@ module.exports = function(app, template, hook) {
           }
         ],
         email: {
-          gmail: {
-            auth: {
-              user: 'test@example.com',
-              pass: 'test123'
-            }
+          custom: {
+            url: 'test.example.com',
+            user: 'test',
+            pass: 'test123'
           }
         }
       };
@@ -939,6 +938,80 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      it('A Project on the basic plan will not be able to set premium email settings on creation', function(done) {
+        var tempProject = {
+          title: chance.word(),
+          description: chance.sentence(),
+          settings: {
+            email: {
+              custom: {url: chance.word(), username: chance.word(), password: chance.word()},
+              smtp: {host: chance.word(), auth: {pass: chance.word(), user: chance.word()}},
+              gmail: {auth: {user: chance.word(), pass: chance.word()}},
+              sendgrid: {auth: {api_key: chance.word(), api_user: chance.word()}},
+              mandrill: {auth: {apiKey: chance.word()}},
+              mailgun: {auth: {api_key: chance.word(), domain: chance.word()}}
+            }
+          }
+        };
+
+        request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(tempProject)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.hasOwnProperty('settings'), false);
+
+            tempProjects.push(res.body);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the basic plan will not be able to set premium email settings on project update', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              email: {
+                custom: {url: chance.word(), username: chance.word(), password: chance.word()},
+                smtp: {host: chance.word(), auth: {pass: chance.word(), user: chance.word()}},
+                gmail: {auth: {user: chance.word(), pass: chance.word()}},
+                sendgrid: {auth: {api_key: chance.word(), api_user: chance.word()}},
+                mandrill: {auth: {apiKey: chance.word()}},
+                mailgun: {auth: {api_key: chance.word(), domain: chance.word()}}
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('email'), true);
+            assert.deepEqual(Object.keys(response.settings.email), ['custom', 'smtp']);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
       after(function(done) {
         deleteProjects(tempProjects, done);
       });
@@ -947,7 +1020,6 @@ module.exports = function(app, template, hook) {
     describe('Independent Plan', function() {
       if (!docker)
       before(function(done) {
-        tempProjects = [];
 
         // Confirm the dummy project is on the independent plan.
         app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
@@ -1053,30 +1125,59 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      after(function(done) {
-        deleteProjects(tempProjects, done);
+      it('A Project on the Independent plan will be able to set premium email settings on project update', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              email: {
+                custom: {url: chance.word(), username: chance.word(), password: chance.word()},
+                smtp: {host: chance.word(), auth: {pass: chance.word(), user: chance.word()}},
+                gmail: {auth: {user: chance.word(), pass: chance.word()}},
+                sendgrid: {auth: {api_key: chance.word(), api_user: chance.word()}},
+                mandrill: {auth: {apiKey: chance.word()}},
+                mailgun: {auth: {api_key: chance.word(), domain: chance.word()}}
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('email'), true);
+            assert.deepEqual(Object.keys(response.settings.email), ['custom', 'smtp', 'gmail', 'sendgrid', 'mandrill', 'mailgun']);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
       });
     });
 
     describe('Team Plan', function() {
       if (!docker)
       before(function(done) {
-          tempProjects = [];
+        // Confirm the dummy project is on the independent plan.
+        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
+          if (err) return done(err);
 
-          // Confirm the dummy project is on the independent plan.
-          app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
-            if (err) return done(err);
+          project.plan = 'team';
+          project.save(function(err) {
+            if (err) {
+              return done(err);
+            }
 
-            project.plan = 'team';
-            project.save(function(err) {
-              if (err) {
-                return done(err);
-              }
-
-              done();
-            });
+            done();
           });
         });
+      });
 
       if (!docker)
       it('Confirm the project is on the Team plan', function(done) {
@@ -1134,8 +1235,39 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      after(function(done) {
-        deleteProjects(tempProjects, done);
+      it('A Project on the Team plan will be able to set premium email settings on project update', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              email: {
+                custom: {url: chance.word(), username: chance.word(), password: chance.word()},
+                smtp: {host: chance.word(), auth: {pass: chance.word(), user: chance.word()}},
+                gmail: {auth: {user: chance.word(), pass: chance.word()}},
+                sendgrid: {auth: {api_key: chance.word(), api_user: chance.word()}},
+                mandrill: {auth: {apiKey: chance.word()}},
+                mailgun: {auth: {api_key: chance.word(), domain: chance.word()}}
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('email'), true);
+            assert.deepEqual(Object.keys(response.settings.email), ['custom', 'smtp', 'gmail', 'sendgrid', 'mandrill', 'mailgun']);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
       });
     });
 

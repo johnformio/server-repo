@@ -54,6 +54,18 @@ module.exports = function(formio) {
   };
 
   /**
+   * Helper function to filter premium email providers from projects on the basic plan.
+   *
+   * @param req
+   */
+  var filterEmailSettings = function(req) {
+    req.body.settings = req.body.settings || {};
+    if (_.has(req.body, 'settings.email')) {
+      req.body.settings.email = _.pick(req.body.settings.email, ['custom', 'smtp'])
+    }
+  };
+
+  /**
    * Ensure a name gets set if not sent.
    *
    * @param req
@@ -95,6 +107,7 @@ module.exports = function(formio) {
           filterNameChanges(req);
           filterCorsChanges(req);
           filterOAuthSettings(req);
+          filterEmailSettings(req);
 
           debug(req.body);
           return next();
