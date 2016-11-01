@@ -44,6 +44,16 @@ module.exports = function(formio) {
   };
 
   /**
+   * Helper function to filter oauth changes for projects on the basic plan.
+   *
+   * @param req
+   */
+  var filterOAuthSettings = function(req) {
+    req.body.settings = req.body.settings || {};
+    req.body.settings = _.omit(req.body.settings, 'oauth');
+  };
+
+  /**
    * Ensure a name gets set if not sent.
    *
    * @param req
@@ -84,6 +94,7 @@ module.exports = function(formio) {
 
           filterNameChanges(req);
           filterCorsChanges(req);
+          filterOAuthSettings(req);
 
           debug(req.body);
           return next();
