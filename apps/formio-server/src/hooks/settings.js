@@ -249,6 +249,7 @@ module.exports = function(app) {
         actions.googlesheet = require('../actions/googlesheet/googleSheet')(formioServer);
         actions.sqlconnector = require('../actions/sqlconnector/SQLConnector')(formioServer);
         actions.jira = require('../actions/atlassian/jira')(formioServer);
+        actions.group = require('../actions/GroupAction')(formioServer);
         return actions;
       },
       emailTransports: function(transports, settings) {
@@ -428,7 +429,7 @@ module.exports = function(app) {
             }
 
             // Skip teams processing, if this projects plan does not support teams.
-            _debug(project);
+            _debug(JSON.stringify(project));
             if (!project.plan || project.plan === 'basic' || project.plan === 'independent') {
               return callback(null);
             }
@@ -583,6 +584,88 @@ module.exports = function(app) {
           getTeamAccess
         );
         return handlers;
+      },
+
+      /**
+       * Update the submission resource access query, to include groups the user is a member of, or owns.
+       *
+       * @param query
+       * @param req
+       * @param callback
+       * @returns {*}
+       */
+      resourceAccessFilter: function(query, req, callback) {
+        var _debug = require('debug')('formio:settings:resourceAccessFilter');
+        if (!req.projectId || !_.get(req, 'token.user._id')) {
+          _debug('Required items not available.');
+          return callback(null, query);
+        }
+
+        // Get all the possible groups in the project
+        formioServer.formio.resources.form.model.aggregate(
+          // Get all the forms for the current project.
+          {$match: {
+            project: formioServer.formio.util.idToBson(req.projectId),
+            deleted: {$eq: null}
+          }},
+          {$project: {'form._id': '$_id', _id: 0}},
+
+          // Get all the group assignment actions for the forms in the pipeline
+          {$lookup: {from: 'actions', localField: 'form._id', foreignField: 'form', as: 'action'}},
+          {$match: {action: {$exists: true, $ne: []}}},
+          {$unwind: '$action'},
+          {$match: {'action.deleted': {$eq: null}, 'action.name': 'group', 'action.settings.user': {$exists: true}}},
+          {$project: {form: 1, action: {_id: '$action._id', settings: '$action.settings'}}},
+
+          // Get all the groups that the current user is a member of, or owns
+          {$lookup: {from: 'submissions', localField: 'form._id', foreignField: 'form', as: 'submission'}},
+          {$unwind: '$submission'},
+          {$match: {$or: [
+            {'submission.data.user': {$exists: true}},
+            {'submission.owner': formioServer.formio.util.idToBson(req.token.user._id)}
+          ]}},
+          {$project: {form: 1, action: 1, submission: {
+            _id: '$submission._id',
+            data: {
+              user: {
+                $cond: [
+                  {$anyElementTrue: [['$submission.data.user._id']]},
+                  '$submission.data.user._id',
+                  '$submission.data.user'
+                ]
+              },
+              group: '$submission.data.group._id'
+            },
+            owner: '$submission.owner'
+          }}},
+          {$group: {
+            _id: {group: '$submission.data.group', owner: '$submission.owner'},
+            users: {$push: '$submission.data.user'}
+          }},
+          {$project: {
+            _id: '$_id.group',
+            owner: '$_id.owner',
+            users: '$users'
+          }},
+          {$match: {$or: [
+            {users: formioServer.formio.util.idToString(req.token.user._id)},
+            {owner: formioServer.formio.util.idToBson(req.token.user._id)}
+          ]}},
+          function(err, groups) {
+            if (err) {
+              // Try to recover from failure, but passing the original query on.
+              _debug(err);
+              return callback(err, query);
+            }
+
+            _debug(groups);
+            groups.forEach(function(group) {
+              query.push(formioServer.formio.util.idToBson(group._id));
+            });
+
+            return callback(null, query, groups);
+          }
+        );
       },
 
       /**
@@ -795,6 +878,7 @@ module.exports = function(app) {
         // Force the user reference to be an object rather than a mongoose document.
         try {
           user = user.toObject();
+          user._id = user._id.toString();
         }
         catch (e) {
           //debug.error(e);

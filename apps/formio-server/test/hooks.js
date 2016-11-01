@@ -1,5 +1,7 @@
 'use strict';
 
+var _ = require('lodash');
+
 module.exports = {
   alter: {
     /**
@@ -12,6 +14,14 @@ module.exports = {
     url: function(url, template, projectName) {
       projectName = projectName || 'project';
       return '/project/' + template[projectName]._id + url;
+    },
+
+    webhookBody: function(body) {
+      if (_.has(body, 'submission.externalTokens')) {
+        delete body.submission.externalTokens;
+      }
+
+      return body;
     }
   }
 };
