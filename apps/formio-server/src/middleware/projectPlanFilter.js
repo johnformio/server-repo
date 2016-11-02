@@ -61,7 +61,7 @@ module.exports = function(formio) {
   var filterEmailSettings = function(req) {
     req.body.settings = req.body.settings || {};
     if (_.has(req.body, 'settings.email')) {
-      req.body.settings.email = _.pick(req.body.settings.email, ['custom', 'smtp'])
+      req.body.settings.email = _.pick(req.body.settings.email, ['smtp'])
     }
   };
 

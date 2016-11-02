@@ -324,10 +324,12 @@ module.exports = function(app, template, hook) {
           }
         ],
         email: {
-          custom: {
-            url: 'test.example.com',
-            user: 'test',
-            pass: 'test123'
+          smtp: {
+            host: 'example.com',
+            auth: {
+              user: 'test',
+              pass: 'test123'
+            }
           }
         }
       };
@@ -1003,7 +1005,7 @@ module.exports = function(app, template, hook) {
             var response = res.body;
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('email'), true);
-            assert.deepEqual(Object.keys(response.settings.email), ['custom', 'smtp']);
+            assert.deepEqual(Object.keys(response.settings.email), ['smtp']);
 
             // Store the JWT for future API calls.
             template.formio.owner.token = res.headers['x-jwt-token'];
