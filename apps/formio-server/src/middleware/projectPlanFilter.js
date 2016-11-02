@@ -66,6 +66,18 @@ module.exports = function(formio) {
   };
 
   /**
+   * Helper function to filter file storage providers from projects on the basic/independent plan.
+   *
+   * @param req
+   */
+  var filterStorageSettings = function(req) {
+    req.body.settings = req.body.settings || {};
+    if (_.has(req.body, 'settings.storage')) {
+      req.body.settings = _.omit(req.body.settings, 'storage')
+    }
+  };
+
+  /**
    * Ensure a name gets set if not sent.
    *
    * @param req
@@ -99,6 +111,7 @@ module.exports = function(formio) {
         case 'independent':
           generateNameIfMissing(req);
           filterCorsChanges(req);
+          filterStorageSettings(req);
           return next();
         case 'basic':
         default:
@@ -108,6 +121,7 @@ module.exports = function(formio) {
           filterCorsChanges(req);
           filterOAuthSettings(req);
           filterEmailSettings(req);
+          filterStorageSettings(req);
 
           debug(req.body);
           return next();

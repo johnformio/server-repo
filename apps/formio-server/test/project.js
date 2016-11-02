@@ -1014,6 +1014,89 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      it('A Project on the basic plan will not be able to set file storage settings on creation', function(done) {
+        var tempProject = {
+          title: chance.word(),
+          description: chance.sentence(),
+          settings: {
+            storage: {
+              s3: {
+                AWSAccessKeyId: chance.word(),
+                AWSSecretKey: chance.word(),
+                bucket: chance.word(),
+                bucketUrl: chance.word(),
+                expiration: chance.word(),
+                maxSize: chance.word(),
+                startsWith: chance.word()
+              },
+              dropbox: {
+                access_token: chance.word()
+              }
+            }
+          }
+        };
+
+        request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(tempProject)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.hasOwnProperty('settings'), false);
+
+            tempProjects.push(res.body);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the basic plan will not be able to set file storage settings on project update', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            storage: {
+              s3: {
+                AWSAccessKeyId: chance.word(),
+                AWSSecretKey: chance.word(),
+                bucket: chance.word(),
+                bucketUrl: chance.word(),
+                expiration: chance.word(),
+                maxSize: chance.word(),
+                startsWith: chance.word()
+              },
+              dropbox: {
+                access_token: chance.word()
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('storage'), false);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
       after(function(done) {
         deleteProjects(tempProjects, done);
       });
@@ -1161,6 +1244,46 @@ module.exports = function(app, template, hook) {
             done();
           });
       });
+
+      it('A Project on the Independent plan will not be able to set file storage settings on project update', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              storage: {
+                s3: {
+                  AWSAccessKeyId: chance.word(),
+                  AWSSecretKey: chance.word(),
+                  bucket: chance.word(),
+                  bucketUrl: chance.word(),
+                  expiration: chance.word(),
+                  maxSize: chance.word(),
+                  startsWith: chance.word()
+                },
+                dropbox: {
+                  access_token: chance.word()
+                }
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('storage'), false);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
     });
 
     describe('Team Plan', function() {
@@ -1264,6 +1387,47 @@ module.exports = function(app, template, hook) {
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('email'), true);
             assert.deepEqual(Object.keys(response.settings.email), ['custom', 'smtp', 'gmail', 'sendgrid', 'mandrill', 'mailgun']);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Team plan will be able to set file storage settings on project update', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              storage: {
+                s3: {
+                  AWSAccessKeyId: chance.word(),
+                  AWSSecretKey: chance.word(),
+                  bucket: chance.word(),
+                  bucketUrl: chance.word(),
+                  expiration: chance.word(),
+                  maxSize: chance.word(),
+                  startsWith: chance.word()
+                },
+                dropbox: {
+                  access_token: chance.word()
+                }
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('storage'), true);
+            assert.deepEqual(Object.keys(response.settings.storage), ['s3', 'dropbox']);
 
             // Store the JWT for future API calls.
             template.formio.owner.token = res.headers['x-jwt-token'];
