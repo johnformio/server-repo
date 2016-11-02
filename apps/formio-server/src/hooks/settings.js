@@ -251,6 +251,50 @@ module.exports = function(app) {
         actions.jira = require('../actions/atlassian/jira')(formioServer);
         return actions;
       },
+
+      /**
+       * Alter specific actions to be flagged as premium actions.
+       *
+       * @param title
+       */
+      actionTitle: function(title) {
+        var premium = ['Webhook'];
+        if (premium.indexOf(title) !== -1) {
+          title += ' (Premium)';
+        }
+
+        return title;
+      },
+
+      /**
+       * Skip premium actions, on non premium plans.
+       *
+       * @param action
+       * @param handler
+       * @param method
+       * @param req
+       * @param res
+       * @param next
+       */
+      resolve: function(defaultReturn, action, handler, method, req, res) {
+        var _debug = require('debug')('formio:settings:resolve');
+        var premium = ['webhook'];
+
+        // If the action does not have a name, or is not flagged as being premium, ignore it.
+        if (!action.hasOwnProperty('name')) {
+          return true;
+        }
+        if (premium.indexOf(action.name) === -1) {
+          return true;
+        }
+        if (['basic'].indexOf(req.currentProject.plan) !== -1) {
+          _debug('Skipping ' + action.name + ' action, because the project plan is ' + req.currentProject.plan);
+          return false;
+        }
+
+        return true;
+      },
+
       emailTransports: function(transports, settings) {
         settings = settings || {};
         var office365 = settings.office365 || {};
@@ -378,6 +422,9 @@ module.exports = function(app) {
 
               // Add the UserId of the Project Owner for the ownerFilter middleware.
               req.projectOwner = access.project.owner;
+
+              // Add the current project to the req.
+              req.currentProject = project.toObject();
             }
 
             // Add the other defined access types.
