@@ -77,6 +77,11 @@ module.exports = function(formio) {
     }
   };
 
+  var filterDataConnectionSettings = function(req) {
+    req.body.settings = req.body.settings || {};
+    req.body.settings = _.omit(req.body.settings, ['office365', 'databases', 'google', 'kickbox', 'hubspot', 'sqlconnector', 'atlassian']);
+  };
+
   /**
    * Ensure a name gets set if not sent.
    *
@@ -122,6 +127,7 @@ module.exports = function(formio) {
           filterOAuthSettings(req);
           filterEmailSettings(req);
           filterStorageSettings(req);
+          filterDataConnectionSettings(req);
 
           debug(req.body);
           return next();

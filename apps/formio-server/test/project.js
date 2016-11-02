@@ -1064,18 +1064,20 @@ module.exports = function(app, template, hook) {
           .put('/project/' + template.project._id)
           .set('x-jwt-token', template.formio.owner.token)
           .send({
-            storage: {
-              s3: {
-                AWSAccessKeyId: chance.word(),
-                AWSSecretKey: chance.word(),
-                bucket: chance.word(),
-                bucketUrl: chance.word(),
-                expiration: chance.word(),
-                maxSize: chance.word(),
-                startsWith: chance.word()
-              },
-              dropbox: {
-                access_token: chance.word()
+            settings: {
+              storage: {
+                s3: {
+                  AWSAccessKeyId: chance.word(),
+                  AWSSecretKey: chance.word(),
+                  bucket: chance.word(),
+                  bucketUrl: chance.word(),
+                  expiration: chance.word(),
+                  maxSize: chance.word(),
+                  startsWith: chance.word()
+                },
+                dropbox: {
+                  access_token: chance.word()
+                }
               }
             }
           })
@@ -1089,6 +1091,157 @@ module.exports = function(app, template, hook) {
             var response = res.body;
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('storage'), false);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the basic plan will not be able to set data connection settings on creation', function(done) {
+        var tempProject = {
+          title: chance.word(),
+          description: chance.sentence(),
+          settings: {
+            atlassian: {
+              url: chance.word()
+            },
+            databases: {
+              mssql: {
+                azure: true,
+                database: chance.word(),
+                host: chance.word(),
+                password: chance.word(),
+                port: chance.word(),
+                user: chance.word()
+              },
+              mysql: {
+                database: chance.word(),
+                host: chance.word(),
+                password: chance.word(),
+                port: chance.word(),
+                user: chance.word()
+              }
+            },
+            google: {
+              clientId: chance.word(),
+              cskey: chance.word(),
+              refreshtoken: chance.word()
+            },
+            hubspot: {
+              apikey: chance.word()
+            },
+            kickbox: {
+              apikey: chance.word()
+            },
+            office365: {
+              cert: chance.word(),
+              clientId: chance.word(),
+              email: chance.word(),
+              tenant: chance.word(),
+              thumbprint: chance.word()
+            },
+            sqlconnector: {
+              host: chance.word(),
+              password: chance.word(),
+              type: chance.word(),
+              user: chance.word()
+            }
+          }
+        };
+
+        request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(tempProject)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.hasOwnProperty('settings'), false);
+
+            tempProjects.push(res.body);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the basic plan will not be able to set data connection settings on project update', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              atlassian: {
+                url: chance.word()
+              },
+              databases: {
+                mssql: {
+                  azure: true,
+                  database: chance.word(),
+                  host: chance.word(),
+                  password: chance.word(),
+                  port: chance.word(),
+                  user: chance.word()
+                },
+                mysql: {
+                  database: chance.word(),
+                  host: chance.word(),
+                  password: chance.word(),
+                  port: chance.word(),
+                  user: chance.word()
+                }
+              },
+              google: {
+                clientId: chance.word(),
+                cskey: chance.word(),
+                refreshtoken: chance.word()
+              },
+              hubspot: {
+                apikey: chance.word()
+              },
+              kickbox: {
+                apikey: chance.word()
+              },
+              office365: {
+                cert: chance.word(),
+                clientId: chance.word(),
+                email: chance.word(),
+                tenant: chance.word(),
+                thumbprint: chance.word()
+              },
+              sqlconnector: {
+                host: chance.word(),
+                password: chance.word(),
+                type: chance.word(),
+                user: chance.word()
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('atlassian'), false);
+            assert.equal(response.settings.hasOwnProperty('databases'), false);
+            assert.equal(response.settings.hasOwnProperty('google'), false);
+            assert.equal(response.settings.hasOwnProperty('hubspot'), false);
+            assert.equal(response.settings.hasOwnProperty('kickbox'), false);
+            assert.equal(response.settings.hasOwnProperty('office365'), false);
+            assert.equal(response.settings.hasOwnProperty('sqlconnector'), false);
 
             // Store the JWT for future API calls.
             template.formio.owner.token = res.headers['x-jwt-token'];
@@ -1284,6 +1437,82 @@ module.exports = function(app, template, hook) {
             done();
           });
       });
+
+      it('A Project on the Independent plan will be able to set data connection settings on project update', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              atlassian: {
+                url: chance.word()
+              },
+              databases: {
+                mssql: {
+                  azure: true,
+                  database: chance.word(),
+                  host: chance.word(),
+                  password: chance.word(),
+                  port: chance.word(),
+                  user: chance.word()
+                },
+                mysql: {
+                  database: chance.word(),
+                  host: chance.word(),
+                  password: chance.word(),
+                  port: chance.word(),
+                  user: chance.word()
+                }
+              },
+              google: {
+                clientId: chance.word(),
+                cskey: chance.word(),
+                refreshtoken: chance.word()
+              },
+              hubspot: {
+                apikey: chance.word()
+              },
+              kickbox: {
+                apikey: chance.word()
+              },
+              office365: {
+                cert: chance.word(),
+                clientId: chance.word(),
+                email: chance.word(),
+                tenant: chance.word(),
+                thumbprint: chance.word()
+              },
+              sqlconnector: {
+                host: chance.word(),
+                password: chance.word(),
+                type: chance.word(),
+                user: chance.word()
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('atlassian'), true);
+            assert.equal(response.settings.hasOwnProperty('databases'), true);
+            assert.equal(response.settings.hasOwnProperty('google'), true);
+            assert.equal(response.settings.hasOwnProperty('hubspot'), true);
+            assert.equal(response.settings.hasOwnProperty('kickbox'), true);
+            assert.equal(response.settings.hasOwnProperty('office365'), true);
+            assert.equal(response.settings.hasOwnProperty('sqlconnector'), true);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
     });
 
     describe('Team Plan', function() {
@@ -1468,6 +1697,82 @@ module.exports = function(app, template, hook) {
             done();
           });
       });
+
+      it('A Project on the Team plan will be able to set data connection settings on project update', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              atlassian: {
+                url: chance.word()
+              },
+              databases: {
+                mssql: {
+                  azure: true,
+                  database: chance.word(),
+                  host: chance.word(),
+                  password: chance.word(),
+                  port: chance.word(),
+                  user: chance.word()
+                },
+                mysql: {
+                  database: chance.word(),
+                  host: chance.word(),
+                  password: chance.word(),
+                  port: chance.word(),
+                  user: chance.word()
+                }
+              },
+              google: {
+                clientId: chance.word(),
+                cskey: chance.word(),
+                refreshtoken: chance.word()
+              },
+              hubspot: {
+                apikey: chance.word()
+              },
+              kickbox: {
+                apikey: chance.word()
+              },
+              office365: {
+                cert: chance.word(),
+                clientId: chance.word(),
+                email: chance.word(),
+                tenant: chance.word(),
+                thumbprint: chance.word()
+              },
+              sqlconnector: {
+                host: chance.word(),
+                password: chance.word(),
+                type: chance.word(),
+                user: chance.word()
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('atlassian'), true);
+            assert.equal(response.settings.hasOwnProperty('databases'), true);
+            assert.equal(response.settings.hasOwnProperty('google'), true);
+            assert.equal(response.settings.hasOwnProperty('hubspot'), true);
+            assert.equal(response.settings.hasOwnProperty('kickbox'), true);
+            assert.equal(response.settings.hasOwnProperty('office365'), true);
+            assert.equal(response.settings.hasOwnProperty('sqlconnector'), true);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
     });
 
     describe('Commercial Plan', function() {
@@ -1645,6 +1950,82 @@ module.exports = function(app, template, hook) {
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('storage'), true);
             assert.deepEqual(Object.keys(response.settings.storage), ['s3', 'dropbox']);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Commercial plan will be able to set data connection settings on project update', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              atlassian: {
+                url: chance.word()
+              },
+              databases: {
+                mssql: {
+                  azure: true,
+                  database: chance.word(),
+                  host: chance.word(),
+                  password: chance.word(),
+                  port: chance.word(),
+                  user: chance.word()
+                },
+                mysql: {
+                  database: chance.word(),
+                  host: chance.word(),
+                  password: chance.word(),
+                  port: chance.word(),
+                  user: chance.word()
+                }
+              },
+              google: {
+                clientId: chance.word(),
+                cskey: chance.word(),
+                refreshtoken: chance.word()
+              },
+              hubspot: {
+                apikey: chance.word()
+              },
+              kickbox: {
+                apikey: chance.word()
+              },
+              office365: {
+                cert: chance.word(),
+                clientId: chance.word(),
+                email: chance.word(),
+                tenant: chance.word(),
+                thumbprint: chance.word()
+              },
+              sqlconnector: {
+                host: chance.word(),
+                password: chance.word(),
+                type: chance.word(),
+                user: chance.word()
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('atlassian'), true);
+            assert.equal(response.settings.hasOwnProperty('databases'), true);
+            assert.equal(response.settings.hasOwnProperty('google'), true);
+            assert.equal(response.settings.hasOwnProperty('hubspot'), true);
+            assert.equal(response.settings.hasOwnProperty('kickbox'), true);
+            assert.equal(response.settings.hasOwnProperty('office365'), true);
+            assert.equal(response.settings.hasOwnProperty('sqlconnector'), true);
 
             // Store the JWT for future API calls.
             template.formio.owner.token = res.headers['x-jwt-token'];
