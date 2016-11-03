@@ -10,6 +10,7 @@ var async = require('async');
 
 module.exports = function(router) {
   var formio = router.formio;
+  var hook = router.formio.hook;
 
   /**
    * GoogleSheetAction class.
@@ -25,17 +26,16 @@ module.exports = function(router) {
   GoogleSheetAction.prototype = Object.create(formio.Action.prototype);
   GoogleSheetAction.prototype.constructor = GoogleSheetAction;
   GoogleSheetAction.info = function(req, res, next) {
-    next(null, {
+    next(null, hook.alter('actionInfo', {
       name: 'googlesheet',
       title: 'Google Sheets',
       description: 'Allows you to integrate data into Google sheets.',
-      premium: false,
       priority: 0,
       defaults: {
         handler: ['after'],
         method: ['create', 'update', 'delete']
       }
-    });
+    }));
   };
 
   // The actions settings form.
@@ -104,6 +104,10 @@ module.exports = function(router) {
 
   // The actions core execution logic.
   GoogleSheetAction.prototype.resolve = function(handler, method, req, res, next) {
+    if (!hook.alter('resolve', true, this, handler, method, req, res)) {
+      return next();
+    }
+
     // No feedback needed directly. Call next immediately.
     next(); // eslint-disable-line callback-return
 
