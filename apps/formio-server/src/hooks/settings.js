@@ -259,7 +259,7 @@ module.exports = function(app) {
        */
       actionInfo: function(action) {
         // Modify premium actions if present.
-        var premium = ['webhook', 'oauth', 'office365contact', 'hubspotContact', 'googlesheet', 'jira'];
+        var premium = ['webhook', 'oauth', 'office365contact', 'office365calendar', 'hubspotContact', 'googlesheet', 'jira'];
         if (action.title && action.name && !action.premium && premium.indexOf(action.name) !== -1) {
           action.title += ' (Premium)';
           action.premium = true;
@@ -280,7 +280,7 @@ module.exports = function(app) {
        */
       resolve: function(defaultReturn, action, handler, method, req, res) {
         var _debug = require('debug')('formio:settings:resolve');
-        var premium = ['webhook', 'oauth', 'office365contact', 'hubspotContact', 'googlesheet', 'jira'];
+        var premium = ['webhook', 'oauth', 'office365contact', 'office365calendar', 'hubspotContact', 'googlesheet', 'jira'];
 
         // If the action does not have a name, or is not flagged as being premium, ignore it.
         if (!action.hasOwnProperty('name')) {
