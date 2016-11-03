@@ -12,6 +12,17 @@ module.exports = {
     url: function(url, template, projectName) {
       projectName = projectName || 'project';
       return '/project/' + template[projectName]._id + url;
+    },
+
+    webhookServer: function(server, app, template, next) {
+      if (!app || !template.project) {
+        return next(server);
+      }
+
+      var helper = new template.Helper();
+      helper.setProjectPlan.call({template: template}, 'team', function() {
+        return next(server);
+      });
     }
   }
 };
