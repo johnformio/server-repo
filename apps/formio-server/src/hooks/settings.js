@@ -257,13 +257,15 @@ module.exports = function(app) {
        *
        * @param title
        */
-      actionTitle: function(title) {
-        var premium = ['Webhook'];
-        if (premium.indexOf(title) !== -1) {
-          title += ' (Premium)';
+      actionInfo: function(action) {
+        // Modify premium actions if present.
+        var premium = ['Webhook', 'OAuth'];
+        if (action.title && premium.indexOf(action.title) !== -1) {
+          action.title += ' (Premium)';
+          action.premium = true;
         }
 
-        return title;
+        return action;
       },
 
       /**
@@ -278,7 +280,7 @@ module.exports = function(app) {
        */
       resolve: function(defaultReturn, action, handler, method, req, res) {
         var _debug = require('debug')('formio:settings:resolve');
-        var premium = ['webhook'];
+        var premium = ['webhook', 'oauth'];
 
         // If the action does not have a name, or is not flagged as being premium, ignore it.
         if (!action.hasOwnProperty('name')) {

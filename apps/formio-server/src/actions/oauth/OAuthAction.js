@@ -9,6 +9,7 @@ var chance = require('chance').Chance();
 
 module.exports = function(router) {
   var formio = router.formio;
+  var hook = router.formio.hook;
   var oauthUtil = require('../../util/oauth')(formio);
   var auth = require('../../authentication/index')(formio);
 
@@ -26,16 +27,16 @@ module.exports = function(router) {
   OAuthAction.prototype = Object.create(formio.Action.prototype);
   OAuthAction.prototype.constructor = OAuthAction;
   OAuthAction.info = function(req, res, next) {
-    next(null, {
+    next(null, hook.alter('actionInfo', {
       name: 'oauth',
-      title: 'OAuth',
+      title: hook.alter('actionTitle', 'OAuth'),
       description: 'Provides OAuth authentication behavior to this form.',
       priority: 20,
       defaults: {
         handler: ['after'],
         method: ['form', 'create']
       }
-    });
+    }));
   };
   // Disable editing handler and method settings
   OAuthAction.access = {
@@ -495,6 +496,10 @@ module.exports = function(router) {
    *   The callback function to execute upon completion.
    */
   OAuthAction.prototype.resolve = function(handler, method, req, res, next) {
+    if (!hook.alter('resolve', true, this, handler, method, req, res)) {
+      return next();
+    }
+
     if (this.settings.association === 'new' && (!this.settings.hasOwnProperty('role') || !this.settings.role)) {
       return next('The OAuth Action requires a Role to be selected for new resources.');
     }
