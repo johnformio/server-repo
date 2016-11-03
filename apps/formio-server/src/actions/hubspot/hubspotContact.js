@@ -5,6 +5,8 @@ var util = require('./util');
 var debug = require('debug')('formio:action:hubspot');
 
 module.exports = function(router) {
+  var hook = router.formio.hook;
+
   /**
    * HubspotContactAction class.
    *   This class is used to create the Hubspot Contact action.
@@ -19,17 +21,16 @@ module.exports = function(router) {
   HubspotContactAction.prototype = Object.create(router.formio.Action.prototype);
   HubspotContactAction.prototype.constructor = HubspotContactAction;
   HubspotContactAction.info = function(req, res, next) {
-    next(null, {
+    next(null, hook.alter('actionInfo', {
       name: 'hubspotContact',
-      title: 'Hubspot Contact (Premium)',
+      title: 'Hubspot Contact',
       description: 'Allows you to change contact fields in hubspot.',
-      premium: true,
       priority: 0,
       defaults: {
         handler: ['after'],
         method: ['create']
       }
-    });
+    }));
   };
 
   HubspotContactAction.settingsForm = function(req, res, next) {
@@ -168,6 +169,10 @@ module.exports = function(router) {
    *   The callback function to execute upon completion.
    */
   HubspotContactAction.prototype.resolve = function(handler, method, req, res, next) {
+    if (!hook.alter('resolve', true, this, handler, method, req, res)) {
+      return next();
+    }
+
     var actionInfo = this;
 
     // Dont block on the hubspot request.
