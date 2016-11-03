@@ -29,7 +29,7 @@ module.exports = function(router) {
   OAuthAction.info = function(req, res, next) {
     next(null, hook.alter('actionInfo', {
       name: 'oauth',
-      title: hook.alter('actionTitle', 'OAuth'),
+      title: 'OAuth',
       description: 'Provides OAuth authentication behavior to this form.',
       priority: 20,
       defaults: {
