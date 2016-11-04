@@ -15,7 +15,7 @@
     "lint": "eslint ."
   },
   "main": "./server.js",
-  "schema": "3.0.6-rc.1",
+  "schema": "3.0.7-rc.1",
   "dependencies": {
     "JSONStream": "^1.1.1",
     "adal-node": "^0.1.15",
