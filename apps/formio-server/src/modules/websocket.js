@@ -24,8 +24,9 @@ module.exports = function(app, config) {
       if (err) {
         return next(err);
       }
+      // Skip the websocket stuff, because the plan is not upgraded.
       if (['team', 'commercial'].indexOf(plan) === -1) {
-        return res.status(402).send('A Team or Commercial plan is required to use Websockets.');
+        return next();
       }
 
       // Send the request to the socket.

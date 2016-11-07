@@ -16,12 +16,12 @@ module.exports = {
 
     webhookServer: function(server, app, template, next) {
       if (!app || !template.project) {
-        return next(server);
+        return next(null, server);
       }
 
       var helper = new template.Helper();
       helper.setProjectPlan.call({template: template}, 'team', function() {
-        return next(server);
+        return next(null, server);
       });
     }
   }
