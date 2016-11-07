@@ -1,5 +1,7 @@
 'use strict';
 
+var _ = require('lodash');
+
 module.exports = {
   alter: {
     /**
@@ -23,6 +25,14 @@ module.exports = {
       helper.setProjectPlan.call({template: template}, 'team', function() {
         return next(null, server);
       });
+    },
+
+    webhookBody: function(body) {
+      if (_.has(body, 'submission.externalTokens')) {
+        delete body.submission.externalTokens;
+      }
+
+      return body;
     }
   }
 };

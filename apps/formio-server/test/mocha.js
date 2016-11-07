@@ -1317,6 +1317,7 @@ describe('Tests', function() {
         require('./dropbox')(app, template, hook);
         require('./report')(app, template, hook);
         require('./actions')(app, template, hook);
+        require('./group-permissions')(app, template, hook);
       });
     });
   });
