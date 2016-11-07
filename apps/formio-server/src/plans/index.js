@@ -11,6 +11,7 @@ module.exports = function(formioServer, cache) {
     basic: 1000,
     independent: 10000,
     team: 250000,
+    trial: 250000,
     commercial: Number.MAX_VALUE
   };
 
