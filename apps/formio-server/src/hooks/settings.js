@@ -427,7 +427,12 @@ module.exports = function(app) {
               req.projectOwner = access.project.owner;
 
               // Add the current project to the req.
-              req.currentProject = project.toObject();
+              try {
+                req.currentProject = project.toObject();
+              }
+              catch (err) {
+                req.currentProject = project;
+              }
             }
 
             // Add the other defined access types.

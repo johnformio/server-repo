@@ -25,6 +25,7 @@ module.exports = function(formio) {
           return cb('Project not found');
         }
 
+        project = project.toObject();
         var projectId = project._id.toString();
         if (!cache.projectNames) {
           cache.projectNames = {};
@@ -73,24 +74,15 @@ module.exports = function(formio) {
      * @param cb
      */
     loadProject: function(req, id, cb) {
+      id = formio.util.idToString(id);
       var cache = formio.cache.cache(req);
       if (cache.projects[id]) {
         return cb(null, cache.projects[id]);
       }
 
-      debug.loadProject(typeof id + ': ' + id);
-      try {
-        id = (typeof id === 'string') ? formio.mongoose.Types.ObjectId(id) : id;
-      }
-      catch (e) {
-        debug.error(e);
-        debug.loadProject(e);
-        return cb('Invalid Project Id given.');
-      }
-
-      var query = {_id: id, deleted: {$eq: null}};
+      var query = {_id: formio.util.idToBson(id), deleted: {$eq: null}};
       var params = req.params;
-      formio.resources.project.model.findOne(query).exec(function(err, result) {
+      formio.resources.project.model.findOne(query, function(err, result) {
         // @todo: Figure out why we have to reset the params after project load.
         req.params = params;
         if (err) {
@@ -99,9 +91,39 @@ module.exports = function(formio) {
         if (!result) {
           return cb('Project not found');
         }
+        if (result.plan && result.plan !== 'trial') {
+          cache.projects[id] = result;
+          return cb(null, result);
+        }
 
-        cache.projects[id] = result;
-        cb(null, result);
+        try {
+          var currTime = (new Date()).getTime();
+          var projTime = (new Date(result.created.toString())).getTime();
+          var delta = Math.ceil(parseInt((currTime - projTime) / 1000));
+          var day = 86400;
+          var remaining = 30 - parseInt(delta / day);
+          var trialDaysRemaining = remaining > 0 ? remaining : 0;
+
+          if (trialDaysRemaining > 0) {
+            cache.projects[id] = result;
+            return cb(null, result);
+          }
+
+          result.set('plan', 'basic');
+          result.save(function(err, response) {
+            if (err) {
+              debug.error(err);
+            }
+
+            cache.projects[id] = response;
+            return cb(null, response);
+          });
+        }
+        catch (e) {
+          debug.error(e);
+          cache.projects[id] = response;
+          return cb(null, response);
+        }
       });
     }
   };

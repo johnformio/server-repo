@@ -113,6 +113,10 @@ module.exports = function(formio) {
         case 'team':
           generateNameIfMissing(req);
           return next();
+        case 'trial':
+          generateNameIfMissing(req);
+          filterNameChanges(req);
+          return next();
         case 'independent':
           generateNameIfMissing(req);
           filterCorsChanges(req);
