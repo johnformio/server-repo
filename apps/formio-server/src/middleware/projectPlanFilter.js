@@ -61,7 +61,7 @@ module.exports = function(formio) {
   var filterEmailSettings = function(req) {
     req.body.settings = req.body.settings || {};
     if (_.has(req.body, 'settings.email')) {
-      req.body.settings.email = _.pick(req.body.settings.email, ['smtp'])
+      req.body.settings.email = _.pick(req.body.settings.email, ['smtp']);
     }
   };
 
@@ -73,13 +73,15 @@ module.exports = function(formio) {
   var filterStorageSettings = function(req) {
     req.body.settings = req.body.settings || {};
     if (_.has(req.body, 'settings.storage')) {
-      req.body.settings = _.omit(req.body.settings, 'storage')
+      req.body.settings = _.omit(req.body.settings, 'storage');
     }
   };
 
   var filterDataConnectionSettings = function(req) {
     req.body.settings = req.body.settings || {};
-    req.body.settings = _.omit(req.body.settings, ['office365', 'databases', 'google', 'kickbox', 'hubspot', 'sqlconnector', 'atlassian']);
+    req.body.settings = _.omit(req.body.settings, [
+      'office365', 'databases', 'google', 'kickbox', 'hubspot', 'sqlconnector', 'atlassian'
+    ]);
   };
 
   /**

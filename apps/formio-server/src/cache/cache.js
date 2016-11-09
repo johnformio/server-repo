@@ -121,8 +121,8 @@ module.exports = function(formio) {
         }
         catch (e) {
           debug.error(e);
-          cache.projects[id] = response;
-          return cb(null, response);
+          cache.projects[id] = result;
+          return cb(null, result);
         }
       });
     }
