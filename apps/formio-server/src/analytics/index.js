@@ -633,6 +633,55 @@ module.exports = function(config) {
     };
 
     /**
+     * Get the formio project upgrade history using the given query.
+     *
+     * @param query
+     * @param _debug
+     * @param req
+     * @param res
+     */
+    var getProjectsCreated = function(query, _debug, req, res) {
+      formioServer.formio.resources.project.model.aggregate(
+        {$match: query},
+        {$lookup: {
+          from: 'submissions',
+          localField: 'owner',
+          foreignField: '_id',
+          as: 'owner'
+        }},
+        {$unwind: '$owner'},
+        {$project: {
+          _id: 1,
+          plan: 1,
+          deleted: 1,
+          created: 1,
+          modified: 1,
+          name: 1,
+          title: 1,
+          owner: {
+            deleted: 1,
+            data: {
+              fullName: 1,
+              name: 1,
+              email: 1
+            },
+            form: 1,
+            modified: 1,
+            created: 1,
+            _id: 1
+          }
+        }},
+        function(err, results) {
+          if (err) {
+            return res.status(500).send(err);
+          }
+
+          return res.status(200).json(results);
+        }
+      );
+    };
+
+    /**
      * Expose the monthly api calls for each month of the year.
      */
     app.get(
@@ -1300,6 +1349,104 @@ module.exports = function(config) {
 
         // Get the data and respond.
         getProjectUpgrades(query, _debug, req, res);
+      }
+    );
+
+    app.get(
+      '/analytics/total/projects/year/:year',
+      formioServer.formio.middleware.tokenHandler,
+      restrictToFormioEmployees,
+      function(req, res, next) {
+        var _debug = require('debug')('formio:analytics:yearlyProjectTotals');
+        if (!req.params.year) {
+          return res.status(400).send('Expected params `year`.');
+        }
+
+        // Param validation.
+        var curr = new Date();
+        req.params.year = parseInt(req.params.year);
+        if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
+          return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
+        }
+
+        var query = {
+          created: {
+            $lt: new Date((req.params.year + 1).toString())
+          }
+        };
+
+        // Get the data and respond.
+        getProjectsCreated(query, _debug, req, res);
+      }
+    );
+
+    app.get(
+      '/analytics/total/projects/year/:year/month/:month',
+      formioServer.formio.middleware.tokenHandler,
+      restrictToFormioEmployees,
+      function(req, res, next) {
+        var _debug = require('debug')('formio:analytics:monthlyProjectTotals');
+        if (!req.params.year || !req.params.month) {
+          return res.status(400).send('Expected params `year` and `month`.');
+        }
+
+        // Param validation.
+        var curr = new Date();
+        req.params.year = parseInt(req.params.year);
+        req.params.month = parseInt(req.params.month);
+        if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
+          return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
+        }
+        if (!between(req.params.month, 1, 12)) {
+          return res.status(400).send('Expected a month in the range of 1-12.');
+        }
+
+        // Adjust the month for zero index in timestamp.
+        var query = {
+          created: {
+            $lt: new Date(req.params.year.toString(), (req.params.month).toString())
+          }
+        };
+
+        // Get the data and respond.
+        getProjectsCreated(query, _debug, req, res);
+      }
+    );
+
+    app.get(
+      '/analytics/total/projects/year/:year/month/:month/day/:day',
+      formioServer.formio.middleware.tokenHandler,
+      restrictToFormioEmployees,
+      function(req, res, next) {
+        var _debug = require('debug')('formio:analytics:monthlyProjectTotals');
+        if (!req.params.year || !req.params.month || !req.params.day) {
+          return res.status(400).send('Expected params `year`, `month`, and `day`.');
+        }
+
+        // Param validation.
+        var curr = new Date();
+        req.params.year = parseInt(req.params.year);
+        req.params.month = parseInt(req.params.month);
+        req.params.day = parseInt(req.params.day);
+        if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
+          return res.status(400).send('Expected a year in the range of 2015 - ' + curr.getUTCFullYear() + '.');
+        }
+        if (!between(req.params.month, 1, 12)) {
+          return res.status(400).send('Expected a month in the range of 1 - 12.');
+        }
+        if (!between(req.params.day, 1, 31)) {
+          return res.status(400).send('Expected a day in the range of 1 - 31.');
+        }
+
+        var month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
+        var query = {
+          created: {
+            $lt: new Date(req.params.year.toString(), month, (req.params.day + 1).toString())
+          }
+        };
+
+        // Get the data and respond.
+        getProjectsCreated(query, _debug, req, res);
       }
     );
   };
