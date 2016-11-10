@@ -1449,6 +1449,104 @@ module.exports = function(config) {
         getProjectsCreated(query, _debug, req, res);
       }
     );
+
+    app.get(
+      '/analytics/total/users/year/:year',
+      formioServer.formio.middleware.tokenHandler,
+      restrictToFormioEmployees,
+      function(req, res, next) {
+        var _debug = require('debug')('formio:analytics:yearlyUserTotals');
+        if (!req.params.year) {
+          return res.status(400).send('Expected params `year`.');
+        }
+
+        // Param validation.
+        var curr = new Date();
+        req.params.year = parseInt(req.params.year);
+        if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
+          return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
+        }
+
+        var query = {
+          created: {
+            $lt: new Date((req.params.year + 1).toString())
+          }
+        };
+
+        // Get the data and respond.
+        getFormioUsersCreated(query, _debug, req, res);
+      }
+    );
+
+    app.get(
+      '/analytics/total/users/year/:year/month/:month',
+      formioServer.formio.middleware.tokenHandler,
+      restrictToFormioEmployees,
+      function(req, res, next) {
+        var _debug = require('debug')('formio:analytics:monthlyUserTotals');
+        if (!req.params.year || !req.params.month) {
+          return res.status(400).send('Expected params `year` and `month`.');
+        }
+
+        // Param validation.
+        var curr = new Date();
+        req.params.year = parseInt(req.params.year);
+        req.params.month = parseInt(req.params.month);
+        if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
+          return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
+        }
+        if (!between(req.params.month, 1, 12)) {
+          return res.status(400).send('Expected a month in the range of 1-12.');
+        }
+
+        // Adjust the month for zero index in timestamp.
+        var query = {
+          created: {
+            $lt: new Date(req.params.year.toString(), (req.params.month).toString())
+          }
+        };
+
+        // Get the data and respond.
+        getFormioUsersCreated(query, _debug, req, res);
+      }
+    );
+
+    app.get(
+      '/analytics/total/users/year/:year/month/:month/day/:day',
+      formioServer.formio.middleware.tokenHandler,
+      restrictToFormioEmployees,
+      function(req, res, next) {
+        var _debug = require('debug')('formio:analytics:monthlyUserTotals');
+        if (!req.params.year || !req.params.month || !req.params.day) {
+          return res.status(400).send('Expected params `year`, `month`, and `day`.');
+        }
+
+        // Param validation.
+        var curr = new Date();
+        req.params.year = parseInt(req.params.year);
+        req.params.month = parseInt(req.params.month);
+        req.params.day = parseInt(req.params.day);
+        if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
+          return res.status(400).send('Expected a year in the range of 2015 - ' + curr.getUTCFullYear() + '.');
+        }
+        if (!between(req.params.month, 1, 12)) {
+          return res.status(400).send('Expected a month in the range of 1 - 12.');
+        }
+        if (!between(req.params.day, 1, 31)) {
+          return res.status(400).send('Expected a day in the range of 1 - 31.');
+        }
+
+        var month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
+        var query = {
+          created: {
+            $lt: new Date(req.params.year.toString(), month, (req.params.day + 1).toString())
+          }
+        };
+
+        // Get the data and respond.
+        getFormioUsersCreated(query, _debug, req, res);
+      }
+    );
   };
 
   /**
