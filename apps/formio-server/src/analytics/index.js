@@ -1547,6 +1547,35 @@ module.exports = function(config) {
         getFormioUsersCreated(query, _debug, req, res);
       }
     );
+
+    app.put(
+      '/analytics/upgrade',
+      formioServer.formio.middleware.tokenHandler,
+      restrictToFormioEmployees,
+      function(req, res, next) {
+        var _debug = require('debug')('formio:analytics:upgradeProject');
+        var plans = ['basic', 'independent', 'team', 'commercial'];
+        if (!req.body || !req.body.project || !req.body.plan) {
+          return res.status(400).send('Expected params `project` and `plan`.');
+        }
+        if (plans.indexOf(req.body.plan) === -1) {
+          return res.status(400).send('Expexted `plan` of type: ' + plans.join(',') + '.');
+        }
+
+        formioServer.formio.resources.project.model.update({
+          _id: formioServer.formio.util.idToBson(req.body.project),
+          deleted: {$eq: null}
+        }, {$set: {plan: req.body.plan}}, function(err, results) {
+          if (err) {
+            _debug(err);
+            return res.status(400).send(err);
+          }
+
+          _debug(results);
+          return res.sendStatus(200);
+        });
+      }
+    );
   };
 
   /**
