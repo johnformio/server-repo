@@ -359,6 +359,7 @@ module.exports = function(config) {
     });
   };
 
+  /* eslint-disable max-statements */
   /**
    *
    * @param app
@@ -1577,6 +1578,7 @@ module.exports = function(config) {
       }
     );
   };
+  /* eslint-enable max-statements */
 
   /**
    * Expose the redis interface for analytics.
