@@ -2,7 +2,7 @@
 
 var Q = require('q');
 var _ = require('lodash');
-var uuid = require('node-uuid');
+var uuid = require('uuid');
 var AuthenticationContext = require('adal-node').AuthenticationContext;
 
 var util = require('formio/src/util/util');
