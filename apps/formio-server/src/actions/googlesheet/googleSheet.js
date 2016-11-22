@@ -61,7 +61,7 @@ module.exports = function(router) {
           components: []
         };
         _.each(availableProviders.componentMap, function(field, fieldKey) {
-          if (field.action !== 'submit') {
+          if (field.action !== 'submit' && field.input) {
             fieldPanel.components.push({
               type: 'textfield',
               input: true,
