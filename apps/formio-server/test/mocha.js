@@ -644,7 +644,7 @@ describe('Tests', function() {
                   refreshDelay: 0,
                   refresh: false,
                   multiple: true,
-                  unique: true,
+                  unique: false,
                   searchFields: '',
                   searchExpression: '',
                   template: '<span>{{ item.data.name }}</span>',
