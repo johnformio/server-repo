@@ -146,7 +146,7 @@ module.exports = function(router) {
       var canAssignGroup = function(gid) {
         return loadFilteredSubmission('group', gid)
         .then(function(group) {
-          var context = _.clone(req);
+          var context = _.cloneDeep(req);
           context.formioCache = hook.alter('cacheInit', {
             names: {},
             aliases: {},

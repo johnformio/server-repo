@@ -54,7 +54,7 @@ module.exports = function(formio) {
 
         // Update the accessIds with the project roles.
         roles = roles || [];
-        roles = _.map(_.pluck(roles, '_id'), formio.util.idToString);
+        roles = _.map(_.map(roles, '_id'), formio.util.idToString);
         accessIds = accessIds.concat(roles);
 
         /**
@@ -89,7 +89,7 @@ module.exports = function(formio) {
         formio.teams.getTeams(project.owner, false, true)
           .then(function(teams) {
             teams = teams || [];
-            teams = _.map(_.pluck(teams, '_id'), formio.util.idToString);
+            teams = _.map(_.map(teams, '_id'), formio.util.idToString);
 
             accessIds = accessIds.concat(teams);
             accessIds = _.uniq(_.filter(accessIds));

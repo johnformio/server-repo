@@ -67,7 +67,7 @@ module.exports = function(router) {
   }, 'A Project domain name may only contain letters, numbers, and hyphens (but cannot start or end with a hyphen)');
 
   model.schema.path('name').validate(function(name) {
-    return !formio.config.reservedSubdomains || !_.contains(formio.config.reservedSubdomains, name);
+    return !formio.config.reservedSubdomains || !_.includes(formio.config.reservedSubdomains, name);
   }, 'This domain is reserved. Please use a different domain.');
 
   // Validate the uniqueness of the value given for the name.
