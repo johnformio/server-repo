@@ -900,15 +900,14 @@ module.exports = function(app) {
             // Filter the teams to only contain the team ids.
             _debug('RAW: ' + JSON.stringify(teams));
             teams = _(teams)
-              .pluck('_id')
+              .map('_id')
               .filter()
               .map(util.idToString)
               .uniq()
               .forEach(function(team) {
                 // Add the users team ids, to their roles.
                 user.roles.push(team);
-              })
-              .value();
+              });
 
             _debug('Teams: ' + JSON.stringify(teams));
             _debug('Final User Roles: ' + JSON.stringify(user.roles));

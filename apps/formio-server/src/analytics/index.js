@@ -340,8 +340,7 @@ module.exports = function(config) {
         .uniq()
         .forEach(function(key) {
           transaction.llen(key);
-        })
-        .value();
+        });
 
       transaction.exec(function(err, response) {
         if (err) {
@@ -455,7 +454,7 @@ module.exports = function(config) {
           debug.restrictToFormioEmployees('req.user: ' + JSON.stringify(req.user));
           debug.restrictToFormioEmployees('teams: ' + JSON.stringify(teams));
 
-          var member = _.any(teams, function(team) {
+          var member = _.some(teams, function(team) {
             debug.restrictToFormioEmployees('req.user.roles.indexOf(' + team + '): ' + req.user.roles.indexOf(team));
             if (req.user.roles.indexOf(team) !== -1) {
               return true;
@@ -1242,8 +1241,8 @@ module.exports = function(config) {
         var month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
         var query = {
           created: {
-            $gte: new Date(req.params.year.toString(), month, req.params.day.toString()),
-            $lt: new Date(req.params.year.toString(), month, (req.params.day + 1).toString())
+            $gte: Date.UTC(req.params.year.toString(), month, req.params.day.toString()),
+            $lt: Date.UTC(req.params.year.toString(), month, (req.params.day + 1).toString())
           }
         };
 
@@ -1271,8 +1270,8 @@ module.exports = function(config) {
 
         var query = {
           created: {
-            $gte: new Date(req.params.year.toString()),
-            $lt: new Date((req.params.year + 1).toString())
+            $gte: Date.UTC(req.params.year.toString()),
+            $lt: Date.UTC((req.params.year + 1).toString())
           }
         };
 
@@ -1305,8 +1304,8 @@ module.exports = function(config) {
         // Adjust the month for zero index in timestamp.
         var query = {
           created: {
-            $gte: new Date(req.params.year.toString(), (req.params.month - 1).toString()),
-            $lt: new Date(req.params.year.toString(), (req.params.month).toString())
+            $gte: Date.UTC(req.params.year.toString(), (req.params.month - 1).toString()),
+            $lt: Date.UTC(req.params.year.toString(), (req.params.month).toString())
           }
         };
 
@@ -1343,8 +1342,8 @@ module.exports = function(config) {
         var month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
         var query = {
           created: {
-            $gte: new Date(req.params.year.toString(), month, req.params.day.toString()),
-            $lt: new Date(req.params.year.toString(), month, (req.params.day + 1).toString())
+            $gte: Date.UTC(req.params.year.toString(), month, req.params.day.toString()),
+            $lt: Date.UTC(req.params.year.toString(), month, (req.params.day + 1).toString())
           }
         };
 
@@ -1372,7 +1371,7 @@ module.exports = function(config) {
 
         var query = {
           created: {
-            $lt: new Date((req.params.year + 1).toString())
+            $lt: Date.UTC((req.params.year + 1).toString())
           }
         };
 
@@ -1405,7 +1404,7 @@ module.exports = function(config) {
         // Adjust the month for zero index in timestamp.
         var query = {
           created: {
-            $lt: new Date(req.params.year.toString(), (req.params.month).toString())
+            $lt: Date.UTC(req.params.year.toString(), (req.params.month).toString())
           }
         };
 
@@ -1442,7 +1441,7 @@ module.exports = function(config) {
         var month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
         var query = {
           created: {
-            $lt: new Date(req.params.year.toString(), month, (req.params.day + 1).toString())
+            $lt: Date.UTC(req.params.year.toString(), month, (req.params.day + 1).toString())
           }
         };
 
@@ -1470,7 +1469,7 @@ module.exports = function(config) {
 
         var query = {
           created: {
-            $lt: new Date((req.params.year + 1).toString())
+            $lt: Date.UTC((req.params.year + 1).toString())
           }
         };
 
@@ -1503,7 +1502,7 @@ module.exports = function(config) {
         // Adjust the month for zero index in timestamp.
         var query = {
           created: {
-            $lt: new Date(req.params.year.toString(), (req.params.month).toString())
+            $lt: Date.UTC(req.params.year.toString(), (req.params.month).toString())
           }
         };
 
@@ -1540,7 +1539,7 @@ module.exports = function(config) {
         var month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
         var query = {
           created: {
-            $lt: new Date(req.params.year.toString(), month, (req.params.day + 1).toString())
+            $lt: Date.UTC(req.params.year.toString(), month, (req.params.day + 1).toString())
           }
         };
 
