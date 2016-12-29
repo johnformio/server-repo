@@ -173,7 +173,7 @@ module.exports = function(router, formioServer) {
     if (!req.body || !req.body.name) {
       return res.status(400).send('"name" parameter is required');
     }
-    if (config.reservedSubdomains && _.contains(config.reservedSubdomains, req.body.name)) {
+    if (config.reservedSubdomains && _.includes(config.reservedSubdomains, req.body.name)) {
       return res.status(200).send({available: false});
     }
 
