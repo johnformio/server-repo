@@ -12,7 +12,7 @@ module.exports = function(formio) {
       return Q.ninvoke(formio.hook, 'settings', req)
       .then(function(settings) {
         return _(formio.oauth.providers)
-        .pick(function(provider, name) {
+        .filter(function(provider, name) {
           // Use custom isAvailable method if available
           return provider.isAvailable && provider.isAvailable(settings) ||
           // Else just check for default client id and secret
