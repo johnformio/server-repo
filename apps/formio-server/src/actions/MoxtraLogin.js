@@ -244,11 +244,12 @@ module.exports = function(router) {
 
         user = user.pop();
         user.set('externalIds', external);
-        user.save(function(err) {
+        user.save(function(err, user) {
           if (err) {
             return deferred.reject('Could not save the user.');
           }
 
+          res.resource.item = user;
           return deferred.resolve('The users access token has been updated for moxtra.');
         });
       });
