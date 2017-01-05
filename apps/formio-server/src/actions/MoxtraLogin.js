@@ -200,18 +200,26 @@ module.exports = function(router) {
           return deferred.reject('No Moxtra environment found in the project settings.');
         }
 
-        rest.post(_.get(settings, 'moxtra.environment'), {data: {
-          client_id: _.get(settings, 'moxtra.clientId'),
-          client_secret: _.get(settings, 'moxtra.clientSecret'),
-          grant_type: 'http://www.moxtra.com/auth_uniqueid',
-          uniqueid: user._id.toString(),
-          timestamp: new Date().getTime(),
-          firstname: _.get(user.data, firstname),
-          lastname: _.get(user.data, lastname)
-        }})
-        .on('complete', function(result, response) {
+        var body = {
+          data: {
+            client_id: _.get(settings, 'moxtra.clientId'),
+            client_secret: _.get(settings, 'moxtra.clientSecret'),
+            grant_type: 'http://www.moxtra.com/auth_uniqueid',
+            uniqueid: user._id.toString(),
+            timestamp: new Date().getTime(),
+            firstname: _.get(user.data, firstname),
+            lastname: _.get(user.data, lastname)
+          }
+        };
+
+        // Add the orgId if present in the settings.
+        if (_.has(settings, 'moxtra.orgId')) {
+          body.data.orgid = _.get(settings, 'moxtra.orgId');
+        }
+
+        rest.post(_.get(settings, 'moxtra.environment'), body)
+        .on('complete', function(result) {
           debug(result);
-          debug(response);
           if (result instanceof Error) {
             return deferred.reject(result);
           }
