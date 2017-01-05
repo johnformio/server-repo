@@ -200,6 +200,7 @@ module.exports = function(router) {
           return deferred.reject('No Moxtra environment found in the project settings.');
         }
 
+        /* eslint-disable camelcase */
         var body = {
           data: {
             client_id: _.get(settings, 'moxtra.clientId'),
@@ -211,6 +212,7 @@ module.exports = function(router) {
             lastname: _.get(user.data, lastname)
           }
         };
+        /* eslint-enable camelcase */
 
         // Add the orgId if present in the settings.
         if (_.has(settings, 'moxtra.orgId')) {
