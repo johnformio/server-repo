@@ -114,7 +114,7 @@ module.exports = function(options) {
       app.use('/project/:projectId', app.formio);
 
       // Mount the aggregation system.
-      app.use('/project/:projectId/report', require('./src/middleware/report')(app.formio.formio));
+      app.use('/project/:projectId/report', require('./src/middleware/report')(app.formio));
 
       return q.resolve({
         app: app,
