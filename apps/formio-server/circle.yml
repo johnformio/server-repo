@@ -7,7 +7,7 @@ machine:
     version: 2.7.3
   services:
     - docker
-    - mongodb
+    - mongod
     - redis
   environment:
     SHORT_SHA: $(echo $CIRCLE_SHA1 | cut -b1-7)
