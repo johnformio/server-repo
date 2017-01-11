@@ -2,7 +2,7 @@ machine:
   pre:
     - curl -sSL https://s3.amazonaws.com/circle-downloads/install-circleci-docker.sh | bash -s -- 1.10.0
   node:
-    version: 4.4.5
+    version: 6.9.4
   python:
     version: 2.7.3
   services:
@@ -18,8 +18,8 @@ machine:
 
 dependencies:
   pre:
-    - sudo /etc/init.d/mongodb stop && wget http://downloads.mongodb.org/linux/mongodb-linux-x86_64-ubuntu1204-3.2.6.tgz && tar xvzf mongodb-linux-x86_64-ubuntu1204-3.2.6.tgz
-    - sudo cp mongodb-linux-x86_64-ubuntu1204-3.2.6/bin/* /usr/bin
+    - sudo /etc/init.d/mongodb stop && wget http://downloads.mongodb.org/linux/mongodb-linux-x86_64-ubuntu1204-3.2.9.tgz && tar xvzf mongodb-linux-x86_64-ubuntu1204-3.2.9.tgz
+    - sudo cp mongodb-linux-x86_64-ubuntu1204-3.2.9/bin/* /usr/bin
     - sudo /etc/init.d/mongodb start
     - pip install awscli
     - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test && sudo apt-get update
