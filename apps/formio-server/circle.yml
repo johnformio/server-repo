@@ -7,7 +7,6 @@ machine:
     version: 2.7.3
   services:
     - docker
-    - mongodb
     - redis
   environment:
     SHORT_SHA: $(echo $CIRCLE_SHA1 | cut -b1-7)
@@ -18,9 +17,6 @@ machine:
 
 dependencies:
   pre:
-    - sudo /etc/init.d/mongod stop && wget http://downloads.mongodb.org/linux/mongodb-linux-x86_64-ubuntu1204-3.2.9.tgz && tar xvzf mongodb-linux-x86_64-ubuntu1204-3.2.9.tgz
-    - sudo cp mongodb-linux-x86_64-ubuntu1204-3.2.9/bin/* /usr/bin
-    - sudo /etc/init.d/mongod start
     - pip install awscli
     - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test && sudo apt-get update
     - sudo apt-get install -y gcc-4.9 g++-4.9
