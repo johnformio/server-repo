@@ -175,6 +175,7 @@ module.exports = function(formio) {
             }
 
             item.machineName = machineName;
+            _debug(item)
             done(null, item);
           });
         }
@@ -186,11 +187,12 @@ module.exports = function(formio) {
 
         if (req.templateMode === 'create') {
           // Update the project with this template.
-          updateProject(template);
+          return updateProject(template);
         }
-        else {
-          return next();
-        }
+
+        _debug('FINAL=')
+        _debug(template)
+        return next();
       });
     };
 
@@ -198,11 +200,11 @@ module.exports = function(formio) {
     debug('template: ' + template + ', typeof ' + typeof template);
     if (typeof template === 'object') {
       // Import the template.
-      importTemplate(template);
+      return importTemplate(template);
     }
     // Allow templates from http://help.form.io/templates.
-    else if (isURL(template)) {
-      request({
+    if (isURL(template)) {
+      return request({
         url: template,
         json: true
       }, function(err, response, body) {
@@ -216,17 +218,16 @@ module.exports = function(formio) {
         }
 
         // Import the template.
-        importTemplate(body);
+        return importTemplate(body);
       });
     }
     // Check for template that is already provided.
-    else if (formio.templates.hasOwnProperty(template)) {
+    if (formio.templates.hasOwnProperty(template)) {
       // Import the template.
-      importTemplate(_.cloneDeep(formio.templates[template]));
+      return importTemplate(_.cloneDeep(formio.templates[template]));
     }
-    else {
-      // Unknown template.
-      return next('Unknown template.');
-    }
+
+    // Unknown template.
+    return next('Unknown template.');
   };
 };
