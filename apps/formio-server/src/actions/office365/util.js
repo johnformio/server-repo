@@ -2,7 +2,7 @@
 
 var _ = require('lodash');
 var adal = require('adal-node');
-var uuid = require('node-uuid');
+var uuid = require('uuid');
 var AuthenticationContext = adal.AuthenticationContext;
 var request = require('request');
 var Q = require('q');

@@ -55,7 +55,7 @@ module.exports = function(app, formioServer) {
       access.roles = _.map(access.roles, formioServer.formio.util.idToString);
 
       var starts = _.startsWith(access.type, 'team_');
-      var contains = _.contains(access.roles, formioServer.formio.util.idToString(team));
+      var contains = _.includes(access.roles, formioServer.formio.util.idToString(team));
 
       debug.getProjectPermission('access: ' + JSON.stringify(access));
       debug.getProjectPermission('starts: ' + starts);
@@ -75,16 +75,16 @@ module.exports = function(app, formioServer) {
       /* eslint-enable no-console */
 
       // Return the highest access permission.
-      var permissions = _.pluck(type, 'type');
+      var permissions = _.map(type, 'type');
       debug.getProjectPermission(permissions);
 
-      if (_.contains(permissions, 'team_admin')) {
+      if (_.includes(permissions, 'team_admin')) {
         return 'team_admin';
       }
-      if (_.contains(permissions, 'team_write')) {
+      if (_.includes(permissions, 'team_write')) {
         return 'team_write';
       }
-      if (_.contains(permissions, 'team_read')) {
+      if (_.includes(permissions, 'team_read')) {
         return 'team_read';
       }
     }
@@ -269,17 +269,17 @@ module.exports = function(app, formioServer) {
 
       // Build the team:permission map.
       var permissions = {};
-      _.forEach(teams, function(permission) {
+      _.each(teams, function(permission) {
         // Iterate each permission role and associate it with the original permission type.
         permission.roles = permission.roles || [];
-        _.forEach(permission.roles, function(role) {
+        _.each(permission.roles, function(role) {
           permissions[role] = permission.type;
         });
       });
       debug.getProjectTeams(permissions);
 
       // Separate the teams from their roles for a flat list, and convert to strings for comparison.
-      teams = _.pluck(teams, 'roles');
+      teams = _.map(teams, 'roles');
       teams = _.flatten(teams);
       teams = teams || [];
       teams = _.map(teams, formioServer.formio.util.idToString);
@@ -441,7 +441,7 @@ module.exports = function(app, formioServer) {
       }
 
       var response = [];
-      _.forEach(projects, function(project) {
+      _.each(projects, function(project) {
         project = project.toObject();
 
         response.push({
@@ -545,7 +545,7 @@ module.exports = function(app, formioServer) {
           })
           .then(function(teams) {
             // Inject the original team permissions with each team.
-            teams = _.forEach(teams, function(team) {
+            teams = _.each(teams, function(team) {
               if (team._id && permissions[team._id]) {
                 team.permission = permissions[team._id];
               }

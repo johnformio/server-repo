@@ -586,7 +586,7 @@ module.exports = function(app, template, hook) {
 
           // Confirm that all permission types are present.
           assert.equal(response.access.length, 4);
-          var permissions = _.pluck(response.access, 'type');
+          var permissions = _.map(response.access, 'type');
           assert.deepEqual(permissions, ['create_all', 'read_all', 'update_all', 'delete_all']);
 
           // Confirm that all roles are not empty.

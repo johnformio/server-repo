@@ -235,7 +235,7 @@ module.exports = function(router) {
         return Q.ninvoke(router.formio.resources.form.model, 'find', {project: projectId, deleted: {$eq: null}});
       })
       .then(function(forms) {
-        var formIds = _.pluck(forms, '_id');
+        var formIds = _.map(forms, '_id');
         formIds.map(util.idToBson);
 
         // Get all the actions for the current projects forms, which havent been deleted.

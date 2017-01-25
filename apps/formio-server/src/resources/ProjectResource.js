@@ -16,7 +16,7 @@ module.exports = function(router, formioServer) {
       var cache = require('../cache/cache')(formio);
       cache.loadProject(req, req.projectId, function(err, project) {
         if (!err) {
-          var access = _.map(_.pluck(_.filter(project.access, {type: 'team_admin'}), 'roles'), formio.util.idToString);
+          var access = _.map(_.map(_.filter(project.access, {type: 'team_admin'}), 'roles'), formio.util.idToString);
           var roles = _.map(req.user.roles, formio.util.idToString);
 
           if ( _.intersection(access, roles).length !== 0) {
@@ -112,7 +112,7 @@ module.exports = function(router, formioServer) {
               return;
             }
 
-            var modReq = _.clone(req);
+            var modReq = _.cloneDeep(req);
             modReq.projectId = project._id;
             var projectFieldName = process.env.HUBSPOT_PROJECT_FIELD;
             var options = {settings: {}};
@@ -173,7 +173,7 @@ module.exports = function(router, formioServer) {
     if (!req.body || !req.body.name) {
       return res.status(400).send('"name" parameter is required');
     }
-    if (config.reservedSubdomains && _.contains(config.reservedSubdomains, req.body.name)) {
+    if (config.reservedSubdomains && _.includes(config.reservedSubdomains, req.body.name)) {
       return res.status(200).send({available: false});
     }
 

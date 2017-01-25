@@ -2,12 +2,11 @@ machine:
   pre:
     - curl -sSL https://s3.amazonaws.com/circle-downloads/install-circleci-docker.sh | bash -s -- 1.10.0
   node:
-    version: 4.4.5
+    version: 6.9.4
   python:
     version: 2.7.3
   services:
     - docker
-    - mongodb
     - redis
   environment:
     SHORT_SHA: $(echo $CIRCLE_SHA1 | cut -b1-7)
@@ -18,14 +17,16 @@ machine:
 
 dependencies:
   pre:
-    - sudo /etc/init.d/mongodb stop && wget http://downloads.mongodb.org/linux/mongodb-linux-x86_64-ubuntu1204-3.2.6.tgz && tar xvzf mongodb-linux-x86_64-ubuntu1204-3.2.6.tgz
-    - sudo cp mongodb-linux-x86_64-ubuntu1204-3.2.6/bin/* /usr/bin
-    - sudo /etc/init.d/mongodb start
+    - sudo service mongod stop
+    - sleep 2
+    - wget http://downloads.mongodb.org/linux/mongodb-linux-x86_64-ubuntu1204-3.2.9.tgz && tar xvzf mongodb-linux-x86_64-ubuntu1204-3.2.9.tgz
+    - sudo cp mongodb-linux-x86_64-ubuntu1204-3.2.9/bin/* /usr/bin
+    - sudo service mongod start
     - pip install awscli
     - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test && sudo apt-get update
     - sudo apt-get install -y gcc-4.9 g++-4.9
-    - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.6 10
-    - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.6 10
+    - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 10
+    - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 10
     - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 20
     - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 20
   override:
@@ -48,7 +49,6 @@ test:
     - sudo bash -c "echo \"127.0.0.1 dockertest.localhost\" >> /etc/hosts"
     - npm i --g formio-cli
     - npm i --g eslint-cli
-    - sudo pkill redis-server
   override:
     # Test Formio locally.
     - redis-server &> $CIRCLE_ARTIFACTS/redis.log:
@@ -69,14 +69,13 @@ test:
     - docker logs formio-server &> $CIRCLE_ARTIFACTS/docker-server.log
     # Test Formio in a customer docker environment.
     - docker stop formio-server
-    - sudo pkill redis-server
-    - sudo service mongodb stop
+    - sudo service mongod stop
     - docker ps -a
     - docker images
     - docker network create formio
     - docker run -itd --name formio-mongo --net formio -p 27017:27017 mongo
-    - docker run -itd --name formio-redis --net formio -p 6379:6379 redis
-    - docker run -itd -e "DEBUG=formio:*,formio:*:*" -e "PROJECT_PLAN=trial" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "JWT_SECRET=CHANGEME" -e "JWT_EXPIRE_TIME=240" -e "DB_SECRET=CHANGEME" -e "ADMIN_EMAIL=dockertest@form.io" -e "ADMIN_PASS=testdockertest" --name formio-server2 --net formio --link formio-redis:redis --link formio-mongo:mongo -p 127.0.0.1:3000:3000 $IMAGE_PATH
+    - docker run -itd --name formio-redis --net formio -p 6380 redis
+    - docker run -itd -e "DEBUG=formio:*,formio:*:*" -e "PROJECT_PLAN=trial" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "REDIS_ADDR=localhost" -e "REDIS_PORT=6380" -e "JWT_SECRET=CHANGEME" -e "JWT_EXPIRE_TIME=240" -e "DB_SECRET=CHANGEME" -e "ADMIN_EMAIL=dockertest@form.io" -e "ADMIN_PASS=testdockertest" --name formio-server2 --net formio --link formio-redis:redis --link formio-mongo:mongo -p 127.0.0.1:3000:3000 $IMAGE_PATH
     - docker ps
     - docker network inspect formio
     - docker logs formio-server2
