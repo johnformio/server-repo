@@ -27,6 +27,7 @@ module.exports = function(app, template, hook) {
         helper = new template.Helper(template.formio.owner);
         helper
           .project()
+          .plan('basic')
           .resource([
             {
               input: true,
@@ -175,7 +176,6 @@ module.exports = function(app, template, hook) {
               }
 
               assert(typeof response === 'object');
-              assert.deepEqual(response.settings, {cors: '*'});
               project = response;
               done();
             });
