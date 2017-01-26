@@ -727,10 +727,29 @@ module.exports = function(app, template, hook) {
   describe('Project Plans', function() {
     var tempProjects = [];
     describe('Basic Plan', function() {
-      before(function() {
+      before(function(done) {
         tempProjects = [];
+
+        if (docker) {
+          return done();
+        }
+
+        // Confirm the dummy project is on the independent plan.
+        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
+          if (err) return done(err);
+
+          project.plan = 'basic';
+          project.save(function(err) {
+            if (err) {
+              return done(err);
+            }
+
+            done();
+          });
+        });
       });
 
+      if (!docker)
       it('Confirm the project is on the basic plan', function(done) {
         confirmProjectPlan(template.project._id, template.formio.owner, 'basic', done);
       });
