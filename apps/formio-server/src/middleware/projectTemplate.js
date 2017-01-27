@@ -189,8 +189,6 @@ module.exports = function(formio) {
           return updateProject(template);
         }
 
-        _debug('FINAL=')
-        _debug(template)
         return next();
       });
     };

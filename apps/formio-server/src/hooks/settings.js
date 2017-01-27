@@ -1096,7 +1096,8 @@ module.exports = function(app) {
         return schema;
       },
       formMachineName: function(machineName, document, done) {
-        formioServer.formio.resources.project.model.findOne({_id: document.project, deleted: {$eq: null}}).exec(function(err, project) {
+        formioServer.formio.resources.project.model.findOne({_id: document.project, deleted: {$eq: null}})
+        .exec(function(err, project) {
           if (err) {
             return done(err);
           }
@@ -1108,7 +1109,8 @@ module.exports = function(app) {
         this.formMachineName(machineName, document, done);
       },
       actionMachineName: function(machineName, document, done) {
-        formioServer.formio.resources.form.model.findOne({_id: document.form, deleted: {$eq: null}}).exec(function(err, form) {
+        formioServer.formio.resources.form.model.findOne({_id: document.form, deleted: {$eq: null}})
+        .exec(function(err, form) {
           if (err) {
             return done(err);
           }
