@@ -175,7 +175,6 @@ module.exports = function(formio) {
             }
 
             item.machineName = machineName;
-            _debug(item)
             done(null, item);
           });
         }
