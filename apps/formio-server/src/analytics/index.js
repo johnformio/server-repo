@@ -340,7 +340,8 @@ module.exports = function(config) {
         .uniq()
         .forEach(function(key) {
           transaction.llen(key);
-        });
+        })
+        .value();
 
       transaction.exec(function(err, response) {
         if (err) {
