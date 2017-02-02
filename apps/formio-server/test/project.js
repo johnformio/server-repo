@@ -1343,6 +1343,32 @@ module.exports = function(app, template, hook) {
         confirmProjectPlan(template.project._id, template.formio.owner, 'independent', done);
       });
 
+      if (docker)
+      it('Confirm the project is on the independent plan', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .send({
+            plan: 'independent'
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'independent');
+            template.project = response;
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
       it('A Project on the Independent plan will be able to change the project name on project update', function(done) {
         var attempt = chance.word({length: 10});
 
@@ -1358,6 +1384,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'independent');
             assert.equal(response.hasOwnProperty('name'), true);
             assert.equal(response.name, attempt);
 
@@ -1383,6 +1410,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'independent');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('cors'), true);
             assert.equal(response.settings.cors, '*');
@@ -1415,6 +1443,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'independent');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('oauth'), true);
             assert.equal(response.settings.oauth.hasOwnProperty('github'), true);
@@ -1451,6 +1480,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'independent');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('email'), true);
             assert.deepEqual(Object.keys(response.settings.email), ['custom', 'smtp', 'gmail', 'sendgrid', 'mandrill', 'mailgun']);
@@ -1492,6 +1522,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'independent');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('storage'), false);
 
@@ -1562,6 +1593,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'independent');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('atlassian'), true);
             assert.equal(response.settings.hasOwnProperty('databases'), true);
