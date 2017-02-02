@@ -754,6 +754,32 @@ module.exports = function(app, template, hook) {
         confirmProjectPlan(template.project._id, template.formio.owner, 'basic', done);
       });
 
+      if (docker)
+      it('Confirm the project is on the basic plan', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .send({
+            plan: 'basic'
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'basic');
+            template.project = response;
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
       it('A Project on the basic plan will have a uuid generated name on creation', function(done) {
         request(app)
           .get('/project/' + template.project._id)
@@ -766,6 +792,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('name'), true);
             assert.notEqual(response.name.search(uuidRegex), -1);
 
@@ -781,7 +808,8 @@ module.exports = function(app, template, hook) {
         var tempProject = {
           title: chance.word(),
           description: chance.sentence(),
-          name: attempt
+          name: attempt,
+          plan: 'basic'
         };
 
         request(app)
@@ -796,6 +824,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('name'), true);
             assert.notEqual(response.name, attempt);
             assert.notEqual(response.name.search(uuidRegex), -1);
@@ -824,6 +853,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('name'), true);
             assert.equal(response.name, template.project.name);
             assert.notEqual(response.name.search(uuidRegex), -1);
@@ -842,7 +872,8 @@ module.exports = function(app, template, hook) {
           description: chance.sentence(),
           settings: {
             cors: attempt
-          }
+          },
+          plan: 'basic'
         };
 
         request(app)
@@ -857,6 +888,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('settings'), false);
             tempProjects.push(res.body);
 
@@ -882,6 +914,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('cors'), true);
             assert.equal(response.settings.cors, '*');
@@ -902,7 +935,8 @@ module.exports = function(app, template, hook) {
             oauth: {
               github: attempt
             }
-          }
+          },
+          plan: 'basic'
         };
 
         request(app)
@@ -917,6 +951,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('settings'), false);
 
             tempProjects.push(res.body);
@@ -949,6 +984,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('oauth'), false);
 
@@ -972,7 +1008,8 @@ module.exports = function(app, template, hook) {
               mandrill: {auth: {apiKey: chance.word()}},
               mailgun: {auth: {api_key: chance.word(), domain: chance.word()}}
             }
-          }
+          },
+          plan: 'basic'
         };
 
         request(app)
@@ -987,6 +1024,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('settings'), false);
 
             tempProjects.push(res.body);
@@ -1022,6 +1060,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('email'), true);
             assert.deepEqual(Object.keys(response.settings.email), ['smtp']);
@@ -1052,7 +1091,8 @@ module.exports = function(app, template, hook) {
                 access_token: chance.word()
               }
             }
-          }
+          },
+          plan: 'basic'
         };
 
         request(app)
@@ -1067,6 +1107,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('settings'), false);
 
             tempProjects.push(res.body);
@@ -1108,6 +1149,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('storage'), false);
 
@@ -1167,7 +1209,8 @@ module.exports = function(app, template, hook) {
               type: chance.word(),
               user: chance.word()
             }
-          }
+          },
+          plan: 'basic'
         };
 
         request(app)
@@ -1182,6 +1225,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('settings'), false);
 
             tempProjects.push(res.body);
@@ -1253,6 +1297,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('atlassian'), false);
             assert.equal(response.settings.hasOwnProperty('databases'), false);
