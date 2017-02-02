@@ -727,14 +727,8 @@ module.exports = function(app, template, hook) {
   describe('Project Plans', function() {
     var tempProjects = [];
     describe('Basic Plan', function() {
+      if (!docker)
       before(function(done) {
-        tempProjects = [];
-
-        if (docker) {
-          return done();
-        }
-
-        // Confirm the dummy project is on the independent plan.
         app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
           if (err) return done(err);
 
@@ -749,13 +743,8 @@ module.exports = function(app, template, hook) {
         });
       });
 
-      if (!docker)
-      it('Confirm the project is on the basic plan', function(done) {
-        confirmProjectPlan(template.project._id, template.formio.owner, 'basic', done);
-      });
-
       if (docker)
-      it('Confirm the project is on the basic plan', function(done) {
+      before(function(done) {
         request(app)
           .put('/project/' + template.project._id)
           .send({
@@ -1322,8 +1311,6 @@ module.exports = function(app, template, hook) {
     describe('Independent Plan', function() {
       if (!docker)
       before(function(done) {
-
-        // Confirm the dummy project is on the independent plan.
         app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
           if (err) return done(err);
 
@@ -1338,13 +1325,8 @@ module.exports = function(app, template, hook) {
         });
       });
 
-      if (!docker)
-      it('Confirm the project is on the independent plan', function(done) {
-        confirmProjectPlan(template.project._id, template.formio.owner, 'independent', done);
-      });
-
       if (docker)
-      it('Confirm the project is on the independent plan', function(done) {
+      before(function(done) {
         request(app)
           .put('/project/' + template.project._id)
           .send({
@@ -1614,7 +1596,6 @@ module.exports = function(app, template, hook) {
     describe('Team Plan', function() {
       if (!docker)
       before(function(done) {
-        // Confirm the dummy project is on the independent plan.
         app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
           if (err) return done(err);
 
@@ -1629,13 +1610,8 @@ module.exports = function(app, template, hook) {
         });
       });
 
-      if (!docker)
-      it('Confirm the project is on the Team plan', function(done) {
-        confirmProjectPlan(template.project._id, template.formio.owner, 'team', done);
-      });
-
       if (docker)
-      it('Confirm the project is on the Team plan', function(done) {
+      before(function(done) {
         request(app)
           .put('/project/' + template.project._id)
           .send({
@@ -1906,7 +1882,6 @@ module.exports = function(app, template, hook) {
     describe('Commercial Plan', function() {
       if (!docker)
       before(function(done) {
-        // Confirm the dummy project is on the independent plan.
         app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
           if (err) return done(err);
 
@@ -1921,9 +1896,30 @@ module.exports = function(app, template, hook) {
         });
       });
 
-      if (!docker)
-      it('Confirm the project is on the Commercial plan', function(done) {
-        confirmProjectPlan(template.project._id, template.formio.owner, 'commercial', done);
+      if (docker)
+      before(function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .send({
+            plan: 'commercial'
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'commercial');
+            template.project = response;
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
       });
 
       it('A Project on the Commercial plan will be able to change the project name on project update', function(done) {
@@ -1941,6 +1937,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'commercial');
             assert.equal(response.hasOwnProperty('name'), true);
             assert.equal(response.name, attempt);
 
@@ -1966,6 +1963,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'commercial');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('cors'), true);
             assert.equal(response.settings.cors, attempt);
@@ -1998,6 +1996,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'commercial');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('oauth'), true);
             assert.equal(response.settings.oauth.hasOwnProperty('github'), true);
@@ -2034,6 +2033,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'commercial');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('email'), true);
             assert.deepEqual(Object.keys(response.settings.email), ['custom', 'smtp', 'gmail', 'sendgrid', 'mandrill', 'mailgun']);
@@ -2075,6 +2075,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'commercial');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('storage'), true);
             assert.deepEqual(Object.keys(response.settings.storage), ['s3', 'dropbox']);
@@ -2146,6 +2147,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'commercial');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('atlassian'), true);
             assert.equal(response.settings.hasOwnProperty('databases'), true);
@@ -2166,7 +2168,6 @@ module.exports = function(app, template, hook) {
     describe('Upgrading Plans', function() {
       if (!docker)
       before(function(done) {
-        // Confirm the dummy project is on the basic plan.
         app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
           if (err) return done(err);
 
@@ -2179,6 +2180,32 @@ module.exports = function(app, template, hook) {
             done();
           });
         });
+      });
+
+      if (docker)
+      before(function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .send({
+            plan: 'basic'
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'basic');
+            template.project = response;
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
       });
 
       it('Anonymous users should not be allowed to upgrade a project', function(done) {
