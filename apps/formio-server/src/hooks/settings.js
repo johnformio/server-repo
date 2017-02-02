@@ -662,12 +662,13 @@ module.exports = function(app) {
         formioServer.formio.plans.getPlan(req, function(err, plan) {
           if (err) {
             _debug(err);
-            return callback();
+            return callback(err, query);
           }
 
           // FOR-209 - Skip group permission checks for non-team/commercial project plans.
           if (['team', 'commercial'].indexOf(plan) === -1) {
-            return callback();
+            _debug('Skipping additional permission checks, plan: ', plan);
+            return callback(null, query);
           }
 
           // Get all the possible groups in the project
