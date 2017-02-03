@@ -1,5 +1,6 @@
 'use strict';
 
+var _ = require('lodash');
 var debug = {
   plans: require('debug')('formio:plans'),
   checkRequest: require('debug')('formio:plans:checkRequest'),
