@@ -220,7 +220,7 @@ module.exports = function(app, template, hook) {
             .set('x-jwt-token', template.users.tempUser.token)
             .send(file)
             .expect(402)
-            .expect('Content-Type', /json/)
+            .expect('Content-Type', /text/)
             .end(function(err, res) {
               if (err) {
                 return done(err);
@@ -485,7 +485,7 @@ module.exports = function(app, template, hook) {
             .set('x-jwt-token', template.users.tempUser.token)
             .send(file)
             .expect(402)
-            .expect('Content-Type', /json/)
+            .expect('Content-Type', /text/)
             .end(function(err, res) {
               if (err) {
                 return done(err);

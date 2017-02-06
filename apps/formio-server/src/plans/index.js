@@ -164,7 +164,7 @@ module.exports = function(formioServer, cache) {
       plans = [plans];
     }
 
-    var allow = _.without(getPlans(), plans);
+    var allow = _.difference(getPlans(), plans);
     debug.disableForPlans('Inverting blacklist: ' + allow.join(', '));
     return allowForPlans(allow);
   };
