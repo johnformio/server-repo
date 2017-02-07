@@ -75,7 +75,7 @@ module.exports = function(app, template, hook) {
 
               var found = false;
               _.forEach(response, function(user) {
-                if (user._id === template.formio.owner._id) {
+                if (user._id == template.formio.owner._id) {
                   found = true;
                 }
               });

@@ -407,7 +407,7 @@ module.exports = function(app, template, hook) {
 
     it('A Form.io User should be able to Read the Index of their User-Created Projects', function(done) {
       request(app)
-        .get('/project?limit=9999')
+        .get('/project?limit=99999999')
         .set('x-jwt-token', template.formio.owner.token)
         .expect(200)
         .expect('Content-Type', /json/)
