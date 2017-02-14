@@ -10,6 +10,7 @@ var kickboxValidate = require('../actions/kickbox/validate');
 var nodeUrl = require('url');
 var jwt = require('jsonwebtoken');
 var semver = require('semver');
+var util = require('../util/util');
 
 module.exports = function(app) {
   var formioServer = app.formio;
@@ -165,81 +166,73 @@ module.exports = function(app) {
         return _.assign(models, require('../models/models')(formioServer));
       },
       email: function(mail, req, res, params, cb) {
-        // Search for tokens within an email and replace it with a SSO token.
-        // The token regular expression.
-        var tokenRegex = new RegExp(/\[\[\s*token\(\s*([^\)]+\s*)\)\s*\]\]/i);
-
-        // If the email is only going to one person, and they wish to have a token within the email, then
-        // we can generate a token for this user.
-        var matches = [];
-        if (mail.to.indexOf(',') === -1) {
-          matches = mail.html.match(tokenRegex);
-        }
-        if (matches && matches.length > 1) {
-          var parts = matches[1].split('=');
-          var field = parts[0];
-          var resources = parts[1];
-          var query = formioServer.formio.hook.alter('formQuery', {
-            name: {'$in': resources.split(',')},
-            deleted: {$eq: null}
-          }, req);
-
-          // Find the forms to search the record within.
-          formioServer.formio.resources.form.model.find(query).exec(function(err, result) {
-            if (err || !result) {
-              return cb(err);
-            }
-
-            var forms = [];
-            var formObjs = {};
-            result.forEach(function(form) {
-              formObjs[form._id.toString()] = form;
-              forms.push(form._id);
-            });
-
-            var query = {
-              form: {'$in': forms},
-              deleted: {$eq: null}
-            };
-
-            // Set the username field to the email address this is getting sent to.
-            query[field] = mail.to;
-
-            // Find the submission.
-            formioServer.formio.resources.submission.model
-              .findOne(query)
-              .select('_id, form')
-              .exec(function(err, submission) {
-                if (err || !submission) {
-                  return cb(null, mail);
-                }
-
-                // Create a new JWT token for the SSO.
-                var token = formioServer.formio.hook.alter('token', {
-                  user: {
-                    _id: submission._id.toString()
-                  },
-                  form: {
-                    _id: submission.form.toString()
-                  }
-                }, formObjs[submission.form.toString()]);
-
-                // Create a token that expires in 30 minutes.
-                token = jwt.sign(token, formioServer.formio.config.jwt.secret, {
-                  expiresIn: 30 * 60
-                });
-
-                // Replace the string token with the one generated here.
-                mail.html = mail.html.replace(tokenRegex, token);
-
-                // TO-DO: Generate the token for this user.
-                return cb(null, mail);
-              });
-          }.bind(this));
-        }
-        else {
+        if (mail.to.indexOf(',') !== -1) {
           return cb(null, mail);
         }
+
+        // Find the ssoToken.
+        var ssoToken = util.ssoToken(mail.html);
+        if (!ssoToken) {
+          return cb(null, mail);
+        }
+
+        var query = formioServer.formio.hook.alter('formQuery', {
+          name: {'$in': ssoToken.resources},
+          deleted: {$eq: null}
+        }, req);
+
+        // Find the forms to search the record within.
+        formioServer.formio.resources.form.model.find(query).exec(function(err, result) {
+          if (err || !result) {
+            return cb(err);
+          }
+
+          var forms = [];
+          var formObjs = {};
+          result.forEach(function(form) {
+            formObjs[form._id.toString()] = form;
+            forms.push(form._id);
+          });
+
+          var query = {
+            form: {'$in': forms},
+            deleted: {$eq: null}
+          };
+
+          // Set the username field to the email address this is getting sent to.
+          query[ssoToken.field] = mail.to;
+
+          // Find the submission.
+          formioServer.formio.resources.submission.model
+            .findOne(query)
+            .select('_id, form')
+            .exec(function(err, submission) {
+              if (err || !submission) {
+                return cb(null, mail);
+              }
+
+              // Create a new JWT token for the SSO.
+              var token = formioServer.formio.hook.alter('token', {
+                user: {
+                  _id: submission._id.toString()
+                },
+                form: {
+                  _id: submission.form.toString()
+                }
+              }, formObjs[submission.form.toString()]);
+
+              // Create a token that expires in 30 minutes.
+              token = jwt.sign(token, formioServer.formio.config.jwt.secret, {
+                expiresIn: ssoToken.expireTime * 60
+              });
+
+              // Replace the string token with the one generated here.
+              mail.html = mail.html.replace(util.tokenRegex, token);
+
+              // TO-DO: Generate the token for this user.
+              return cb(null, mail);
+            });
+        }.bind(this));
       },
       actions: function(actions) {
         actions.office365contact = require('../actions/office365/Office365Contact')(formioServer);
