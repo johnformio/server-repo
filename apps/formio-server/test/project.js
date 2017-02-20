@@ -409,7 +409,6 @@ module.exports = function(app, template, hook) {
       request(app)
         .get('/project?limit=9999')
         .set('x-jwt-token', template.formio.owner.token)
-        .expect(200)
         .expect('Content-Type', /json/)
         .end(function(err, res) {
           if (err) {
