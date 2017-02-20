@@ -338,10 +338,12 @@ module.exports = function(config) {
       // Confirm the keys are unique and add them to the transaction.
       var wrapped = _(keys)
         .uniq()
+        .value();
+
+      wrapped
         .forEach(function(key) {
           transaction.llen(key);
-        })
-        .value();
+        });
 
       transaction.exec(function(err, response) {
         if (err) {
