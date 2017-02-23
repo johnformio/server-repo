@@ -27,6 +27,8 @@ module.exports = function(options) {
   // Load the analytics hooks.
   var analytics = require('./src/analytics/index')(config);
 
+  var Logger = require('./src/logger/index')();
+
   // Ensure that we create projects within the helper.
   app.hasProjects = true;
 
@@ -78,6 +80,15 @@ module.exports = function(options) {
     res.redirect('https://' + req.get('Host') + req.url);
   });
 
+  app.use('/crash', function(req, res, next) {
+    var test = null;
+
+    var test2 = test.a.b
+    console.log(test2)
+    return something(next)
+    //return next(new Error('CRASH ME'))
+  });
+
   // CORS Support
   app.use(require('cors')());
 
@@ -115,6 +126,8 @@ module.exports = function(options) {
 
       // Mount the aggregation system.
       app.use('/project/:projectId/report', require('./src/middleware/report')(app.formio.formio));
+
+      app.use(Logger.errors.middleware);
 
       return q.resolve({
         app: app,
