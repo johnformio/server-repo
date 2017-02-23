@@ -27,7 +27,7 @@ module.exports = function(options) {
   // Load the analytics hooks.
   var analytics = require('./src/analytics/index')(config);
 
-  var Logger = require('./src/logger/index')();
+  var Logger = require('./src/logger/index')(config);
 
   // Ensure that we create projects within the helper.
   app.hasProjects = true;
@@ -127,7 +127,8 @@ module.exports = function(options) {
       // Mount the aggregation system.
       app.use('/project/:projectId/report', require('./src/middleware/report')(app.formio.formio));
 
-      app.use(Logger.errors.middleware);
+      // Mount the error logging middleware.
+      app.use(Logger.middleware);
 
       return q.resolve({
         app: app,
