@@ -3,7 +3,7 @@
 let _ = require('lodash');
 let debug = require('debug')('formio:logger:console');
 
-module.exports = (config) => {
+module.exports = (config, utils) => {
   if (!_.get(config, 'logging.console')) {
     debug('Disabled');
     return false;
@@ -11,15 +11,8 @@ module.exports = (config) => {
 
   return (err, req) => Promise.resolve()
   .then(() => {
-    let message = {
-      date: new Date(),
-      message: _.get(err, 'message', ''),
-      name: _.get(err, 'name', ''),
-      fileName: _.get(err, 'fileName', ''),
-      lineNumber: _.get(err, 'lineNumber', ''),
-      columnNumber: _.get(err, 'columnNumber', ''),
-      stack: _.get(err, 'stack', '')
-    };
+    let message = utils.message(err, req);
+    message.date = new Date();
 
     console.error(message);
     return message;

@@ -80,13 +80,11 @@ module.exports = function(options) {
     res.redirect('https://' + req.get('Host') + req.url);
   });
 
-  app.use('/crash', function(req, res, next) {
+  app.use('/crash/:myParam', function(req, res, next) {
     var test = null;
-
     var test2 = test.a.b
     console.log(test2)
     return something(next)
-    //return next(new Error('CRASH ME'))
   });
 
   // CORS Support

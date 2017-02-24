@@ -4,7 +4,7 @@ let _ = require('lodash');
 let rest = require('restler');
 let debug = require('debug')('formio:logger:formio');
 
-module.exports = (config) => {
+module.exports = (config, utils) => {
   if (!_.get(config, 'logging.formio')) {
     debug('Disabled');
     return false;
@@ -14,16 +14,10 @@ module.exports = (config) => {
     let url = _.get(config, 'logging.formio');
     debug(url);
 
-    rest.postJson(`${url}/submission`, {
-      data: {
-        message: _.get(err, 'message', ''),
-        name: _.get(err, 'name', ''),
-        fileName: _.get(err, 'fileName', ''),
-        lineNumber: _.get(err, 'lineNumber', ''),
-        columnNumber: _.get(err, 'columnNumber', ''),
-        stack: _.get(err, 'stack', '')
-      }
-    }).on('complete', function(result) {
+    let data = {data: utils.message(err, req)};
+    debug(data);
+
+    rest.postJson(url, data).on('complete', function(result) {
       if (result instanceof Error) {
         return reject(result);
       }
