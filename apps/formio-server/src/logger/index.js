@@ -32,7 +32,10 @@ module.exports = (config) => {
     return Promise.all(handlers)
     .then((results) => {
       debug(results);
-      return res.sendStatus(500);
+
+      if (res !== undefined) {
+        return res.sendStatus(500);
+      }
     })
     .catch(fatal => {
       console.error(`Fatal Logger Error: ${fatal}`);

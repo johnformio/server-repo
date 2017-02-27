@@ -80,13 +80,6 @@ module.exports = function(options) {
     res.redirect('https://' + req.get('Host') + req.url);
   });
 
-  app.use('/crash/:myParam', function(req, res, next) {
-    var test = null;
-    var test2 = test.a.b
-    console.log(test2)
-    return something(next)
-  });
-
   // CORS Support
   app.use(require('cors')());
 
@@ -154,8 +147,9 @@ module.exports = function(options) {
     });
   });
 
-  if (config.jslogger && jslogger) {
-    process.on('uncaughtException', function(err) {
+  // Do some logging on uncaught exceptions in the application.
+  process.on('uncaughtException', function(err) {
+    if (config.jslogger && jslogger) {
       /* eslint-disable no-console */
       console.log('Uncaught exception:');
       console.log(err);
@@ -167,13 +161,17 @@ module.exports = function(options) {
         fileName: err.fileName,
         lineNumber: err.lineNumber
       });
+    }
 
-      // Give jslogger time to log before exiting.
-      setTimeout(function() {
-        process.exit(1);
-      }, 1500);
-    });
-  }
+    if (Logger.middleware) {
+      Logger.middleware(err, {});
+    }
+
+    // Give the loggers some time to log before exiting.
+    setTimeout(function() {
+      process.exit(1);
+    }, 2500);
+  });
 
   return q.promise;
 };
