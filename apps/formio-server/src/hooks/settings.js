@@ -1090,7 +1090,8 @@ module.exports = function(app) {
         return schema;
       },
       formMachineName: function(machineName, document, done) {
-        formioServer.formio.resources.project.model.findOne({_id: document.project}).exec(function(err, project) {
+        formioServer.formio.resources.project.model.findOne({_id: document.project, deleted: {$eq: null}})
+        .exec(function(err, project) {
           if (err) {
             return done(err);
           }
@@ -1102,7 +1103,8 @@ module.exports = function(app) {
         this.formMachineName(machineName, document, done);
       },
       actionMachineName: function(machineName, document, done) {
-        formioServer.formio.resources.form.model.findOne({_id: document.form}).exec(function(err, form) {
+        formioServer.formio.resources.form.model.findOne({_id: document.form, deleted: {$eq: null}})
+        .exec(function(err, form) {
           if (err) {
             return done(err);
           }
@@ -1114,20 +1116,17 @@ module.exports = function(app) {
         if (!machineName) {
           return 'export';
         }
-        var ucFirst = function(string) {
-          return string.charAt(0).toUpperCase() + string.slice(1);
-        };
-        var lcFirst = function(string) {
-          return string.charAt(0).toLowerCase() + string.slice(1);
-        };
 
         var parts = machineName.split(':');
-        if (!parts || parts.length <= 1) {
-          return machineName;
+        if (parts.length === 1) {
+          return parts.pop();
         }
 
-        // Return a camel cased name without the project name.
-        return lcFirst(_.map(parts.slice(1), ucFirst).join(''));
+        // Remove the project portion of the machine name.
+        parts.shift();
+
+        // Rejoin the machine name as : seperated.
+        return parts.join(':');
       },
       exportComponent: function(_export, _map, options, component) {
         if (component.type === 'resource') {
