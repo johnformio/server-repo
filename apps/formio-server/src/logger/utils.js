@@ -11,6 +11,6 @@ module.exports = {
       method: _.get(req, 'method', ''),
       params: _.get(req, 'params', ''),
       body: _.get(req, 'body', '')
-    }
+    };
   }
 };

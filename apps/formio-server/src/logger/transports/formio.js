@@ -9,7 +9,7 @@ module.exports = (config, utils) => {
     debug('Disabled');
     return false;
   }
-  
+
   return (err, req) => new Promise((resolve, reject) => {
     let url = _.get(config, 'logging.formio');
     debug(url);

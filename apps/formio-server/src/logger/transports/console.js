@@ -14,7 +14,9 @@ module.exports = (config, utils) => {
     let message = utils.message(err, req);
     message.date = new Date();
 
+    /* eslint-disable no-console */
     console.error(message);
+    /* eslint-enable no-console */
     return message;
   });
 };

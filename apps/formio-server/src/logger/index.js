@@ -38,11 +38,15 @@ module.exports = (config) => {
       }
     })
     .catch(fatal => {
+      /* eslint-disable no-console */
       console.error(`Fatal Logger Error: ${fatal}`);
+      /* eslint-enable no-console */
       try {
         return res.sendStatus(500);
       }
-      catch (e) {}
+      catch (e) {
+        // res is undefined, called from global uncaughtException handler.
+      }
     });
   };
 
