@@ -1,7 +1,7 @@
 {
   "private": true,
   "engines": {
-    "node": ">=4.2.0"
+    "node": ">=6.0.0"
   },
   "scripts": {
     "start": "PROTOCOL=http DOMAIN=localhost PORT=3000 node main.js",

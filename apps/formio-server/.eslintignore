@@ -2,3 +2,4 @@ test/*
 src/db/updates/*
 node_modules/*
 bower_components/*
+build/*
