@@ -20,7 +20,7 @@ dependencies:
     - sudo service mongod stop
     - sleep 2
     - wget http://downloads.mongodb.org/linux/mongodb-linux-x86_64-ubuntu1204-3.2.9.tgz && tar xvzf mongodb-linux-x86_64-ubuntu1204-3.2.9.tgz
-    - sudo cp mongodb-linux-x86_64-ubuntu1204-3.2.9/bin/* /usr/bin
+    - sudo cp -f mongodb-linux-x86_64-ubuntu1204-3.2.9/bin/* /usr/bin
     - sudo service mongod start
     - pip install awscli
     - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test && sudo apt-get update
