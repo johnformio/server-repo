@@ -2,7 +2,7 @@ machine:
   pre:
     - curl -sSL https://s3.amazonaws.com/circle-downloads/install-circleci-docker.sh | bash -s -- 1.10.0
   node:
-    version: 6.9.4
+    version: 6
   python:
     version: 2.7.3
   services:
@@ -33,7 +33,7 @@ dependencies:
     - uname -r
     - echo $TAG_NAME
     - ./serverSetup.sh
-    - npm run build
+    - DEBUG=* npm run build
     - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
     - docker build -t $IMAGE_PATH -f deployment/docker/formio-server/Dockerfile .
   post:
