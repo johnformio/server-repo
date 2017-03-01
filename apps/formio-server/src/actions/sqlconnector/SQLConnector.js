@@ -58,6 +58,29 @@ module.exports = function(router) {
 
       var form = [];
       async.waterfall([
+        function addBlockCheckbox(cb) {
+          form.push({
+            conditional: {
+              eq: '',
+                when: null,
+                show: ''
+            },
+            type: 'checkbox',
+              validate: {
+              required: false
+            },
+            persistent: true,
+            protected: false,
+            defaultValue: false,
+            key: 'block',
+            label: 'Block request for SQL Connector feedback',
+            hideLabel: true,
+            tableView: true,
+            inputType: 'checkbox',
+            input: true
+          });
+          return cb();
+        },
         function addTableName(cb) {
           form.push({
             label: 'Table Name',
@@ -288,8 +311,25 @@ module.exports = function(router) {
    *   The callback function to execute upon completion.
    */
   SQLConnector.prototype.resolve = function(handler, method, req, res, next) { // eslint-disable-line max-statements
-    // Dont block on this action, lots of stuff to do.
-    next(); // eslint-disable-line callback-return
+    var settings = this.settings;
+
+    // Only block on the external request, if configured
+    if (!_.has(settings, 'block') || settings.block === false) {
+      return next();
+    }
+
+    var handleErrors = function(err) {
+      debug(err);
+      try {
+        // If blocking is on, return the error.
+        if (_.has(settings, 'block') && settings.block === true) {
+          return next(err.message || err);
+        }
+      }
+      catch (e) {
+        debug(e)
+      }
+    };
 
     try {
       method = req.method.toString().toLowerCase();
@@ -342,57 +382,72 @@ module.exports = function(router) {
       }
 
       debug(options);
-      request(options, function(err, response, body) {
-        if (err) {
-          debug(err);
-          return;
-        }
+      process.nextTick(function() {
+        request(options, function(err, response, body) {
+          if (err) {
+            return handleErrors(err);
+          }
 
-        debug(body);
+          debug(body);
 
-        // Begin link phase for new resources.
-        if (method !== 'post') {
-          return;
-        }
+          // Begin link phase for new resources.
+          if (method !== 'post') {
+            // if the request was blocking, return here.
+            if (_.has(settings, 'block') && settings.block === true) {
+              return next();
+            }
+            return;
+          }
 
-        // Attempt to modify linked resources.
-        return Q()
-          .then(function() {
-            var results = _.get(response, 'body.rows');
-            if (!(results instanceof Array)) {
-              // No clue what to do here.
-              throw new Error('Expected array of results, got ' + typeof results);
-            }
-            if (results.length === 1) {
-              return results[0];
-            }
+          // Attempt to modify linked resources.
+          return Q()
+            .then(function() {
+              if (!(/^2\d\d$/i.test(response.statusCode))) {
+                throw new Error((response.body || '').toString().replace(/<br>/, ''));
+              }
 
-            throw new Error('More than one result: ' + results.length);
-          })
-          .then(function(remoteItem) {
-            // Get the localId
-            var localId = _.get(res, 'resource.item._id');
-            if (!localId) {
-              throw new Error('Unknown local item id: ' + localId);
-            }
-            // Get the remoteId
-            var remoteId = _.get(remoteItem, primary);
-            if (!remoteId && remoteId !== 0) {
-              throw new Error('Unknown remote item id: ' + remoteId);
-            }
+              var results = _.get(response, 'body.rows');
+              if (!(results instanceof Array)) {
+                // No clue what to do here.
+                throw new Error('Expected array of results, got ' + typeof results);
+              }
+              if (results.length === 1) {
+                return results[0];
+              }
 
-            if (method === 'post') {
-              return addExternalId(localId, remoteId);
-            }
-          })
-          .catch(function(err) {
-            // Do nothing on errors.
-            debug(err);
-          });
+              throw new Error('More than one result: ' + results.length);
+            })
+            .then(function(remoteItem) {
+              // Get the localId
+              var localId = _.get(res, 'resource.item._id');
+              if (!localId) {
+                throw new Error('Unknown local item id: ' + localId);
+              }
+              // Get the remoteId
+              var remoteId = _.get(remoteItem, primary);
+              if (!remoteId && remoteId !== 0) {
+                throw new Error('Unknown remote item id (' + remoteId + ') for primary key.');
+              }
+
+              if (method === 'post') {
+                return addExternalId(localId, remoteId);
+              }
+            })
+            .then(function() {
+              // if the request was blocking, return here.
+              if (_.has(settings, 'block') && settings.block === true) {
+                return next();
+              }
+            })
+            .catch(function(err) {
+              // If blocking is on, return the error.
+              return handleErrors(err);
+            });
+        });
       });
     }
     catch (err) {
-      debug(err);
+      return handleErrors(err);
     }
   };
 
