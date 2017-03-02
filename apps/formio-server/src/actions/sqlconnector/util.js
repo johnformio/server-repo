@@ -78,6 +78,23 @@ module.exports = function(router) {
       endpoint: '/' + path.toString()
     };
 
+    /**
+     * Util function to generate the primary key comparison for different sql types.
+     *
+     * @returns {*}
+     */
+    var getPrimaryComparison = function() {
+      var comparison;
+      if (isPostgresql()) {
+        comparison = ' = text(\'{{ params.id }}\')';
+      }
+      else {
+        comparison = ' = {{ params.id }}';
+      }
+
+      return comparison;
+    };
+
     var _sql;
     switch (method) {
       case 'create':
@@ -129,7 +146,7 @@ module.exports = function(router) {
         _sql = _squel
           .select()
           .from(path.toString())
-          .where(primary.toString() + ' = {{ params.id }}');
+          .where(primary.toString() + (getPrimaryComparison()).toString());
 
         route.query = _sql.toString();
         break;
@@ -150,7 +167,7 @@ module.exports = function(router) {
           _sql.set(column, '{{ data.' + value + ' }}');
         });
 
-        _sql.where(primary.toString() + ' = {{ params.id }}');
+        _sql.where(primary.toString() + (getPrimaryComparison()).toString());
 
         if (isPostgresql()) {
           _sql.returning('*');
@@ -163,7 +180,7 @@ module.exports = function(router) {
           _sql = _squel
             .select()
             .from(path.toString())
-            .where(primary.toString() + ' = {{ params.id }}')
+            .where(primary.toString() + (getPrimaryComparison()).toString())
             .toString();
 
           // Get the select string for the updated record.
@@ -177,7 +194,7 @@ module.exports = function(router) {
         _sql = _squel
           .delete()
           .from(path.toString())
-          .where(primary.toString() + ' = {{ params.id }}');
+          .where(primary.toString() + (getPrimaryComparison()).toString());
 
         route.query = _sql.toString();
         break;

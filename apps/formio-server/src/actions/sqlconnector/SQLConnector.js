@@ -340,9 +340,8 @@ module.exports = function(router) {
       var primary = this.settings.primary;
       var cache = require('../../cache/cache')(formio);
       var project = cache.currentProject(req);
-      if (project === null) {
-        debug('No project found.');
-        return;
+      if (project === null || project === undefined) {
+        return handleErrors('No project found.');
       }
 
       // Add basic auth if available.
@@ -360,8 +359,7 @@ module.exports = function(router) {
       if (method !== 'post') {
         var externalId = getSubmissionId(req, res);
         if (externalId === undefined) {
-          debug('No externalId was found in the existing submission.');
-          return;
+          return handleErrors('No externalId was found in the existing submission.');
         }
 
         options.url += '/' + externalId;
@@ -376,19 +374,17 @@ module.exports = function(router) {
 
         // Remove protected fields from the external request.
         formio.util.removeProtectedFields(req.currentForm, method, item);
-        debug('body:');
-        debug(item);
         options.body = item;
       }
 
-      debug(options);
+      debug('options:', options);
       process.nextTick(function() {
         request(options, function(err, response, body) {
           if (err) {
             return handleErrors(err);
           }
 
-          debug(body);
+          debug('request response:', body);
 
           // Begin link phase for new resources.
           if (method !== 'post') {
@@ -409,7 +405,9 @@ module.exports = function(router) {
               var results = _.get(response, 'body.rows');
               if (!(results instanceof Array)) {
                 // No clue what to do here.
-                throw new Error('Expected array of results, got ' + typeof results);
+                throw new Error(
+                  'Expected array of results, got ' + typeof results + '(' + JSON.stringify(results) + ')'
+                );
               }
               if (results.length === 1) {
                 return results[0];
