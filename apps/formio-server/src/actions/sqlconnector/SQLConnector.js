@@ -32,7 +32,7 @@ module.exports = function(router) {
       priority: 0,
       defaults: {
         handler: ['after'],
-        method: ['create', 'read', 'update', 'delete']
+        method: ['create', 'update', 'delete']
       }
     });
   };
