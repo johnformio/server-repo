@@ -32,7 +32,7 @@ module.exports = function(router) {
       priority: 0,
       defaults: {
         handler: ['after'],
-        method: ['create', 'read', 'update', 'delete', 'index']
+        method: ['create', 'read', 'update', 'delete']
       }
     });
   };
@@ -312,10 +312,6 @@ module.exports = function(router) {
    */
   SQLConnector.prototype.resolve = function(handler, method, req, res, next) { // eslint-disable-line max-statements
     var settings = this.settings;
-    debug('action handler:', this.handler);
-    debug('handler:', handler);
-    debug('action method:', this.method);
-    debug('method:', method);
     debug('settings:', settings);
 
     // Only block on the external request, if configured
@@ -380,6 +376,7 @@ module.exports = function(router) {
         options.body = item;
       }
 
+      options.timeout = 10000;
       debug('options:', options);
       process.nextTick(function() {
         request(options, function(err, response, body) {
