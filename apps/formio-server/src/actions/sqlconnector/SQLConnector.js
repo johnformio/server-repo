@@ -312,6 +312,11 @@ module.exports = function(router) {
    */
   SQLConnector.prototype.resolve = function(handler, method, req, res, next) { // eslint-disable-line max-statements
     var settings = this.settings;
+    debug('action handler:', this.handler);
+    debug('handler:', handler);
+    debug('action method:', this.method);
+    debug('method:', method);
+    debug('settings:', settings);
 
     // Only block on the external request, if configured
     if (!_.has(settings, 'block') || settings.block === false) {
@@ -358,11 +363,9 @@ module.exports = function(router) {
       // If this was not a post request, determine which existing resource we are modifying.
       if (method !== 'post') {
         var externalId = getSubmissionId(req, res);
-        if (externalId === undefined) {
-          return handleErrors('No externalId was found in the existing submission.');
+        if (externalId !== undefined) {
+          options.url += '/' + externalId;
         }
-
-        options.url += '/' + externalId;
       }
 
       // If this is a create/update, determine what to send in the request body.
@@ -386,7 +389,7 @@ module.exports = function(router) {
 
           debug('request response:', body);
 
-          // Begin link phase for new resources.
+          // If this is not a new resource, skip link phase for new resources.
           if (method !== 'post') {
             // if the request was blocking, return here.
             if (_.has(settings, 'block') && settings.block === true) {
