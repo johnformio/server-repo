@@ -253,19 +253,23 @@ module.exports = function(router) {
       .then(function(forms) {
         var formIds = _(forms)
         .map(function(form) {
-          return util.idToBson(form._id)
+          return util.idToBson(form._id);
         })
         .value();
 
         // Get all the actions for the current projects forms, which havent been deleted.
-        return Q.ninvoke(router.formio.actions.model, 'find', {form: {$in: formIds}, deleted: {$eq: null}, name: 'sqlconnector'});
+        return Q.ninvoke(
+          router.formio.actions.model,
+          'find',
+          {form: {$in: formIds}, deleted: {$eq: null}, name: 'sqlconnector'}
+        );
       })
       .then(function(actions) {
         // Get all the sql connector actions
         var sqlActions = _(actions)
         .map(function(action) {
           try {
-            return action.toObject()
+            return action.toObject();
           }
           catch (e) {
             return action;

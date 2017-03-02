@@ -339,7 +339,7 @@ module.exports = function(router) {
 
     // Only block on the external request, if configured
     if (!_.has(settings, 'block') || settings.block === false) {
-      next();
+      next(); // eslint-disable-line callback-return
     }
 
     var handleErrors = function(err) {
@@ -363,7 +363,7 @@ module.exports = function(router) {
               deleted: Date.now()
             }
           };
-          return Q.ninvoke(formio.resources.submission.model, 'update', _find, _update)
+          return Q.ninvoke(formio.resources.submission.model, 'update', _find, _update);
         })
         .then(function() {
           // If blocking is on, return the error.
@@ -373,11 +373,11 @@ module.exports = function(router) {
           return;
         })
         .catch(function(err) {
-          debug(err)
+          debug(err);
         });
       }
       catch (e) {
-        debug(e)
+        debug(e);
       }
     };
 
