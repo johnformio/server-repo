@@ -62,11 +62,11 @@ module.exports = function(router) {
           form.push({
             conditional: {
               eq: '',
-                when: null,
-                show: ''
+              when: null,
+              show: ''
             },
             type: 'checkbox',
-              validate: {
+            validate: {
               required: false
             },
             persistent: true,
@@ -74,6 +74,29 @@ module.exports = function(router) {
             defaultValue: false,
             key: 'block',
             label: 'Block request for SQL Connector feedback',
+            hideLabel: true,
+            tableView: true,
+            inputType: 'checkbox',
+            input: true
+          });
+          return cb();
+        },
+        function addRemoveOnFailCheckbox(cb) {
+          form.push({
+            conditional: {
+              eq: '',
+              when: null,
+              show: ''
+            },
+            type: 'checkbox',
+            validate: {
+              required: false
+            },
+            persistent: true,
+            protected: false,
+            defaultValue: false,
+            key: 'cleanUp',
+            label: 'Remove new Form.io Submissions on SQL Connector failures.',
             hideLabel: true,
             tableView: true,
             inputType: 'checkbox',
@@ -322,10 +345,36 @@ module.exports = function(router) {
     var handleErrors = function(err) {
       debug(err);
       try {
-        // If blocking is on, return the error.
-        if (_.has(settings, 'block') && settings.block === true) {
-          return next(err.message || err);
-        }
+        return Q()
+        .then(function() {
+          // If cleanUp is on, and method is post, remove the newly created item.
+          if (method !== 'post' || !_.has(settings, 'cleanUp') || settings.cleanUp === false) {
+            return;
+          }
+
+          var localId = _.get(res, 'resource.item._id');
+          if (!localId) {
+            return;
+          }
+
+          var _find = {_id: localId};
+          var _update = {
+            $set: {
+              deleted: Date.now()
+            }
+          };
+          return Q.ninvoke(formio.resources.submission.model, 'update', _find, _update)
+        })
+        .then(function() {
+          // If blocking is on, return the error.
+          if (_.has(settings, 'block') && settings.block === true) {
+            return next(err.message || err);
+          }
+          return;
+        })
+        .catch(function(err) {
+          debug(err)
+        });
       }
       catch (e) {
         debug(e)
