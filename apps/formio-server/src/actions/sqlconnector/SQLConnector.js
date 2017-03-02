@@ -339,7 +339,7 @@ module.exports = function(router) {
 
     // Only block on the external request, if configured
     if (!_.has(settings, 'block') || settings.block === false) {
-      return next();
+      next();
     }
 
     var handleErrors = function(err) {
