@@ -370,6 +370,14 @@ module.exports = function(router) {
       if (project === null || project === undefined) {
         return handleErrors('No project found.');
       }
+      else {
+        try {
+          project = project.toObject();
+        }
+        catch (e) {
+          // Project is already a plain object.
+        }
+      }
 
       // Add basic auth if available.
       if (_.has(project, 'settings.sqlconnector.user')) {
