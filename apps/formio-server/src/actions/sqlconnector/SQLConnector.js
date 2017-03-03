@@ -81,29 +81,6 @@ module.exports = function(router) {
           });
           return cb();
         },
-        function addRemoveOnFailCheckbox(cb) {
-          form.push({
-            conditional: {
-              eq: '',
-              when: null,
-              show: ''
-            },
-            type: 'checkbox',
-            validate: {
-              required: false
-            },
-            persistent: true,
-            protected: false,
-            defaultValue: false,
-            key: 'cleanUp',
-            label: 'Remove new Form.io Submissions on SQL Connector failures.',
-            hideLabel: true,
-            tableView: true,
-            inputType: 'checkbox',
-            input: true
-          });
-          return cb();
-        },
         function addTableName(cb) {
           form.push({
             label: 'Table Name',
@@ -347,8 +324,8 @@ module.exports = function(router) {
       try {
         return Q()
         .then(function() {
-          // If cleanUp is on, and method is post, remove the newly created item.
-          if (method !== 'post' || !_.has(settings, 'cleanUp') || settings.cleanUp === false) {
+          // If this is not a creation, skip clean up of the failed item.
+          if (method !== 'post') {
             return;
           }
 
