@@ -48,9 +48,13 @@ var emptyDatabase = template.emptyDatabase = function(done) {
     });
   };
 
-  var resetTeams = function() {
+  var resetTeams = function(err) {
+    if (err) {
+      return done(err);
+    }
+
     if (docker || customer) {
-      return done;
+      return done();
     }
 
     app.formio.formio.teams.resetTeams();
@@ -58,22 +62,38 @@ var emptyDatabase = template.emptyDatabase = function(done) {
   };
 
   // Remove all test documents for roles.
-  var dropRoles = function() {
+  var dropRoles = function(err) {
+    if (err) {
+      return done(err);
+    }
+
     dropDocuments(app.formio.formio.resources.role.model, resetTeams);
   };
 
   // Remove all test documents for actions.
-  var dropActions = function() {
+  var dropActions = function(err) {
+    if (err) {
+      return done(err);
+    }
+
     dropDocuments(app.formio.formio.actions.model, dropRoles);
   };
 
   // Remove all test documents for submissions.
-  var dropSubmissions = function() {
+  var dropSubmissions = function(err) {
+    if (err) {
+      return done(err);
+    }
+
     dropDocuments(app.formio.formio.resources.submission.model, dropActions);
   };
 
   // Remove all test documents for forms.
-  var dropForms = function() {
+  var dropForms = function(err) {
+    if (err) {
+      return done(err);
+    }
+
     dropDocuments(app.formio.formio.resources.form.model, dropSubmissions);
   };
 

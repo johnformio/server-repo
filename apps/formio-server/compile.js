@@ -4,7 +4,6 @@ var fs = require('fs');
 var path = require('path');
 var NodeOptimizer = require('node-optimize');
 var UglifyJS = require('uglify-js');
-
 var outputDir = 'build';
 
 // Ensure build directory exists.
@@ -12,7 +11,9 @@ try {
   fs.mkdirSync(outputDir);
 }
 catch (e) {
-  // Do nothing
+  /* eslint-disable no-console */
+  console.error(e);
+  /* eslint-enable no-console */
 }
 
 // Copy over files

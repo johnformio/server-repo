@@ -2,7 +2,8 @@
   "root": true,
   "extends": "./node_modules/eslint-config-formio/index.js",
   "env": {
-    "node": true
+    "node": true,
+    "es6": true
   },
   "rules": {
     "curly": [2, "all"],
