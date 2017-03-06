@@ -1,3 +1,5 @@
+'use strict';
+
 var _ = require('lodash');
 module.exports = {
   tokenRegex: new RegExp(/\[\[\s*token\(\s*([^\)]+\s*)\)\s*,?\s*([0-9]*)\s*\]\]/i),

@@ -155,7 +155,13 @@ config.formio.dropbox.clientSecret = process.env.DROPBOX_CLIENTSECRET || '';
 config.formio.jwt = {};
 config.formio.jwt.secret = process.env.JWT_SECRET || 'abc123';
 config.formio.jwt.expireTime = process.env.JWT_EXPIRE_TIME || 240;
+
+// Logging config.
 config.jslogger = process.env.JS_LOGGER || null;
+config.logging = {
+  console: process.env.LOGGING_CONSOLE || true,
+  formio: process.env.LOGGING_FORMIO || false
+};
 
 // Allow the config to be displayed when debugged.
 var sanitized = _.clone(config, true);
