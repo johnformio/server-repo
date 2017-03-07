@@ -37,6 +37,14 @@ dependencies:
   post:
     - ./deployment/scripts/importDb.sh formio
 
+compile:
+  override:
+    # Test Formio locally.
+    - redis-server &> $CIRCLE_ARTIFACTS/redis.log:
+          background: true
+    # - DEBUG=formio:*,formio:*:* DROPBOX_CLIENTID=NOTREAL npm test &> $CIRCLE_ARTIFACTS/formio-server.log
+    - DROPBOX_CLIENTID=NOTREAL npm test
+
 test:
   pre:
     - node --version
@@ -47,12 +55,6 @@ test:
     - sudo bash -c "echo \"127.0.0.1 dockertest.localhost\" >> /etc/hosts"
     - npm i --g eslint-cli
   override:
-    # Test Formio locally.
-    - redis-server &> $CIRCLE_ARTIFACTS/redis.log:
-          background: true
-    # - DEBUG=formio:*,formio:*:* DROPBOX_CLIENTID=NOTREAL npm test &> $CIRCLE_ARTIFACTS/formio-server.log
-    - DROPBOX_CLIENTID=NOTREAL npm test
-  post:
     # Test Formio in a docker environment.
     - redis-server &> $CIRCLE_ARTIFACTS/docker-redis.log:
           background: true
