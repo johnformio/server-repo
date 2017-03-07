@@ -191,7 +191,7 @@ module.exports = function(app, template, hook) {
           }
           assert.equal(res.body.bucket, template.project.settings.storage.s3.bucket);
           // Ignore Expires timestamp as it can be off by a second.
-          assert.equal(res.body.url.replace(/Expires=[0-9]*/, ''), template.project.settings.storage.s3.bucketUrl.replace(/Expires=[0-9]*/, ''));
+          assert.equal(res.body.url, template.project.settings.storage.s3.bucketUrl);
           assert.equal(res.body.data.key, template.project.settings.storage.s3.startsWith);
           assert.equal(res.body.data.AWSAccessKeyId, template.project.settings.storage.s3.AWSAccessKeyId);
           assert.equal(res.body.data.acl, template.project.settings.storage.s3.acl);
@@ -253,7 +253,7 @@ module.exports = function(app, template, hook) {
             if (err) {
               done(err);
             }
-            assert.equal(res.body.url, url);
+            assert.equal(res.body.url.replace(/Expires=[0-9]*/, ''), url.replace(/Expires=[0-9]*/, ''));
             done();
           });
         });
