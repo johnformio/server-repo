@@ -78,6 +78,23 @@ module.exports = function(router) {
       endpoint: '/' + path.toString()
     };
 
+    /**
+     * Util function to generate the primary key comparison for different sql types.
+     *
+     * @returns {*}
+     */
+    var getPrimaryComparison = function() {
+      var comparison;
+      if (isPostgresql()) {
+        comparison = ' = text(\'{{ params.id }}\')';
+      }
+      else {
+        comparison = ' = {{ params.id }}';
+      }
+
+      return comparison;
+    };
+
     var _sql;
     switch (method) {
       case 'create':
@@ -129,7 +146,7 @@ module.exports = function(router) {
         _sql = _squel
           .select()
           .from(path.toString())
-          .where(primary.toString() + ' = {{ params.id }}');
+          .where(primary.toString() + (getPrimaryComparison()).toString());
 
         route.query = _sql.toString();
         break;
@@ -150,7 +167,7 @@ module.exports = function(router) {
           _sql.set(column, '{{ data.' + value + ' }}');
         });
 
-        _sql.where(primary.toString() + ' = {{ params.id }}');
+        _sql.where(primary.toString() + (getPrimaryComparison()).toString());
 
         if (isPostgresql()) {
           _sql.returning('*');
@@ -163,7 +180,7 @@ module.exports = function(router) {
           _sql = _squel
             .select()
             .from(path.toString())
-            .where(primary.toString() + ' = {{ params.id }}')
+            .where(primary.toString() + (getPrimaryComparison()).toString())
             .toString();
 
           // Get the select string for the updated record.
@@ -177,7 +194,7 @@ module.exports = function(router) {
         _sql = _squel
           .delete()
           .from(path.toString())
-          .where(primary.toString() + ' = {{ params.id }}');
+          .where(primary.toString() + (getPrimaryComparison()).toString());
 
         route.query = _sql.toString();
         break;
@@ -193,12 +210,11 @@ module.exports = function(router) {
         var type = _.get(project, 'settings.sqlconnector.type');
 
         var routes = [];
-        var path, primary, methods, fields, data;
+        var path, primary, fields, data;
         _.each(actions, function(action) {
           // Pluck out the core info from the action.
           path = _.get(action, 'settings.table');
           primary = _.get(action, 'settings.primary') || 'id';
-          methods = _.get(action, 'method');
           data = {};
 
           // Iterate over each field to get the data mapping.
@@ -207,12 +223,12 @@ module.exports = function(router) {
             data[field.column] = _.get(field, 'field.key');
           });
 
-          _.each(methods, function(method) {
+          _.each(['create', 'read', 'index', 'update', 'delete'], function(method) {
             routes.push(getExpressRoute(method, path, primary, data, type));
           });
         });
 
-        return Q(routes);
+        return routes;
       })
       .catch(function(err) {
         debug.actionsToRoutes(err);
@@ -235,20 +251,34 @@ module.exports = function(router) {
         return Q.ninvoke(router.formio.resources.form.model, 'find', {project: projectId, deleted: {$eq: null}});
       })
       .then(function(forms) {
-        var formIds = _.map(forms, '_id');
-        formIds.map(util.idToBson);
+        var formIds = _(forms)
+        .map(function(form) {
+          return util.idToBson(form._id);
+        })
+        .value();
 
         // Get all the actions for the current projects forms, which havent been deleted.
-        return Q.ninvoke(router.formio.actions.model, 'find', {form: {$in: formIds}, deleted: {$eq: null}});
+        return Q.ninvoke(
+          router.formio.actions.model,
+          'find',
+          {form: {$in: formIds}, deleted: {$eq: null}, name: 'sqlconnector'}
+        );
       })
       .then(function(actions) {
         // Get all the sql connector actions
-        var sqlActions = _.filter(actions, function(item) {
-          return item.name === 'sqlconnector';
-        });
-        debug.getConnectorActions(sqlActions);
+        var sqlActions = _(actions)
+        .map(function(action) {
+          try {
+            return action.toObject();
+          }
+          catch (e) {
+            return action;
+          }
+        })
+        .value();
 
-        return Q(sqlActions);
+        debug.getConnectorActions(sqlActions);
+        return sqlActions;
       })
       .catch(function(err) {
         debug.getConnectorActions(err);

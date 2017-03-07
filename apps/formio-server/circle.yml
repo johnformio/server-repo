@@ -17,11 +17,6 @@ machine:
 
 dependencies:
   pre:
-    - sudo service mongod stop
-    - sleep 2
-    - wget http://downloads.mongodb.org/linux/mongodb-linux-x86_64-ubuntu1204-3.2.9.tgz && tar xvzf mongodb-linux-x86_64-ubuntu1204-3.2.9.tgz
-    - sudo cp -f mongodb-linux-x86_64-ubuntu1204-3.2.9/bin/* /usr/bin
-    - sudo service mongod start
     - pip install awscli
     - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test && sudo apt-get update
     - sudo apt-get install -y gcc-4.9 g++-4.9
@@ -31,13 +26,25 @@ dependencies:
     - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 20
   override:
     - uname -r
-    - echo $TAG_NAME
+
+database:
+  pre:
+    - sudo service mongod stop
+    - sleep 2
+    - wget http://downloads.mongodb.org/linux/mongodb-linux-x86_64-ubuntu1204-3.2.9.tgz && tar xvzf mongodb-linux-x86_64-ubuntu1204-3.2.9.tgz
+    - sudo cp -f mongodb-linux-x86_64-ubuntu1204-3.2.9/bin/* /usr/bin
+    - sudo service mongod start
+
+compile:
+  pre:
     - ./serverSetup.sh
     - npm run build
-    - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-    - docker build -t $IMAGE_PATH -f deployment/docker/formio-server/Dockerfile .
-  post:
-    - ./deployment/scripts/importDb.sh formio
+  override:
+    # Run full suite of tests against natively running server.
+    - redis-server &> $CIRCLE_ARTIFACTS/redis.log:
+          background: true
+    # - DEBUG=formio:*,formio:*:* DROPBOX_CLIENTID=NOTREAL npm test &> $CIRCLE_ARTIFACTS/formio-server.log
+    - DROPBOX_CLIENTID=NOTREAL npm test
 
 test:
   pre:
@@ -47,17 +54,15 @@ test:
     - sudo bash -c "echo \"127.0.0.1 formio.localhost\" >> /etc/hosts"
     - sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
     - sudo bash -c "echo \"127.0.0.1 dockertest.localhost\" >> /etc/hosts"
-    - npm i --g formio-cli
     - npm i --g eslint-cli
+    - ./deployment/scripts/importDb.sh formio
   override:
-    # Test Formio locally.
-    - redis-server &> $CIRCLE_ARTIFACTS/redis.log:
-          background: true
-    - DEBUG=formio:*,formio:*:* DROPBOX_CLIENTID=NOTREAL npm test &> $CIRCLE_ARTIFACTS/formio-server.log
     # Test Formio in a docker environment.
     - redis-server &> $CIRCLE_ARTIFACTS/docker-redis.log:
           background: true
     - ./deployment/scripts/restoreDb.sh formio
+    - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+    - docker build -t $IMAGE_PATH -f deployment/docker/formio-server/Dockerfile .
     - docker network ls
     - docker run -itd -e "MONGO1=$MONGO" -e "REDIS_ADDR=localhost" -e "REDIS_PORT=6379" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "DEBUG=*,*:*,*:*:*" -e "PROJECT_PLAN=basic" -e "DROPBOX_CLIENTID=NOTREAL" --name="formio-server" --net="host" $IMAGE_PATH
     - docker ps -a
@@ -81,6 +86,7 @@ test:
     - docker logs formio-server2
     - sleep 5
     - wget --tries=20 --retry-connrefused --wait=6 -v http://api.localhost:3000/health
+    - npm i --g formio-cli
     - formio deploy --src-username dockertest@form.io --src-password testdockertest --dst-username dockertest@form.io --dst-password testdockertest https://dockertest.form.io http://dockertest.localhost:3000
     - npm run customer
     - docker logs formio-server2 &> $CIRCLE_ARTIFACTS/docker-customer-server.log
