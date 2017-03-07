@@ -34,8 +34,6 @@ dependencies:
     - echo $TAG_NAME
     - ./serverSetup.sh
     - npm run build
-    - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-    - docker build -t $IMAGE_PATH -f deployment/docker/formio-server/Dockerfile .
   post:
     - ./deployment/scripts/importDb.sh formio
 
@@ -53,11 +51,14 @@ test:
     # Test Formio locally.
     - redis-server &> $CIRCLE_ARTIFACTS/redis.log:
           background: true
-    - DEBUG=formio:*,formio:*:* DROPBOX_CLIENTID=NOTREAL npm test &> $CIRCLE_ARTIFACTS/formio-server.log
+    # - DEBUG=formio:*,formio:*:* DROPBOX_CLIENTID=NOTREAL npm test &> $CIRCLE_ARTIFACTS/formio-server.log
+    - DROPBOX_CLIENTID=NOTREAL npm test
     # Test Formio in a docker environment.
     - redis-server &> $CIRCLE_ARTIFACTS/docker-redis.log:
           background: true
     - ./deployment/scripts/restoreDb.sh formio
+    - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+    - docker build -t $IMAGE_PATH -f deployment/docker/formio-server/Dockerfile .
     - docker network ls
     - docker run -itd -e "MONGO1=$MONGO" -e "REDIS_ADDR=localhost" -e "REDIS_PORT=6379" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "DEBUG=*,*:*,*:*:*" -e "PROJECT_PLAN=basic" -e "DROPBOX_CLIENTID=NOTREAL" --name="formio-server" --net="host" $IMAGE_PATH
     - docker ps -a
