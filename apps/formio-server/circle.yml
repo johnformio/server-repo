@@ -45,7 +45,6 @@ test:
     - sudo bash -c "echo \"127.0.0.1 formio.localhost\" >> /etc/hosts"
     - sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
     - sudo bash -c "echo \"127.0.0.1 dockertest.localhost\" >> /etc/hosts"
-    - npm i --g formio-cli
     - npm i --g eslint-cli
   override:
     # Test Formio locally.
@@ -82,6 +81,7 @@ test:
     - docker logs formio-server2
     - sleep 5
     - wget --tries=20 --retry-connrefused --wait=6 -v http://api.localhost:3000/health
+    - npm i --g formio-cli
     - formio deploy --src-username dockertest@form.io --src-password testdockertest --dst-username dockertest@form.io --dst-password testdockertest https://dockertest.form.io http://dockertest.localhost:3000
     - npm run customer
     - docker logs formio-server2 &> $CIRCLE_ARTIFACTS/docker-customer-server.log
