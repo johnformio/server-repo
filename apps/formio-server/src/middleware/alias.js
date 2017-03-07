@@ -62,17 +62,11 @@ module.exports = function(formio) {
       projectName = hostname.split('.')[0];
     }
     // Use the given address to trim the Project name from the subdomain.
-    else {
-      if (subdomain === null || subdomain === '') {
-        // No subdomain was found, skip middleware.
-        //return skip(req, res, next);
-      }
-      else {
-        // Trim the subdomain to the left-most portion for the Project name.
-        projectName = subdomain.split('.').length > 1
-          ? projectName = subdomain.split('.')[0]
-          : subdomain;
-      }
+    else if (subdomain) {
+      // Trim the subdomain to the left-most portion for the Project name.
+      projectName = subdomain.split('.').length > 1
+        ? projectName = subdomain.split('.')[0]
+        : subdomain;
     }
 
     // Quick confirmation that we have an projectName.
@@ -90,28 +84,26 @@ module.exports = function(formio) {
           // Allow using subdomains as subdirectories as well.
           var subdirectory = req.url.split('/')[1];
           // Quick confirmation that we have an projectName.
-          if (subdirectory === 'api') {
+          if (subdirectory === 'api' || config.reservedSubdomains.indexOf(subdirectory) !== -1) {
             return skip(req, res, next);
           }
-          if (config.reservedSubdomains.indexOf(subdirectory) === -1) {
+          else {
             cache.loadProjectByName(req, subdirectory, function(err, project) {
               debug.alias('Loading project from subdir: ' + projectName);
 
               if (err || !project) {
-                return skip(req, res, next);
+                return res.status(404).send('Project not found');
               }
+
               // Set the Project Id in the request.
               req.projectId = project._id.toString();
               req.url = '/project/' + project._id + req.url.slice(subdirectory.length + 1);
               return next();
             });
           }
-          else {
-            return next('Invalid subdomain');
-          }
         }
         else {
-          return next('Invalid subdomain');
+          return res.status(404).send('Project not found');
         }
       }
       else {

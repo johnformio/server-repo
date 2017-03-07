@@ -19,6 +19,7 @@ catch (e) {
 }
 
 config.reservedSubdomains = [
+  '',
   'test',
   'www',
   'api',
@@ -33,6 +34,7 @@ config.reservedSubdomains = [
   'atlassian',
   'available',
   'analytics',
+  'team',
 ];
 config.formio.reservedForms = [
   'submission',

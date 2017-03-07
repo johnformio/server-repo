@@ -50,6 +50,30 @@ module.exports = function(app, template, hook) {
         });
     });
 
+    it('Accesses default config by root', function(done) {
+      request(app)
+        .get('/')
+        .set('host', 'form.io')
+        //.set('x-jwt-token', template.formio.owner.token)
+        .send()
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          var response = res.body;
+
+          assert.equal(response.length, 1);
+          assert.equal(response[0].name, 'formio');
+
+          // Store the JWT for future API calls.
+          //template.formio.owner.token = res.headers['x-jwt-token'];
+          done();
+        });
+    });
+
     it('Accesses projects by subdomain', function(done) {
       request(app)
         .get('/')
@@ -68,6 +92,25 @@ module.exports = function(app, template, hook) {
           delete response.settings;
 
           assert.deepEqual(response, project);
+
+          // Store the JWT for future API calls.
+          template.formio.owner.token = res.headers['x-jwt-token'];
+          done();
+        });
+    });
+
+    it('Accesses current url', function(done) {
+      request(app)
+        .get('/current')
+        .set('host', project.name + '.form.io')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send()
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
 
           // Store the JWT for future API calls.
           template.formio.owner.token = res.headers['x-jwt-token'];
@@ -388,8 +431,8 @@ module.exports = function(app, template, hook) {
         .set('host', 'form.io')
         .set('x-jwt-token', template.formio.owner.token)
         .send()
-        .expect('Content-Type', /json/)
         .expect(200)
+        .expect('Content-Type', /json/)
         .end(function(err, res) {
           if (err) {
             return done(err);
@@ -653,6 +696,91 @@ module.exports = function(app, template, hook) {
 
           // Store the JWT for future API calls.
           template.formio.owner.token = res.headers['x-jwt-token'];
+          done();
+        });
+    });
+
+    it('Error when project not found by subdomain', function(done) {
+      request(app)
+        .get('/user/login')
+        .set('host', 'bad.form.io')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send()
+        .expect(404)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          assert.equal(res.text, 'Project not found');
+          done();
+        });
+    });
+
+    it('Error when project not found in three part domain', function(done) {
+      request(app)
+        .get('/user/login')
+        .set('host', 'form.co.uk')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send()
+        .expect(404)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          assert.equal(res.text, 'Project not found');
+          done();
+        });
+    });
+
+    it('Error when project not found in three part domain with subdomain', function(done) {
+      request(app)
+        .get('/user/login')
+        .set('host', 'bad.form.co.uk')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send()
+        .expect(404)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          assert.equal(res.text, 'Project not found');
+          done();
+        });
+    });
+
+    it('Error when project not found by /project/:projectId', function(done) {
+      request(app)
+        .get('/project/' + project._id + '1/user/login')
+        .set('host', 'form.io')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send()
+        .expect(500)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          assert.equal(res.text, 'Internal Server Error');
+          done();
+        });
+    });
+
+    it('Error when project not found by /project/:projectId or subdomain', function(done) {
+      request(app)
+        .get('/project/' + project._id + '1/user/login')
+        .set('host', 'bad.form.io')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send()
+        .expect(500)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          assert.equal(res.text, 'Internal Server Error');
           done();
         });
     });
