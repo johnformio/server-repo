@@ -831,6 +831,16 @@ module.exports = function(app) {
         return available;
       },
 
+      /**
+       * Disable anonymous project exports on the closed-source version of the api server, this is so we can add
+       * permissions.
+       *
+       * @returns {boolean}
+       */
+      canExport: function() {
+        return false;
+      },
+
       exportOptions: function(options, req, res) {
         var currentProject = cache.currentProject(req);
         options.title = currentProject.title;
