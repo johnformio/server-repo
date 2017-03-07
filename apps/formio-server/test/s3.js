@@ -5,6 +5,8 @@ var request = require('supertest');
 var assert = require('assert');
 var CryptoJS = require('crypto-js');
 var AWS = require('aws-sdk');
+var docker = process.env.DOCKER;
+var customer = process.env.CUSTOMER;
 
 module.exports = function(app, template, hook) {
   describe('S3 setup', function() {
@@ -253,7 +255,9 @@ module.exports = function(app, template, hook) {
             if (err) {
               done(err);
             }
-            assert.equal(res.body.url.replace(/Expires=[0-9]*/, ''), url.replace(/Expires=[0-9]*/, ''));
+            if (!docker && !customer) {
+              assert.equal(res.body.url.replace(/Expires=[0-9]*/, ''), url.replace(/Expires=[0-9]*/, ''));
+            }
             done();
           });
         });
