@@ -81,7 +81,15 @@ module.exports = function(options) {
   });
 
   // CORS Support
-  app.use(require('cors')());
+  var corsRoute = require('cors')();
+  app.use(function(req, res, next) {
+    // Delegate all project related cors requests to the formio module.
+    if (req.url.match(/\/project\/[^\/]*\/./)) {
+      return next();
+    }
+
+    return corsRoute(req, res, next);
+  });
 
   // Establish our url alias middleware.
   app.use(require('./src/middleware/alias')(app.formio.formio));
