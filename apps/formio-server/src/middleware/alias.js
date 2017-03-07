@@ -33,6 +33,11 @@ module.exports = function(formio) {
       return skip(req, res, next);
     }
 
+    // If /project/ is the start of the url, skip aliasing.
+    if (req.url.indexOf('/project/') === 0) {
+      return skip(req, res, next);
+    }
+
     // Get the hostname.
     var hostname = req.headers.host.split(':')[0];
 
@@ -60,7 +65,7 @@ module.exports = function(formio) {
     else {
       if (subdomain === null || subdomain === '') {
         // No subdomain was found, skip middleware.
-        return skip(req, res, next);
+        //return skip(req, res, next);
       }
       else {
         // Trim the subdomain to the left-most portion for the Project name.
@@ -71,7 +76,7 @@ module.exports = function(formio) {
     }
 
     // Quick confirmation that we have an projectName.
-    if (!projectName || projectName === 'api' || Number.isInteger(parseInt(projectName, 10))) {
+    if (Number.isInteger(parseInt(projectName, 10))) {
       return skip(req, res, next);
     }
 
@@ -80,13 +85,41 @@ module.exports = function(formio) {
       debug.alias('Loading project: ' + projectName);
 
       if (err || !project) {
-        return next('Invalid subdomain');
-      }
+        // If project is not found by subdomain, check if the directory refers to the project.
+        if (err === 'Project not found') {
+          // Allow using subdomains as subdirectories as well.
+          var subdirectory = req.url.split('/')[1];
+          // Quick confirmation that we have an projectName.
+          if (subdirectory === 'api') {
+            return skip(req, res, next);
+          }
+          if (config.reservedSubdomains.indexOf(subdirectory) === -1) {
+            cache.loadProjectByName(req, subdirectory, function(err, project) {
+              debug.alias('Loading project from subdir: ' + projectName);
 
-      // Set the Project Id in the request.
-      req.projectId = project._id.toString();
-      req.url = '/project/' + project._id + req.url;
-      next();
+              if (err || !project) {
+                return next('Invalid subdomain');
+              }
+              // Set the Project Id in the request.
+              req.projectId = project._id.toString();
+              req.url = '/project/' + project._id + req.url.slice(subdirectory.length + 1);
+              return next();
+            });
+          }
+          else {
+            return next('Invalid subdomain');
+          }
+        }
+        else {
+          return next('Invalid subdomain');
+        }
+      }
+      else {
+        // Set the Project Id in the request.
+        req.projectId = project._id.toString();
+        req.url = '/project/' + project._id + req.url;
+        next();
+      }
     });
   };
 };
