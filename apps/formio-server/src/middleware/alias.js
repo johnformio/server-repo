@@ -98,7 +98,7 @@ module.exports = function(formio) {
               debug.alias('Loading project from subdir: ' + projectName);
 
               if (err || !project) {
-                return next('Invalid subdomain');
+                return skip(req, res, next);
               }
               // Set the Project Id in the request.
               req.projectId = project._id.toString();
