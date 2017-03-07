@@ -52,6 +52,7 @@ test:
           background: true
     # - DEBUG=formio:*,formio:*:* DROPBOX_CLIENTID=NOTREAL npm test &> $CIRCLE_ARTIFACTS/formio-server.log
     - DROPBOX_CLIENTID=NOTREAL npm test
+  post:
     # Test Formio in a docker environment.
     - redis-server &> $CIRCLE_ARTIFACTS/docker-redis.log:
           background: true
