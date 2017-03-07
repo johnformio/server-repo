@@ -32,7 +32,7 @@ module.exports = function(router) {
       priority: 0,
       defaults: {
         handler: ['after'],
-        method: ['create', 'read', 'update', 'delete', 'index']
+        method: ['create', 'update', 'delete']
       }
     });
   };
@@ -58,6 +58,29 @@ module.exports = function(router) {
 
       var form = [];
       async.waterfall([
+        function addBlockCheckbox(cb) {
+          form.push({
+            conditional: {
+              eq: '',
+              when: null,
+              show: ''
+            },
+            type: 'checkbox',
+            validate: {
+              required: false
+            },
+            persistent: true,
+            protected: false,
+            defaultValue: false,
+            key: 'block',
+            label: 'Block request for SQL Connector feedback',
+            hideLabel: true,
+            tableView: true,
+            inputType: 'checkbox',
+            input: true
+          });
+          return cb();
+        },
         function addTableName(cb) {
           form.push({
             label: 'Table Name',
@@ -288,8 +311,52 @@ module.exports = function(router) {
    *   The callback function to execute upon completion.
    */
   SQLConnector.prototype.resolve = function(handler, method, req, res, next) { // eslint-disable-line max-statements
-    // Dont block on this action, lots of stuff to do.
-    next(); // eslint-disable-line callback-return
+    var settings = this.settings;
+    debug('settings:', settings);
+
+    // Only block on the external request, if configured
+    if (!_.has(settings, 'block') || settings.block === false) {
+      next(); // eslint-disable-line callback-return
+    }
+
+    var handleErrors = function(err) {
+      debug(err);
+      try {
+        return Q()
+        .then(function() {
+          // If this is not a creation, skip clean up of the failed item.
+          if (method !== 'post') {
+            return;
+          }
+
+          var localId = _.get(res, 'resource.item._id');
+          if (!localId) {
+            return;
+          }
+
+          var _find = {_id: localId};
+          var _update = {
+            $set: {
+              deleted: Date.now()
+            }
+          };
+          return Q.ninvoke(formio.resources.submission.model, 'update', _find, _update);
+        })
+        .then(function() {
+          // If blocking is on, return the error.
+          if (_.has(settings, 'block') && settings.block === true) {
+            return next(err.message || err);
+          }
+          return;
+        })
+        .catch(function(err) {
+          debug(err);
+        });
+      }
+      catch (e) {
+        debug(e);
+      }
+    };
 
     try {
       method = req.method.toString().toLowerCase();
@@ -300,9 +367,16 @@ module.exports = function(router) {
       var primary = this.settings.primary;
       var cache = require('../../cache/cache')(formio);
       var project = cache.currentProject(req);
-      if (project === null) {
-        debug('No project found.');
-        return;
+      if (project === null || project === undefined) {
+        return handleErrors('No project found.');
+      }
+      else {
+        try {
+          project = project.toObject();
+        }
+        catch (e) {
+          // Project is already a plain object.
+        }
       }
 
       // Add basic auth if available.
@@ -319,12 +393,9 @@ module.exports = function(router) {
       // If this was not a post request, determine which existing resource we are modifying.
       if (method !== 'post') {
         var externalId = getSubmissionId(req, res);
-        if (externalId === undefined) {
-          debug('No externalId was found in the existing submission.');
-          return;
+        if (externalId !== undefined) {
+          options.url += '/' + externalId;
         }
-
-        options.url += '/' + externalId;
       }
 
       // If this is a create/update, determine what to send in the request body.
@@ -336,63 +407,79 @@ module.exports = function(router) {
 
         // Remove protected fields from the external request.
         formio.util.removeProtectedFields(req.currentForm, method, item);
-        debug('body:');
-        debug(item);
         options.body = item;
       }
 
-      debug(options);
-      request(options, function(err, response, body) {
-        if (err) {
-          debug(err);
-          return;
-        }
+      options.timeout = 10000;
+      debug('options:', options);
+      process.nextTick(function() {
+        request(options, function(err, response, body) {
+          if (err) {
+            return handleErrors(err);
+          }
 
-        debug(body);
+          debug('request response:', body);
 
-        // Begin link phase for new resources.
-        if (method !== 'post') {
-          return;
-        }
+          // If this is not a new resource, skip link phase for new resources.
+          if (method !== 'post') {
+            // if the request was blocking, return here.
+            if (_.has(settings, 'block') && settings.block === true) {
+              return next();
+            }
+            return;
+          }
 
-        // Attempt to modify linked resources.
-        return Q()
-          .then(function() {
-            var results = _.get(response, 'body.rows');
-            if (!(results instanceof Array)) {
-              // No clue what to do here.
-              throw new Error('Expected array of results, got ' + typeof results);
-            }
-            if (results.length === 1) {
-              return results[0];
-            }
+          // Attempt to modify linked resources.
+          return Q()
+            .then(function() {
+              if (!(/^2\d\d$/i.test(response.statusCode))) {
+                throw new Error((response.body || '').toString().replace(/<br>/, ''));
+              }
 
-            throw new Error('More than one result: ' + results.length);
-          })
-          .then(function(remoteItem) {
-            // Get the localId
-            var localId = _.get(res, 'resource.item._id');
-            if (!localId) {
-              throw new Error('Unknown local item id: ' + localId);
-            }
-            // Get the remoteId
-            var remoteId = _.get(remoteItem, primary);
-            if (!remoteId && remoteId !== 0) {
-              throw new Error('Unknown remote item id: ' + remoteId);
-            }
+              var results = _.get(response, 'body.rows');
+              if (!(results instanceof Array)) {
+                // No clue what to do here.
+                throw new Error(
+                  'Expected array of results, got ' + typeof results + '(' + JSON.stringify(results) + ')'
+                );
+              }
+              if (results.length === 1) {
+                return results[0];
+              }
 
-            if (method === 'post') {
-              return addExternalId(localId, remoteId);
-            }
-          })
-          .catch(function(err) {
-            // Do nothing on errors.
-            debug(err);
-          });
+              throw new Error('More than one result: ' + results.length);
+            })
+            .then(function(remoteItem) {
+              // Get the localId
+              var localId = _.get(res, 'resource.item._id');
+              if (!localId) {
+                throw new Error('Unknown local item id: ' + localId);
+              }
+              // Get the remoteId
+              var remoteId = _.get(remoteItem, primary);
+              if (!remoteId && remoteId !== 0) {
+                throw new Error('Unknown remote item id (' + remoteId + ') for primary key.');
+              }
+
+              if (method === 'post') {
+                return addExternalId(localId, remoteId);
+              }
+            })
+            .then(function() {
+              // if the request was blocking, return here.
+              if (_.has(settings, 'block') && settings.block === true) {
+                return next();
+              }
+            })
+            .catch(function(err) {
+              // If blocking is on, return the error.
+              return handleErrors(err);
+            });
+        });
       });
     }
     catch (err) {
-      debug(err);
+      return handleErrors(err);
     }
   };
 
