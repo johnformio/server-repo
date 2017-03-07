@@ -17,11 +17,6 @@ machine:
 
 dependencies:
   pre:
-    - sudo service mongod stop
-    - sleep 2
-    - wget http://downloads.mongodb.org/linux/mongodb-linux-x86_64-ubuntu1204-3.2.9.tgz && tar xvzf mongodb-linux-x86_64-ubuntu1204-3.2.9.tgz
-    - sudo cp -f mongodb-linux-x86_64-ubuntu1204-3.2.9/bin/* /usr/bin
-    - sudo service mongod start
     - pip install awscli
     - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test && sudo apt-get update
     - sudo apt-get install -y gcc-4.9 g++-4.9
@@ -31,15 +26,23 @@ dependencies:
     - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 20
   override:
     - uname -r
-    - echo $TAG_NAME
-    - ./serverSetup.sh
-    - npm run build
-  post:
+
+database:
+  pre:
+    - sudo service mongod stop
+    - sleep 2
+    - wget http://downloads.mongodb.org/linux/mongodb-linux-x86_64-ubuntu1204-3.2.9.tgz && tar xvzf mongodb-linux-x86_64-ubuntu1204-3.2.9.tgz
+    - sudo cp -f mongodb-linux-x86_64-ubuntu1204-3.2.9/bin/* /usr/bin
+    - sudo service mongod start
+  override:
     - ./deployment/scripts/importDb.sh formio
 
 compile:
+  pre:
+    - ./serverSetup.sh
+    - npm run build
   override:
-    # Test Formio locally.
+    # Run full suite of tests against natively running server.
     - redis-server &> $CIRCLE_ARTIFACTS/redis.log:
           background: true
     # - DEBUG=formio:*,formio:*:* DROPBOX_CLIENTID=NOTREAL npm test &> $CIRCLE_ARTIFACTS/formio-server.log
