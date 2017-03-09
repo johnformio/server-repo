@@ -32,13 +32,13 @@ module.exports = function(router) {
     if (
       !req.projectId ||
       (req.projectId === 'available') ||
-      !router.formio.mongoose.Types.ObjectId.isValid(req.projectId)
+      !router.formio.formio.mongoose.Types.ObjectId.isValid(req.projectId)
     ) {
       return callback(null, pass);
     }
 
     // Load the project settings.
-    router.formio.hook.settings(req, function(err, settings) {
+    router.formio.formio.hook.settings(req, function(err, settings) {
       if (err) {
         return callback(err);
       }
