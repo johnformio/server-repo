@@ -53,13 +53,10 @@ module.exports = function(formio) {
 
     // Handle edge-cases for local connections.
     if (local) {
-      // Skip middleware if there really is no subdomain with the localhost url.
-      if (hostname.split('.').length === 1) {
-        return skip(req, res, next);
-      }
-
       // Trim the subdomain to the left-most portion for the Project name.
-      projectName = hostname.split('.')[0];
+      if (hostname.split('.').length > 1) {
+        projectName = hostname.split('.')[0];
+      }
     }
     // Use the given address to trim the Project name from the subdomain.
     else if (subdomain) {
@@ -85,14 +82,14 @@ module.exports = function(formio) {
           var subdirectory = req.url.split('/')[1];
           // Quick confirmation that we have an projectName.
           if (subdirectory === 'api' || config.reservedSubdomains.indexOf(subdirectory) !== -1) {
-            return skip(req, res, next);
+            return next();
           }
           else {
             cache.loadProjectByName(req, subdirectory, function(err, project) {
               debug.alias('Loading project from subdir: ' + projectName);
 
               if (err || !project) {
-                return res.status(404).send('Project not found');
+                return next();
               }
 
               // Set the Project Id in the request.
@@ -103,7 +100,7 @@ module.exports = function(formio) {
           }
         }
         else {
-          return res.status(404).send('Project not found');
+          return next();
         }
       }
       else {

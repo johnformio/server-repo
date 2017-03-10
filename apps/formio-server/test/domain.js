@@ -712,7 +712,7 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
-          assert.equal(res.text, 'Project not found');
+          assert.equal(res.text, 'Not Found');
           done();
         });
     });
@@ -729,7 +729,7 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
-          assert.equal(res.text, 'Project not found');
+          assert.equal(res.text, 'Not Found');
           done();
         });
     });
@@ -746,7 +746,7 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
-          assert.equal(res.text, 'Project not found');
+          assert.equal(res.text, 'Not Found');
           done();
         });
     });
