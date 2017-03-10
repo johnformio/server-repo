@@ -895,6 +895,49 @@ module.exports = function(app, template, hook) {
       });
 
       if (!docker)
+      it ('should respond short circuit for portal domains.', function(done) {
+        request(app)
+          .options('/project/' + template.project._id + '/form')
+          .set('x-jwt-token', template.formio.owner.token)
+          .set('Origin', 'https://portal.form.io')
+          .send()
+          .end(function(err, res) {
+            assert.equal(res.headers['access-control-allow-origin'], 'https://portal.form.io');
+            assert.equal(res.headers['access-control-allow-methods'], 'GET,HEAD,PUT,PATCH,POST,DELETE');
+            done();
+          });
+      });
+
+      if (!docker)
+      it ('should respond with cors request to role endpoint.', function(done) {
+        request(app)
+          .options('/project/' + template.project._id + '/role')
+          .set('x-jwt-token', template.formio.owner.token)
+          .set('Origin', 'https://portal.form.io')
+          .send()
+          .end(function(err, res) {
+            assert.equal(res.headers['access-control-allow-origin'], 'https://portal.form.io');
+            assert.equal(res.headers['access-control-allow-methods'], 'GET,HEAD,PUT,PATCH,POST,DELETE');
+            done();
+          });
+      });
+
+      if (!docker)
+      it ('should respond with cors request for form.', function(done) {
+        request(app)
+          .options('/user/login')
+          .set('x-jwt-token', template.formio.owner.token)
+          .set('host', 'https://formio.form.io')
+          .set('Origin', 'https://portal.form.io')
+          .send()
+          .end(function(err, res) {
+            assert.equal(res.headers['access-control-allow-origin'], 'https://portal.form.io');
+            assert.equal(res.headers['access-control-allow-methods'], 'GET,HEAD,PUT,PATCH,POST,DELETE');
+            done();
+          });
+      });
+
+      if (!docker)
       it ('should respond to cors options request with the proper header when using default cors.', function(done) {
         request(app)
           .options('/project/' + template.project._id + '/form')
@@ -916,7 +959,7 @@ module.exports = function(app, template, hook) {
           .set('Origin', 'http://www.example.com')
           .send()
           .end(function(err, res) {
-            assert.equal(res.headers['access-control-allow-origin'], 'http://www.example.com');
+            assert.equal(res.headers['access-control-allow-origin'], '*');
             assert.equal(res.headers.hasOwnProperty('access-control-allow-methods'), false);
             done();
           });
@@ -959,7 +1002,7 @@ module.exports = function(app, template, hook) {
           .set('Origin', 'http://www.example.com')
           .send()
           .end(function(err, res) {
-            assert.equal(res.headers['access-control-allow-origin'], '*');
+            assert.equal(res.headers['access-control-allow-origin'], 'http://www.example.com');
             assert.equal(res.headers['access-control-allow-methods'], 'GET,HEAD,PUT,PATCH,POST,DELETE');
             done();
           });
@@ -987,7 +1030,7 @@ module.exports = function(app, template, hook) {
           .set('Origin', 'http://www.example.com')
           .send()
           .end(function(err, res) {
-            assert.equal(res.headers['access-control-allow-origin'], 'http://www.example.com');
+            assert.equal(res.headers['access-control-allow-origin'], '*');
             assert.equal(res.headers.hasOwnProperty('access-control-allow-methods'), false);
             done();
           });
