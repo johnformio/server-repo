@@ -848,9 +848,9 @@ module.exports = function(app) {
         req.projectId = projectId;
         return params;
       },
-      cors: function() {
-        return require('../middleware/corsOptions')(formioServer);
-      },
+      //cors: function() {
+      //  return require('../middleware/corsOptions')(formioServer);
+      //},
 
       /**
        * Hook the user object and modify the roles to include the users team id's.
