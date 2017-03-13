@@ -44,7 +44,7 @@ compile:
     - redis-server &> $CIRCLE_ARTIFACTS/redis.log:
           background: true
     # - DEBUG=formio:*,formio:*:* DROPBOX_CLIENTID=NOTREAL npm test &> $CIRCLE_ARTIFACTS/formio-server.log
-    - DROPBOX_CLIENTID=NOTREAL npm test
+    - DEBUG=* DROPBOX_CLIENTID=NOTREAL npm test &> $CIRCLE_ARTIFACTS/formio-server.log
 
 test:
   pre:
