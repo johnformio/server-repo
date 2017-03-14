@@ -1230,8 +1230,7 @@ describe('Tests', function() {
 
       if (!docker && !customer)
       it('Should have sent an email to the user with a valid auth token', function(done) {
-        let email = app.formio.formio.hooks.getLastEmail();
-
+        let email = template.hooks.getLastEmail();
         new Promise((resolve, reject) => {
           if (email && Object.keys(email) > 0) {
             return resolve(email);
@@ -1242,6 +1241,9 @@ describe('Tests', function() {
             events.once('newMail', (email) => {
               return resolve(email);
             });
+          }
+          else {
+            return done(`No event listener was found for newMail`);
           }
         })
         .then(email => {

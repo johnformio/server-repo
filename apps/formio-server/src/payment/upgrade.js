@@ -87,6 +87,7 @@ module.exports = function(formio) {
     })
     .catch(function(err) {
       try {
+        debug(err);
         return res.status(err.status || 400).send(err.message || err);
       }
       catch (e) {
