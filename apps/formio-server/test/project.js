@@ -1232,7 +1232,6 @@ module.exports = function(app, template, hook) {
           .post('/project/' + template.project._id + '/upgrade')
           .set('x-jwt-token', template.formio.owner.token)
           .send({plan: 'independent'})
-          .expect('Content-Type', /text\/plain/)
           .expect(200)
           .end(function(err, res) {
             if (err) {
@@ -1268,7 +1267,6 @@ module.exports = function(app, template, hook) {
           .post('/project/' + template.project._id + '/upgrade')
           .set('x-jwt-token', template.formio.owner.token)
           .send({plan: 'team'})
-          .expect('Content-Type', /text\/plain/)
           .expect(200)
           .end(function(err, res) {
             if (err) {
@@ -1303,7 +1301,6 @@ module.exports = function(app, template, hook) {
           .post('/project/' + template.project._id + '/upgrade')
           .set('x-jwt-token', template.formio.owner.token)
           .send({plan: 'commercial'})
-          .expect('Content-Type', /text\/plain/)
           .expect(200)
           .end(function(err, res) {
             if (err) {
@@ -1338,7 +1335,6 @@ module.exports = function(app, template, hook) {
           .post('/project/' + template.project._id + '/upgrade')
           .set('x-jwt-token', template.formio.owner.token)
           .send({plan: 'team'})
-          .expect('Content-Type', /text\/plain/)
           .expect(200)
           .end(function(err, res) {
             if (err) {
@@ -1373,7 +1369,6 @@ module.exports = function(app, template, hook) {
           .post('/project/' + template.project._id + '/upgrade')
           .set('x-jwt-token', template.formio.owner.token)
           .send({plan: 'independent'})
-          .expect('Content-Type', /text\/plain/)
           .expect(200)
           .end(function(err, res) {
             if (err) {
@@ -1409,7 +1404,6 @@ module.exports = function(app, template, hook) {
           .post('/project/' + template.project._id + '/upgrade')
           .set('x-jwt-token', template.formio.owner.token)
           .send({plan: 'basic'})
-          .expect('Content-Type', /text\/plain/)
           .expect(200)
           .end(function(err, res) {
             if (err) {
