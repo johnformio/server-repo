@@ -29,57 +29,57 @@ module.exports = function(formio) {
         throw 'Only project owners can upgrade a project';
       }
 
-      return formio.payment.userHasPaymentInfo(req);
-    })
-    .then(function(hasPayment) {
-      if (!hasPayment) {
-        throw 'Cannot upgrade project without registered payment info';
-      }
-
-      return formio.resources.project.model.update({
-        _id: req.projectId
-      }, {
-        plan: req.body.plan
-      });
-    })
-    .then(function(rawResponse) {
-      if (rawResponse.ok) {
-        return formio.payment.getUpgradeHistoryFormId(req.userProject._id);
-      }
-
-      throw 'Error occurred trying to update the project';
-    })
-    .then(function(formId) {
-      return formio.resources.submission.model.create({
-        form: formId,
-        owner: req.user._id,
-        data: {
-          projectId: project._id,
-          oldPlan: project.plan,
-          newPlan: req.body.plan
+      return formio.payment.userHasPaymentInfo(req)
+      .then(function(hasPayment) {
+        if (!hasPayment) {
+          throw 'Cannot upgrade project without registered payment info';
         }
+
+        return formio.resources.project.model.update({
+          _id: req.projectId
+        }, {
+          plan: req.body.plan
+        });
+      })
+      .then(function(rawResponse) {
+        if (rawResponse.ok) {
+          return formio.payment.getUpgradeHistoryFormId(req.userProject._id);
+        }
+
+        throw 'Error occurred trying to update the project';
+      })
+      .then(function(formId) {
+        return formio.resources.submission.model.create({
+          form: formId,
+          owner: req.user._id,
+          data: {
+            projectId: project._id,
+            oldPlan: project.plan,
+            newPlan: req.body.plan
+          }
+        });
+      })
+      .then(function() {
+        var emailSettings = {
+          transport: 'default',
+          from: 'no-reply@form.io',
+          emails: ['payment@form.io'],
+          subject: 'Project Upgrade Notification',
+          message: '<p>A project has been upgraded to <strong>{{newPlan}}</strong>!</p>' +
+          '<p><ul>' +
+          '<li>Username: {{user.data.name}}</li>' +
+          '<li>Name: {{user.data.fullName}}</li>' +
+          '<li>Email: {{user.data.email}}</li>' +
+          '<li>User ID: {{user._id}}</li><br>' +
+          '<li>Project Title: {{project.title}}</li>' +
+          '<li>Old Plan: {{project.plan}}</li>' +
+          '<li>New Plan: {{newPlan}}</li>' +
+          '<li>Project ID: {{project._id}}</li>' +
+          '</ul></p>'
+        };
+        var params = {project: project, user: req.user, newPlan: req.body.plan};
+        return Q.ninvoke(emailer, 'send', req, res, emailSettings, params);
       });
-    })
-    .then(function() {
-      var emailSettings = {
-        transport: 'default',
-        from: 'no-reply@form.io',
-        emails: ['payment@form.io'],
-        subject: 'Project Upgrade Notification',
-        message: '<p>A project has been upgraded to <strong>{{newPlan}}</strong>!</p>' +
-        '<p><ul>' +
-        '<li>Username: {{user.data.name}}</li>' +
-        '<li>Name: {{user.data.fullName}}</li>' +
-        '<li>Email: {{user.data.email}}</li>' +
-        '<li>User ID: {{user._id}}</li><br>' +
-        '<li>Project Title: {{project.title}}</li>' +
-        '<li>Old Plan: {{project.plan}}</li>' +
-        '<li>New Plan: {{newPlan}}</li>' +
-        '<li>Project ID: {{project._id}}</li>' +
-        '</ul></p>'
-      };
-      var params = {project: project, user: req.user, newPlan: req.body.plan};
-      return Q.ninvoke(emailer, 'send', req, res, emailSettings, params);
     })
     .then(function(response) {
       debug(response);
