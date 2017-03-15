@@ -166,6 +166,8 @@ module.exports = function(app) {
         return _.assign(models, require('../models/models')(formioServer));
       },
       email: function(mail, req, res, params, cb) {
+        let _debug = require('debug')('formio:hook:email');
+        _debug(mail);
         if (mail.to.indexOf(',') !== -1) {
           return cb(null, mail);
         }
@@ -173,6 +175,7 @@ module.exports = function(app) {
         // Find the ssoToken.
         var ssoToken = util.ssoToken(mail.html);
         if (!ssoToken) {
+          _debug(`No ssoToken`);
           return cb(null, mail);
         }
 
@@ -182,9 +185,11 @@ module.exports = function(app) {
         }, req);
 
         // Find the forms to search the record within.
+        _debug(query);
         formioServer.formio.resources.form.model.find(query).exec(function(err, result) {
           if (err || !result) {
-            return cb(err);
+            _debug(err || `No form was found`);
+            return cb(err, mail);
           }
 
           var forms = [];
@@ -203,11 +208,13 @@ module.exports = function(app) {
           query[ssoToken.field] = mail.to;
 
           // Find the submission.
+          _debug(query);
           formioServer.formio.resources.submission.model
             .findOne(query)
             .select('_id, form')
             .exec(function(err, submission) {
               if (err || !submission) {
+                _debug(err || `No submission found`);
                 return cb(null, mail);
               }
 
@@ -230,6 +237,7 @@ module.exports = function(app) {
               mail.html = mail.html.replace(util.tokenRegex, token);
 
               // TO-DO: Generate the token for this user.
+              _debug(mail);
               return cb(null, mail);
             });
         }.bind(this));
@@ -929,7 +937,7 @@ module.exports = function(app) {
         // Determine which project to use, one in the request, or formio.
         _debug('formio: ' + formio);
         if (formio && formio === true) {
-          cache.loadProjectByName(req, 'formio', function(err, _id) {
+          return cache.loadProjectByName(req, 'formio', function(err, _id) {
             if (err || !_id) {
               _debug(err || 'The formio project was not found..');
               return query;

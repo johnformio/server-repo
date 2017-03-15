@@ -3,12 +3,18 @@ var request = require('supertest');
 var assert = require('assert');
 var async = require('async');
 var chance = new (require('chance'))();
+let EventEmitter = require('events');
+
 module.exports = function(app, template, hook) {
   if (process.env.DOCKER) {
     return;
   }
 
   describe('Emails', function() {
+    if (template.hooks.getEmitter() === null) {
+      template.hooks.addEmitter(new EventEmitter());
+    }
+
     var emailTest = new template.Helper(template.formio.owner);
     var user1Token = '';
     var user2Token = '';
@@ -264,27 +270,45 @@ module.exports = function(app, template, hook) {
     });
 
     it('Should send the separate emails with tokens', function(done) {
-      template.hooks.onEmails(2, function(emails) {
-        assert.equal(emails.length, 2);
-        assert.equal(emails[0].from, 'travis@form.io');
-        assert.equal(emails[0].to, 'joe@example.com');
-        var matches = emails[0].html.match(/token=([^\s]+)/);
-        assert.equal(matches.length, 2);
-        user1Token = matches[1];
-        assert.equal(emails[0].html.indexOf('This is amazing!, Your auth token is token='), 0);
-        assert.equal(emails[0].subject, 'This is a dynamic email!');
-
-        assert.equal(emails[1].from, 'travis@form.io');
-        assert.equal(emails[1].to, 'john@example.com');
-        matches = emails[1].html.match(/token=([^\s]+)/);
-        assert.equal(matches.length, 2);
-        user2Token = matches[1];
-        assert.equal(emails[0].html.indexOf('This is amazing!, Your auth token is token='), 0);
-        assert.equal(emails[0].subject, 'This is a dynamic email!');
-
-        assert(user2Token != user1Token, 'Tokens must not match');
-        done();
+      let event = template.hooks.getEmitter();
+      let email1 = new Promise((resolve, reject) => {
+        event.on('newMail', (email) => {
+          try {
+            assert.equal(email.from, 'travis@form.io');
+            assert.equal(email.to, 'joe@example.com');
+            let matches = email.html.match(/token=([^\s]+)/);
+            assert.equal(matches.length, 2);
+            user1Token = matches[1];
+            assert.equal(email.html.indexOf('This is amazing!, Your auth token is token='), 0);
+            assert.equal(email.subject, 'This is a dynamic email!');
+            return resolve();
+          }
+          catch (e) {}
+        })
       });
+      let email2 = new Promise((resolve, reject) => {
+        event.on('newMail', (email) => {
+          try {
+            assert.equal(email.from, 'travis@form.io');
+            assert.equal(email.to, 'john@example.com');
+            let matches = email.html.match(/token=([^\s]+)/);
+            assert.equal(matches.length, 2);
+            user2Token = matches[1];
+            assert.equal(email.html.indexOf('This is amazing!, Your auth token is token='), 0);
+            assert.equal(email.subject, 'This is a dynamic email!');
+            return resolve();
+          }
+          catch (e) {}
+        });
+      });
+
+      Promise.all([email1, email2])
+      .then(() => {
+        event.removeAllListeners('newMail');
+        assert(user2Token != user1Token, 'Tokens must not match');
+        return done()
+      })
+      .catch(done);
 
       emailTest.createSubmission('email', {
         subject: 'This is a dynamic email!',
@@ -371,15 +395,24 @@ module.exports = function(app, template, hook) {
 
     var resetToken = '';
     it('Should allow you to reset the password', function(done) {
-      template.hooks.onEmails(1, function(emails) {
-        var email = emails.shift();
-        var parts = email.html.split('?x-jwt-token=');
-        assert.equal(parts.length, 2);
-        assert.equal(parts[0], 'http://localhost:9002/#/resetpass');
-        resetToken = parts[1];
-        assert(resetToken.length > 0, 'Reset token not provided');
-        done();
-      });
+      let event = template.hooks.getEmitter();
+      new Promise((resolve, reject) => {
+        event.on('newMail', (email) => {
+          try {
+            var parts = email.html.split('?x-jwt-token=');
+            assert.equal(parts.length, 2);
+            assert.equal(parts[0], 'http://localhost:9002/#/resetpass');
+            resetToken = parts[1];
+            assert(resetToken.length > 0, 'Reset token not provided');
+            return resolve();
+          }
+          catch (e) {
+            return reject(e);
+          }
+        });
+      })
+      .then(() => done())
+      .catch(done);
 
       request(app)
         .post('/project/' + emailTest.template.project._id + '/resetpass/submission')
