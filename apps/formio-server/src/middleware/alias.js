@@ -80,7 +80,7 @@ module.exports = function(formio) {
       debug.alias('Loading project: ' + projectName);
 
       if (err || !project) {
-        return next('Invalid subdomain');
+        return res.status(400).send('Invalid subdomain');
       }
 
       // Set the Project Id in the request.
