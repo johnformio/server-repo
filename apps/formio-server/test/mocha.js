@@ -1309,6 +1309,8 @@ describe('Tests', function() {
         require('formio/test/actions')(app, template, hook);
         require('formio/test/submission')(app, template, hook);
         require('formio/test/submission-access')(app, template, hook);
+        require('formio/test/templates')(app, template, hook);
+        require('./templates')(app, template, hook);
         require('./analytics')(app, template, hook);
         require('./teams')(app, template, hook);
         require('./misc')(app, template, hook);
