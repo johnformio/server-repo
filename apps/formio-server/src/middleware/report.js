@@ -16,11 +16,7 @@ var debug = {
   error: require('debug')('formio:error')
 };
 
-module.exports = function(formioServer) {
-  var util = formioServer.util;
-  var formio = formioServer.formio;
-  formio.mongoose.set('debug', true);
-
+module.exports = function(formio) {
   var report = function(req, res, next, filter) {
     // A user is always required for this operation.
     if (!req.user || !req.user.roles || !req.user.roles.length) {
@@ -33,6 +29,9 @@ module.exports = function(formioServer) {
       return res.status(400).send('Must include an aggregation pipeline');
     }
 
+    var mongoose = formio.mongoose;
+    var submissions = mongoose.connections[0].collections.submissions.collection;
+
     // Make sure the filter is an array.
     if (!filter || !filter.length) {
       filter = [];
@@ -43,7 +42,7 @@ module.exports = function(formioServer) {
     traverse(filter).forEach(function(node) {
       if (typeof node === 'string' && node.match(/^ObjectId\(\'(.{24})\'\)$/)) {
         var result = node.match(/^ObjectId\(\'(.{24})\'\)$/m);
-        this.update(formio.util.idToBson(result[1]));
+        this.update(mongoose.Types.ObjectId(result[1]));
       }
     });
 
@@ -99,13 +98,15 @@ module.exports = function(formioServer) {
     }
 
     // Get the user roles.
-    var userRoles = _.map(req.user.roles, formio.util.idToBson);
+    var userRoles = _.map(req.user.roles, function(role) {
+      return formio.mongoose.Types.ObjectId(role);
+    });
 
     // Find all forms that this user has "read_all" access to or owns and only give them
     // aggregate access to those forms.
     formio.resources.form.model.find({
       '$and': [
-        {project: formio.util.idToBson(req.projectId)},
+        {project: mongoose.Types.ObjectId(req.projectId)},
         {'$or': [
           {access: {
             '$elemMatch': {
@@ -115,7 +116,7 @@ module.exports = function(formioServer) {
               }
             }
           }},
-          {owner: formio.util.idToBson(req.user._id)}
+          {owner: mongoose.Types.ObjectId(req.user._id)}
         ]}
       ]
     }).exec(function(err, result) {
@@ -150,14 +151,14 @@ module.exports = function(formioServer) {
         stages = stages.concat([limitStage]);
       }
 
+      // Start out the filter to only include those forms.
+      debug.report('final pipeline', stages);
+
       res.setHeader('Content-Type', 'application/json');
 
       // Method to perform the aggregation.
       var performAggregation = function() {
-        // Start out the filter to only include those forms.
-        debug.report('final pipeline: ', JSON.stringify(stages));
-        formio.resources.submission.model.collection
-          .aggregate(stages)
+        submissions.aggregate(stages)
           .stream()
           .pipe(through(function(doc) {
             if (doc && doc.form) {
@@ -170,8 +171,6 @@ module.exports = function(formioServer) {
                 });
               }
             }
-
-            debug.report(doc);
             this.queue(doc);
           }))
           .pipe(JSONStream.stringify())
@@ -203,12 +202,11 @@ module.exports = function(formioServer) {
       }
 
       // Find the total count based on the query.
-      formio.resources.submission.model.find(countQuery).count(function(err, count) {
+      submissions.find(countQuery).count(function(err, count) {
         if (err) {
           debug.error(err);
           return next(err);
         }
-        debug.report('Count: ', count);
 
         var skip = skipStage ? skipStage['$skip'] : 0;
         var limit = limitStage['$limit'];
