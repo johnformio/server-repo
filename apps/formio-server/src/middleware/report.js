@@ -17,7 +17,10 @@ var debug = {
 };
 
 module.exports = function(formioServer) {
+  var util = formioServer.util;
   var formio = formioServer.formio;
+  formio.mongoose.set('debug', true);
+
   var report = function(req, res, next, filter) {
     // A user is always required for this operation.
     if (!req.user || !req.user.roles || !req.user.roles.length) {
@@ -135,8 +138,17 @@ module.exports = function(formioServer) {
       }
 
       // Start with the query, then add the remaining stages.
-      stages.unshift({'$match': {form: {'$in': formIds}}}, {'$match': query});
-      var countStages = [].concat(stages);
+      stages = [{'$match': {form: {'$in': formIds}}}].concat([{'$match': query}]).concat(stages);
+
+      // Add the skip stage first if applicable.
+      if (skipStage) {
+        stages = stages.concat([skipStage]);
+      }
+
+      // Next add the limit stage if applicable.
+      if (limitStage) {
+        stages = stages.concat([limitStage]);
+      }
 
       res.setHeader('Content-Type', 'application/json');
 
@@ -166,28 +178,38 @@ module.exports = function(formioServer) {
           .pipe(res);
       };
 
-      // Add the skip stage first if applicable.
-      if (skipStage) {
-        stages.push(skipStage);
-      }
-
-      // Next add the limit stage if applicable.
-      if (limitStage) {
-        stages.push(limitStage);
-      }
       // If a limit is provided, then we need to include some pagination stuff.
-      else {
+      if (!limitStage) {
         return performAggregation();
       }
 
-      formio.resources.submission.model.aggregate(countStages, function(err, count) {
+      // Determine the count query by limiting based on the formIds.
+      var countQuery = _.cloneDeep(query);
+
+      // Add the filtered formIds to the query.
+      if (
+        query.hasOwnProperty('form') &&
+        query.form.hasOwnProperty('$in') &&
+        (query.form['$in'].length > 0)
+      ) {
+        countQuery.form['$in'] = formIds.concat(query.form['$in']);
+      }
+      else if (query.form) {
+        formIds.push(query.form);
+        countQuery.form = {'$in': formIds};
+      }
+      else {
+        countQuery.form = {'$in': formIds};
+      }
+
+      // Find the total count based on the query.
+      formio.resources.submission.model.find(countQuery).count(function(err, count) {
         if (err) {
           debug.error(err);
           return next(err);
         }
-
-        count = count.length;
         debug.report('Count: ', count);
+
         var skip = skipStage ? skipStage['$skip'] : 0;
         var limit = limitStage['$limit'];
         if (!req.headers.range) {
@@ -207,9 +229,7 @@ module.exports = function(formioServer) {
         }
         limitStage['$limit'] = pageRange.limit;
 
-        // Perform the real, streaming, aggregation command.
-        // Double query to make sure protected data is stripped.
-        // TODO: Optimize to reuse these results.
+        // Perform the aggregation command.
         performAggregation();
       });
     });
