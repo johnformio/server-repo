@@ -668,7 +668,6 @@ module.exports = function(app, template, hook) {
           }
 
           var response = res.body;
-          assert.equal(response.machineName, 'formio:login');
           assert.equal(response.path, 'user/login');
 
           // Store the JWT for future API calls.
@@ -691,7 +690,6 @@ module.exports = function(app, template, hook) {
           }
 
           var response = res.body;
-          assert.equal(response.machineName, 'formio:login');
           assert.equal(response.path, 'user/login');
 
           // Store the JWT for future API calls.
