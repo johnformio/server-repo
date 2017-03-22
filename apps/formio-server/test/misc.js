@@ -216,5 +216,42 @@ module.exports = function(app, template, hook) {
           done();
         });
     });
+
+    it('An Anonymous user should not be able to Read the Index of Forms for a User-Created Project', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/form')
+        .expect(401)
+        .end(done);
+    });
+
+    it('An Anonymous user should not be able to Read the Index of Forms for a User-Created Project with the Form filter', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/form?type=form')
+        .expect(401)
+        .end(done);
+    });
+
+    it('A user should NOT be able to Read all forms and resources', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/form')
+        .set('x-jwt-token', template.users.user1.token)
+        .expect(401)
+        .end(done);
+    });
+
+    it('A user should not be able to Read the Index of Resource for a User-Created Project', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/form?type=resource')
+        .set('x-jwt-token', template.users.user1.token)
+        .expect(401)
+        .end(done);
+    });
+
+    it('An Anonymous user should not be able to Read the Index of Resource for a User-Created Project', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + 'form?type=resource')
+        .expect(400)
+        .end(done);
+    });
   });
 };

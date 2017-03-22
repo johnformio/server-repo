@@ -118,7 +118,7 @@ module.exports = function(options) {
       app.use('/project/:projectId', app.formio);
 
       // Mount the aggregation system.
-      app.use('/project/:projectId/report', require('./src/middleware/report')(app.formio));
+      app.use('/project/:projectId/report', require('./src/middleware/report')(app.formio.formio));
 
       // Mount the error logging middleware.
       app.use(Logger.middleware);
