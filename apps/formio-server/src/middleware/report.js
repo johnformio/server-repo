@@ -40,9 +40,17 @@ module.exports = function(formio) {
 
     // Convert ObjectIds to actual object ids.
     traverse(filter).forEach(function(node) {
-      if (typeof node === 'string' && node.match(/^ObjectId\(\'(.{24})\'\)$/)) {
+      if (typeof node !== 'string') {
+        return;
+      }
+
+      if (node.match(/^ObjectId\(\'(.{24})\'\)$/)) {
         var result = node.match(/^ObjectId\(\'(.{24})\'\)$/m);
         this.update(mongoose.Types.ObjectId(result[1]));
+      }
+      if (node.match(/^Date\((\'.+\'|.+)\)$/)) {
+        var result = node.match(/^Date\((\'.+\'|.+)\)$/m);
+        this.update(Date(result[1]));
       }
     });
 
