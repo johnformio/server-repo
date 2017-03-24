@@ -41,8 +41,8 @@ module.exports = function(formio) {
         return;
       }
 
-      if (node.match(/^ObjectId\(\'(.{24})\'\)$/)) {
-        var result = node.match(/^ObjectId\(\'(.{24})\'\)$/m);
+      if (node.match(/^ObjectId\(['|"](.{24})['|"]\)$/)) {
+        var result = node.match(/^ObjectId\(['|"](.{24})['|"]\)$/m);
         this.update(formio.util.idToBson(result[1]));
       }
       if (node.match(/^Date\((\'.+\'|.+)\)$/)) {
