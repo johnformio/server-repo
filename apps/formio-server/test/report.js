@@ -251,5 +251,161 @@ module.exports = function(app, template, hook) {
           done();
         });
     });
+
+    it('Should allow Date in aggregation (plain time input).', function(done) {
+      let now = (new Date()).getTime();
+      let yesterday = now - 1000 * 60 * 60 * 24;
+
+      request(app)
+        .get('/project/' + template.project._id + '/report')
+        .set('x-jwt-token', template.users.admin.token)
+        .set('x-query', JSON.stringify([{
+          '$match': {
+            'created': {
+              '$gte': `Date(${yesterday})`,
+              '$lte': `Date(${now})`
+            }
+          }
+        }]))
+        .expect(200)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+
+          assert(res.body.length > 0);
+          done();
+        });
+    });
+
+    it('Should allow Date in aggregation (time input w/ single quotes).', function(done) {
+      let now = (new Date()).getTime();
+      let yesterday = now - 1000 * 60 * 60 * 24;
+
+      request(app)
+        .get('/project/' + template.project._id + '/report')
+        .set('x-jwt-token', template.users.admin.token)
+        .set('x-query', JSON.stringify([{
+          '$match': {
+            'created': {
+              '$gte': `Date('${yesterday}')`,
+              '$lte': `Date('${now}')`
+            }
+          }
+        }]))
+        .expect(200)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+
+          assert(res.body.length > 0);
+          done();
+        });
+    });
+
+    it('Should allow Date in aggregation (time input w/ double quotes).', function(done) {
+      let now = (new Date()).getTime();
+      let yesterday = now - 1000 * 60 * 60 * 24;
+
+      request(app)
+        .get('/project/' + template.project._id + '/report')
+        .set('x-jwt-token', template.users.admin.token)
+        .set('x-query', JSON.stringify([{
+          '$match': {
+            'created': {
+              '$gte': `Date("${yesterday}")`,
+              '$lte': `Date("${now}")`
+            }
+          }
+        }]))
+        .expect(200)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+
+          assert(res.body.length > 0);
+          done();
+        });
+    });
+
+    it('Should allow Date in aggregation (plain date string input).', function(done) {
+      let now = (new Date()).getTime();
+      let yesterday = now - 1000 * 60 * 60 * 24;
+
+      request(app)
+        .get('/project/' + template.project._id + '/report')
+        .set('x-jwt-token', template.users.admin.token)
+        .set('x-query', JSON.stringify([{
+          '$match': {
+            'created': {
+              '$gte': `Date(${yesterday.toString()})`,
+              '$lte': `Date(${now.toString()})`
+            }
+          }
+        }]))
+        .expect(200)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+
+          assert(res.body.length > 0);
+          done();
+        });
+    });
+
+    it('Should allow Date in aggregation (date string input w/ single quotes).', function(done) {
+      let now = (new Date()).getTime();
+      let yesterday = now - 1000 * 60 * 60 * 24;
+
+      request(app)
+        .get('/project/' + template.project._id + '/report')
+        .set('x-jwt-token', template.users.admin.token)
+        .set('x-query', JSON.stringify([{
+          '$match': {
+            'created': {
+              '$gte': `Date('${yesterday.toString()}')`,
+              '$lte': `Date('${now.toString()}')`
+            }
+          }
+        }]))
+        .expect(200)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+
+          assert(res.body.length > 0);
+          done();
+        });
+    });
+
+    it('Should allow Date in aggregation (date input w/ double quotes).', function(done) {
+      let now = (new Date()).getTime();
+      let yesterday = now - 1000 * 60 * 60 * 24;
+
+      request(app)
+        .get('/project/' + template.project._id + '/report')
+        .set('x-jwt-token', template.users.admin.token)
+        .set('x-query', JSON.stringify([{
+          '$match': {
+            'created': {
+              '$gte': `Date("${yesterday.toString()}")`,
+              '$lte': `Date("${now.toString()}")`
+            }
+          }
+        }]))
+        .expect(200)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+
+          assert(res.body.length > 0);
+          done();
+        });
+    });
   });
 };
