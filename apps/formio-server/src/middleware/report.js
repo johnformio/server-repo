@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * This file serves as an aggregation mechanism for projecst.
+ * This file serves as an aggregation mechanism for projects.
  */
 var express = require('express');
 var router = express.Router();
@@ -46,11 +46,11 @@ module.exports = function(formio) {
 
       if (node.match(/^ObjectId\(\'(.{24})\'\)$/)) {
         var result = node.match(/^ObjectId\(\'(.{24})\'\)$/m);
-        this.update(mongoose.Types.ObjectId(result[1]));
+        this.update(formio.util.idToBson(result[1]));
       }
       if (node.match(/^Date\((\'.+\'|.+)\)$/)) {
         var result = node.match(/^Date\((\'.+\'|.+)\)$/m);
-        this.update(Date(result[1]));
+        this.update(new Date(result[1]));
       }
     });
 

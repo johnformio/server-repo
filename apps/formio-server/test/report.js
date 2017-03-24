@@ -211,5 +211,25 @@ module.exports = function(app, template, hook) {
           done();
         });
     });
+
+    it('Should allow ObjectId in aggregation.', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/report')
+        .set('x-jwt-token', template.users.admin.token)
+        .set('x-query', JSON.stringify([{
+          '$match': {
+            'form': `ObjectId('${template.resources.user._id}')`
+          }
+        }]))
+        .expect(200)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+
+          assert(res.body.length > 0);
+          done();
+        });
+    });
   });
 };
