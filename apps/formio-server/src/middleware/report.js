@@ -29,9 +29,6 @@ module.exports = function(formio) {
       return res.status(400).send('Must include an aggregation pipeline');
     }
 
-    var mongoose = formio.mongoose;
-    var submissions = mongoose.connections[0].collections.submissions.collection;
-
     // Make sure the filter is an array.
     if (!filter || !filter.length) {
       filter = [];
@@ -106,15 +103,13 @@ module.exports = function(formio) {
     }
 
     // Get the user roles.
-    var userRoles = _.map(req.user.roles, function(role) {
-      return formio.mongoose.Types.ObjectId(role);
-    });
+    var userRoles = _.map(req.user.roles, formio.util.idToBson);
 
     // Find all forms that this user has "read_all" access to or owns and only give them
     // aggregate access to those forms.
     formio.resources.form.model.find({
       '$and': [
-        {project: mongoose.Types.ObjectId(req.projectId)},
+        {project: formio.util.idToBson(req.projectId)},
         {'$or': [
           {access: {
             '$elemMatch': {
@@ -124,7 +119,7 @@ module.exports = function(formio) {
               }
             }
           }},
-          {owner: mongoose.Types.ObjectId(req.user._id)}
+          {owner: formio.util.idToBson(req.user._id)}
         ]}
       ]
     }).exec(function(err, result) {
@@ -166,23 +161,25 @@ module.exports = function(formio) {
 
       // Method to perform the aggregation.
       var performAggregation = function() {
-        submissions.aggregate(stages)
-          .stream()
-          .pipe(through(function(doc) {
-            if (doc && doc.form) {
-              var formId = doc.form.toString();
-              if (forms.hasOwnProperty(formId)) {
-                _.each(formioUtils.flattenComponents(forms[doc.form.toString()].components), function(component) {
-                  if (component.protected && doc.data && doc.data.hasOwnProperty(component.key)) {
-                    delete doc.data[component.key];
-                  }
-                });
-              }
+        formio.resources.submission.model.aggregate(stages)
+        .cursor()
+        .exec()
+        .stream()
+        .pipe(through(function(doc) {
+          if (doc && doc.form) {
+            var formId = doc.form.toString();
+            if (forms.hasOwnProperty(formId)) {
+              _.each(formioUtils.flattenComponents(forms[doc.form.toString()].components), function(component) {
+                if (component.protected && doc.data && doc.data.hasOwnProperty(component.key)) {
+                  delete doc.data[component.key];
+                }
+              });
             }
-            this.queue(doc);
-          }))
-          .pipe(JSONStream.stringify())
-          .pipe(res);
+          }
+          this.queue(doc);
+        }))
+        .pipe(JSONStream.stringify())
+        .pipe(res);
       };
 
       // If a limit is provided, then we need to include some pagination stuff.
@@ -210,7 +207,8 @@ module.exports = function(formio) {
       }
 
       // Find the total count based on the query.
-      submissions.find(countQuery).count(function(err, count) {
+      formio.resources.submission.model.find(countQuery)
+      .count(function(err, count) {
         if (err) {
           debug.error(err);
           return next(err);
