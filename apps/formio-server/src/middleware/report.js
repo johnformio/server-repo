@@ -45,9 +45,22 @@ module.exports = function(formio) {
         var result = node.match(/^ObjectId\(['|"](.{24})['|"]\)$/m);
         this.update(formio.util.idToBson(result[1]));
       }
-      if (node.match(/^Date\((\'.+\'|.+)\)$/)) {
-        var result = node.match(/^Date\((\'.+\'|.+)\)$/m);
-        this.update(new Date(result[1]));
+      if (node.match(/^Date\(['|"]?(.[^']+)['|"]?\)$/)) {
+        var result = node.match(/^Date\(['|"]?(.[^']+)['|"]?\)$/m);
+        // If a non digit exists, use the input as a string.
+        let test = result[1].match(/[^\d]/g);
+        if (test && test[1]) {
+          return this.update(new Date(result[1].toString()));
+        }
+
+        try {
+          result[1] = parseInt(result[1]);
+          return this.update(new Date(result[1]));
+        }
+        catch (e) {
+          debug.error(e);
+          return;
+        }
       }
     });
 
