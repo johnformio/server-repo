@@ -51,6 +51,7 @@ test:
     - node --version
     - mongo --version
     - docker --version
+    - wget --version
     - sudo bash -c "echo \"127.0.0.1 formio.localhost\" >> /etc/hosts"
     - sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
     - sudo bash -c "echo \"127.0.0.1 dockertest.localhost\" >> /etc/hosts"
