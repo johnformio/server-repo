@@ -876,6 +876,181 @@ module.exports = function(app, template, hook) {
       });
     });
 
+    describe('CORS Access for default', function() {
+      if (!docker)
+      before(function(done) {
+        // Confirm the dummy project is on the team plan.
+        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
+          if (err) return done(err);
+
+          project.plan = 'team';
+          project.save(function(err) {
+            if (err) {
+              return done(err);
+            }
+
+            done();
+          });
+        });
+      });
+
+      if (!docker)
+      it ('should respond short circuit for portal domains.', function(done) {
+        request(app)
+          .options('/project/' + template.project._id + '/form')
+          .set('x-jwt-token', template.formio.owner.token)
+          .set('Origin', 'https://portal.form.io')
+          .send()
+          .end(function(err, res) {
+            assert.equal(res.headers['access-control-allow-origin'], 'https://portal.form.io');
+            assert.equal(res.headers['access-control-allow-methods'], 'GET,HEAD,PUT,PATCH,POST,DELETE');
+            done();
+          });
+      });
+
+      if (!docker)
+      it ('should respond with cors request to role endpoint.', function(done) {
+        request(app)
+          .options('/project/' + template.project._id + '/role')
+          .set('x-jwt-token', template.formio.owner.token)
+          .set('Origin', 'https://portal.form.io')
+          .send()
+          .end(function(err, res) {
+            assert.equal(res.headers['access-control-allow-origin'], 'https://portal.form.io');
+            assert.equal(res.headers['access-control-allow-methods'], 'GET,HEAD,PUT,PATCH,POST,DELETE');
+            done();
+          });
+      });
+
+      if (!docker)
+      it ('should respond with cors request for form.', function(done) {
+        request(app)
+          .options('/user/login')
+          .set('x-jwt-token', template.formio.owner.token)
+          .set('host', 'https://formio.form.io')
+          .set('Origin', 'https://portal.form.io')
+          .send()
+          .end(function(err, res) {
+            assert.equal(res.headers['access-control-allow-origin'], 'https://portal.form.io');
+            assert.equal(res.headers['access-control-allow-methods'], 'GET,HEAD,PUT,PATCH,POST,DELETE');
+            done();
+          });
+      });
+
+      if (!docker)
+      it ('should respond to cors options request with the proper header when using default cors.', function(done) {
+        request(app)
+          .options('/project/' + template.project._id + '/form')
+          .set('x-jwt-token', template.formio.owner.token)
+          .set('Origin', 'http://www.example.com')
+          .send()
+          .end(function(err, res) {
+            assert.equal(res.headers['access-control-allow-origin'], 'http://www.example.com');
+            assert.equal(res.headers['access-control-allow-methods'], 'GET,HEAD,PUT,PATCH,POST,DELETE');
+            done();
+          });
+      });
+
+      if (!docker)
+      it ('should respond to regular requests with the proper header when using default cors.', function(done) {
+        request(app)
+          .get('/project/' + template.project._id + '/form')
+          .set('x-jwt-token', template.formio.owner.token)
+          .set('Origin', 'http://www.example.com')
+          .send()
+          .end(function(err, res) {
+            assert.equal(res.headers['access-control-allow-origin'], '*');
+            assert.equal(res.headers.hasOwnProperty('access-control-allow-methods'), false);
+            done();
+          });
+      });
+    });
+
+    describe('CORS Access for project with CORS', function() {
+      var cors = 'http://www.example.com,http://portal.example.com';
+
+      if (!docker)
+      before(function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({settings: {cors: cors}})
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('cors'), true);
+            assert.equal(response.settings.cors, cors);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      if (!docker)
+      it ('should allow access to the project root.', function(done) {
+        request(app)
+          .options('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .set('Origin', 'http://www.example.com')
+          .send()
+          .end(function(err, res) {
+            assert.equal(res.headers['access-control-allow-origin'], 'http://www.example.com');
+            assert.equal(res.headers['access-control-allow-methods'], 'GET,HEAD,PUT,PATCH,POST,DELETE');
+            done();
+          });
+      });
+
+      if (!docker)
+      it ('should respond to cors options request with the proper header when using default cors.', function(done) {
+        request(app)
+          .options('/project/' + template.project._id + '/form')
+          .set('x-jwt-token', template.formio.owner.token)
+          .set('Origin', 'http://www.example.com')
+          .send()
+          .end(function(err, res) {
+            assert.equal(res.headers['access-control-allow-origin'], 'http://www.example.com');
+            assert.equal(res.headers['access-control-allow-methods'], 'GET,HEAD,PUT,PATCH,POST,DELETE');
+            done();
+          });
+      });
+
+      if (!docker)
+      it ('should respond to regular requests with the proper header when using default cors.', function(done) {
+        request(app)
+          .get('/project/' + template.project._id + '/form')
+          .set('x-jwt-token', template.formio.owner.token)
+          .set('Origin', 'http://www.example.com')
+          .send()
+          .end(function(err, res) {
+            assert.equal(res.headers['access-control-allow-origin'], '*');
+            assert.equal(res.headers.hasOwnProperty('access-control-allow-methods'), false);
+            done();
+          });
+      });
+
+      if (!docker)
+      it ('should respond to requests from a disallowed domain with https://form.io.', function(done) {
+        request(app)
+          .options('/project/' + template.project._id + '/form')
+          .set('x-jwt-token', template.formio.owner.token)
+          .set('Origin', 'http://bad.example.com')
+          .send()
+          .end(function(err, res) {
+            assert.equal(res.headers['access-control-allow-origin'], 'https://form.io');
+            assert.equal(res.headers['access-control-allow-methods'], 'GET,HEAD,PUT,PATCH,POST,DELETE');
+            done();
+          });
+      });
+    });
+
     describe('Upgrading Plans', function() {
       if (!docker)
       before(function(done) {
@@ -1057,7 +1232,6 @@ module.exports = function(app, template, hook) {
           .post('/project/' + template.project._id + '/upgrade')
           .set('x-jwt-token', template.formio.owner.token)
           .send({plan: 'independent'})
-          .expect('Content-Type', /text\/plain/)
           .expect(200)
           .end(function(err, res) {
             if (err) {
@@ -1093,7 +1267,6 @@ module.exports = function(app, template, hook) {
           .post('/project/' + template.project._id + '/upgrade')
           .set('x-jwt-token', template.formio.owner.token)
           .send({plan: 'team'})
-          .expect('Content-Type', /text\/plain/)
           .expect(200)
           .end(function(err, res) {
             if (err) {
@@ -1128,7 +1301,6 @@ module.exports = function(app, template, hook) {
           .post('/project/' + template.project._id + '/upgrade')
           .set('x-jwt-token', template.formio.owner.token)
           .send({plan: 'commercial'})
-          .expect('Content-Type', /text\/plain/)
           .expect(200)
           .end(function(err, res) {
             if (err) {
@@ -1163,7 +1335,6 @@ module.exports = function(app, template, hook) {
           .post('/project/' + template.project._id + '/upgrade')
           .set('x-jwt-token', template.formio.owner.token)
           .send({plan: 'team'})
-          .expect('Content-Type', /text\/plain/)
           .expect(200)
           .end(function(err, res) {
             if (err) {
@@ -1198,7 +1369,6 @@ module.exports = function(app, template, hook) {
           .post('/project/' + template.project._id + '/upgrade')
           .set('x-jwt-token', template.formio.owner.token)
           .send({plan: 'independent'})
-          .expect('Content-Type', /text\/plain/)
           .expect(200)
           .end(function(err, res) {
             if (err) {
@@ -1234,7 +1404,6 @@ module.exports = function(app, template, hook) {
           .post('/project/' + template.project._id + '/upgrade')
           .set('x-jwt-token', template.formio.owner.token)
           .send({plan: 'basic'})
-          .expect('Content-Type', /text\/plain/)
           .expect(200)
           .end(function(err, res) {
             if (err) {

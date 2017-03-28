@@ -1,15 +1,15 @@
 {
   "private": true,
   "engines": {
-    "node": ">=4.2.0"
+    "node": ">=6.0.0"
   },
   "scripts": {
     "start": "PROTOCOL=http DOMAIN=localhost PORT=3000 node main.js",
-    "test": "TEST_SUITE=1 PROTOCOL=http DOMAIN=localhost PORT=3000 MONGO_COLLECTION=formio-test PROJECT_PLAN=basic ADMIN_EMAIL=admin@example.com ADMIN_PASS=CHANGEME DROPBOX_CLIENTID=clientid123 DROPBOX_CLIENTSECRET=clientsecret123 mocha -b -t 60000 test/mocha.js",
-    "docker": "DOCKER=1 TEST_SUITE=1 PROTOCOL=http DOMAIN=localhost PORT=3000 DROPBOX_CLIENTID=NOTREAL DROPBOX_CLIENTSECRET=clientsecret123 mocha -b -t 30000 test/mocha.js",
+    "test": "TEST_SUITE=1 PROTOCOL=http DOMAIN=localhost PORT=3000 MONGO_COLLECTION=formio-test PROJECT_PLAN=basic ADMIN_EMAIL=admin@example.com ADMIN_PASS=CHANGEME DROPBOX_CLIENTID=clientid123 DROPBOX_CLIENTSECRET=clientsecret123 mocha -b -t 120000 test/mocha.js",
+    "docker": "DOCKER=1 TEST_SUITE=1 PROTOCOL=http DOMAIN=localhost PORT=3000 DROPBOX_CLIENTID=NOTREAL DROPBOX_CLIENTSECRET=clientsecret123 mocha -b -t 60000 test/mocha.js",
     "clean": "rm -rf build",
     "compile": "node compile",
-    "customer": "DOCKER=1 CUSTOMER=1 TEST_SUITE=1 PROTOCOL=http DOMAIN=localhost PORT=3000 ADMIN_EMAIL=dockertest@form.io ADMIN_PASS=testdockertest DROPBOX_CLIENTID=NOTREAL DROPBOX_CLIENTSECRET=clientsecret123 mocha -b -t 30000 test/mocha.js",
+    "customer": "DOCKER=1 CUSTOMER=1 TEST_SUITE=1 PROTOCOL=http DOMAIN=localhost PORT=3000 ADMIN_EMAIL=dockertest@form.io ADMIN_PASS=testdockertest DROPBOX_CLIENTID=NOTREAL DROPBOX_CLIENTSECRET=clientsecret123 mocha -b -t 60000 test/mocha.js",
     "build": "npm run lint; npm run clean; npm run compile",
     "builddocker": "docker build -f deployment/docker/formio-server/Dockerfile .",
     "lint": "eslint ."
@@ -28,7 +28,7 @@
     "dotenv": "1.2.0",
     "edit-google-spreadsheet": "^0.2.21",
     "express": "^4.14.0",
-    "formio": "^1.15.12",
+    "formio": "^1.16.2",
     "formio-utils": "^0.1.10",
     "is-url": "^1.2.1",
     "jira-connector": "^2.3.0",
@@ -70,6 +70,6 @@
     "node-optimize": "^1.2.1",
     "sinon": "^1.17.2",
     "supertest": "^1.1.0",
-    "uglify-js": "^2.7.0"
+    "uglify-js": "git+https://github.com/mishoo/UglifyJS2.git#harmony"
   }
 }

@@ -5,6 +5,8 @@ var request = require('supertest');
 var assert = require('assert');
 var CryptoJS = require('crypto-js');
 var AWS = require('aws-sdk');
+var docker = process.env.DOCKER;
+var customer = process.env.CUSTOMER;
 
 module.exports = function(app, template, hook) {
   describe('S3 setup', function() {
@@ -190,6 +192,7 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
           assert.equal(res.body.bucket, template.project.settings.storage.s3.bucket);
+          // Ignore Expires timestamp as it can be off by a second.
           assert.equal(res.body.url, template.project.settings.storage.s3.bucketUrl);
           assert.equal(res.body.data.key, template.project.settings.storage.s3.startsWith);
           assert.equal(res.body.data.AWSAccessKeyId, template.project.settings.storage.s3.AWSAccessKeyId);
@@ -252,7 +255,9 @@ module.exports = function(app, template, hook) {
             if (err) {
               done(err);
             }
-            assert.equal(res.body.url, url);
+            if (!docker && !customer) {
+              assert.equal(res.body.url.replace(/Expires=[0-9]*/, ''), url.replace(/Expires=[0-9]*/, ''));
+            }
             done();
           });
         });

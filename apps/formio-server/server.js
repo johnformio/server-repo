@@ -27,6 +27,8 @@ module.exports = function(options) {
   // Load the analytics hooks.
   var analytics = require('./src/analytics/index')(config);
 
+  var Logger = require('./src/logger/index')(config);
+
   // Ensure that we create projects within the helper.
   app.hasProjects = true;
 
@@ -78,11 +80,13 @@ module.exports = function(options) {
     res.redirect('https://' + req.get('Host') + req.url);
   });
 
-  // CORS Support
-  app.use(require('cors')());
-
   // Establish our url alias middleware.
   app.use(require('./src/middleware/alias')(app.formio.formio));
+
+  // CORS Support
+  var corsMiddleware = require('./src/middleware/corsOptions')(app);
+  var corsRoute = require('cors')(corsMiddleware);
+  app.use(corsRoute);
 
   // Handle our API Keys.
   app.use(require('./src/middleware/apiKey')(app.formio.formio));
@@ -114,7 +118,10 @@ module.exports = function(options) {
       app.use('/project/:projectId', app.formio);
 
       // Mount the aggregation system.
-      app.use('/project/:projectId/report', require('./src/middleware/report')(app.formio));
+      app.use('/project/:projectId/report', require('./src/middleware/report')(app.formio.formio));
+
+      // Mount the error logging middleware.
+      app.use(Logger.middleware);
 
       return q.resolve({
         app: app,
@@ -142,8 +149,9 @@ module.exports = function(options) {
     });
   });
 
-  if (config.jslogger && jslogger) {
-    process.on('uncaughtException', function(err) {
+  // Do some logging on uncaught exceptions in the application.
+  process.on('uncaughtException', function(err) {
+    if (config.jslogger && jslogger) {
       /* eslint-disable no-console */
       console.log('Uncaught exception:');
       console.log(err);
@@ -155,13 +163,17 @@ module.exports = function(options) {
         fileName: err.fileName,
         lineNumber: err.lineNumber
       });
+    }
 
-      // Give jslogger time to log before exiting.
-      setTimeout(function() {
-        process.exit(1);
-      }, 1500);
-    });
-  }
+    if (Logger.middleware) {
+      Logger.middleware(err, {});
+    }
+
+    // Give the loggers some time to log before exiting.
+    setTimeout(function() {
+      process.exit(1);
+    }, 2500);
+  });
 
   return q.promise;
 };
