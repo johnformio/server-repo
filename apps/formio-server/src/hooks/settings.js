@@ -374,30 +374,31 @@ module.exports = function(app) {
               _debug('No project found with projectId: ' + req.projectId);
               return callback('No project found with projectId: ' + req.projectId);
             }
+            cache.loadPrimaryProject(req, function(err, primaryProject) {
+              // Store the Project Owners UserId, because they will have all permissions.
+              if (primaryProject.owner) {
+                access.project.owner = primaryProject.owner.toString();
 
-            // Store the Project Owners UserId, because they will have all permissions.
-            if (project.owner) {
-              access.project.owner = project.owner.toString();
+                // Add the UserId of the Project Owner for the ownerFilter middleware.
+                req.projectOwner = access.project.owner;
+              }
 
-              // Add the UserId of the Project Owner for the ownerFilter middleware.
-              req.projectOwner = access.project.owner;
-            }
+              // Add the other defined access types.
+              if (project.access) {
+                project.access.forEach(function(permission) {
+                  access.project[permission.type] = access.project[permission.type] || [];
 
-            // Add the other defined access types.
-            if (project.access) {
-              project.access.forEach(function(permission) {
-                access.project[permission.type] = access.project[permission.type] || [];
-
-                // Convert the roles from BSON to comparable strings.
-                permission.roles.forEach(function(id) {
-                  access.project[permission.type].push(id.toString());
+                  // Convert the roles from BSON to comparable strings.
+                  permission.roles.forEach(function(id) {
+                    access.project[permission.type].push(id.toString());
+                  });
                 });
-              });
-            }
+              }
 
-            // Pass the access of this project to the next function.
-            _debug(JSON.stringify(access));
-            return callback(null);
+              // Pass the access of this project to the next function.
+              _debug(JSON.stringify(access));
+              return callback(null);
+            });
           });
         };
 
@@ -420,7 +421,7 @@ module.exports = function(app) {
           }
 
           // Load the project.
-          cache.loadProject(req, req.projectId, function(err, project) {
+          cache.loadPrimaryProject(req, function(err, project) {
             if (err) {
               _debug(err);
               return callback(err);

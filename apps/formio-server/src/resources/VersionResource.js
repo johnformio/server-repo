@@ -9,7 +9,7 @@ module.exports = function(router, formioServer) {
   var hiddenFields = ['deleted', '__v'];
   var resource = Resource(
     router,
-    '',
+    '/project/:projectId',
     'version',
     formio.mongoose.model('version', formio.schemas.version)
   ).rest({

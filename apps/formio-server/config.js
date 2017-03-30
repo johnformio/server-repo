@@ -27,17 +27,22 @@ config.reservedSubdomains = [
   'portal',
   'app',
   'apps',
-  'classic'
+  'classic',
+  'beta'
 ];
 config.formio.reservedForms = [
   'submission',
   'report',
+  'version',
   'exists',
   'export',
+  'import',
+  'clone',
+  'deploy',
+  'wipe',
   'role',
   'current',
   'logout',
-  'import',
   'form',
   'logs',
   'classic',
