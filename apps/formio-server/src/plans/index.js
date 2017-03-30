@@ -35,7 +35,7 @@ module.exports = function(formioServer, cache) {
       return next(null, basePlan);
     }
 
-    cache.loadProject(req, req.projectId, function(err, project) {
+    cache.loadPrimaryProject(req, function(err, project) {
       if (err || !project) {
         debug.getPlan(err || 'Project not found.');
         return next(err || 'Project not found.');

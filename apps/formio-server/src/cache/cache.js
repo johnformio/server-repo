@@ -72,18 +72,20 @@ module.exports = function(formio) {
           return cb(err);
         }
         // If this is an environment, not a project, load the primary project.
-        if (currentProject.hasOwnProperty('project') && currentProject.project) {
+        if ('project' in currentProject && currentProject.project) {
           this.loadProject(req, currentProject.project, function(err, primaryProject) {
             if (err) {
               return cb(err);
             }
+            debug.loadProject('Has primary. ', currentProject._id, primaryProject._id);
             cb(null, primaryProject);
           });
         }
         else {
+          debug.loadProject('Is primary. ', currentProject._id);
           cb(null, currentProject);
         }
-      });
+      }.bind(this));
     },
 
     /**
