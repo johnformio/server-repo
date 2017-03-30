@@ -18,7 +18,17 @@ catch (e) {
   config.docker = false;
 }
 
-config.reservedSubdomains = ['test', 'www', 'api', 'help', 'support', 'portal', 'app', 'apps'];
+config.reservedSubdomains = [
+  'test',
+  'www',
+  'api',
+  'help',
+  'support',
+  'portal',
+  'app',
+  'apps',
+  'classic'
+];
 config.formio.reservedForms = [
   'submission',
   'report',
@@ -29,6 +39,8 @@ config.formio.reservedForms = [
   'logout',
   'import',
   'form',
+  'logs',
+  'classic',
   'storage\/s3',
   'storage\/dropbox',
   'dropbox\/auth',

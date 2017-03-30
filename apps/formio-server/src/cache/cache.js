@@ -66,6 +66,26 @@ module.exports = function(formio) {
       this.loadProject(req, projectId, cb);
     },
 
+    loadPrimaryProject: function(req, cb) {
+      this.loadCurrentProject(req, function(err, currentProject) {
+        if (err) {
+          return cb(err);
+        }
+        // If this is an environment, not a project, load the primary project.
+        if (currentProject.hasOwnProperty('project') && currentProject.project) {
+          this.loadProject(req, currentProject.project, function(err, primaryProject) {
+            if (err) {
+              return cb(err);
+            }
+            cb(null, primaryProject);
+          });
+        }
+        else {
+          cb(null, currentProject);
+        }
+      });
+    },
+
     /**
      * Load an Project provided the Project ID.
      * @param req

@@ -196,11 +196,13 @@ module.exports = function(formio) {
     // Allow external templates.
     debug('template: ' + template + ', typeof ' + typeof template);
     if (typeof template === 'object') {
+      debug('importing object');
       // Import the template.
       return importTemplate(template);
     }
     // Allow templates from http://help.form.io/templates.
-    if (isURL(template)) {
+    else if (isURL(template)) {
+      debug('importing URL');
       return request({
         url: template,
         json: true
@@ -218,13 +220,31 @@ module.exports = function(formio) {
         return importTemplate(body);
       });
     }
+    // New environments should copy their primary project template.
+    else if ('project' in project && project.project) {
+      debug('importing primary project');
+      // Change the req.projectId so formQuery alter works for primary project. Restore when done!
+      //var currentProjectId = req.projectId;
+      //req.projectId = project.project;
+      formio.exporter.export({}, function(err, template) {
+        //req.projectId = currentProjectId;
+        if (err) {
+          // If something went wrong, just import the default template instead.
+          return importTemplate(_.cloneDeep(formio.templates['default']));
+        }
+        return importTemplate(template);
+      });
+    }
     // Check for template that is already provided.
-    if (formio.templates.hasOwnProperty(template)) {
+    else if (formio.templates.hasOwnProperty(template)) {
+      debug('importing template:' + template);
       // Import the template.
       return importTemplate(_.cloneDeep(formio.templates[template]));
     }
-
-    // Unknown template.
-    return next('Unknown template.');
+    else {
+      debug('importing nothing!');
+      // Unknown template.
+      return next('Unknown template.');
+    }
   };
 };
