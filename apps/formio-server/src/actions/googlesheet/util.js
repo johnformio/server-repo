@@ -11,7 +11,7 @@ module.exports = {
   checkOauthParameters: function(router, req, next) {
     router.formio.hook.settings(req, function(err, settings) {
       if (err) {
-        return next(err);
+        return next(err.message || err);
       }
 
       if (!_.has(settings, 'google')) {

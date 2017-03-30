@@ -120,7 +120,7 @@ module.exports = function(router) {
    */
   MoxtraLogin.prototype.resolve = function(handler, method, req, res, next) {
     if (!_.has(res, 'resource.item')) {
-      return next('No resource was loaded for authentication.');
+      return res.status(400).send('No resource was loaded for authentication.');
     }
 
     // Grab the user obj.
@@ -133,7 +133,7 @@ module.exports = function(router) {
     }
 
     if (!user || !_.has(user, 'data')) {
-      return next('Could not load the current user.');
+      return res.status(400).send('Could not load the current user.');
     }
 
     // Check for the require action settings.
@@ -144,17 +144,17 @@ module.exports = function(router) {
       }
     }.bind(this));
     if (errors.length !== 0) {
-      return next('The Moxtra project settings are incomplete. Missing: ' + errors.join(', '));
+      return res.status(400).send('The Moxtra project settings are incomplete. Missing: ' + errors.join(', '));
     }
 
     // They must provide a firstname.
     if (!_.has(user.data, this.settings.firstname)) {
-      return next('First name not provided.');
+      return res.status(400).send('First name not provided.');
     }
 
     // They must provide a lastname.
     if (!_.has(user.data, this.settings.lastname)) {
-      return next('Last name not provided.');
+      return res.status(400).send('Last name not provided.');
     }
 
     /**
