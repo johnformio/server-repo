@@ -91,6 +91,20 @@ module.exports = function(options) {
   // Handle our API Keys.
   app.use(require('./src/middleware/apiKey')(app.formio.formio));
 
+  // Add download submission endpoint.
+  app.use('/project/:projectId/form/:formId/submission/:submissionId/download/:fileId',
+    function(req, res, next) {
+      if (!req.query.token) {
+        return res.sendStatus(401);
+      }
+      req.headers['x-jwt-token'] = req.query.token;
+      next();
+    },
+    app.formio.formio.middleware.tokenHandler,
+    app.formio.formio.middleware.permissionHandler,
+    require('./src/middleware/download')(app.formio.formio)
+  );
+
   // Adding google analytics to our api.
   if (config.gaTid) {
     var ua = require('universal-analytics');
