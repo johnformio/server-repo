@@ -5,7 +5,8 @@ var fs = require('fs');
 var _ = require('lodash');
 var debug = require('debug')('formio:error');
 
-module.exports = function(formio, done) {
+module.exports = function(router, done) {
+  let formio = router.formio;
   var hook = require('formio/src/util/hook')(formio);
 
   if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASS) {
@@ -14,7 +15,7 @@ module.exports = function(formio, done) {
     );
   }
 
-  var importer = require('formio/src/templates/import')(formio);
+  var importer = require('formio/src/templates/import')(router);
   var template;
   var project;
   var user;
@@ -53,10 +54,16 @@ module.exports = function(formio, done) {
       /* eslint-disable no-console */
       console.log(' > Importing formio project.');
       /* eslint-enable no-console */
-      importer.project = importer.createInstall(formio.mongoose.models.project, parseProject);
+      let projectInstall = importer.install({
+        model: formio.mongoose.models.project,
+        transform: parseProject
+      });
+
+      //importer.project = importer.createInstall(formio.mongoose.models.project, parseProject);
       var items = {};
       items[template.name] = '';
-      importer.project(template, items, function(err) {
+
+      projectInstall(template, items, function(err) {
         if (err) {
           return done(err);
         }

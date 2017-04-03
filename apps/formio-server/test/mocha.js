@@ -12,14 +12,14 @@ var docker = process.env.DOCKER;
 var customer = process.env.CUSTOMER;
 var app = null;
 var hook = null;
-var template = _.cloneDeep(require('formio/test/template')());
+var template = _.cloneDeep(require('formio/test/fixtures/template')());
 let EventEmitter = require('events');
 
 process.on('uncaughtException', function(err) {
   console.log(err.stack);
 });
 
-var emptyDatabase = template.emptyDatabase = function(done) {
+var emptyDatabase = template.emptyDatabase = template.clearData = function(done) {
   if (docker || customer) {
     return done();
   }
@@ -163,7 +163,7 @@ describe('Tests', function() {
         process.env.ADMIN_PASS = 'password';
         // Clear the database, reset the schema and perform a fresh install.
         emptyDatabase(function() {
-          require('../install')(app.formio.formio, done);
+          require('../install')(app.formio, done);
         });
       });
 
@@ -1340,6 +1340,7 @@ describe('Tests', function() {
 
     after(function() {
       describe('Final Tests', function() {
+        require('formio/test/templates')(app, template, hook);
         require('./project')(app, template, hook);
         require('./email')(app, template, hook);
         require('formio/test/unit')(app, template, hook);
@@ -1351,7 +1352,6 @@ describe('Tests', function() {
         require('formio/test/actions')(app, template, hook);
         require('formio/test/submission')(app, template, hook);
         require('formio/test/submission-access')(app, template, hook);
-        require('formio/test/templates')(app, template, hook);
         require('./templates')(app, template, hook);
         require('./analytics')(app, template, hook);
         require('./teams')(app, template, hook);
