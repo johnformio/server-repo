@@ -1808,7 +1808,7 @@ module.exports = function(app, template, hook) {
       }
 
       // Bootstrap
-      it('A Project Owner should be able to add one of their teams to have access with the team_read permission', function(done) {
+      it('A Project Owner should be able to add one of their teams to have access with the team_write permission', function(done) {
         var teamAccess = {type: 'team_write', roles: [template.team1._id]};
 
         request(app)
@@ -2529,7 +2529,7 @@ module.exports = function(app, template, hook) {
       }
 
       // Bootstrap
-      it('A Project Owner should be able to add one of their teams to have access with the team_read permission', function(done) {
+      it('A Project Owner should be able to add one of their teams to have access with the team_admin permission', function(done) {
         var teamAccess = {type: 'team_admin', roles: [template.team1._id]};
 
         request(app)

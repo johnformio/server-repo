@@ -107,7 +107,7 @@ var emptyDatabase = template.emptyDatabase = function(done) {
   dropProjects();
 };
 
-describe('Tests', function() {
+describe('Initial Tests', function() {
   before(function(done) {
     var hooks = _.merge(require('formio/test/hooks'), require('./hooks')); // Merge all the test hooks.
     if (!docker && !customer) {
@@ -1339,7 +1339,7 @@ describe('Tests', function() {
     });
 
     after(function() {
-      describe('Final Tests', function() {
+      describe('Project Tests', function() {
         require('./project')(app, template, hook);
         require('./email')(app, template, hook);
         require('formio/test/unit')(app, template, hook);
@@ -1353,6 +1353,7 @@ describe('Tests', function() {
         require('formio/test/submission-access')(app, template, hook);
         require('./analytics')(app, template, hook);
         require('./teams')(app, template, hook);
+        require('./env')(app, template, hook);
         require('./misc')(app, template, hook);
         require('./oauth')(app, template, hook);
         require('./s3')(app, template, hook);
