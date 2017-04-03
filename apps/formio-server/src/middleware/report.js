@@ -16,219 +16,232 @@ var debug = {
   error: require('debug')('formio:error')
 };
 
-module.exports = function(formio) {
+module.exports = function(formioServer) {
+  var formio = formioServer.formio;
+
   var report = function(req, res, next, filter) {
-    // A user is always required for this operation.
-    if (!req.user || !req.user.roles || !req.user.roles.length) {
-      debug.report('Unauthorized');
-      return res.status(401).send('Unauthorized');
-    }
-
-    if (!req.body) {
-      debug.report('No pipeline');
-      return res.status(400).send('Must include an aggregation pipeline');
-    }
-
-    var mongoose = formio.mongoose;
-    var submissions = mongoose.connections[0].collections.submissions.collection;
-
-    // Make sure the filter is an array.
-    if (!filter || !filter.length) {
-      filter = [];
-    }
-    debug.report('filter', filter);
-
-    // Convert ObjectIds to actual object ids.
-    traverse(filter).forEach(function(node) {
-      if (typeof node === 'string' && node.match(/^ObjectId\(\'(.{24})\'\)$/)) {
-        var result = node.match(/^ObjectId\(\'(.{24})\'\)$/m);
-        this.update(mongoose.Types.ObjectId(result[1]));
-      }
-    });
-
-    var query = {};
-    var stages = [];
-    var limitStage = null;
-    var skipStage = null;
-    var filterStages = function() {
-      // Ensure there are no disallowed stages in the aggregation.
-      // We may want to include additional stages but better to start with less.
-      var allowedStages = ['$match', '$limit', '$sort', '$skip', '$group', '$unwind'];
-      /* eslint-disable */
-      for (var i in filter) {
-        var stage = filter[i];
-        var includeStage = false;
-        for (var key in stage) {
-          // Only allow boolean values for $project
-          if (key === '$project') {
-            for (var param in stage[key]) {
-              if (['number', 'boolean'].indexOf((typeof stage[key][param])) === -1) {
-                return true;
-              }
-            }
-            includeStage = true;
-          }
-          else if (key === '$match') {
-            _.merge(query, stage[key]);
-          }
-          else if (key === '$limit') {
-            limitStage = stage;
-          }
-          else if (key === '$skip') {
-            skipStage = stage;
-          }
-          // Make sure that this is an allowed stage.
-          else if (allowedStages.indexOf(key) === -1) {
-            return true;
-          }
-          else {
-            includeStage = true;
-          }
-        }
-        if (includeStage) {
-          stages.push(filter[i]);
-        }
-      }
-      /* eslint-enable */
-      return false;
-    };
-
-    if (filterStages()) {
-      return res.status(400).send('Disallowed stage used in aggregation.');
-    }
-
-    // Get the user roles.
-    var userRoles = _.map(req.user.roles, function(role) {
-      return formio.mongoose.Types.ObjectId(role);
-    });
-
-    // Find all forms that this user has "read_all" access to or owns and only give them
-    // aggregate access to those forms.
-    formio.resources.form.model.find({
-      '$and': [
-        {project: mongoose.Types.ObjectId(req.projectId)},
-        {'$or': [
-          {access: {
-            '$elemMatch': {
-              type: 'read_all',
-              roles: {
-                '$in': userRoles
-              }
-            }
-          }},
-          {owner: mongoose.Types.ObjectId(req.user._id)}
-        ]}
-      ]
-    }).exec(function(err, result) {
+    formio.cache.loadProject(req, req.projectId, function(err, project) {
       if (err) {
-        return next(err);
+        debug.report(err);
+        return res.status(400).send('Could not load the project.');
       }
 
-      var formIds = [];
-      var forms = {};
+      if (['trial', 'team', 'commercial'].indexOf(project.plan) === -1) {
+        return res.status(402).send('The report framework requires a Team or Commercial plan.');
+      }
 
-      // Add all these forms to a forms array.
-      _.each(result, function(form) {
-        formIds.push(form._id);
-        forms[form._id.toString()] = form;
+      // A user is always required for this operation.
+      if (!req.user || !req.user.roles || !req.user.roles.length) {
+        debug.report('Unauthorized');
+        return res.status(401).send('Unauthorized');
+      }
+
+      if (!req.body) {
+        debug.report('No pipeline');
+        return res.status(400).send('Must include an aggregation pipeline');
+      }
+
+      var mongoose = formio.mongoose;
+      var submissions = mongoose.connections[0].collections.submissions.collection;
+
+      // Make sure the filter is an array.
+      if (!filter || !filter.length) {
+        filter = [];
+      }
+      debug.report('filter', filter);
+
+      // Convert ObjectIds to actual object ids.
+      traverse(filter).forEach(function(node) {
+        if (typeof node === 'string' && node.match(/^ObjectId\(\'(.{24})\'\)$/)) {
+          var result = node.match(/^ObjectId\(\'(.{24})\'\)$/m);
+          this.update(mongoose.Types.ObjectId(result[1]));
+        }
       });
 
-      // Make sure to not include deleted submissions.
-      if (!req.query.deleted) {
-        query.deleted = {$eq: null};
-      }
-
-      // Start with the query, then add the remaining stages.
-      stages = [{'$match': {form: {'$in': formIds}}}].concat([{'$match': query}]).concat(stages);
-
-      // Add the skip stage first if applicable.
-      if (skipStage) {
-        stages = stages.concat([skipStage]);
-      }
-
-      // Next add the limit stage if applicable.
-      if (limitStage) {
-        stages = stages.concat([limitStage]);
-      }
-
-      // Start out the filter to only include those forms.
-      debug.report('final pipeline', stages);
-
-      res.setHeader('Content-Type', 'application/json');
-
-      // Method to perform the aggregation.
-      var performAggregation = function() {
-        submissions.aggregate(stages)
-          .stream()
-          .pipe(through(function(doc) {
-            if (doc && doc.form) {
-              var formId = doc.form.toString();
-              if (forms.hasOwnProperty(formId)) {
-                _.each(formioUtils.flattenComponents(forms[doc.form.toString()].components), function(component) {
-                  if (component.protected && doc.data && doc.data.hasOwnProperty(component.key)) {
-                    delete doc.data[component.key];
-                  }
-                });
+      var query = {};
+      var stages = [];
+      var limitStage = null;
+      var skipStage = null;
+      var filterStages = function() {
+        // Ensure there are no disallowed stages in the aggregation.
+        // We may want to include additional stages but better to start with less.
+        var allowedStages = ['$match', '$limit', '$sort', '$skip', '$group', '$unwind'];
+        /* eslint-disable */
+        for (var i in filter) {
+          var stage = filter[i];
+          var includeStage = false;
+          for (var key in stage) {
+            // Only allow boolean values for $project
+            if (key === '$project') {
+              for (var param in stage[key]) {
+                if (['number', 'boolean'].indexOf((typeof stage[key][param])) === -1) {
+                  return true;
+                }
               }
+              includeStage = true;
             }
-            this.queue(doc);
-          }))
-          .pipe(JSONStream.stringify())
-          .pipe(res);
+            else if (key === '$match') {
+              _.merge(query, stage[key]);
+            }
+            else if (key === '$limit') {
+              limitStage = stage;
+            }
+            else if (key === '$skip') {
+              skipStage = stage;
+            }
+            // Make sure that this is an allowed stage.
+            else if (allowedStages.indexOf(key) === -1) {
+              return true;
+            }
+            else {
+              includeStage = true;
+            }
+          }
+          if (includeStage) {
+            stages.push(filter[i]);
+          }
+        }
+        /* eslint-enable */
+        return false;
       };
 
-      // If a limit is provided, then we need to include some pagination stuff.
-      if (!limitStage) {
-        return performAggregation();
+      if (filterStages()) {
+        return res.status(400).send('Disallowed stage used in aggregation.');
       }
 
-      // Determine the count query by limiting based on the formIds.
-      var countQuery = _.cloneDeep(query);
+      // Get the user roles.
+      var userRoles = _.map(req.user.roles, function(role) {
+        return formio.mongoose.Types.ObjectId(role);
+      });
 
-      // Add the filtered formIds to the query.
-      if (
-        query.hasOwnProperty('form') &&
-        query.form.hasOwnProperty('$in') &&
-        (query.form['$in'].length > 0)
-      ) {
-        countQuery.form['$in'] = formIds.concat(query.form['$in']);
-      }
-      else if (query.form) {
-        formIds.push(query.form);
-        countQuery.form = {'$in': formIds};
-      }
-      else {
-        countQuery.form = {'$in': formIds};
-      }
-
-      // Find the total count based on the query.
-      submissions.find(countQuery).count(function(err, count) {
+      // Find all forms that this user has "read_all" access to or owns and only give them
+      // aggregate access to those forms.
+      formio.resources.form.model.find({
+        '$and': [
+          {project: mongoose.Types.ObjectId(req.projectId)},
+          {'$or': [
+            {access: {
+              '$elemMatch': {
+                type: 'read_all',
+                roles: {
+                  '$in': userRoles
+                }
+              }
+            }},
+            {owner: mongoose.Types.ObjectId(req.user._id)}
+          ]}
+        ]
+      }).exec(function(err, result) {
         if (err) {
-          debug.error(err);
           return next(err);
         }
 
-        var skip = skipStage ? skipStage['$skip'] : 0;
-        var limit = limitStage['$limit'];
-        if (!req.headers.range) {
-          req.headers['range-unit'] = 'items';
-          req.headers.range = skip + '-' + (skip + (limit - 1));
+        var formIds = [];
+        var forms = {};
+
+        // Add all these forms to a forms array.
+        _.each(result, function(form) {
+          formIds.push(form._id);
+          forms[form._id.toString()] = form;
+        });
+
+        // Make sure to not include deleted submissions.
+        if (!req.query.deleted) {
+          query.deleted = {$eq: null};
         }
 
-        // Get the page range.
-        var pageRange = paginate(req, res, count, limit) || {
-          limit: limit,
-          skip: skip
+        // Start with the query, then add the remaining stages.
+        stages = [{'$match': {form: {'$in': formIds}}}].concat([{'$match': query}]).concat(stages);
+
+        // Add the skip stage first if applicable.
+        if (skipStage) {
+          stages = stages.concat([skipStage]);
+        }
+
+        // Next add the limit stage if applicable.
+        if (limitStage) {
+          stages = stages.concat([limitStage]);
+        }
+
+        // Start out the filter to only include those forms.
+        debug.report('final pipeline', stages);
+
+        res.setHeader('Content-Type', 'application/json');
+
+        // Method to perform the aggregation.
+        var performAggregation = function() {
+          submissions.aggregate(stages)
+            .stream()
+            .pipe(through(function(doc) {
+              if (doc && doc.form) {
+                var formId = doc.form.toString();
+                if (forms.hasOwnProperty(formId)) {
+                  _.each(formioUtils.flattenComponents(forms[doc.form.toString()].components), function(component) {
+                    if (component.protected && doc.data && doc.data.hasOwnProperty(component.key)) {
+                      delete doc.data[component.key];
+                    }
+                  });
+                }
+              }
+              this.queue(doc);
+            }))
+            .pipe(JSONStream.stringify())
+            .pipe(res);
         };
 
-        // Alter the skip and limit stages.
-        if (skipStage) {
-          skipStage['$skip'] = pageRange.skip;
+        // If a limit is provided, then we need to include some pagination stuff.
+        if (!limitStage) {
+          return performAggregation();
         }
-        limitStage['$limit'] = pageRange.limit;
 
-        // Perform the aggregation command.
-        performAggregation();
+        // Determine the count query by limiting based on the formIds.
+        var countQuery = _.cloneDeep(query);
+
+        // Add the filtered formIds to the query.
+        if (
+          query.hasOwnProperty('form') &&
+          query.form.hasOwnProperty('$in') &&
+          (query.form['$in'].length > 0)
+        ) {
+          countQuery.form['$in'] = formIds.concat(query.form['$in']);
+        }
+        else if (query.form) {
+          formIds.push(query.form);
+          countQuery.form = {'$in': formIds};
+        }
+        else {
+          countQuery.form = {'$in': formIds};
+        }
+
+        // Find the total count based on the query.
+        submissions.find(countQuery).count(function(err, count) {
+          if (err) {
+            debug.error(err);
+            return next(err);
+          }
+
+          var skip = skipStage ? skipStage['$skip'] : 0;
+          var limit = limitStage['$limit'];
+          if (!req.headers.range) {
+            req.headers['range-unit'] = 'items';
+            req.headers.range = skip + '-' + (skip + (limit - 1));
+          }
+
+          // Get the page range.
+          var pageRange = paginate(req, res, count, limit) || {
+              limit: limit,
+              skip: skip
+            };
+
+          // Alter the skip and limit stages.
+          if (skipStage) {
+            skipStage['$skip'] = pageRange.skip;
+          }
+          limitStage['$limit'] = pageRange.limit;
+
+          // Perform the aggregation command.
+          performAggregation();
+        });
       });
     });
   };

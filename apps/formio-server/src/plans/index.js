@@ -1,9 +1,12 @@
 'use strict';
 
+var _ = require('lodash');
 var debug = {
   plans: require('debug')('formio:plans'),
   checkRequest: require('debug')('formio:plans:checkRequest'),
-  getPlan: require('debug')('formio:plans:getPlan')
+  getPlan: require('debug')('formio:plans:getPlan'),
+  allowForPlans: require('debug')('formio:plans:allowForPlans'),
+  disableForPlans: require('debug')('formio:plans:disableForPlans')
 };
 
 module.exports = function(formioServer, cache) {
@@ -11,6 +14,7 @@ module.exports = function(formioServer, cache) {
     basic: 1000,
     independent: 10000,
     team: 250000,
+    trial: 250000,
     commercial: Number.MAX_VALUE
   };
 
@@ -116,10 +120,61 @@ module.exports = function(formioServer, cache) {
     return Object.keys(limits);
   };
 
+  /**
+   * Utility function to allow project based endpoints depending on the project plan.
+   * 
+   * @param {Array|String} plans
+   *   An array of plans to allow
+   * 
+   * @returns {Function}
+   */
+  var allowForPlans = function(plans) {
+    if (!(plans instanceof Array)) {
+      plans = [plans];
+    }
+
+    debug.allowForPlans(plans);
+    return function(req, res, next) {
+      getPlan(req, function(err, plan) {
+        if (err) {
+          debug.allowForPlans(err);
+          return res.sendStatus(402);
+        }
+
+        if (plans.indexOf(plan) === -1) {
+          debug.allowForPlans(plan + ' not found in whitelist: ' + plans.join(', '));
+          return res.sendStatus(402);
+        }
+
+        return next();
+      });
+    };
+  };
+
+  /**
+   * Utility function to block project based endpoints depending on the project plan.
+   *
+   * @param {Array|String} plans
+   *   An array of plans to disallow
+   *
+   * @returns {Function}
+   */
+  var disableForPlans = function(plans) {
+    if (!(plans instanceof Array)) {
+      plans = [plans];
+    }
+
+    var allow = _.difference(getPlans(), plans);
+    debug.disableForPlans('Inverting blacklist: ' + allow.join(', '));
+    return allowForPlans(allow);
+  };
+
   return {
     limits: limits,
     checkRequest: checkRequest,
     getPlan: getPlan,
-    getPlans: getPlans
+    getPlans: getPlans,
+    allowForPlans: allowForPlans,
+    disableForPlans: disableForPlans
   };
 };

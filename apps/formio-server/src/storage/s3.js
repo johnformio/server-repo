@@ -20,6 +20,7 @@ module.exports = function(router) {
       next();
     },
     router.formio.formio.middleware.permissionHandler,
+    router.formio.formio.plans.disableForPlans(['basic', 'independent']),
     function(req, res) {
       debug('Signing GET request');
       cache.loadProject(req, req.projectId, function(err, project) {
@@ -68,6 +69,7 @@ module.exports = function(router) {
       next();
     },
     router.formio.formio.middleware.permissionHandler,
+    router.formio.formio.plans.disableForPlans(['basic', 'independent']),
     function(req, res) {
       debug('Signing POST request');
       cache.loadProject(req, req.projectId, function(err, project) {

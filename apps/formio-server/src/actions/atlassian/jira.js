@@ -8,6 +8,8 @@ module.exports = function(router) {
   var atlassian = require('./util')(router);
   var Action = router.formio.Action;
   var formio = router.formio;
+  var hook = router.formio.hook;
+
   /**
    * JiraAction class.
    *   This class is used to create jira interface.
@@ -22,17 +24,16 @@ module.exports = function(router) {
   JiraAction.prototype = Object.create(Action.prototype);
   JiraAction.prototype.constructor = JiraAction;
   JiraAction.info = function(req, res, next) {
-    next(null, {
+    next(null, hook.alter('actionInfo', {
       name: 'jira',
-      title: 'Jira (Premium)',
-      premium: true,
+      title: 'Jira',
       description: 'Allows you to create issues within Jira.',
       priority: 0,
       defaults: {
         handler: ['after'],
         method: ['create', 'update', 'delete']
       }
-    });
+    }));
   };
 
   JiraAction.settingsForm = function(req, res, next) {
@@ -244,6 +245,10 @@ module.exports = function(router) {
    *   The callback function to execute upon completion.
    */
   JiraAction.prototype.resolve = function(handler, method, req, res, next) {
+    if (!hook.alter('resolve', true, this, handler, method, req, res)) {
+      return next();
+    }
+
     var jira = null;
     var settings = this.settings;
     var _issue = undefined;

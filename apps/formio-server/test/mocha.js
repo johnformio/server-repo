@@ -119,7 +119,7 @@ describe('Tests', function() {
         hook = require('formio/src/util/hook')(app.formio.formio);
 
         // Establish the helper library.
-        template.Helper = require('formio/test/helper')(app);
+        template.Helper = require('./Helper')(app, require('formio/test/helper')(app));
         template.hooks = app.formio.formio.hooks || {};
         template.hooks.addEmitter(new EventEmitter());
         return done();

@@ -56,7 +56,7 @@ module.exports = function(router) {
       },
       plan: {
         type: String,
-        enum: ['basic', 'independent', 'team', 'commercial'],
+        enum: ['basic', 'independent', 'team', 'trial', 'commercial'],
         default: router.config.plan || 'commercial',
         index: true
       },

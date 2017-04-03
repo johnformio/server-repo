@@ -107,6 +107,8 @@ module.exports = function(options) {
 
   // Start the api server.
   app.formio.init(hooks).then(function(formio) {
+    app.formio.formio.cache = _.assign(app.formio.formio.cache, require('./src/cache/cache')(formio));
+
     var start = function() {
       // The formio app sanity endpoint.
       app.get('/health', require('./src/middleware/health')(app.formio.formio), formio.update.sanityCheck);
@@ -118,7 +120,7 @@ module.exports = function(options) {
       app.use('/project/:projectId', app.formio);
 
       // Mount the aggregation system.
-      app.use('/project/:projectId/report', require('./src/middleware/report')(app.formio.formio));
+      app.use('/project/:projectId/report', require('./src/middleware/report')(app.formio));
 
       // Mount the error logging middleware.
       app.use(Logger.middleware);
@@ -128,8 +130,6 @@ module.exports = function(options) {
         config: config
       });
     };
-
-    app.storage = require('./src/storage/index.js')(app);
 
     formio.db.collection('projects').count(function(err, numProjects) {
       if (!err && numProjects > 0) {
