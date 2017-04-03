@@ -298,8 +298,8 @@ module.exports = function(app) {
         if (premium.indexOf(action.name) === -1) {
           return true;
         }
-        if (['basic'].indexOf(req.currentProject.plan) !== -1) {
-          _debug('Skipping ' + action.name + ' action, because the project plan is ' + req.currentProject.plan);
+        if (['basic'].indexOf(req.primaryProject.plan) !== -1) {
+          _debug('Skipping ' + action.name + ' action, because the project plan is ' + req.primaryProject.plan);
           return false;
         }
 
@@ -426,7 +426,25 @@ module.exports = function(app) {
               _debug('No project found with projectId: ' + req.projectId);
               return callback('No project found with projectId: ' + req.projectId);
             }
+
+            // Add the current project to the req.
+            try {
+              req.currentProject = project.toObject();
+            }
+            catch (err) {
+              req.currentProject = project;
+            }
+
+
             cache.loadPrimaryProject(req, function(err, primaryProject) {
+              // Add the current project to the req.
+              try {
+                req.primaryProject = primaryProject.toObject();
+              }
+              catch (err) {
+                req.primaryProject = primaryProject;
+              }
+
               // Store the Project Owners UserId, because they will have all permissions.
               if (primaryProject.owner) {
                 access.project.owner = primaryProject.owner.toString();

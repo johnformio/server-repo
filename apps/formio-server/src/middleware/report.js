@@ -20,12 +20,13 @@ module.exports = function(formioServer) {
   var formio = formioServer.formio;
 
   var report = function(req, res, next, filter) {
-    formio.cache.loadProject(req, req.projectId, function(err, project) {
+    formio.cache.loadPrimaryProject(req, function(err, project) {
       if (err) {
         debug.report(err);
         return res.status(400).send('Could not load the project.');
       }
 
+      debug.report('Plan: ' + project.plan);
       if (['trial', 'team', 'commercial'].indexOf(project.plan) === -1) {
         return res.status(402).send('The report framework requires a Team or Commercial plan.');
       }
