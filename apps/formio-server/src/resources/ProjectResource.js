@@ -148,6 +148,15 @@ module.exports = function(router, formioServer) {
         }
         next();
       },
+      // Protected Project Access.
+      function(req, res, next) {
+        // Not allowed to modify access settings in a protected project.
+        if ('access' in req.body && 'protect' in req.currentProject && req.currentProject.protect === true && !_.isEqual(JSON.parse(JSON.stringify(req.currentProject.access)), req.body.access)) {
+          debug('Denying change to access because protected.');
+          return res.status(403).send('Modifications not allowed. Project is protected.');
+        }
+        next();
+      },
       formio.middleware.condensePermissionTypes,
       formio.middleware.projectAccessFilter,
       formio.middleware.projectPlanFilter,
@@ -160,6 +169,7 @@ module.exports = function(router, formioServer) {
       formio.middleware.projectAnalytics
     ],
     beforeDelete: [
+      require('../middleware/projectProtectAccess')(formio),
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       require('../middleware/deleteProjectHandler')(formio)
     ],

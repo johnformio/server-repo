@@ -1059,6 +1059,10 @@ module.exports = function(app) {
         query.projectId = token.form.project;
         return query;
       },
+      formRoutes: function(routes) {
+        routes.before.unshift(require('../middleware/projectProtectAccess')(formioServer.formio));
+        return routes;
+      },
       submissionRoutes: function(routes) {
         var filterExternalTokens = formioServer.formio.middleware.filterResourcejsResponse(['externalTokens']);
         var conditionalFilter = function(req, res, next) {
@@ -1085,6 +1089,20 @@ module.exports = function(app) {
           routes[handler].push(conditionalFilter);
         });
 
+        return routes;
+      },
+      actionRoutes: function(routes) {
+        var projectProtectAccess = require('../middleware/projectProtectAccess')(formioServer.formio);
+
+        _.each(['beforePost', 'beforePut', 'beforeDelete'], function(handler) {
+          routes[handler].unshift(projectProtectAccess);
+        });
+
+        return routes;
+      },
+      roleRoutes: function(routes) {
+        routes.before.unshift(require('../middleware/bootstrapEntityProject'), require('../middleware/projectFilter'));
+        routes.before.unshift(require('../middleware/projectProtectAccess')(formioServer.formio));
         return routes;
       },
       submissionSchema: function(schema) {
@@ -1162,10 +1180,6 @@ module.exports = function(app) {
         var projectId = req.projectId || req.params.projectId;
         query.project = formioServer.formio.mongoose.Types.ObjectId(projectId);
         return query;
-      },
-      roleRoutes: function(routes) {
-        routes.before.unshift(require('../middleware/bootstrapEntityProject'), require('../middleware/projectFilter'));
-        return routes;
       },
       roleSearch: function(search, model, value) {
         return this.formSearch(search, model, value);

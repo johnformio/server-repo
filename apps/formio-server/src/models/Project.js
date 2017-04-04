@@ -63,6 +63,10 @@ module.exports = function(router) {
       steps: {
         type: [String]
       },
+      protect: {
+        type: Boolean,
+        default: false
+      },
       primary: {
         type: Boolean,
         default: false
