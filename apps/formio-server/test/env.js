@@ -280,6 +280,28 @@ module.exports = function(app, template, hook) {
       });
   });
 
+    it('A Form.io user should be able to create an environment role for a project they own created by a team member', function(done) {
+      request(app)
+        .post('/project/' + template.env._id + '/role')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send({
+          title: chance.word(),
+          description: chance.sentence()
+        })
+        .expect('Content-Type', /json/)
+        .expect(201)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          // Store the JWT for future API calls.
+          template.formio.owner.token = res.headers['x-jwt-token'];
+
+          done();
+        });
+    });
+
     it('A Form.io user should be able to delete an environment for a project they own created by a team member.', function(done) {
       request(app)
         .delete('/project/' + template.env._id)
