@@ -11,6 +11,7 @@ var nodeUrl = require('url');
 var jwt = require('jsonwebtoken');
 var semver = require('semver');
 var util = require('../util/util');
+let async = require('async');
 
 module.exports = function(app) {
   var formioServer = app.formio;
@@ -839,6 +840,60 @@ module.exports = function(app) {
         return available;
       },
 
+      templateAlters: function(alters, template) {
+        alters.role = (item, done) => {
+          item.project = template._id;
+          this.roleMachineName(item.machineName, item, (err, machineName) => {
+            if (err) {
+              return done(err);
+            }
+
+            item.machineName = machineName;
+            done(null, item);
+          });
+        };
+
+        alters.form = (item, done) => {
+          item.project = template._id;
+          this.formMachineName(item.machineName, item, (err, machineName) => {
+            if (err) {
+              return done(err);
+            }
+
+            item.machineName = machineName;
+            done(null, item);
+          });
+        };
+
+        alters.action = (item, done) => {
+          this.actionMachineName(item.machineName, item, (err, machineName) => {
+            if (err) {
+              return done(err);
+            }
+
+            item.machineName = machineName;
+            done(null, item);
+          });
+        };
+
+        console.log(alters);
+        return alters;
+      },
+
+      templateSteps: (steps, install, template) => {
+        let _install = install({
+          model: formioServer.formio.resources.project.model
+        });
+        let project = {};
+        project[template.name || 'project'] = _.omit(template, ['roles', 'forms', 'actions', 'resources', 'access']);
+
+        steps.unshift(
+          async.apply(_install, template, project)
+        );
+
+        return steps;
+      },
+      
       /**
        * Disable anonymous project exports on the closed-source version of the api server, this is so we can add
        * permissions.

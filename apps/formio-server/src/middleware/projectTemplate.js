@@ -49,7 +49,7 @@ module.exports = function(formio) {
         var roles = owner.roles;
         owner.save(function(err) {
           if (err) {
-            debug(err);
+            debug(err.errors || err);
             return next(err);
           }
 
@@ -127,7 +127,7 @@ module.exports = function(formio) {
       // Save the project.
       project.save(function(err) {
         if (err) {
-          debug(err);
+          debug(err.errors || err);
           return next(err);
         }
 
