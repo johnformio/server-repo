@@ -991,6 +991,18 @@ module.exports = function(app, template, hook) {
           .end(done);
       });
 
+      it('A Form.io User cannot Update the Name of a protected Project', function(done) {
+        var tmpProject = _.cloneDeep(project);
+        tmpProject.name = chance.word();
+
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(tmpProject)
+          .expect(403)
+          .end(done);
+      });
+
       it('A Form.io User should be able to Update the Settings of a protected Project', function(done) {
         var newSettings = {
           cors: '*',

@@ -161,6 +161,16 @@ module.exports = function(router, formioServer) {
           debug('Denying change to access because protected.');
           return res.status(403).send('Modifications not allowed. Project is protected.');
         }
+        // Not allowed to modify project name in a protected project.
+        if (
+          'protect' in req.currentProject &&
+          req.currentProject.protect === true &&
+          req.body.protect === true &&
+          req.currentProject.name !== req.body.name
+        ){
+          debug('Denying change to name because protected');
+          return res.status(403).send('Modifications not allowed. Project is protected.');
+        }
         next();
       },
       // Don't allow modifying a primary project id.
