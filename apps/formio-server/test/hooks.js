@@ -1,6 +1,7 @@
 'use strict';
 
-var _ = require('lodash');
+let _ = require('lodash');
+let assert = require('assert');
 
 module.exports = {
   alter: {
@@ -22,6 +23,22 @@ module.exports = {
       }
 
       return body;
+    },
+
+    templateRoles: function(map) {
+      let temp = [];
+
+      Object.keys(map).forEach(role => {
+        assert(map[role].hasOwnProperty('project'));
+
+        let machineName = role.split(':');
+        machineName = machineName.pop();
+
+        // Remove the project from the role payload, for comparison in the open source tests.
+        temp[machineName] = _.omit(map[role], ['project']);
+      });
+
+      return temp;
     }
   }
 };

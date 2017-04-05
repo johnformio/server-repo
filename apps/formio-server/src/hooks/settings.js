@@ -840,8 +840,8 @@ module.exports = function(app) {
         return available;
       },
 
-      templateAlters: function(alters, template) {
-        alters.role = (item, done) => {
+      templateAlters: function(alters) {
+        alters.role = (item, template, done) => {
           item.project = template._id;
           this.roleMachineName(item.machineName, item, (err, machineName) => {
             if (err) {
@@ -853,7 +853,7 @@ module.exports = function(app) {
           });
         };
 
-        alters.form = (item, done) => {
+        alters.form = (item, template, done) => {
           item.project = template._id;
           this.formMachineName(item.machineName, item, (err, machineName) => {
             if (err) {
@@ -865,7 +865,7 @@ module.exports = function(app) {
           });
         };
 
-        alters.action = (item, done) => {
+        alters.action = (item, template, done) => {
           this.actionMachineName(item.machineName, item, (err, machineName) => {
             if (err) {
               return done(err);
@@ -876,21 +876,21 @@ module.exports = function(app) {
           });
         };
 
-        console.log(alters);
         return alters;
       },
 
       templateSteps: (steps, install, template) => {
         let _install = install({
-          model: formioServer.formio.resources.project.model
+          model: formioServer.formio.resources.project.model,
+          cleanUp: (template, items, done) => {
+            template._id = items[template.name]._id;
+            return done();
+          }
         });
         let project = {};
         project[template.name || 'project'] = _.omit(template, ['roles', 'forms', 'actions', 'resources', 'access']);
 
-        steps.unshift(
-          async.apply(_install, template, project)
-        );
-
+        steps.unshift(async.apply(_install, template, project));
         return steps;
       },
       
@@ -1014,7 +1014,7 @@ module.exports = function(app) {
           });
         }
         else {
-          req.projectId = req.projectId || req.params.projectId || 0;
+          req.projectId = req.projectId || (req.params ? req.params.projectId : undefined) || req._id;
           query.project = formioServer.formio.mongoose.Types.ObjectId(req.projectId);
           _debug(query);
           return query;
@@ -1140,8 +1140,8 @@ module.exports = function(app) {
         return handlers;
       },
       roleQuery: function(query, req) {
-        var projectId = req.projectId || req.params.projectId;
-        query.project = formioServer.formio.mongoose.Types.ObjectId(projectId);
+        var projectId = req.projectId || (req.params ? req.params.projectId : undefined) || req._id;
+        query.project = formioServer.formio.util.idToBson(projectId);
         return query;
       },
       roleRoutes: function(routes) {
