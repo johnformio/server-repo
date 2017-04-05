@@ -119,6 +119,7 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      // This test breaks often. Need to figure out why. Disabling for now.
       it('A Formio User should be able to access the Team Form', function(done) {
           request(app)
             .get('/project/' + template.formio.project._id + '/form/' + template.formio.teamResource._id)
