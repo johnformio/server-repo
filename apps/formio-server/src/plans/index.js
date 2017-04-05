@@ -22,6 +22,36 @@ module.exports = function(formioServer, cache) {
   debug.plans('Base Plan: ' + basePlan);
 
   /**
+   * After loading, determine the plan from the projec
+   * @param err
+   * @param project
+   * @returns {*|{done, value}}
+   */
+  var getProjectPlan = function(err, project, next) {
+    if (err || !project) {
+      debug.getPlan(err || 'Project not found.');
+      return next(err || 'Project not found.');
+    }
+
+    if (project.primary && project.primary === true) {
+      debug.getPlan('commercial');
+      return next(null, 'commercial', project);
+    }
+
+    // Only allow plans defined within the limits definition.
+    if (project.plan && limits.hasOwnProperty(project.plan)) {
+      debug.getPlan('has plan');
+      debug.getPlan(project.plan);
+      return next(null, project.plan, project);
+    }
+
+    // Default the project to the basePlan plan if not defined in the limits.
+    debug.getPlan('using default');
+    debug.getPlan(basePlan);
+    return next(null, basePlan, project);
+  };
+
+  /**
    * Get the plan for the project in the request.
    *
    * Project plan names limited to those inside the limits obj and 'formio'.
@@ -33,6 +63,14 @@ module.exports = function(formioServer, cache) {
    * @returns {*}
    */
   var getPlan = function(req, next) {
+    // Environment Create is tricky as we have to use permissions of the referenced project before it exists.
+    if (req.method === 'POST' && req.path === '/project' && req.body.hasOwnProperty('project')) {
+      debug.getPlan('Project from environment create.');
+      return cache.loadProject(req, req.body.project, function(err, project) {
+        return getProjectPlan(err, project, next);
+      });
+    }
+
     // Ignore project plans, if not interacting with a project.
     if (!req.projectId) {
       debug.getPlan('No project given.');
@@ -40,27 +78,7 @@ module.exports = function(formioServer, cache) {
     }
 
     cache.loadPrimaryProject(req, function(err, project) {
-      if (err || !project) {
-        debug.getPlan(err || 'Project not found.');
-        return next(err || 'Project not found.');
-      }
-
-      if (project.primary && project.primary === true) {
-        debug.getPlan('commercial');
-        return next(null, 'commercial', project);
-      }
-
-      // Only allow plans defined within the limits definition.
-      if (project.plan && limits.hasOwnProperty(project.plan)) {
-        debug.getPlan('has plan');
-        debug.getPlan(project.plan);
-        return next(null, project.plan, project);
-      }
-
-      // Default the project to the basePlan plan if not defined in the limits.
-      debug.getPlan('using default');
-      debug.getPlan(basePlan);
-      return next(null, basePlan, project);
+      getProjectPlan(err, project, next);
     });
   };
 

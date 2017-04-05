@@ -7,6 +7,7 @@ var chance = new (require('chance'))();
 var uuidRegex = /^([a-z]{15})$/;
 
 module.exports = function(app, template, hook) {
+  var secondProject;
 
   var not = function(item, properties) {
     if (!item || !properties) {
@@ -117,11 +118,41 @@ module.exports = function(app, template, hook) {
         });
     });
 
-    it('A Form.io user can create an environment', function(done) {
-      tempProject.project = template.project._id;
+    it('Create a second project', function(done) {
+      var newProject = {
+        title: chance.word(),
+        description: chance.sentence()
+      };
       request(app)
         .post('/project')
-        .send(tempProject)
+        .send(newProject)
+        .set('x-jwt-token', template.formio.owner.token)
+        .expect('Content-Type', /json/)
+        .expect(201)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          secondProject = res.body;
+
+          // Store the JWT for future API calls.
+          template.formio.owner.token = res.headers['x-jwt-token'];
+
+          done();
+        });
+    });
+
+    it('A Form.io user can create an environment', function(done) {
+      var myProject = {
+        title: chance.word(),
+        description: chance.sentence(),
+        name: chance.word(),
+        project: template.project._id
+      };
+      request(app)
+        .post('/project')
+        .send(myProject)
         .set('x-jwt-token', template.formio.owner.token)
         .expect('Content-Type', /json/)
         .expect(201)
@@ -146,8 +177,8 @@ module.exports = function(app, template, hook) {
           assert.notEqual(response.access[3].roles, [], 'The delete_all Administrator `role` should not be empty.');
           assert.notEqual(response.defaultAccess, [], 'The Projects default `role` should not be empty.');
           assert.equal(response.hasOwnProperty('name'), true);
-          assert.notEqual(response.name.search(uuidRegex), -1);
-          assert.equal(response.description, tempProject.description);
+          assert.equal(response.description, myProject.description);
+          assert.equal(response.name, myProject.name);
 
           // Check plan and api calls info
           if (app.formio) {
@@ -159,6 +190,30 @@ module.exports = function(app, template, hook) {
           not(response, ['__v', 'deleted', 'settings_encrypted', 'primary']);
 
           template.env = response;
+
+          // Store the JWT for future API calls.
+          template.formio.owner.token = res.headers['x-jwt-token'];
+
+          done();
+        });
+    });
+
+    it('A Form.io user cannot change an environments primary project', function(done) {
+      var newEnv = _.cloneDeep(template.env);
+      newEnv.project = secondProject._id;
+      request(app)
+        .put('/project/' + template.env._id)
+        .send(newEnv)
+        .set('x-jwt-token', template.formio.owner.token)
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          var response = res.body;
+          assert.equal(response.project, template.env.project);
 
           // Store the JWT for future API calls.
           template.formio.owner.token = res.headers['x-jwt-token'];
@@ -279,6 +334,35 @@ module.exports = function(app, template, hook) {
         done();
       });
   });
+
+    it('A Non Team member cannot create an environment for a project', function(done) {
+      var otherEnvironment = {
+        title: chance.word(),
+        description: chance.sentence(),
+        project: template.project._id
+      };
+      request(app)
+        .post('/project')
+        .send(otherEnvironment)
+        .set('x-jwt-token', template.formio.user2.token)
+        .expect(403)
+        .end(done);
+    });
+
+    it('A Form.io user canmpt create an environment for a bad project', function(done) {
+      var myProject = {
+        title: chance.word(),
+        description: chance.sentence(),
+        name: chance.word(),
+        project: '123l4kj23090k23k2'
+      };
+      request(app)
+        .post('/project')
+        .send(myProject)
+        .set('x-jwt-token', template.formio.owner.token)
+        .expect(400)
+        .end(done);
+    });
 
     it('A Form.io user should be able to create an environment role for a project they own created by a team member', function(done) {
       request(app)

@@ -14,7 +14,7 @@ module.exports = function(router, formioServer) {
     }
     else if (req.projectId && req.user) {
       var cache = require('../cache/cache')(formio);
-      cache.loadProject(req, req.projectId, function(err, project) {
+      cache.loadPrimaryProject(req, function(err, project) {
         if (!err) {
           var access = _.map(_.map(_.filter(project.access, {type: 'team_admin'}), 'roles'), formio.util.idToString);
           var roles = _.map(req.user.roles, formio.util.idToString);
@@ -63,6 +63,10 @@ module.exports = function(router, formioServer) {
   // Load the restrictive middleware to use
   formio.middleware.restrictOwnerAccess = require('../middleware/restrictOwnerAccess')(formio);
 
+  // Load the Environment create middleware.
+  formio.middleware.projectEnvCreatePlan = require('../middleware/projectEnvCreatePlan')(formio);
+  formio.middleware.projectEnvCreateAccess = require('../middleware/projectEnvCreateAccess')(formio);
+
   var hiddenFields = ['deleted', '__v', 'machineName', 'primary'];
   var resource = Resource(
     router,
@@ -80,6 +84,8 @@ module.exports = function(router, formioServer) {
     ],
     beforePost: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
+      formio.middleware.projectEnvCreatePlan,
+      formio.middleware.projectEnvCreateAccess,
       function(req, res, next) {
         if (req.body && req.body.template) {
           req.template = req.body.template;
@@ -154,6 +160,16 @@ module.exports = function(router, formioServer) {
         if ('access' in req.body && 'protect' in req.currentProject && req.currentProject.protect === true && !_.isEqual(JSON.parse(JSON.stringify(req.currentProject.access)), req.body.access)) {
           debug('Denying change to access because protected.');
           return res.status(403).send('Modifications not allowed. Project is protected.');
+        }
+        next();
+      },
+      // Don't allow modifying a primary project id.
+      function(req, res, next) {
+        if (!req.currentProject.hasOwnProperty('project')) {
+          delete req.body.project;
+        }
+        else {
+          req.body.project = req.currentProject.project;
         }
         next();
       },

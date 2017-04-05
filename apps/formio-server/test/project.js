@@ -1778,6 +1778,21 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      it('A Project on the basic plan will not be able to create environments', function(done) {
+        var otherProject = {
+          title: chance.word(),
+          description: chance.sentence(),
+          project: template.project._id
+        };
+
+        request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(otherProject)
+          .expect(402)
+          .end(done);
+      });
+
       after(function(done) {
         deleteProjects(tempProjects, done);
       });
@@ -2241,6 +2256,21 @@ module.exports = function(app, template, hook) {
             done();
           });
       });
+
+      it('A Project on the Independent plan will not be able to create environments', function(done) {
+        var otherProject = {
+          title: chance.word(),
+          description: chance.sentence(),
+          project: template.project._id
+        };
+
+        request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(otherProject)
+          .expect(402)
+          .end(done);
+      });
     });
 
     describe('Team Plan', function() {
@@ -2527,6 +2557,21 @@ module.exports = function(app, template, hook) {
             done();
           });
       });
+
+      it('A Project on the Team plan will be able to create environments', function(done) {
+        var otherProject = {
+          title: chance.word(),
+          description: chance.sentence(),
+          project: template.project._id
+        };
+
+        request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(otherProject)
+          .expect(201)
+          .end(done);
+      });
     });
 
     describe('Commercial Plan', function() {
@@ -2812,6 +2857,21 @@ module.exports = function(app, template, hook) {
 
             done();
           });
+      });
+
+      it('A Project on the Commercial plan will be able to create environments', function(done) {
+        var otherProject = {
+          title: chance.word(),
+          description: chance.sentence(),
+          project: template.project._id
+        };
+
+        request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(otherProject)
+          .expect(201)
+          .end(done);
       });
     });
 
