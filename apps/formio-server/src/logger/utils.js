@@ -1,16 +1,16 @@
 'use strict';
 
-let _ = require('lodash');
-
 module.exports = {
   message: (err, req) => {
     return {
-      message: _.get(err, 'message', ''),
-      name: _.get(err, 'name', ''),
-      stack: _.get(err, 'stack', ''),
-      method: _.get(req, 'method', ''),
-      params: _.get(req, 'params', ''),
-      body: _.get(req, 'body', '')
+      message: err.message || err,
+      name: err.name || '',
+      stack: err.stack || '',
+      method: req.method || '',
+      params: req.params || {},
+      body: req.body || {},
+      url: req.url || '',
+      user: req.user ? req.user._id.toString() : ''
     };
   }
 };

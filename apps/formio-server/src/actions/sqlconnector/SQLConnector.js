@@ -45,7 +45,7 @@ module.exports = function(router) {
 
       settings = settings || {};
       if (!settings.sqlconnector) {
-        return next('No project settings were found for the SQL Connector.');
+        return res.status(400).send('No project settings were found for the SQL Connector.');
       }
 
       var missingSetting = _.find(['host', 'type'], function(prop) {
@@ -53,7 +53,7 @@ module.exports = function(router) {
       });
       if (missingSetting) {
         debug(missingSetting);
-        return next('The SQL Connector is missing required settings.');
+        return res.status(400).send('The SQL Connector is missing required settings.');
       }
 
       var form = [];

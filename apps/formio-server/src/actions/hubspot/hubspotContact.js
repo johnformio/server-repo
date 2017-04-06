@@ -36,7 +36,7 @@ module.exports = function(router) {
     util.connect(router, req, function(err, hubspot) {
       if (err) {
         debug('hubspot connect err: ' + (err.message || err));
-        return next(err.message || err);
+        return res.status(400).send(err.message || err);
       }
 
       // Create the panel for all the fields.
