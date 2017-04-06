@@ -100,21 +100,18 @@ module.exports = {
 
         if (entity.settings && entity.settings.role) {
           if (!(entity.settings.role instanceof Array)) {
-            entity.settings.role =(entity.settings.role.split(':')).pop();
-            return;
+            entity.settings.role = (entity.settings.role.split(':')).pop();
           }
-
-          console.log(entity.settings.role)
-          entity.settings.role = entity.settings.role.map(resource => {
-            return (resource.split(':')).pop();
-          });
+          else {
+            entity.settings.role = entity.settings.role.map(resource => {
+              return (resource.split(':')).pop();
+            });
+          }
         }
 
         temp[machineName] = entity;
       });
 
-      console.log(`temp: ${Object.keys(temp).length}`)
-      console.log(Object.keys(temp))
       return temp;
     }
   }
