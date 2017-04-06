@@ -80,10 +80,8 @@ module.exports = {
       Object.keys(map).forEach(action => {
         assert(map[action].hasOwnProperty('form'));
 
-        let machineName = action.split(':');
-        machineName = machineName.pop();
-
         let entity = map[action];
+        let machineName = action;
         let form = entity.form.split(':');
         form = form.pop();
         entity.form = form;
@@ -113,6 +111,16 @@ module.exports = {
       });
 
       return temp;
+    },
+    
+    templateActionMachineName: function(machineName, template) {
+      assert(machineName);
+      assert(machineName.indexOf(':') !== -1);
+      assert.equal(machineName.split(':').length, 3);
+
+      machineName = machineName.split(':');
+      let projectMachineName = machineName.shift();
+      return machineName.join(':');
     }
   }
 };
