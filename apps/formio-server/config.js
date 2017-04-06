@@ -29,7 +29,7 @@ config.reservedSubdomains = [
   'app',
   'apps',
   'classic',
-  'beta'
+  'beta',
   'project',
   'storage',
   'dropbox',

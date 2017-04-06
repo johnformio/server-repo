@@ -42,10 +42,9 @@ module.exports = function(formioServer) {
         return res.status(400).send('Must include an aggregation pipeline');
       }
 
-      var mongoose = formio.mongoose;
-      var submissions = mongoose.connections[0].collections.submissions.collection;
-
       // Make sure the filter is an array.
+      if (!filter || !filter.length) {
+        filter = [];
       }
       debug.report('filter', filter);
 
@@ -189,34 +188,8 @@ module.exports = function(formioServer) {
         // Method to perform the aggregation.
         var performAggregation = function() {
           formio.resources.submission.model.aggregate(stages)
-          .cursor()
-          .exec()
-          .stream()
-          .pipe(through(function(doc) {
-            if (doc && doc.form) {
-              var formId = doc.form.toString();
-              if (forms.hasOwnProperty(formId)) {
-                _.each(formioUtils.flattenComponents(forms[doc.form.toString()].components), function(component) {
-                  if (component.protected && doc.data && doc.data.hasOwnProperty(component.key)) {
-                    delete doc.data[component.key];
-                  }
-                });
-              }
-            }
-            this.queue(doc);
-          }))
-          .pipe(JSONStream.stringify())
-          .pipe(res);
-        };
-
-        // Start out the filter to only include those forms.
-        debug.report('final pipeline', stages);
-
-        res.setHeader('Content-Type', 'application/json');
-
-        // Method to perform the aggregation.
-        var performAggregation = function() {
-          submissions.aggregate(stages)
+            .cursor()
+            .exec()
             .stream()
             .pipe(through(function(doc) {
               if (doc && doc.form) {
@@ -289,6 +262,7 @@ module.exports = function(formioServer) {
             // Perform the aggregation command.
             performAggregation();
           });
+      });
     });
   };
 
