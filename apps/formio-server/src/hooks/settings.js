@@ -106,7 +106,7 @@ module.exports = function(app) {
               return next(err);
             }
             if (!project) {
-              return next('Could not find project');
+              return res.status(400).send('Could not find project');
             }
 
             // Validate with kickbox.

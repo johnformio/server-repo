@@ -43,9 +43,9 @@ module.exports = function(router) {
     /**
      * Verifying settings form data and restricting action form loading if any of the settings field data is missing.
      */
-    util.checkOauthParameters(router, req, function(err, settings) {
+    util.checkOauthParameters(router, req, function(err) {
       if (err) {
-        return next(null, {});
+        return res.status(400).send(err);
       }
 
       // Creating the field for Google Sheet Action.
