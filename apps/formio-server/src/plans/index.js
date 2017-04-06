@@ -140,10 +140,10 @@ module.exports = function(formioServer, cache) {
 
   /**
    * Utility function to allow project based endpoints depending on the project plan.
-   * 
+   *
    * @param {Array|String} plans
    *   An array of plans to allow
-   * 
+   *
    * @returns {Function}
    */
   var allowForPlans = function(plans) {

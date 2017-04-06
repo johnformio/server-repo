@@ -157,7 +157,12 @@ module.exports = function(router, formioServer) {
       // Protected Project Access.
       function(req, res, next) {
         // Not allowed to modify access settings in a protected project.
-        if ('access' in req.body && 'protect' in req.currentProject && req.currentProject.protect === true && !_.isEqual(JSON.parse(JSON.stringify(req.currentProject.access)), req.body.access)) {
+        if (
+          'access' in req.body &&
+          'protect' in req.currentProject
+          && req.currentProject.protect === true
+          && !_.isEqual(JSON.parse(JSON.stringify(req.currentProject.access)), req.body.access)
+        ) {
           debug('Denying change to access because protected.');
           return res.status(403).send('Modifications not allowed. Project is protected.');
         }
@@ -167,7 +172,7 @@ module.exports = function(router, formioServer) {
           req.currentProject.protect === true &&
           req.body.protect === true &&
           req.currentProject.name !== req.body.name
-        ){
+        ) {
           debug('Denying change to name because protected');
           return res.status(403).send('Modifications not allowed. Project is protected.');
         }

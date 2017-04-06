@@ -1,7 +1,7 @@
 'use strict';
 
 var Resource = require('resourcejs');
-var debug = require('debug')('formio:resources:version');
+//var debug = require('debug')('formio:resources:version');
 
 module.exports = function(router, formioServer) {
   var formio = formioServer.formio;
@@ -14,34 +14,34 @@ module.exports = function(router, formioServer) {
     formio.mongoose.model('version', formio.schemas.version)
   ).rest({
     beforeGet: [
-      formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
+      formio.middleware.filterMongooseExists({field: 'deleted', isNull: true})
     ],
     afterGet: [
-      formio.middleware.filterResourcejsResponse(hiddenFields),
+      formio.middleware.filterResourcejsResponse(hiddenFields)
     ],
     beforePost: [
-      formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
+      formio.middleware.filterMongooseExists({field: 'deleted', isNull: true})
     ],
     afterPost: [
-      formio.middleware.filterResourcejsResponse(hiddenFields),
+      formio.middleware.filterResourcejsResponse(hiddenFields)
     ],
     beforeIndex: [
-      formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
+      formio.middleware.filterMongooseExists({field: 'deleted', isNull: true})
     ],
     afterIndex: [
-      formio.middleware.filterResourcejsResponse(hiddenFields),
+      formio.middleware.filterResourcejsResponse(hiddenFields)
     ],
     beforePut: [
-      formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
+      formio.middleware.filterMongooseExists({field: 'deleted', isNull: true})
     ],
     afterPut: [
-      formio.middleware.filterResourcejsResponse(hiddenFields),
+      formio.middleware.filterResourcejsResponse(hiddenFields)
     ],
     beforeDelete: [
-      formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
+      formio.middleware.filterMongooseExists({field: 'deleted', isNull: true})
     ],
     afterDelete: [
-      formio.middleware.filterResourcejsResponse(hiddenFields),
+      formio.middleware.filterResourcejsResponse(hiddenFields)
     ]
   });
 

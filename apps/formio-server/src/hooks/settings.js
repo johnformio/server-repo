@@ -435,7 +435,6 @@ module.exports = function(app) {
               req.currentProject = project;
             }
 
-
             cache.loadPrimaryProject(req, function(err, primaryProject) {
               // Add the current project to the req.
               try {

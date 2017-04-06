@@ -1,6 +1,5 @@
 'use strict';
 
-var _ = require('lodash');
 var debug = require('debug')('formio:middleware:projectEnvCreatePlan');
 
 module.exports = function(formio) {

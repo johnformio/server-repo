@@ -36,7 +36,7 @@ config.reservedSubdomains = [
   'atlassian',
   'available',
   'analytics',
-  'team',
+  'team'
 ];
 config.formio.reservedForms = [
   'submission',

@@ -1,6 +1,5 @@
 'use strict';
 
-var _ = require('lodash');
 var debug = require('debug')('formio:middleware:projectProtectAccess');
 
 module.exports = function(formio) {
@@ -14,7 +13,7 @@ module.exports = function(formio) {
     cache.loadCurrentProject(req, function(err, project) {
       debug('Entering Protect Test');
       if (err) {
-        next(err);
+        return next(err);
       }
       if ('protect' in project && project.protect) {
         debug('Project is protected');

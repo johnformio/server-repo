@@ -79,12 +79,12 @@ module.exports = function(formio) {
               return cb(err);
             }
             debug.loadProject('Has primary. ', currentProject._id, primaryProject._id);
-            cb(null, primaryProject);
+            return cb(null, primaryProject);
           });
         }
         else {
           debug.loadProject('Is primary. ', currentProject._id);
-          cb(null, currentProject);
+          return cb(null, currentProject);
         }
       }.bind(this));
     },
