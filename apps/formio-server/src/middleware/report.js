@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * This file serves as an aggregation mechanism for projecst.
+ * This file serves as an aggregation mechanism for projects.
  */
 var express = require('express');
 var router = express.Router();
@@ -46,16 +46,35 @@ module.exports = function(formioServer) {
       var submissions = mongoose.connections[0].collections.submissions.collection;
 
       // Make sure the filter is an array.
-      if (!filter || !filter.length) {
-        filter = [];
       }
       debug.report('filter', filter);
 
       // Convert ObjectIds to actual object ids.
       traverse(filter).forEach(function(node) {
-        if (typeof node === 'string' && node.match(/^ObjectId\(\'(.{24})\'\)$/)) {
-          var result = node.match(/^ObjectId\(\'(.{24})\'\)$/m);
-          this.update(mongoose.Types.ObjectId(result[1]));
+        if (typeof node !== 'string') {
+          return;
+        }
+
+        if (node.match(/^ObjectId\(['|"](.{24})['|"]\)$/)) {
+          var result = node.match(/^ObjectId\(['|"](.{24})['|"]\)$/m);
+          this.update(formio.util.idToBson(result[1]));
+        }
+        if (node.match(/^Date\(['|"]?(.[^']+)['|"]?\)$/)) {
+          var result = node.match(/^Date\(['|"]?(.[^']+)['|"]?\)$/m);
+          // If a non digit exists, use the input as a string.
+          let test = result[1].match(/[^\d]/g);
+          if (test && test[1]) {
+            return this.update(new Date(result[1].toString()));
+          }
+
+          try {
+            result[1] = parseInt(result[1]);
+            return this.update(new Date(result[1]));
+          }
+          catch (e) {
+            debug.error(e);
+            return;
+          }
         }
       });
 
@@ -111,15 +130,13 @@ module.exports = function(formioServer) {
       }
 
       // Get the user roles.
-      var userRoles = _.map(req.user.roles, function(role) {
-        return formio.mongoose.Types.ObjectId(role);
-      });
+      var userRoles = _.map(req.user.roles, formio.util.idToBson);
 
       // Find all forms that this user has "read_all" access to or owns and only give them
       // aggregate access to those forms.
       formio.resources.form.model.find({
         '$and': [
-          {project: mongoose.Types.ObjectId(req.projectId)},
+          {project: formio.util.idToBson(req.projectId)},
           {'$or': [
             {access: {
               '$elemMatch': {
@@ -129,7 +146,7 @@ module.exports = function(formioServer) {
                 }
               }
             }},
-            {owner: mongoose.Types.ObjectId(req.user._id)}
+            {owner: formio.util.idToBson(req.user._id)}
           ]}
         ]
       }).exec(function(err, result) {
@@ -163,6 +180,34 @@ module.exports = function(formioServer) {
         if (limitStage) {
           stages = stages.concat([limitStage]);
         }
+
+        // Start out the filter to only include those forms.
+        debug.report('final pipeline', stages);
+
+        res.setHeader('Content-Type', 'application/json');
+
+        // Method to perform the aggregation.
+        var performAggregation = function() {
+          formio.resources.submission.model.aggregate(stages)
+          .cursor()
+          .exec()
+          .stream()
+          .pipe(through(function(doc) {
+            if (doc && doc.form) {
+              var formId = doc.form.toString();
+              if (forms.hasOwnProperty(formId)) {
+                _.each(formioUtils.flattenComponents(forms[doc.form.toString()].components), function(component) {
+                  if (component.protected && doc.data && doc.data.hasOwnProperty(component.key)) {
+                    delete doc.data[component.key];
+                  }
+                });
+              }
+            }
+            this.queue(doc);
+          }))
+          .pipe(JSONStream.stringify())
+          .pipe(res);
+        };
 
         // Start out the filter to only include those forms.
         debug.report('final pipeline', stages);
@@ -215,35 +260,35 @@ module.exports = function(formioServer) {
         }
 
         // Find the total count based on the query.
-        submissions.find(countQuery).count(function(err, count) {
-          if (err) {
-            debug.error(err);
-            return next(err);
-          }
+        formio.resources.submission.model.find(countQuery)
+          .count(function(err, count) {
+            if (err) {
+              debug.error(err);
+              return next(err);
+            }
 
-          var skip = skipStage ? skipStage['$skip'] : 0;
-          var limit = limitStage['$limit'];
-          if (!req.headers.range) {
-            req.headers['range-unit'] = 'items';
-            req.headers.range = skip + '-' + (skip + (limit - 1));
-          }
+            var skip = skipStage ? skipStage['$skip'] : 0;
+            var limit = limitStage['$limit'];
+            if (!req.headers.range) {
+              req.headers['range-unit'] = 'items';
+              req.headers.range = skip + '-' + (skip + (limit - 1));
+            }
 
-          // Get the page range.
-          var pageRange = paginate(req, res, count, limit) || {
-              limit: limit,
-              skip: skip
-            };
+            // Get the page range.
+            var pageRange = paginate(req, res, count, limit) || {
+                limit: limit,
+                skip: skip
+              };
 
-          // Alter the skip and limit stages.
-          if (skipStage) {
-            skipStage['$skip'] = pageRange.skip;
-          }
-          limitStage['$limit'] = pageRange.limit;
+            // Alter the skip and limit stages.
+            if (skipStage) {
+              skipStage['$skip'] = pageRange.skip;
+            }
+            limitStage['$limit'] = pageRange.limit;
 
-          // Perform the aggregation command.
-          performAggregation();
-        });
-      });
+            // Perform the aggregation command.
+            performAggregation();
+          });
     });
   };
 

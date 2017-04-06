@@ -19,6 +19,7 @@ catch (e) {
 }
 
 config.reservedSubdomains = [
+  '',
   'test',
   'www',
   'api',
@@ -29,6 +30,13 @@ config.reservedSubdomains = [
   'apps',
   'classic',
   'beta'
+  'project',
+  'storage',
+  'dropbox',
+  'atlassian',
+  'available',
+  'analytics',
+  'team',
 ];
 config.formio.reservedForms = [
   'submission',
@@ -55,6 +63,8 @@ config.formio.reservedForms = [
   'atlassian\/oauth\/finalize',
   'sqlconnector'
 ];
+// If it isn't allowed as a form, it isn't allowed as a project either.
+config.reservedSubdomains.concat(config.formio.reservedForms);
 
 // Set the App settings.
 var domain = process.env.DOMAIN || 'form.io';
