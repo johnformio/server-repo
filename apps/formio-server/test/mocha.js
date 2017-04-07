@@ -1341,6 +1341,7 @@ describe('Tests', function() {
     after(function() {
       describe('Final Tests', function() {
         require('./project')(app, template, hook);
+        require('./domain')(app, template, hook);
         require('./email')(app, template, hook);
         require('formio/test/unit')(app, template, hook);
         require('formio/test/auth')(app, template, hook);

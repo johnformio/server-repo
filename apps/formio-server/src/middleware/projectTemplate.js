@@ -23,7 +23,7 @@ module.exports = function(formio) {
     // The Project that was just created.
     var project = res.resource.item;
     if (!project) {
-      return next('No project found.');
+      return res.status(400).send('No project found.');
     }
 
     // The project template they wish to use.
@@ -150,7 +150,7 @@ module.exports = function(formio) {
       formio.template.import.template(template, alters, function(err, template) {
         if (err) {
           _debug(err);
-          return next('An error occurred with the template import.');
+          return res.status(400).send('An error occurred with the template import.');
         }
 
         if (req.templateMode === 'create') {
@@ -180,7 +180,7 @@ module.exports = function(formio) {
         }
 
         if (response.statusCode !== 200) {
-          return next('Unable to load template.');
+          return res.status(400).send('Unable to load template.');
         }
 
         // Import the template.
@@ -194,6 +194,6 @@ module.exports = function(formio) {
     }
 
     // Unknown template.
-    return next('Unknown template.');
+    return res.status(400).send('Unknown template.');
   };
 };
