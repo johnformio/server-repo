@@ -18,7 +18,24 @@ catch (e) {
   config.docker = false;
 }
 
-config.reservedSubdomains = ['test', 'www', 'api', 'help', 'support', 'portal', 'app', 'apps'];
+config.reservedSubdomains = [
+  '',
+  'test',
+  'www',
+  'api',
+  'help',
+  'support',
+  'portal',
+  'app',
+  'apps',
+  'project',
+  'storage',
+  'dropbox',
+  'atlassian',
+  'available',
+  'analytics',
+  'team',
+];
 config.formio.reservedForms = [
   'submission',
   'report',
@@ -38,6 +55,8 @@ config.formio.reservedForms = [
   'atlassian\/oauth\/finalize',
   'sqlconnector'
 ];
+// If it isn't allowed as a form, it isn't allowed as a project either.
+config.reservedSubdomains.concat(config.formio.reservedForms);
 
 // Set the App settings.
 var domain = process.env.DOMAIN || 'form.io';

@@ -391,7 +391,7 @@ module.exports = function(router) {
     var oauthResponse = req.body.oauth[provider.name];
 
     if (!oauthResponse.code || !oauthResponse.state || !oauthResponse.redirectURI) {
-      return next('No authorization code provided.');
+      return res.status(400).send('No authorization code provided.');
     }
 
     // Do not execute the form CRUD methods.
@@ -496,7 +496,7 @@ module.exports = function(router) {
    */
   OAuthAction.prototype.resolve = function(handler, method, req, res, next) {
     if (this.settings.association === 'new' && (!this.settings.hasOwnProperty('role') || !this.settings.role)) {
-      return next('The OAuth Action requires a Role to be selected for new resources.');
+      return res.status(400).send('The OAuth Action requires a Role to be selected for new resources.');
     }
 
     if (this.settings.association === 'existing' && this.settings.hasOwnProperty('role') && this.settings.role) {
@@ -504,16 +504,16 @@ module.exports = function(router) {
     }
 
     if (!this.settings.provider) {
-      return next('OAuth Action is missing Provider setting.');
+      return res.status(400).send('OAuth Action is missing Provider setting.');
     }
 
     // Non-link association requires a resource setting
     if (this.settings.association !== 'link' && !this.settings.resource) {
-      return next('OAuth Action is missing Resource setting.');
+      return res.status(400).send('OAuth Action is missing Resource setting.');
     }
 
     if (!this.settings.button) {
-      return next('OAuth Action is missing Button setting.');
+      return res.status(400).send('OAuth Action is missing Button setting.');
     }
 
     var self = this;
