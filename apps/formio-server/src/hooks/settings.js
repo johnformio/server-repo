@@ -865,30 +865,27 @@ module.exports = function(app) {
           });
         };
 
-        //alters.action = (item, template, done) => {
-        //  this.actionMachineName(item.machineName, item, (err, machineName) => {
-        //    if (err) {
-        //      return done(err);
-        //    }
-        //
-        //    item.machineName = machineName;
-        //    done(null, item);
-        //  });
-        //};
-
         return alters;
       },
 
       templateSteps: (steps, install, template) => {
         let _install = install({
           model: formioServer.formio.resources.project.model,
+          valid: entity => {
+            let project = entity[template.name || 'project'];
+            if (!project || !project.title) {
+              return false;
+            }
+
+            return true;
+          },
           cleanUp: (template, items, done) => {
             template._id = items[template.name]._id;
             return done();
           }
         });
         let project = {};
-        project[template.name || 'project'] = _.omit(template, ['roles', 'forms', 'actions', 'resources', 'access']);
+        project[template.name || 'export'] = _.omit(template, ['roles', 'forms', 'actions', 'resources', 'access']);
 
         steps.unshift(async.apply(_install, template, project));
         return steps;
@@ -1175,18 +1172,6 @@ module.exports = function(app) {
       roleMachineName: function(machineName, document, done) {
         this.formMachineName(machineName, document, done);
       },
-      //actionMachineName: function(machineName, document, done) {
-      //  return done(null, machineName);
-      //
-      //  //formioServer.formio.resources.form.model.findOne({_id: document.form, deleted: {$eq: null}})
-      //  //.exec(function(err, form) {
-      //  //  if (err) {
-      //  //    return done(err);
-      //  //  }
-      //  //
-      //  //  done(null, form.machineName + ':' + machineName);
-      //  //});
-      //},
       machineNameExport: function(machineName) {
         if (!machineName) {
           return 'export';
@@ -1203,12 +1188,12 @@ module.exports = function(app) {
         // Rejoin the machine name as : seperated.
         return parts.join(':');
       },
-      exportComponent: function(_export, _map, options, component) {
+      exportComponent: function(component) {
         if (component.type === 'resource') {
           component.project = 'project';
         }
       },
-      importComponent: function(template, components, component) {
+      importComponent: function(template, component) {
         if (!component) {
           return false;
         }

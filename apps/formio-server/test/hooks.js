@@ -2,6 +2,7 @@
 
 let _ = require('lodash');
 let assert = require('assert');
+let formioUtils = require('formio-utils');
 
 module.exports = {
   alter: {
@@ -113,28 +114,34 @@ module.exports = {
       return temp;
     },
 
+    /**
+     * Modify the input test template components to match export templates after the `exportComponent` hook executes.
+     * 
+     * @param forms
+     */
+    templateImportComponent: function(forms) {
+      Object.keys(forms).forEach(machineName => {
+        formioUtils.eachComponent(forms[machineName].components, component => {
+          if (component.type === 'resource') {
+            component.project = 'project';
+          }
+        });
+      })
+    },
+
+    /**
+     * Verify that the actions machineName is in the correct format in the closed source server.
+     *
+     * @param actions
+     * @returns {{}}
+     */
     templateActionExport: function(actions) {
-      let temp = {};
       Object.keys(actions).forEach(action => {
         let machineName = action;
         assert(machineName);
         assert(machineName.indexOf(':') !== -1);
         assert.equal(machineName.split(':').length, 2);
-
-        temp[machineName] = actions[action];
       });
-
-      return temp;
-    },
-
-    templateActionMachineName: function(machineName, template) {
-      assert(machineName);
-      assert(machineName.indexOf(':') !== -1);
-      assert.equal(machineName.split(':').length, 3);
-
-      machineName = machineName.split(':');
-      machineName.shift(); // remove the project machineName.
-      return machineName.join(':');
     }
   }
 };
