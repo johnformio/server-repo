@@ -288,17 +288,17 @@ describe('Tests', function() {
               template.actions[action.machineName] = action;
             });
 
-            assert.equal(template.actions['formio:user:userSave'].title, 'Save Submission');
-            assert.equal(template.actions['formio:user:userSave'].machineName, 'formio:user:userSave');
-            assert.equal(template.actions['formio:user:userSave'].form._id, template.resources.user._id._id);
+            assert.equal(template.actions['user:save'].title, 'Save Submission');
+            assert.equal(template.actions['user:save'].machineName, 'user:save');
+            assert.equal(template.actions['user:save'].form._id, template.resources.user._id._id);
 
-            assert.equal(template.actions['formio:user:userRole'].title, 'Role Assignment');
-            assert.equal(template.actions['formio:user:userRole'].machineName, 'formio:user:userRole');
-            assert.equal(template.actions['formio:user:userRole'].form._id, template.resources.user._id._id);
+            assert.equal(template.actions['user:role'].title, 'Role Assignment');
+            assert.equal(template.actions['user:role'].machineName, 'user:role');
+            assert.equal(template.actions['user:role'].form._id, template.resources.user._id._id);
 
-            assert.equal(template.actions['formio:userLogin:userLoginLogin'].title, 'Login');
-            assert.equal(template.actions['formio:userLogin:userLoginLogin'].machineName, 'formio:userLogin:userLoginLogin');
-            assert.equal(template.actions['formio:userLogin:userLoginLogin'].form._id, template.forms.userLogin._id._id);
+            assert.equal(template.actions['userLogin:login'].title, 'Login');
+            assert.equal(template.actions['userLogin:login'].machineName, 'userLogin:login');
+            assert.equal(template.actions['userLogin:login'].form._id, template.forms.userLogin._id._id);
 
             done();
           });
@@ -1352,7 +1352,6 @@ describe('Tests', function() {
         require('formio/test/actions')(app, template, hook);
         require('formio/test/submission')(app, template, hook);
         require('formio/test/submission-access')(app, template, hook);
-        require('./templates')(app, template, hook);
         require('./analytics')(app, template, hook);
         require('./teams')(app, template, hook);
         require('./misc')(app, template, hook);

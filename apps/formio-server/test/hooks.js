@@ -112,14 +112,28 @@ module.exports = {
 
       return temp;
     },
-    
+
+    templateActionExport: function(actions) {
+      let temp = {};
+      Object.keys(actions).forEach(action => {
+        let machineName = action;
+        assert(machineName);
+        assert(machineName.indexOf(':') !== -1);
+        assert.equal(machineName.split(':').length, 2);
+
+        temp[machineName] = actions[action];
+      });
+
+      return temp;
+    },
+
     templateActionMachineName: function(machineName, template) {
       assert(machineName);
       assert(machineName.indexOf(':') !== -1);
       assert.equal(machineName.split(':').length, 3);
 
       machineName = machineName.split(':');
-      let projectMachineName = machineName.shift();
+      machineName.shift(); // remove the project machineName.
       return machineName.join(':');
     }
   }

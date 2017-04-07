@@ -865,16 +865,16 @@ module.exports = function(app) {
           });
         };
 
-        alters.action = (item, template, done) => {
-          this.actionMachineName(item.machineName, item, (err, machineName) => {
-            if (err) {
-              return done(err);
-            }
-
-            item.machineName = machineName;
-            done(null, item);
-          });
-        };
+        //alters.action = (item, template, done) => {
+        //  this.actionMachineName(item.machineName, item, (err, machineName) => {
+        //    if (err) {
+        //      return done(err);
+        //    }
+        //
+        //    item.machineName = machineName;
+        //    done(null, item);
+        //  });
+        //};
 
         return alters;
       },
@@ -1175,16 +1175,18 @@ module.exports = function(app) {
       roleMachineName: function(machineName, document, done) {
         this.formMachineName(machineName, document, done);
       },
-      actionMachineName: function(machineName, document, done) {
-        formioServer.formio.resources.form.model.findOne({_id: document.form, deleted: {$eq: null}})
-        .exec(function(err, form) {
-          if (err) {
-            return done(err);
-          }
-
-          done(null, form.machineName + ':' + machineName);
-        });
-      },
+      //actionMachineName: function(machineName, document, done) {
+      //  return done(null, machineName);
+      //
+      //  //formioServer.formio.resources.form.model.findOne({_id: document.form, deleted: {$eq: null}})
+      //  //.exec(function(err, form) {
+      //  //  if (err) {
+      //  //    return done(err);
+      //  //  }
+      //  //
+      //  //  done(null, form.machineName + ':' + machineName);
+      //  //});
+      //},
       machineNameExport: function(machineName) {
         if (!machineName) {
           return 'export';
