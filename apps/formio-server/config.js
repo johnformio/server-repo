@@ -35,6 +35,8 @@ config.reservedSubdomains = [
   'available',
   'analytics',
   'team',
+  'files',
+  'pdf'
 ];
 config.formio.reservedForms = [
   'submission',
@@ -46,6 +48,7 @@ config.formio.reservedForms = [
   'logout',
   'import',
   'form',
+  'token',
   'storage\/s3',
   'storage\/dropbox',
   'dropbox\/auth',

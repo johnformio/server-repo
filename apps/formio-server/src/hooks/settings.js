@@ -75,6 +75,9 @@ module.exports = function(app) {
           case 'logout':
             app.get('/logout', formio.auth.logout);
             return false;
+          case 'getTempToken':
+            app.get('/token', formio.auth.tempToken);
+            return false;
           case 'current':
             app.get('/current', formio.auth.currentUser);
             return false;
