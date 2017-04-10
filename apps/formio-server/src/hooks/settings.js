@@ -12,6 +12,8 @@ var jwt = require('jsonwebtoken');
 var semver = require('semver');
 var util = require('../util/util');
 let async = require('async');
+let mongoose = require('mongoose');
+mongoose.set('debug', true);
 
 module.exports = function(app) {
   var formioServer = app.formio;
@@ -885,7 +887,7 @@ module.exports = function(app) {
           }
         });
         let project = {};
-        project[template.name || 'export'] = _.omit(template, ['roles', 'forms', 'actions', 'resources', 'access']);
+        project[template.name || 'export'] = _.pick(template, ['title', 'name', 'version', 'description', 'primary']);
 
         steps.unshift(async.apply(_install, template, project));
         return steps;

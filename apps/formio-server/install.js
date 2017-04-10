@@ -50,11 +50,12 @@ module.exports = function(router, done) {
       /* eslint-disable no-console */
       console.log(' > Importing roles, forms, resources, and actions.');
       /* eslint-enable no-console */
-      importer.template(template, alters, function(err, template) {
+      importer.template(template, alters, function(err, _template) {
         if (err) {
           return done(err);
         }
 
+        template = _template;
         done();
       });
     },
@@ -126,8 +127,7 @@ module.exports = function(router, done) {
           }
         ];
         project.owner = user._id;
-        project.save();
-        done();
+        project.save(done);
       });
     }
   };

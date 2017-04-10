@@ -19,6 +19,10 @@ process.on('uncaughtException', function(err) {
   console.log(err.stack);
 });
 
+process.on('unhandledRejection', (err) => {
+  console.log(err.stack);
+});
+
 var emptyDatabase = template.emptyDatabase = template.clearData = function(done) {
   if (docker || customer) {
     return done();
@@ -335,6 +339,7 @@ describe('Tests', function() {
             if (err) {
               return done(err);
             }
+
             var response = res.body;
             assert.equal(response.length, 1);
             project = response[0];
@@ -360,7 +365,6 @@ describe('Tests', function() {
             assert.equal(response.length, 8);
             response.forEach(function(form) {
               forms[form.name] = form;
-  //>>>>>>> f2817cd19d5860d8d349b06aaaaace0a085e29ed
             });
             assert(forms.user);
             assert(forms.userLogin);
