@@ -919,6 +919,24 @@ module.exports = function(app) {
       },
 
       /**
+       * Allow a user with the correct jwt secret, to skip user loading and supply their own permissions check.
+       *
+       * @param decoded
+       * @param req
+       * @returns {boolean}
+       */
+      external: function(decoded, req, res) {
+        // If external is provided in the signed token, use the decoded token as the request token.
+        if (decoded.external === true) {
+          req.token = decoded;
+          req.user = decoded.user;
+          return false;
+        }
+
+        return true;
+      },
+
+      /**
        * Hook a form query and add the requested projects information.
        *
        * @param query {Object}
