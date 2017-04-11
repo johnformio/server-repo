@@ -12,8 +12,6 @@ var jwt = require('jsonwebtoken');
 var semver = require('semver');
 var util = require('../util/util');
 let async = require('async');
-let mongoose = require('mongoose');
-mongoose.set('debug', true);
 
 module.exports = function(app) {
   var formioServer = app.formio;
