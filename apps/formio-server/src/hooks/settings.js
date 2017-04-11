@@ -892,16 +892,6 @@ module.exports = function(app) {
         steps.unshift(async.apply(_install, template, project));
         return steps;
       },
-      
-      /**
-       * Disable anonymous project exports on the closed-source version of the api server, this is so we can add
-       * permissions.
-       *
-       * @returns {boolean}
-       */
-      canExport: function() {
-        return false;
-      },
 
       exportOptions: function(options, req, res) {
         var currentProject = cache.currentProject(req);
