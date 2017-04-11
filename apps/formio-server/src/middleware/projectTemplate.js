@@ -141,8 +141,16 @@ module.exports = function(formio) {
       var _debug = require('debug')('formio:middleware:projectTemplate#importTemplate');
       _debug(JSON.stringify(template));
 
+      let _project;
+      try {
+        _project = project.toObject()
+      }
+      catch (e) {
+        _project = project;
+      }
+
       // Set the project on the template.
-      template = _.assign({}, template, project);
+      template = _.assign({}, template, _project);
 
       let alters = hook.alter('templateAlters', {});
 

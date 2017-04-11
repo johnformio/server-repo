@@ -50,12 +50,11 @@ module.exports = function(router, done) {
       /* eslint-disable no-console */
       console.log(' > Importing roles, forms, resources, and actions.');
       /* eslint-enable no-console */
-      importer.template(template, alters, function(err, _template) {
+      importer.template(template, alters, function(err) {
         if (err) {
           return done(err);
         }
 
-        template = _template;
         done();
       });
     },
