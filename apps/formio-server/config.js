@@ -53,7 +53,8 @@ config.formio.reservedForms = [
   'access',
   'atlassian\/oauth\/authorize',
   'atlassian\/oauth\/finalize',
-  'sqlconnector'
+  'sqlconnector',
+  'token'
 ];
 // If it isn't allowed as a form, it isn't allowed as a project either.
 config.reservedSubdomains.concat(config.formio.reservedForms);
