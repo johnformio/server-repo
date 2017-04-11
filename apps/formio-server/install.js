@@ -2,7 +2,6 @@
 
 var async = require('async');
 var fs = require('fs');
-var _ = require('lodash');
 var debug = require('debug')('formio:error');
 
 module.exports = function(router, done) {
@@ -17,7 +16,6 @@ module.exports = function(router, done) {
 
   var importer = require('formio/src/templates/import')(router);
   var template;
-  var project;
   var user;
 
   // Add project id to roles and forms.

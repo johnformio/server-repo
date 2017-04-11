@@ -143,7 +143,7 @@ module.exports = function(formio) {
 
       let _project;
       try {
-        _project = project.toObject()
+        _project = project.toObject();
       }
       catch (e) {
         _project = project;
