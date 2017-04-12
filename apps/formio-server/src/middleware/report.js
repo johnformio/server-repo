@@ -55,11 +55,11 @@ module.exports = function(formioServer) {
         }
 
         if (node.match(/^ObjectId\(['|"](.{24})['|"]\)$/)) {
-          var result = node.match(/^ObjectId\(['|"](.{24})['|"]\)$/m);
+          let result = node.match(/^ObjectId\(['|"](.{24})['|"]\)$/m);
           this.update(formio.util.idToBson(result[1]));
         }
         if (node.match(/^Date\(['|"]?(.[^']+)['|"]?\)$/)) {
-          var result = node.match(/^Date\(['|"]?(.[^']+)['|"]?\)$/m);
+          let result = node.match(/^Date\(['|"]?(.[^']+)['|"]?\)$/m);
           // If a non digit exists, use the input as a string.
           let test = result[1].match(/[^\d]/g);
           if (test && test[1]) {
