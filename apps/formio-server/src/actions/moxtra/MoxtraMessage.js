@@ -40,6 +40,12 @@ module.exports = function(router) {
     });
   };
 
+  let getMoxtraToken = () => {
+    return new Promise((resolve, reject) => {
+      
+    });
+  };
+
   /**
    * Settings form
    *

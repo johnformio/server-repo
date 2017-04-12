@@ -251,8 +251,8 @@ module.exports = function(app) {
         actions.sqlconnector = require('../actions/sqlconnector/SQLConnector')(formioServer);
         actions.jira = require('../actions/atlassian/jira')(formioServer);
         actions.group = require('../actions/GroupAction')(formioServer);
-        actions.moxtraLogin = require('../actions/MoxtraLogin')(formioServer);
-        actions.moxtraMessage = require('../actions/MoxtraMessage')(formioServer);
+        actions.moxtraLogin = require('../actions/moxtra/MoxtraLogin')(formioServer);
+        actions.moxtraMessage = require('../actions/moxtra/MoxtraMessage')(formioServer);
         return actions;
       },
       emailTransports: function(transports, settings) {
