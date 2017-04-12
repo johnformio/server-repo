@@ -252,6 +252,7 @@ module.exports = function(app) {
         actions.jira = require('../actions/atlassian/jira')(formioServer);
         actions.group = require('../actions/GroupAction')(formioServer);
         actions.moxtraLogin = require('../actions/MoxtraLogin')(formioServer);
+        actions.moxtraMessage = require('../actions/MoxtraMessage')(formioServer);
         return actions;
       },
       emailTransports: function(transports, settings) {
