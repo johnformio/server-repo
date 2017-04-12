@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 ### Added
  - Template import / export tests
+ - External token support to skip dynamic user permission loading
 
 ### Changed
  - Template action import / export names to be in the format of "form:action"
