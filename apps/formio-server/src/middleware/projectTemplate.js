@@ -49,7 +49,7 @@ module.exports = function(formio) {
         var roles = owner.roles;
         owner.save(function(err) {
           if (err) {
-            debug(err);
+            debug(err.errors || err);
             return next(err);
           }
 
@@ -127,7 +127,7 @@ module.exports = function(formio) {
       // Save the project.
       project.save(function(err) {
         if (err) {
-          debug(err);
+          debug(err.errors || err);
           return next(err);
         }
 
@@ -139,46 +139,23 @@ module.exports = function(formio) {
     // Method to import the template.
     var importTemplate = function(template) {
       var _debug = require('debug')('formio:middleware:projectTemplate#importTemplate');
-      _debug(template);
+      _debug(JSON.stringify(template));
+
+      let _project;
+      try {
+        _project = project.toObject();
+      }
+      catch (e) {
+        _project = project;
+      }
 
       // Set the project on the template.
-      template.project = project;
+      template = _.assign({}, template, _project);
+
+      let alters = hook.alter('templateAlters', {});
 
       // Import the template within formio.
-      formio.import.template(template, {
-        role: function(item, done) {
-          item.project = project._id;
-          hook.alter('roleMachineName', item.machineName, item, function(err, machineName) {
-            if (err) {
-              return done(err);
-            }
-
-            item.machineName = machineName;
-            done(null, item);
-          });
-        },
-        form: function(item, done) {
-          item.project = project._id;
-          hook.alter('formMachineName', item.machineName, item, function(err, machineName) {
-            if (err) {
-              return done(err);
-            }
-
-            item.machineName = machineName;
-            done(null, item);
-          });
-        },
-        action: function(item, done) {
-          hook.alter('actionMachineName', item.machineName, item, function(err, machineName) {
-            if (err) {
-              return done(err);
-            }
-
-            item.machineName = machineName;
-            done(null, item);
-          });
-        }
-      }, function(err, template) {
+      formio.template.import.template(template, alters, function(err, template) {
         if (err) {
           _debug(err);
           return res.status(400).send('An error occurred with the template import.');

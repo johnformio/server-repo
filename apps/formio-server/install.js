@@ -2,10 +2,10 @@
 
 var async = require('async');
 var fs = require('fs');
-var _ = require('lodash');
 var debug = require('debug')('formio:error');
 
-module.exports = function(formio, done) {
+module.exports = function(router, done) {
+  let formio = router.formio;
   var hook = require('formio/src/util/hook')(formio);
 
   if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASS) {
@@ -14,10 +14,13 @@ module.exports = function(formio, done) {
     );
   }
 
-  var importer = require('formio/src/templates/import')(formio);
+  var importer = require('formio/src/templates/import')(router);
   var template;
-  var project;
   var user;
+
+  // Add project id to roles and forms.
+  let alters;
+
   var steps = {
     readJson: function(done) {
       /* eslint-disable no-console */
@@ -39,73 +42,13 @@ module.exports = function(formio, done) {
         return done(err);
       }
     },
-    importProject: function(done) {
-      var parseProject = function(template, item) {
-        var project = _.cloneDeep(template);
-        delete project.roles;
-        delete project.forms;
-        delete project.actions;
-        delete project.resources;
-        delete project.access;
-        return project;
-      };
-
-      /* eslint-disable no-console */
-      console.log(' > Importing formio project.');
-      /* eslint-enable no-console */
-      importer.project = importer.createInstall(formio.mongoose.models.project, parseProject);
-      var items = {};
-      items[template.name] = '';
-      importer.project(template, items, function(err) {
-        if (err) {
-          return done(err);
-        }
-
-        project = items[template.name];
-        done();
-      });
-    },
     importItems: function(done) {
+      alters = hook.alter(`templateAlters`, {}, template);
+
       /* eslint-disable no-console */
       console.log(' > Importing roles, forms, resources, and actions.');
       /* eslint-enable no-console */
-
-      // Add project id to roles and forms.
-      var alter = {
-        role: function(item, done) {
-          item.project = project._id;
-          hook.alter('roleMachineName', item.machineName, item, function(err, machineName) {
-            if (err) {
-              done(err);
-            }
-
-            item.machineName = machineName;
-            done(null, item);
-          });
-        },
-        form: function(item, done) {
-          item.project = project._id;
-          hook.alter('formMachineName', item.machineName, item, function(err, machineName) {
-            if (err) {
-              done(err);
-            }
-
-            item.machineName = machineName;
-            done(null, item);
-          });
-        },
-        action: function(item, done) {
-          hook.alter('actionMachineName', item.machineName, item, function(err, machineName) {
-            if (err) {
-              done(err);
-            }
-
-            item.machineName = machineName;
-            done(null, item);
-          });
-        }
-      };
-      importer.template(template, alter, function(err, template) {
+      importer.template(template, alters, function(err) {
         if (err) {
           return done(err);
         }
@@ -147,7 +90,7 @@ module.exports = function(formio, done) {
       /* eslint-disable no-console */
       console.log(' > Updating project with owner and roles.');
       /* eslint-enable no-console */
-      formio.resources.project.model.findOne({_id: project._id}, function(err, project) {
+      formio.resources.project.model.findOne({_id: template._id}, function(err, project) {
         if (err) {
           return done(err);
         }
@@ -181,19 +124,17 @@ module.exports = function(formio, done) {
           }
         ];
         project.owner = user._id;
-        project.save();
-        done();
+        project.save(done);
       });
     }
   };
 
   async.series([
     steps.readJson,
-    steps.importProject,
     steps.importItems,
     steps.createRootAccount,
     steps.updateProject
-  ], function(err, result) {
+  ], function(err) {
     if (err) {
       /* eslint-disable no-console */
       console.log(err);

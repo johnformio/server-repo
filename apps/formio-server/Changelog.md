@@ -6,8 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
+ - Template import / export tests
 
 ### Changed
+ - Template action import / export names to be in the format of "form:action"
 
 ### Fixed
 
