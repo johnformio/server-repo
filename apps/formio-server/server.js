@@ -136,16 +136,8 @@ module.exports = function(options) {
         return start();
       }
       /* eslint-disable no-console */
-      console.log(' > No projects found. Setting up server.');
+      console.log(' > No projects found.');
       /* eslint-enable no-console */
-
-      require('./install')(app.formio, function(err) {
-        if (err) {
-          // Throw an error and exit.
-          throw new Error(err);
-        }
-        return start();
-      });
     });
   });
 
