@@ -1,6 +1,5 @@
 'use strict';
 
-var rest = require('restler');
 var Q = require('q');
 var _ = require('lodash');
 var debug = require('debug')('formio:actions:moxtralogin');
@@ -10,6 +9,7 @@ module.exports = function(router) {
   var Action = formio.Action;
   var hook = formio.hook;
   var util = formio.util;
+  let Moxtra = require('./utils')(router);
 
   /**
    * AuthAction class.
@@ -157,85 +157,6 @@ module.exports = function(router) {
       return res.status(400).send('Last name not provided.');
     }
 
-    /**
-     * Wrap the project settings request in a promise.
-     *
-     * @returns {*|promise}
-     */
-    var getProjectSettings = function() {
-      var deferred = Q.defer();
-
-      hook.settings(req, function(err, settings) {
-        if (err) {
-          return deferred.reject(err);
-        }
-
-        return deferred.resolve(settings);
-      });
-
-      return deferred.promise;
-    };
-
-    /**
-     * Get the auth token for a moxtra user.
-     *
-     * @param user
-     * @param firstname
-     * @param lastname
-     * @returns {*|promise}
-     */
-    var getMoxtraToken = function(user, firstname, lastname) {
-      var deferred = Q.defer();
-
-      getProjectSettings().then(function(settings) {
-        if (!_.has(settings, 'moxtra.clientId')) {
-          return deferred.reject('No Moxtra clientId found in the project settings.');
-        }
-
-        if (!_.has(settings, 'moxtra.clientSecret')) {
-          return deferred.reject('No Moxtra clientSecret found in the project settings.');
-        }
-
-        if (!_.has(settings, 'moxtra.environment')) {
-          return deferred.reject('No Moxtra environment found in the project settings.');
-        }
-
-        /* eslint-disable camelcase */
-        var body = {
-          data: {
-            client_id: _.get(settings, 'moxtra.clientId'),
-            client_secret: _.get(settings, 'moxtra.clientSecret'),
-            grant_type: 'http://www.moxtra.com/auth_uniqueid',
-            uniqueid: user._id.toString(),
-            timestamp: new Date().getTime(),
-            firstname: _.get(user.data, firstname),
-            lastname: _.get(user.data, lastname)
-          }
-        };
-        /* eslint-enable camelcase */
-
-        // Add the orgId if present in the settings.
-        if (_.has(settings, 'moxtra.orgId')) {
-          body.data.orgid = _.get(settings, 'moxtra.orgId');
-        }
-
-        rest.post(_.get(settings, 'moxtra.environment'), body)
-        .on('complete', function(result) {
-          debug(result);
-          if (result instanceof Error) {
-            return deferred.reject(result);
-          }
-          if (!_.has(result, 'access_token')) {
-            return deferred.reject('No access token given.');
-          }
-
-          return deferred.resolve(result.access_token);
-        });
-      });
-
-      return deferred.promise;
-    };
-
     var updateUsersToken = function(token) {
       var deferred = Q.defer();
 
@@ -273,7 +194,7 @@ module.exports = function(router) {
     }
 
     // If the user was supplied (just created, make the user in moxtra).
-    getMoxtraToken(user, this.settings.firstname, this.settings.lastname)
+    Moxtra.getToken(user, this.settings.firstname, this.settings.lastname)
     .then(function(token) {
       return updateUsersToken(token);
     })
