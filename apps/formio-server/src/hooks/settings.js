@@ -925,7 +925,7 @@ module.exports = function(app) {
        * @param req
        * @returns {boolean}
        */
-      external: function(decoded, req, res) {
+      external: function(decoded, req) {
         // If external is provided in the signed token, use the decoded token as the request token.
         if (decoded.external === true) {
           req.token = decoded;

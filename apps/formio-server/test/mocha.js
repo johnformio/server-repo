@@ -1345,6 +1345,7 @@ describe('Tests', function() {
         require('./email')(app, template, hook);
         require('formio/test/unit')(app, template, hook);
         require('formio/test/auth')(app, template, hook);
+        require('./externalTokens')(app, template, hook);
         require('formio/test/roles')(app, template, hook);
         require('formio/test/form')(app, template, hook);
         require('formio/test/resource')(app, template, hook);
