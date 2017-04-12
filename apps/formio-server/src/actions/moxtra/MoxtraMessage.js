@@ -9,6 +9,7 @@ module.exports = function(router) {
   let Action = formio.Action;
   let hook = formio.hook;
   let util = formio.util;
+  let Moxtra = require('./utils')(router);
 
   /**
    * AuthAction class.
@@ -40,12 +41,6 @@ module.exports = function(router) {
     });
   };
 
-  let getMoxtraToken = () => {
-    return new Promise((resolve, reject) => {
-      
-    });
-  };
-
   /**
    * Settings form
    *
@@ -54,7 +49,13 @@ module.exports = function(router) {
    * @param next
    */
   MoxtraMessage.settingsForm = function(req, res, next) {
-    return next(null, []);
+    Moxtra.getToken(`Form.io`)
+    .then(token => {
+      return next(null, []);
+    })
+    .catch(err => {
+      return next(err.message || err);
+    });
   };
 
   /**

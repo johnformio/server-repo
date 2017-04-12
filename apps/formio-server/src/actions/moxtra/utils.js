@@ -36,7 +36,7 @@ module.exports = (router) => {
    */
   let getToken = (user, firstname, lastname) => {
     return getProjectSettings()
-    .then((settings) => {
+    .then(settings => {
       if (!_.has(settings, 'moxtra.clientId')) {
         throw 'No Moxtra clientId found in the project settings.';
       }
@@ -56,12 +56,17 @@ module.exports = (router) => {
           client_secret: _.get(settings, 'moxtra.clientSecret'),
           grant_type: 'http://www.moxtra.com/auth_uniqueid',
           uniqueid: user._id.toString(),
-          timestamp: new Date().getTime(),
-          firstname: _.get(user.data, firstname),
-          lastname: _.get(user.data, lastname)
+          timestamp: new Date().getTime()
         }
       };
       /* eslint-enable camelcase */
+
+      if (_.has(user.data, firstname)) {
+        body.data.firstname = _.get(user.data, firstname);
+      }
+      if (_.has(user.data, lastname)) {
+        body.data.lastname = _.get(user.data, lastname);
+      }
 
       // Add the orgId if present in the settings.
       if (_.has(settings, 'moxtra.orgId')) {
