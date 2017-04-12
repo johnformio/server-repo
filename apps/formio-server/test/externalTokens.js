@@ -15,10 +15,10 @@ module.exports = function(app, template, hook) {
     let tempForm;
     let tempSubmission;
     let customToken;
-    let helper = new Helper(template.users.admin, template);
+    let helper = new Helper(template.formio.owner, template);
 
     before(function(done) {
-      new Promise((resolve, reject) => {
+      return new Promise((resolve, reject) => {
         // Get the old token payload
         jwt.verify(template.users.user1.token, app.formio.formio.config.jwt.secret, (err, decoded) => {
           if (err) {
@@ -73,7 +73,7 @@ module.exports = function(app, template, hook) {
             {type: 'read_all', roles: ['000000000000000000000000']}
           ]
         })
-        .exec((err, results) => {
+        .execute((err, results) => {
           if (err) {
             return done;
           }
@@ -85,10 +85,10 @@ module.exports = function(app, template, hook) {
 
     it('Create a temporary submission for external token tests', function(done) {
       helper
-        .submission('externalToken', {
+        .submission(tempForm, {
           foo: 'bar'
         })
-        .exec((err, response) => {
+        .execute((err, response) => {
           if (err) {
             return done(err);
           }
