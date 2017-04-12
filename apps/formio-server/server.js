@@ -138,6 +138,14 @@ module.exports = function(options) {
       /* eslint-disable no-console */
       console.log(' > No projects found.');
       /* eslint-enable no-console */
+
+      require('./install')(formio, function(err) {
+        if (err) {
+          // Throw an error and exit.
+          throw new Error(err);
+        }
+        return start();
+      });
     });
   });
 

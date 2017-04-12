@@ -13,34 +13,10 @@ module.exports = function(router, formioServer) {
     'version',
     formio.mongoose.model('version', formio.schemas.version)
   ).rest({
-    beforeGet: [
+    before: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true})
     ],
-    afterGet: [
-      formio.middleware.filterResourcejsResponse(hiddenFields)
-    ],
-    beforePost: [
-      formio.middleware.filterMongooseExists({field: 'deleted', isNull: true})
-    ],
-    afterPost: [
-      formio.middleware.filterResourcejsResponse(hiddenFields)
-    ],
-    beforeIndex: [
-      formio.middleware.filterMongooseExists({field: 'deleted', isNull: true})
-    ],
-    afterIndex: [
-      formio.middleware.filterResourcejsResponse(hiddenFields)
-    ],
-    beforePut: [
-      formio.middleware.filterMongooseExists({field: 'deleted', isNull: true})
-    ],
-    afterPut: [
-      formio.middleware.filterResourcejsResponse(hiddenFields)
-    ],
-    beforeDelete: [
-      formio.middleware.filterMongooseExists({field: 'deleted', isNull: true})
-    ],
-    afterDelete: [
+    after: [
       formio.middleware.filterResourcejsResponse(hiddenFields)
     ]
   });

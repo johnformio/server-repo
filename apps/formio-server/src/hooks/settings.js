@@ -977,9 +977,9 @@ module.exports = function(app) {
       exportOptions: function(options, req, res) {
         var currentProject = cache.currentProject(req);
         options.title = currentProject.title;
+        options.version = currentProject.version;
         options.name = currentProject.name;
         options.description = currentProject.description;
-        options.plan = currentProject.plan;
         options.projectId = req.projectId || req.params.projectId || 0;
         return options;
       },
@@ -991,9 +991,6 @@ module.exports = function(app) {
         req.projectId = projectId;
         return params;
       },
-      //cors: function() {
-      //  return require('../middleware/corsOptions')(formioServer);
-      //},
 
       /**
        * Hook the user object and modify the roles to include the users team id's.

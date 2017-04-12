@@ -151,6 +151,7 @@ module.exports = function(formio) {
 
       // Set the project on the template.
       template = _.assign({}, template, _project);
+      debug('import template', template);
 
       let alters = hook.alter('templateAlters', {});
 
@@ -201,7 +202,8 @@ module.exports = function(formio) {
     else if ('project' in project && project.project) {
       debug('importing primary project');
       // Change the req.projectId so formQuery alter works for primary project. Restore when done!
-      formio.template.export({ projectId: project.project}, function(err, template) {
+      formio.template.export({projectId: project.project}, function(err, template) {
+        debug('importing from primary', template);
         if (err) {
           // If something went wrong, just import the default template instead.
           return importTemplate(_.cloneDeep(formio.templates['default']));

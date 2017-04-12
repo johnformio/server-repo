@@ -1,4 +1,4 @@
-'use strict';
+/**/'use strict';
 
 var request = require('supertest');
 var assert = require('assert');
@@ -26,11 +26,41 @@ module.exports = function(app, template, hook) {
   };
 
   describe('Environments', function() {
-    var tempProject = {
+    let tempProject = {
       title: chance.word(),
       description: chance.sentence()
     };
-    var originalProject = _.cloneDeep(tempProject);
+    let tempForm = {
+      title: chance.word(),
+      name: chance.word(),
+      path: chance.word(),
+      type: 'form',
+      access: [],
+      submissionAccess: [],
+      components: [
+        {
+          type: 'textfield',
+          validate: {
+            custom: '',
+            pattern: '',
+            maxLength: '',
+            minLength: '',
+            required: false
+          },
+          defaultValue: '',
+          multiple: false,
+          suffix: '',
+          prefix: '',
+          placeholder: 'foo',
+          key: 'foo',
+          label: 'foo',
+          inputMask: '',
+          inputType: 'text',
+          input: true
+        }
+      ]
+    };
+    const originalProject = _.cloneDeep(tempProject);
 
     // Bootstrap
     it('A Project Owner should be able to add one of their teams to have access with the team_admin permission', function(done) {
@@ -143,6 +173,30 @@ module.exports = function(app, template, hook) {
         });
     });
 
+    it('Add a form to the main project.', function(done) {
+      request(app)
+        .post('/project/' + template.project._id + '/form')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send(tempForm)
+        .expect('Content-Type', /json/)
+        .expect(201)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          var response = res.body;
+
+          // Store the JWT for future API calls.
+          template.formio.owner.token = res.headers['x-jwt-token'];
+
+          // Update the temp form.
+          tempForm = response;
+
+          done();
+        });
+    });
+
     it('A Form.io user can create an environment', function(done) {
       var myProject = {
         title: chance.word(),
@@ -152,8 +206,8 @@ module.exports = function(app, template, hook) {
       };
       request(app)
         .post('/project')
-        .send(myProject)
         .set('x-jwt-token', template.formio.owner.token)
+        .send(myProject)
         .expect('Content-Type', /json/)
         .expect(201)
         .end(function(err, res) {
@@ -194,6 +248,25 @@ module.exports = function(app, template, hook) {
           // Store the JWT for future API calls.
           template.formio.owner.token = res.headers['x-jwt-token'];
 
+          done();
+        });
+    });
+
+    it('New environment should be a copy of live', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/' + tempForm.name)
+        .set('x-jwt-token', template.formio.owner.token)
+        .send()
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .end(function (err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          var response = res.body;
+          console.log(response, tempForm);
+          assert(false, 'stop');
           done();
         });
     });
@@ -349,7 +422,7 @@ module.exports = function(app, template, hook) {
         .end(done);
     });
 
-    it('A Form.io user canmpt create an environment for a bad project', function(done) {
+    it('A Form.io user cannot create an environment for a bad project', function(done) {
       var myProject = {
         title: chance.word(),
         description: chance.sentence(),
