@@ -49,7 +49,7 @@ module.exports = function(router) {
    * @param next
    */
   MoxtraMessage.settingsForm = function(req, res, next) {
-    if (!_.has(req.user.externalIds)) {
+    if (!_.has(req.user, 'externalIds')) {
       return res.status(400).send(`Could not access user token.`);
     }
     let userToken = _.filter(req.user.externalIds, {type: `moxtra`});
@@ -61,9 +61,26 @@ module.exports = function(router) {
     .then(token => {
       return Moxtra.getBinder(req, token);
     })
-    .then(binders => {
-      console.log(binders);
-      return next(null, []);
+    .then(response => {
+      let binders = response.binders;
+
+      return next(null, [
+        {
+          type: 'select',
+          input: true,
+          label: 'Binder',
+          key: 'binder',
+          placeholder: 'Select the Binder to send a Message to',
+          dataSrc: 'json',
+          data: {json: JSON.stringify(binders)},
+          valueProperty: 'binder.id',
+          template: '<span>{{ item.binder.name }}</span>',
+          multiple: false,
+          validate: {
+            required: true
+          }
+        }
+      ]);
     })
     .catch(err => {
       return next(err.message || err);

@@ -39,10 +39,10 @@ module.exports = (router) => {
 
     let url = _.get(settings, 'moxtra.environment');
     if (url.match(/api\.moxtra\.com/i)) {
-      return `https://api.moxtra.com/`;
+      return `https://api.moxtra.com/v1`;
     }
     else if (url.match(/apisandbox\.moxtra\.com/i)) {
-      return `https://apisandbox.moxtra.com/`;
+      return `https://apisandbox.moxtra.com/v1`;
     }
 
     throw `The Moxtra environment could not be determined from ${_.get(settings, `moxtra.environment`)}`;
@@ -115,13 +115,21 @@ module.exports = (router) => {
    * @param token
    */
   let getBinder = (req, token, filter) => getEnvironmentUrl(req).then(baseUrl => {
-    rest.post(`${baseUrl}/${filter ? filter : req.user._id}/binders`)
-    .on('complete', result => {
-      if (result instanceof Error) {
-        throw result;
-      }
+    let url = `${baseUrl}/${filter ? filter : `me`}/binders`;
+    let headers = {
+      'Authorization': `BEARER ${token}`,
+      'Accept': `*/*`
+    };
 
-      return result;
+    return new Promise((resolve, reject) => {
+      rest.get(url, {headers})
+      .on('complete', result => {
+        if (result instanceof Error || _.has(result, 'error')) {
+          return reject(result);
+        }
+
+        return resolve(result.data);
+      });
     });
   });
 
