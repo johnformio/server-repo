@@ -49,8 +49,9 @@ module.exports = function(router) {
    * @param next
    */
   MoxtraMessage.settingsForm = function(req, res, next) {
-    Moxtra.getToken(`Form.io`)
+    Moxtra.getToken(req, {_id: `Form.io`})
     .then(token => {
+      console.log(token);
       return next(null, []);
     })
     .catch(err => {

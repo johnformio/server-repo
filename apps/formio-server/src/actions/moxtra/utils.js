@@ -14,7 +14,7 @@ module.exports = (router) => {
    *
    * @returns {*|promise}
    */
-  let getProjectSettings = () => {
+  let getProjectSettings = (req) => {
     return new Promise((resolve, reject) => {
       hook.settings(req, (err, settings) => {
         if (err) {
@@ -34,8 +34,8 @@ module.exports = (router) => {
    * @param lastname
    * @returns {*|promise}
    */
-  let getToken = (user, firstname, lastname) => {
-    return getProjectSettings()
+  let getToken = (req, user, firstname, lastname) => {
+    return getProjectSettings(req)
     .then(settings => {
       if (!_.has(settings, 'moxtra.clientId')) {
         throw 'No Moxtra clientId found in the project settings.';
@@ -73,18 +73,20 @@ module.exports = (router) => {
         body.data.orgid = _.get(settings, 'moxtra.orgId');
       }
 
-      rest.post(_.get(settings, 'moxtra.environment'), body)
+      return new Promise((resolve, reject) => {
+        rest.post(_.get(settings, 'moxtra.environment'), body)
         .on('complete', function(result) {
           debug(result);
           if (result instanceof Error) {
-            throw result;
+            return reject(result);
           }
           if (!_.has(result, 'access_token')) {
-            throw 'No access token given.';
+            return reject('No access token given.');
           }
 
-          return result.access_token;
+          return resolve(result.access_token);
         });
+      });
     });
   };
 

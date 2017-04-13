@@ -194,7 +194,7 @@ module.exports = function(router) {
     }
 
     // If the user was supplied (just created, make the user in moxtra).
-    Moxtra.getToken(user, this.settings.firstname, this.settings.lastname)
+    Moxtra.getToken(req, user, this.settings.firstname, this.settings.lastname)
     .then(function(token) {
       return updateUsersToken(token);
     })
