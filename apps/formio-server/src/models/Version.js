@@ -17,9 +17,9 @@ module.exports = function(router) {
         maxlength: 32,
         required: true
       },
-      definition: {
+      template: {
         type: router.formio.mongoose.Schema.Types.Mixed,
-        description: 'The project version definition.'
+        description: 'The project version template.'
       },
       owner: {
         type: router.formio.mongoose.Schema.Types.ObjectId,
@@ -34,6 +34,23 @@ module.exports = function(router) {
     })
   });
   /* eslint-enable new-cap */
+
+  // Validate the uniqueness of the value given for the version.
+  model.schema.path('version').validate(function(value, done) {
+    var search = {
+      project: this.project,
+      version: value,
+      deleted: {$eq: null}
+    };
+
+    formio.mongoose.model('version').findOne(search).exec(function(err, result) {
+      if (err || result) {
+        return done(false);
+      }
+
+      done(true);
+    });
+  }, 'The version must be unique.');
 
   return model;
 };

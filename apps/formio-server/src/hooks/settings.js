@@ -875,6 +875,11 @@ module.exports = function(app) {
           return true;
         }
 
+        // Allow access to current version endpoint.
+        else if (req.projectId && req.url === '/project/' + req.projectId + '/version/current') {
+          return true;
+        }
+
         else if (req.token && access.project && access.project.owner) {
           var url = req.url.split('/');
 
@@ -1071,7 +1076,7 @@ module.exports = function(app) {
         if (formio && formio === true) {
           return cache.loadProjectByName(req, 'formio', function(err, _id) {
             if (err || !_id) {
-              _debug(err || 'The formio project was not found..');
+              _debug(err || 'The formio project was not found.');
               return query;
             }
 
