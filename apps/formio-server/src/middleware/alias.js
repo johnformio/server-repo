@@ -107,7 +107,7 @@ module.exports = function(formio) {
         // Set the Project Id in the request.
         req.projectId = project._id.toString();
         req.url = '/project/' + project._id + req.url;
-        next();
+        return next();
       }
     });
   };

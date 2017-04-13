@@ -28,7 +28,7 @@
     "dotenv": "1.2.0",
     "edit-google-spreadsheet": "^0.2.21",
     "express": "^4.14.0",
-    "formio": "^1.16.3",
+    "formio": "^1.16.5",
     "formio-utils": "^0.1.10",
     "is-url": "^1.2.1",
     "jira-connector": "^2.3.0",
@@ -68,8 +68,12 @@
     "eslint-config-formio": "^1.1.2",
     "mocha": "^2.5.3",
     "node-optimize": "^1.2.1",
+    "pre-commit": "^1.2.2",
     "sinon": "^1.17.2",
     "supertest": "^1.1.0",
     "uglify-js": "git+https://github.com/mishoo/UglifyJS2.git#harmony"
-  }
+  },
+  "pre-commit": [
+    "lint"
+  ]
 }

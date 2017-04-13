@@ -12,14 +12,18 @@ var docker = process.env.DOCKER;
 var customer = process.env.CUSTOMER;
 var app = null;
 var hook = null;
-var template = _.cloneDeep(require('formio/test/template')());
+var template = _.cloneDeep(require('formio/test/fixtures/template')());
 let EventEmitter = require('events');
 
 process.on('uncaughtException', function(err) {
   console.log(err.stack);
 });
 
-var emptyDatabase = template.emptyDatabase = function(done) {
+process.on('unhandledRejection', (err) => {
+  console.log(err.stack);
+});
+
+var emptyDatabase = template.emptyDatabase = template.clearData = function(done) {
   if (docker || customer) {
     return done();
   }
@@ -163,7 +167,7 @@ describe('Tests', function() {
         process.env.ADMIN_PASS = 'password';
         // Clear the database, reset the schema and perform a fresh install.
         emptyDatabase(function() {
-          require('../install')(app.formio.formio, done);
+          require('../install')(app.formio, done);
         });
       });
 
@@ -288,17 +292,17 @@ describe('Tests', function() {
               template.actions[action.machineName] = action;
             });
 
-            assert.equal(template.actions['formio:user:userSave'].title, 'Save Submission');
-            assert.equal(template.actions['formio:user:userSave'].machineName, 'formio:user:userSave');
-            assert.equal(template.actions['formio:user:userSave'].form._id, template.resources.user._id._id);
+            assert.equal(template.actions['user:save'].title, 'Save Submission');
+            assert.equal(template.actions['user:save'].machineName, 'user:save');
+            assert.equal(template.actions['user:save'].form._id, template.resources.user._id._id);
 
-            assert.equal(template.actions['formio:user:userRole'].title, 'Role Assignment');
-            assert.equal(template.actions['formio:user:userRole'].machineName, 'formio:user:userRole');
-            assert.equal(template.actions['formio:user:userRole'].form._id, template.resources.user._id._id);
+            assert.equal(template.actions['user:role'].title, 'Role Assignment');
+            assert.equal(template.actions['user:role'].machineName, 'user:role');
+            assert.equal(template.actions['user:role'].form._id, template.resources.user._id._id);
 
-            assert.equal(template.actions['formio:userLogin:userLoginLogin'].title, 'Login');
-            assert.equal(template.actions['formio:userLogin:userLoginLogin'].machineName, 'formio:userLogin:userLoginLogin');
-            assert.equal(template.actions['formio:userLogin:userLoginLogin'].form._id, template.forms.userLogin._id._id);
+            assert.equal(template.actions['userLogin:login'].title, 'Login');
+            assert.equal(template.actions['userLogin:login'].machineName, 'userLogin:login');
+            assert.equal(template.actions['userLogin:login'].form._id, template.forms.userLogin._id._id);
 
             done();
           });
@@ -335,6 +339,7 @@ describe('Tests', function() {
             if (err) {
               return done(err);
             }
+
             var response = res.body;
             assert.equal(response.length, 1);
             project = response[0];
@@ -360,7 +365,6 @@ describe('Tests', function() {
             assert.equal(response.length, 8);
             response.forEach(function(form) {
               forms[form.name] = form;
-  //>>>>>>> f2817cd19d5860d8d349b06aaaaace0a085e29ed
             });
             assert(forms.user);
             assert(forms.userLogin);
@@ -1361,6 +1365,7 @@ describe('Tests', function() {
         require('./report')(app, template, hook);
         require('./actions')(app, template, hook);
         require('./group-permissions')(app, template, hook);
+        require('formio/test/templates')(app, template, hook);
       });
     });
   });
