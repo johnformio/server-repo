@@ -49,9 +49,20 @@ module.exports = function(router) {
    * @param next
    */
   MoxtraMessage.settingsForm = function(req, res, next) {
-    Moxtra.getToken(req, {_id: `Form.io`})
+    if (!_.has(req.user.externalIds)) {
+      return res.status(400).send(`Could not access user token.`);
+    }
+    let userToken = _.filter(req.user.externalIds, {type: `moxtra`});
+    if (!userToken) {
+      return res.status(400).send(`Moxtra token not found for the current user.`)
+    }
+    
+    Moxtra.getToken(req, req.user)
     .then(token => {
-      console.log(token);
+      return Moxtra.getBinder(req, token);
+    })
+    .then(binders => {
+      console.log(binders);
       return next(null, []);
     })
     .catch(err => {
