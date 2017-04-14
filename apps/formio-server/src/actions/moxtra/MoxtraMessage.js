@@ -10,6 +10,8 @@ module.exports = function(router) {
   let hook = formio.hook;
   let util = formio.util;
   let Moxtra = require('./utils')(router);
+  let Thread = require('formio/src/worker/Thread');
+  let Nunjucks = require('formio/src/util/email')(formio);
 
   /**
    * AuthAction class.
@@ -26,6 +28,21 @@ module.exports = function(router) {
   MoxtraMessage.prototype.constructor = MoxtraMessage;
   MoxtraMessage.info = function(req, res, next) {
     next(null, {
+      conditional: {
+        eq: '',
+        when: null,
+        show: ''
+      },
+      tags: [],
+      type: 'hidden',
+      persistent: true,
+      unique: false,
+      protected: false,
+      label: 'user',
+      key: 'user',
+      tableView: true,
+      input: true
+    }, {
       name: 'moxtraMessage',
       title: 'Moxtra Message',
       description: 'Provides a way to Create new Moxtra Chat Messages',
@@ -37,6 +54,23 @@ module.exports = function(router) {
       access: {
         handler: false,
         method: false
+      },
+      validate: {
+        required: true
+      }
+    }, {
+      label: 'Message',
+      key: 'message',
+      type: 'textarea',
+      defaultValue: '{{ table(form.components) }}',
+      multiple: false,
+      rows: 3,
+      suffix: '',
+      prefix: '',
+      placeholder: 'Enter the message you would like to send.',
+      input: true,
+      validate: {
+        required: true
       }
     });
   };
@@ -100,7 +134,44 @@ module.exports = function(router) {
    *   The callback function to execute upon completion.
    */
   MoxtraMessage.prototype.resolve = function(handler, method, req, res, next) {
+    // Load the form for this request.
+    router.formio.cache.loadCurrentForm(req, (err, form) => {
+      if (err) {
+        return next(err);
+      }
+      if (!form) {
+        return res.status(404).send(`Form not found.`);
+      }
 
+      // Dont block on sending messages.
+      next(); // eslint-disable-line callback-return
+
+      // Get the Nunjucks parameters.
+      Nunjucks.getParams(res, form, req.body)
+      .then(params => {
+        let query = {
+          _id: params.owner,
+          deleted: {$eq: null}
+        };
+
+        return router.formio.resources.submission.model.findOne(query)
+        .then(owner => {
+          if (owner) {
+            params.owner = owner.toObject();
+          }
+
+          return new Promise((resolve, reject) => {
+            // Prepend the macros to the message so that they can use them.
+            this.settings.message = macros + this.settings.message;
+
+            // send the message
+          });
+        });
+      })
+      .catch(err => {
+        debug(err);
+      });
+    });
   };
 
   // Return the MoxtraMessage.
