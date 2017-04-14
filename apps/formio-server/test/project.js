@@ -75,7 +75,7 @@ module.exports = function(app, template, hook) {
           form = forms[a];
 
           request(app)
-            .get('/project/' + template.project._id + '/form/' + form._id + '/actions?limit=9999')
+            .get('/project/' + template.project._id + '/form/' + form._id + '/action?limit=9999')
             .set('x-jwt-token', template.formio.owner.token)
             .expect('Content-Type', /json/)
             .expect(200)
@@ -86,8 +86,8 @@ module.exports = function(app, template, hook) {
               template.formio.owner.token = res.headers['x-jwt-token'];
 
               res.body.forEach(function(action) {
-                template.actions[form.name] = template.actions[form.name] || {};
-                template.actions[form.name] = action;
+                template.actions[`${form.name}:${action.name}`] = template.actions[`${form.name}:${action.name}`] || {};
+                template.actions[`${form.name}:${action.name}`] = action;
               });
             });
         }
