@@ -153,7 +153,7 @@ module.exports = function(options) {
       console.log(' > No projects found. Setting up server.');
       /* eslint-enable no-console */
 
-      require('./install')(formio, function(err) {
+      require('./install')(app.formio, function(err) {
         if (err) {
           // Throw an error and exit.
           throw new Error(err);
