@@ -659,7 +659,7 @@ module.exports = function(app, template, hook) {
             assert.equal(response.priority, authRegisterAction.priority);
             assert.deepEqual(response.settings, authRegisterAction.settings);
             assert.equal(response.form, template.forms.oauthRegisterForm._id);
-            template.actions.authRegisterAction = response;
+            template.actions['oauthRegisterForm:save'] = response;
 
             // Store the JWT for future API calls.
             template.users.admin.token = res.headers['x-jwt-token'];
@@ -700,7 +700,7 @@ module.exports = function(app, template, hook) {
             assert.equal(response.priority, authRegisterLoginAction.priority);
             assert.deepEqual(response.settings, authRegisterLoginAction.settings);
             assert.equal(response.form, template.forms.oauthRegisterForm._id);
-            template.actions.authRegisterLoginAction = response;
+            template.actions['oauthRegisterForm:login'] = response;
 
             // Store the JWT for future API calls.
             template.users.admin.token = res.headers['x-jwt-token'];

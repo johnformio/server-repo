@@ -780,7 +780,7 @@
     }
   },
   "actions": {
-    "userEmail": {
+    "user:email": {
       "title": "Email",
       "name": "email",
       "form": "user",
@@ -812,7 +812,7 @@
         "after"
       ]
     },
-    "userRole": {
+    "user:role": {
       "title": "Role Assignment",
       "name": "role",
       "form": "user",
@@ -829,7 +829,7 @@
         "after"
       ]
     },
-    "userSave": {
+    "user:save": {
       "title": "Save Submission",
       "name": "save",
       "form": "user",
@@ -843,7 +843,7 @@
         "before"
       ]
     },
-    "userLoginLogin": {
+    "userLogin:login": {
       "title": "Login",
       "name": "login",
       "form": "userLogin",
@@ -862,7 +862,7 @@
         "before"
       ]
     },
-    "userRegistrationFormLogin": {
+    "userRegistrationForm:login": {
       "title": "Login",
       "name": "login",
       "form": "userRegistrationForm",
@@ -881,7 +881,7 @@
         "before"
       ]
     },
-    "userRegistrationFormSave": {
+    "userRegistrationForm:save": {
       "title": "Save Submission",
       "name": "save",
       "form": "userRegistrationForm",
@@ -903,7 +903,7 @@
         "before"
       ]
     },
-    "teamSave": {
+    "team:save": {
       "title": "Save Submission",
       "name": "save",
       "form": "team",
@@ -917,7 +917,7 @@
         "before"
       ]
     },
-    "feedbackEmail": {
+    "feedback:email": {
       "title": "Email",
       "name": "email",
       "form": "feedback",
@@ -946,7 +946,7 @@
         "after"
       ]
     },
-    "feedbackSave": {
+    "feedback:save": {
       "title": "Save Submission",
       "name": "save",
       "form": "feedback",
@@ -960,7 +960,7 @@
         "before"
       ]
     },
-    "supportFormEmail": {
+    "supportForm:email": {
       "title": "Email",
       "name": "email",
       "form": "supportForm",
@@ -989,7 +989,7 @@
         "after"
       ]
     },
-    "supportFormSave": {
+    "supportForm:save": {
       "title": "Save Submission",
       "name": "save",
       "form": "supportForm",
@@ -1003,7 +1003,7 @@
         "before"
       ]
     },
-    "resetPasswordResetpass": {
+    "resetPassword:resetpass": {
       "title": "Reset Password",
       "name": "resetpass",
       "form": "resetPassword",
@@ -1036,7 +1036,7 @@
         "before"
       ]
     },
-    "adminRole": {
+    "admin:role": {
       "title": "Role Assignment",
       "name": "role",
       "form": "admin",
@@ -1053,7 +1053,7 @@
         "after"
       ]
     },
-    "adminSave": {
+    "admin:save": {
       "title": "Save Submission",
       "name": "save",
       "form": "admin",

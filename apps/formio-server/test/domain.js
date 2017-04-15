@@ -18,10 +18,9 @@ module.exports = function(app, template, hook) {
   var tempProject = {
     title: chance.word(),
     description: chance.sentence(),
-    template: _.omit(template, ['users', 'formio'])
+    template: _.pick(template, ['title', 'name', 'version', 'primary', 'roles', 'resources', 'forms', 'actions'])
   };
   var originalProject = _.cloneDeep(tempProject);
-
   var project;
 
   describe('Domains tests', function() {

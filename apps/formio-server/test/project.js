@@ -63,19 +63,18 @@ module.exports = function(app, template, hook) {
     var tempProject = {
       title: chance.word(),
       description: chance.sentence(),
-      template: _.omit(template, ['users', 'formio'])
+      template: _.pick(template, ['title', 'name', 'version', 'description', 'roles', 'resources', 'forms', 'actions'])
     };
     var originalProject = _.cloneDeep(tempProject);
 
     // Update the template with current data for future tests.
-    var mapProjectToTemplate = function(project, template, callback) {
+    var mapProjectToTemplate = function(template, callback) {
       var mapActions = function(forms, cb) {
-        var form = null;
         for (var a = 0; a < forms.length || 0; a++) {
-          form = forms[a];
+          let form = forms[a];
 
           request(app)
-            .get('/project/' + template.project._id + '/form/' + form._id + '/actions?limit=9999')
+            .get('/project/' + template.project._id + '/form/' + form._id + '/action?limit=9999')
             .set('x-jwt-token', template.formio.owner.token)
             .expect('Content-Type', /json/)
             .expect(200)
@@ -86,8 +85,8 @@ module.exports = function(app, template, hook) {
               template.formio.owner.token = res.headers['x-jwt-token'];
 
               res.body.forEach(function(action) {
-                template.actions[form.name] = template.actions[form.name] || {};
-                template.actions[form.name] = action;
+                template.actions = template.actions || {};
+                template.actions[`${form.name}:${action.name}`] = action;
               });
             });
         }
@@ -108,7 +107,7 @@ module.exports = function(app, template, hook) {
             template.formio.owner.token = res.headers['x-jwt-token'];
 
             res.body.forEach(function(form) {
-              template[form.type + 's'][form.name] = template[form.type + 's'][form.name] || {};
+              template[form.type + 's'] = template[form.type + 's'] || {}
               template[form.type + 's'][form.name] = form;
             });
             mapActions(res.body, cb);
@@ -128,7 +127,7 @@ module.exports = function(app, template, hook) {
             template.formio.owner.token = res.headers['x-jwt-token'];
 
             res.body.forEach(function(role) {
-              template.roles[role.title.toLowerCase()] = template.roles[role.title.toLowerCase()] || {};
+              template.roles = template.roles || {};
               template.roles[role.title.toLowerCase()] = role;
             });
             cb();
@@ -197,7 +196,7 @@ module.exports = function(app, template, hook) {
           // Store the JWT for future API calls.
           template.formio.owner.token = res.headers['x-jwt-token'];
 
-          mapProjectToTemplate(response._id, template, done);
+          mapProjectToTemplate(template, done);
         });
     });
 
@@ -694,7 +693,7 @@ module.exports = function(app, template, hook) {
           // Store the JWT for future API calls.
           template.formio.owner.token = res.headers['x-jwt-token'];
 
-          mapProjectToTemplate(response._id, template, done);
+          mapProjectToTemplate(template, done);
         });
     });
   });

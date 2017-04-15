@@ -11,6 +11,7 @@ var nodeUrl = require('url');
 var jwt = require('jsonwebtoken');
 var semver = require('semver');
 var util = require('../util/util');
+let async = require('async');
 
 module.exports = function(app) {
   var formioServer = app.formio;
@@ -839,6 +840,72 @@ module.exports = function(app) {
         return available;
       },
 
+      importActionQuery: function(query, action, template) {
+        query.form = formioServer.formio.util.idToBson(action.form);
+        return query;
+      },
+
+      importFormQuery: function(query, form, template) {
+        query.project = formioServer.formio.util.idToBson(form.project);
+        return query;
+      },
+
+      importRoleQuery: function(query, role, template) {
+        query.project = formioServer.formio.util.idToBson(role.project);
+        return query;
+      },
+
+      templateAlters: function(alters) {
+        alters.role = (item, template, done) => {
+          item.project = template._id;
+          this.roleMachineName(item.machineName, item, (err, machineName) => {
+            if (err) {
+              return done(err);
+            }
+
+            item.machineName = machineName;
+            done(null, item);
+          });
+        };
+
+        alters.form = (item, template, done) => {
+          item.project = template._id;
+          this.formMachineName(item.machineName, item, (err, machineName) => {
+            if (err) {
+              return done(err);
+            }
+
+            item.machineName = machineName;
+            done(null, item);
+          });
+        };
+
+        return alters;
+      },
+
+      templateSteps: (steps, install, template) => {
+        let _install = install({
+          model: formioServer.formio.resources.project.model,
+          valid: entity => {
+            let project = entity[template.name || 'project'];
+            if (!project || !project.title) {
+              return false;
+            }
+
+            return true;
+          },
+          cleanUp: (template, items, done) => {
+            template._id = items[template.name]._id;
+            return done();
+          }
+        });
+        let project = {};
+        project[template.name || 'export'] = _.pick(template, ['title', 'name', 'version', 'description', 'primary']);
+
+        steps.unshift(async.apply(_install, template, project));
+        return steps;
+      },
+
       exportOptions: function(options, req, res) {
         var currentProject = cache.currentProject(req);
         options.title = currentProject.title;
@@ -856,9 +923,6 @@ module.exports = function(app) {
         req.projectId = projectId;
         return params;
       },
-      //cors: function() {
-      //  return require('../middleware/corsOptions')(formioServer);
-      //},
 
       /**
        * Hook the user object and modify the roles to include the users team id's.
@@ -949,7 +1013,7 @@ module.exports = function(app) {
           });
         }
         else {
-          req.projectId = req.projectId || req.params.projectId || 0;
+          req.projectId = req.projectId || (req.params ? req.params.projectId : undefined) || req._id;
           query.project = formioServer.formio.mongoose.Types.ObjectId(req.projectId);
           _debug(query);
           return query;
@@ -1075,8 +1139,8 @@ module.exports = function(app) {
         return handlers;
       },
       roleQuery: function(query, req) {
-        var projectId = req.projectId || req.params.projectId;
-        query.project = formioServer.formio.mongoose.Types.ObjectId(projectId);
+        var projectId = req.projectId || (req.params ? req.params.projectId : undefined) || req._id;
+        query.project = formioServer.formio.util.idToBson(projectId);
         return query;
       },
       roleRoutes: function(routes) {
@@ -1110,16 +1174,6 @@ module.exports = function(app) {
       roleMachineName: function(machineName, document, done) {
         this.formMachineName(machineName, document, done);
       },
-      actionMachineName: function(machineName, document, done) {
-        formioServer.formio.resources.form.model.findOne({_id: document.form, deleted: {$eq: null}})
-        .exec(function(err, form) {
-          if (err) {
-            return done(err);
-          }
-
-          done(null, form.machineName + ':' + machineName);
-        });
-      },
       machineNameExport: function(machineName) {
         if (!machineName) {
           return 'export';
@@ -1136,12 +1190,12 @@ module.exports = function(app) {
         // Rejoin the machine name as : seperated.
         return parts.join(':');
       },
-      exportComponent: function(_export, _map, options, component) {
+      exportComponent: function(component) {
         if (component.type === 'resource') {
           component.project = 'project';
         }
       },
-      importComponent: function(template, components, component) {
+      importComponent: function(template, component) {
         if (!component) {
           return false;
         }
