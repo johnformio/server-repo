@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Removed
 
+## 4.0.1
+### Added
+ - New download PDF endpoint that allows for downloading submissions as PDFs using the file server.
+ - Upgraded formio to version 1.17.0 which includes temp token support.
+ - Removed formio-utils dependency and replaced with formiojs.
+
 ## 4.0.0
 ### Added
  - Ability to have projects as subdirectories
