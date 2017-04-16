@@ -1116,56 +1116,59 @@ module.exports = function(app, template, hook) {
         });
     });
 
-    if (!docker)
-    it('A Deleted Project should still remain in the Database', function(done) {
-      app.formio.formio.resources.project.model.find({project: template.project._id, deleted: {$eq: null}})
-        .exec(function(err, results) {
-          if (err) {
-            return done(err);
-          }
+    if (!docker) {
+      it('A Deleted Project should still remain in the Database', function (done) {
+        app.formio.formio.resources.project.model.find({project: template.project._id, deleted: {$eq: null}})
+          .exec(function (err, results) {
+            if (err) {
+              return done(err);
+            }
 
-          if (results.length === 0) {
-            done();
-          }
-          else {
-            done(new Error('Expected zero results, got ' + results.length));
-          }
-        });
-    });
+            if (results.length === 0) {
+              done();
+            }
+            else {
+              done(new Error('Expected zero results, got ' + results.length));
+            }
+          });
+      });
+    }
 
-    if (!docker)
-    it('A Deleted Project should not have any active Forms', function(done) {
-      app.formio.formio.resources.form.model.find({project: template.project._id, deleted: {$eq: null}})
-        .exec(function(err, results) {
-          if (err) {
-            return done(err);
-          }
+    if (!docker) {
+      it('A Deleted Project should not have any active Forms', function(done) {
+        app.formio.formio.resources.form.model.find({project: template.project._id, deleted: {$eq: null}})
+          .exec(function(err, results) {
+            if (err) {
+              return done(err);
+            }
 
-          if (results.length === 0) {
-            done();
-          }
-          else {
-            done(new Error('Expected zero results, got ' + results.length));
-          }
-        });
-    });
+            if (results.length === 0) {
+              done();
+            }
+            else {
+              done(new Error('Expected zero results, got ' + results.length));
+            }
+          });
+      });
+    }
 
-    if (!docker)
-    it('A Deleted Project should not have any active Roles', function(done) {
-      app.formio.formio.resources.role.model.find({project: template.project._id, deleted: {$eq: null}})
-        .exec(function(err, results) {
-          if (err) {
-            return done(err);
-          }
+    if (!docker) {
+      it('A Deleted Project should not have any active Roles', function(done) {
+        app.formio.formio.resources.role.model.find({project: template.project._id, deleted: {$eq: null}})
+          .exec(function(err, results) {
+            if (err) {
+              return done(err);
+            }
 
-          if (results.length === 0) {
-            done();
-          }
-          else {
-            done(new Error('Expected zero results, got ' + results.length));
-          }
-        });
-    });
+            if (results.length === 0) {
+              done();
+            }
+            else {
+              done(new Error('Expected zero results, got ' + results.length));
+            }
+          });
+      });
+    }
 
     it('Recreate the user Project for later tests', function(done) {
       request(app)
@@ -1205,7 +1208,7 @@ module.exports = function(app, template, hook) {
           // Store the JWT for future API calls.
           template.formio.owner.token = res.headers['x-jwt-token'];
 
-          mapProjectToTemplate(response._id, template, done);
+          mapProjectToTemplate(template, done);
         });
     });
   });
