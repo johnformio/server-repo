@@ -1,3 +1,4 @@
+'use strict';
 var request = require('request');
 var FORMIO_FILES_SERVER = process.env.FORMIO_FILES_SERVER || 'https://files.form.io';
 module.exports = function(formio) {
