@@ -3,6 +3,7 @@ var moment = require('moment');
 
 module.exports = function(router) {
   var util = require('./util')(router);
+  var hook = router.formio.hook;
 
   /**
    * Office365CalendarAction class.
@@ -18,7 +19,7 @@ module.exports = function(router) {
   Office365CalendarAction.prototype = Object.create(router.formio.Action.prototype);
   Office365CalendarAction.prototype.constructor = Office365CalendarAction;
   Office365CalendarAction.info = function(req, res, next) {
-    next(null, {
+    next(null, hook.alter('actionInfo', {
       name: 'office365calendar',
       title: 'Office 365 Calendar (Premium)',
       description: 'Allows you to integrate into your Office 365 Calendar.',
@@ -28,7 +29,7 @@ module.exports = function(router) {
         handler: ['after'],
         method: ['create', 'update', 'delete']
       }
-    });
+    }));
   };
 
   Office365CalendarAction.settingsForm = function(req, res, next) {
@@ -187,6 +188,10 @@ module.exports = function(router) {
    *   The callback function to execute upon completion.
    */
   Office365CalendarAction.prototype.resolve = function(handler, method, req, res, next) {
+    if (!hook.alter('resolve', true, this, handler, method, req, res)) {
+      return next();
+    }
+
     var payload = {};
 
     // Skip if there are no settings.

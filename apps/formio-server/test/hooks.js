@@ -18,6 +18,17 @@ module.exports = {
       return '/project/' + template[projectName]._id + url;
     },
 
+    webhookServer: function(server, app, template, next) {
+      if (!app || !template.project) {
+        return next(null, server);
+      }
+
+      var helper = new template.Helper();
+      helper.setProjectPlan.call({template: template}, 'team', function() {
+        return next(null, server);
+      });
+    },
+
     webhookBody: function(body) {
       if (_.has(body, 'submission.externalTokens')) {
         delete body.submission.externalTokens;

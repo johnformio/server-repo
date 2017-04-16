@@ -22,15 +22,12 @@ module.exports = function(app, template, hook) {
       }
 
       var helper;
+      var project;
       it('Create the test project', function(done) {
         helper = new template.Helper(template.formio.owner);
         helper
-          .project({
-            sqlconnector: {
-              host: 'example.com',
-              type: 'mysql'
-            }
-          })
+          .project()
+          .plan('basic')
           .resource([
             {
               input: true,
@@ -172,27 +169,17 @@ module.exports = function(app, template, hook) {
               table: 'customers'
             }
           })
-          .execute(done);
-      });
+          .execute(function() {
+            helper.getProject(function(err, response) {
+              if (err) {
+                return done(err);
+              }
 
-      var project;
-      it('Verify the project has sql connector settings', function(done) {
-        helper.getProject(function(err, response) {
-          if (err) {
-            return done(err);
-          }
-
-          assert(typeof response === 'object');
-          assert.deepEqual(response.settings, {
-            sqlconnector: {
-              host: 'example.com',
-              type: 'mysql'
-            },
-            cors: '*'
+              assert(typeof response === 'object');
+              project = response;
+              done();
+            });
           });
-          project = response;
-          done();
-        });
       });
 
       it('A project on the basic plan cannot access the /sqlconnector endpoint', function(done) {
@@ -213,27 +200,9 @@ module.exports = function(app, template, hook) {
       });
 
       it('Update the project to the independent plan', function(done) {
-        app.formio.formio.resources.project.model.findOne({_id: project._id, deleted: {$eq: null}}, function(err, project) {
-          if (err) {
-            return done(err);
-          }
-
-          project.plan = 'independent';
-          project.save(function(err) {
-            if (err) {
-              return done(err);
-            }
-
-            helper.getProject(function(err, response) {
-              if (err) {
-                return done(err);
-              }
-
-              project = response;
-              done();
-            });
-          });
-        });
+        return helper
+          .plan('independent')
+          .execute(done);
       });
 
       it('A project on the independent plan cannot access the /sqlconnector endpoint', function(done) {
@@ -254,27 +223,21 @@ module.exports = function(app, template, hook) {
       });
 
       it('Update the project to the team plan', function(done) {
-        app.formio.formio.resources.project.model.findOne({_id: project._id, deleted: {$eq: null}}, function(err, project) {
-          if (err) {
-            return done(err);
-          }
+        return helper
+          .plan('team')
+          .execute(done);
+      });
 
-          project.plan = 'team';
-          project.save(function(err) {
-            if (err) {
-              return done(err);
+      it('Add the sqlconnector project settings', function(done) {
+        return helper
+          .settings({
+            cors: '*',
+            sqlconnector: {
+              host: 'example.com',
+              type: 'mysql'
             }
-
-            helper.getProject(function(err, response) {
-              if (err) {
-                return done(err);
-              }
-
-              project = response;
-              done();
-            });
-          });
-        });
+          })
+          .execute(done);
       });
 
       it('A project on the team plan can access the /sqlconnector endpoint', function(done) {

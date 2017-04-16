@@ -111,7 +111,7 @@ var emptyDatabase = template.emptyDatabase = template.clearData = function(done)
   dropProjects();
 };
 
-describe('Tests', function() {
+describe('Initial Tests', function() {
   before(function(done) {
     var hooks = _.merge(require('formio/test/hooks'), require('./hooks')); // Merge all the test hooks.
     if (!docker && !customer) {
@@ -123,7 +123,7 @@ describe('Tests', function() {
         hook = require('formio/src/util/hook')(app.formio.formio);
 
         // Establish the helper library.
-        template.Helper = require('formio/test/helper')(app);
+        template.Helper = require('./Helper')(app, require('formio/test/helper')(app));
         template.hooks = app.formio.formio.hooks || {};
         template.hooks.addEmitter(new EventEmitter());
         return done();
@@ -1343,7 +1343,7 @@ describe('Tests', function() {
     });
 
     after(function() {
-      describe('Final Tests', function() {
+      describe('Project Tests', function() {
         require('./project')(app, template, hook);
         require('./domain')(app, template, hook);
         require('./email')(app, template, hook);
@@ -1359,6 +1359,7 @@ describe('Tests', function() {
         require('formio/test/submission-access')(app, template, hook);
         require('./analytics')(app, template, hook);
         require('./teams')(app, template, hook);
+        require('./env')(app, template, hook);
         require('./misc')(app, template, hook);
         require('./oauth')(app, template, hook);
         require('./s3')(app, template, hook);

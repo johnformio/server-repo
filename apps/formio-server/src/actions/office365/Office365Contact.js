@@ -4,6 +4,7 @@ var _ = require('lodash');
 
 module.exports = function(router) {
   var util = require('./util')(router);
+  var hook = router.formio.hook;
 
   // The available fields.
   var office365Fields = {
@@ -131,17 +132,16 @@ module.exports = function(router) {
   Office365ContactAction.prototype = Object.create(router.formio.Action.prototype);
   Office365ContactAction.prototype.constructor = Office365ContactAction;
   Office365ContactAction.info = function(req, res, next) {
-    next(null, {
+    next(null, hook.alter('actionInfo', {
       name: 'office365contact',
-      title: 'Office 365 Contacts (Premium)',
+      title: 'Office 365 Contacts',
       description: 'Allows you to integrate into your Office 365 Contacts.',
-      premium: true,
       priority: 0,
       defaults: {
         handler: ['after'],
         method: ['create', 'update', 'delete']
       }
-    });
+    }));
   };
 
   Office365ContactAction.settingsForm = function(req, res, next) {
@@ -218,6 +218,10 @@ module.exports = function(router) {
    *   The callback function to execute upon completion.
    */
   Office365ContactAction.prototype.resolve = function(handler, method, req, res, next) {
+    if (!hook.alter('resolve', true, this, handler, method, req, res)) {
+      return next();
+    }
+
     var payload = {};
 
     // Skip if there are no settings.

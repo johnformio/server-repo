@@ -31,6 +31,8 @@ module.exports = function(app) {
   // Handle Payeezy form signing requests and project upgrades
   app.formio.formio.payment = require('../payment/payment')(app, app.formio.formio);
 
+  app.storage = require('../storage/index.js')(app);
+
   return {
     settings: function(settings, req, cb) {
       if (!req.projectId) {
@@ -258,6 +260,56 @@ module.exports = function(app) {
         actions.moxtraLogin = require('../actions/MoxtraLogin')(formioServer);
         return actions;
       },
+
+      /**
+       * Alter specific actions to be flagged as premium actions.
+       *
+       * @param title
+       */
+      actionInfo: function(action) {
+        // Modify premium actions if present.
+        var premium = [
+          'webhook', 'oauth', 'office365contact', 'office365calendar', 'hubspotContact', 'googlesheet', 'jira'
+        ];
+        if (action.title && action.name && !action.premium && premium.indexOf(action.name) !== -1) {
+          action.title += ' (Premium)';
+          action.premium = true;
+        }
+
+        return action;
+      },
+
+      /**
+       * Skip premium actions, on non premium plans.
+       *
+       * @param action
+       * @param handler
+       * @param method
+       * @param req
+       * @param res
+       * @param next
+       */
+      resolve: function(defaultReturn, action, handler, method, req, res) {
+        var _debug = require('debug')('formio:settings:resolve');
+        var premium = [
+          'webhook', 'oauth', 'office365contact', 'office365calendar', 'hubspotContact', 'googlesheet', 'jira'
+        ];
+
+        // If the action does not have a name, or is not flagged as being premium, ignore it.
+        if (!action.hasOwnProperty('name')) {
+          return true;
+        }
+        if (premium.indexOf(action.name) === -1) {
+          return true;
+        }
+        if (['basic'].indexOf(req.primaryProject.plan) !== -1) {
+          _debug('Skipping ' + action.name + ' action, because the project plan is ' + req.primaryProject.plan);
+          return false;
+        }
+
+        return true;
+      },
+
       emailTransports: function(transports, settings) {
         settings = settings || {};
         var office365 = settings.office365 || {};
@@ -379,29 +431,47 @@ module.exports = function(app) {
               return callback('No project found with projectId: ' + req.projectId);
             }
 
-            // Store the Project Owners UserId, because they will have all permissions.
-            if (project.owner) {
-              access.project.owner = project.owner.toString();
-
-              // Add the UserId of the Project Owner for the ownerFilter middleware.
-              req.projectOwner = access.project.owner;
+            // Add the current project to the req.
+            try {
+              req.currentProject = project.toObject();
+            }
+            catch (err) {
+              req.currentProject = project;
             }
 
-            // Add the other defined access types.
-            if (project.access) {
-              project.access.forEach(function(permission) {
-                access.project[permission.type] = access.project[permission.type] || [];
+            cache.loadPrimaryProject(req, function(err, primaryProject) {
+              // Add the current project to the req.
+              try {
+                req.primaryProject = primaryProject.toObject();
+              }
+              catch (err) {
+                req.primaryProject = primaryProject;
+              }
 
-                // Convert the roles from BSON to comparable strings.
-                permission.roles.forEach(function(id) {
-                  access.project[permission.type].push(id.toString());
+              // Store the Project Owners UserId, because they will have all permissions.
+              if (primaryProject.owner) {
+                access.project.owner = primaryProject.owner.toString();
+
+                // Add the UserId of the Project Owner for the ownerFilter middleware.
+                req.projectOwner = access.project.owner;
+              }
+
+              // Add the other defined access types.
+              if (project.access) {
+                project.access.forEach(function(permission) {
+                  access.project[permission.type] = access.project[permission.type] || [];
+
+                  // Convert the roles from BSON to comparable strings.
+                  permission.roles.forEach(function(id) {
+                    access.project[permission.type].push(id.toString());
+                  });
                 });
-              });
-            }
+              }
 
-            // Pass the access of this project to the next function.
-            _debug(JSON.stringify(access));
-            return callback(null);
+              // Pass the access of this project to the next function.
+              _debug(JSON.stringify(access));
+              return callback(null);
+            });
           });
         };
 
@@ -424,7 +494,7 @@ module.exports = function(app) {
           }
 
           // Load the project.
-          cache.loadProject(req, req.projectId, function(err, project) {
+          cache.loadPrimaryProject(req, function(err, project) {
             if (err) {
               _debug(err);
               return callback(err);
@@ -607,71 +677,84 @@ module.exports = function(app) {
           return callback(null, query);
         }
 
-        // Get all the possible groups in the project
-        formioServer.formio.resources.form.model.aggregate(
-          // Get all the forms for the current project.
-          {$match: {
-            project: formioServer.formio.util.idToBson(req.projectId),
-            deleted: {$eq: null}
-          }},
-          {$project: {'form._id': '$_id', _id: 0}},
-
-          // Get all the group assignment actions for the forms in the pipeline
-          {$lookup: {from: 'actions', localField: 'form._id', foreignField: 'form', as: 'action'}},
-          {$match: {action: {$exists: true, $ne: []}}},
-          {$unwind: '$action'},
-          {$match: {'action.deleted': {$eq: null}, 'action.name': 'group', 'action.settings.user': {$exists: true}}},
-          {$project: {form: 1, action: {_id: '$action._id', settings: '$action.settings'}}},
-
-          // Get all the groups that the current user is a member of, or owns
-          {$lookup: {from: 'submissions', localField: 'form._id', foreignField: 'form', as: 'submission'}},
-          {$unwind: '$submission'},
-          {$match: {$or: [
-            {'submission.data.user': {$exists: true}},
-            {'submission.owner': formioServer.formio.util.idToBson(req.token.user._id)}
-          ]}},
-          {$project: {form: 1, action: 1, submission: {
-            _id: '$submission._id',
-            data: {
-              user: {
-                $cond: [
-                  {$anyElementTrue: [['$submission.data.user._id']]},
-                  '$submission.data.user._id',
-                  '$submission.data.user'
-                ]
-              },
-              group: '$submission.data.group._id'
-            },
-            owner: '$submission.owner'
-          }}},
-          {$group: {
-            _id: {group: '$submission.data.group', owner: '$submission.owner'},
-            users: {$push: '$submission.data.user'}
-          }},
-          {$project: {
-            _id: '$_id.group',
-            owner: '$_id.owner',
-            users: '$users'
-          }},
-          {$match: {$or: [
-            {users: formioServer.formio.util.idToString(req.token.user._id)},
-            {owner: formioServer.formio.util.idToBson(req.token.user._id)}
-          ]}},
-          function(err, groups) {
-            if (err) {
-              // Try to recover from failure, but passing the original query on.
-              _debug(err);
-              return callback(err, query);
-            }
-
-            _debug(groups);
-            groups.forEach(function(group) {
-              query.push(formioServer.formio.util.idToBson(group._id));
-            });
-
-            return callback(null, query, groups);
+        formioServer.formio.plans.getPlan(req, function(err, plan) {
+          if (err) {
+            _debug(err);
+            return callback(err, query);
           }
-        );
+
+          // FOR-209 - Skip group permission checks for non-team/commercial project plans.
+          if (['team', 'commercial'].indexOf(plan) === -1) {
+            _debug('Skipping additional permission checks, plan: ', plan);
+            return callback(null, query);
+          }
+
+          // Get all the possible groups in the project
+          formioServer.formio.resources.form.model.aggregate(
+            // Get all the forms for the current project.
+            {$match: {
+              project: formioServer.formio.util.idToBson(req.projectId),
+              deleted: {$eq: null}
+            }},
+            {$project: {'form._id': '$_id', _id: 0}},
+
+            // Get all the group assignment actions for the forms in the pipeline
+            {$lookup: {from: 'actions', localField: 'form._id', foreignField: 'form', as: 'action'}},
+            {$match: {action: {$exists: true, $ne: []}}},
+            {$unwind: '$action'},
+            {$match: {'action.deleted': {$eq: null}, 'action.name': 'group', 'action.settings.user': {$exists: true}}},
+            {$project: {form: 1, action: {_id: '$action._id', settings: '$action.settings'}}},
+
+            // Get all the groups that the current user is a member of, or owns
+            {$lookup: {from: 'submissions', localField: 'form._id', foreignField: 'form', as: 'submission'}},
+            {$unwind: '$submission'},
+            {$match: {$or: [
+              {'submission.data.user': {$exists: true}},
+              {'submission.owner': formioServer.formio.util.idToBson(req.token.user._id)}
+            ]}},
+            {$project: {form: 1, action: 1, submission: {
+              _id: '$submission._id',
+              data: {
+                user: {
+                  $cond: [
+                    {$anyElementTrue: [['$submission.data.user._id']]},
+                    '$submission.data.user._id',
+                    '$submission.data.user'
+                  ]
+                },
+                group: '$submission.data.group._id'
+              },
+              owner: '$submission.owner'
+            }}},
+            {$group: {
+              _id: {group: '$submission.data.group', owner: '$submission.owner'},
+              users: {$push: '$submission.data.user'}
+            }},
+            {$project: {
+              _id: '$_id.group',
+              owner: '$_id.owner',
+              users: '$users'
+            }},
+            {$match: {$or: [
+              {users: formioServer.formio.util.idToString(req.token.user._id)},
+              {owner: formioServer.formio.util.idToBson(req.token.user._id)}
+            ]}},
+            function(err, groups) {
+              if (err) {
+                // Try to recover from failure, but passing the original query on.
+                _debug(err);
+                return callback(err, query);
+              }
+
+              _debug(groups);
+              groups.forEach(function(group) {
+                query.push(formioServer.formio.util.idToBson(group._id));
+              });
+
+              return callback(null, query, groups);
+            }
+          );
+        });
       },
 
       /**
@@ -795,6 +878,11 @@ module.exports = function(app) {
           return true;
         }
 
+        // Allow access to current version endpoint.
+        else if (req.projectId && req.url === '/project/' + req.projectId + '/version/current') {
+          return true;
+        }
+
         else if (req.token && access.project && access.project.owner) {
           var url = req.url.split('/');
 
@@ -912,9 +1000,9 @@ module.exports = function(app) {
       exportOptions: function(options, req, res) {
         var currentProject = cache.currentProject(req);
         options.title = currentProject.title;
+        options.version = currentProject.version;
         options.name = currentProject.name;
         options.description = currentProject.description;
-        options.plan = currentProject.plan;
         options.projectId = req.projectId || req.params.projectId || 0;
         return options;
       },
@@ -1024,7 +1112,7 @@ module.exports = function(app) {
         if (formio && formio === true) {
           return cache.loadProjectByName(req, 'formio', function(err, _id) {
             if (err || !_id) {
-              _debug(err || 'The formio project was not found..');
+              _debug(err || 'The formio project was not found.');
               return query;
             }
 
@@ -1060,6 +1148,10 @@ module.exports = function(app) {
         query.projectId = token.form.project;
         return query;
       },
+      formRoutes: function(routes) {
+        routes.before.unshift(require('../middleware/projectProtectAccess')(formioServer.formio));
+        return routes;
+      },
       submissionRoutes: function(routes) {
         var filterExternalTokens = formioServer.formio.middleware.filterResourcejsResponse(['externalTokens']);
         var conditionalFilter = function(req, res, next) {
@@ -1086,6 +1178,20 @@ module.exports = function(app) {
           routes[handler].push(conditionalFilter);
         });
 
+        return routes;
+      },
+      actionRoutes: function(routes) {
+        var projectProtectAccess = require('../middleware/projectProtectAccess')(formioServer.formio);
+
+        _.each(['beforePost', 'beforePut', 'beforeDelete'], function(handler) {
+          routes[handler].unshift(projectProtectAccess);
+        });
+
+        return routes;
+      },
+      roleRoutes: function(routes) {
+        routes.before.unshift(require('../middleware/bootstrapEntityProject'), require('../middleware/projectFilter'));
+        routes.before.unshift(require('../middleware/projectProtectAccess')(formioServer.formio));
         return routes;
       },
       submissionSchema: function(schema) {
@@ -1163,10 +1269,6 @@ module.exports = function(app) {
         var projectId = req.projectId || (req.params ? req.params.projectId : undefined) || req._id;
         query.project = formioServer.formio.util.idToBson(projectId);
         return query;
-      },
-      roleRoutes: function(routes) {
-        routes.before.unshift(require('../middleware/bootstrapEntityProject'), require('../middleware/projectFilter'));
-        return routes;
       },
       roleSearch: function(search, model, value) {
         return this.formSearch(search, model, value);

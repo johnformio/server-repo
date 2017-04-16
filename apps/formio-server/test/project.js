@@ -59,6 +59,29 @@ module.exports = function(app, template, hook) {
       });
   };
 
+  var deleteProjects = function(projects, next) {
+    async.each(projects, function(proj, cb) {
+      request(app)
+        .delete('/project/' + proj._id)
+        .set('x-jwt-token', template.formio.owner.token)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          var response = res.body;
+          assert.deepEqual(response, {});
+
+          // Store the JWT for future API calls.
+          template.formio.owner.token = res.headers['x-jwt-token'];
+
+          cb();
+        });
+    }, function(err) {
+      return next(err);
+    });
+  };
+
   describe('Projects', function() {
     var tempProject = {
       title: chance.word(),
@@ -300,9 +323,10 @@ module.exports = function(app, template, hook) {
           }
         ],
         email: {
-          gmail: {
+          smtp: {
+            host: 'example.com',
             auth: {
-              user: 'test@example.com',
+              user: 'test',
               pass: 'test123'
             }
           }
@@ -584,6 +608,494 @@ module.exports = function(app, template, hook) {
         });
     });
 
+    describe('Protected Project', function() {
+      var project, form, submission, action, role;
+
+      it('Create a content form for protected testing', function(done) {
+        var tempForm = {
+          title: 'Protect Form',
+          name: 'protectForm',
+          path: 'temp/protectform',
+          type: 'form',
+          access: [],
+          submissionAccess: [],
+          components: [
+            {
+              type: 'textfield',
+              validate: {
+                custom: '',
+                pattern: '',
+                maxLength: '',
+                minLength: '',
+                required: false
+              },
+              defaultValue: '',
+              multiple: false,
+              suffix: '',
+              prefix: '',
+              placeholder: 'foo',
+              key: 'foo',
+              label: 'foo',
+              inputMask: '',
+              inputType: 'text',
+              input: true
+            }
+          ]
+        };
+
+        request(app)
+          .post('/project/' + template.project._id + '/form')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(tempForm)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            form = res.body;
+            done();
+          });
+      });
+
+      it('Get project definition for testing', function(done) {
+        request(app)
+          .get('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            project = res.body;
+            done();
+          });
+      });
+
+      it('A Form.io User should be able to set a project to protected', function(done) {
+        project.protect = true;
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(project)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.hasOwnProperty('protect'), true);
+            assert(response.protect, 'Project should be protected');
+
+            template.project = response;
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Form.io User should be able to Read a protected Project', function(done) {
+        request(app)
+          .get('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
+            assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
+            assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
+            assert(response.hasOwnProperty('access'), 'The response should contain an the `access`.');
+            assert(response.protect, 'Project should be protected');
+            assert.equal(response.access[0].type, 'create_all');
+            assert.notEqual(response.access[0].roles, [], 'The create_all Administrator `role` should not be empty.');
+            assert.equal(response.access[1].type, 'read_all');
+            assert.notEqual(response.access[1].roles, [], 'The read_all Administrator `role` should not be empty.');
+            assert.equal(response.access[2].type, 'update_all');
+            assert.notEqual(response.access[2].roles, [], 'The update_all Administrator `role` should not be empty.');
+            assert.equal(response.access[3].type, 'delete_all');
+            assert.notEqual(response.access[3].roles, [], 'The delete_all Administrator `role` should not be empty.');
+            assert.notEqual(response.defaultAccess, [], 'The Projects default `role` should not be empty.');
+            assert.equal(response.name, template.project.name);
+            assert.equal(response.description, template.project.description);
+
+            // Check plan and api calls info
+            if (app.formio) {
+              var plan = process.env.PROJECT_PLAN;
+              assert.equal(response.plan, plan, 'The plan should match the default new project plan.');
+              assert.deepEqual(response.apiCalls, {
+                used: 0,
+                remaining: app.formio.formio.plans.limits[response.plan],
+                limit: app.formio.formio.plans.limits[response.plan],
+                reset: moment().startOf('month').add(1, 'month').toISOString()
+              });
+            }
+
+            // Check that the response does not contain these properties.
+            not(response, ['__v', 'deleted', 'settings_encrypted', 'primary', 'machineName']);
+
+            template.project = response;
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Form.io User should be able to Read forms of a protected project', function(done) {
+        request(app)
+          .get('/project/' + template.project._id + '/form')
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(done);
+      });
+
+      it('A Form.io User should be able to Read a form definition of a protected project', function(done) {
+        request(app)
+          .get('/project/' + template.project._id + '/' + template.forms.userLogin.path)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(done);
+      });
+
+      it('A Form.io User cannot Create a form in a protected project', function(done) {
+        var tempForm = {
+          title: 'Temp Form',
+          name: 'tempForm',
+          path: 'temp/tempform',
+          type: 'form',
+          access: [],
+          submissionAccess: [],
+          components: [
+            {
+              type: 'textfield',
+              validate: {
+                custom: '',
+                pattern: '',
+                maxLength: '',
+                minLength: '',
+                required: false
+              },
+              defaultValue: '',
+              multiple: false,
+              suffix: '',
+              prefix: '',
+              placeholder: 'foo',
+              key: 'foo',
+              label: 'foo',
+              inputMask: '',
+              inputType: 'text',
+              input: true
+            }
+          ]
+        };
+
+        request(app)
+          .post('/project/' + template.project._id + '/form')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(tempForm)
+          .expect(403)
+          .end(done);
+      });
+
+      it('A Form.io User cannot Update a form in a protected project', function(done) {
+        request(app)
+          .put('/project/' + template.project._id + '/' + template.forms.userLogin.path)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(template.forms.userLogin)
+          .expect(403)
+          .end(done);
+      });
+
+      it('A Form.io User cannot Delete a form in a protected project', function(done) {
+        request(app)
+          .delete('/project/' + template.project._id + '/' + template.forms.userLogin.path)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(403)
+          .end(done);
+      });
+
+      it('A Form.io User should be able to Read the Index of Actions in a protected project', function(done) {
+        request(app)
+          .get('/project/' + template.project._id + '/form/' + template.forms.userLogin._id + '/action')
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            action = res.body[0];
+            done();
+          });
+      });
+
+      it('A Form.io User should be able to Read an Action in a protected project', function(done) {
+        request(app)
+          .get('/project/' + template.project._id + '/form/' + template.forms.userLogin._id + '/action/' + action._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(done);
+      });
+
+      it('A Form.io User cannot Create an Action in a protected project', function(done) {
+        request(app)
+          .post('/project/' + template.project._id + '/form/' + template.forms.userLogin._id + '/action')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(action)
+          .expect(403)
+          .end(done);
+      });
+
+      it('A Form.io User cannot Update an Action in a protected project', function(done) {
+        request(app)
+          .put('/project/' + template.project._id + '/form/' + template.forms.userLogin._id + '/action/' + action._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(action)
+          .expect(403)
+          .end(done);
+      });
+
+      it('A Form.io User cannot Delete an Action in a protected project', function(done) {
+        request(app)
+          .delete('/project/' + template.project._id + '/form/' + template.forms.userLogin._id + '/action/' + action._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(action)
+          .expect(403)
+          .end(done);
+      });
+
+      it('A Form.io User should be able to Read the Index of Roles in a protected project', function(done) {
+        request(app)
+          .get('/project/' + template.project._id + '/role?limit=9999')
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            role = res.body[0];
+            done();
+          });
+      });
+
+      it('A Form.io User should be able to Read a Role in a protected project', function(done) {
+        request(app)
+          .get('/project/' + template.project._id + '/role/' + role._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(done);
+      });
+
+      it('A Form.io User cannot Create a Role in a protected project', function(done) {
+        request(app)
+          .post('/project/' + template.project._id + '/role')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(role)
+          .expect(403)
+          .end(done);
+      });
+
+      it('A Form.io User cannot Update a Role in a protected project', function(done) {
+        request(app)
+          .put('/project/' + template.project._id + '/role/' + role._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(role)
+          .expect(403)
+          .end(done);
+      });
+
+      it('A Form.io User cannot Delete a Role in a protected project', function(done) {
+        request(app)
+          .delete('/project/' + template.project._id + '/role/' + role._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(403)
+          .end(done);
+      });
+
+      it('A Form.io User should be able to Create a Submission in a protected project', function(done) {
+        var tempSubmission = {
+          data: {
+            foo: 'test'
+          }
+        };
+
+        request(app)
+          .post('/project/' + template.project._id + '/form/' + form._id + '/submission')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(tempSubmission)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            submission = res.body;
+
+            assert.deepEqual(res.body.data, tempSubmission.data);
+            done();
+          });
+      });
+
+      it('A Form.io User should be able to Read an Index of Submissions in a protected project', function(done) {
+        request(app)
+          .get('/project/' + template.project._id + '/form/' + form._id + '/submission')
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(200)
+          .end(done);
+      });
+
+      it('A Form.io User should be able to Read a Submission in a protected project', function(done) {
+        request(app)
+          .get('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(200)
+          .end(done);
+      });
+
+      it('A Form.io User should be able to Update a Submission in a protected project', function(done) {
+        request(app)
+          .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(submission)
+          .expect(200)
+          .end(done);
+      });
+
+      it('A Form.io User should be able to Delete a Submission in a protected project', function(done) {
+        request(app)
+          .delete('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(200)
+          .end(done);
+      });
+
+      it('A Form.io User cannot Update the Access of a protected Project', function(done) {
+        var tmpProject = _.cloneDeep(project);
+        tmpProject.access = [{}];
+
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(tmpProject)
+          .expect(403)
+          .end(done);
+      });
+
+      it('A Form.io User cannot Update the Name of a protected Project', function(done) {
+        var tmpProject = _.cloneDeep(project);
+        tmpProject.name = chance.word();
+
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(tmpProject)
+          .expect(403)
+          .end(done);
+      });
+
+      it('A Form.io User should be able to Update the Settings of a protected Project', function(done) {
+        var newSettings = {
+          cors: '*',
+          keys: [
+            {
+              name: 'Test Key',
+              key: '123testing123testing1212'
+            },
+            {
+              name: 'Bad Key',
+              key: '123testing12332'
+            }
+          ],
+          email: {
+            smtp: {
+              host: 'example.com',
+              auth: {
+                user: 'test2323',
+                pass: 'test1233232'
+              }
+            }
+          }
+        };
+
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({settings: newSettings})
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.deepEqual(response.settings, newSettings);
+
+            // Check that the response does not contain these properties.
+            not(response, ['__v', 'deleted', 'settings_encrypted']);
+
+            template.project = response;
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Form.io User cannot Delete a protected Project', function(done) {
+        request(app)
+          .delete('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(403)
+          .end(done);
+      });
+
+      it('A Form.io User should be able to remove protected on a project', function(done) {
+        project.protect = false;
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(project)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.hasOwnProperty('protect'), true);
+            assert(!response.protect, 'Project should not be protected');
+
+            template.project = response;
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('Clean up project form', function(done) {
+        request(app)
+          .delete('/project/' + template.project._id + '/' + form.path)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(200)
+          .end(done);
+      });
+    });
+
     it('A Form.io User should be able to Delete their Project without explicit permissions', function(done) {
       request(app)
         .delete('/project/' + template.project._id)
@@ -693,15 +1205,54 @@ module.exports = function(app, template, hook) {
           // Store the JWT for future API calls.
           template.formio.owner.token = res.headers['x-jwt-token'];
 
-          mapProjectToTemplate(template, done);
+          mapProjectToTemplate(response._id, template, done);
         });
     });
   });
 
   describe('Project Plans', function() {
+    var tempProjects = [];
     describe('Basic Plan', function() {
-      it('Confirm the project is on the basic plan', function(done) {
-        confirmProjectPlan(template.project._id, template.formio.owner, 'basic', done);
+      if (!docker)
+      before(function(done) {
+        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
+          if (err) return done(err);
+
+          project.plan = 'basic';
+          project.save(function(err) {
+            if (err) {
+              return done(err);
+            }
+
+            done();
+          });
+        });
+      });
+
+      if (docker)
+      before(function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .send({
+            plan: 'basic'
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'basic');
+            template.project = response;
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
       });
 
       it('A Project on the basic plan will have a uuid generated name on creation', function(done) {
@@ -716,8 +1267,44 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('name'), true);
             assert.notEqual(response.name.search(uuidRegex), -1);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the basic plan should not be able to define its name on project creation', function(done) {
+        var attempt = chance.word({length: 10});
+        var tempProject = {
+          title: chance.word(),
+          description: chance.sentence(),
+          name: attempt,
+          plan: 'basic'
+        };
+
+        request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(tempProject)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'basic');
+            assert.equal(response.hasOwnProperty('name'), true);
+            assert.notEqual(response.name, attempt);
+            assert.notEqual(response.name.search(uuidRegex), -1);
+
+            tempProjects.push(res.body);
 
             // Store the JWT for future API calls.
             template.formio.owner.token = res.headers['x-jwt-token'];
@@ -741,6 +1328,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('name'), true);
             assert.equal(response.name, template.project.name);
             assert.notEqual(response.name.search(uuidRegex), -1);
@@ -753,20 +1341,31 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project on the basic plan will not be able to set cors options on creation', function(done) {
+        var attempt = '*,www.example.com';
+        var tempProject = {
+          title: chance.word(),
+          description: chance.sentence(),
+          settings: {
+            cors: attempt
+          },
+          plan: 'basic'
+        };
+
         request(app)
-          .get('/project/' + template.project._id)
+          .post('/project')
           .set('x-jwt-token', template.formio.owner.token)
+          .send(tempProject)
           .expect('Content-Type', /json/)
-          .expect(200)
+          .expect(201)
           .end(function(err, res) {
             if (err) {
               return done(err);
             }
 
             var response = res.body;
-            assert.equal(response.hasOwnProperty('settings'), true);
-            assert.equal(response.settings.hasOwnProperty('cors'), true);
-            assert.equal(response.settings.cors, '*');
+            assert.equal(response.plan, 'basic');
+            assert.equal(response.hasOwnProperty('settings'), false);
+            tempProjects.push(res.body);
 
             // Store the JWT for future API calls.
             template.formio.owner.token = res.headers['x-jwt-token'];
@@ -790,6 +1389,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('cors'), true);
             assert.equal(response.settings.cors, '*');
@@ -800,46 +1400,36 @@ module.exports = function(app, template, hook) {
             done();
           });
       });
-    });
 
-    describe('Independent Plan', function() {
-      if (!docker)
-      before(function(done) {
-        // Confirm the dummy project is on the independent plan.
-        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
-          if (err) return done(err);
-
-          project.plan = 'independent';
-          project.save(function(err) {
-            if (err) {
-              return done(err);
+      it('A Project on the basic plan will not be able to set oauth settings on creation', function(done) {
+        var attempt = {clientId: chance.word(), clientSecret: chance.word()};
+        var tempProject = {
+          title: chance.word(),
+          description: chance.sentence(),
+          settings: {
+            oauth: {
+              github: attempt
             }
+          },
+          plan: 'basic'
+        };
 
-            done();
-          });
-        });
-      });
-
-      if (!docker)
-      it('Confirm the project is on the independent plan', function(done) {
-        confirmProjectPlan(template.project._id, template.formio.owner, 'independent', done);
-      });
-
-      it('A Project on the Independent plan will not be able to set cors options on creation', function(done) {
         request(app)
-          .get('/project/' + template.project._id)
+          .post('/project')
           .set('x-jwt-token', template.formio.owner.token)
+          .send(tempProject)
           .expect('Content-Type', /json/)
-          .expect(200)
+          .expect(201)
           .end(function(err, res) {
             if (err) {
               return done(err);
             }
 
             var response = res.body;
-            assert.equal(response.hasOwnProperty('settings'), true);
-            assert.equal(response.settings.hasOwnProperty('cors'), true);
-            assert.equal(response.settings.cors, '*');
+            assert.equal(response.plan, 'basic');
+            assert.equal(response.hasOwnProperty('settings'), false);
+
+            tempProjects.push(res.body);
 
             // Store the JWT for future API calls.
             template.formio.owner.token = res.headers['x-jwt-token'];
@@ -848,13 +1438,19 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      it('A Project on the Independent plan will not be able to set cors options on project update', function(done) {
-        var attempt = '*,www.example.com';
+      it('A Project on the basic plan will not be able to set oauth settings on project update', function(done) {
+        var attempt = {clientId: chance.word(), clientSecret: chance.word()};
 
         request(app)
           .put('/project/' + template.project._id)
           .set('x-jwt-token', template.formio.owner.token)
-          .send({settings: {cors: attempt}})
+          .send({
+            settings: {
+              oauth: {
+                github: attempt
+              }
+            }
+          })
           .expect('Content-Type', /json/)
           .expect(200)
           .end(function(err, res) {
@@ -863,15 +1459,353 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
+            assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('settings'), true);
-            assert.equal(response.settings.hasOwnProperty('cors'), true);
-            assert.equal(response.settings.cors, '*');
+            assert.equal(response.settings.hasOwnProperty('oauth'), false);
 
             // Store the JWT for future API calls.
             template.formio.owner.token = res.headers['x-jwt-token'];
 
             done();
           });
+      });
+
+      it('A Project on the basic plan will not be able to set premium email settings on creation', function(done) {
+        var tempProject = {
+          title: chance.word(),
+          description: chance.sentence(),
+          settings: {
+            email: {
+              custom: {url: chance.word(), username: chance.word(), password: chance.word()},
+              smtp: {host: chance.word(), auth: {pass: chance.word(), user: chance.word()}},
+              gmail: {auth: {user: chance.word(), pass: chance.word()}},
+              sendgrid: {auth: {api_key: chance.word(), api_user: chance.word()}},
+              mandrill: {auth: {apiKey: chance.word()}},
+              mailgun: {auth: {api_key: chance.word(), domain: chance.word()}}
+            }
+          },
+          plan: 'basic'
+        };
+
+        request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(tempProject)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'basic');
+            assert.equal(response.hasOwnProperty('settings'), false);
+
+            tempProjects.push(res.body);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the basic plan will not be able to set premium email settings on project update', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              email: {
+                custom: {url: chance.word(), username: chance.word(), password: chance.word()},
+                smtp: {host: chance.word(), auth: {pass: chance.word(), user: chance.word()}},
+                gmail: {auth: {user: chance.word(), pass: chance.word()}},
+                sendgrid: {auth: {api_key: chance.word(), api_user: chance.word()}},
+                mandrill: {auth: {apiKey: chance.word()}},
+                mailgun: {auth: {api_key: chance.word(), domain: chance.word()}}
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'basic');
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('email'), true);
+            assert.deepEqual(Object.keys(response.settings.email), ['smtp']);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the basic plan will not be able to set file storage settings on creation', function(done) {
+        var tempProject = {
+          title: chance.word(),
+          description: chance.sentence(),
+          settings: {
+            storage: {
+              s3: {
+                AWSAccessKeyId: chance.word(),
+                AWSSecretKey: chance.word(),
+                bucket: chance.word(),
+                bucketUrl: chance.word(),
+                expiration: chance.word(),
+                maxSize: chance.word(),
+                startsWith: chance.word()
+              },
+              dropbox: {
+                access_token: chance.word()
+              }
+            }
+          },
+          plan: 'basic'
+        };
+
+        request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(tempProject)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'basic');
+            assert.equal(response.hasOwnProperty('settings'), false);
+
+            tempProjects.push(res.body);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the basic plan will not be able to set file storage settings on project update', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              storage: {
+                s3: {
+                  AWSAccessKeyId: chance.word(),
+                  AWSSecretKey: chance.word(),
+                  bucket: chance.word(),
+                  bucketUrl: chance.word(),
+                  expiration: chance.word(),
+                  maxSize: chance.word(),
+                  startsWith: chance.word()
+                },
+                dropbox: {
+                  access_token: chance.word()
+                }
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'basic');
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('storage'), false);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the basic plan will not be able to set data connection settings on creation', function(done) {
+        var tempProject = {
+          title: chance.word(),
+          description: chance.sentence(),
+          settings: {
+            atlassian: {
+              url: chance.word()
+            },
+            databases: {
+              mssql: {
+                azure: true,
+                database: chance.word(),
+                host: chance.word(),
+                password: chance.word(),
+                port: chance.word(),
+                user: chance.word()
+              },
+              mysql: {
+                database: chance.word(),
+                host: chance.word(),
+                password: chance.word(),
+                port: chance.word(),
+                user: chance.word()
+              }
+            },
+            google: {
+              clientId: chance.word(),
+              cskey: chance.word(),
+              refreshtoken: chance.word()
+            },
+            hubspot: {
+              apikey: chance.word()
+            },
+            kickbox: {
+              apikey: chance.word()
+            },
+            office365: {
+              cert: chance.word(),
+              clientId: chance.word(),
+              email: chance.word(),
+              tenant: chance.word(),
+              thumbprint: chance.word()
+            },
+            sqlconnector: {
+              host: chance.word(),
+              password: chance.word(),
+              type: chance.word(),
+              user: chance.word()
+            }
+          },
+          plan: 'basic'
+        };
+
+        request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(tempProject)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'basic');
+            assert.equal(response.hasOwnProperty('settings'), false);
+
+            tempProjects.push(res.body);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the basic plan will not be able to set data connection settings on project update', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              atlassian: {
+                url: chance.word()
+              },
+              databases: {
+                mssql: {
+                  azure: true,
+                  database: chance.word(),
+                  host: chance.word(),
+                  password: chance.word(),
+                  port: chance.word(),
+                  user: chance.word()
+                },
+                mysql: {
+                  database: chance.word(),
+                  host: chance.word(),
+                  password: chance.word(),
+                  port: chance.word(),
+                  user: chance.word()
+                }
+              },
+              google: {
+                clientId: chance.word(),
+                cskey: chance.word(),
+                refreshtoken: chance.word()
+              },
+              hubspot: {
+                apikey: chance.word()
+              },
+              kickbox: {
+                apikey: chance.word()
+              },
+              office365: {
+                cert: chance.word(),
+                clientId: chance.word(),
+                email: chance.word(),
+                tenant: chance.word(),
+                thumbprint: chance.word()
+              },
+              sqlconnector: {
+                host: chance.word(),
+                password: chance.word(),
+                type: chance.word(),
+                user: chance.word()
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'basic');
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('atlassian'), false);
+            assert.equal(response.settings.hasOwnProperty('databases'), false);
+            assert.equal(response.settings.hasOwnProperty('google'), false);
+            assert.equal(response.settings.hasOwnProperty('hubspot'), false);
+            assert.equal(response.settings.hasOwnProperty('kickbox'), false);
+            assert.equal(response.settings.hasOwnProperty('office365'), false);
+            assert.equal(response.settings.hasOwnProperty('sqlconnector'), false);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the basic plan will not be able to create environments', function(done) {
+        var otherProject = {
+          title: chance.word(),
+          description: chance.sentence(),
+          project: template.project._id
+        };
+
+        request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(otherProject)
+          .expect(402)
+          .end(done);
+      });
+
+      after(function(done) {
+        deleteProjects(tempProjects, done);
       });
     });
 
@@ -1050,10 +1984,911 @@ module.exports = function(app, template, hook) {
       });
     });
 
+    describe('Independent Plan', function() {
+      if (!docker)
+      before(function(done) {
+        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
+          if (err) return done(err);
+
+          project.plan = 'independent';
+          project.save(function(err) {
+            if (err) {
+              return done(err);
+            }
+
+            done();
+          });
+        });
+      });
+
+      if (docker)
+      before(function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .send({
+            plan: 'independent'
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'independent');
+            template.project = response;
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Independent plan will be able to change the project name on project update', function(done) {
+        var attempt = chance.word({length: 10});
+
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({name: attempt})
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'independent');
+            assert.equal(response.hasOwnProperty('name'), true);
+            assert.equal(response.name, attempt);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Independent plan will not be able to set cors options on project update', function(done) {
+        var attempt = '*,www.example.com';
+
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({settings: {cors: attempt}})
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'independent');
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('cors'), true);
+            assert.equal(response.settings.cors, '*');
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Independent plan will be able to set oauth settings on project update', function(done) {
+        var attempt = {clientId: chance.word(), clientSecret: chance.word()};
+
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              oauth: {
+                github: attempt
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'independent');
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('oauth'), true);
+            assert.equal(response.settings.oauth.hasOwnProperty('github'), true);
+            assert.deepEqual(response.settings.oauth.github, attempt);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Independent plan will be able to set premium email settings on project update', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              email: {
+                custom: {url: chance.word(), username: chance.word(), password: chance.word()},
+                smtp: {host: chance.word(), auth: {pass: chance.word(), user: chance.word()}},
+                gmail: {auth: {user: chance.word(), pass: chance.word()}},
+                sendgrid: {auth: {api_key: chance.word(), api_user: chance.word()}},
+                mandrill: {auth: {apiKey: chance.word()}},
+                mailgun: {auth: {api_key: chance.word(), domain: chance.word()}}
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'independent');
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('email'), true);
+            assert.deepEqual(Object.keys(response.settings.email), ['custom', 'smtp', 'gmail', 'sendgrid', 'mandrill', 'mailgun']);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Independent plan will not be able to set file storage settings on project update', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              storage: {
+                s3: {
+                  AWSAccessKeyId: chance.word(),
+                  AWSSecretKey: chance.word(),
+                  bucket: chance.word(),
+                  bucketUrl: chance.word(),
+                  expiration: chance.word(),
+                  maxSize: chance.word(),
+                  startsWith: chance.word()
+                },
+                dropbox: {
+                  access_token: chance.word()
+                }
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'independent');
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('storage'), false);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Independent plan will be able to set data connection settings on project update', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              atlassian: {
+                url: chance.word()
+              },
+              databases: {
+                mssql: {
+                  azure: true,
+                  database: chance.word(),
+                  host: chance.word(),
+                  password: chance.word(),
+                  port: chance.word(),
+                  user: chance.word()
+                },
+                mysql: {
+                  database: chance.word(),
+                  host: chance.word(),
+                  password: chance.word(),
+                  port: chance.word(),
+                  user: chance.word()
+                }
+              },
+              google: {
+                clientId: chance.word(),
+                cskey: chance.word(),
+                refreshtoken: chance.word()
+              },
+              hubspot: {
+                apikey: chance.word()
+              },
+              kickbox: {
+                apikey: chance.word()
+              },
+              office365: {
+                cert: chance.word(),
+                clientId: chance.word(),
+                email: chance.word(),
+                tenant: chance.word(),
+                thumbprint: chance.word()
+              },
+              sqlconnector: {
+                host: chance.word(),
+                password: chance.word(),
+                type: chance.word(),
+                user: chance.word()
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'independent');
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('atlassian'), true);
+            assert.equal(response.settings.hasOwnProperty('databases'), true);
+            assert.equal(response.settings.hasOwnProperty('google'), true);
+            assert.equal(response.settings.hasOwnProperty('hubspot'), true);
+            assert.equal(response.settings.hasOwnProperty('kickbox'), true);
+            assert.equal(response.settings.hasOwnProperty('office365'), true);
+            assert.equal(response.settings.hasOwnProperty('sqlconnector'), true);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Independent plan will not be able to create environments', function(done) {
+        var otherProject = {
+          title: chance.word(),
+          description: chance.sentence(),
+          project: template.project._id
+        };
+
+        request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(otherProject)
+          .expect(402)
+          .end(done);
+      });
+    });
+
+    describe('Team Plan', function() {
+      if (!docker)
+      before(function(done) {
+        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
+          if (err) return done(err);
+
+          project.plan = 'team';
+          project.save(function(err) {
+            if (err) {
+              return done(err);
+            }
+
+            done();
+          });
+        });
+      });
+
+      if (docker)
+      before(function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .send({
+            plan: 'team'
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'team');
+            template.project = response;
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Team plan will be able to change the project name on project update', function(done) {
+        var attempt = chance.word({length: 10});
+
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({name: attempt})
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'team');
+            assert.equal(response.hasOwnProperty('name'), true);
+            assert.equal(response.name, attempt);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Team plan will be able to set cors options on project update', function(done) {
+        var attempt = '*,www.example.com';
+
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({settings: {cors: attempt}})
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'team');
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('cors'), true);
+            assert.equal(response.settings.cors, attempt);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Team plan will be able to set oauth settings on project update', function(done) {
+        var attempt = {clientId: chance.word(), clientSecret: chance.word()};
+
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              oauth: {
+                github: attempt
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'team');
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('oauth'), true);
+            assert.equal(response.settings.oauth.hasOwnProperty('github'), true);
+            assert.deepEqual(response.settings.oauth.github, attempt);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Team plan will be able to set premium email settings on project update', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              email: {
+                custom: {url: chance.word(), username: chance.word(), password: chance.word()},
+                smtp: {host: chance.word(), auth: {pass: chance.word(), user: chance.word()}},
+                gmail: {auth: {user: chance.word(), pass: chance.word()}},
+                sendgrid: {auth: {api_key: chance.word(), api_user: chance.word()}},
+                mandrill: {auth: {apiKey: chance.word()}},
+                mailgun: {auth: {api_key: chance.word(), domain: chance.word()}}
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'team');
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('email'), true);
+            assert.deepEqual(Object.keys(response.settings.email), ['custom', 'smtp', 'gmail', 'sendgrid', 'mandrill', 'mailgun']);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Team plan will be able to set file storage settings on project update', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              storage: {
+                s3: {
+                  AWSAccessKeyId: chance.word(),
+                  AWSSecretKey: chance.word(),
+                  bucket: chance.word(),
+                  bucketUrl: chance.word(),
+                  expiration: chance.word(),
+                  maxSize: chance.word(),
+                  startsWith: chance.word()
+                },
+                dropbox: {
+                  access_token: chance.word()
+                }
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'team');
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('storage'), true);
+            assert.deepEqual(Object.keys(response.settings.storage), ['s3', 'dropbox']);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Team plan will be able to set data connection settings on project update', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              atlassian: {
+                url: chance.word()
+              },
+              databases: {
+                mssql: {
+                  azure: true,
+                  database: chance.word(),
+                  host: chance.word(),
+                  password: chance.word(),
+                  port: chance.word(),
+                  user: chance.word()
+                },
+                mysql: {
+                  database: chance.word(),
+                  host: chance.word(),
+                  password: chance.word(),
+                  port: chance.word(),
+                  user: chance.word()
+                }
+              },
+              google: {
+                clientId: chance.word(),
+                cskey: chance.word(),
+                refreshtoken: chance.word()
+              },
+              hubspot: {
+                apikey: chance.word()
+              },
+              kickbox: {
+                apikey: chance.word()
+              },
+              office365: {
+                cert: chance.word(),
+                clientId: chance.word(),
+                email: chance.word(),
+                tenant: chance.word(),
+                thumbprint: chance.word()
+              },
+              sqlconnector: {
+                host: chance.word(),
+                password: chance.word(),
+                type: chance.word(),
+                user: chance.word()
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'team');
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('atlassian'), true);
+            assert.equal(response.settings.hasOwnProperty('databases'), true);
+            assert.equal(response.settings.hasOwnProperty('google'), true);
+            assert.equal(response.settings.hasOwnProperty('hubspot'), true);
+            assert.equal(response.settings.hasOwnProperty('kickbox'), true);
+            assert.equal(response.settings.hasOwnProperty('office365'), true);
+            assert.equal(response.settings.hasOwnProperty('sqlconnector'), true);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Team plan will be able to create environments', function(done) {
+        var otherProject = {
+          title: chance.word(),
+          description: chance.sentence(),
+          project: template.project._id
+        };
+
+        request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(otherProject)
+          .expect(201)
+          .end(done);
+      });
+    });
+
+    describe('Commercial Plan', function() {
+      if (!docker)
+      before(function(done) {
+        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
+          if (err) return done(err);
+
+          project.plan = 'commercial';
+          project.save(function(err) {
+            if (err) {
+              return done(err);
+            }
+
+            done();
+          });
+        });
+      });
+
+      if (docker)
+      before(function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .send({
+            plan: 'commercial'
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'commercial');
+            template.project = response;
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Commercial plan will be able to change the project name on project update', function(done) {
+        var attempt = chance.word({length: 10});
+
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({name: attempt})
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'commercial');
+            assert.equal(response.hasOwnProperty('name'), true);
+            assert.equal(response.name, attempt);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Commercial plan will be able to set cors options on project update', function(done) {
+        var attempt = '*,www.example.com';
+
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({settings: {cors: attempt}})
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'commercial');
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('cors'), true);
+            assert.equal(response.settings.cors, attempt);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Commercial plan will be able to set oauth settings on project update', function(done) {
+        var attempt = {clientId: chance.word(), clientSecret: chance.word()};
+
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              oauth: {
+                github: attempt
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'commercial');
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('oauth'), true);
+            assert.equal(response.settings.oauth.hasOwnProperty('github'), true);
+            assert.deepEqual(response.settings.oauth.github, attempt);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Commercial plan will be able to set premium email settings on project update', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              email: {
+                custom: {url: chance.word(), username: chance.word(), password: chance.word()},
+                smtp: {host: chance.word(), auth: {pass: chance.word(), user: chance.word()}},
+                gmail: {auth: {user: chance.word(), pass: chance.word()}},
+                sendgrid: {auth: {api_key: chance.word(), api_user: chance.word()}},
+                mandrill: {auth: {apiKey: chance.word()}},
+                mailgun: {auth: {api_key: chance.word(), domain: chance.word()}}
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'commercial');
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('email'), true);
+            assert.deepEqual(Object.keys(response.settings.email), ['custom', 'smtp', 'gmail', 'sendgrid', 'mandrill', 'mailgun']);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Commercial plan will be able to set file storage settings on project update', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              storage: {
+                s3: {
+                  AWSAccessKeyId: chance.word(),
+                  AWSSecretKey: chance.word(),
+                  bucket: chance.word(),
+                  bucketUrl: chance.word(),
+                  expiration: chance.word(),
+                  maxSize: chance.word(),
+                  startsWith: chance.word()
+                },
+                dropbox: {
+                  access_token: chance.word()
+                }
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'commercial');
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('storage'), true);
+            assert.deepEqual(Object.keys(response.settings.storage), ['s3', 'dropbox']);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Commercial plan will be able to set data connection settings on project update', function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            settings: {
+              atlassian: {
+                url: chance.word()
+              },
+              databases: {
+                mssql: {
+                  azure: true,
+                  database: chance.word(),
+                  host: chance.word(),
+                  password: chance.word(),
+                  port: chance.word(),
+                  user: chance.word()
+                },
+                mysql: {
+                  database: chance.word(),
+                  host: chance.word(),
+                  password: chance.word(),
+                  port: chance.word(),
+                  user: chance.word()
+                }
+              },
+              google: {
+                clientId: chance.word(),
+                cskey: chance.word(),
+                refreshtoken: chance.word()
+              },
+              hubspot: {
+                apikey: chance.word()
+              },
+              kickbox: {
+                apikey: chance.word()
+              },
+              office365: {
+                cert: chance.word(),
+                clientId: chance.word(),
+                email: chance.word(),
+                tenant: chance.word(),
+                thumbprint: chance.word()
+              },
+              sqlconnector: {
+                host: chance.word(),
+                password: chance.word(),
+                type: chance.word(),
+                user: chance.word()
+              }
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'commercial');
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.equal(response.settings.hasOwnProperty('atlassian'), true);
+            assert.equal(response.settings.hasOwnProperty('databases'), true);
+            assert.equal(response.settings.hasOwnProperty('google'), true);
+            assert.equal(response.settings.hasOwnProperty('hubspot'), true);
+            assert.equal(response.settings.hasOwnProperty('kickbox'), true);
+            assert.equal(response.settings.hasOwnProperty('office365'), true);
+            assert.equal(response.settings.hasOwnProperty('sqlconnector'), true);
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Project on the Commercial plan will be able to create environments', function(done) {
+        var otherProject = {
+          title: chance.word(),
+          description: chance.sentence(),
+          project: template.project._id
+        };
+
+        request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(otherProject)
+          .expect(201)
+          .end(done);
+      });
+    });
+
     describe('Upgrading Plans', function() {
       if (!docker)
       before(function(done) {
-        // Confirm the dummy project is on the basic plan.
         app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
           if (err) return done(err);
 
@@ -1066,6 +2901,32 @@ module.exports = function(app, template, hook) {
             done();
           });
         });
+      });
+
+      if (docker)
+      before(function(done) {
+        request(app)
+          .put('/project/' + template.project._id)
+          .send({
+            plan: 'basic'
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.plan, 'basic');
+            template.project = response;
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
       });
 
       it('Anonymous users should not be allowed to upgrade a project', function(done) {
