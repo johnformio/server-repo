@@ -6,20 +6,28 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
- - Template import / export tests
 
 ### Changed
- - Template action import / export names to be in the format of "form:action"
- - Updated formio to 1.16.7
 
 ### Fixed
 
 ### Removed
 
-## 4.0.1
+## 4.1.0
 ### Added
  - New download PDF endpoint that allows for downloading submissions as PDFs using the file server.
- - Upgraded formio to version 1.17.0 which includes temp token support.
+ - Template import / export tests
+
+### Fixed
+ - Authentication for websocket connections to allow API keys, and team authentication.
+
+### Changed
+ - Template action import / export names to be in the format of "form:action"
+ - Updated formio to 1.17.0
+ - Updated primus to 5.2.2
+ - Updated request to 2.81.0
+ - Updated resourcejs to 1.7.0
+ - Updated websockets to 1.1.4
  - Removed formio-utils dependency and replaced with formiojs.
 
 ## 4.0.0
