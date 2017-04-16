@@ -2,7 +2,7 @@
 
 let _ = require('lodash');
 let assert = require('assert');
-let formioUtils = require('formio-utils');
+let formioUtils = require('formiojs/utils');
 
 module.exports = {
   alter: {
@@ -116,7 +116,7 @@ module.exports = {
 
     /**
      * Modify the input test template components to match export templates after the `exportComponent` hook executes.
-     * 
+     *
      * @param forms
      */
     templateImportComponent: function(forms) {
