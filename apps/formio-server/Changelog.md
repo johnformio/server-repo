@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
  - New download PDF endpoint that allows for downloading submissions as PDFs using the file server.
  - Template import / export tests
+ - External token support to skip dynamic user permission loading
 
 ### Fixed
  - Authentication for websocket connections to allow API keys, and team authentication.
