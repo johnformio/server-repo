@@ -256,6 +256,39 @@ module.exports = function(app) {
         actions.moxtraMessage = require('../actions/moxtra/MoxtraMessage')(formioServer);
         return actions;
       },
+
+      actionRoutes: function(handlers) {
+        handlers.beforePost = handlers.beforePost || [];
+        handlers.beforePut = handlers.beforePut || [];
+
+        // On action creation, if the action is a moxtraMessage action, add the user _id to the request payload.
+        let addCurrentUserToAction = (req, res, next) => {
+          if (req.method !== 'POST' || !req.user) {
+            return next();
+          }
+          let userActions = ['moxtraMessage'];
+          if (userActions.indexOf(_.get(req.body, 'data.name')) === -1) {
+            return next();
+          }
+
+          let user;
+          try {
+            user = req.user.toObject();
+          }
+          catch (e) {
+            user = req.user;
+          }
+
+          _.set(req.body, 'data.settings.user', req.user._id);
+          return next();
+        };
+
+        handlers.beforePost.push(addCurrentUserToAction);
+        handlers.beforePut.push(addCurrentUserToAction);
+
+        return handlers;
+      },
+
       emailTransports: function(transports, settings) {
         settings = settings || {};
         var office365 = settings.office365 || {};
