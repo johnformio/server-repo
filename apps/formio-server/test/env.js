@@ -265,8 +265,6 @@ module.exports = function(app, template, hook) {
           }
 
           var response = res.body;
-          console.log(response, tempForm);
-          assert(false, 'stop');
           done();
         });
     });
