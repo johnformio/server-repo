@@ -841,6 +841,21 @@ module.exports = function(app) {
         return available;
       },
 
+      importActionQuery: function(query, action, template) {
+        query.form = formioServer.formio.util.idToBson(action.form);
+        return query;
+      },
+
+      importFormQuery: function(query, form, template) {
+        query.project = formioServer.formio.util.idToBson(form.project);
+        return query;
+      },
+
+      importRoleQuery: function(query, role, template) {
+        query.project = formioServer.formio.util.idToBson(role.project);
+        return query;
+      },
+
       templateAlters: function(alters) {
         alters.role = (item, template, done) => {
           item.project = template._id;
@@ -909,9 +924,6 @@ module.exports = function(app) {
         req.projectId = projectId;
         return params;
       },
-      //cors: function() {
-      //  return require('../middleware/corsOptions')(formioServer);
-      //},
 
       /**
        * Hook the user object and modify the roles to include the users team id's.

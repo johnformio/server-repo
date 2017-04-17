@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
  - Template action import / export names to be in the format of "form:action"
- - Updated formio to 1.16.5
+ - Updated formio to 1.16.7
 
 ### Fixed
 
