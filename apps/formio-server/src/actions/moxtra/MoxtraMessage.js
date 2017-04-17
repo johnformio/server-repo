@@ -28,21 +28,6 @@ module.exports = function(router) {
   MoxtraMessage.prototype.constructor = MoxtraMessage;
   MoxtraMessage.info = function(req, res, next) {
     next(null, {
-      conditional: {
-        eq: '',
-        when: null,
-        show: ''
-      },
-      tags: [],
-      type: 'hidden',
-      persistent: true,
-      unique: false,
-      protected: false,
-      label: 'user',
-      key: 'user',
-      tableView: true,
-      input: true
-    }, {
       name: 'moxtraMessage',
       title: 'Moxtra Message',
       description: 'Provides a way to Create new Moxtra Chat Messages',
@@ -55,20 +40,6 @@ module.exports = function(router) {
         handler: false,
         method: false
       },
-      validate: {
-        required: true
-      }
-    }, {
-      label: 'Message',
-      key: 'message',
-      type: 'textarea',
-      defaultValue: '{{ table(form.components) }}',
-      multiple: false,
-      rows: 3,
-      suffix: '',
-      prefix: '',
-      placeholder: 'Enter the message you would like to send.',
-      input: true,
       validate: {
         required: true
       }
@@ -92,13 +63,27 @@ module.exports = function(router) {
     }
     
     Moxtra.getToken(req, req.user)
-    .then(token => {
-      return Moxtra.getBinder(req, token);
-    })
+    .then(token => Moxtra.getBinder(req, token))
     .then(response => {
       let binders = response.binders;
 
       return next(null, [
+        {
+          conditional: {
+            eq: '',
+            when: null,
+            show: ''
+          },
+          tags: [],
+          type: 'hidden',
+          persistent: true,
+          unique: false,
+          protected: false,
+          label: 'user',
+          key: 'user',
+          tableView: true,
+          input: true
+        },
         {
           type: 'select',
           input: true,
@@ -110,6 +95,21 @@ module.exports = function(router) {
           valueProperty: 'binder.id',
           template: '<span>{{ item.binder.name }}</span>',
           multiple: false,
+          validate: {
+            required: true
+          }
+        },
+        {
+          label: 'Message',
+          key: 'message',
+          type: 'textarea',
+          defaultValue: '{{ submission(form.components) }}',
+          multiple: false,
+          rows: 3,
+          suffix: '',
+          prefix: '',
+          placeholder: 'Enter the message you would like to send.',
+          input: true,
           validate: {
             required: true
           }
