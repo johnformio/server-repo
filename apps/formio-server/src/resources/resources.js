@@ -3,6 +3,6 @@
 module.exports = function(router, formioServer) {
   return {
     project: require('./ProjectResource')(router, formioServer),
-    version: require('./TagResource')(router, formioServer)
+    tag: require('./TagResource')(router, formioServer)
   };
 };

@@ -878,8 +878,8 @@ module.exports = function(app) {
           return true;
         }
 
-        // Allow access to current version endpoint.
-        else if (req.projectId && req.url === '/project/' + req.projectId + '/version/current') {
+        // Allow access to current tag endpoint.
+        else if (req.projectId && req.url === '/project/' + req.projectId + '/tag/current') {
           return true;
         }
 
@@ -992,7 +992,7 @@ module.exports = function(app) {
           }
         });
         let project = {};
-        project[template.name || 'export'] = _.pick(template, ['title', 'name', 'version', 'description']);
+        project[template.name || 'export'] = _.pick(template, ['title', 'name', 'tag', 'description']);
 
         steps.unshift(async.apply(_install, template, project));
         return steps;
@@ -1019,7 +1019,7 @@ module.exports = function(app) {
       exportOptions: function(options, req, res) {
         var currentProject = cache.currentProject(req);
         options.title = currentProject.title;
-        options.version = currentProject.version;
+        options.tag = currentProject.tag;
         options.name = currentProject.name;
         options.description = currentProject.description;
         options.projectId = currentProject.projectId || req.projectId || req.params.projectId || 0;
