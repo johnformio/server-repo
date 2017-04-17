@@ -279,7 +279,7 @@ module.exports = function(app) {
             user = req.user;
           }
 
-          _.set(req.body, 'data.settings.user', req.user._id);
+          _.set(req.body, 'data.settings.user', user._id);
           return next();
         };
 

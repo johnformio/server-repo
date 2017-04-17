@@ -133,9 +133,29 @@ module.exports = (router) => {
     });
   });
 
+  let addMessageToBinder = (req, message, binder, token) => getEnvironmentUrl(req).then(baseUrl => {
+    let url = `${baseUrl}/${binder}/comments`;
+    let headers = {
+      'Authorization': `BEARER ${token}`,
+      'Accept': `*/*`
+    };
+
+    return new Promise((resolve, reject) => {
+      rest.postJson(url, {text: message}, {headers})
+      .on('complete', result => {
+        if (result instanceof Error || _.has(result, 'error')) {
+          return reject(result);
+        }
+
+        return resolve(result.data);
+      });
+    });
+  });
+
   return {
     getProjectSettings,
     getToken,
-    getBinder
+    getBinder,
+    addMessageToBinder
   }
 };

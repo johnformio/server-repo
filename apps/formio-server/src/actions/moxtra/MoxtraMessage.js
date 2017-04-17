@@ -12,6 +12,7 @@ module.exports = function(router) {
   let Moxtra = require('./utils')(router);
   let Thread = require('formio/src/worker/Thread');
   let Nunjucks = require('formio/src/util/email')(formio);
+  let macros = require('formio/src/actions/macros/macros');
 
   /**
    * AuthAction class.
@@ -117,7 +118,7 @@ module.exports = function(router) {
       ]);
     })
     .catch(err => {
-      return next(err.message || err);
+      return res.status(400).send(err.message || err);
     });
   };
 
@@ -160,12 +161,13 @@ module.exports = function(router) {
             params.owner = owner.toObject();
           }
 
-          return new Promise((resolve, reject) => {
-            // Prepend the macros to the message so that they can use them.
-            this.settings.message = macros + this.settings.message;
+          // Prepend the macros to the message so that they can use them.
+          this.settings.message = macros + this.settings.message;
 
-            // send the message
-          });
+          // send the message
+          let user = {_id: this.settings.user};
+          return Moxtra.getToken(req, user)
+          .then(token => Moxtra.addMessageToBinder(req, this.settings.message, this.settings.binder, token))
         });
       })
       .catch(err => {
