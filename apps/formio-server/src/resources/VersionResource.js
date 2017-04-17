@@ -1,7 +1,8 @@
 'use strict';
 
 var Resource = require('resourcejs');
-//var debug = require('debug')('formio:resources:version');
+var _ = require('lodash');
+var debug = require('debug')('formio:resources:version');
 
 module.exports = function(router, formioServer) {
   var formio = formioServer.formio;
@@ -10,23 +11,21 @@ module.exports = function(router, formioServer) {
   formio.middleware.restrictToPlans = require('../middleware/restrictToPlans')(router);
 
   var hiddenFields = ['deleted', '__v'];
+
   var resource = Resource(
     router,
     '/project/:projectId',
     'version',
     formio.mongoose.model('version', formio.schemas.version)
-  ).get({
-    before: [
-      formio.middleware.restrictToPlans(['team', 'commercial', 'trial']),
+  ).rest({
+    beforeGet: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       formio.middleware.versionHandler
     ],
-    after: [
+    afterGet: [
       formio.middleware.filterResourcejsResponse(hiddenFields)
-    ]
-  })
-  .post({
-    before: [
+    ],
+    beforePost: [
       formio.middleware.restrictToPlans(['team', 'commercial', 'trial']),
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       formio.middleware.versionHandler,
@@ -47,17 +46,23 @@ module.exports = function(router, formioServer) {
         });
       }
     ],
-    after: [
+    afterPost: [
       formio.middleware.filterResourcejsResponse(hiddenFields)
-    ]
-  })
-  .index({
-    before: [
-      formio.middleware.restrictToPlans(['team', 'commercial', 'trial']),
+    ],
+    beforePut: [
+      function(req, res, next) {
+        return res.status(400).send('Modifying versions not allowed.');
+      }
+    ],
+    beforeDelete: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       formio.middleware.versionHandler
     ],
-    after: [
+    beforeIndex: [
+      formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
+      formio.middleware.versionHandler
+    ],
+    afterIndex: [
       formio.middleware.filterResourcejsResponse(hiddenFields)
     ]
   });
@@ -85,10 +90,65 @@ module.exports = function(router, formioServer) {
   router.post(
     '/project/:projectId/deploy',
     formio.middleware.restrictToPlans(['team', 'commercial', 'trial']),
-    formio.middleware.versionHandler,
     function(req, res, next) {
-      // TODO: Do an import with the template from a version.
-      return res.send('Deployed!');
+      cache.loadCurrentProject(req, (err, project) => {
+        const deploy = req.body;
+        deploy.project = project._id;
+
+        // Sanity checks.
+        if (!('type' in deploy)) {
+          return res.status(400).send('Deploy command must contain a type.');
+        }
+
+        switch (deploy.type) {
+          case 'version': {
+            if (!('version' in deploy)) {
+              return res.status(400).send('Deploy version command must contain a version number.');
+            }
+            const search = {
+              version: deploy.version,
+              project: project,
+              deleted: {$eq: null}
+            };
+            formio.mongoose.model('version').findOne(search).exec((err, result) => {
+              if (err) {
+                return res.status(400).send(err);
+              }
+              let template = result.template;
+
+              template = _.assign({}, template, project);
+              debug('import template', template);
+
+              //let alters = hook.alter('templateAlters', {});
+              //
+              //formio.template.import.template(template, alters, function(err, template) {
+              //  if (err) {
+              //    _debug(err);
+              //    return res.status(400).send('An error occurred with the template import.');
+              //  }
+              //
+              //  return res.send('Version Deployed');
+              //
+              //  if (req.templateMode === 'create') {
+              //    // Update the project with this template.
+              //    //return updateProject(template);
+              //  }
+              //});
+            });
+            break;
+          }
+          case 'environment': {
+            if (!('environment' in deploy)) {
+              return res.status(400).send('Deploy environment command must contain an environment name.');
+            }
+            // TODO: do environment deploy.
+            break;
+          }
+          default: {
+            return res.status(400).send('Unknown deploy type. Please use version or environment.');
+          }
+        }
+      });
     }
   );
 
