@@ -251,7 +251,7 @@ module.exports = function(app, template, hook) {
           done();
         });
     });
-
+/*
     it('New environment should be a copy of live', function(done) {
       request(app)
         .get('/project/' + template.project._id + '/' + tempForm.name)
@@ -268,7 +268,7 @@ module.exports = function(app, template, hook) {
           done();
         });
     });
-
+*/
     it('A Form.io user cannot change an environments primary project', function(done) {
       var newEnv = _.cloneDeep(template.env);
       newEnv.project = secondProject._id;
