@@ -11,15 +11,15 @@ module.exports = function(router) {
         index: true,
         required: true
       },
-      version: {
+      tag: {
         type: String,
-        description: 'The version identifier.',
+        description: 'The tag identifier.',
         maxlength: 32,
         required: true
       },
       template: {
         type: router.formio.mongoose.Schema.Types.Mixed,
-        description: 'The project version template.'
+        description: 'The project template.'
       },
       owner: {
         type: router.formio.mongoose.Schema.Types.ObjectId,
@@ -35,22 +35,22 @@ module.exports = function(router) {
   });
   /* eslint-enable new-cap */
 
-  // Validate the uniqueness of the value given for the version.
-  model.schema.path('version').validate(function(value, done) {
+  // Validate the uniqueness of the value given for the tag.
+  model.schema.path('tag').validate(function(value, done) {
     var search = {
       project: this.project,
-      version: value,
+      tag: value,
       deleted: {$eq: null}
     };
 
-    formio.mongoose.model('version').findOne(search).exec(function(err, result) {
+    formio.mongoose.model('tag').findOne(search).exec(function(err, result) {
       if (err || result) {
         return done(false);
       }
 
       done(true);
     });
-  }, 'The version must be unique.');
+  }, 'The tag must be unique.');
 
   return model;
 };

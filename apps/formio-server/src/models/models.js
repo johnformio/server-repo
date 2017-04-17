@@ -3,6 +3,6 @@
 module.exports = function(router) {
   return {
     project: require('./Project')(router),
-    version: require('./Version')(router)
+    version: require('./Tag')(router)
   };
 };

@@ -8,11 +8,11 @@ var nodeUrl = require('url');
  * @returns {Function}
  */
 module.exports = function(router) {
-  return function versionHandler(req, res, next) {
+  return function tagHandler(req, res, next) {
     var _url = nodeUrl.parse(req.url).pathname;
 
-    // Allow access to version/current
-    if (req.method === 'GET' && req.projectId && _url === '/project/' + req.projectId + '/version/current') {
+    // Allow access to tag/current
+    if (req.method === 'GET' && req.projectId && _url === '/project/' + req.projectId + '/tag/current') {
       req.skipResource = true;
       return next();
     }

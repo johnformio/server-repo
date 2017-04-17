@@ -24,7 +24,7 @@ module.exports = function(formio) {
         case 'independent':
         case 'basic':
         default:
-          res.status(402).send('Environments can only be created on a Team Pro or higher plan.');
+          return res.status(402).send('Environments can only be created on a Team Pro or higher plan.');
       }
     });
   };

@@ -974,7 +974,7 @@ module.exports = function(app) {
         return alters;
       },
 
-      templateSteps: (steps, install, template) => {
+      templateImportSteps: (steps, install, template) => {
         let _install = install({
           model: formioServer.formio.resources.project.model,
           valid: entity => {
@@ -986,14 +986,33 @@ module.exports = function(app) {
             return true;
           },
           cleanUp: (template, items, done) => {
-            template._id = items[template.name]._id;
+            template._id = items[template.name];
+
             return done();
           }
         });
         let project = {};
-        project[template.name || 'export'] = _.pick(template, ['title', 'name', 'version', 'description', 'primary']);
+        project[template.name || 'export'] = _.pick(template, ['title', 'name', 'version', 'description']);
 
         steps.unshift(async.apply(_install, template, project));
+        return steps;
+      },
+
+      templateExportSteps: (steps, template, map, options) => {
+        let _exportAccess = function(_export, _map, options, next) {
+          // Clean up roles to point to machine names.
+          let accesses = _.cloneDeep(_export.access);
+          _export.access = [];
+          _.each(accesses, function(access) {
+            const roleNames = access.roles.map(roleId => _map.roles[roleId.toString()]);
+            access.roles = roleNames;
+            _export.access.push(access);
+          });
+
+          next();
+        };
+
+        steps.push(async.apply(_exportAccess, template, map, options));
         return steps;
       },
 
@@ -1003,7 +1022,9 @@ module.exports = function(app) {
         options.version = currentProject.version;
         options.name = currentProject.name;
         options.description = currentProject.description;
-        options.projectId = req.projectId || req.params.projectId || 0;
+        options.projectId = currentProject.projectId || req.projectId || req.params.projectId || 0;
+        options.access = currentProject.access.toObject();
+
         return options;
       },
       requestParams: function(req, params) {

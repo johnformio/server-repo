@@ -2,12 +2,12 @@
 
 var Resource = require('resourcejs');
 var _ = require('lodash');
-var debug = require('debug')('formio:resources:version');
+var debug = require('debug')('formio:resources:tag');
 
 module.exports = function(router, formioServer) {
   var formio = formioServer.formio;
   var cache = require('../cache/cache')(formio);
-  formio.middleware.versionHandler = require('../middleware/versionHandler')(router);
+  formio.middleware.tagHandler = require('../middleware/tagHandler')(router);
   formio.middleware.restrictToPlans = require('../middleware/restrictToPlans')(router);
 
   var hiddenFields = ['deleted', '__v'];
@@ -15,12 +15,12 @@ module.exports = function(router, formioServer) {
   var resource = Resource(
     router,
     '/project/:projectId',
-    'version',
-    formio.mongoose.model('version', formio.schemas.version)
+    'tag',
+    formio.mongoose.model('tag', formio.schemas.tag)
   ).rest({
     beforeGet: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
-      formio.middleware.versionHandler
+      formio.middleware.tagHandler
     ],
     afterGet: [
       formio.middleware.filterResourcejsResponse(hiddenFields)
@@ -28,17 +28,15 @@ module.exports = function(router, formioServer) {
     beforePost: [
       formio.middleware.restrictToPlans(['team', 'commercial', 'trial']),
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
-      formio.middleware.versionHandler,
+      formio.middleware.tagHandler,
       function(req, res, next) {
         cache.loadCurrentProject(req, (err, project) => {
-          formio.template.export({projectId: project.project}, function(err, template) {
+          let options = router.formio.formio.hook.alter('exportOptions', {}, req, res);
+          formio.template.export(options, function(err, template) {
             if (err) {
               return res.status(400).send(err);
             }
-            template.version = req.body.version;
-            template.title = project.title;
-            template.name = project.name;
-            template.description = project.description;
+            template.tag = req.body.tag;
             req.body.template = template;
             req.body.owner = project.owner.toString();
             return next();
@@ -51,16 +49,16 @@ module.exports = function(router, formioServer) {
     ],
     beforePut: [
       function(req, res, next) {
-        return res.status(400).send('Modifying versions not allowed.');
+        return res.status(400).send('Modifying tags not allowed.');
       }
     ],
     beforeDelete: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
-      formio.middleware.versionHandler
+      formio.middleware.tagHandler
     ],
     beforeIndex: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
-      formio.middleware.versionHandler
+      formio.middleware.tagHandler
     ],
     afterIndex: [
       formio.middleware.filterResourcejsResponse(hiddenFields)
@@ -68,18 +66,18 @@ module.exports = function(router, formioServer) {
   });
 
   /**
-   * Expose the project current version via api.
+   * Expose the project current tag via api.
    *
    * @type {{loadProjectByName, currentProject, loadCurrentProject, loadPrimaryProject, loadProject}|*}
    */
   router.get(
-    '/project/:projectId/version/current',
+    '/project/:projectId/tag/current',
     function(req, res, next) {
       cache.loadCurrentProject(req, (err, project) => {
         if (err) {
           return res.status(400).send(err);
         }
-        return res.send(project.version);
+        return res.send(project.tag);
       });
     }
   );
@@ -101,16 +99,16 @@ module.exports = function(router, formioServer) {
         }
 
         switch (deploy.type) {
-          case 'version': {
-            if (!('version' in deploy)) {
-              return res.status(400).send('Deploy version command must contain a version number.');
+          case 'tag': {
+            if (!('tag' in deploy)) {
+              return res.status(400).send('Deploy tag command must contain a tag number.');
             }
             const search = {
-              version: deploy.version,
+              tag: deploy.tag,
               project: project,
               deleted: {$eq: null}
             };
-            formio.mongoose.model('version').findOne(search).exec((err, result) => {
+            formio.mongoose.model('tag').findOne(search).exec((err, result) => {
               if (err) {
                 return res.status(400).send(err);
               }
@@ -127,7 +125,7 @@ module.exports = function(router, formioServer) {
               //    return res.status(400).send('An error occurred with the template import.');
               //  }
               //
-              //  return res.send('Version Deployed');
+              //  return res.send('Tag Deployed');
               //
               //  if (req.templateMode === 'create') {
               //    // Update the project with this template.
@@ -145,7 +143,7 @@ module.exports = function(router, formioServer) {
             break;
           }
           default: {
-            return res.status(400).send('Unknown deploy type. Please use version or environment.');
+            return res.status(400).send('Unknown deploy type. Please use tag or environment.');
           }
         }
       });
