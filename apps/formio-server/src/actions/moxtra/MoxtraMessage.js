@@ -104,9 +104,13 @@ module.exports = function(router) {
           label: 'Message',
           key: 'message',
           type: 'textarea',
-          defaultValue: '{{ submission(form.components) }}',
+          defaultValue: `A new submission was created!
+
+{% for key, value in data %}
+    {{ key }}: {{ value }}
+{% endfor %}`,
           multiple: false,
-          rows: 3,
+          rows: 7,
           suffix: '',
           prefix: '',
           placeholder: 'Enter the message you would like to send.',
