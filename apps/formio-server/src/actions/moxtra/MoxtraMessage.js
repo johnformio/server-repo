@@ -164,14 +164,18 @@ module.exports = function(router) {
             params.owner = owner.toObject();
           }
 
-          // Prepend the macros to the message so that they can use them.
-          this.settings.message = macros + this.settings.message;
-
-          // send the message
-          return Moxtra.getToken(req, this.settings.user);
+          // Use nunjucks on the message.
+          return new Thread(Thread.Tasks.nunjucks)
+          .start({
+            render: this.settings.message,
+            context: params
+          })
+          .then(injectedMessage => {
+            return Moxtra.getToken(req, this.settings.user)
+            .then(token => Moxtra.addMessageToBinder(req, injectedMessage, this.settings.binder, token))
+          })
         })
       })
-      .then(token => Moxtra.addMessageToBinder(req, this.settings.message, this.settings.binder, token))
       .catch(err => {
         debug(err);
       });
