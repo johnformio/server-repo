@@ -12,7 +12,6 @@ module.exports = function(router) {
   let Moxtra = require('./utils')(router);
   let Thread = require('formio/src/worker/Thread');
   let Nunjucks = require('formio/src/util/email')(formio);
-  let macros = require('formio/src/actions/macros/macros');
 
   /**
    * AuthAction class.

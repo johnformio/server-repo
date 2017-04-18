@@ -254,6 +254,7 @@ module.exports = function(app) {
         actions.group = require('../actions/GroupAction')(formioServer);
         actions.moxtraLogin = require('../actions/moxtra/MoxtraLogin')(formioServer);
         actions.moxtraMessage = require('../actions/moxtra/MoxtraMessage')(formioServer);
+        actions.moxtraTodo = require('../actions/moxtra/MoxtraTodo')(formioServer);
         return actions;
       },
 
@@ -266,7 +267,7 @@ module.exports = function(app) {
           if (['POST', 'PUT'].indexOf(req.method) === -1 || !req.user) {
             return next();
           }
-          let userActions = ['moxtraMessage'];
+          let userActions = ['moxtraMessage', 'moxtraTodo'];
           if (userActions.indexOf(_.get(req.body, 'name')) === -1) {
             return next();
           }

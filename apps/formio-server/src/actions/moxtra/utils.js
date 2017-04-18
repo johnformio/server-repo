@@ -171,10 +171,41 @@ module.exports = (router) => {
     });
   });
 
+  /**
+   * Add a to-do to the given binder.
+   *
+   * @param {Object} req
+   * @param {String} name
+   * @param {String} message
+   * @param {String} binder
+   * @param {String} token
+   *
+   * @returns {*|promise}
+   */
+  let addTodoToBinder = (req, name, description, binder, token) => getEnvironmentUrl(req).then(baseUrl => {
+    let url = `${baseUrl}/${binder}/todos`;
+    let headers = {
+      'Authorization': `BEARER ${token}`,
+      'Accept': `*/*`
+    };
+
+    return new Promise((resolve, reject) => {
+      rest.postJson(url, {name, description}, {headers})
+        .on('complete', result => {
+          if (result instanceof Error || _.has(result, 'error')) {
+            return reject(result);
+          }
+
+          return resolve(result.data);
+        });
+    });
+  });
+
   return {
     getProjectSettings,
     getToken,
     getBinder,
-    addMessageToBinder
+    addMessageToBinder,
+    addTodoToBinder
   }
 };
