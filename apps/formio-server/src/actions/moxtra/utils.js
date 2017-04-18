@@ -2,12 +2,10 @@
 
 let rest = require('restler');
 var _ = require('lodash');
-var debug = require('debug')('formio:actions:moxtra#util');
 
 module.exports = (router) => {
   let formio = router.formio;
   let hook = formio.hook;
-  let util = formio.util;
 
   /**
    * Wrap the project settings request in a promise.
@@ -207,5 +205,5 @@ module.exports = (router) => {
     getBinder,
     addMessageToBinder,
     addTodoToBinder
-  }
+  };
 };

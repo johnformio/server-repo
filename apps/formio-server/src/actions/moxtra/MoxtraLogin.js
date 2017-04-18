@@ -199,9 +199,11 @@ module.exports = function(router) {
       return updateUsersToken(token);
     })
     .then(function(response) {
+      debug(response);
       return next(null, response);
     })
     .catch(function(err) {
+      debug(err);
       return next(err);
     });
   };

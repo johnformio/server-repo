@@ -1,14 +1,11 @@
 'use strict';
 
-let rest = require('restler');
 let _ = require('lodash');
 let debug = require('debug')('formio:actions:moxtramessage');
 
 module.exports = function(router) {
   let formio = router.formio;
   let Action = formio.Action;
-  let hook = formio.hook;
-  let util = formio.util;
   let Moxtra = require('./utils')(router);
   let Thread = require('formio/src/worker/Thread');
   let Nunjucks = require('formio/src/util/email')(formio);
@@ -59,7 +56,7 @@ module.exports = function(router) {
     }
     let userToken = _.filter(req.user.externalIds, {type: `moxtra`});
     if (!userToken) {
-      return res.status(400).send(`Moxtra token not found for the current user.`)
+      return res.status(400).send(`Moxtra token not found for the current user.`);
     }
 
     Moxtra.getToken(req, req.user)
@@ -175,9 +172,9 @@ module.exports = function(router) {
           })
           .then(injectedMessage => {
             return Moxtra.getToken(req, this.settings.user)
-            .then(token => Moxtra.addMessageToBinder(req, injectedMessage, this.settings.binder, token))
-          })
-        })
+            .then(token => Moxtra.addMessageToBinder(req, injectedMessage, this.settings.binder, token));
+          });
+        });
       })
       .catch(err => {
         debug(err);
