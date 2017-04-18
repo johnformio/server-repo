@@ -26,9 +26,9 @@ module.exports = function(router) {
         description: 'A description for the project.',
         maxlength: 512
       },
-      version: {
+      tag: {
         type: String,
-        description: 'Last deployed version of the project.',
+        description: 'Last deployed tag of the project.',
         maxlength: 32,
         default: '0.0.0'
       },
