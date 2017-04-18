@@ -62,7 +62,7 @@ module.exports = function(router) {
     if (!userToken) {
       return res.status(400).send(`Moxtra token not found for the current user.`)
     }
-    
+
     Moxtra.getToken(req, req.user)
     .then(token => Moxtra.getBinder(req, token))
     .then(response => {
@@ -143,6 +143,9 @@ module.exports = function(router) {
       if (!form) {
         return res.status(404).send(`Form not found.`);
       }
+      if (!this.settings.user) {
+        return res.status(401).send(`MoxtraMessage action missing user settings.`);
+      }
 
       // Dont block on sending messages.
       next(); // eslint-disable-line callback-return
@@ -165,11 +168,10 @@ module.exports = function(router) {
           this.settings.message = macros + this.settings.message;
 
           // send the message
-          let user = {_id: this.settings.user};
-          return Moxtra.getToken(req, user)
-          .then(token => Moxtra.addMessageToBinder(req, this.settings.message, this.settings.binder, token))
-        });
+          return Moxtra.getToken(req, this.settings.user);
+        })
       })
+      .then(token => Moxtra.addMessageToBinder(req, this.settings.message, this.settings.binder, token))
       .catch(err => {
         debug(err);
       });

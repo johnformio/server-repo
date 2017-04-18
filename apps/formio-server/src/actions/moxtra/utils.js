@@ -12,6 +12,8 @@ module.exports = (router) => {
   /**
    * Wrap the project settings request in a promise.
    *
+   * @param {Object} req
+   *
    * @returns {*|promise}
    */
   let getProjectSettings = req => new Promise((resolve, reject) => {
@@ -30,7 +32,9 @@ module.exports = (router) => {
    * Note: We need to convert it, because it stores the token generation endpoint and we can't auto update since all the
    * project settings are encrypted..
    *
-   * @param req
+   * @param {Object} req
+   *
+   * @returns {*|promise}
    */
   let getEnvironmentUrl = req => getProjectSettings(req).then(settings => {
     if (!_.has(settings, 'moxtra.environment')) {
@@ -51,9 +55,11 @@ module.exports = (router) => {
   /**
    * Get the auth token for a moxtra user.
    *
-   * @param user
-   * @param firstname
-   * @param lastname
+   * @param {Object} req
+   * @param {Object|String} user
+   * @param [String] firstname
+   * @param [String] lastname
+   *
    * @returns {*|promise}
    */
   let getToken = (req, user, firstname, lastname) => getProjectSettings(req).then(settings => {
@@ -75,16 +81,16 @@ module.exports = (router) => {
         client_id: _.get(settings, 'moxtra.clientId'),
         client_secret: _.get(settings, 'moxtra.clientSecret'),
         grant_type: 'http://www.moxtra.com/auth_uniqueid',
-        uniqueid: user._id.toString(),
-        timestamp: new Date().getTime()
+        uniqueid: (user._id || user || '').toString(),
+        timestamp: (new Date()).getTime()
       }
     };
     /* eslint-enable camelcase */
 
-    if (_.has(user.data, firstname)) {
+    if (firstname && _.has(user.data, firstname)) {
       body.data.firstname = _.get(user.data, firstname);
     }
-    if (_.has(user.data, lastname)) {
+    if (lastname && _.has(user.data, lastname)) {
       body.data.lastname = _.get(user.data, lastname);
     }
 
@@ -96,7 +102,6 @@ module.exports = (router) => {
     return new Promise((resolve, reject) => {
       rest.post(_.get(settings, 'moxtra.environment'), body)
       .on('complete', result => {
-        debug(result);
         if (result instanceof Error) {
           return reject(result);
         }
@@ -110,9 +115,13 @@ module.exports = (router) => {
   });
 
   /**
-   * Get a list of the binders using the given token
+   * Get a list of the binders using the given token.
    *
-   * @param token
+   * @param {Object} req
+   * @param {String} token
+   * @param [String] filter
+   *
+   * @returns {*|promise}
    */
   let getBinder = (req, token, filter) => getEnvironmentUrl(req).then(baseUrl => {
     let url = `${baseUrl}/${filter ? filter : `me`}/binders`;
@@ -133,6 +142,16 @@ module.exports = (router) => {
     });
   });
 
+  /**
+   * Add a message to the given binder.
+   *
+   * @param {Object} req
+   * @param {String} message
+   * @param {String} binder
+   * @param {String} token
+   *
+   * @returns {*|promise}
+   */
   let addMessageToBinder = (req, message, binder, token) => getEnvironmentUrl(req).then(baseUrl => {
     let url = `${baseUrl}/${binder}/comments`;
     let headers = {

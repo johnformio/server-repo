@@ -263,11 +263,11 @@ module.exports = function(app) {
 
         // On action creation, if the action is a moxtraMessage action, add the user _id to the request payload.
         let addCurrentUserToAction = (req, res, next) => {
-          if (req.method !== 'POST' || !req.user) {
+          if (['POST', 'PUT'].indexOf(req.method) === -1 || !req.user) {
             return next();
           }
           let userActions = ['moxtraMessage'];
-          if (userActions.indexOf(_.get(req.body, 'data.name')) === -1) {
+          if (userActions.indexOf(_.get(req.body, 'name')) === -1) {
             return next();
           }
 
@@ -279,7 +279,7 @@ module.exports = function(app) {
             user = req.user;
           }
 
-          _.set(req.body, 'data.settings.user', user._id);
+          _.set(req.body, 'settings.user', user._id);
           return next();
         };
 
