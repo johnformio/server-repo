@@ -5,8 +5,13 @@ let request = require('supertest');
 let assert = require('assert');
 let jwt = require('jsonwebtoken');
 let config = require('../config');
+let docker = process.env.DOCKER;
 
 module.exports = function(app, template, hook) {
+  if (docker) {
+    // No docker tests.
+    return;
+  }
   let Helper = require('formio/test/helper')(app);
   
   describe('External Tokens', function() {
