@@ -1360,6 +1360,7 @@ describe('Initial Tests', function() {
         require('./analytics')(app, template, hook);
         require('./teams')(app, template, hook);
         require('./env')(app, template, hook);
+        require('./tags')(app, template, hook);
         require('./misc')(app, template, hook);
         require('./oauth')(app, template, hook);
         require('./s3')(app, template, hook);
@@ -1368,6 +1369,7 @@ describe('Initial Tests', function() {
         require('./actions')(app, template, hook);
         require('./group-permissions')(app, template, hook);
         require('formio/test/templates')(app, template, hook);
+        require('./templates')(app, template, hook);
       });
     });
   });

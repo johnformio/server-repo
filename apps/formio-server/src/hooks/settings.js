@@ -946,6 +946,11 @@ module.exports = function(app) {
         return query;
       },
 
+      defaultTemplate: function(template, options) {
+        template.access = options.access;
+        return template;
+      },
+
       templateAlters: function(alters) {
         alters.role = (item, template, done) => {
           item.project = template._id;
@@ -1008,6 +1013,8 @@ module.exports = function(app) {
             access.roles = roleNames;
             _export.access.push(access);
           });
+          delete template.projectId;
+          delete template._id;
 
           next();
         };
@@ -1022,7 +1029,7 @@ module.exports = function(app) {
         options.tag = currentProject.tag;
         options.name = currentProject.name;
         options.description = currentProject.description;
-        options.projectId = currentProject.projectId || req.projectId || req.params.projectId || 0;
+        options.projectId = currentProject._id || req.projectId || req.params.projectId || 0;
         options.access = currentProject.access.toObject();
 
         return options;

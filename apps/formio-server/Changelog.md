@@ -5,14 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
-### Added
-
 ### Changed
-
-### Fixed
-
-### Removed
-
+ - Updated formio to 1.17.1
+ 
 ## 4.1.0
 ### Added
  - New download PDF endpoint that allows for downloading submissions as PDFs using the file server.
