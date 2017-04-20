@@ -1151,6 +1151,10 @@ module.exports = function(app) {
         }
         else {
           req.projectId = req.projectId || (req.params ? req.params.projectId : undefined) || req._id;
+          // This is really bad. I don't know why projectId is being set to the whole project object but it shouldn't be.
+          if (typeof req.projectId === 'object') {
+            req.projectId = req.projectId._id;
+          }
           query.project = formioServer.formio.mongoose.Types.ObjectId(req.projectId);
           _debug(query);
           return query;
