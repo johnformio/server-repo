@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+### Added
+ - Project access to export/import
+ - Environment Support
+ - Tags support
+
 ### Changed
  - Updated formio to 1.17.1
  

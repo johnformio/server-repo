@@ -1000,6 +1000,65 @@ module.exports = function(app) {
         project[template.name || 'export'] = _.pick(template, ['title', 'name', 'tag', 'description']);
 
         steps.unshift(async.apply(_install, template, project));
+
+        let _importAccess = (template, items, done) => {
+          formioServer.formio.resources.project.model.findOne({_id: template._id}, function(err, project) {
+            if (err) {
+              return done(err);
+            }
+
+            if ('access' in template) {
+              project.access = [];
+
+              template.access.forEach(access => {
+                project.access.push({
+                  type: access.type,
+                  roles: access.roles.map(name => template.roles[name]._id)
+                });
+              });
+            }
+            else if (
+              'roles' in template &&
+              Object.keys(template.roles).length > 0 &&
+              'administrator' in template.roles
+            ) {
+              project.access = [
+                {
+                  type: 'create_all',
+                  roles: [
+                    template.roles.administrator._id
+                  ]
+                },
+                {
+                  type: 'update_all',
+                  roles: [
+                    template.roles.administrator._id
+                  ]
+                },
+                {
+                  type: 'delete_all',
+                  roles: [
+                    template.roles.administrator._id
+                  ]
+                }
+              ];
+              const readAll = {
+                type: 'read_all',
+                roles: []
+              };
+
+              // Add all roles to read_all.
+              Object.keys(template.roles).forEach(roleName => {
+                readAll.roles.push(template.roles[roleName]._id);
+              });
+
+              project.access.push(readAll);
+            }
+            project.save(done);
+          });
+        };
+
+        steps.push(async.apply(_importAccess, template, project));
         return steps;
       },
 
@@ -1010,8 +1069,10 @@ module.exports = function(app) {
           _export.access = [];
           _.each(accesses, function(access) {
             const roleNames = access.roles.map(roleId => _map.roles[roleId.toString()]);
-            access.roles = roleNames;
-            _export.access.push(access);
+            _export.access.push({
+              type: access.type,
+              roles: roleNames
+            });
           });
           delete template.projectId;
           delete template._id;
