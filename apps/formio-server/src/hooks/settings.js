@@ -252,9 +252,44 @@ module.exports = function(app) {
         actions.sqlconnector = require('../actions/sqlconnector/SQLConnector')(formioServer);
         actions.jira = require('../actions/atlassian/jira')(formioServer);
         actions.group = require('../actions/GroupAction')(formioServer);
-        actions.moxtraLogin = require('../actions/MoxtraLogin')(formioServer);
+        actions.moxtraLogin = require('../actions/moxtra/MoxtraLogin')(formioServer);
+        actions.moxtraMessage = require('../actions/moxtra/MoxtraMessage')(formioServer);
+        actions.moxtraTodo = require('../actions/moxtra/MoxtraTodo')(formioServer);
         return actions;
       },
+
+      actionRoutes: function(handlers) {
+        handlers.beforePost = handlers.beforePost || [];
+        handlers.beforePut = handlers.beforePut || [];
+
+        // On action creation, if the action is a moxtraMessage action, add the user _id to the request payload.
+        let addCurrentUserToAction = (req, res, next) => {
+          if (['POST', 'PUT'].indexOf(req.method) === -1 || !req.user) {
+            return next();
+          }
+          let userActions = ['moxtraMessage', 'moxtraTodo'];
+          if (userActions.indexOf(_.get(req.body, 'name')) === -1) {
+            return next();
+          }
+
+          let user;
+          try {
+            user = req.user.toObject();
+          }
+          catch (e) {
+            user = req.user;
+          }
+
+          _.set(req.body, 'settings.user', user._id);
+          return next();
+        };
+
+        handlers.beforePost.push(addCurrentUserToAction);
+        handlers.beforePut.push(addCurrentUserToAction);
+
+        return handlers;
+      },
+
       emailTransports: function(transports, settings) {
         settings = settings || {};
         var office365 = settings.office365 || {};
