@@ -5,8 +5,13 @@ var assert = require('assert');
 var _ = require('lodash');
 var chance = new (require('chance'))();
 var uuidRegex = /^([a-z]{15})$/;
+var docker = process.env.DOCKER;
 
 module.exports = function(app, template, hook) {
+  if (docker) {
+    // No docker tests.
+    return;
+  }
   var secondProject;
 
   var not = function(item, properties) {
