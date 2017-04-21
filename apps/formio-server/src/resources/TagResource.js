@@ -77,7 +77,7 @@ module.exports = function(router, formioServer) {
         if (err) {
           return res.status(400).send(err);
         }
-        return res.send(project.tag);
+        return res.send({tag: project.tag});
       });
     }
   );
@@ -112,10 +112,17 @@ module.exports = function(router, formioServer) {
               if (err) {
                 return res.status(400).send(err);
               }
+              if (!result) {
+                return res.status(400).send('Tag not found.');
+              }
+
               let template = result.template;
 
               template = _.assign({}, template, project);
               debug('import template', template);
+
+              // TODO: remove this
+              res.send({});
 
               //let alters = hook.alter('templateAlters', {});
               //

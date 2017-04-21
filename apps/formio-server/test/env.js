@@ -425,6 +425,19 @@ module.exports = function(app, template, hook) {
         .end(done);
     });
 
+    it('Anonymous cannot create an environment for a project', function(done) {
+      var otherEnvironment = {
+        title: chance.word(),
+        description: chance.sentence(),
+        project: template.project._id
+      };
+      request(app)
+        .post('/project')
+        .send(otherEnvironment)
+        .expect(401)
+        .end(done);
+    });
+
     it('A Form.io user cannot create an environment for a bad project', function(done) {
       var myProject = {
         title: chance.word(),
