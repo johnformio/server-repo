@@ -9,6 +9,7 @@ module.exports = function(router, formioServer) {
   var cache = require('../cache/cache')(formio);
   formio.middleware.tagHandler = require('../middleware/tagHandler')(router);
   formio.middleware.restrictToPlans = require('../middleware/restrictToPlans')(router);
+  formio.middleware.deleteTagHandler = require('../middleware/deleteTagHandler')(router, formioServer);
 
   var hiddenFields = ['deleted', '__v'];
 
@@ -54,7 +55,7 @@ module.exports = function(router, formioServer) {
     ],
     beforeDelete: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
-      formio.middleware.tagHandler
+      formio.middleware.deleteTagHandler
     ],
     beforeIndex: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
