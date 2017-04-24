@@ -1092,7 +1092,7 @@ module.exports = function(app) {
         options.tag = currentProject.tag;
         options.name = currentProject.name;
         options.description = currentProject.description;
-        options.projectId = currentProject._id || req.projectId || req.params.projectId || 0;
+        options.projectId = currentProject._id.toString() || req.projectId || req.params.projectId || 0;
         options.access = currentProject.access.toObject();
 
         return options;
@@ -1214,10 +1214,6 @@ module.exports = function(app) {
         }
         else {
           req.projectId = req.projectId || (req.params ? req.params.projectId : undefined) || req._id;
-          // This is really bad. I don't know why projectId is being set to the whole project object but it shouldn't be.
-          if (typeof req.projectId === 'object') {
-            req.projectId = req.projectId._id;
-          }
           query.project = formioServer.formio.mongoose.Types.ObjectId(req.projectId);
           _debug(query);
           return query;
@@ -1418,8 +1414,8 @@ module.exports = function(app) {
           return false;
         }
         if (component.hasOwnProperty('project')) {
-          if (template.project._id) {
-            component.project = template.project._id.toString();
+          if (template._id) {
+            component.project = template._id.toString();
             return true;
           }
         }

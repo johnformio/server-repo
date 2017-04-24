@@ -66,13 +66,22 @@ var emptyDatabase = template.emptyDatabase = template.clearData = function(done)
     done();
   };
 
+  // Remove all test documents for tags.
+  var dropTags = function(err) {
+    if (err) {
+      return done(err);
+    }
+
+    dropDocuments(app.formio.formio.resources.tag.model, resetTeams);
+  };
+
   // Remove all test documents for roles.
   var dropRoles = function(err) {
     if (err) {
       return done(err);
     }
 
-    dropDocuments(app.formio.formio.resources.role.model, resetTeams);
+    dropDocuments(app.formio.formio.resources.role.model, dropTags);
   };
 
   // Remove all test documents for actions.

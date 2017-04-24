@@ -122,7 +122,6 @@ module.exports = function(router, formioServer) {
 
               let template = tag.template;
 
-              //template = hook.alter('defaultTemplate', template, project);
               Object.assign(template, _.pick(project, ['name', 'title', 'description', 'machineName']));
               let alters = hook.alter('templateAlters', {});
               debug('import template', template);

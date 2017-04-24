@@ -899,22 +899,32 @@ module.exports = function(app, template, hook) {
       });
 
       it('Tag Contains the form', done => {
+        assert(tag.template.forms[form.machineName.split(':')[1]], 'Tag must contain the form');
+
         done();
       });
 
       it('Tag Contains the resource', done => {
+        assert(tag.template.resources[resource.machineName.split(':')[1]], 'Tag must contain the resource');
+
         done();
       });
 
       it('Tag Contains the role', done => {
+        const roleName = role.machineName.split(':')[1];
+        assert(tag.template.roles[roleName], 'Tag must contain the role');
+
         done();
       });
 
       it('Tag Contains the action', done => {
+        assert(tag.template.actions[action.machineName], 'Tag must contain the action');
+
         done();
       });
 
       it('Tag Contains the project access', done => {
+        
         done();
       });
 
