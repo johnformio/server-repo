@@ -691,11 +691,256 @@ module.exports = function(app, template, hook) {
 
       });
 
-      it('Should deploy a tag correctly', done => {
-        assert(false, 'stop');
+      it('Create a form in Environment 1', done => {
+        let tempForm = {
+          title: chance.word(),
+          name: chance.word(),
+          path: chance.word().toLowerCase(),
+          type: 'form',
+          access: [],
+          submissionAccess: [],
+          components: [
+            {
+              type: 'textfield',
+              validate: {
+                custom: '',
+                pattern: '',
+                maxLength: '',
+                minLength: '',
+                required: false
+              },
+              defaultValue: '',
+              multiple: false,
+              suffix: '',
+              prefix: '',
+              placeholder: 'foo',
+              key: 'foo',
+              label: 'foo',
+              inputMask: '',
+              inputType: 'text',
+              input: true
+            }
+          ]
+        };
+
+        request(app)
+          .post('/project/' + env1._id + '/form')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(tempForm)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            form = res.body;
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('Create a resource in Environment 1', done => {
+        let tempResource = {
+          title: chance.word(),
+          name: chance.word(),
+          path: chance.word().toLowerCase(),
+          type: 'resource',
+          access: [],
+          submissionAccess: [],
+          components: [
+            {
+              type: 'textfield',
+              validate: {
+                custom: '',
+                pattern: '',
+                maxLength: '',
+                minLength: '',
+                required: false
+              },
+              defaultValue: '',
+              multiple: false,
+              suffix: '',
+              prefix: '',
+              placeholder: 'foo',
+              key: 'foo',
+              label: 'foo',
+              inputMask: '',
+              inputType: 'text',
+              input: true
+            }
+          ]
+        };
+
+        request(app)
+          .post('/project/' + env1._id + '/form')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(tempResource)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            resource = res.body;
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('Create a role in Environment 1', done => {
+        var myRole = {
+          title: 'TestRole',
+          description: 'A test role.'
+        };
+        request(app)
+          .post('/project/' + env1._id + '/role')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(myRole)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            role = res.body;
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('Create an action in Environment 1', done => {
+        let myAction = {
+          title: 'Login',
+          name: 'login',
+          handler: ['before'],
+          method: ['create'],
+          priority: 0,
+          settings: {
+            resources: [resource._id.toString()],
+            username: 'username',
+            password: 'password'
+          }
+        };
+        request(app)
+          .post('/project/' + env1._id + '/form/' + form._id + '/action')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(myAction)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            action = res.body;
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('Add role to project update_all access in Environment 1', done => {
+        env1.access = env1.access.map(access => {
+          if (access.type === 'update_all') {
+            access.roles.push(role._id);
+          }
+        });
+        request(app)
+          .put('/project/' + env1._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(env1)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            env1 = res.body;
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('Tag Environment 1', done => {
+        request(app)
+          .post('/project/' + env1._id + '/tag')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            tag: '0.0.4'
+          })
+          .expect(201)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            tag = res.body;
+
+            done();
+          });
+      });
+
+      it('Tag Contains the form', done => {
         done();
       });
 
+      it('Tag Contains the resource', done => {
+        done();
+      });
+
+      it('Tag Contains the role', done => {
+        done();
+      });
+
+      it('Tag Contains the action', done => {
+        done();
+      });
+
+      it('Tag Contains the project access', done => {
+        done();
+      });
+
+      it('Deploy tag to environment 2', done => {
+        done();
+      });
+
+      it('Environment 2 Contains the form', done => {
+        done();
+      });
+
+      it('Environment 2 Contains the resource', done => {
+        done();
+      });
+
+      it('Environment 2 Contains the role', done => {
+        done();
+      });
+
+      it('Environment 2 Contains the action', done => {
+        done();
+      });
+
+      it('Environment 2 Contains the project access', done => {
+        done();
+      });
     });
 
     describe('Normalization', () => {
@@ -713,6 +958,7 @@ module.exports = function(app, template, hook) {
             // Update the users project access with the new team.
             var oldResponse = res.body;
             var oldAccess = _.clone(oldResponse.access);
+            console.log(oldAccess);
             var newAccess = _.filter(oldAccess, function(permission) {
               if (permission.type && !_.startsWith(permission.type, 'team_')) {
                 return permission;

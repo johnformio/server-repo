@@ -983,7 +983,7 @@ module.exports = function(app) {
         let _install = install({
           model: formioServer.formio.resources.project.model,
           valid: entity => {
-            let project = entity[template.name || 'project'];
+            let project = entity[template.machineName || template.name || 'project'];
             if (!project || !project.title) {
               return false;
             }
@@ -991,13 +991,13 @@ module.exports = function(app) {
             return true;
           },
           cleanUp: (template, items, done) => {
-            template._id = items[template.name];
+            template._id = items[template.machineName || template.name]._id;
 
             return done();
           }
         });
         let project = {};
-        project[template.name || 'export'] = _.pick(template, ['title', 'name', 'tag', 'description']);
+        project[template.machineName || template.name || 'export'] = _.pick(template, ['title', 'name', 'tag', 'description', 'machineName']);
 
         steps.unshift(async.apply(_install, template, project));
 
@@ -1008,12 +1008,12 @@ module.exports = function(app) {
             }
 
             if ('access' in template) {
-              project.access = [];
+              project.access = _.filter(project.access, access => ['create_all', 'read_all', 'update_all', 'delete_all'].indexOf(access.type) === -1);
 
               template.access.forEach(access => {
                 project.access.push({
                   type: access.type,
-                  roles: access.roles.map(name => template.roles[name]._id)
+                  roles: _.filter(access.roles).map(name => template.roles[name]._id)
                 });
               });
             }
@@ -1068,11 +1068,13 @@ module.exports = function(app) {
           let accesses = _.cloneDeep(_export.access);
           _export.access = [];
           _.each(accesses, function(access) {
-            const roleNames = access.roles.map(roleId => _map.roles[roleId.toString()]);
-            _export.access.push({
-              type: access.type,
-              roles: roleNames
-            });
+            if (access.type.indexOf('team_') === -1) {
+              const roleNames = access.roles.map(roleId => _map.roles[roleId.toString()]);
+              _export.access.push({
+                type: access.type,
+                roles: roleNames
+              });
+            }
           });
           delete template.projectId;
           delete template._id;
