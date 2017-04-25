@@ -7,5 +7,7 @@ module.exports = {
   '3.0.4': require('./3.0.4.js'),
   '3.0.4-rc.1': require('./3.0.4-rc.1.js'),
   '3.0.6-rc.1': require('./3.0.6-rc.1.js'),
-  '3.0.7-rc.1': require('./3.0.7-rc.1.js')
+  '3.0.7-rc.1': require('./3.0.7-rc.1.js'),
+  '3.0.8-rc.1': require('./3.0.8-rc.1.js'),
+  '3.0.9-rc.1': require('./3.0.9-rc.1.js')
 };
