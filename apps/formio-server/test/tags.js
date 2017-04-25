@@ -633,7 +633,7 @@ module.exports = function(app, template, hook) {
     });
 
     describe('Deployments', () => {
-      let env1, env2, form, resource, action, role, tag;
+      let env1, env2, form, resource, action, role, tag, _export;
 
       it('Create Environment 1', done => {
         let myProject = {
@@ -858,6 +858,7 @@ module.exports = function(app, template, hook) {
           if (access.type === 'update_all') {
             access.roles.push(role._id);
           }
+          return access;
         });
         request(app)
           .put('/project/' + env1._id)
@@ -918,37 +919,82 @@ module.exports = function(app, template, hook) {
       });
 
       it('Tag Contains the action', done => {
-        assert(tag.template.actions[action.machineName], 'Tag must contain the action');
+        let actionName = action.machineName.split(':');
+        actionName.shift();
+        actionName = actionName.join(':');
+        assert(tag.template.actions[actionName], 'Tag must contain the action');
 
         done();
       });
 
       it('Tag Contains the project access', done => {
-        
+        assert(tag.template.access.reduce((prev, access) => prev || (access.type === 'update_all' && access.roles.includes('testrole')), false), 'Update all must contain the role.');
+
         done();
       });
 
       it('Deploy tag to environment 2', done => {
-        done();
+        request(app)
+          .post('/project/' + env2._id + '/deploy')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            type: 'tag',
+            tag: '0.0.4'
+          })
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            request(app)
+              .get('/project/' + env2._id + '/export')
+              .set('x-jwt-token', template.formio.owner.token)
+              .send()
+              .expect(200)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                _export = res.body;
+
+                done();
+              });
+          });
       });
 
       it('Environment 2 Contains the form', done => {
+        assert(_export.forms[form.machineName.split(':')[1]], 'Env 2 must contain the form');
+
         done();
       });
 
       it('Environment 2 Contains the resource', done => {
+        assert(_export.resources[resource.machineName.split(':')[1]], 'Env 2 must contain the resource');
+
         done();
       });
 
       it('Environment 2 Contains the role', done => {
+        const roleName = role.machineName.split(':')[1];
+        assert(_export.roles[roleName], 'Env 2 must contain the role');
+
         done();
       });
 
       it('Environment 2 Contains the action', done => {
+        let actionName = action.machineName.split(':');
+        actionName.shift();
+        actionName = actionName.join(':');
+        assert(_export.actions[actionName], 'Env 2 must contain the action');
+
         done();
       });
 
       it('Environment 2 Contains the project access', done => {
+        assert(_export.access.reduce((prev, access) => prev || (access.type === 'update_all' && access.roles.includes('testrole')), false), 'Env 2 Update all must contain the role.');
+
         done();
       });
     });

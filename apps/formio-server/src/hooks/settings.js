@@ -976,6 +976,18 @@ module.exports = function(app) {
           });
         };
 
+        alters.action = (item, template, done) => {
+          item.project = template._id;
+          this.actionMachineName(item.machineName, item, (err, machineName) => {
+            if (err) {
+              return done(err);
+            }
+
+            item.machineName = machineName;
+            done(null, item);
+          });
+        };
+
         return alters;
       },
 
@@ -1387,6 +1399,16 @@ module.exports = function(app) {
       },
       roleMachineName: function(machineName, document, done) {
         this.formMachineName(machineName, document, done);
+      },
+      actionMachineName: function(machineName, document, done) {
+        formioServer.formio.resources.form.model.findOne({_id: document.form, deleted: {$eq: null}})
+          .exec((err, form) => {
+            if (err) {
+              return done(err);
+            }
+
+            this.formMachineName(machineName, form, done);
+          });
       },
       machineNameExport: function(machineName) {
         if (!machineName) {

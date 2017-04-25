@@ -6,12 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
- - Project access to export/import
+ - Project access settings in export/import
  - Environment Support
  - Tags support
 
 ### Changed
- - Updated formio to 1.17.1
+ - Updated formio to 1.17.2
+ 
+### Fixed
+ - Fixed issues with import/export and machine names for actions.
  
 ## 4.1.0
 ### Added

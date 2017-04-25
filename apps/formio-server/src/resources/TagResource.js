@@ -109,7 +109,7 @@ module.exports = function(router, formioServer) {
             }
             const search = {
               tag: deploy.tag,
-              project: project._id,
+              project: project.project || project._id,
               deleted: {$eq: null}
             };
             formio.mongoose.model('tag').findOne(search).exec((err, tag) => {

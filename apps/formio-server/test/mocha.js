@@ -279,7 +279,7 @@ describe('Initial Tests', function() {
           template.forms = {};
           results.forEach(function(result) {
             template.forms[result.name] = result;
-          })
+          });
           assert.equal(template.forms.userLogin.name, 'userLogin');
           assert.equal(template.forms.userLogin.title, 'User Login');
           assert.equal(template.forms.userLogin.machineName, 'formio:userLogin');
@@ -301,17 +301,17 @@ describe('Initial Tests', function() {
               template.actions[action.machineName] = action;
             });
 
-            assert.equal(template.actions['user:save'].title, 'Save Submission');
-            assert.equal(template.actions['user:save'].machineName, 'user:save');
-            assert.equal(template.actions['user:save'].form._id, template.resources.user._id._id);
+            assert.equal(template.actions['formio:user:save'].title, 'Save Submission');
+            assert.equal(template.actions['formio:user:save'].machineName, 'formio:user:save');
+            assert.equal(template.actions['formio:user:save'].form._id, template.resources.user._id._id);
 
-            assert.equal(template.actions['user:role'].title, 'Role Assignment');
-            assert.equal(template.actions['user:role'].machineName, 'user:role');
-            assert.equal(template.actions['user:role'].form._id, template.resources.user._id._id);
+            assert.equal(template.actions['formio:user:role'].title, 'Role Assignment');
+            assert.equal(template.actions['formio:user:role'].machineName, 'formio:user:role');
+            assert.equal(template.actions['formio:user:role'].form._id, template.resources.user._id._id);
 
-            assert.equal(template.actions['userLogin:login'].title, 'Login');
-            assert.equal(template.actions['userLogin:login'].machineName, 'userLogin:login');
-            assert.equal(template.actions['userLogin:login'].form._id, template.forms.userLogin._id._id);
+            assert.equal(template.actions['formio:userLogin:login'].title, 'Login');
+            assert.equal(template.actions['formio:userLogin:login'].machineName, 'formio:userLogin:login');
+            assert.equal(template.actions['formio:userLogin:login'].form._id, template.forms.userLogin._id._id);
 
             done();
           });
