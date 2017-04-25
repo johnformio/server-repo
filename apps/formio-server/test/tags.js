@@ -5,9 +5,14 @@ var assert = require('assert');
 var _ = require('lodash');
 var chance = new (require('chance'))();
 var sinon = require('sinon');
-
+var docker = process.env.DOCKER;
 
 module.exports = function(app, template, hook) {
+  if (docker) {
+    // No docker tests.
+    return;
+  }
+
   describe('Tagging', () => {
     const _template = _.cloneDeep(require('./fixtures/template')());
     let project = {};
