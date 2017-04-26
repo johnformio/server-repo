@@ -32,13 +32,17 @@ module.exports = function(router) {
       priority: -10,
       defaults: {
         handler: ['after'],
-        method: ['create']
+        method: ['create', 'delete']
       },
       access: {
         handler: false,
         method: false
       }
     });
+  };
+  MoxtraLogin.access = {
+    handler: false,
+    method: false
   };
 
   /**
@@ -119,6 +123,26 @@ module.exports = function(router) {
    *   The callback function to execute upon completion.
    */
   MoxtraLogin.prototype.resolve = function(handler, method, req, res, next) {
+    if (method === 'delete') {
+      // If the current project does not have any orgId, dont worry about deleting the user. There is no moxtra support.
+      if (!_.has(req.currentProject, 'settings.moxtra.orgId')) {
+        return next();
+      }
+
+      let orgId = _.get(req.currentProject, 'settings.moxtra.orgId');
+      return Moxtra.getToken(req, req.user)
+      .then(token => Moxtra.removeUserFromOrg(req, orgId, req.subId, token))
+      .then(results => {
+        // Ignore the moxtra results.
+        debug(results);
+        return next();
+      })
+      .catch(e => {
+        debug(e);
+        return next();
+      });
+    }
+
     if (!_.has(res, 'resource.item')) {
       return res.status(400).send('No resource was loaded for authentication.');
     }

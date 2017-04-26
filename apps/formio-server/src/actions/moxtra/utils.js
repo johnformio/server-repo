@@ -199,11 +199,41 @@ module.exports = (router) => {
     });
   });
 
+  /**
+   * Removes a given user from the org.
+   *
+   * @param {Object} req
+   * @param {String} org
+   * @param {String} user
+   * @param {String} token
+   *
+   * @returns {*|promise}
+   */
+  let removeUserFromOrg = (req, org, user, token) => getEnvironmentUrl(req).then(baseUrl => {
+    let url = `${baseUrl}/${org}/users/${user}`;
+    let headers = {
+      'Authorization': `BEARER ${token}`,
+      'Accept': `*/*`
+    };
+
+    return new Promise((resolve, reject) => {
+      rest.del(url, {headers})
+        .on('complete', result => {
+          if (result instanceof Error || _.has(result, 'error')) {
+            return reject(result);
+          }
+
+          return resolve(result.data);
+        });
+    });
+  });
+
   return {
     getProjectSettings,
     getToken,
     getBinder,
     addMessageToBinder,
-    addTodoToBinder
+    addTodoToBinder,
+    removeUserFromOrg
   };
 };
