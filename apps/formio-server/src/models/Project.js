@@ -6,7 +6,7 @@ var invalidRegex = /[^0-9a-zA-Z\-]|^\-|\-$/;
 
 module.exports = function(router) {
   var formio = router.formio;
-  /* eslint-disable new-cap */
+  /* eslint-disable new-cap, max-len */
   var model = formio.BaseModel({
     schema: new formio.mongoose.Schema({
       title: {
@@ -90,7 +90,7 @@ module.exports = function(router) {
       access: [formio.schemas.PermissionSchema]
     })
   });
-  /* eslint-enable new-cap */
+  /* eslint-enable new-cap, max-len */
 
   // Encrypt 'settings' property at rest in MongoDB.
   model.schema.plugin(EncryptedProperty, {
