@@ -247,48 +247,106 @@ module.exports = function(formio) {
       return authorized(new Error('Missing project'));
     }
 
-    // Verify the token.
-    jwt.verify(token, this.config.formio.jwt.secret, function(err, decoded) {
+    // Load the project.
+    this.loadProject(req, projectId, project, (err, project) => {
       if (err) {
-        return authorized(new Error(err.name));
+        return authorized(new Error(err));
       }
 
-      if (!decoded) {
-        return authorized(new Error('Invalid Token'));
+      if (!project) {
+        return authorized(new Error('Unknown project'));
       }
 
-      if (!decoded.user._id) {
-        return authorized(new Error('Invalid User'));
-      }
-
-      // Save the user on the request.
-      req.user = decoded.user;
-
-      // Load the project.
-      this.loadProject(req, projectId, project, function(err, project) {
-        if (err) {
-          return authorized(new Error(err));
-        }
-
-        if (!project) {
-          return authorized(new Error('Unknown project'));
-        }
-
-        // Ensure the project is owned by the person requesting.
-        if (!project.owner || (decoded.user._id.toString() !== project.owner.toString())) {
-          return authorized(new Error('Unauthorized'));
-        }
-
-        // Save the project on the request.
+      // Check if this is an api token.
+      if (project.settings && project.settings.keys && _.find(project.settings.keys, {key: token})) {
         req.project = project;
+        req.apitoken = token;
+        return authorized();
+      }
 
-        // Create a non-expiring token for server-to-server communication.
-        req.apitoken = jwt.sign(decoded, this.config.formio.jwt.secret);
+      // Verify the token.
+      jwt.verify(token, this.config.formio.jwt.secret, (err, decoded) => {
+        if (err) {
+          return authorized(new Error(err.name));
+        }
 
-        // This person is authorized to make the connection.
-        authorized();
-      }.bind(this));
-    }.bind(this));
+        if (!decoded) {
+          return authorized(new Error('Invalid Token'));
+        }
+
+        if (!decoded.user._id) {
+          return authorized(new Error('Invalid User'));
+        }
+
+        // Save the user on the request.
+        req.user = decoded.user;
+
+        // Project owners always get access.
+        if (project.owner && (decoded.user._id.toString() === project.owner.toString())) {
+          req.project = project;
+          req.apitoken = jwt.sign(decoded, this.config.formio.jwt.secret);
+          return authorized();
+        }
+
+        // Find the user object.
+        formio.resources.submission.model.findOne({
+          _id: formio.util.idToBson(req.user._id)
+        }, (err, user) => {
+          if (err) {
+            return authorized(new Error('Unauthorized'));
+          }
+
+          // Check if they have the admin role.
+          var userRoles = _.map(user.roles, formio.util.idToString);
+          formio.resources.role.model.find({
+            deleted: {$eq: null},
+            project: project._id.toString(),
+            admin: true
+          }, (err, roles) => {
+            if (err) {
+              return authorized(new Error('Unauthorized'));
+            }
+
+            var roleIds = _.map(roles, function(role) {
+              return role._id.toString();
+            });
+
+            var access = _.filter(_.map(roleIds, function(roleId) {
+              return (userRoles.indexOf(roleId) === -1) ? null : roleId;
+            }));
+
+            if (access && access.length) {
+              req.project = project;
+              req.apitoken = jwt.sign(decoded, this.config.formio.jwt.secret);
+              return authorized();
+            }
+
+            // Check the teams they are on.
+            formio.teams.getTeams(req.user._id, true, false).then((teams) => {
+              teams = teams || [];
+              teams = _.map(_.map(teams, '_id'), formio.util.idToString);
+              var userTeams = [];
+              _.each(project.access, (projectAccess) => {
+                if (projectAccess.type === 'team_admin') {
+                  var teamRoles = _.map(projectAccess.roles, formio.util.idToString);
+                  userTeams = _.intersection(teamRoles, teams);
+                  if (userTeams && userTeams.length) {
+                    return false;
+                  }
+                }
+              });
+              if (userTeams && userTeams.length) {
+                req.project = project;
+                req.apitoken = jwt.sign(decoded, this.config.formio.jwt.secret);
+                return authorized();
+              }
+
+              return authorized(new Error('Unauthorized'));
+            });
+          });
+        });
+      });
+    });
   };
 
   /**

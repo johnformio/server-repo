@@ -26,20 +26,46 @@ module.exports = function(router) {
         description: 'A description for the project.',
         maxlength: 512
       },
+      tag: {
+        type: String,
+        description: 'Last deployed tag of the project.',
+        maxlength: 32,
+        default: '0.0.0'
+      },
       owner: {
         type: formio.mongoose.Schema.Types.ObjectId,
         ref: 'submission',
         index: true,
         default: null
       },
+      project: {
+        type: formio.mongoose.Schema.Types.ObjectId,
+        description: 'The project Id of the project this environment is a part of.',
+        ref: 'project',
+        index: true
+      },
+      type: {
+        type: String,
+        enum: ['hosted', 'onPremise'],
+        default: 'hosted'
+      },
+      externalUrl: {
+        type: String,
+        description: 'The external URL to the project.',
+        maxlength: 256
+      },
       plan: {
         type: String,
-        enum: ['basic', 'independent', 'team', 'commercial'],
+        enum: ['basic', 'independent', 'team', 'trial', 'commercial'],
         default: router.config.plan || 'commercial',
         index: true
       },
       steps: {
         type: [String]
+      },
+      protect: {
+        type: Boolean,
+        default: false
       },
       primary: {
         type: Boolean,
