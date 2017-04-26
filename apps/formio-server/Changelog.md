@@ -5,29 +5,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
-### Added
- - Project access settings in export/import
- - Environment Support
- - Tags support
-
-### Changed
- - Updated formio to 1.17.3
- 
-### Fixed
- - Fixed issues with import/export and machine names for actions.
  
 ## 4.1.0
 ### Added
  - New download PDF endpoint that allows for downloading submissions as PDFs using the file server.
  - Template import / export tests
  - External token support to skip dynamic user permission loading
+ - Project access settings in export/import
+ - Environment Support
+ - Tags support
 
 ### Fixed
  - Authentication for websocket connections to allow API keys, and team authentication.
+ - Fixed issues with import/export and machine names for actions.
 
 ### Changed
  - Template action import / export names to be in the format of "form:action"
- - Updated formio to 1.17.0
+ - Updated formio to 1.17.3
  - Updated primus to 5.2.2
  - Updated request to 2.81.0
  - Updated resourcejs to 1.7.0
