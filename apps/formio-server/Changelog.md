@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Tags support
 
 ### Changed
- - Updated formio to 1.17.2
+ - Updated formio to 1.17.3
  
 ### Fixed
  - Fixed issues with import/export and machine names for actions.
