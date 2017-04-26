@@ -44,6 +44,47 @@ module.exports = function(formio) {
   };
 
   /**
+   * Helper function to filter oauth changes for projects on the basic plan.
+   *
+   * @param req
+   */
+  var filterOAuthSettings = function(req) {
+    req.body.settings = req.body.settings || {};
+    req.body.settings = _.omit(req.body.settings, 'oauth');
+  };
+
+  /**
+   * Helper function to filter premium email providers from projects on the basic plan.
+   *
+   * @param req
+   */
+  var filterEmailSettings = function(req) {
+    req.body.settings = req.body.settings || {};
+    if (_.has(req.body, 'settings.email')) {
+      req.body.settings.email = _.pick(req.body.settings.email, ['smtp']);
+    }
+  };
+
+  /**
+   * Helper function to filter file storage providers from projects on the basic/independent plan.
+   *
+   * @param req
+   */
+  var filterStorageSettings = function(req) {
+    req.body.settings = req.body.settings || {};
+    if (_.has(req.body, 'settings.storage')) {
+      req.body.settings = _.omit(req.body.settings, 'storage');
+    }
+  };
+
+  var filterDataConnectionSettings = function(req) {
+    req.body.settings = req.body.settings || {};
+    req.body.settings = _.omit(req.body.settings, [
+      'office365', 'databases', 'google', 'kickbox', 'hubspot', 'sqlconnector', 'atlassian'
+    ]);
+  };
+
+  /**
    * Ensure a name gets set if not sent.
    *
    * @param req
@@ -74,9 +115,14 @@ module.exports = function(formio) {
         case 'team':
           generateNameIfMissing(req);
           return next();
+        case 'trial':
+          generateNameIfMissing(req);
+          filterNameChanges(req);
+          return next();
         case 'independent':
           generateNameIfMissing(req);
           filterCorsChanges(req);
+          filterStorageSettings(req);
           return next();
         case 'basic':
         default:
@@ -84,6 +130,10 @@ module.exports = function(formio) {
 
           filterNameChanges(req);
           filterCorsChanges(req);
+          filterOAuthSettings(req);
+          filterEmailSettings(req);
+          filterStorageSettings(req);
+          filterDataConnectionSettings(req);
 
           debug(req.body);
           return next();

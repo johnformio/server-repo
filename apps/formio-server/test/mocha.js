@@ -66,13 +66,22 @@ var emptyDatabase = template.emptyDatabase = template.clearData = function(done)
     done();
   };
 
+  // Remove all test documents for tags.
+  var dropTags = function(err) {
+    if (err) {
+      return done(err);
+    }
+
+    dropDocuments(app.formio.formio.resources.tag.model, resetTeams);
+  };
+
   // Remove all test documents for roles.
   var dropRoles = function(err) {
     if (err) {
       return done(err);
     }
 
-    dropDocuments(app.formio.formio.resources.role.model, resetTeams);
+    dropDocuments(app.formio.formio.resources.role.model, dropTags);
   };
 
   // Remove all test documents for actions.
@@ -111,7 +120,7 @@ var emptyDatabase = template.emptyDatabase = template.clearData = function(done)
   dropProjects();
 };
 
-describe('Tests', function() {
+describe('Initial Tests', function() {
   before(function(done) {
     var hooks = _.merge(require('formio/test/hooks'), require('./hooks')); // Merge all the test hooks.
     if (!docker && !customer) {
@@ -123,7 +132,7 @@ describe('Tests', function() {
         hook = require('formio/src/util/hook')(app.formio.formio);
 
         // Establish the helper library.
-        template.Helper = require('formio/test/helper')(app);
+        template.Helper = require('./Helper')(app, require('formio/test/helper')(app));
         template.hooks = app.formio.formio.hooks || {};
         template.hooks.addEmitter(new EventEmitter());
         return done();
@@ -270,7 +279,7 @@ describe('Tests', function() {
           template.forms = {};
           results.forEach(function(result) {
             template.forms[result.name] = result;
-          })
+          });
           assert.equal(template.forms.userLogin.name, 'userLogin');
           assert.equal(template.forms.userLogin.title, 'User Login');
           assert.equal(template.forms.userLogin.machineName, 'formio:userLogin');
@@ -292,17 +301,17 @@ describe('Tests', function() {
               template.actions[action.machineName] = action;
             });
 
-            assert.equal(template.actions['user:save'].title, 'Save Submission');
-            assert.equal(template.actions['user:save'].machineName, 'user:save');
-            assert.equal(template.actions['user:save'].form._id, template.resources.user._id._id);
+            assert.equal(template.actions['formio:user:save'].title, 'Save Submission');
+            assert.equal(template.actions['formio:user:save'].machineName, 'formio:user:save');
+            assert.equal(template.actions['formio:user:save'].form._id, template.resources.user._id._id);
 
-            assert.equal(template.actions['user:role'].title, 'Role Assignment');
-            assert.equal(template.actions['user:role'].machineName, 'user:role');
-            assert.equal(template.actions['user:role'].form._id, template.resources.user._id._id);
+            assert.equal(template.actions['formio:user:role'].title, 'Role Assignment');
+            assert.equal(template.actions['formio:user:role'].machineName, 'formio:user:role');
+            assert.equal(template.actions['formio:user:role'].form._id, template.resources.user._id._id);
 
-            assert.equal(template.actions['userLogin:login'].title, 'Login');
-            assert.equal(template.actions['userLogin:login'].machineName, 'userLogin:login');
-            assert.equal(template.actions['userLogin:login'].form._id, template.forms.userLogin._id._id);
+            assert.equal(template.actions['formio:userLogin:login'].title, 'Login');
+            assert.equal(template.actions['formio:userLogin:login'].machineName, 'formio:userLogin:login');
+            assert.equal(template.actions['formio:userLogin:login'].form._id, template.forms.userLogin._id._id);
 
             done();
           });
@@ -1343,12 +1352,13 @@ describe('Tests', function() {
     });
 
     after(function() {
-      describe('Final Tests', function() {
+      describe('Project Tests', function() {
         require('./project')(app, template, hook);
         require('./domain')(app, template, hook);
         require('./email')(app, template, hook);
         require('formio/test/unit')(app, template, hook);
         require('formio/test/auth')(app, template, hook);
+        require('./externalTokens')(app, template, hook);
         require('formio/test/roles')(app, template, hook);
         require('formio/test/form')(app, template, hook);
         require('formio/test/resource')(app, template, hook);
@@ -1358,6 +1368,8 @@ describe('Tests', function() {
         require('formio/test/submission-access')(app, template, hook);
         require('./analytics')(app, template, hook);
         require('./teams')(app, template, hook);
+        require('./env')(app, template, hook);
+        require('./tags')(app, template, hook);
         require('./misc')(app, template, hook);
         require('./oauth')(app, template, hook);
         require('./s3')(app, template, hook);
@@ -1366,6 +1378,7 @@ describe('Tests', function() {
         require('./actions')(app, template, hook);
         require('./group-permissions')(app, template, hook);
         require('formio/test/templates')(app, template, hook);
+        require('./templates')(app, template, hook);
       });
     });
   });

@@ -3,7 +3,8 @@
 var _ = require('lodash');
 
 module.exports = function(app, config) {
-  var ProjectSocket = require('./websocket/ProjectSocket')(app.formio.formio);
+  var formio = app.formio.formio;
+  var ProjectSocket = require('./websocket/ProjectSocket')(formio);
 
   // Create a project socket.
   var socket = new ProjectSocket(app.server, config);
@@ -19,18 +20,28 @@ module.exports = function(app, config) {
       'query'
     ]);
 
-    // Send the request to the socket.
-    socket.send(request).then(function(data) {
-      if (data && data.response) {
-        if (data.response.status && (data.response.status !== 200)) {
-          res.status(data.response.status).json(data.response.message);
-          return;
-        }
-        if (data.response.body) {
-          _.assign(req.body, data.response.body);
-        }
+    formio.plans.getPlan(req, function(err, plan) {
+      if (err) {
+        return next(err);
       }
-      next();
-    }).catch(next);
+      // Skip the websocket stuff, because the plan is not upgraded.
+      if (['team', 'commercial'].indexOf(plan) === -1) {
+        return next();
+      }
+
+      // Send the request to the socket.
+      socket.send(request).then(function(data) {
+        if (data && data.response) {
+          if (data.response.status && (data.response.status !== 200)) {
+            res.status(data.response.status).json(data.response.message);
+            return;
+          }
+          if (data.response.body) {
+            _.assign(req.body, data.response.body);
+          }
+        }
+        next();
+      }).catch(next);
+    });
   });
 };

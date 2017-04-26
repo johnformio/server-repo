@@ -14,7 +14,7 @@ module.exports = function(router, formioServer) {
     }
     else if (req.projectId && req.user) {
       var cache = require('../cache/cache')(formio);
-      cache.loadProject(req, req.projectId, function(err, project) {
+      cache.loadPrimaryProject(req, function(err, project) {
         if (!err) {
           var access = _.map(_.map(_.filter(project.access, {type: 'team_admin'}), 'roles'), formio.util.idToString);
           var roles = _.map(req.user.roles, formio.util.idToString);
@@ -63,6 +63,10 @@ module.exports = function(router, formioServer) {
   // Load the restrictive middleware to use
   formio.middleware.restrictOwnerAccess = require('../middleware/restrictOwnerAccess')(formio);
 
+  // Load the Environment create middleware.
+  formio.middleware.projectEnvCreatePlan = require('../middleware/projectEnvCreatePlan')(formio);
+  formio.middleware.projectEnvCreateAccess = require('../middleware/projectEnvCreateAccess')(formio);
+
   var hiddenFields = ['deleted', '__v', 'machineName', 'primary'];
   var resource = Resource(
     router,
@@ -80,6 +84,8 @@ module.exports = function(router, formioServer) {
     ],
     beforePost: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
+      formio.middleware.projectEnvCreatePlan,
+      formio.middleware.projectEnvCreateAccess,
       function(req, res, next) {
         if (req.body && req.body.template) {
           req.template = req.body.template;
@@ -148,6 +154,40 @@ module.exports = function(router, formioServer) {
         }
         next();
       },
+      // Protected Project Access.
+      function(req, res, next) {
+        // Not allowed to modify access settings in a protected project.
+        if (
+          'access' in req.body &&
+          'protect' in req.currentProject
+          && req.currentProject.protect === true
+          && !_.isEqual(JSON.parse(JSON.stringify(req.currentProject.access)), req.body.access)
+        ) {
+          debug('Denying change to access because protected.');
+          return res.status(403).send('Modifications not allowed. Project is protected.');
+        }
+        // Not allowed to modify project name in a protected project.
+        if (
+          'protect' in req.currentProject &&
+          req.currentProject.protect === true &&
+          req.body.protect === true &&
+          req.currentProject.name !== req.body.name
+        ) {
+          debug('Denying change to name because protected');
+          return res.status(403).send('Modifications not allowed. Project is protected.');
+        }
+        next();
+      },
+      // Don't allow modifying a primary project id.
+      function(req, res, next) {
+        if (!req.currentProject.hasOwnProperty('project')) {
+          delete req.body.project;
+        }
+        else {
+          req.body.project = req.currentProject.project;
+        }
+        next();
+      },
       formio.middleware.condensePermissionTypes,
       formio.middleware.projectAccessFilter,
       formio.middleware.projectPlanFilter,
@@ -160,6 +200,7 @@ module.exports = function(router, formioServer) {
       formio.middleware.projectAnalytics
     ],
     beforeDelete: [
+      require('../middleware/projectProtectAccess')(formio),
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       require('../middleware/deleteProjectHandler')(formio)
     ],

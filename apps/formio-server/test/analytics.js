@@ -25,6 +25,11 @@ module.exports = function(app, template, hook) {
           done();
         });
       });
+
+      it('Set the project to the basic plan', function(done) {
+        var helper = new template.Helper();
+        helper.setProjectPlan.call({template: template}, 'basic', done);
+      });
     });
 
     describe('Analytics tracking', function() {

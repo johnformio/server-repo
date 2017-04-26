@@ -687,6 +687,96 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      it('Upgrade the project to a commercial project plan', function(done) {
+        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
+          if(err) {
+            return done(err);
+          }
+
+          project.plan = 'trial';
+          project.save(function(err) {
+            if(err) {
+              return done(err);
+            }
+
+            // Update the template version of the project.
+            request(app)
+              .get('/project/' + template.project._id)
+              .set('x-jwt-token', template.formio.owner.token)
+              .expect('Content-Type', /json/)
+              .expect(200)
+              .end(function(err, res) {
+                if (err) {
+                  return done(err);
+                }
+
+                // Update the project.
+                var response = res.body;
+                template.project = response;
+
+                // Store the JWT for future API calls.
+                template.formio.owner.token = res.headers['x-jwt-token'];
+
+                done();
+              });
+          });
+        });
+      });
+
+      it('A Project Owner should be able to add a Team they own to their project, if its on a commercial plan', function(done) {
+        var teamAccess = {type: 'team_read', roles: [template.team1._id]};
+
+        request(app)
+          .get('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            // Update the users project access with the new team.
+            var oldResponse = res.body;
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            request(app)
+              .put('/project/' + template.project._id)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({ access: oldResponse.access.concat(teamAccess) })
+              .expect('Content-Type', /json/)
+              .expect(200)
+              .end(function(err, res) {
+                if (err) {
+                  return done(err);
+                }
+
+                // Confirm that the team role was added to the projects permissions.
+                var response = res.body;
+                var found = false;
+                response.access.forEach(function(element) {
+                  if(element.type === 'team_read') {
+                    found = true;
+                    assert.notEqual(template.team1._id, null);
+                    assert.notEqual(template.team1._id, '');
+                    assert.deepEqual(element, teamAccess);
+                  }
+                });
+                assert.equal(found, true);
+
+                // Update the project.
+                template.project = response;
+
+                // Store the JWT for future API calls.
+                template.formio.owner.token = res.headers['x-jwt-token'];
+
+                done();
+              });
+          });
+      });
+
       it('Revert the project to a team project plan', function(done) {
         app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
           if(err) {
@@ -1719,7 +1809,7 @@ module.exports = function(app, template, hook) {
       }
 
       // Bootstrap
-      it('A Project Owner should be able to add one of their teams to have access with the team_read permission', function(done) {
+      it('A Project Owner should be able to add one of their teams to have access with the team_write permission', function(done) {
         var teamAccess = {type: 'team_write', roles: [template.team1._id]};
 
         request(app)
@@ -2440,7 +2530,7 @@ module.exports = function(app, template, hook) {
       }
 
       // Bootstrap
-      it('A Project Owner should be able to add one of their teams to have access with the team_read permission', function(done) {
+      it('A Project Owner should be able to add one of their teams to have access with the team_admin permission', function(done) {
         var teamAccess = {type: 'team_admin', roles: [template.team1._id]};
 
         request(app)

@@ -53,6 +53,7 @@ module.exports = function(router) {
     },
     restrictOwnerAccess,
     function(req, res) {
+      debug('Handling Dropbox request: ' + req.body.code);
       if (req.body.code) {
         // Send code to dropbox for token.
         request.post('https://api.dropboxapi.com/1/oauth2/token', {

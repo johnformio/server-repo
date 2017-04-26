@@ -21,7 +21,7 @@ module.exports = function(formio) {
       }
 
       // Get the owner of the Project
-      cache.loadProject(req, req.projectId, function(err, project) {
+      cache.loadPrimaryProject(req, function(err, project) {
         if (err) {
           return reject(err);
         }
@@ -48,6 +48,7 @@ module.exports = function(formio) {
     .catch(err => {
       try {
         if (!err) {
+          debug('Could not load project');
           return res.sendStatus(401);
         }
 

@@ -2,7 +2,7 @@
 
 let _ = require('lodash');
 let assert = require('assert');
-let formioUtils = require('formio-utils');
+let formioUtils = require('formiojs/utils');
 
 module.exports = {
   alter: {
@@ -16,6 +16,17 @@ module.exports = {
     url: function(url, template, projectName) {
       projectName = projectName || 'project';
       return '/project/' + template[projectName]._id + url;
+    },
+
+    webhookServer: function(server, app, template, next) {
+      if (!app || !template.project) {
+        return next(null, server);
+      }
+
+      var helper = new template.Helper();
+      helper.setProjectPlan.call({template: template}, 'team', function() {
+        return next(null, server);
+      });
     },
 
     webhookBody: function(body) {
@@ -82,7 +93,9 @@ module.exports = {
         assert(map[action].hasOwnProperty('form'));
 
         let entity = map[action];
-        let machineName = action;
+        let machineName = action.split(':');
+        machineName.shift();
+        machineName = machineName.join(':');
         let form = entity.form.split(':');
         form = form.pop();
         entity.form = form;
@@ -116,7 +129,7 @@ module.exports = {
 
     /**
      * Modify the input test template components to match export templates after the `exportComponent` hook executes.
-     * 
+     *
      * @param forms
      */
     templateImportComponent: function(forms) {

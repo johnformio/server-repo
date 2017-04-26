@@ -86,10 +86,30 @@ module.exports = function(options) {
   // CORS Support
   var corsMiddleware = require('./src/middleware/corsOptions')(app);
   var corsRoute = require('cors')(corsMiddleware);
-  app.use(corsRoute);
+  app.use(function(req, res, next) {
+    // If headers already sent, skip cors.
+    if (res.headersSent) {
+      return next();
+    }
+    corsRoute(req, res, next);
+  });
 
   // Handle our API Keys.
   app.use(require('./src/middleware/apiKey')(app.formio.formio));
+
+  // Add download submission endpoint.
+  app.use('/project/:projectId/form/:formId/submission/:submissionId/download/:fileId',
+    function(req, res, next) {
+      if (!req.query.token) {
+        return res.sendStatus(401);
+      }
+      req.headers['x-jwt-token'] = req.query.token;
+      next();
+    },
+    app.formio.formio.middleware.tokenHandler,
+    app.formio.formio.middleware.permissionHandler,
+    require('./src/middleware/download')(app.formio.formio)
+  );
 
   // Adding google analytics to our api.
   if (config.gaTid) {
@@ -107,6 +127,8 @@ module.exports = function(options) {
 
   // Start the api server.
   app.formio.init(hooks).then(function(formio) {
+    app.formio.formio.cache = _.assign(app.formio.formio.cache, require('./src/cache/cache')(formio));
+
     var start = function() {
       // The formio app sanity endpoint.
       app.get('/health', require('./src/middleware/health')(app.formio.formio), formio.update.sanityCheck);
@@ -118,7 +140,7 @@ module.exports = function(options) {
       app.use('/project/:projectId', app.formio);
 
       // Mount the aggregation system.
-      app.use('/project/:projectId/report', require('./src/middleware/report')(app.formio.formio));
+      app.use('/project/:projectId/report', require('./src/middleware/report')(app.formio));
 
       // Mount the error logging middleware.
       app.use(Logger.middleware);
@@ -129,14 +151,12 @@ module.exports = function(options) {
       });
     };
 
-    app.storage = require('./src/storage/index.js')(app);
-
     formio.db.collection('projects').count(function(err, numProjects) {
       if (!err && numProjects > 0) {
         return start();
       }
       /* eslint-disable no-console */
-      console.log(' > No projects found. Setting up server.');
+      console.log(' > No projects found.');
       /* eslint-enable no-console */
 
       require('./install')(app.formio, function(err) {
