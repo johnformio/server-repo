@@ -124,6 +124,7 @@ module.exports = function(router, done) {
           }
         ];
         project.owner = user._id;
+        project.primary = true;
         project.save(done);
       });
     }

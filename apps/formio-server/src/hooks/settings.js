@@ -946,6 +946,11 @@ module.exports = function(app) {
         return query;
       },
 
+      defaultTemplate: function(template, options) {
+        template.access = options.access;
+        return template;
+      },
+
       templateAlters: function(alters) {
         alters.role = (item, template, done) => {
           item.project = template._id;
@@ -971,6 +976,18 @@ module.exports = function(app) {
           });
         };
 
+        alters.action = (item, template, done) => {
+          item.project = template._id;
+          this.actionMachineName(item.machineName, item, (err, machineName) => {
+            if (err) {
+              return done(err);
+            }
+
+            item.machineName = machineName;
+            done(null, item);
+          });
+        };
+
         return alters;
       },
 
@@ -978,7 +995,7 @@ module.exports = function(app) {
         let _install = install({
           model: formioServer.formio.resources.project.model,
           valid: entity => {
-            let project = entity[template.name || 'project'];
+            let project = entity[template.machineName || template.name || 'project'];
             if (!project || !project.title) {
               return false;
             }
@@ -986,15 +1003,74 @@ module.exports = function(app) {
             return true;
           },
           cleanUp: (template, items, done) => {
-            template._id = items[template.name];
+            template._id = items[template.machineName || template.name]._id;
 
             return done();
           }
         });
         let project = {};
-        project[template.name || 'export'] = _.pick(template, ['title', 'name', 'tag', 'description']);
+        project[template.machineName || template.name || 'export'] = _.pick(template, ['title', 'name', 'tag', 'description', 'machineName']);
 
         steps.unshift(async.apply(_install, template, project));
+
+        let _importAccess = (template, items, done) => {
+          formioServer.formio.resources.project.model.findOne({_id: template._id}, function(err, project) {
+            if (err) {
+              return done(err);
+            }
+
+            if ('access' in template) {
+              project.access = _.filter(project.access, access => ['create_all', 'read_all', 'update_all', 'delete_all'].indexOf(access.type) === -1);
+
+              template.access.forEach(access => {
+                project.access.push({
+                  type: access.type,
+                  roles: _.filter(access.roles).map(name => template.roles[name]._id)
+                });
+              });
+            }
+            else if (
+              'roles' in template &&
+              Object.keys(template.roles).length > 0 &&
+              'administrator' in template.roles
+            ) {
+              project.access = [
+                {
+                  type: 'create_all',
+                  roles: [
+                    template.roles.administrator._id
+                  ]
+                },
+                {
+                  type: 'update_all',
+                  roles: [
+                    template.roles.administrator._id
+                  ]
+                },
+                {
+                  type: 'delete_all',
+                  roles: [
+                    template.roles.administrator._id
+                  ]
+                }
+              ];
+              const readAll = {
+                type: 'read_all',
+                roles: []
+              };
+
+              // Add all roles to read_all.
+              Object.keys(template.roles).forEach(roleName => {
+                readAll.roles.push(template.roles[roleName]._id);
+              });
+
+              project.access.push(readAll);
+            }
+            project.save(done);
+          });
+        };
+
+        steps.push(async.apply(_importAccess, template, project));
         return steps;
       },
 
@@ -1004,10 +1080,16 @@ module.exports = function(app) {
           let accesses = _.cloneDeep(_export.access);
           _export.access = [];
           _.each(accesses, function(access) {
-            const roleNames = access.roles.map(roleId => _map.roles[roleId.toString()]);
-            access.roles = roleNames;
-            _export.access.push(access);
+            if (access.type.indexOf('team_') === -1) {
+              const roleNames = access.roles.map(roleId => _map.roles[roleId.toString()]);
+              _export.access.push({
+                type: access.type,
+                roles: roleNames
+              });
+            }
           });
+          delete template.projectId;
+          delete template._id;
 
           next();
         };
@@ -1022,7 +1104,7 @@ module.exports = function(app) {
         options.tag = currentProject.tag;
         options.name = currentProject.name;
         options.description = currentProject.description;
-        options.projectId = currentProject.projectId || req.projectId || req.params.projectId || 0;
+        options.projectId = currentProject._id.toString() || req.projectId || req.params.projectId || 0;
         options.access = currentProject.access.toObject();
 
         return options;
@@ -1318,6 +1400,16 @@ module.exports = function(app) {
       roleMachineName: function(machineName, document, done) {
         this.formMachineName(machineName, document, done);
       },
+      actionMachineName: function(machineName, document, done) {
+        formioServer.formio.resources.form.model.findOne({_id: document.form, deleted: {$eq: null}})
+          .exec((err, form) => {
+            if (err) {
+              return done(err);
+            }
+
+            this.formMachineName(machineName, form, done);
+          });
+      },
       machineNameExport: function(machineName) {
         if (!machineName) {
           return 'export';
@@ -1344,8 +1436,8 @@ module.exports = function(app) {
           return false;
         }
         if (component.hasOwnProperty('project')) {
-          if (template.project._id) {
-            component.project = template.project._id.toString();
+          if (template._id) {
+            component.project = template._id.toString();
             return true;
           }
         }

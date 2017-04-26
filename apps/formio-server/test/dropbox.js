@@ -10,6 +10,7 @@ module.exports = function(app, template, hook) {
   if (process.env.DOCKER) {
     return;
   }
+  process.env.DROPBOX_CLIENTID = 'NOT_REAL';
 
   describe('Dropbox setup', function() {
     var testUser = {

@@ -44,7 +44,7 @@ compile:
     - redis-server &> $CIRCLE_ARTIFACTS/redis.log:
           background: true
     # - DEBUG=formio:*,formio:*:* DROPBOX_CLIENTID=NOTREAL npm test &> $CIRCLE_ARTIFACTS/formio-server.log
-    - DROPBOX_CLIENTID=NOTREAL npm test
+    - npm test
 
 test:
   pre:
@@ -68,8 +68,8 @@ test:
     - docker run -itd -e "MONGO1=$MONGO" -e "REDIS_ADDR=localhost" -e "REDIS_PORT=6379" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "DEBUG=*,*:*,*:*:*" -e "PROJECT_PLAN=trial" -e "DROPBOX_CLIENTID=NOTREAL" --name="formio-server" --net="host" $IMAGE_PATH
     - docker ps -a
     - docker logs formio-server
-    - sleep 15
-    - wget --tries=50 --retry-connrefused --wait=6 -v http://api.localhost:3000/health
+    - sleep 5
+    - curl -f --retry 10 http://api.localhost:3000/health
     - docker logs formio-server
     - npm run docker
     - docker logs formio-server &> $CIRCLE_ARTIFACTS/docker-server.log

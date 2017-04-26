@@ -5,8 +5,13 @@ var assert = require('assert');
 var _ = require('lodash');
 var chance = new (require('chance'))();
 var uuidRegex = /^([a-z]{15})$/;
+var docker = process.env.DOCKER;
 
 module.exports = function(app, template, hook) {
+  if (docker) {
+    // No docker tests.
+    return;
+  }
   var secondProject;
 
   var not = function(item, properties) {
@@ -417,6 +422,19 @@ module.exports = function(app, template, hook) {
         .send(otherEnvironment)
         .set('x-jwt-token', template.formio.user2.token)
         .expect(403)
+        .end(done);
+    });
+
+    it('Anonymous cannot create an environment for a project', function(done) {
+      var otherEnvironment = {
+        title: chance.word(),
+        description: chance.sentence(),
+        project: template.project._id
+      };
+      request(app)
+        .post('/project')
+        .send(otherEnvironment)
+        .expect(401)
         .end(done);
     });
 

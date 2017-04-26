@@ -86,7 +86,13 @@ module.exports = function(options) {
   // CORS Support
   var corsMiddleware = require('./src/middleware/corsOptions')(app);
   var corsRoute = require('cors')(corsMiddleware);
-  app.use(corsRoute);
+  app.use(function(req, res, next) {
+    // If headers already sent, skip cors.
+    if (res.headersSent) {
+      return next();
+    }
+    corsRoute(req, res, next);
+  });
 
   // Handle our API Keys.
   app.use(require('./src/middleware/apiKey')(app.formio.formio));

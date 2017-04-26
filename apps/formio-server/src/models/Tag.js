@@ -1,5 +1,7 @@
 'use strict';
 
+var debug = require('debug')('formio:resource:tag');
+
 module.exports = function(router) {
   var formio = router.formio;
   /* eslint-disable new-cap */
@@ -42,9 +44,16 @@ module.exports = function(router) {
       tag: value,
       deleted: {$eq: null}
     };
+    debug(search);
+
+    // Ignore the id if this is an update.
+    if (this._id) {
+      search._id = {$ne: this._id};
+    }
 
     formio.mongoose.model('tag').findOne(search).exec(function(err, result) {
       if (err || result) {
+        debug('Tag exists');
         return done(false);
       }
 

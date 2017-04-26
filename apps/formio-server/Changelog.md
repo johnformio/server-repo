@@ -6,13 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
+ - Project access settings in export/import
+ - Environment Support
+ - Tags support
 
 ### Changed
-
+ - Updated formio to 1.17.3
+ 
 ### Fixed
-
-### Removed
-
+ - Fixed issues with import/export and machine names for actions.
+ 
 ## 4.1.0
 ### Added
  - New download PDF endpoint that allows for downloading submissions as PDFs using the file server.

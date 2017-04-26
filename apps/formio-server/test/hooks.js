@@ -93,7 +93,9 @@ module.exports = {
         assert(map[action].hasOwnProperty('form'));
 
         let entity = map[action];
-        let machineName = action;
+        let machineName = action.split(':');
+        machineName.shift();
+        machineName = machineName.join(':');
         let form = entity.form.split(':');
         form = form.pop();
         entity.form = form;
