@@ -1,11 +1,21 @@
-FROM formio/ubuntu-base:latest
-MAINTAINER Randall Knutson <randall@form.io>
+FROM ubuntu:14.04
+MAINTAINER Form.io <support@form.io>
 
-RUN apt-get update
+RUN apt-get install -y curl && curl -sL https://deb.nodesource.com/setup_6.x | sudo bash -
+RUN apt-get update && apt-get install -y \
+  build-essential \
+  autoconf \
+  nasm \
+  zlib1g-dev \
+  libpng-dev \
+  libkrb5-dev \
+  python \
+  git \
+  nodejs \
+  apt-transport-https
 
 # Install the core dd agent.
-RUN apt-get install -y apt-transport-https; \
-    sh -c "echo 'deb https://apt.datadoghq.com/ stable main' > /etc/apt/sources.list.d/datadog.list"; \
+RUN sh -c "echo 'deb https://apt.datadoghq.com/ stable main' > /etc/apt/sources.list.d/datadog.list"; \
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys C7A7DA52; \
     apt-get update; \
     apt-get install -y datadog-agent;
