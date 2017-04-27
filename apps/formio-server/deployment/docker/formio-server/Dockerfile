@@ -1,7 +1,10 @@
 FROM node:boron-slim
 MAINTAINER Form.io <support@form.io>
 
-RUN apt-get update && apt-get install -y apt-transport-https
+RUN apt-get update && apt-get install -y \
+  build-essential \
+  apt-transport-https \
+  python
 
 # Install the core dd agent.
 RUN sh -c "echo 'deb https://apt.datadoghq.com/ stable main' > /etc/apt/sources.list.d/datadog.list"; \
