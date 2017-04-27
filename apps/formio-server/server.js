@@ -101,7 +101,14 @@ module.exports = function(options) {
   let base64DecodeUrl = function(str) {
     str = (str + '===').slice(0, str.length + (str.length % 4));
     str = str.replace(/-/g, '+').replace(/_/g, '/');
-    return Buffer.from(str, 'base64').toString();
+    if (typeof Buffer.from === "function") {
+      // Node 5.10+
+      return Buffer.from(str, 'base64').toString();
+    }
+    else {
+      // older Node versions
+      return (new Buffer(str, 'base64')).toString();
+    }
   };
 
   app.use('/project/:projectId/form/:formId/submission/:submissionId/download/:fileId/:token',
