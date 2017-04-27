@@ -311,10 +311,17 @@ module.exports = function(app) {
 
         return true;
       },
-        
+
       actionRoutes: function(handlers) {
         handlers.beforePost = handlers.beforePost || [];
         handlers.beforePut = handlers.beforePut || [];
+        handlers.beforeDelete = handlers.beforeDelete || [];
+
+        var projectProtectAccess = require('../middleware/projectProtectAccess')(formioServer.formio);
+
+        _.each(['beforePost', 'beforePut', 'beforeDelete'], function(handler) {
+          handlers[handler].unshift(projectProtectAccess);
+        });
 
         // On action creation, if the action is a moxtraMessage action, add the user _id to the request payload.
         let addCurrentUserToAction = (req, res, next) => {
@@ -1313,15 +1320,6 @@ module.exports = function(app) {
 
         _.each(['afterGet', 'afterIndex', 'afterPost', 'afterPut', 'afterDelete'], function(handler) {
           routes[handler].push(conditionalFilter);
-        });
-
-        return routes;
-      },
-      actionRoutes: function(routes) {
-        var projectProtectAccess = require('../middleware/projectProtectAccess')(formioServer.formio);
-
-        _.each(['beforePost', 'beforePut', 'beforeDelete'], function(handler) {
-          routes[handler].unshift(projectProtectAccess);
         });
 
         return routes;
