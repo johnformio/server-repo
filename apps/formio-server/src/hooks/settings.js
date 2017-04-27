@@ -311,10 +311,17 @@ module.exports = function(app) {
 
         return true;
       },
-        
+
       actionRoutes: function(handlers) {
         handlers.beforePost = handlers.beforePost || [];
         handlers.beforePut = handlers.beforePut || [];
+        handlers.beforeDelete = handlers.beforeDelete || [];
+
+        var projectProtectAccess = require('../middleware/projectProtectAccess')(formioServer.formio);
+
+        _.each(['beforePost', 'beforePut', 'beforeDelete'], function(handler) {
+          handlers[handler].unshift(projectProtectAccess);
+        });
 
         // On action creation, if the action is a moxtraMessage action, add the user _id to the request payload.
         let addCurrentUserToAction = (req, res, next) => {
@@ -1043,7 +1050,8 @@ module.exports = function(app) {
           }
         });
         let project = {};
-        project[template.machineName || template.name || 'export'] = _.pick(template, ['title', 'name', 'tag', 'description', 'machineName']);
+        let projectKeys = ['title', 'name', 'tag', 'description', 'machineName'];
+        project[template.machineName || template.name || 'export'] = _.pick(template, projectKeys);
 
         steps.unshift(async.apply(_install, template, project));
 
@@ -1054,7 +1062,8 @@ module.exports = function(app) {
             }
 
             if ('access' in template) {
-              project.access = _.filter(project.access, access => ['create_all', 'read_all', 'update_all', 'delete_all'].indexOf(access.type) === -1);
+              let permissions = ['create_all', 'read_all', 'update_all', 'delete_all'];
+              project.access = _.filter(project.access, access => permissions.indexOf(access.type) === -1);
 
               template.access.forEach(access => {
                 project.access.push({
@@ -1313,15 +1322,6 @@ module.exports = function(app) {
 
         _.each(['afterGet', 'afterIndex', 'afterPost', 'afterPut', 'afterDelete'], function(handler) {
           routes[handler].push(conditionalFilter);
-        });
-
-        return routes;
-      },
-      actionRoutes: function(routes) {
-        var projectProtectAccess = require('../middleware/projectProtectAccess')(formioServer.formio);
-
-        _.each(['beforePost', 'beforePut', 'beforeDelete'], function(handler) {
-          routes[handler].unshift(projectProtectAccess);
         });
 
         return routes;

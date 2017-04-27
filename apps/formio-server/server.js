@@ -98,12 +98,18 @@ module.exports = function(options) {
   app.use(require('./src/middleware/apiKey')(app.formio.formio));
 
   // Add download submission endpoint.
-  app.use('/project/:projectId/form/:formId/submission/:submissionId/download/:fileId',
+  let base64DecodeUrl = function(str) {
+    str = (str + '===').slice(0, str.length + (str.length % 4));
+    str = str.replace(/-/g, '+').replace(/_/g, '/');
+    return Buffer.from(str, 'base64').toString();
+  };
+
+  app.use('/project/:projectId/form/:formId/submission/:submissionId/download/:fileId/:token',
     function(req, res, next) {
-      if (!req.query.token) {
+      if (!req.params.token) {
         return res.sendStatus(401);
       }
-      req.headers['x-jwt-token'] = req.query.token;
+      req.headers['x-jwt-token'] = base64DecodeUrl(req.params.token);
       next();
     },
     app.formio.formio.middleware.tokenHandler,
