@@ -113,6 +113,62 @@ module.exports = (router) => {
   });
 
   /**
+   * Get the auth token for administrative use within moxtra.
+   *
+   * @param {Object} req
+   * @param {Object|String} user
+   * @param [String] firstname
+   * @param [String] lastname
+   *
+   * @returns {*|promise}
+   */
+  let getFormioBotToken = (req, project) => getProjectSettings(req).then(settings => {
+    if (!_.has(settings, 'moxtra.clientId')) {
+      throw 'No Moxtra clientId found in the project settings.';
+    }
+
+    if (!_.has(settings, 'moxtra.clientSecret')) {
+      throw 'No Moxtra clientSecret found in the project settings.';
+    }
+
+    if (!_.has(settings, 'moxtra.environment')) {
+      throw 'No Moxtra environment found in the project settings.';
+    }
+
+    /* eslint-disable camelcase */
+    let data = {
+      client_id: _.get(settings, 'moxtra.clientId'),
+      client_secret: _.get(settings, 'moxtra.clientSecret'),
+      grant_type: 'http://www.moxtra.com/auth_uniqueid',
+      uniqueid: (project._id || project || '').toString(),
+      timestamp: (new Date()).getTime(),
+      firstname: `Form.io`,
+      lastname: `Bot`,
+      admin: true
+    };
+    /* eslint-enable camelcase */
+
+    // Add the orgId if present in the settings.
+    if (_.has(settings, 'moxtra.orgId')) {
+      data.orgid = _.get(settings, 'moxtra.orgId');
+    }
+
+    return new Promise((resolve, reject) => {
+      rest.post(_.get(settings, 'moxtra.environment'), {data})
+      .on('complete', result => {
+        if (result instanceof Error) {
+          return reject(result);
+        }
+        if (!_.has(result, 'access_token')) {
+          return reject('No access token given.');
+        }
+
+        return resolve(result.access_token);
+      });
+    });
+  });
+
+  /**
    * Get a list of the binders using the given token.
    *
    * @param {Object} req
@@ -210,7 +266,7 @@ module.exports = (router) => {
    * @returns {*|promise}
    */
   let removeUserFromOrg = (req, org, user, token) => getEnvironmentUrl(req).then(baseUrl => {
-    let url = `${baseUrl}/${org}/users/${user}`;
+    let url = `${baseUrl}/${org}/users/${user}?remove=true&binders=true`;
     let headers = {
       'Authorization': `BEARER ${token}`,
       'Accept': `*/*`
@@ -223,7 +279,7 @@ module.exports = (router) => {
             return reject(result);
           }
 
-          return resolve(result.data);
+          return resolve(result.data || result);
         });
     });
   });
@@ -231,6 +287,7 @@ module.exports = (router) => {
   return {
     getProjectSettings,
     getToken,
+    getFormioBotToken,
     getBinder,
     addMessageToBinder,
     addTodoToBinder,

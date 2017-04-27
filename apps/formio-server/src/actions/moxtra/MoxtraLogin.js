@@ -130,7 +130,7 @@ module.exports = function(router) {
       }
 
       let orgId = _.get(req.currentProject, 'settings.moxtra.orgId');
-      return Moxtra.getToken(req, req.user)
+      return Moxtra.getFormioBotToken(req, req.projectId)
       .then(token => Moxtra.removeUserFromOrg(req, orgId, req.subId, token))
       .then(results => {
         // Ignore the moxtra results.
@@ -219,9 +219,7 @@ module.exports = function(router) {
 
     // If the user was supplied (just created, make the user in moxtra).
     Moxtra.getToken(req, user, this.settings.firstname, this.settings.lastname)
-    .then(function(token) {
-      return updateUsersToken(token);
-    })
+    .then(token => updateUsersToken(token))
     .then(function(response) {
       debug(response);
       return next(null, response);

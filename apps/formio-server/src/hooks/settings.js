@@ -32,7 +32,7 @@ module.exports = function(app) {
   app.formio.formio.payment = require('../payment/payment')(app, app.formio.formio);
 
   app.storage = require('../storage/index.js')(app);
-
+  
   return {
     settings: function(settings, req, cb) {
       if (!req.projectId) {
@@ -1287,6 +1287,8 @@ module.exports = function(app) {
       },
 
       actionRoutes: function(routes) {
+        let Moxtra = require('../actions/moxtra/utils')(app.formio);
+
         routes.beforePost = routes.beforePost || [];
         routes.beforePut = routes.beforePut || [];
 
@@ -1319,7 +1321,25 @@ module.exports = function(app) {
         };
 
         let addFormioBotToMoxtraOrg = (req, res, next) => {
+          if (['POST', 'PUT'].indexOf(req.method) === -1 || !req.user) {
+            return next();
+          }
+          if (_.get(req.body, 'name') !== 'moxtraLogin') {
+            return next();
+          }
 
+          // Create a formio bot token, which will authenticate or create a user. Ignore the token, as we just need the
+          // user to exist.
+          return Moxtra.getFormioBotToken(req, req.projectId)
+          .then(token => {
+            debug.settings(`moxtra formiobot token: ${token}`);
+
+            return next()
+          })
+          .catch(error => {
+            debug.error(error);
+            return next()
+          });
         };
 
         routes.beforePost.push(addCurrentUserToAction, addFormioBotToMoxtraOrg);
