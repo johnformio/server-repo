@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## 4.1.3
+### Fixed
+ - An issue that was crashing the server when Buffer does not use proper constructor for node versions.
+
 ## 4.1.2
 ### Fixed
  - Issue with the actionRoutes getting declared twice in the hooks/settings.js file.
