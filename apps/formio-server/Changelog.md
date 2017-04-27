@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
  - Now perform new base server build for every build.
  - Change node.js version to 6.x
- - Changed base linux to node:boron-alpine
+ - Changed base linux to node:boron-slim
 
 ## 4.1.3
 ### Fixed
