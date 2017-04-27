@@ -311,38 +311,6 @@ module.exports = function(app) {
 
         return true;
       },
-        
-      actionRoutes: function(handlers) {
-        handlers.beforePost = handlers.beforePost || [];
-        handlers.beforePut = handlers.beforePut || [];
-
-        // On action creation, if the action is a moxtraMessage action, add the user _id to the request payload.
-        let addCurrentUserToAction = (req, res, next) => {
-          if (['POST', 'PUT'].indexOf(req.method) === -1 || !req.user) {
-            return next();
-          }
-          let userActions = ['moxtraMessage', 'moxtraTodo'];
-          if (userActions.indexOf(_.get(req.body, 'name')) === -1) {
-            return next();
-          }
-
-          let user;
-          try {
-            user = req.user.toObject();
-          }
-          catch (e) {
-            user = req.user;
-          }
-
-          _.set(req.body, 'settings.user', user._id);
-          return next();
-        };
-
-        handlers.beforePost.push(addCurrentUserToAction);
-        handlers.beforePut.push(addCurrentUserToAction);
-
-        return handlers;
-      },
 
       emailTransports: function(transports, settings) {
         settings = settings || {};
@@ -1317,12 +1285,45 @@ module.exports = function(app) {
 
         return routes;
       },
+
       actionRoutes: function(routes) {
+        routes.beforePost = routes.beforePost || [];
+        routes.beforePut = routes.beforePut || [];
+
         var projectProtectAccess = require('../middleware/projectProtectAccess')(formioServer.formio);
 
         _.each(['beforePost', 'beforePut', 'beforeDelete'], function(handler) {
           routes[handler].unshift(projectProtectAccess);
         });
+
+        // On action creation, if the action is a moxtraMessage action, add the user _id to the request payload.
+        let addCurrentUserToAction = (req, res, next) => {
+          if (['POST', 'PUT'].indexOf(req.method) === -1 || !req.user) {
+            return next();
+          }
+          let userActions = ['moxtraMessage', 'moxtraTodo'];
+          if (userActions.indexOf(_.get(req.body, 'name')) === -1) {
+            return next();
+          }
+
+          let user;
+          try {
+            user = req.user.toObject();
+          }
+          catch (e) {
+            user = req.user;
+          }
+
+          _.set(req.body, 'settings.user', user._id);
+          return next();
+        };
+
+        let addFormioBotToMoxtraOrg = (req, res, next) => {
+
+        };
+
+        routes.beforePost.push(addCurrentUserToAction, addFormioBotToMoxtraOrg);
+        routes.beforePut.push(addCurrentUserToAction, addFormioBotToMoxtraOrg);
 
         return routes;
       },
