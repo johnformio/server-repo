@@ -1,4 +1,4 @@
-FROM ubuntu:14.04
+FROM node:boron-alpine
 MAINTAINER Form.io <support@form.io>
 
 RUN apt-get install -y curl && curl -sL https://deb.nodesource.com/setup_6.x | sudo bash -
