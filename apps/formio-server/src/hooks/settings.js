@@ -1050,7 +1050,8 @@ module.exports = function(app) {
           }
         });
         let project = {};
-        project[template.machineName || template.name || 'export'] = _.pick(template, ['title', 'name', 'tag', 'description', 'machineName']);
+        let projectKeys = ['title', 'name', 'tag', 'description', 'machineName'];
+        project[template.machineName || template.name || 'export'] = _.pick(template, projectKeys);
 
         steps.unshift(async.apply(_install, template, project));
 
@@ -1061,7 +1062,8 @@ module.exports = function(app) {
             }
 
             if ('access' in template) {
-              project.access = _.filter(project.access, access => ['create_all', 'read_all', 'update_all', 'delete_all'].indexOf(access.type) === -1);
+              let permissions = ['create_all', 'read_all', 'update_all', 'delete_all'];
+              project.access = _.filter(project.access, access => permissions.indexOf(access.type) === -1);
 
               template.access.forEach(access => {
                 project.access.push({
