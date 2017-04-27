@@ -1,4 +1,4 @@
-FROM node:boron-alpine
+FROM node:boron-slim
 MAINTAINER Form.io <support@form.io>
 
 RUN apt-get update && apt-get install -y apt-transport-https
