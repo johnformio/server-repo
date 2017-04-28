@@ -97,27 +97,27 @@ module.exports = function(options) {
   // Handle our API Keys.
   app.use(require('./src/middleware/apiKey')(app.formio.formio));
 
-  // Add download submission endpoint.
-  let base64DecodeUrl = function(str) {
-    str = (str + '===').slice(0, str.length + (str.length % 4));
-    str = str.replace(/-/g, '+').replace(/_/g, '/');
-    if (typeof Buffer.from === "function") {
-      // Node 5.10+
-      return Buffer.from(str, 'base64').toString();
-    }
-    else {
-      // older Node versions
-      return (new Buffer(str, 'base64')).toString();
-    }
-  };
-
-  app.use('/project/:projectId/form/:formId/submission/:submissionId/download/:fileId/:token',
+  // Download a submission pdf.
+  app.use('/project/:projectId/form/:formId/submission/:submissionId/download/:fileId',
     function(req, res, next) {
-      if (!req.params.token) {
+      if (!req.query.token) {
         return res.sendStatus(401);
       }
-      req.headers['x-jwt-token'] = base64DecodeUrl(req.params.token);
-      next();
+
+      // Get the jwt token for this user.
+      let redis = app.formio.analytics.getRedis();
+      redis.get(req.query.token, function(err, token) {
+        if (err) {
+          return next('Token not valid.');
+        }
+
+        if (!token) {
+          return next('Token expired.');
+        }
+
+        req.headers['x-jwt-token'] = token;
+        next();
+      });
     },
     app.formio.formio.middleware.tokenHandler,
     app.formio.formio.middleware.permissionHandler,

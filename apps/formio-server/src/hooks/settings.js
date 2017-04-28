@@ -12,6 +12,7 @@ var jwt = require('jsonwebtoken');
 var semver = require('semver');
 var util = require('../util/util');
 let async = require('async');
+var chance = new (require('chance'))();
 
 module.exports = function(app) {
   var formioServer = app.formio;
@@ -404,6 +405,25 @@ module.exports = function(app) {
       token: function(token, form) {
         token.form.project = form.project;
         return token;
+      },
+
+      /**
+       * Modify the temp token to add a redis id to it.
+       *
+       * @param req
+       * @param res
+       * @param token
+       * @param allow
+       * @param expire
+       * @param tempToken
+       */
+      tempToken: function(req, res, token, allow, expire, tokenResponse) {
+        let redis = formioServer.analytics.getRedis();
+        tokenResponse.key = chance.string({
+          pool: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+          length: 30
+        });
+        redis.set(tokenResponse.key, tokenResponse.token, 'EX', expire);
       },
 
       isAdmin: function(isAdmin, req) {
