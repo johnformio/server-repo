@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## 4.1.5
+### Changed
+ - Added keys to the temp tokens to allow easier GET requests.
+
 ## 4.1.4
 ### Changed
  - Now perform new base server build for every build.
