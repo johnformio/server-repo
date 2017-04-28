@@ -103,6 +103,7 @@ module.exports = function(router) {
       },
       framework: {
         type: String,
+        enum: ['angular', 'angular2', 'react', 'vue', 'html5', 'simple', 'custom'],
         description: 'The target framework for the project.',
         maxlength: 32
       },
