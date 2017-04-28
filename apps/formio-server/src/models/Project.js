@@ -82,16 +82,6 @@ module.exports = function(router) {
         ref: 'project',
         index: true
       },
-      type: {
-        type: String,
-        enum: ['hosted', 'onPremise'],
-        default: 'hosted'
-      },
-      externalUrl: {
-        type: String,
-        description: 'The external URL to the project.',
-        maxlength: 256
-      },
       plan: {
         type: String,
         enum: ['basic', 'independent', 'team', 'trial', 'commercial'],
