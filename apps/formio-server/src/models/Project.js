@@ -101,6 +101,11 @@ module.exports = function(router) {
       steps: {
         type: [String]
       },
+      framework: {
+        type: String,
+        description: 'The target framework for the project.',
+        maxlength: 32
+      },
       protect: {
         type: Boolean,
         default: false
