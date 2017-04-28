@@ -106,6 +106,10 @@ module.exports = function(options) {
 
       // Get the jwt token for this user.
       let redis = app.formio.analytics.getRedis();
+      if (!redis) {
+        return next('Redis not available');
+      }
+
       redis.get(req.query.token, function(err, token) {
         if (err) {
           return next('Token not valid.');
