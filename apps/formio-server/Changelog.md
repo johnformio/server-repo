@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## 4.1.7
+### Changed
+ - The submission pdf download to use POST instead of GET so it works with ELB.
+
+## 4.1.6
+### Added
+ - Framework definition to project model.
+
+### Changed
+ - Removed Remove type and externalUrl from Project schema until On Site environments are set up later.
+
 ## 4.1.5
 ### Changed
  - Added keys to the temp tokens to allow easier GET requests.
