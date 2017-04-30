@@ -18,12 +18,15 @@ module.exports = function(formio) {
             return next(err);
           }
           request({
-            method: 'GET',
+            method: 'POST',
             url: FORMIO_FILES_SERVER + '/pdf/' + req.params.projectId + '/file/' + req.params.fileId + '/download',
             headers: {
-              'x-form': JSON.stringify(form),
-              'x-submission': JSON.stringify(submission),
               'x-file-token': settings.filetoken
+            },
+            json: true,
+            body: {
+              form: form,
+              submission: submission
             }
           }).pipe(res);
         });
