@@ -47,6 +47,14 @@ module.exports = function(router, formioServer) {
       }
     ],
     afterPost: [
+      function(req, res, next) {
+        cache.loadCurrentProject(req, (err, project) => {
+          project.tag = req.body.tag;
+          project.markModified('tag');
+          project.save();
+          return next();
+        });
+      },
       formio.middleware.filterResourcejsResponse(hiddenFields)
     ],
     beforePut: [
