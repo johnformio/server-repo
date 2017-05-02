@@ -25,7 +25,7 @@ module.exports = (router) => {
   });
 
   /**
-   * Convert the moxtra settings url for environemnts to the base api url.
+   * Convert the moxtra settings url for environments to the base api url.
    *
    * Note: We need to convert it, because it stores the token generation endpoint and we can't auto update since all the
    * project settings are encrypted..
@@ -116,9 +116,7 @@ module.exports = (router) => {
    * Get the auth token for administrative use within moxtra.
    *
    * @param {Object} req
-   * @param {Object|String} user
-   * @param [String] firstname
-   * @param [String] lastname
+   * @param {Object|String} project
    *
    * @returns {*|promise}
    */
