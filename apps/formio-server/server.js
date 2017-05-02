@@ -97,14 +97,31 @@ module.exports = function(options) {
   // Handle our API Keys.
   app.use(require('./src/middleware/apiKey')(app.formio.formio));
 
-  // Add download submission endpoint.
+  // Download a submission pdf.
   app.use('/project/:projectId/form/:formId/submission/:submissionId/download/:fileId',
     function(req, res, next) {
       if (!req.query.token) {
         return res.sendStatus(401);
       }
-      req.headers['x-jwt-token'] = req.query.token;
-      next();
+
+      // Get the jwt token for this user.
+      let redis = app.formio.analytics.getRedis();
+      if (!redis) {
+        return next('Redis not available');
+      }
+
+      redis.get(req.query.token, function(err, token) {
+        if (err) {
+          return next('Token not valid.');
+        }
+
+        if (!token) {
+          return next('Token expired.');
+        }
+
+        req.headers['x-jwt-token'] = token;
+        next();
+      });
     },
     app.formio.formio.middleware.tokenHandler,
     app.formio.formio.middleware.permissionHandler,

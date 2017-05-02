@@ -1,11 +1,13 @@
-FROM formio/ubuntu-base:latest
-MAINTAINER Randall Knutson <randall@form.io>
+FROM node:boron-slim
+MAINTAINER Form.io <support@form.io>
 
-RUN apt-get update
+RUN apt-get update && apt-get install -y \
+  build-essential \
+  apt-transport-https \
+  python
 
 # Install the core dd agent.
-RUN apt-get install -y apt-transport-https; \
-    sh -c "echo 'deb https://apt.datadoghq.com/ stable main' > /etc/apt/sources.list.d/datadog.list"; \
+RUN sh -c "echo 'deb https://apt.datadoghq.com/ stable main' > /etc/apt/sources.list.d/datadog.list"; \
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys C7A7DA52; \
     apt-get update; \
     apt-get install -y datadog-agent;

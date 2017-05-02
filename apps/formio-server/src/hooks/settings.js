@@ -12,6 +12,7 @@ var jwt = require('jsonwebtoken');
 var semver = require('semver');
 var util = require('../util/util');
 let async = require('async');
+var chance = new (require('chance'))();
 
 module.exports = function(app) {
   var formioServer = app.formio;
@@ -32,7 +33,7 @@ module.exports = function(app) {
   app.formio.formio.payment = require('../payment/payment')(app, app.formio.formio);
 
   app.storage = require('../storage/index.js')(app);
-  
+
   return {
     settings: function(settings, req, cb) {
       if (!req.projectId) {
@@ -365,6 +366,27 @@ module.exports = function(app) {
       token: function(token, form) {
         token.form.project = form.project;
         return token;
+      },
+
+      /**
+       * Modify the temp token to add a redis id to it.
+       *
+       * @param req
+       * @param res
+       * @param token
+       * @param allow
+       * @param expire
+       * @param tempToken
+       */
+      tempToken: function(req, res, token, allow, expire, tokenResponse) {
+        let redis = formioServer.analytics.getRedis();
+        if (redis) {
+          tokenResponse.key = chance.string({
+            pool: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+            length: 30
+          });
+          redis.set(tokenResponse.key, tokenResponse.token, 'EX', expire);
+        }
       },
 
       isAdmin: function(isAdmin, req) {
@@ -1011,7 +1033,8 @@ module.exports = function(app) {
           }
         });
         let project = {};
-        project[template.machineName || template.name || 'export'] = _.pick(template, ['title', 'name', 'tag', 'description', 'machineName']);
+        let projectKeys = ['title', 'name', 'tag', 'description', 'machineName'];
+        project[template.machineName || template.name || 'export'] = _.pick(template, projectKeys);
 
         steps.unshift(async.apply(_install, template, project));
 
@@ -1022,7 +1045,8 @@ module.exports = function(app) {
             }
 
             if ('access' in template) {
-              project.access = _.filter(project.access, access => ['create_all', 'read_all', 'update_all', 'delete_all'].indexOf(access.type) === -1);
+              let permissions = ['create_all', 'read_all', 'update_all', 'delete_all'];
+              project.access = _.filter(project.access, access => permissions.indexOf(access.type) === -1);
 
               template.access.forEach(access => {
                 project.access.push({
@@ -1287,14 +1311,14 @@ module.exports = function(app) {
       },
 
       actionRoutes: function(routes) {
-        let Moxtra = require('../actions/moxtra/utils')(app.formio);
-
         routes.beforePost = routes.beforePost || [];
         routes.beforePut = routes.beforePut || [];
+        routes.beforeDelete = routes.beforeDelete || [];
 
-        var projectProtectAccess = require('../middleware/projectProtectAccess')(formioServer.formio);
+        let Moxtra = require('../actions/moxtra/utils')(app.formio);
+        let projectProtectAccess = require('../middleware/projectProtectAccess')(formioServer.formio);
 
-        _.each(['beforePost', 'beforePut', 'beforeDelete'], function(handler) {
+        _.each(['beforePost', 'beforePut', 'beforeDelete'], handler => {
           routes[handler].unshift(projectProtectAccess);
         });
 
@@ -1334,11 +1358,11 @@ module.exports = function(app) {
           .then(token => {
             debug.settings(`moxtra formiobot token: ${token}`);
 
-            return next()
+            return next();
           })
           .catch(error => {
             debug.error(error);
-            return next()
+            return next();
           });
         };
 
@@ -1347,6 +1371,7 @@ module.exports = function(app) {
 
         return routes;
       },
+
       roleRoutes: function(routes) {
         routes.before.unshift(require('../middleware/bootstrapEntityProject'), require('../middleware/projectFilter'));
         routes.before.unshift(require('../middleware/projectProtectAccess')(formioServer.formio));

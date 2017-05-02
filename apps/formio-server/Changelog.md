@@ -5,6 +5,39 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+
+## 4.1.7
+### Changed
+ - The submission pdf download to use POST instead of GET so it works with ELB.
+
+## 4.1.6
+### Added
+ - Framework definition to project model.
+
+### Changed
+ - Removed Remove type and externalUrl from Project schema until On Site environments are set up later.
+
+## 4.1.5
+### Changed
+ - Added keys to the temp tokens to allow easier GET requests.
+
+## 4.1.4
+### Changed
+ - Now perform new base server build for every build.
+ - Change node.js version to 6.x
+ - Changed base linux to node:boron-slim
+
+## 4.1.3
+### Fixed
+ - An issue that was crashing the server when Buffer does not use proper constructor for node versions.
+
+## 4.1.2
+### Fixed
+ - Issue with the actionRoutes getting declared twice in the hooks/settings.js file.
+ - Issue with download pdf using query to get the token and it is too long.
+
+## 4.1.1
+ - No changes. 
  
 ## 4.1.0
 ### Added
