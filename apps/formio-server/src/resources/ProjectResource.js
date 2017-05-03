@@ -154,27 +154,29 @@ module.exports = function(router, formioServer) {
         }
         next();
       },
+      formio.middleware.condensePermissionTypes,
       // Protected Project Access.
       function(req, res, next) {
-        // Not allowed to modify access settings in a protected project.
-        if (
-          'access' in req.body &&
-          'protect' in req.currentProject
-          && req.currentProject.protect === true
-          && !_.isEqual(JSON.parse(JSON.stringify(req.currentProject.access)), req.body.access)
-        ) {
-          debug('Denying change to access because protected.');
-          return res.status(403).send('Modifications not allowed. Project is protected.');
-        }
-        // Not allowed to modify project name in a protected project.
-        if (
-          'protect' in req.currentProject &&
-          req.currentProject.protect === true &&
-          req.body.protect === true &&
-          req.currentProject.name !== req.body.name
-        ) {
-          debug('Denying change to name because protected');
-          return res.status(403).send('Modifications not allowed. Project is protected.');
+        // Don't allow some changes if project is protected.
+        if ('protect' in req.currentProject && req.currentProject.protect === true && req.body.protect !== false) {
+          let accesses = {};
+          req.currentProject.access.forEach(access => {
+            accesses[access.type] = access.roles;
+          });
+          req.body.name = req.currentProject.name;
+          req.body.access = req.body.access || [];
+          req.body.access.forEach(access => {
+            if (['read_all', 'create_all', 'update_all', 'delete_all'].indexOf(access.type) !== -1) {
+              access.roles = accesses[access.type].map(role => role.toString());
+              delete accesses[access.type];
+            }
+          });
+          Object.keys(accesses).forEach(key => {
+            req.body.access.push({
+              type: key,
+              roles: accesses[key].map(role => role.toString())
+            });
+          });
         }
         next();
       },
@@ -188,7 +190,6 @@ module.exports = function(router, formioServer) {
         }
         next();
       },
-      formio.middleware.condensePermissionTypes,
       formio.middleware.projectAccessFilter,
       formio.middleware.projectPlanFilter,
       removeProjectSettings
