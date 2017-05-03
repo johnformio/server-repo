@@ -125,12 +125,14 @@ module.exports = function(router) {
   MoxtraLogin.prototype.resolve = function(handler, method, req, res, next) {
     if (method === 'delete') {
       // If the current project does not have any orgId, dont worry about deleting the user. There is no moxtra support.
-      if (!_.has(req.currentProject, 'settings.moxtra.orgId') || !_.has(req.currentProject, 'settings.moxtra.partnerId')) {
+      if (
+        !_.has(req.currentProject, 'settings.moxtra.orgId')
+        || !_.has(req.currentProject, 'settings.moxtra.partnerId')
+      ) {
         return next();
       }
 
       let orgId = _.get(req.currentProject, 'settings.moxtra.orgId');
-      let partnerId = _.get(req.currentProject, 'settings.moxtra.partnerId');
       return Moxtra.getFormioBotToken(req, req.projectId)
       .then(token => Moxtra.removeUserFromOrg(req, orgId, req.subId, token))
       .then(results => {
