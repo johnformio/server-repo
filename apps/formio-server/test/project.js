@@ -980,14 +980,21 @@ module.exports = function(app, template, hook) {
 
       it('A Form.io User cannot Update the Access of a protected Project', function(done) {
         var tmpProject = _.cloneDeep(project);
-        tmpProject.access = [{}];
+        tmpProject.access = [{ type: project.access[0].type, roles: []}, project.access[1]];
 
         request(app)
           .put('/project/' + template.project._id)
           .set('x-jwt-token', template.formio.owner.token)
           .send(tmpProject)
-          .expect(403)
-          .end(done);
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              done(err);
+            }
+
+            assert.deepEqual(res.body.access, project.access);
+            done();
+          });
       });
 
       it('A Form.io User cannot Update the Name of a protected Project', function(done) {
@@ -998,8 +1005,15 @@ module.exports = function(app, template, hook) {
           .put('/project/' + template.project._id)
           .set('x-jwt-token', template.formio.owner.token)
           .send(tmpProject)
-          .expect(403)
-          .end(done);
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              done(err);
+            }
+
+            assert.equal(res.body.name, project.name);
+            done();
+          });
       });
 
       it('A Form.io User should be able to Update the Settings of a protected Project', function(done) {
