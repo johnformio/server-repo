@@ -375,7 +375,7 @@ module.exports = function(app, template, hook) {
               done(err);
             }
 
-            assert.deepEqual(res.body, { tag: '0.0.0'});
+            assert.deepEqual(res.body, { tag: '0.0.2'});
 
             done();
           });
@@ -392,7 +392,7 @@ module.exports = function(app, template, hook) {
               done(err);
             }
 
-            assert.deepEqual(res.body, { tag: '0.0.0'});
+            assert.deepEqual(res.body, { tag: '0.0.2'});
 
             done();
           });
@@ -409,7 +409,7 @@ module.exports = function(app, template, hook) {
               done(err);
             }
 
-            assert.deepEqual(res.body, { tag: '0.0.0'});
+            assert.deepEqual(res.body, { tag: '0.0.2'});
 
             done();
           });
@@ -425,7 +425,7 @@ module.exports = function(app, template, hook) {
               done(err);
             }
 
-            assert.deepEqual(res.body, { tag: '0.0.0'});
+            assert.deepEqual(res.body, { tag: '0.0.2'});
 
             done();
           });
@@ -942,7 +942,22 @@ module.exports = function(app, template, hook) {
 
             tag = res.body;
 
-            done();
+            request(app)
+              .get('/project/' + env1._id)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send()
+              .expect(200)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                env1 = res.body;
+
+                assert.equal(env1.tag, '0.0.4');
+
+                done();
+              });
           });
       });
 
