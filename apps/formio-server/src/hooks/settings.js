@@ -557,6 +557,7 @@ module.exports = function(app) {
           }
 
           // Load the project.
+          /* eslint-disable camelcase, max-statements, no-fallthrough */
           cache.loadPrimaryProject(req, function(err, project) {
             if (err) {
               _debug(err);
@@ -578,142 +579,72 @@ module.exports = function(app) {
               var teamAccess = _.filter(project.access, function(permission) {
                 return _.startsWith(permission.type, 'team_');
               });
-              _debug('Team Permissions: ' + JSON.stringify(teamAccess));
+              //_debug('Team Permissions: ' + JSON.stringify(teamAccess));
+              // Initialize the project access.
+              access.project = access.project || {};
+              access.project.create_all = access.project.create_all || [];
+              access.project.read_all = access.project.read_all || [];
+              access.project.update_all = access.project.update_all || [];
+              access.project.delete_all = access.project.delete_all || [];
 
-              /* eslint-disable camelcase, max-statements */
+              // Initialize the form access.
+              access.form = access.form || {};
+              access.form.create_all = access.form.create_all || [];
+              access.form.read_all = access.form.read_all || [];
+              access.form.update_all = access.form.update_all || [];
+              access.form.delete_all = access.form.delete_all || [];
+
+              // Initialize the submission access.
+              access.submission = access.submission || {};
+              access.submission.create_all = access.submission.create_all || [];
+              access.submission.read_all = access.submission.read_all || [];
+              access.submission.update_all = access.submission.update_all || [];
+              access.submission.delete_all = access.submission.delete_all || [];
+
+              // Initialize the role access.
+              access.role = access.role || {};
+              access.role.create_all = access.role.create_all || [];
+              access.role.read_all = access.role.read_all || [];
+              access.role.update_all = access.role.update_all || [];
+              access.role.delete_all = access.role.delete_all || [];
+
               teamAccess.forEach(function(permission) {
                 _debug(permission);
-                /**
-                 * For the team_read permission, the following need to be added:
-                 *   - read_all permissions on the project
-                 *   - read_all permissions on all forms
-                 *   - read_all permissions on all submissions
-                 */
-                if (permission.type === 'team_read') {
-                  // Modify the project access.
-                  access.project = access.project || {};
-                  access.project.read_all = access.project.read_all || [];
-
-                  // Modify the form access.
-                  access.form = access.form || {};
-                  access.form.read_all = access.form.read_all || [];
-
-                  // Modify the submission access.
-                  access.submission = access.submission || {};
-                  access.submission.read_all = access.submission.read_all || [];
-
-                  // Iterate each team in the team_read roles, and add their permissions.
-                  permission.roles = permission.roles || [];
-                  permission.roles.forEach(function(id) {
-                    access.project.read_all.push(id.toString());
-                    access.form.read_all.push(id.toString());
-                    access.submission.read_all.push(id.toString());
-                  });
-                }
-
-                /**
-                 * For the team_write permission, the following need to be added:
-                 *   - create_all permissions on the project
-                 *   - create_all permissions on all forms
-                 *   - read_all permissions on the project
-                 *   - read_all permissions on all forms
-                 *   - update_all permissions on the project
-                 *   - update_all permissions on all forms
-                 *   - delete_all permissions on all forms
-                 */
-                else if (permission.type === 'team_write') {
-                  // Modify the project access.
-                  access.project = access.project || {};
-                  access.project.create_all = access.project.create_all || [];
-                  access.project.read_all = access.project.read_all || [];
-                  access.project.update_all = access.project.update_all || [];
-                  access.project.delete_all = access.project.delete_all || [];
-
-                  // Modify the form access.
-                  access.form = access.form || {};
-                  access.form.create_all = access.form.create_all || [];
-                  access.form.read_all = access.form.read_all || [];
-                  access.form.update_all = access.form.update_all || [];
-                  access.form.delete_all = access.form.delete_all || [];
-
-                  // Iterate each team in the team_write roles, and add their permissions.
-                  permission.roles = permission.roles || [];
-                  permission.roles.forEach(function(id) {
-                    access.project.create_all.push(id.toString());
-                    access.project.read_all.push(id.toString());
-                    access.project.update_all.push(id.toString());
-                    access.project.delete_all.push(id.toString());
-
-                    access.form.create_all.push(id.toString());
-                    access.form.read_all.push(id.toString());
-                    access.form.update_all.push(id.toString());
-                    access.form.delete_all.push(id.toString());
-                  });
-                }
-
-                /**
-                 * For the team_admin permission, the following need to be added:
-                 *   - create_all permissions on the project
-                 *   - create_all permissions on all forms
-                 *   - create_all permissions on all submissions
-                 *   - read_all permissions on the project
-                 *   - read_all permissions on all forms
-                 *   - read_all permissions on all submissions
-                 *   - update_all permissions on the project
-                 *   - update_all permissions on all forms
-                 *   - update_all permissions on all submissions
-                 *   - delete_all permissions on all forms
-                 *   - delete_all permissions on all submissions
-                 */
-                else if (permission.type === 'team_admin') {
-                  // Modify the project access.
-                  access.project = access.project || {};
-                  access.project.create_all = access.project.create_all || [];
-                  access.project.read_all = access.project.read_all || [];
-                  access.project.update_all = access.project.update_all || [];
-                  access.project.delete_all = access.project.delete_all || [];
-
-                  // Modify the form access.
-                  access.form = access.form || {};
-                  access.form.create_all = access.form.create_all || [];
-                  access.form.read_all = access.form.read_all || [];
-                  access.form.update_all = access.form.update_all || [];
-                  access.form.delete_all = access.form.delete_all || [];
-
-                  // Modify the submission access.
-                  access.submission = access.submission || {};
-                  access.submission.create_all = access.submission.create_all || [];
-                  access.submission.read_all = access.submission.read_all || [];
-                  access.submission.update_all = access.submission.update_all || [];
-                  access.submission.delete_all = access.submission.delete_all || [];
-
-                  // Iterate each team in the team_admin roles, and add their permissions.
-                  permission.roles = permission.roles || [];
-                  permission.roles.forEach(function(id) {
-                    access.project.create_all.push(id.toString());
-                    access.project.read_all.push(id.toString());
-                    access.project.update_all.push(id.toString());
-                    access.project.delete_all.push(id.toString());
-
-                    access.form.create_all.push(id.toString());
-                    access.form.read_all.push(id.toString());
-                    access.form.update_all.push(id.toString());
-                    access.form.delete_all.push(id.toString());
-
-                    access.submission.create_all.push(id.toString());
-                    access.submission.read_all.push(id.toString());
-                    access.submission.update_all.push(id.toString());
-                    access.submission.delete_all.push(id.toString());
-                  });
-                }
+                permission.roles = permission.roles || [];
+                // Note: These roles are additive. team_admin gets all roles in team_write and team_read.
+                // Iterate each team in the team roles, and add their permissions.
+                permission.roles.forEach(function(id) {
+                   switch (permission.type) {
+                    case 'team_admin':
+                      access.project.update_all.push(id.toString());
+                      access.project.delete_all.push(id.toString());
+                    case 'team_write':
+                      access.project.create_all.push(id.toString()); // This controls form creation.
+                      access.form.create_all.push(id.toString());
+                      access.form.update_all.push(id.toString());
+                      access.form.delete_all.push(id.toString());
+                      access.submission.create_all.push(id.toString());
+                      access.submission.update_all.push(id.toString());
+                      access.submission.delete_all.push(id.toString());
+                      access.role.create_all.push(id.toString());
+                      access.role.update_all.push(id.toString());
+                      access.role.delete_all.push(id.toString());
+                    case 'team_read':
+                      access.project.read_all.push(id.toString());
+                      access.form.read_all.push(id.toString());
+                      access.submission.read_all.push(id.toString());
+                      access.role.read_all.push(id.toString());
+                      break;
+                  }
+                });
               });
-              /* eslint-enable camelcase, max-statements */
             }
 
             // Pass the access of this Team to the next function.
-            _debug(JSON.stringify(access));
+            //_debug(JSON.stringify(access));
             return callback(null);
           });
+          /* eslint-enable camelcase, max-statements, no-fallthrough */
         };
 
         // Get the permissions for an Project with the given ObjectId.
