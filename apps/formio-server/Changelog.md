@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+### Fixed
+ - Fixed issue with oauth action, where the roles weren't being filtered for non-deleted status.
 
 ## 4.1.7
 ### Changed
