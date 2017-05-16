@@ -196,7 +196,7 @@ module.exports = function(app, formioServer) {
       if (member && owner) {
         query['$or'] = [
           {'data.members': {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}}},
-          {'data.owners': {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}}},
+          {'data.admins': {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}}},
           {owner: {$in: [util.idToBson(user), util.idToString(user)]}}
         ];
       }
@@ -206,7 +206,7 @@ module.exports = function(app, formioServer) {
       else if (!member && owner) {
         query['$or'] = [
           {'owner': {$in: [util.idToBson(user), util.idToString(user)]}},
-          {'data.owners': {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}}}
+          {'data.admins': {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}}}
         ];
       }
       else {
@@ -392,7 +392,7 @@ module.exports = function(app, formioServer) {
       team.data = team.data || {};
       team.data.name = team.data.name || '';
       team.data.members = team.data.members || [];
-      team.data.owners = team.data.owners || [];
+      team.data.admins = team.data.admins || [];
 
       // The sanitized version of the team.
       debug.filterTeamsForDisplay('Team: ' + JSON.stringify(team));
@@ -407,7 +407,7 @@ module.exports = function(app, formioServer) {
               name: member.name
             };
           }),
-          owners: _.map(team.data.owners, function(member) {
+          admins: _.map(team.data.admins, function(member) {
             return {
               _id: member._id,
               name: member.name
