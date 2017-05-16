@@ -58,6 +58,7 @@
     "through": "^2.3.8",
     "tldjs": "^1.5.3",
     "traverse": "^0.6.6",
+    "uglify-es": "git+https://github.com/mishoo/UglifyJS2.git#harmony",
     "universal-analytics": "^0.3.9",
     "uuid": "^3.0.0",
     "ws": "^1.1.4"
