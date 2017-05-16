@@ -58,7 +58,6 @@
     "through": "^2.3.8",
     "tldjs": "^1.5.3",
     "traverse": "^0.6.6",
-    "uglify-es": "git+https://github.com/mishoo/UglifyJS2.git#harmony",
     "universal-analytics": "^0.3.9",
     "uuid": "^3.0.0",
     "ws": "^1.1.4"
@@ -68,11 +67,12 @@
     "eslint": "^2.11.1",
     "eslint-config-formio": "^1.1.2",
     "mocha": "^2.5.3",
-    "node-optimize": "^1.2.1",
     "pre-commit": "^1.2.2",
+    "prepack": "^0.2.2",
     "sinon": "^1.17.2",
     "supertest": "^1.1.0",
-    "uglify-js": "git+https://github.com/mishoo/UglifyJS2.git#harmony"
+    "uglify-es": "git+https://github.com/mishoo/UglifyJS2.git#harmony",
+    "webpack": "^2.5.1"
   },
   "pre-commit": [
     "lint"
