@@ -1883,7 +1883,7 @@ module.exports = function(app, template, hook) {
             .send({
               owner: template.users.user2._id
             })
-            .expect('Content-Type', /json/)
+            //.expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
               if (err) {
