@@ -2182,23 +2182,22 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user with group access, should be able to change the owner of a submission', function(done) {
+        it('A user with group access, should not be able to change the owner of a submission', function(done) {
           request(app)
             .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
             .set('x-jwt-token', template.users.user1.token)
             .send({
               owner: template.users.user2._id
             })
-            .expect('Content-Type', /json/)
-            .expect(200)
+            .expect('Content-Type', /text/)
+            .expect(401)
             .end(function(err, res) {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
-              assert.equal(response.owner, template.users.user2._id);
-              submission = response;
+              assert.deepEqual(res.body, {});
+              assert.equal(res.text, 'Unauthorized');
 
               // Store the JWT for future API calls.
               template.users.user1.token = res.headers['x-jwt-token'];
