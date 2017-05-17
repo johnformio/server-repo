@@ -1883,17 +1883,15 @@ module.exports = function(app, template, hook) {
             .send({
               owner: template.users.user2._id
             })
-            //.expect('Content-Type', /json/)
-            .expect(200)
+            .expect('Content-Type', /text/)
+            .expect(401)
             .end(function(err, res) {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
-              assert.equal(response.owner, submission.owner);
-              assert.notEqual(response.owner, template.users.user1._id);
-              assert.notEqual(response.owner, template.users.user2._id);
+              assert.deepEqual(res.body, {});
+              assert.equal(res.text, 'Unauthorized');
 
               // Store the JWT for future API calls.
               template.users.user1.token = res.headers['x-jwt-token'];
