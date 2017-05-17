@@ -2078,6 +2078,8 @@ module.exports = function(app, template, hook) {
             .set('x-jwt-token', template.users.admin.token)
             .send({
               data: {
+                readPerm: null,
+                writePerm: null,
                 adminPerm: group
               }
             })
