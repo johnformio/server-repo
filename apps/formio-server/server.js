@@ -41,7 +41,7 @@ module.exports = function(options) {
   // Hook each request and add analytics support.
   app.use(analytics.hook);
 
-  app.use(favicon(__dirname + '/favicon.ico'));
+  app.use(favicon('./favicon.ico'));
 
   // Add Middleware necessary for REST API's
   app.use(bodyParser.urlencoded({extended: true, limit: '16mb'}));
