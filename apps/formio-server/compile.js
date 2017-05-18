@@ -39,6 +39,11 @@ var copyFile = function(file) {
 var compiler = webpack({
   entry: './main.js',
   target: 'node',
+  node: {
+    __filename: true,
+    __dirname: true,
+    module: true
+  },
   output: {
     path: path.join(__dirname, 'build'),
     filename: 'main.js'
@@ -48,7 +53,13 @@ var compiler = webpack({
 
 compiler.run(function(err, stats) {
   var code = UglifyJS.minify(fs.readFileSync("build/main.js", "utf8"), {
-
+    mangle: {
+      reserved: [
+        '__filename',
+        '__dirname',
+        'module'
+      ]
+    }
   }).code;
 
   fs.writeFile('build/main.js', code);

@@ -68,8 +68,35 @@ module.exports = function(app, template, hook) {
     const originalProject = _.cloneDeep(tempProject);
 
     // Bootstrap
+    it('A Formio User should be able to create a Team without users', function(done) {
+      request(app)
+        .post('/project/' + template.formio.project._id + '/form/' + template.formio.teamResource._id + '/submission')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send({
+          data: {
+            name: chance.word(),
+            members: [{_id: template.users.user2._id}]
+          }
+        })
+        .expect('Content-Type', /json/)
+        .expect(201)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          // Store the JWT for future API calls.
+          template.formio.owner.token = res.headers['x-jwt-token'];
+
+          // Store the team reference for later.
+          template.team3 = res.body;
+
+          done();
+        });
+    });
+
     it('A Project Owner should be able to add one of their teams to have access with the team_admin permission', function(done) {
-      var teamAccess = {type: 'team_admin', roles: [template.team1._id]};
+      var teamAccess = [{type: 'team_admin', roles: [template.team1._id]}, {type: 'team_write', roles: [template.team3._id]}];
 
       request(app)
         .get('/project/' + template.project._id)
@@ -98,18 +125,24 @@ module.exports = function(app, template, hook) {
                 return done(err);
               }
 
-              var found = false;
+              var found = 0;
               var response = res.body;
               response.access.forEach(function(element) {
                 if (element.type === 'team_admin') {
-                  found = true;
+                  found++;
                   assert.notEqual(template.team1._id, null);
                   assert.notEqual(template.team1._id, '');
-                  assert.deepEqual(element, teamAccess);
+                  assert.deepEqual(element.roles, [template.team1._id]);
+                }
+                if (element.type === 'team_write') {
+                  found++;
+                  assert.notEqual(template.team3._id, null);
+                  assert.notEqual(template.team3._id, '');
+                  assert.deepEqual(element.roles, [template.team3._id]);
                 }
               });
 
-              assert.equal(found, true);
+              assert.equal(found, 2);
 
               // Update the project.
               template.project = response;
@@ -411,6 +444,16 @@ module.exports = function(app, template, hook) {
       });
   });
 
+    it('A team member with team_write can not create an environment', function(done) {
+    tempProject.project = template.project._id;
+    request(app)
+      .post('/project')
+      .send(tempProject)
+      .set('x-jwt-token', template.formio.user2.token)
+      .expect(403)
+      .end(done);
+  });
+
     it('A Non Team member cannot create an environment for a project', function(done) {
       var otherEnvironment = {
         title: chance.word(),
@@ -507,7 +550,6 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
-          // Update the users project access with the new team.
           var oldResponse = res.body;
           var oldAccess = _.clone(oldResponse.access);
           var newAccess = _.filter(oldAccess, function(permission) {
@@ -532,7 +574,7 @@ module.exports = function(app, template, hook) {
 
               var response = res.body;
               assert.notEqual(oldAccess.length, newAccess.length);
-              assert.equal(oldAccess.length, (newAccess.length + 1));
+              assert.equal(oldAccess.length, (newAccess.length + 2));
 
               // Update the project.
               template.project = response;
