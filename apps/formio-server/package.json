@@ -28,7 +28,7 @@
     "dotenv": "1.2.0",
     "edit-google-spreadsheet": "^0.2.21",
     "express": "^4.15.2",
-    "formio": "^1.17.5",
+    "formio": "^1.17.6",
     "formiojs": "^2.4.2",
     "is-url": "^1.2.1",
     "jira-connector": "^2.3.0",
@@ -44,7 +44,6 @@
     "node-paginate-anything": "git://github.com/polo2ro/node-paginate-anything.git#d3fd205557614a67a0bdee19fe581f43aba539bc",
     "omega-supreme": "git://github.com/formio/omega-supreme.git",
     "on-finished": "^2.3.0",
-    "pkginfo": "^0.4.0",
     "primus": "^5.2.2",
     "q": "^1.4.1",
     "redis": "^2.6.5",
@@ -67,11 +66,12 @@
     "eslint": "^2.11.1",
     "eslint-config-formio": "^1.1.2",
     "mocha": "^2.5.3",
-    "node-optimize": "^1.2.1",
     "pre-commit": "^1.2.2",
+    "prepack": "^0.2.2",
     "sinon": "^1.17.2",
     "supertest": "^1.1.0",
-    "uglify-js": "git+https://github.com/mishoo/UglifyJS2.git#harmony"
+    "uglify-es": "git+https://github.com/mishoo/UglifyJS2.git#harmony",
+    "webpack": "^2.5.1"
   },
   "pre-commit": [
     "lint"

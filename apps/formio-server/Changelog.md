@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+### Changed
+ - Changed the way team permissions were calculated and made them additive.
+ - Updated formio to 1.17.6
+
+## 4.1.8
+### Added
+ - When creating a tag, project is updated with that tag.
+ 
+### Fixed
+ - Protected projects can now update other settings that aren't protected.
 
 ## 4.1.7
 ### Changed
