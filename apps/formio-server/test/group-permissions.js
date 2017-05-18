@@ -1849,16 +1849,12 @@ module.exports = function(app, template, hook) {
         });
 
         it('A user with group access, should be able to update a submission', function(done) {
-          var update = chance.word();
+          submission.data.foo = chance.word();
 
           request(app)
             .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
             .set('x-jwt-token', template.users.user1.token)
-            .send({
-              data: {
-                foo: update
-              }
-            })
+            .send(submission)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
@@ -1867,7 +1863,8 @@ module.exports = function(app, template, hook) {
               }
 
               var response = res.body;
-              assert.equal(response.data.foo, update);
+              assert.equal(response.data.foo, submission.data.foo);
+              response = submission;
 
               // Store the JWT for future API calls.
               template.users.user1.token = res.headers['x-jwt-token'];
@@ -1877,21 +1874,22 @@ module.exports = function(app, template, hook) {
         });
 
         it('A user with group access, should not be able to change the owner of a submission', function(done) {
+          submission.owner = template.users.user2._id;
           request(app)
             .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
             .set('x-jwt-token', template.users.user1.token)
-            .send({
-              owner: template.users.user2._id
-            })
-            .expect('Content-Type', /text/)
-            .expect(401)
+            .send(submission)
+            .expect('Content-Type', /json/)
+            .expect(200)
             .end(function(err, res) {
               if (err) {
                 return done(err);
               }
 
-              assert.deepEqual(res.body, {});
-              assert.equal(res.text, 'Unauthorized');
+              var response = res.body;
+              assert.notEqual(response.owner, template.users.user1._id);
+              assert.notEqual(response.owner, template.users.user2._id);
+              submission = response;
 
               // Store the JWT for future API calls.
               template.users.user1.token = res.headers['x-jwt-token'];
@@ -2078,8 +2076,6 @@ module.exports = function(app, template, hook) {
             .set('x-jwt-token', template.users.admin.token)
             .send({
               data: {
-                readPerm: null,
-                writePerm: null,
                 adminPerm: group
               }
             })
@@ -2157,16 +2153,12 @@ module.exports = function(app, template, hook) {
         });
 
         it('A user with group access, should be able to update a submission', function(done) {
-          var update = chance.word();
+          submission.data.foo = chance.word();
 
           request(app)
             .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
             .set('x-jwt-token', template.users.user1.token)
-            .send({
-              data: {
-                foo: update
-              }
-            })
+            .send(submission)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
@@ -2175,7 +2167,8 @@ module.exports = function(app, template, hook) {
               }
 
               var response = res.body;
-              assert.equal(response.data.foo, update);
+              assert.equal(response.data.foo, submission.data.foo);
+              submission = response;
 
               // Store the JWT for future API calls.
               template.users.user1.token = res.headers['x-jwt-token'];
@@ -2185,12 +2178,11 @@ module.exports = function(app, template, hook) {
         });
 
         it('A user with group access, should be able to change the owner of a submission', function(done) {
+          submission.owner = template.users.user2._id;
           request(app)
             .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
             .set('x-jwt-token', template.users.user1.token)
-            .send({
-              owner: template.users.user2._id
-            })
+            .send(submission)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function(err, res) {
