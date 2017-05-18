@@ -13,6 +13,7 @@ var semver = require('semver');
 var util = require('../util/util');
 let async = require('async');
 var chance = new (require('chance'))();
+var fs = require('fs');
 
 module.exports = function(app) {
   var formioServer = app.formio;
@@ -1441,8 +1442,7 @@ module.exports = function(app) {
         var _debug = require('debug')('formio:settings:config');
 
         // Hook the schema var to load the latest public/private schema.
-        require('pkginfo')(module);
-        var pkg = module.exports;
+        var pkg = JSON.parse(fs.readFileSync('./package.json'));
         if (pkg && pkg.schema && pkg.schema !== null && semver.gt(pkg.schema, config.schema)) {
           config.schema = pkg.schema;
         }

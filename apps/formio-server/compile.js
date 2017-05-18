@@ -41,7 +41,8 @@ var compiler = webpack({
   target: 'node',
   node: {
     __filename: true,
-    __dirname: true
+    __dirname: true,
+    module: true
   },
   output: {
     path: path.join(__dirname, 'build'),
@@ -55,7 +56,8 @@ compiler.run(function(err, stats) {
     mangle: {
       reserved: [
         '__filename',
-        '__dirname'
+        '__dirname',
+        'module'
       ]
     }
   }).code;
