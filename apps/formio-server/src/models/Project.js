@@ -110,7 +110,13 @@ module.exports = function(router) {
         type: Number,
         default: null
       },
-      access: [formio.schemas.PermissionSchema]
+      access: [formio.schemas.PermissionSchema],
+      trial: {
+        type: Date,
+        description: 'The start date of the trial.',
+        'default': Date.now,
+        __readonly: true
+      }
     })
   });
   /* eslint-enable new-cap, max-len */
