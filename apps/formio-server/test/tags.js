@@ -655,7 +655,7 @@ module.exports = function(app, template, hook) {
           .end(done);
       });
 
-      it('Should allow deploying for a team plans', done => {
+      it('Should not allow deploying for a team plans', done => {
         request(app)
           .post('/project/' + project._id + '/deploy')
           .set('x-jwt-token', template.formio.owner.token)
@@ -663,18 +663,18 @@ module.exports = function(app, template, hook) {
             type: 'tag',
             tag: '0.0.1'
           })
-          .expect(200)
+          .expect(402)
           .end(done);
       });
 
-      it('Should allow tagging for a team plans', done => {
+      it('Should not allow tagging for a team plans', done => {
         request(app)
           .post('/project/' + project._id + '/tag')
           .set('x-jwt-token', template.formio.owner.token)
           .send({
             tag: '0.0.3'
           })
-          .expect(201)
+          .expect(402)
           .end(done);
       });
     });
