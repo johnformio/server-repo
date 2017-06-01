@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+### Added
+ - Trial date to projects and update hook to set all basic to trials.
+ 
+### Changed
+ - Disallow environments, tagging and deploying on team plans.
+
 ### Fixed
  - Fixed issue with oauth action, where the roles weren't being filtered for non-deleted status.
 

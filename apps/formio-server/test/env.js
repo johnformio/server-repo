@@ -235,6 +235,15 @@ module.exports = function(app, template, hook) {
         });
     });
 
+    it('Set to commercial plan', done => {
+      request(app)
+        .post('/project/' + template.project._id + '/upgrade')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send({plan: 'commercial'})
+        .expect(200)
+        .end(done);
+    });
+
     it('A Form.io user can create an environment', function(done) {
       var myProject = {
         title: chance.word(),

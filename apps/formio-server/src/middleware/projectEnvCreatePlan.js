@@ -18,13 +18,13 @@ module.exports = function(formio) {
       debug(plan);
       switch (plan.toString()) {
         case 'commercial':
-        case 'team':
         case 'trial':
           return next();
+        case 'team':
         case 'independent':
         case 'basic':
         default:
-          return res.status(402).send('Environments can only be created on a Team Pro or higher plan.');
+          return res.status(402).send('Environments can only be created on a Commercial or higher plan.');
       }
     });
   };

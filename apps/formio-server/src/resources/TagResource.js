@@ -28,7 +28,7 @@ module.exports = function(router, formioServer) {
       formio.middleware.filterResourcejsResponse(hiddenFields)
     ],
     beforePost: [
-      formio.middleware.restrictToPlans(['team', 'commercial', 'trial']),
+      formio.middleware.restrictToPlans(['commercial', 'trial']),
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       formio.middleware.tagHandler,
       function(req, res, next) {
@@ -97,7 +97,7 @@ module.exports = function(router, formioServer) {
    */
   router.post(
     '/project/:projectId/deploy',
-    formio.middleware.restrictToPlans(['team', 'commercial', 'trial']),
+    formio.middleware.restrictToPlans(['commercial', 'trial']),
     function(req, res, next) {
       formio.mongoose.model('project').findOne({
         _id: req.projectId,

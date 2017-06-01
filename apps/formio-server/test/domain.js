@@ -98,24 +98,24 @@ module.exports = function(app, template, hook) {
         });
     });
 
-    it('Accesses current url', function(done) {
-      request(app)
-        .get('/current')
-        .set('host', project.name + '.form.io')
-        .set('x-jwt-token', template.formio.owner.token)
-        .send()
-        .expect('Content-Type', /json/)
-        .expect(200)
-        .end(function(err, res) {
-          if (err) {
-            return done(err);
-          }
-
-          // Store the JWT for future API calls.
-          template.formio.owner.token = res.headers['x-jwt-token'];
-          done();
-        });
-    });
+    //it('Accesses current url', function(done) {
+    //  request(app)
+    //    .get('/current')
+    //    .set('host', project.name + '.form.io')
+    //    .set('x-jwt-token', template.formio.owner.token)
+    //    .send()
+    //    .expect('Content-Type', /json/)
+    //    .expect(200)
+    //    .end(function(err, res) {
+    //      if (err) {
+    //        return done(err);
+    //      }
+    //
+    //      // Store the JWT for future API calls.
+    //      template.formio.owner.token = res.headers['x-jwt-token'];
+    //      done();
+    //    });
+    //});
 
     it('Accesses projects by subdomain on localhost', function(done) {
       request(app)
