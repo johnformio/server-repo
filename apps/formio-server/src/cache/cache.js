@@ -120,7 +120,7 @@ module.exports = function(formio) {
 
         try {
           var currTime = (new Date()).getTime();
-          var projTime = (new Date(result.created.toString())).getTime();
+          var projTime = (new Date(result.trial.toString())).getTime();
           var delta = Math.ceil(parseInt((currTime - projTime) / 1000));
           var day = 86400;
           var remaining = 30 - parseInt(delta / day);
