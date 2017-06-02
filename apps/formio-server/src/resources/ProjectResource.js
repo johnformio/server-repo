@@ -184,6 +184,7 @@ module.exports = function(router, formioServer) {
     ],
     afterDelete: [
       formio.middleware.filterResourcejsResponse(hiddenFields),
+      formio.middleware.customCrmAction('deleteproject'),
       removeProjectSettings
     ]
   });
