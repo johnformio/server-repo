@@ -4,6 +4,9 @@ var Q = require('q');
 var debug = require('debug')('formio:payment');
 
 module.exports = function(app, formio) {
+  // Load custom CRM action.
+  formio.middleware.customCrmAction = require('../middleware/customCrmAction')(formio);
+
   var cache = require('../cache/cache')(formio);
 
   app.post('/payeezy',
@@ -16,7 +19,8 @@ module.exports = function(app, formio) {
     formio.middleware.tokenHandler,
     require('../middleware/userProject')(cache),
     require('../middleware/restrictOwnerAccess')(formio),
-    require('./upgrade')(formio)
+    require('./upgrade')(formio),
+    formio.middleware.customCrmAction('upgradeproject')
   );
 
   var paymentFormId;
