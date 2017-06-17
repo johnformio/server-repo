@@ -69,15 +69,14 @@ module.exports = function(schema, options) {
     if (!secret || !cipherbuffer) {
       return null;
     }
-
-    var decipher = crypto.createDecipher('aes-256-cbc', secret);
-    var decryptedJSON = Buffer.concat([
-      decipher.update(cipherbuffer), // Buffer contains encrypted utf8
-      decipher.final()
-    ]);
-
     var data = {};
+
     try {
+      var decipher = crypto.createDecipher('aes-256-cbc', secret);
+      var decryptedJSON = Buffer.concat([
+        decipher.update(cipherbuffer), // Buffer contains encrypted utf8
+        decipher.final()
+      ]);
       data = JSON.parse(decryptedJSON);
     }
     catch (e) {
