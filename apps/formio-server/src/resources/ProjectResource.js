@@ -175,7 +175,8 @@ module.exports = function(router, formioServer) {
       require('../middleware/projectTemplate')(formio),
       formio.middleware.filterResourcejsResponse(hiddenFields),
       removeProjectSettings,
-      formio.middleware.projectAnalytics
+      formio.middleware.projectAnalytics,
+      formio.middleware.customCrmAction('updateproject')
     ],
     beforeDelete: [
       require('../middleware/projectProtectAccess')(formio),
