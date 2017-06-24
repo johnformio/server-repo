@@ -28,7 +28,7 @@
     "dotenv": "1.2.0",
     "edit-google-spreadsheet": "^0.2.21",
     "express": "^4.15.2",
-    "formio": "1.17.6",
+    "formio": "^1.18.5",
     "formiojs": "^2.4.2",
     "is-url": "^1.2.1",
     "jira-connector": "^2.3.0",
