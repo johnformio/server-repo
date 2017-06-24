@@ -122,6 +122,9 @@ module.exports = function(formio) {
         case 'independent':
           generateNameIfMissing(req);
           filterCorsChanges(req);
+          if (process.env.DISABLE_RESTRICTIONS) {
+            return next();
+          }
           filterStorageSettings(req);
           return next();
         case 'basic':
@@ -130,6 +133,9 @@ module.exports = function(formio) {
 
           filterNameChanges(req);
           filterCorsChanges(req);
+          if (process.env.DISABLE_RESTRICTIONS) {
+            return next();
+          }
           filterOAuthSettings(req);
           filterEmailSettings(req);
           filterStorageSettings(req);
