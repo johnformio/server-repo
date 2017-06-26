@@ -294,6 +294,9 @@ module.exports = function(app) {
        * @param next
        */
       resolve: function(defaultReturn, action, handler, method, req, res) {
+        if (process.env.DISABLE_RESTRICTIONS) {
+          return true;
+        }
         var _debug = require('debug')('formio:settings:resolve');
         var premium = [
           'webhook', 'oauth', 'office365contact', 'office365calendar', 'hubspotContact', 'googlesheet', 'jira'
