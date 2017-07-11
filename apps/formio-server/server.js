@@ -146,43 +146,24 @@ module.exports = function(options) {
   app.formio.init(hooks).then(function(formio) {
     app.formio.formio.cache = _.assign(app.formio.formio.cache, require('./src/cache/cache')(formio));
 
-    var start = function() {
-      // The formio app sanity endpoint.
-      app.get('/health', require('./src/middleware/health')(app.formio.formio), formio.update.sanityCheck);
+    // The formio app sanity endpoint.
+    app.get('/health', require('./src/middleware/health')(app.formio.formio), formio.update.sanityCheck);
 
-      // Respond with default server information.
-      app.get('/', require('./src/middleware/projectIndex')(app.formio.formio));
+    // Respond with default server information.
+    app.get('/', require('./src/middleware/projectIndex')(app.formio.formio));
 
-      // Mount formio at /project/:projectId.
-      app.use('/project/:projectId', app.formio);
+    // Mount formio at /project/:projectId.
+    app.use('/project/:projectId', app.formio);
 
-      // Mount the aggregation system.
-      app.use('/project/:projectId/report', require('./src/middleware/report')(app.formio));
+    // Mount the aggregation system.
+    app.use('/project/:projectId/report', require('./src/middleware/report')(app.formio));
 
-      // Mount the error logging middleware.
-      app.use(Logger.middleware);
+    // Mount the error logging middleware.
+    app.use(Logger.middleware);
 
-      return q.resolve({
-        app: app,
-        config: config
-      });
-    };
-
-    formio.db.collection('projects').count(function(err, numProjects) {
-      if (!err && numProjects > 0) {
-        return start();
-      }
-      /* eslint-disable no-console */
-      console.log(' > No projects found.');
-      /* eslint-enable no-console */
-
-      require('./install')(app.formio, function(err) {
-        if (err) {
-          // Throw an error and exit.
-          throw new Error(err);
-        }
-        return start();
-      });
+    return q.resolve({
+      app: app,
+      config: config
     });
   });
 

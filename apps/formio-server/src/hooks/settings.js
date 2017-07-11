@@ -3,7 +3,8 @@
 var _ = require('lodash');
 var debug = {
   settings: require('debug')('formio:settings'),
-  error: require('debug')('formio:error')
+  error: require('debug')('formio:error'),
+  import: require('debug')('formio:project:import')
 };
 var o365Util = require('../actions/office365/util');
 var kickboxValidate = require('../actions/kickbox/validate');
@@ -817,6 +818,11 @@ module.exports = function(app) {
         var _debug = require('debug')('formio:settings:hasAccess');
         var _url = nodeUrl.parse(req.url).pathname;
 
+        // Allow access if access key is set.
+        if (process.env.ACCESS_KEY && process.env.ACCESS_KEY === req.headers['access-key']) {
+          return true;
+        }
+
         // Check requests not pointed at specific projects.
         if (!entity && !req.projectId) {
           // No project but authenticated.
@@ -1016,15 +1022,23 @@ module.exports = function(app) {
             }
 
             if ('access' in template) {
+              debug.import('start access');
               let permissions = ['create_all', 'read_all', 'update_all', 'delete_all'];
               project.access = _.filter(project.access, access => permissions.indexOf(access.type) === -1);
 
+              debug.import(template.roles);
               template.access.forEach(access => {
                 project.access.push({
                   type: access.type,
-                  roles: _.filter(access.roles).map(name => template.roles[name]._id)
+                  roles: _.filter(access.roles).map(name => {
+                    if (template.roles.hasOwnProperty(name)) {
+                      return template.roles[name]._id;
+                    }
+                    return name;
+                  })
                 });
               });
+              debug.import('end access');
             }
             else if (
               'roles' in template &&

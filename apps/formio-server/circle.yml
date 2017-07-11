@@ -56,7 +56,7 @@ test:
     - sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
     - sudo bash -c "echo \"127.0.0.1 dockertest.localhost\" >> /etc/hosts"
     - npm i --g eslint-cli
-    - ./deployment/scripts/importDb.sh formio
+    #- ./deployment/scripts/importDb.sh formio
   override:
     # Test Formio in a docker environment.
     - redis-server &> $CIRCLE_ARTIFACTS/docker-redis.log:

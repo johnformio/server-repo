@@ -574,6 +574,90 @@ module.exports = function(app, formioServer) {
   );
 
   /**
+   * Calculate if a user has access to a remote project or not.
+   */
+  app.get('/team/project/:projectId/access',
+    formioServer.formio.middleware.tokenHandler,
+    function(req, res, next) {
+      if (!req.projectId && req.params.projectId) {
+        req.projectId = req.params.projectId;
+      }
+
+      next();
+    },
+    function(req, res, next) {
+      /*
+       * req.projectId is actually the remote project which is stored in the local project at:
+       * project.remote
+       */
+
+      var query = {
+        'remote.project._id': req.projectId,
+        deleted: {$eq: null}
+      };
+
+      debug.teamProjects(query);
+      formioServer.formio.resources.project.model.find(query, function(err, projects) {
+        if (err) {
+          debug.teamProjects(err);
+          return res.sendStatus(400);
+        }
+
+        var response = {
+          permission: 'none'
+        };
+
+        // Permission heirarchy.
+        const permissions = ['none', 'team_read', 'team_write', 'team_admin', 'owner'];
+
+        if (projects && projects.length > 0) {
+          const project = projects[0].toObject();
+          response = {
+            _id: project._id,
+            title: project.title,
+            name: project.name,
+            owner: project.owner,
+            permission: 'none'
+          };
+
+          // If user is owner, skip other checks.
+          if (formioServer.formio.util.idToString(project.owner) === req.token.user._id) {
+            response.permission = 'owner';
+            return res.status(200).json(response);
+          }
+          else {
+            getTeams(req.token.user, true, true)
+              .then(function(teams) {
+                const teamIds = (teams || []).map(team => formioServer.formio.util.idToString(team._id));
+
+                project.access.forEach(access => {
+                  if (_.startsWith(access.type, 'team_')) {
+                    const roles = access.roles.map(role => role.toString());
+                    teamIds.forEach(teamId => {
+                      if (roles.indexOf(teamId) !== -1) {
+                        if (permissions.indexOf(access.type) > permissions.indexOf(response.permission)) {
+                          response.permission = access.type;
+                        }
+                      }
+                    });
+                  }
+                });
+
+                return res.status(200).json(response);
+              })
+              .catch(function(err) {
+                return res.sendStatus(400);
+              });
+          }
+        }
+        else {
+          return res.status(200).json(response);
+        }
+      });
+    }
+  );
+
+  /**
    * Expose the functionality to find all of a users teams.
    */
   app.get('/team/all', formioServer.formio.middleware.tokenHandler, function(req, res, next) {

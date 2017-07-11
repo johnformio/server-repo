@@ -38,6 +38,11 @@ module.exports = function(formio) {
           return next(err);
         }
 
+        // If there is no owner, don't update.
+        if (!owner) {
+          return next();
+        }
+
         // Attempt to remove array with one null element, inserted by mongo.
         owner.roles = _.filter(owner.roles || []);
 
