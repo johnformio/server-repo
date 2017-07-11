@@ -837,16 +837,17 @@ module.exports = function(app) {
               break;
             case 'team_write':
               // Allow full access to forms, submissions and roles.
-              if (['form', 'submission', 'role'].indexOf(entity.type) !== -1) {
+              // TODO: currently projects also control forms so we can't easily restrict here.
+              if (['project', 'form', 'submission', 'role', 'action'].indexOf(entity.type) !== -1) {
                 permission = true;
               }
               // Only allow get access for projects.
-              if (entity.type === 'project' && req.method === 'GET') {
-                permission = true;
-              }
+              //if (entity.type === 'project' && req.method === 'GET') {
+              //  permission = true;
+              //}
               break;
             case 'team_read':
-              if (['form', 'submission', 'role', 'project'].indexOf(entity.type) !== -1 && req.method === 'GET') {
+              if (['form', 'submission', 'role', 'project', 'action'].indexOf(entity.type) !== -1 && req.method === 'GET') {
                 permission = true;
               }
               break;
