@@ -75,6 +75,7 @@ module.exports = function(app) {
             app.use(formio.middleware.params);
             return true;
           case 'token':
+            app.use(require('../middleware/remoteToken')(app));
             app.use(formio.middleware.tokenHandler);
             app.use(require('../middleware/userProject')(cache));
             return true;
@@ -405,6 +406,7 @@ module.exports = function(app) {
        *   The modified token.
        */
       token: function(token, form) {
+        token.origin = formioServer.formio.config.apiHost;
         token.form.project = form.project;
         return token;
       },
@@ -821,6 +823,35 @@ module.exports = function(app) {
         // Allow access if access key is set.
         if (process.env.ACCESS_KEY && process.env.ACCESS_KEY === req.headers['access-key']) {
           return true;
+        }
+
+        /**
+         * Check access if the auth token is meant for a remote server.
+         */
+        if (req.remoteAuth) {
+          let permission = false;
+          switch (req.remoteAuth.permission) {
+            case 'owner':
+            case 'team_admin':
+              permission = true;
+              break;
+            case 'team_write':
+              // Allow full access to forms, submissions and roles.
+              if (['form', 'submission', 'role'].indexOf(entity.type) !== -1) {
+                permission = true;
+              }
+              // Only allow get access for projects.
+              if (entity.type === 'project' && req.method === 'GET') {
+                permission = true;
+              }
+              break;
+            case 'team_read':
+              if (['form', 'submission', 'role', 'project'].indexOf(entity.type) !== -1 && req.method === 'GET') {
+                permission = true;
+              }
+              break;
+          }
+          return permission;
         }
 
         // Check requests not pointed at specific projects.

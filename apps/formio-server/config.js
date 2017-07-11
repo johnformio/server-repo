@@ -195,6 +195,9 @@ config.logging = {
   formio: process.env.LOGGING_FORMIO || false
 };
 
+// Remote Auth
+config.remoteAuth = (process.env.REMOTE_AUTH === 'false') ? false : (process.env.REMOTE_AUTH || 'https://api.form.io');
+
 // Allow the config to be displayed when debugged.
 var sanitized = _.clone(config, true);
 sanitized = _.pick(sanitized, [

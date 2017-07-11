@@ -604,7 +604,9 @@ module.exports = function(app, formioServer) {
         }
 
         var response = {
-          permission: 'none'
+          project: {},
+          permission: 'none',
+          user: req.user
         };
 
         // Permission heirarchy.
@@ -613,10 +615,12 @@ module.exports = function(app, formioServer) {
         if (projects && projects.length > 0) {
           const project = projects[0].toObject();
           response = {
-            _id: project._id,
-            title: project.title,
-            name: project.name,
-            owner: project.owner,
+            project: {
+              _id: project._id,
+              title: project.title,
+              name: project.name,
+              owner: project.owner
+            },
             permission: 'none'
           };
 
