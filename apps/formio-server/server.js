@@ -177,6 +177,8 @@ module.exports = function(options) {
       });
     };
 
+    app.storage = require('./src/storage/index.js')(app);
+
     formio.db.collection('projects').count(function(err, numProjects) {
       if (!err && numProjects > 0) {
         return start();
