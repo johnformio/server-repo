@@ -236,7 +236,7 @@ module.exports = function(app, template, hook) {
                 assert.equal(component.oauth.authURI, app.formio.formio.oauth.providers.facebook.authURI);
                 assert.equal(component.oauth.scope, app.formio.formio.oauth.providers.facebook.scope);
                 assert.equal(component.oauth.display, app.formio.formio.oauth.providers.facebook.display);
-                assert.deepEqual(_.omit(component, 'oauth'), flattenedComponents[i],
+                assert.deepEqual(_.omit(component, 'oauth', 'path'), flattenedComponents[i],
                   'OAuth button should only have oauth prop added');
               }
               else {
