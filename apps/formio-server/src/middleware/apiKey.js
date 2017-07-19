@@ -13,7 +13,7 @@ module.exports = function(formio) {
   // Handle the request.
   return function(req, res, next) {
     // Get the API Token
-    var token = req.headers.hasOwnProperty('x-token') ? req.headers['x-token'] : false;
+    var token = req.headers.hasOwnProperty('x-token') ? req.headers['x-token'] : req.query['token'];
 
     // Load the current project.
     cache.loadCurrentProject(req, function(err, currentProject) {
