@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Removed
- - Passing API Keys as querystrings. Must use headers from now on.
+ - Passing API Keys as querystrings in CORS requests. Must use headers from now on.
 
 ## 4.1.14
 ### Fixed
