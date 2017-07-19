@@ -6,6 +6,7 @@ var _ = require('lodash');
 var bodyParser = require('body-parser');
 var methodOverride = require('method-override');
 var favicon = require('serve-favicon');
+var packageJson = require('./package.json');
 var Q = require('q');
 
 module.exports = function(options) {
@@ -47,6 +48,14 @@ module.exports = function(options) {
   app.use(bodyParser.urlencoded({extended: true, limit: '16mb'}));
   app.use(bodyParser.json({limit: '16mb'}));
   app.use(methodOverride('X-HTTP-Method-Override'));
+
+  // Status response.
+  app.get('/status', (req, res) => {
+    res.json({
+      version: packageJson.version,
+      schema: packageJson.schema
+    });
+  });
 
   // Error handler for malformed JSON
   app.use(function(err, req, res, next) {
@@ -160,6 +169,8 @@ module.exports = function(options) {
 
     // Mount the error logging middleware.
     app.use(Logger.middleware);
+
+    app.storage = require('./src/storage/index.js')(app);
 
     return q.resolve({
       app: app,

@@ -34,8 +34,6 @@ module.exports = function(app) {
   // Handle Payeezy form signing requests and project upgrades
   app.formio.formio.payment = require('../payment/payment')(app, app.formio.formio);
 
-  app.storage = require('../storage/index.js')(app);
-
   return {
     settings: function(settings, req, cb) {
       if (!req.projectId) {
@@ -296,6 +294,9 @@ module.exports = function(app) {
        * @param next
        */
       resolve: function(defaultReturn, action, handler, method, req, res) {
+        if (process.env.DISABLE_RESTRICTIONS) {
+          return true;
+        }
         var _debug = require('debug')('formio:settings:resolve');
         var premium = [
           'webhook', 'oauth', 'office365contact', 'office365calendar', 'hubspotContact', 'googlesheet', 'jira'

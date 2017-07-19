@@ -5,6 +5,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+### Removed
+ - Passing API Keys as querystrings in CORS requests. Must use headers from now on.
+
+## 4.1.14
+### Fixed
+ - Issue where the clearOnHide flag was clobbering data when it was unchecked.
+
+## [Unreleased]
+### Changed
+ - Allow overriding of new plan restrictions based on an environment variable.
+
+### Added
+ - CRM Tigger when projects are updated
+ 
+## 4.1.11
+### Added
+ - CRM Triggers for creating, upgrading and deleting projects.
 
 ## 4.1.10
 ### Added

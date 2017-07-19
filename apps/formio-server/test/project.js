@@ -1999,6 +1999,19 @@ module.exports = function(app, template, hook) {
             done();
           });
       });
+
+      if (!docker)
+      it ('should not allow CORS requests if using an API key in a querystring.', function(done) {
+        request(app)
+          .options('/project/' + template.project._id + '/form?token=12345678901234567890')
+          .set('Origin', 'http://www.example.com')
+          .send()
+          .end(function(err, res) {
+            assert.equal(res.headers['access-control-allow-origin'], 'https://form.io');
+            assert.equal(res.headers['access-control-allow-methods'], 'GET,HEAD,PUT,PATCH,POST,DELETE');
+            done();
+          });
+      });
     });
 
     describe('Independent Plan', function() {
