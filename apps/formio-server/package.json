@@ -16,7 +16,7 @@
   },
   "main": "./server.js",
   "schema": "3.0.9-rc.1",
-  "version": "4.1.16",
+  "version": "4.1.17",
   "dependencies": {
     "JSONStream": "^1.3.0",
     "adal-node": "^0.1.15",
