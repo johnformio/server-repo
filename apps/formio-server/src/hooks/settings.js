@@ -260,6 +260,7 @@ module.exports = function(app) {
         actions.moxtraLogin = require('../actions/moxtra/MoxtraLogin')(formioServer);
         actions.moxtraMessage = require('../actions/moxtra/MoxtraMessage')(formioServer);
         actions.moxtraTodo = require('../actions/moxtra/MoxtraTodo')(formioServer);
+        actions.twilioSMS = require('../actions/twilio/sms')(formioServer);
         return actions;
       },
 
