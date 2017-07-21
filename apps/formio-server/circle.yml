@@ -61,7 +61,7 @@ test:
     # Test Formio in a docker environment.
     - redis-server &> $CIRCLE_ARTIFACTS/docker-redis.log:
           background: true
-    - ./deployment/scripts/restoreDb.sh formio
+#    - ./deployment/scripts/restoreDb.sh formio
     - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
     - docker build -t $IMAGE_PATH -f deployment/docker/formio-server/Dockerfile .
     - docker network ls
