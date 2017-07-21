@@ -53,22 +53,26 @@ module.exports = function(router) {
         return res.status(400).send('The Twilio is missing required settings.');
       }
 
-      next(null, [
+      var form = [
         {
           input: true,
-          inputType: 'text',
           label: 'From:',
           key: 'from',
-          placeholder: 'Enter phone number from which send SMS.',
+          placeholder: 'Choose phone number from which send SMS.',
+          dataSrc: 'values',
+          template: '<span>{{ item.label }}</span>',
+          data: {
+            values: []
+          },
           validate: {
             required: true
           },
-          type: 'textfield'
+          type: 'select'
         },
         {
           input: true,
           inputType: 'text',
-          label: 'Number To:',
+          label: 'To:',
           key: 'to',
           placeholder: 'Enter phone number to which send SMS.',
           validate: {
@@ -86,7 +90,22 @@ module.exports = function(router) {
           },
           type: 'textarea'
         }
-      ]);
+      ];
+
+      var accountSid = settings.twilio.accountSid;
+      var authToken = settings.twilio.authToken;
+
+      var client = new Twilio(accountSid, authToken);
+      client.incomingPhoneNumbers.list()
+        .then(function(phoneNumbers) {
+          form[0].data.values = phoneNumbers.map(function(phoneNumber) {
+            return {
+              value: phoneNumber.phoneNumber,
+              label: phoneNumber.friendlyName
+            };
+          });
+          next(null, form);
+        });
     });
   };
   TwilioSMS.prototype.resolve = function(handler, method, req, res, next) {
