@@ -1050,7 +1050,10 @@ module.exports = function(app) {
         });
         let project = {};
         let projectKeys = ['title', 'name', 'tag', 'description', 'machineName'];
+
         project[template.machineName || template.name || 'export'] = _.pick(template, projectKeys);
+
+        project[template.machineName || template.name || 'export'].primary = !!template.isPrimary;
 
         steps.unshift(async.apply(_install, template, project));
 

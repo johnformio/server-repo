@@ -9,7 +9,6 @@
     "docker": "DOCKER=1 TEST_SUITE=1 PROTOCOL=http DOMAIN=localhost PORT=3000 DROPBOX_CLIENTID=NOTREAL DROPBOX_CLIENTSECRET=clientsecret123 mocha -b -t 30000 test/mocha.js",
     "clean": "rm -rf build",
     "compile": "node compile",
-    "customer": "DOCKER=1 CUSTOMER=1 TEST_SUITE=1 PROTOCOL=http DOMAIN=localhost PORT=3000 ADMIN_EMAIL=dockertest@form.io ADMIN_PASS=testdockertest DROPBOX_CLIENTID=NOTREAL DROPBOX_CLIENTSECRET=clientsecret123 mocha -b -t 60000 test/mocha.js",
     "build": "npm run lint; npm run clean; npm run compile",
     "builddocker": "docker build -f deployment/docker/formio-server/Dockerfile .",
     "lint": "eslint ."
