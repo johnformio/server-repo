@@ -25,7 +25,6 @@ module.exports = function(formio) {
           return cb('Project not found');
         }
 
-        project = project.toObject();
         var projectId = project._id.toString();
         if (!cache.projectNames) {
           cache.projectNames = {};

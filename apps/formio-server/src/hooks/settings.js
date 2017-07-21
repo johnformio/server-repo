@@ -848,7 +848,13 @@ module.exports = function(app) {
               //}
               break;
             case 'team_read':
-              if (['form', 'submission', 'role', 'project', 'action'].indexOf(entity.type) !== -1 && req.method === 'GET') {
+              if ([
+                  'form',
+                  'submission',
+                  'role',
+                  'project',
+                  'action'
+                ].indexOf(entity.type) !== -1 && req.method === 'GET') {
                 permission = true;
               }
               break;
@@ -1153,6 +1159,16 @@ module.exports = function(app) {
 
         return options;
       },
+
+      importOptions: function(options, req, res) {
+        var currentProject = cache.currentProject(req);
+        options._id = currentProject._id;
+        options.name = currentProject.name;
+        options.machineName = currentProject.machineName;
+
+        return options;
+      },
+
       requestParams: function(req, params) {
         var projectId = params.project;
         if (projectId && projectId === 'available') {

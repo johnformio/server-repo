@@ -34,6 +34,14 @@ module.exports = function(formio) {
     // All of the valid access ids for this project.
     var accessIds = [];
 
+    // If this is remote access, check the permissions.
+    if (req.remoteAuth) {
+      // Allow access if they have team access.
+      if (['owner', 'team_admin', 'team_write', 'team_read'].indexOf(req.remoteAuth.permission) !== -1) {
+        return next();
+      }
+    }
+
     // Get the owner of the Project
     cache.loadProject(req, req.projectId, function(err, project) {
       if (err) {
