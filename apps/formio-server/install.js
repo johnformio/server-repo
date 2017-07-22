@@ -23,6 +23,6 @@ fs.readFile('./project.json', 'utf8', function(err, data) {
     }
   }, function(err, response, body) {
     /* eslint-disable no-console */
-    console.log(err, response.statusCode);
+    console.log(err, response.statusCode, response.statusMessage);
   });
 });
