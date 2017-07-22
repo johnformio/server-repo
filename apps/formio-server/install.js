@@ -25,6 +25,7 @@ fs.readFile('./project.json', 'utf8', function(err, data) {
     /* eslint-disable no-console */
     if (err) {
       console.log(err);
+      process.exit(1);
     }
     else {
       console.log(response.statusCode, response.statusMessage);

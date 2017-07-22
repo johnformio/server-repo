@@ -41,9 +41,9 @@ database:
           background: true
   override:
     # Start a server temporarily so we can run the formio install.
-    - ACCESS_KEY=test MONGO_COLLECTION=formio-test PROJECT_PLAN=commercial node main:
+    - ACCESS_KEY=test MONGO_COLLECTION=formio-test PROJECT_PLAN=commercial PORT=3000 node main:
           background: true
-    - sleep 10
+    - sleep 5
     - ACCESS_KEY=test node install
     - pkill -SIGTERM node
 
@@ -52,6 +52,7 @@ compile:
     - npm i --g eslint-cli
   override:
     - npm run build
+    - docker build -t $IMAGE_PATH -f deployment/docker/formio-server/Dockerfile .
 
 test:
   pre:
@@ -65,7 +66,6 @@ test:
     - npm test
     # Test Formio in a docker environment.
     - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-    - docker build -t $IMAGE_PATH -f deployment/docker/formio-server/Dockerfile .
     - docker network create formio
     - docker network ls
     - docker run -itd --name formio-mongo --net formio -p 27017:27017 mongo
