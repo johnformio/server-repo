@@ -5,7 +5,7 @@
   },
   "scripts": {
     "start": "PROTOCOL=http DOMAIN=localhost PORT=3000 node main.js",
-    "test": "TEST_SUITE=1 PROTOCOL=http DOMAIN=localhost PORT=3000 MONGO_COLLECTION=formio-test PROJECT_PLAN=trial DROPBOX_CLIENTID=clientid123 DROPBOX_CLIENTSECRET=clientsecret123 mocha -b -t 120000 test/formio.js",
+    "test": "TEST_SUITE=1 PROTOCOL=http DOMAIN=localhost PORT=3000 MONGO_COLLECTION=formio-test PROJECT_PLAN=trial DROPBOX_CLIENTID=clientid123 DROPBOX_CLIENTSECRET=clientsecret123 ADMIN_EMAIL=admin@example.com ADMIN_PASS=password mocha -b -t 120000 test/formio.js",
     "docker": "DOCKER=1 TEST_SUITE=1 PROTOCOL=http DOMAIN=localhost PORT=3000 DROPBOX_CLIENTID=NOTREAL DROPBOX_CLIENTSECRET=clientsecret123 mocha -b -t 30000 test/formio.js",
     "customer": "CUSTOMER=1 TEST_SUITE=1 PROTOCOL=http DOMAIN=localhost PORT=3000 DROPBOX_CLIENTID=NOTREAL DROPBOX_CLIENTSECRET=clientsecret123 mocha -b -t 30000 test/customer.js",
     "clean": "rm -rf build",
