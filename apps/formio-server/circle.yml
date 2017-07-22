@@ -43,7 +43,7 @@ database:
     # Start a server temporarily so we can run the formio install.
     - ACCESS_KEY=test MONGO_COLLECTION=formio-test PROJECT_PLAN=commercial node main:
           background: true
-    - sleep 5
+    - sleep 10
     - ACCESS_KEY=test node install
     - pkill -SIGTERM node
 
