@@ -33,7 +33,7 @@ fs.readFile('./project.json', 'utf8', function(err, data) {
       console.log('project', response.statusCode, response.statusMessage, project._id);
       request({
         method: 'POST',
-        uri: server + '/project/' + project._id + '/admin',
+        uri: server + '/project/' + project._id + '/user',
         headers: {
           'Content-Type': 'application/json',
           'access-key': accessKey
@@ -44,12 +44,12 @@ fs.readFile('./project.json', 'utf8', function(err, data) {
             password
           }
         }
-      }, function(err, response, admin) {
+      }, function(err, response, user) {
         if (err) {
           console.log(err);
           process.exit(1);
         }
-        console.log('admin', response.statusCode, response.statusMessage, admin._id);
+        console.log('user', response.statusCode, response.statusMessage, user._id);
         request({
           method: 'POST',
           uri: server + '/project/' + project._id + '/owner',
@@ -58,7 +58,7 @@ fs.readFile('./project.json', 'utf8', function(err, data) {
             'access-key': accessKey
           },
           json: {
-            owner: admin._id
+            owner: user._id
           }
         }, function(err, response, project) {
           if (err) {

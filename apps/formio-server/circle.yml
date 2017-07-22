@@ -52,6 +52,8 @@ compile:
     - npm i --g eslint-cli
   override:
     - npm run build
+    # Test full suite against natively running server. Do it here so docker tests are skipped if fail.
+    - npm test
 
 test:
   pre:
@@ -61,8 +63,6 @@ test:
     - uname -r
 
   override:
-    # Test full suite against natively running server.
-    - npm test
     # Test Formio in a docker environment.
     - sudo service mongod stop
     - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS

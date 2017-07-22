@@ -63,12 +63,24 @@ module.exports = function(formioServer, cache) {
    * @returns {*}
    */
   var getPlan = function(req, next) {
-    // Environment Create is tricky as we have to use permissions of the referenced project before it exists.
-    if (req.method === 'POST' && req.path === '/project' && req.body.hasOwnProperty('project')) {
-      debug.getPlan('Project from environment create.');
-      return cache.loadProject(req, req.body.project, function(err, project) {
-        return getProjectPlan(err, project, next);
-      });
+    if (req.method === 'POST' && req.path === '/project') {
+      // Environment Create is tricky as we have to use permissions of the referenced project before it exists.
+      if (req.body.hasOwnProperty('project')) {
+        debug.getPlan('Project from environment create.');
+        return cache.loadProject(req, req.body.project, function(err, project) {
+          return getProjectPlan(err, project, next);
+        });
+      }
+
+      // Allow access key to set plan.
+      if (
+        req.body.plan &&
+        process.env.ACCESS_KEY &&
+        req.headers.hasOwnProperty('access-key') &&
+        process.env.ACCESS_KEY === req.headers['access-key']
+      ) {
+        return next(null, req.body.plan);
+      }
     }
 
     // Ignore project plans, if not interacting with a project.

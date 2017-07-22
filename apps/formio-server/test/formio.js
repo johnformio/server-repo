@@ -13,6 +13,7 @@ var customer = process.env.CUSTOMER;
 var app = null;
 var hook = null;
 var template = _.cloneDeep(require('formio/test/fixtures/template')());
+var formioProject = require('../project.json');
 let EventEmitter = require('events');
 
 process.on('uncaughtException', function(err) {
@@ -24,7 +25,7 @@ process.on('unhandledRejection', (err) => {
 });
 
 var emptyDatabase = template.emptyDatabase = template.clearData = function(done) {
-  if (docker || customer) {
+  if (docker) {
     return done();
   }
 
@@ -58,7 +59,7 @@ var emptyDatabase = template.emptyDatabase = template.clearData = function(done)
       return done(err);
     }
 
-    if (docker || customer) {
+    if (docker) {
       return done();
     }
 
@@ -123,7 +124,7 @@ var emptyDatabase = template.emptyDatabase = template.clearData = function(done)
 describe('Initial Tests', function() {
   before(function(done) {
     var hooks = _.merge(require('formio/test/hooks'), require('./tests/hooks')); // Merge all the test hooks.
-    if (!docker && !customer) {
+    if (!docker) {
       require('../server')({
         hooks: hooks
       })
@@ -137,13 +138,6 @@ describe('Initial Tests', function() {
         template.hooks.addEmitter(new EventEmitter());
         return done();
       });
-    }
-    else if (customer) {
-      app = 'http://api.localhost:3000';
-      hook = require('formio/src/util/hook')({hooks: hooks});
-      template.hooks = hooks;
-      template.hooks.addEmitter(new EventEmitter());
-      return done();
     }
     else if (docker) {
       app = 'http://api.localhost:3000';
@@ -162,99 +156,123 @@ describe('Initial Tests', function() {
    * Create a simulated Form.io environment for testing.
    */
   describe('Bootstrap', function() {
-    describe('Initialize Formio Info', function() {
-      if (!customer) {
-        it('Discover the formio install', function(done) {
-          var getPrimary = function(cb) {
-            request(app)
-              .get('/')
-              .expect(200)
-              .expect('Content-Type', /json/)
-              .end(function(err, res) {
-                if (err) {
-                  return cb(err);
-                }
+    describe('Setup Form.io', function() {
+      before(function(done) {
+        process.env.ACCESS_KEY = 'examplekey';
+        // Clear the database, reset the schema and perform a fresh install.
+        emptyDatabase(done);
+      });
 
-                var response = res.body;
-                response.forEach(function(project) {
-                  if (project.name === 'formio') {
-                    template.formio.primary = project;
-                  }
-                });
-
-                cb();
-              });
-          };
-          var getProject = function(cb) {
-            request(app)
-              .get('/project/' + template.formio.primary._id)
-              .expect(200)
-              .expect('Content-Type', /json/)
-              .end(function(err, res) {
-                if (err) {
-                  return cb(err);
-                }
-
-                var response = res.body;
-                template.formio.project = response;
-
-                cb();
-              });
-          };
-          var getForms = function(cb) {
-            request(app)
-              .get('/project/' + template.formio.project._id + '/form?limit=9999999')
-              .expect(200)
-              .expect('Content-Type', /json/)
-              .end(function(err, res) {
-                if (err) {
-                  return cb(err);
-                }
-
-                var response = res.body;
-                response.forEach(function(form) {
-                  if (form.name === 'userRegistrationForm') {
-                    template.formio.formRegister = form;
-                  }
-                  else if (form.name === 'userLogin') {
-                    template.formio.formLogin = form;
-                  }
-                  else if (form.name === 'user') {
-                    template.formio.userResource = form;
-                  }
-                  else if (form.name === 'team') {
-                    template.formio.teamResource = form;
-                  }
-                });
-
-                cb();
-              });
-          };
-
-          template.formio = {
-            owner: {
-              data: {
-                email: process.env.ADMIN_EMAIL || '',
-                password: process.env.ADMIN_PASS || ''
-              }
-            }
-          };
-          async.series([
-            getPrimary,
-            getProject,
-            getForms
-          ], function(err) {
+      it('Installs the form.io project', function(done) {
+        request(app)
+          .post('/project')
+          .set('access-key', process.env.ACCESS_KEY)
+          .send({
+            title: 'Form.io',
+            name: 'formio',
+            plan: 'commercial',
+            template: formioProject
+          })
+          .end(function(err, res) {
             if (err) {
               return done(err);
             }
+            template.formio = {
+              primary: res.body,
+              project: res.body,
+              owner: {
+                data: {
+                  name: chance.word(),
+                  email: chance.email(),
+                  password: chance.word()
+                }
+              }
+            };
 
             done();
           });
-        });
-      }
-    });
+      });
 
-    describe('Initial access tests', function() {
+      it('Discovers the formio project', function(done) {
+        var getPrimary = function(cb) {
+          request(app)
+            .get('/')
+            .expect(200)
+            .expect('Content-Type', /json/)
+            .end(function(err, res) {
+              if (err) {
+                return cb(err);
+              }
+
+              var response = res.body;
+              response.forEach(function(project) {
+                if (project.name === 'formio') {
+                  template.formio.primary = project;
+                }
+              });
+
+              cb();
+            });
+        };
+        var getProject = function(cb) {
+          request(app)
+            .get('/project/' + template.formio.primary._id)
+            .expect(200)
+            .expect('Content-Type', /json/)
+            .end(function(err, res) {
+              if (err) {
+                return cb(err);
+              }
+
+              var response = res.body;
+              template.formio.project = response;
+
+              cb();
+            });
+        };
+        var getForms = function(cb) {
+          request(app)
+            .get('/project/' + template.formio.project._id + '/form?limit=9999999')
+            .expect(200)
+            .expect('Content-Type', /json/)
+            .end(function(err, res) {
+              if (err) {
+                return cb(err);
+              }
+
+              var response = res.body;
+              response.forEach(function(form) {
+                if (form.name === 'userRegistrationForm') {
+                  template.formio.formRegister = form;
+                }
+                else if (form.name === 'userLogin') {
+                  template.formio.formLogin = form;
+                }
+                else if (form.name === 'user') {
+                  template.formio.userResource = form;
+                }
+                else if (form.name === 'team') {
+                  template.formio.teamResource = form;
+                }
+              });
+
+              cb();
+            });
+        };
+
+        async.series([
+          getPrimary,
+          getProject,
+          getForms
+        ], function(err) {
+          if (err) {
+            return done(err);
+          }
+
+          done();
+        });
+      });
+
       it('A user can access the register form', function(done) {
         request(app)
           .get('/project/' + template.formio.project._id + '/form/' + template.formio.formRegister._id)
@@ -268,6 +286,68 @@ describe('Initial Tests', function() {
             done();
           });
       });
+
+      it('Should be able to register a new user for Form.io', function(done) {
+        request(app)
+          .post('/project/' + template.formio.project._id + '/form/' + template.formio.formRegister._id + '/submission')
+          .send({
+            data: {
+              'name': template.formio.owner.data.name,
+              'email': template.formio.owner.data.email,
+              'password': template.formio.owner.data.password
+            }
+          })
+          .expect(200)
+          .expect('Content-Type', /json/)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
+            assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
+            assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
+            assert(response.hasOwnProperty('data'), 'The response should contain a submission `data` object.');
+            assert(response.data.hasOwnProperty('name'), 'The submission `data` should contain the `name`.');
+            assert.equal(response.data.name, template.formio.owner.data.name);
+            assert(response.data.hasOwnProperty('email'), 'The submission `data` should contain the `email`.');
+            assert.equal(response.data.email, template.formio.owner.data.email);
+            assert(!response.data.hasOwnProperty('password'), 'The submission `data` should not contain the `password`.');
+            assert(response.hasOwnProperty('form'), 'The response should contain the resource `form`.');
+            assert.equal(response.form, template.formio.userResource._id);
+            assert(res.headers.hasOwnProperty('x-jwt-token'), 'The response should contain a `x-jwt-token` header.');
+
+            // Update our testProject.owners data.
+            var tempPassword = template.formio.owner.data.password;
+            template.formio.owner = response;
+            template.formio.owner.data.password = tempPassword;
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('Make our test user the owner of formio', function(done) {
+        request(app)
+          .post('/project/' + template.formio.primary._id + '/owner')
+          .set('access-key', process.env.ACCESS_KEY)
+          .send({
+            data: {
+              owner: template.formio.owner._id
+            }
+          })
+          .expect(200)
+          .expect('Content-Type', /json/)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            done();
+          });
+        });
 
       it('Form.io owner should be able to login', function(done) {
         request(app)
@@ -290,9 +370,7 @@ describe('Initial Tests', function() {
             assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
             assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
             assert(response.hasOwnProperty('data'), 'The response should contain a submission `data` object.');
-            if (!customer) {
-              assert(response.data.hasOwnProperty('name'), 'The submission `data` should contain the `name`.');
-            }
+            assert(response.data.hasOwnProperty('name'), 'The submission `data` should contain the `name`.');
             assert(response.data.hasOwnProperty('email'), 'The submission `data` should contain the `email`.');
             assert.equal(response.data.email, template.formio.owner.data.email);
             assert(!response.hasOwnProperty('password'), 'The submission `data` should not contain the `password`.');
@@ -312,6 +390,11 @@ describe('Initial Tests', function() {
             done();
           });
       });
+
+      after(function(done) {
+        delete process.env.ACCESS_KEY;
+        done();
+      })
     });
 
     after(function() {
