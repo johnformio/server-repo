@@ -52,7 +52,6 @@ compile:
     - npm i --g eslint-cli
   override:
     - npm run build
-    - docker build -t $IMAGE_PATH -f deployment/docker/formio-server/Dockerfile .
 
 test:
   pre:
@@ -65,7 +64,9 @@ test:
     # Test full suite against natively running server.
     - npm test
     # Test Formio in a docker environment.
+    - sudo service mongod stop
     - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+    - docker build -t $IMAGE_PATH -f deployment/docker/formio-server/Dockerfile .
     - docker network create formio
     - docker network ls
     - docker run -itd --name formio-mongo --net formio -p 27017:27017 mongo

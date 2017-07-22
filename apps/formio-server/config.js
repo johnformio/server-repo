@@ -44,6 +44,7 @@ config.formio.reservedForms = [
   'submission',
   'report',
   'version',
+  'owner',
   'tag',
   'exists',
   'export',

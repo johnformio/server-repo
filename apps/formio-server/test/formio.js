@@ -122,7 +122,7 @@ var emptyDatabase = template.emptyDatabase = template.clearData = function(done)
 
 describe('Initial Tests', function() {
   before(function(done) {
-    var hooks = _.merge(require('formio/test/hooks'), require('./hooks')); // Merge all the test hooks.
+    var hooks = _.merge(require('formio/test/hooks'), require('./tests/hooks')); // Merge all the test hooks.
     if (!docker && !customer) {
       require('../server')({
         hooks: hooks
@@ -132,7 +132,7 @@ describe('Initial Tests', function() {
         hook = require('formio/src/util/hook')(app.formio.formio);
 
         // Establish the helper library.
-        template.Helper = require('./Helper')(app, require('formio/test/helper')(app));
+        template.Helper = require('./tests/Helper')(app, require('formio/test/helper')(app));
         template.hooks = app.formio.formio.hooks || {};
         template.hooks.addEmitter(new EventEmitter());
         return done();
@@ -437,12 +437,12 @@ describe('Initial Tests', function() {
 
     after(function() {
       describe('Project Tests', function() {
-        require('./project')(app, template, hook);
-        require('./domain')(app, template, hook);
-        require('./email')(app, template, hook);
+        require('./tests/project')(app, template, hook);
+        require('./tests/domain')(app, template, hook);
+        require('./tests/email')(app, template, hook);
         require('formio/test/unit')(app, template, hook);
         require('formio/test/auth')(app, template, hook);
-        require('./externalTokens')(app, template, hook);
+        require('./tests/externalTokens')(app, template, hook);
         require('formio/test/roles')(app, template, hook);
         require('formio/test/form')(app, template, hook);
         require('formio/test/resource')(app, template, hook);
@@ -450,19 +450,19 @@ describe('Initial Tests', function() {
         require('formio/test/actions')(app, template, hook);
         require('formio/test/submission')(app, template, hook);
         require('formio/test/submission-access')(app, template, hook);
-        require('./analytics')(app, template, hook);
-        require('./teams')(app, template, hook);
-        require('./env')(app, template, hook);
-        require('./tags')(app, template, hook);
-        require('./misc')(app, template, hook);
-        require('./oauth')(app, template, hook);
-        require('./s3')(app, template, hook);
-        require('./dropbox')(app, template, hook);
-        require('./report')(app, template, hook);
-        require('./actions')(app, template, hook);
-        require('./group-permissions')(app, template, hook);
+        require('./tests/analytics')(app, template, hook);
+        require('./tests/teams')(app, template, hook);
+        require('./tests/env')(app, template, hook);
+        require('./tests/tags')(app, template, hook);
+        require('./tests/misc')(app, template, hook);
+        require('./tests/oauth')(app, template, hook);
+        require('./tests/s3')(app, template, hook);
+        require('./tests/dropbox')(app, template, hook);
+        require('./tests/report')(app, template, hook);
+        require('./tests/actions')(app, template, hook);
+        require('./tests/group-permissions')(app, template, hook);
         require('formio/test/templates')(app, template, hook);
-        require('./templates')(app, template, hook);
+        require('./tests/templates')(app, template, hook);
       });
     });
   });

@@ -155,7 +155,8 @@ module.exports = function(formio) {
       }
 
       // Set the project on the template.
-      template = _.assign({}, template, _project);
+      let projectKeys = ['_id', 'title', 'name', 'description', 'machineName'];
+      template = _.assign({}, template, _.pick(_project, projectKeys));
       debug('import template', template);
 
       let alters = hook.alter('templateAlters', {});

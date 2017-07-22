@@ -103,6 +103,17 @@ module.exports = function(options) {
     corsRoute(req, res, next);
   });
 
+  // Secure the isPrimary for templates.
+  app.use((req, res, next) => {
+    if (req.body && req.body.template) {
+      if (typeof req.body.template === 'string') {
+        req.body.template = JSON.parse(req.body.template);
+      }
+      delete req.body.template.isPrimary;
+    }
+    next();
+  });
+
   // Handle our API Keys.
   app.use(require('./src/middleware/apiKey')(app.formio.formio));
 
@@ -166,6 +177,9 @@ module.exports = function(options) {
 
     // Mount the aggregation system.
     app.use('/project/:projectId/report', require('./src/middleware/report')(app.formio));
+
+    // Allow changing the owner of a project
+    app.use('/project/:projectId/owner', require('./src/middleware/projectOwner')(app.formio));
 
     // Mount the error logging middleware.
     app.use(Logger.middleware);
