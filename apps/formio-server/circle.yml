@@ -39,13 +39,6 @@ database:
     - sudo service mongod start
     - redis-server &> $CIRCLE_ARTIFACTS/redis.log:
           background: true
-  override:
-    # Start a server temporarily so we can run the formio install.
-    - ACCESS_KEY=test MONGO_COLLECTION=formio-test PROJECT_PLAN=commercial PROTOCOL=http DOMAIN=localhost PORT=3000 node main &> $CIRCLE_ARTIFACTS/install.log:
-          background: true
-    - sleep 5
-    - ACCESS_KEY=test node install
-    - pkill -SIGTERM node
 
 compile:
   pre:

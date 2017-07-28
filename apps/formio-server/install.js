@@ -40,6 +40,7 @@ fs.readFile('./project.json', 'utf8', function(err, data) {
         },
         json: {
           data: {
+            name: 'admin',
             email,
             password
           }

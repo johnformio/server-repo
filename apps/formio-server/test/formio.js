@@ -303,9 +303,7 @@ describe('Initial Tests', function() {
           .post('/project/' + template.formio.primary._id + '/owner')
           .set('access-key', process.env.ACCESS_KEY)
           .send({
-            data: {
-              owner: template.formio.owner._id
-            }
+            owner: template.formio.owner._id
           })
           .expect(200)
           .expect('Content-Type', /json/)

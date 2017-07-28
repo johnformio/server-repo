@@ -15,7 +15,7 @@ module.exports = function(formioServer) {
         if (!project) {
           return res.status(404).send('Project not found');
         }
-        project.owner = formioServer.formio.util.idToBson(req.body.data.owner);
+        project.owner = formioServer.formio.util.idToBson(req.body.owner);
         project.markModified('owner');
         project.save();
         const projectObj = project.toObject();
