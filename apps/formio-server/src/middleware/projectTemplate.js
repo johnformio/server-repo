@@ -34,7 +34,6 @@ module.exports = function(formio) {
       // Give the project owner all the administrator roles.
       var adminRoles = [];
       var roles = {};
-      var accessList = {};
       // Normalize roles and access for processing.
       _.each(template.roles, function(role, name) {
         roles[name] = role._id;

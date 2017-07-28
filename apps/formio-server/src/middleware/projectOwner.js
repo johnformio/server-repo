@@ -1,7 +1,6 @@
 'use strict';
 
 var _ = require('lodash');
-var jwt = require('jsonwebtoken');
 
 module.exports = function(formioServer) {
   var formio = formioServer.formio;
@@ -21,12 +20,19 @@ module.exports = function(formioServer) {
         project.save();
         const projectObj = project.toObject();
 
-        formio.resources.role.model.findOne({project: projectObj._id, title: 'Administrator', deleted: {$eq: null}}, function(err, adminRole) {
+        formio.resources.role.model.findOne({
+          project: projectObj._id,
+          title: 'Administrator',
+          deleted: {$eq: null}
+        }, function(err, adminRole) {
           if (err || !adminRole) {
             return res.send(projectObj);
           }
           // Find the Project owner by id, and add the administrator role of this Project to their roles.
-          formio.resources.submission.model.findOne({_id: projectObj.owner.toString(), deleted: {$eq: null}}, function(err, owner) {
+          formio.resources.submission.model.findOne({
+            _id: projectObj.owner.toString(),
+            deleted: {$eq: null}
+          }, function(err, owner) {
             if (err || !owner) {
               return res.send(projectObj);
             }

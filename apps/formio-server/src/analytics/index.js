@@ -439,7 +439,11 @@ module.exports = function(config) {
           return next();
         }
 
-        formioServer.formio.resources.role.model.findOne({project: project._id, title: "Administrator", deleted: {$eq: null}}, function(err, response) {
+        formioServer.formio.resources.role.model.findOne({
+          project: project._id,
+          title: "Administrator",
+          deleted: {$eq: null}
+        }, function(err, response) {
           if (!err && response) {
             // Admin of Formio.
             if (req.user.roles.indexOf(response.toObject()._id) !== -1) {
