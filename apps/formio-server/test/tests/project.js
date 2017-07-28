@@ -448,11 +448,11 @@ module.exports = function(app, template, hook) {
           // Check plan and api calls info
           if (!docker && !customer) {
             var plan = process.env.PROJECT_PLAN;
-            assert.equal(response[0].plan, plan, 'The plan should match the default new project plan.');
-            assert.deepEqual(response[0].apiCalls, {
+            assert.equal(response[1].plan, plan, 'The plan should match the default new project plan.');
+            assert.deepEqual(response[1].apiCalls, {
               used: 0,
-              remaining: app.formio.formio.plans.limits[response[0].plan],
-              limit: app.formio.formio.plans.limits[response[0].plan],
+              remaining: app.formio.formio.plans.limits[response[1].plan],
+              limit: app.formio.formio.plans.limits[response[1].plan],
               reset: moment().startOf('month').add(1, 'month').toISOString()
             });
           }
