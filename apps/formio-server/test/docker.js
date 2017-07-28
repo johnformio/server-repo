@@ -8,11 +8,9 @@ var express = require('express');
 var path = require('path');
 var async = require('async');
 var chance = new (require('chance'))();
-var docker = process.env.DOCKER;
 var app = null;
 var hook = null;
-var template = _.cloneDeep(require('formio/test/fixtures/template')());
-var formioProject = require('../project.json');
+var template = _.cloneDeep(require('./tests/fixtures/template')());
 let EventEmitter = require('events');
 
 process.on('uncaughtException', function(err) {
@@ -53,7 +51,17 @@ describe('Initial Tests', function() {
               var response = res.body;
               response.forEach(function(project) {
                 if (project.name === 'formio') {
-                  template.formio.primary = project;
+                  template.formio = {
+                    primary: project,
+                    project: project,
+                    owner: {
+                      data: {
+                        name: 'admin',
+                        email: 'admin@example.com',
+                        password: 'password'
+                      }
+                    }
+                  };
                 }
               });
 
@@ -91,7 +99,7 @@ describe('Initial Tests', function() {
                 if (form.name === 'userRegistrationForm') {
                   template.formio.formRegister = form;
                 }
-                else if (form.name === 'userLogin') {
+                else if (form.name === 'userLoginForm') {
                   template.formio.formLogin = form;
                 }
                 else if (form.name === 'user') {
@@ -167,7 +175,6 @@ describe('Initial Tests', function() {
       describe('Project Tests', function() {
         require('./tests/project')(app, template, hook);
         require('./tests/domain')(app, template, hook);
-        require('./tests/email')(app, template, hook);
         require('formio/test/unit')(app, template, hook);
         require('formio/test/auth')(app, template, hook);
         require('./tests/externalTokens')(app, template, hook);
@@ -178,7 +185,6 @@ describe('Initial Tests', function() {
         require('formio/test/actions')(app, template, hook);
         require('formio/test/submission')(app, template, hook);
         require('formio/test/submission-access')(app, template, hook);
-        require('./tests/analytics')(app, template, hook);
         require('./tests/teams')(app, template, hook);
         require('./tests/env')(app, template, hook);
         require('./tests/tags')(app, template, hook);
@@ -190,7 +196,6 @@ describe('Initial Tests', function() {
         require('./tests/actions')(app, template, hook);
         require('./tests/group-permissions')(app, template, hook);
         require('formio/test/templates')(app, template, hook);
-        require('./tests/templates')(app, template, hook);
       });
     });
   });

@@ -591,7 +591,6 @@ module.exports = function(app, template, hook) {
           });
 
           assert.notEqual(response.defaultAccess, [], 'The Projects default `role` should not be empty.');
-          assert.equal(response.name, template.project.name);
           assert.equal(response.description, template.project.description);
 
           // Check that the response does not contain these properties.
