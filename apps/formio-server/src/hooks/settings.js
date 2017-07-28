@@ -871,7 +871,6 @@ module.exports = function(app) {
               return req.userProject.primary;
             }
 
-            // @TODO: Should this be restricted to only primary projects as well?
             if (_url === '/project') {
               _debug('true');
               return true;
@@ -1087,12 +1086,22 @@ module.exports = function(app) {
               Object.keys(template.roles).length > 0 &&
               'administrator' in template.roles
             ) {
+              // Add all roles to read_all.
+              let readAllRoles = [];
+              Object.keys(template.roles).forEach(roleName => {
+                readAllRoles.push(template.roles[roleName]._id);
+              });
+
               project.access = [
                 {
                   type: 'create_all',
                   roles: [
                     template.roles.administrator._id
                   ]
+                },
+                {
+                  type: 'read_all',
+                  roles: readAllRoles
                 },
                 {
                   type: 'update_all',
@@ -1107,17 +1116,6 @@ module.exports = function(app) {
                   ]
                 }
               ];
-              const readAll = {
-                type: 'read_all',
-                roles: []
-              };
-
-              // Add all roles to read_all.
-              Object.keys(template.roles).forEach(roleName => {
-                readAll.roles.push(template.roles[roleName]._id);
-              });
-
-              project.access.push(readAll);
             }
             project.save(done);
           });

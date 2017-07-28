@@ -86,7 +86,7 @@ module.exports = function(app, template, hook) {
     var tempProject = {
       title: chance.word(),
       description: chance.sentence(),
-      template: _.pick(template, ['title', 'name', 'version', 'description', 'roles', 'resources', 'forms', 'actions'])
+      template: _.pick(template, ['title', 'name', 'version', 'description', 'roles', 'resources', 'forms', 'actions', 'access'])
     };
     var originalProject = _.cloneDeep(tempProject);
 
@@ -174,8 +174,6 @@ module.exports = function(app, template, hook) {
         .post('/project')
         .send(tempProject)
         .set('x-jwt-token', template.formio.owner.token)
-        .expect('Content-Type', /json/)
-        .expect(201)
         .end(function(err, res) {
           if (err) {
             return done(err);
@@ -450,11 +448,11 @@ module.exports = function(app, template, hook) {
           // Check plan and api calls info
           if (!docker && !customer) {
             var plan = process.env.PROJECT_PLAN;
-            assert.equal(response[1].plan, plan, 'The plan should match the default new project plan.');
-            assert.deepEqual(response[1].apiCalls, {
+            assert.equal(response[0].plan, plan, 'The plan should match the default new project plan.');
+            assert.deepEqual(response[0].apiCalls, {
               used: 0,
-              remaining: app.formio.formio.plans.limits[response[1].plan],
-              limit: app.formio.formio.plans.limits[response[1].plan],
+              remaining: app.formio.formio.plans.limits[response[0].plan],
+              limit: app.formio.formio.plans.limits[response[0].plan],
               reset: moment().startOf('month').add(1, 'month').toISOString()
             });
           }

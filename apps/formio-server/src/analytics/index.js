@@ -439,39 +439,42 @@ module.exports = function(config) {
           return next();
         }
 
-        // Admin of Formio.
-        if (req.user.roles.indexOf('55cd5c3ca51a96bef99ef550') !== -1) {
-          return next();
-        }
-
-        // Team member of Formio.
-        formioServer.formio.teams.getProjectTeams(req, '553db92f72f702e714dd9778', function(err, teams, permissions) {
-          if (err || !teams || !permissions) {
-            debug.restrictToFormioEmployees('err: ' + err);
-            debug.restrictToFormioEmployees('teams: ' + teams);
-            debug.restrictToFormioEmployees('permissions: ' + permissions);
-            return res.sendStatus(401);
+        formioServer.formio.resources.role.model.findOne({project: project._id, title: "Administrator", deleted: {$eq: null}}, function(err, response) {
+          if (!err && response) {
+            // Admin of Formio.
+            if (req.user.roles.indexOf(response.toObject()._id) !== -1) {
+              return next();
+            }
           }
-
-          debug.restrictToFormioEmployees('req.user: ' + JSON.stringify(req.user));
-          debug.restrictToFormioEmployees('teams: ' + JSON.stringify(teams));
-
-          var member = _.some(teams, function(team) {
-            debug.restrictToFormioEmployees('req.user.roles.indexOf(' + team + '): ' + req.user.roles.indexOf(team));
-            if (req.user.roles.indexOf(team) !== -1) {
-              return true;
+          // Team member of Formio.
+          formioServer.formio.teams.getProjectTeams(req, project._id, function(err, teams, permissions) {
+            if (err || !teams || !permissions) {
+              debug.restrictToFormioEmployees('err: ' + err);
+              debug.restrictToFormioEmployees('teams: ' + teams);
+              debug.restrictToFormioEmployees('permissions: ' + permissions);
+              return res.sendStatus(401);
             }
 
-            return false;
+            debug.restrictToFormioEmployees('req.user: ' + JSON.stringify(req.user));
+            debug.restrictToFormioEmployees('teams: ' + JSON.stringify(teams));
+
+            var member = _.some(teams, function(team) {
+              debug.restrictToFormioEmployees('req.user.roles.indexOf(' + team + '): ' + req.user.roles.indexOf(team));
+              if (req.user.roles.indexOf(team) !== -1) {
+                return true;
+              }
+
+              return false;
+            });
+
+            if (member) {
+              return next();
+            }
+
+            debug.restrictToFormioEmployees('Denied');
+            debug.restrictToFormioEmployees('Member: ' + member);
+            return res.sendStatus(401);
           });
-
-          if (member) {
-            return next();
-          }
-
-          debug.restrictToFormioEmployees('Denied');
-          debug.restrictToFormioEmployees('Member: ' + member);
-          return res.sendStatus(401);
         });
       });
     };

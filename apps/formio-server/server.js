@@ -8,6 +8,7 @@ var methodOverride = require('method-override');
 var favicon = require('serve-favicon');
 var packageJson = require('./package.json');
 var Q = require('q');
+var debug = require('debug')('formio:requestInfo');
 
 module.exports = function(options) {
   options = options || {};
@@ -38,6 +39,12 @@ module.exports = function(options) {
   app.listen = function() {
     return app.server.listen.apply(app.server, arguments);
   };
+
+  // Debug request info.
+  app.use(function(req, res, next) {
+    debug(req.method + ': ' + req.originalUrl);
+    next();
+  });
 
   // Hook each request and add analytics support.
   app.use(analytics.hook);
