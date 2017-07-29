@@ -87,7 +87,7 @@ test:
 
 deployment:
   prerelease:
-    tag: /^\d+\.\d+\.\d+(-.*)?$/
+    tag: /^\d+\.\d+\.\d+(-.*)$/
     commands:
       - docker tag $IMAGE_PATH $IMAGE_PATH:$TAG
       - docker push $IMAGE_PATH:$TAG
