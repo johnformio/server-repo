@@ -3,7 +3,6 @@
   "version": "2.0.0",
   "description": "The Form.IO Application",
   "primary": true,
-  "plan": "commercial",
   "name": "formio",
   "roles": {
     "administrator": {

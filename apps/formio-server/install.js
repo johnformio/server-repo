@@ -21,7 +21,8 @@ fs.readFile('./project.json', 'utf8', function(err, data) {
     json: {
       template: template,
       title: template.title,
-      name: template.name
+      name: template.name,
+      plan: 'commercial'
     }
   }, function(err, response, project) {
     /* eslint-disable no-console */
