@@ -86,8 +86,14 @@ test:
     #- docker logs formio-server &> $CIRCLE_ARTIFACTS/customer-server.log
 
 deployment:
-  release:
+  prerelease:
     tag: /^\d+\.\d+\.\d+(-.*)?$/
+    commands:
+      - docker tag $IMAGE_PATH $IMAGE_PATH:$TAG
+      - docker push $IMAGE_PATH:$TAG
+      - ./deployment/scripts/createVersion.sh $TAG
+  release:
+    tag: /^\d+\.\d+\.\d+$/
     commands:
       - docker tag $IMAGE_PATH $IMAGE_PATH:$TAG
       - docker push $IMAGE_PATH
