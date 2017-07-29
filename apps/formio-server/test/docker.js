@@ -53,7 +53,6 @@ describe('Initial Tests', function() {
                 if (project.name === 'formio') {
                   template.formio = {
                     primary: project,
-                    project: project,
                     owner: {
                       data: {
                         name: 'admin',
