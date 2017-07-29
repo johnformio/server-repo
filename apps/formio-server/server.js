@@ -8,6 +8,7 @@ var methodOverride = require('method-override');
 var favicon = require('serve-favicon');
 var packageJson = require('./package.json');
 var Q = require('q');
+var debug = require('debug')('formio:requestInfo');
 
 module.exports = function(options) {
   options = options || {};
@@ -38,6 +39,12 @@ module.exports = function(options) {
   app.listen = function() {
     return app.server.listen.apply(app.server, arguments);
   };
+
+  // Debug request info.
+  app.use(function(req, res, next) {
+    debug(req.method + ': ' + req.originalUrl);
+    next();
+  });
 
   // Hook each request and add analytics support.
   app.use(analytics.hook);
@@ -103,6 +110,17 @@ module.exports = function(options) {
     corsRoute(req, res, next);
   });
 
+  // Secure the isPrimary for templates.
+  app.use((req, res, next) => {
+    if (req.body && req.body.template) {
+      if (typeof req.body.template === 'string') {
+        req.body.template = JSON.parse(req.body.template);
+      }
+      delete req.body.template.isPrimary;
+    }
+    next();
+  });
+
   // Handle our API Keys.
   app.use(require('./src/middleware/apiKey')(app.formio.formio));
 
@@ -155,45 +173,29 @@ module.exports = function(options) {
   app.formio.init(hooks).then(function(formio) {
     app.formio.formio.cache = _.assign(app.formio.formio.cache, require('./src/cache/cache')(formio));
 
-    var start = function() {
-      // The formio app sanity endpoint.
-      app.get('/health', require('./src/middleware/health')(app.formio.formio), formio.update.sanityCheck);
+    // The formio app sanity endpoint.
+    app.get('/health', require('./src/middleware/health')(app.formio.formio), formio.update.sanityCheck);
 
-      // Respond with default server information.
-      app.get('/', require('./src/middleware/projectIndex')(app.formio.formio));
+    // Respond with default server information.
+    app.get('/', require('./src/middleware/projectIndex')(app.formio.formio));
 
-      // Mount formio at /project/:projectId.
-      app.use('/project/:projectId', app.formio);
+    // Mount formio at /project/:projectId.
+    app.use('/project/:projectId', app.formio);
 
-      // Mount the aggregation system.
-      app.use('/project/:projectId/report', require('./src/middleware/report')(app.formio));
+    // Mount the aggregation system.
+    app.use('/project/:projectId/report', require('./src/middleware/report')(app.formio));
 
-      // Mount the error logging middleware.
-      app.use(Logger.middleware);
+    // Allow changing the owner of a project
+    app.use('/project/:projectId/owner', require('./src/middleware/projectOwner')(app.formio));
 
-      return q.resolve({
-        app: app,
-        config: config
-      });
-    };
+    // Mount the error logging middleware.
+    app.use(Logger.middleware);
 
     app.storage = require('./src/storage/index.js')(app);
 
-    formio.db.collection('projects').count(function(err, numProjects) {
-      if (!err && numProjects > 0) {
-        return start();
-      }
-      /* eslint-disable no-console */
-      console.log(' > No projects found.');
-      /* eslint-enable no-console */
-
-      require('./install')(app.formio, function(err) {
-        if (err) {
-          // Throw an error and exit.
-          throw new Error(err);
-        }
-        return start();
-      });
+    return q.resolve({
+      app: app,
+      config: config
     });
   });
 

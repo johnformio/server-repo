@@ -32,7 +32,6 @@ var copyFile = function(file) {
 [
   'favicon.ico',
   'package.json',
-  'project.json',
   'server.sh'
 ].forEach(copyFile);
 

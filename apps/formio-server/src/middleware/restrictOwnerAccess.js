@@ -10,6 +10,11 @@ module.exports = function(formio) {
    */
   return function(req, res, next) {
     new Promise((resolve, reject) => {
+      // Allow access if access key is set.
+      if (process.env.ACCESS_KEY && process.env.ACCESS_KEY === req.headers['access-key']) {
+        return resolve();
+      }
+
       if (!req.projectId) {
         debug('No project id found with the request.');
         return reject('No project id found with the request.');

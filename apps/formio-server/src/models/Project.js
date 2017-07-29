@@ -82,6 +82,10 @@ module.exports = function(router) {
         ref: 'project',
         index: true
       },
+      remote: {
+        type: formio.mongoose.Schema.Types.Mixed,
+        description: 'The remote project definition.'
+      },
       plan: {
         type: String,
         enum: ['basic', 'independent', 'team', 'trial', 'commercial'],

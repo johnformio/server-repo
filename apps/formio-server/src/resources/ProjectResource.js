@@ -96,6 +96,18 @@ module.exports = function(router, formioServer) {
         if (req.body && req.body.template) {
           req.template = req.body.template;
           req.templateMode = 'create';
+          //  Allow primary if using access key
+          if (
+            req.template.primary &&
+            process.env.ACCESS_KEY &&
+            req.headers.hasOwnProperty('access-key') &&
+            process.env.ACCESS_KEY === req.headers['access-key']
+          ) {
+            req.template.isPrimary = true;
+          }
+          else {
+            req.template.isPrimary = false;
+          }
           delete req.body.template;
         }
         next();
