@@ -99,9 +99,3 @@ deployment:
       - docker push $IMAGE_PATH
       - docker push $IMAGE_PATH:$TAG
       - ./deployment/scripts/createVersion.sh $TAG
-  build:
-    tag: /build-.*/
-    commands:
-      - docker tag $IMAGE_PATH $IMAGE_PATH:$TAG
-      - docker push $IMAGE_PATH:$TAG
-      - ./deployment/scripts/createVersion.sh $TAG
