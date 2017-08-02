@@ -188,6 +188,9 @@ module.exports = function(options) {
     // Allow changing the owner of a project
     app.use('/project/:projectId/owner', require('./src/middleware/projectOwner')(app.formio));
 
+    // Add remote token generation endpoint.
+    app.use('/project/:projectId/access/remote', require('./src/middleware/remoteAccess')(app.formio));
+
     // Mount the error logging middleware.
     app.use(Logger.middleware);
 

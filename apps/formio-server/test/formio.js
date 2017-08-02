@@ -126,7 +126,7 @@ describe('Initial Tests', function() {
   describe('Bootstrap', function() {
     describe('Setup Form.io', function() {
       before(function(done) {
-        process.env.ACCESS_KEY = 'examplekey';
+        process.env.ADMIN_KEY = 'examplekey';
         // Clear the database, reset the schema and perform a fresh install.
         emptyDatabase(done);
       });
@@ -134,7 +134,7 @@ describe('Initial Tests', function() {
       it('Installs the form.io project', function(done) {
         request(app)
           .post('/project')
-          .set('access-key', process.env.ACCESS_KEY)
+          .set('x-admin-key', process.env.ADMIN_KEY)
           .send({
             title: 'Form.io',
             name: 'formio',
@@ -301,7 +301,7 @@ describe('Initial Tests', function() {
       it('Make our test user the owner of formio', function(done) {
         request(app)
           .post('/project/' + template.formio.primary._id + '/owner')
-          .set('access-key', process.env.ACCESS_KEY)
+          .set('x-admin-key', process.env.ADMIN_KEY)
           .send({
             owner: template.formio.owner._id
           })
@@ -358,7 +358,7 @@ describe('Initial Tests', function() {
       });
 
       after(function(done) {
-        delete process.env.ACCESS_KEY;
+        delete process.env.ADMIN_KEY;
         done();
       })
     });
