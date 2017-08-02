@@ -13,8 +13,8 @@ module.exports = function(formioServer) {
   return function projectIndexFilter(req, res, next) {
     var query;
 
-    // Allow access to all projects for access key, otherwise restrict to user.
-    if (!process.env.ACCESS_KEY || process.env.ACCESS_KEY !== req.headers['access-key']) {
+    // Allow access to all projects for admins, otherwise restrict to user.
+    if (!req.isAdmin) {
       if (!req.user || !req.user._id || !req.user.roles) {
         debug(req.user);
         return res.sendStatus(401);

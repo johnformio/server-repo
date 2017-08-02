@@ -6,8 +6,8 @@ module.exports = function(formioServer) {
   var formio = formioServer.formio;
   var cache = require('../cache/cache')(formio);
   return function(req, res, next) {
-    // Only allow access key to change owner for now.
-    if (req.projectId && process.env.ACCESS_KEY && process.env.ACCESS_KEY === req.headers['access-key']) {
+    // Only allow admins to change owner for now.
+    if (req.projectId && req.isAdmin && req.adminKey) {
       cache.loadCurrentProject(req, (err, project) => {
         if (err) {
           return next(err);

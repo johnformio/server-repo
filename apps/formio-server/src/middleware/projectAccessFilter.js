@@ -35,9 +35,9 @@ module.exports = function(formio) {
     var accessIds = [];
 
     // If this is remote access, check the permissions.
-    if (req.remoteAuth) {
+    if (req.remotePermission) {
       // Allow access if they have team access.
-      if (['owner', 'team_admin', 'team_write', 'team_read'].indexOf(req.remoteAuth.permission) !== -1) {
+      if (['admin', 'owner', 'team_admin', 'team_write', 'team_read'].indexOf(req.remotePermission) !== -1) {
         return next();
       }
     }

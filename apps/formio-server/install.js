@@ -6,7 +6,7 @@ const request = require('request');
 const server = process.env.SERVER || 'http://localhost:3000';
 const email = process.env.ADMIN_EMAIL || 'admin@example.com';
 const password = process.env.ADMIN_PASSWORD || 'password';
-const accessKey = process.env.ACCESS_KEY;
+const adminKey = process.env.ADMIN_KEY;
 
 fs.readFile('./project.json', 'utf8', function(err, data) {
   const template = JSON.parse(data);
@@ -16,7 +16,7 @@ fs.readFile('./project.json', 'utf8', function(err, data) {
     uri: server + '/project',
     headers: {
       'Content-Type': 'application/json',
-      'access-key': accessKey
+      'x-admin-key': adminKey
     },
     json: {
       template: template,
@@ -37,7 +37,7 @@ fs.readFile('./project.json', 'utf8', function(err, data) {
         uri: server + '/project/' + project._id + '/user',
         headers: {
           'Content-Type': 'application/json',
-          'access-key': accessKey
+          'x-admin-key': adminKey
         },
         json: {
           data: {
@@ -57,7 +57,7 @@ fs.readFile('./project.json', 'utf8', function(err, data) {
           uri: server + '/project/' + project._id + '/owner',
           headers: {
             'Content-Type': 'application/json',
-            'access-key': accessKey
+            'x-admin-key': adminKey
           },
           json: {
             owner: user._id
