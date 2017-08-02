@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+
+## 4.1.17
+### Removed
+ - Passing API Keys as querystrings in CORS requests. Must use headers from now on.
+
+## 4.1.16
+### Updated
+ - formio library to 1.8.11
+
 ## 4.1.14
 ### Fixed
  - Issue where the clearOnHide flag was clobbering data when it was unchecked.

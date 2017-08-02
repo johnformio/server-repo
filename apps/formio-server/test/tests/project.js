@@ -86,7 +86,7 @@ module.exports = function(app, template, hook) {
     var tempProject = {
       title: chance.word(),
       description: chance.sentence(),
-      template: _.pick(template, ['title', 'name', 'version', 'description', 'roles', 'resources', 'forms', 'actions'])
+      template: _.pick(template, ['title', 'name', 'version', 'description', 'roles', 'resources', 'forms', 'actions', 'access'])
     };
     var originalProject = _.cloneDeep(tempProject);
 
@@ -174,8 +174,6 @@ module.exports = function(app, template, hook) {
         .post('/project')
         .send(tempProject)
         .set('x-jwt-token', template.formio.owner.token)
-        .expect('Content-Type', /json/)
-        .expect(201)
         .end(function(err, res) {
           if (err) {
             return done(err);
@@ -593,7 +591,6 @@ module.exports = function(app, template, hook) {
           });
 
           assert.notEqual(response.defaultAccess, [], 'The Projects default `role` should not be empty.');
-          assert.equal(response.name, template.project.name);
           assert.equal(response.description, template.project.description);
 
           // Check that the response does not contain these properties.
@@ -1992,6 +1989,19 @@ module.exports = function(app, template, hook) {
           .options('/project/' + template.project._id + '/form')
           .set('x-jwt-token', template.formio.owner.token)
           .set('Origin', 'http://bad.example.com')
+          .send()
+          .end(function(err, res) {
+            assert.equal(res.headers['access-control-allow-origin'], 'https://form.io');
+            assert.equal(res.headers['access-control-allow-methods'], 'GET,HEAD,PUT,PATCH,POST,DELETE');
+            done();
+          });
+      });
+
+      if (!docker)
+      it ('should not allow CORS requests if using an API key in a querystring.', function(done) {
+        request(app)
+          .options('/project/' + template.project._id + '/form?token=12345678901234567890')
+          .set('Origin', 'http://www.example.com')
           .send()
           .end(function(err, res) {
             assert.equal(res.headers['access-control-allow-origin'], 'https://form.io');

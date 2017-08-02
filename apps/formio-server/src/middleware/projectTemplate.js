@@ -8,6 +8,7 @@ var debug = require('debug')('formio:middleware:projectTemplate');
 
 module.exports = function(formio) {
   var hook = require('formio/src/util/hook')(formio);
+  var cache = require('../cache/cache')(formio);
   return function(req, res, next) {
     // If we are creating a project without a template, use the default template.
     if (res.resource.status === 201 && !req.templateMode) {
@@ -30,12 +31,27 @@ module.exports = function(formio) {
     var template = req.template || 'default';
 
     // Update the owner of the Project, and give them the Administrator Role.
-    var updateProjectOwner = function(template, adminRoles) {
+    var updateProjectOwner = function(template) {
+      // Give the project owner all the administrator roles.
+      var adminRoles = [];
+      var roles = {};
+      // Normalize roles and access for processing.
+      _.each(template.roles, function(role, name) {
+        roles[name] = role._id;
+        if (role.admin) {
+          adminRoles.push(role._id);
+        }
+      });
       // Find the Project owner by id, and add the administrator role of this Project to their roles.
       formio.resources.submission.model.findOne({_id: project.owner, deleted: {$eq: null}}, function(err, owner) {
         if (err) {
           debug(err);
           return next(err);
+        }
+
+        // If there is no owner, don't update.
+        if (!owner) {
+          return next();
         }
 
         // Attempt to remove array with one null element, inserted by mongo.
@@ -80,62 +96,6 @@ module.exports = function(formio) {
       });
     };
 
-    // Update the Project and attach the anonymous role as the default Role.
-    var updateProject = function(template) {
-      // Give the project owner all the administrator roles.
-      var adminRoles = [];
-      var roles = {};
-      var accessList = {};
-      // Normalize roles and access for processing.
-      _.each(template.roles, function(role, name) {
-        roles[name] = role._id;
-        if (role.admin) {
-          adminRoles.push(role._id);
-        }
-      });
-
-      if (template.access) {
-        _.each(template.access, function(access) {
-          accessList[access.type] = access.roles;
-        });
-      }
-
-        // Set project access
-      _.each(['create_all', 'read_all', 'update_all', 'delete_all'], function(permission) {
-        var access = {
-          type: permission,
-          roles: []
-        };
-        access.roles = _.clone(adminRoles);
-        if (accessList[permission]) {
-          _.each(accessList[permission], function(role) {
-            if (access.roles.indexOf(roles[role]) === -1) {
-              access.roles.push(roles[role]);
-            }
-          });
-        }
-        project.access.push(access);
-      });
-
-      // Save preview info to settings if available
-      if (template.preview) {
-        var settings = _.cloneDeep(project.settings);
-        settings.preview = template.preview;
-        project.set('settings', settings);
-      }
-
-      // Save the project.
-      project.save(function(err) {
-        if (err) {
-          debug(err.errors || err);
-          return next(err);
-        }
-
-        // Update the project owner with the admin roles.
-        updateProjectOwner(template, adminRoles);
-      });
-    };
-
     // Method to import the template.
     var importTemplate = function(template) {
       var _debug = require('debug')('formio:middleware:projectTemplate#importTemplate');
@@ -150,7 +110,8 @@ module.exports = function(formio) {
       }
 
       // Set the project on the template.
-      template = _.assign({}, template, _project);
+      let projectKeys = ['_id', 'title', 'name', 'description', 'machineName'];
+      template = _.assign({}, template, _.pick(_project, projectKeys));
       debug('import template', template);
 
       let alters = hook.alter('templateAlters', {});
@@ -162,12 +123,20 @@ module.exports = function(formio) {
           return res.status(400).send('An error occurred with the template import.');
         }
 
-        if (req.templateMode === 'create') {
-          // Update the project with this template.
-          return updateProject(template);
-        }
+        // Reload the project to reflect any changes made by the template.
+        formio.resources.project.model.findOne({_id: project._id}, function(err, project) {
+          if (err) {
+            return res.status(400).send(err);
+          }
+          res.resource.item = project;
 
-        return next();
+          if (req.templateMode === 'create') {
+            // Update the project owner with the admin role.
+            return updateProjectOwner(template);
+          }
+
+          return next();
+        });
       });
     };
 
@@ -201,14 +170,18 @@ module.exports = function(formio) {
     // New environments should copy their primary project template.
     else if ('project' in project && project.project) {
       debug('importing primary project');
-      // Change the req.projectId so formQuery alter works for primary project. Restore when done!
-      formio.template.export({projectId: project.project}, function(err, template) {
-        debug('importing from primary', template);
-        if (err) {
-          // If something went wrong, just import the default template instead.
-          return importTemplate(_.cloneDeep(formio.templates['default']));
-        }
-        return importTemplate(template);
+      cache.loadProject(req, project.project, function(err, primaryProject) {
+        formio.template.export({
+          projectId: project.project,
+          access: primaryProject.access.toObject()
+        }, function(err, template) {
+          debug('importing from primary', template);
+          if (err) {
+            // If something went wrong, just import the default template instead.
+            return importTemplate(_.cloneDeep(formio.templates['default']));
+          }
+          return importTemplate(template);
+        });
       });
     }
     // Check for template that is already provided.

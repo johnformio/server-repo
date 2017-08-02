@@ -37,6 +37,11 @@ module.exports = function(router) {
       return callback(null, pass);
     }
 
+    // Disallow cors if they are attempting to use a querystring.
+    if (req.query.hasOwnProperty('token')) {
+      return callback(null, fail);
+    }
+
     // Load the project settings.
     router.formio.formio.hook.settings(req, function(err, settings) {
       if (err) {

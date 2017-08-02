@@ -6,10 +6,6 @@ var chance = new (require('chance'))();
 let EventEmitter = require('events');
 
 module.exports = function(app, template, hook) {
-  if (process.env.DOCKER) {
-    return;
-  }
-
   describe('Emails', function() {
     if (template.hooks.getEmitter() === null) {
       template.hooks.addEmitter(new EventEmitter());

@@ -81,7 +81,7 @@ module.exports = function(formio) {
             }
 
             // Move onto the next middleware.
-            next();
+            return next();
           });
         });
       });

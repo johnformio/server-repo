@@ -3,7 +3,8 @@
 var _ = require('lodash');
 var debug = {
   settings: require('debug')('formio:settings'),
-  error: require('debug')('formio:error')
+  error: require('debug')('formio:error'),
+  import: require('debug')('formio:project:import')
 };
 var o365Util = require('../actions/office365/util');
 var kickboxValidate = require('../actions/kickbox/validate');
@@ -72,6 +73,7 @@ module.exports = function(app) {
             app.use(formio.middleware.params);
             return true;
           case 'token':
+            app.use(require('../middleware/remoteToken')(app));
             app.use(formio.middleware.tokenHandler);
             app.use(require('../middleware/userProject')(cache));
             return true;
@@ -405,6 +407,7 @@ module.exports = function(app) {
        *   The modified token.
        */
       token: function(token, form) {
+        token.origin = formioServer.formio.config.apiHost;
         token.form.project = form.project;
         return token;
       },
@@ -818,6 +821,47 @@ module.exports = function(app) {
         var _debug = require('debug')('formio:settings:hasAccess');
         var _url = nodeUrl.parse(req.url).pathname;
 
+        // Allow access if access key is set.
+        if (process.env.ACCESS_KEY && process.env.ACCESS_KEY === req.headers['access-key']) {
+          return true;
+        }
+
+        /**
+         * Check access if the auth token is meant for a remote server.
+         */
+        if (req.remoteAuth) {
+          let permission = false;
+          switch (req.remoteAuth.permission) {
+            case 'owner':
+            case 'team_admin':
+              permission = true;
+              break;
+            case 'team_write':
+              // Allow full access to forms, submissions and roles.
+              // TODO: currently projects also control forms so we can't easily restrict here.
+              if (['project', 'form', 'submission', 'role', 'action'].indexOf(entity.type) !== -1) {
+                permission = true;
+              }
+              // Only allow get access for projects.
+              //if (entity.type === 'project' && req.method === 'GET') {
+              //  permission = true;
+              //}
+              break;
+            case 'team_read':
+              if ([
+                  'form',
+                  'submission',
+                  'role',
+                  'project',
+                  'action'
+                ].indexOf(entity.type) !== -1 && req.method === 'GET') {
+                permission = true;
+              }
+              break;
+          }
+          return permission;
+        }
+
         // Check requests not pointed at specific projects.
         if (!entity && !req.projectId) {
           // No project but authenticated.
@@ -827,7 +871,6 @@ module.exports = function(app) {
               return req.userProject.primary;
             }
 
-            // @TODO: Should this be restricted to only primary projects as well?
             if (_url === '/project') {
               _debug('true');
               return true;
@@ -1006,7 +1049,10 @@ module.exports = function(app) {
         });
         let project = {};
         let projectKeys = ['title', 'name', 'tag', 'description', 'machineName'];
+
         project[template.machineName || template.name || 'export'] = _.pick(template, projectKeys);
+
+        project[template.machineName || template.name || 'export'].primary = !!template.isPrimary;
 
         steps.unshift(async.apply(_install, template, project));
 
@@ -1017,27 +1063,45 @@ module.exports = function(app) {
             }
 
             if ('access' in template) {
+              debug.import('start access');
               let permissions = ['create_all', 'read_all', 'update_all', 'delete_all'];
               project.access = _.filter(project.access, access => permissions.indexOf(access.type) === -1);
 
+              debug.import(template.roles);
               template.access.forEach(access => {
                 project.access.push({
                   type: access.type,
-                  roles: _.filter(access.roles).map(name => template.roles[name]._id)
+                  roles: _.filter(access.roles).map(name => {
+                    if (template.roles.hasOwnProperty(name)) {
+                      return template.roles[name]._id;
+                    }
+                    return name;
+                  })
                 });
               });
+              debug.import('end access');
             }
             else if (
               'roles' in template &&
               Object.keys(template.roles).length > 0 &&
               'administrator' in template.roles
             ) {
+              // Add all roles to read_all.
+              let readAllRoles = [];
+              Object.keys(template.roles).forEach(roleName => {
+                readAllRoles.push(template.roles[roleName]._id);
+              });
+
               project.access = [
                 {
                   type: 'create_all',
                   roles: [
                     template.roles.administrator._id
                   ]
+                },
+                {
+                  type: 'read_all',
+                  roles: readAllRoles
                 },
                 {
                   type: 'update_all',
@@ -1052,17 +1116,6 @@ module.exports = function(app) {
                   ]
                 }
               ];
-              const readAll = {
-                type: 'read_all',
-                roles: []
-              };
-
-              // Add all roles to read_all.
-              Object.keys(template.roles).forEach(roleName => {
-                readAll.roles.push(template.roles[roleName]._id);
-              });
-
-              project.access.push(readAll);
             }
             project.save(done);
           });
@@ -1107,6 +1160,16 @@ module.exports = function(app) {
 
         return options;
       },
+
+      importOptions: function(options, req, res) {
+        var currentProject = cache.currentProject(req);
+        options._id = currentProject._id;
+        options.name = currentProject.name;
+        options.machineName = currentProject.machineName;
+
+        return options;
+      },
+
       requestParams: function(req, params) {
         var projectId = params.project;
         if (projectId && projectId === 'available') {
