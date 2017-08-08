@@ -1,49 +1,28 @@
 'use strict';
 
 const jwt = require('jsonwebtoken');
-const request = require('request');
 
 module.exports = app => (req, res, next) => {
-  if (!app.formio.config.remoteAuth || !req.projectId) {
-    return next();
-  }
-  const token = app.formio.formio.util.getRequestValue(req, 'x-jwt-token');
+  const token = app.formio.formio.util.getRequestValue(req, 'x-remote-token');
 
-  // This is NOT a verified token yet. We need to check if it is remote first though.
-  let decoded = jwt.decode(token);
-
-  // If there is no origin, pass to regular token handler
-  if (!decoded || !decoded.hasOwnProperty('origin')) {
+  if (!token || !app.formio.config.remoteSecret) {
     return next();
   }
 
-  // See if this token is from a remote server.
-  if (decoded.origin === app.formio.config.remoteAuth) {
-    // Since this is remote, get information about them from the other server.
-    request({
-      method: 'GET',
-      url: app.formio.config.remoteAuth + '/team/project/' + req.projectId + '/access',
-      headers: {
-        'x-jwt-token': token,
-        'Content-Type': 'application/json'
-      }
-    }, (err, response, body) => {
-      if (err || response.statusCode !== 200) {
-        return next();
-      }
-      else {
-        const result = JSON.parse(body);
-        res.token = response.headers['x-jwt-token'];
-        req.token = decoded;
-        req.user = decoded.user;
-        req.userProject = result.project;
-        req.remoteAuth = result;
-        return next();
-      }
-    });
-  }
-  else {
-    // Not the right origin.
+  jwt.verify(token, app.formio.config.remoteSecret, function(err, decoded) {
+    if (err || !decoded) {
+      // If something went wrong in decoding, skip the middleware.
+      return next();
+    }
+
+    // By setting these here it will skip the tokenHandler.
+    req.token = decoded;
+    req.user = decoded.user;
+    req.userProject = decoded.project;
+    req.remotePermission = decoded.permission;
+
+    // TODO: return a new token to renew.
+    res.token = req.token;
     return next();
-  }
+  });
 };

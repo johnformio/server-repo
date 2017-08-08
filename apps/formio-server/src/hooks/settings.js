@@ -436,6 +436,19 @@ module.exports = function(app) {
       isAdmin: function(isAdmin, req) {
         var _debug = require('debug')('formio:settings:isAdmin');
 
+        // Allow admin key to act as admin.
+        if (process.env.ADMIN_KEY && process.env.ADMIN_KEY === req.headers['x-admin-key']) {
+          _debug('Admin Key');
+          req.adminKey = true;
+          return true;
+        }
+
+        // Allow remote team admins to have admin access.
+        if (req.remotePermission && ['admin', 'owner', 'team_admin'].indexOf(req.remotePermission)) {
+          _debug('Remote Admin');
+          return true;
+        }
+
         // If no user is found, then return false.
         if (!req.token || !req.token.user) {
           _debug('Skipping - No user given');
@@ -449,9 +462,12 @@ module.exports = function(app) {
         }
 
         // Project owners are default admins.
-        isAdmin = (req.token.user._id === req.projectOwner);
-        _debug(isAdmin);
-        return isAdmin;
+        if (req.token.user._id === req.projectOwner) {
+          _debug('Project owner');
+          return true;
+        }
+
+        return false;
       },
 
       /**
@@ -821,17 +837,17 @@ module.exports = function(app) {
         var _debug = require('debug')('formio:settings:hasAccess');
         var _url = nodeUrl.parse(req.url).pathname;
 
-        // Allow access if access key is set.
-        if (process.env.ACCESS_KEY && process.env.ACCESS_KEY === req.headers['access-key']) {
+        // Allow access if admin.
+        if (req.isAdmin) {
           return true;
         }
 
         /**
          * Check access if the auth token is meant for a remote server.
          */
-        if (req.remoteAuth) {
+        if (req.remotePermission) {
           let permission = false;
-          switch (req.remoteAuth.permission) {
+          switch (req.remotePermission) {
             case 'owner':
             case 'team_admin':
               permission = true;

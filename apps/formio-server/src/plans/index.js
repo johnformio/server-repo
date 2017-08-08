@@ -72,13 +72,8 @@ module.exports = function(formioServer, cache) {
         });
       }
 
-      // Allow access key to set plan.
-      if (
-        req.body.plan &&
-        process.env.ACCESS_KEY &&
-        req.headers.hasOwnProperty('access-key') &&
-        process.env.ACCESS_KEY === req.headers['access-key']
-      ) {
+      // Allow admins to set plan.
+      if (req.body.plan && req.isAdmin) {
         return next(null, req.body.plan);
       }
     }
