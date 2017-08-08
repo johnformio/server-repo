@@ -213,7 +213,10 @@ module.exports = function(app) {
           };
 
           // Set the username field to the email address this is getting sent to.
-          query[ssoToken.field] = mail.to;
+          query[ssoToken.field] = {
+            $regex: new RegExp('^' + formioServer.formio.util.escapeRegExp(mail.to) + '$'),
+            $options: 'i'
+          };
 
           // Find the submission.
           _debug(query);
