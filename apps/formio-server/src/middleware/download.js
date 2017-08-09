@@ -20,9 +20,15 @@ module.exports = function(formio) {
 
           // Allow them to dynamically download from any server.
           var filesServer = req.query.from || FORMIO_FILES_SERVER;
+          var downloadUrl = filesServer + '/pdf/' + req.params.projectId;
+          if (req.params.fileId) {
+            downloadUrl += '/file/' + req.params.fileId;
+          }
+          downloadUrl += '/download';
+
           request({
             method: 'POST',
-            url: filesServer + '/pdf/' + req.params.projectId + '/file/' + req.params.fileId + '/download',
+            url: downloadUrl,
             headers: {
               'x-file-token': settings.filetoken
             },
