@@ -3,6 +3,11 @@
 var _ = require('lodash');
 module.exports = {
   tokenRegex: new RegExp(/\[\[\s*token\(\s*([^\)]+\s*)\)\s*,?\s*([0-9]*)\s*\]\]/i),
+  query: (query) => {
+    return Object.keys(query).map((k) => {
+      return encodeURIComponent(k) + '=' + encodeURIComponent(query[k]);
+    }).join('&');
+  },
   ssoToken: function(text) {
     var matches = text.match(this.tokenRegex);
     if (matches && matches.length > 1) {
