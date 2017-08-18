@@ -44,7 +44,7 @@ module.exports = app => (req, res, next) => {
           currentProject.remote.project,
           currentProject.remote.url,
           currentProject.remote.type
-        ) + req.url);
+        ) + req.pathAlias);
     }
     else {
       return next();
