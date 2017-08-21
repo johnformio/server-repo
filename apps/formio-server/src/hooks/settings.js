@@ -15,6 +15,7 @@ var util = require('../util/util');
 let async = require('async');
 var chance = new (require('chance'))();
 var fs = require('fs');
+var url = require('url');
 
 module.exports = function(app) {
   var formioServer = app.formio;
@@ -63,7 +64,10 @@ module.exports = function(app) {
           case 'alias':
             // Dynamically set the baseUrl.
             formio.middleware.alias.baseUrl = function(req) {
-              return '/project/' + req.projectId;
+              const baseUrl = '/project/' + req.projectId;
+              // Save the alias as well.
+              req.pathAlias = url.parse(req.url).pathname.substr(baseUrl.length);
+              return baseUrl;
             };
 
             // Add the alias handler.

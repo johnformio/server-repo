@@ -158,6 +158,9 @@ module.exports = function(options) {
     // Respond with default server information.
     app.get('/', require('./src/middleware/projectIndex')(app.formio.formio));
 
+    // Don't allow accessing a project's forms and other if it is remote. Redirect to the remote instead.
+    app.use('/project/:projectId', require('./src/middleware/remoteRedirect')(app.formio));
+
     // Mount formio at /project/:projectId.
     app.use('/project/:projectId', app.formio);
 
