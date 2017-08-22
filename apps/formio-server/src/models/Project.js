@@ -84,7 +84,35 @@ module.exports = function(router) {
       },
       remote: {
         type: formio.mongoose.Schema.Types.Mixed,
-        description: 'The remote project definition.'
+        description: 'The remote project definition.',
+        validate: [
+          {
+            async: true,
+            message: 'Remote already connected to an environment.',
+            validator: function(value, done) {
+              if (!value || !value.project || !value.project._id) {
+                return done(true);
+              }
+
+              var search = {
+                'remote.project._id': value.project._id,
+                deleted: {$eq: null}
+              };
+
+              if (this._id) {
+                search._id = {$ne: this._id};
+              }
+
+              formio.mongoose.model('project').findOne(search).exec(function(err, result) {
+                if (err || result) {
+                  return done(false);
+                }
+
+                return done(true);
+              });
+            }
+          }
+        ]
       },
       plan: {
         type: String,

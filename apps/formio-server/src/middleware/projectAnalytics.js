@@ -40,6 +40,11 @@ module.exports = function(formioServer) {
       return next();
     }
 
+    // This happens when an error occurred. Don't count it.
+    if (!res.resource.item) {
+      return next();
+    }
+
     Q.all(_.map([].concat(res.resource.item), function(project) {
       return getCallInfo(project)
       .then(function(info) {
