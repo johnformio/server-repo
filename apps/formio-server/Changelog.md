@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## 5.0.0
+### Added
+ - Remote environment support with remote authentication
+ - New deployment options by sending the template with request
+ - Add ADMIN_KEY option
+ 
+### Removed
+ - Install process for form.io project
+
 ## 4.1.17
 ### Removed
  - Passing API Keys as querystrings in CORS requests. Must use headers from now on.
