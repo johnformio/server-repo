@@ -123,16 +123,14 @@ module.exports = function(options) {
 
   // Handle our API Keys.
   app.use(require('./src/middleware/apiKey')(app.formio.formio));
-  let pdfDownloadMiddleware = [
+
+  // Download a submission pdf.
+  app.get('/project/:projectId/form/:formId/submission/:submissionId/download', [
     require('./src/middleware/aliasToken')(app),
     app.formio.formio.middleware.tokenHandler,
     app.formio.formio.middleware.permissionHandler,
     require('./src/middleware/download')(app.formio.formio)
-  ];
-
-  // Download a submission pdf.
-  app.get('/project/:projectId/form/:formId/submission/:submissionId/download/:fileId', ...pdfDownloadMiddleware);
-  app.get('/project/:projectId/form/:formId/submission/:submissionId/download', ...pdfDownloadMiddleware);
+  ]);
 
   // Adding google analytics to our api.
   if (config.gaTid) {
