@@ -47,7 +47,7 @@
     "on-finished": "^2.3.0",
     "primus": "^5.2.2",
     "q": "^1.4.1",
-    "redis": "^2.6.5",
+    "redis": "^2.8.0",
     "request": "^2.81.0",
     "resourcejs": "^1.7.0",
     "restler": "^3.4.0",

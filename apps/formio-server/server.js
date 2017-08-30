@@ -26,8 +26,12 @@ module.exports = function(options) {
     jslogger = require('jslogger')({key: config.jslogger});
   }
 
+  // Connect to redis.
+  const RedisInterface = require('./src/util/redis');
+  const redis = new RedisInterface(config);
+
   // Load the analytics hooks.
-  var analytics = require('./src/analytics/index')(config);
+  const analytics = require('./src/analytics/index')(redis);
 
   var Logger = require('./src/logger/index')(config);
 
@@ -80,9 +84,11 @@ module.exports = function(options) {
   // Attach the formio-server config.
   app.formio.config = _.omit(config, 'formio');
 
+  // Add the redis interface.
+  app.formio.redis = redis;
+
   // Attach the analytics to the formio server and attempt to connect.
   app.formio.analytics = analytics;
-  app.formio.analytics.connect(); // Try the connection on server start.
 
   // Import the OAuth providers
   app.formio.formio.oauth = require('./src/oauth/oauth')(app.formio.formio);

@@ -1,6 +1,5 @@
 'use strict';
 
-var Redis = require('redis');
 var onFinished = require('on-finished');
 var debug = {
   connect: require('debug')('formio:analytics:connect'),
@@ -18,69 +17,7 @@ var submission = /(\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}\/submission)/i;
 var _ = require('lodash');
 var BSON = new RegExp('^[0-9a-fA-F]{24}$');
 
-/**
- *
- * @param config
- * @returns {{record: Function}}
- */
-module.exports = function(config) {
-  var redis = null;
-
-  /**
-   * Get the redis connection.
-   *
-   * @returns {*}
-   */
-  var getRedis = function() {
-    return redis;
-  };
-
-  /**
-   * Configure the redis connection.
-   *
-   * @returns {boolean}
-   *   If the server is connected or not.
-   */
-  var connect = function() {
-    // Only connect once.
-    if (redis && redis.hasOwnProperty('connected') && redis.connected === true) {
-      debug.connect('Already connected.');
-      return true;
-    }
-    // Redis is not currently connected, attempt to configure the connection.
-    else if (config.redis && config.redis.url) {
-      var opts = {};
-      if (config.redis.password) {
-        /* eslint-disable */
-        opts.auth_pass = config.redis.password;
-        /* eslint-enable */
-      }
-
-      // Attempt to connect to redis 1 time only.
-      redis = Redis.createClient(config.redis.url, opts);
-      /* eslint-disable */
-      redis.max_attempts = 1;
-      /* eslint-enable */
-
-      // Attach debugging to specific events, unset redis ref on error/disconnect.
-      redis.on('ready', function() {
-        debug.connect('Connected');
-      });
-      redis.on('error', function(err) {
-        redis = null;
-        debug.connect(err.message || err);
-      });
-      redis.on('end', function() {
-        redis = null;
-        debug.connect('End');
-      });
-    }
-    else {
-      debug.connect('Redis options not found or incomplete: ' + JSON.stringify(config.redis || {}));
-      return false;
-    }
-  };
-
+module.exports = (redis) => {
   /**
    * Util function to build the analytics key with the given params.
    *
@@ -110,6 +47,8 @@ module.exports = function(config) {
   /**
    * Express middleware for tracking request analytics.
    *
+   * @param redis {Redis}
+   *   The Redis connection.
    * @param project {String}
    *   The Project Id of this request.
    * @param path {String}
@@ -119,9 +58,9 @@ module.exports = function(config) {
    * @param start {Number}
    *   The date timestamp this request started.
    */
-  var record = function(project, path, method, start) {
-    if (!connect()) {
-      debug.record('Skipping, redis not found.');
+  var record = function(db, project, path, method, start) {
+    if (!db) {
+      debug.record('No redis instance found.');
       return;
     }
     if (!project) {
@@ -155,7 +94,7 @@ module.exports = function(config) {
     var value = path + ':' + method + ':' + now.getTime() + ':' + delta;
 
     // Add this record, to the end of the list at the position of the key.
-    redis.rpush(key, value, function(err, length) {
+    db.rpush(key, value, function(err, length) {
       if (err) {
         debug.record(err);
         return;
@@ -173,30 +112,30 @@ module.exports = function(config) {
    * @param next
    */
   var hook = function(req, res, next) {
-    if (!connect()) {
-      return next();
-    }
-
-    // Attach the request start time.
-    req._start = (new Date()).getTime();
-    debug.hook(req._start);
-
-    onFinished(res, function(err) {
+    redis.getDb((err, db) => {
       if (err) {
-        debug.hook(err);
         return;
       }
-      if (!req.projectId) {
-        debug.hook('No projectId found in the request, skipping redis record.');
-        return;
-      }
+      // Attach the request start time.
+      req._start = (new Date()).getTime();
+      debug.hook(req._start);
 
-      var id = req.projectId;
-      var path = url.parse(req.url).pathname;
-      var start = req._start;
-      record(id, path, req.method, start);
+      onFinished(res, function(err) {
+        if (err) {
+          debug.hook(err);
+          return;
+        }
+        if (!req.projectId) {
+          debug.hook('No projectId found in the request, skipping redis record.');
+          return;
+        }
+
+        var id = req.projectId;
+        var path = url.parse(req.url).pathname;
+        var start = req._start;
+        record(db, id, path, req.method, start);
+      });
     });
-
     next();
   };
 
@@ -210,32 +149,34 @@ module.exports = function(config) {
    * @param next {function}
    */
   var getCalls = function(year, month, day, project, next) {
-    if (!connect() || !year || (!month && month !== 0) || !project) {
-      debug.getCalls('Skipping');
-      return next();
-    }
-
-    var transaction = redis.multi();
-
-    if (!day) {
-      for (day = 1; day < 32; day++) {
-        transaction.llen(getAnalyticsKey(project, year, month, day, 's'));
-      }
-    }
-    else {
-      transaction.llen(getAnalyticsKey(project, year, month, day, 's'));
-    }
-
-    transaction.exec(function(err, response) {
-      if (err) {
-        debug.getCalls(err);
+    redis.getDb((err, db) => {
+      if (err || !db || !year || (!month && month !== 0) || !project) {
+        debug.getCalls('Skipping');
         return next();
       }
 
-      debug.getCalls('RAW: ' + JSON.stringify(response));
-      var daysInMonth = (new Date(parseInt(year), parseInt(month)+1, 0)).getUTCDate();
-      response = _.sum(response.slice(0, daysInMonth));
-      return next(null, response);
+      var transaction = db.multi();
+
+      if (!day) {
+        for (day = 1; day < 32; day++) {
+          transaction.llen(getAnalyticsKey(project, year, month, day, 's'));
+        }
+      }
+      else {
+        transaction.llen(getAnalyticsKey(project, year, month, day, 's'));
+      }
+
+      transaction.exec(function(err, response) {
+        if (err) {
+          debug.getCalls(err);
+          return next();
+        }
+
+        debug.getCalls('RAW: ' + JSON.stringify(response));
+        var daysInMonth = (new Date(parseInt(year), parseInt(month)+1, 0)).getUTCDate();
+        response = _.sum(response.slice(0, daysInMonth));
+        return next(null, response);
+      });
     });
   };
 
@@ -248,41 +189,47 @@ module.exports = function(config) {
    *   The callback function to invoke when complete.
    */
   var getAllKeys = function(glob, next) {
-    var _debug = require('debug')('formio:analytics:getAllKeys');
-    var keys = [];
-
-    // Recursively get all the keys matching the glob.
-    var started = false;
-    (function scan(cursor, cb) {
-      _debug(cursor);
-      if (cursor === '0' && started) {
-        return cb();
+    redis.getDb((err, db) => {
+      if (err || !db) {
+        return next();
       }
 
-      if (!started) {
-        _debug('started=true');
-        started = true;
-      }
+      var _debug = require('debug')('formio:analytics:getAllKeys');
+      var keys = [];
 
-      redis.scan(cursor, 'MATCH', glob, function(err, _keys) {
-        if (err || !_keys) {
-          _debug(cursor + ',' + glob);
-          return cb(err);
+      // Recursively get all the keys matching the glob.
+      var started = false;
+      (function scan(cursor, cb) {
+        _debug(cursor);
+        if (cursor === '0' && started) {
+          return cb();
         }
 
-        if (_keys[1] &&_keys[1].length > 0) {
-          _debug(_keys[1]);
-          keys = keys.concat(_keys[1]);
+        if (!started) {
+          _debug('started=true');
+          started = true;
         }
 
-        return scan(_keys[0], cb);
+        db.scan(cursor, 'MATCH', glob, function(err, _keys) {
+          if (err || !_keys) {
+            _debug(cursor + ',' + glob);
+            return cb(err);
+          }
+
+          if (_keys[1] &&_keys[1].length > 0) {
+            _debug(_keys[1]);
+            keys = keys.concat(_keys[1]);
+          }
+
+          return scan(_keys[0], cb);
+        });
+      })('0', function(err) {
+        if (err) {
+          return next(err);
+        }
+
+        next(null, keys);
       });
-    })('0', function(err) {
-      if (err) {
-        return next(err);
-      }
-
-      next(null, keys);
     });
   };
 
@@ -328,7 +275,7 @@ module.exports = function(config) {
    */
   var getFormioAnalytics = function(glob, _debug, res) {
     // Start the transaction and all the keys in question.
-    var transaction = redis.multi();
+    var transaction = res.redis.multi();
     getAllKeys(glob, function(err, keys) {
       if (err) {
         _debug(err);
@@ -695,10 +642,11 @@ module.exports = function(config) {
      */
     app.get(
       '/project/:projectId/analytics/year/:year',
+      redis.middleware.bind(redis),
       formioServer.formio.middleware.tokenHandler,
       formioServer.formio.middleware.permissionHandler,
       function(req, res, next) {
-        if (!connect() || !req.params.projectId || !req.params.year) {
+        if (!req.params.projectId || !req.params.year) {
           return res.status(400).send('Expected params `year`.');
         }
 
@@ -711,7 +659,7 @@ module.exports = function(config) {
 
         var project = req.params.projectId.toString();
         var year = req.params.year.toString();
-        var transaction = redis.multi();
+        var transaction = req.redis.multi();
         for (var month = 0; month < 12; month++) {
           for (var day = 1; day < 32; day++) {
             transaction.llen(getAnalyticsKey(project, year, month, day, 's'));
@@ -751,10 +699,11 @@ module.exports = function(config) {
      */
     app.get(
       '/project/:projectId/analytics/year/:year/month/:month',
+      redis.middleware.bind(redis),
       formioServer.formio.middleware.tokenHandler,
       formioServer.formio.middleware.permissionHandler,
       function(req, res, next) {
-        if (!connect() || !req.params.projectId || !req.params.year || !req.params.month) {
+        if (!req.params.projectId || !req.params.year || !req.params.month) {
           return res.status(400).send('Expected params `year` and `month`.');
         }
 
@@ -772,7 +721,7 @@ module.exports = function(config) {
         var project = req.params.projectId.toString();
         var year = req.params.year.toString();
         var month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
-        var transaction = redis.multi();
+        var transaction = req.redis.multi();
         for (var day = 1; day < 32; day++) {
           transaction.llen(getAnalyticsKey(project, year, month, day, 's'));
         }
@@ -806,10 +755,11 @@ module.exports = function(config) {
      */
     app.get(
       '/project/:projectId/analytics/year/:year/month/:month/day/:day',
+      redis.middleware.bind(redis),
       formioServer.formio.middleware.tokenHandler,
       formioServer.formio.middleware.permissionHandler,
       function(req, res, next) {
-        if (!connect() || !req.params.projectId || !req.params.year || !req.params.month || !req.params.day) {
+        if (!req.params.projectId || !req.params.year || !req.params.month || !req.params.day) {
           return res.status(400).send('Expected params `year`, `month`, and `day`.');
         }
 
@@ -832,7 +782,7 @@ module.exports = function(config) {
         var year = req.params.year.toString();
         var month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
         var day = req.params.day.toString();
-        redis.lrange(getAnalyticsKey(project, year, month, day, 's'), 0, -1, function(err, response) {
+        req.redis.lrange(getAnalyticsKey(project, year, month, day, 's'), 0, -1, function(err, response) {
           if (err) {
             debug.getDailyAnalytics(err);
             return res.sendStatus(500);
@@ -925,53 +875,54 @@ module.exports = function(config) {
           }
 
           formioServer.formio.resources.form.model.findOne({project: project._id, name: 'user'})
-          .exec(function(err, form) {
-            if (err || !form) {
-              _debug(err);
-              return res.status(500).send(err);
-            }
-
-            try {
-              form = form.toObject();
-            }
-            catch (err) {
-              // n/a
-            }
-
-            formioServer.formio.resources.submission.model.find({form: form._id, _id: {$in: owners}})
-            .exec(function(err, owners) {
-              if (err) {
+            .exec(function(err, form) {
+              if (err || !form) {
                 _debug(err);
                 return res.status(500).send(err);
               }
 
-              owners = _(owners)
-                .map(function(owner) {
-                  _debug(owner);
-                  return {
-                    _id: owner._id.toString(),
-                    data: {
-                      email: owner.data.email.toString() || '',
-                      name: owner.data.name.toString() || ''
-                    }
-                  };
-                })
-                .value();
+              try {
+                form = form.toObject();
+              }
+              catch (err) {
+                // n/a
+              }
 
-              return res.status(200).json(owners);
+              formioServer.formio.resources.submission.model.find({form: form._id, _id: {$in: owners}})
+                .exec(function(err, owners) {
+                  if (err) {
+                    _debug(err);
+                    return res.status(500).send(err);
+                  }
+
+                  owners = _(owners)
+                    .map(function(owner) {
+                      _debug(owner);
+                      return {
+                        _id: owner._id.toString(),
+                        data: {
+                          email: owner.data.email.toString() || '',
+                          name: owner.data.name.toString() || ''
+                        }
+                      };
+                    })
+                    .value();
+
+                  return res.status(200).json(owners);
+                });
             });
-          });
         });
       }
     );
 
     app.get(
       '/analytics/project/year/:year',
+      redis.middleware.bind(redis),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
         var _debug = require('debug')('formio:analytics:getFormioYearAnalytics');
-        if (!connect() || !req.params.year) {
+        if (!req.params.year) {
           return res.status(400).send('Expected params `year`.');
         }
 
@@ -993,11 +944,12 @@ module.exports = function(config) {
 
     app.get(
       '/analytics/project/year/:year/month/:month',
+      redis.middleware.bind(redis),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
         var _debug = require('debug')('formio:analytics:getFormioMonthAnalytics');
-        if (!connect() || !req.params.year || !req.params.month) {
+        if (!req.params.year || !req.params.month) {
           return res.status(400).send('Expected params `year` and `month`.');
         }
 
@@ -1024,11 +976,12 @@ module.exports = function(config) {
 
     app.get(
       '/analytics/project/year/:year/month/:month/day/:day',
+      redis.middleware.bind(redis),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
         var _debug = require('debug')('formio:analytics:getFormioDayAnalytics');
-        if (!connect() || !req.params.year || !req.params.month || !req.params.day) {
+        if (!req.params.year || !req.params.month || !req.params.day) {
           return res.status(400).send('Expected params `year`, `month`, and `day`.');
         }
 
@@ -1060,6 +1013,7 @@ module.exports = function(config) {
 
     app.get(
       '/analytics/created/projects/year/:year',
+      redis.middleware.bind(redis),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1089,6 +1043,7 @@ module.exports = function(config) {
 
     app.get(
       '/analytics/created/projects/year/:year/month/:month',
+      redis.middleware.bind(redis),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1123,6 +1078,7 @@ module.exports = function(config) {
 
     app.get(
       '/analytics/created/projects/year/:year/month/:month/day/:day',
+      redis.middleware.bind(redis),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1161,6 +1117,7 @@ module.exports = function(config) {
 
     app.get(
       '/analytics/created/users/year/:year',
+      redis.middleware.bind(redis),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1190,6 +1147,7 @@ module.exports = function(config) {
 
     app.get(
       '/analytics/created/users/year/:year/month/:month',
+      redis.middleware.bind(redis),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1224,6 +1182,7 @@ module.exports = function(config) {
 
     app.get(
       '/analytics/created/users/year/:year/month/:month/day/:day',
+      redis.middleware.bind(redis),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1262,6 +1221,7 @@ module.exports = function(config) {
 
     app.get(
       '/analytics/upgrades/projects/year/:year',
+      redis.middleware.bind(redis),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1291,6 +1251,7 @@ module.exports = function(config) {
 
     app.get(
       '/analytics/upgrades/projects/year/:year/month/:month',
+      redis.middleware.bind(redis),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1325,6 +1286,7 @@ module.exports = function(config) {
 
     app.get(
       '/analytics/upgrades/projects/year/:year/month/:month/day/:day',
+      redis.middleware.bind(redis),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1363,6 +1325,7 @@ module.exports = function(config) {
 
     app.get(
       '/analytics/total/projects/year/:year',
+      redis.middleware.bind(redis),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1391,6 +1354,7 @@ module.exports = function(config) {
 
     app.get(
       '/analytics/total/projects/year/:year/month/:month',
+      redis.middleware.bind(redis),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1424,6 +1388,7 @@ module.exports = function(config) {
 
     app.get(
       '/analytics/total/projects/year/:year/month/:month/day/:day',
+      redis.middleware.bind(redis),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1461,6 +1426,7 @@ module.exports = function(config) {
 
     app.get(
       '/analytics/total/users/year/:year',
+      redis.middleware.bind(redis),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1489,6 +1455,7 @@ module.exports = function(config) {
 
     app.get(
       '/analytics/total/users/year/:year/month/:month',
+      redis.middleware.bind(redis),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1522,6 +1489,7 @@ module.exports = function(config) {
 
     app.get(
       '/analytics/total/users/year/:year/month/:month/day/:day',
+      redis.middleware.bind(redis),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1592,8 +1560,6 @@ module.exports = function(config) {
    * Expose the redis interface for analytics.
    */
   return {
-    getRedis: getRedis,
-    connect: connect,
     hook: hook,
     getCalls: getCalls,
     getAnalyticsKey: getAnalyticsKey,
