@@ -125,12 +125,15 @@ module.exports = function(options) {
   app.use(require('./src/middleware/apiKey')(app.formio.formio));
 
   // Download a submission pdf.
-  app.get('/project/:projectId/form/:formId/submission/:submissionId/download', [
+  let downloadPDF = [
     require('./src/middleware/aliasToken')(app),
     app.formio.formio.middleware.tokenHandler,
     app.formio.formio.middleware.permissionHandler,
     require('./src/middleware/download')(app.formio.formio)
-  ]);
+  ];
+
+  app.get('/project/:projectId/form/:formId/submission/:submissionId/download', downloadPDF);
+  app.get('/project/:projectId/form/:formId/submission/:submissionId/download/:fileId', downloadPDF);
 
   // Adding google analytics to our api.
   if (config.gaTid) {
