@@ -19,7 +19,7 @@ class RedisInterface {
   }
 
   middleware(req, res, next) {
-    this.get((err, db) => {
+    this.getDb((err, db) => {
       if (err) {
         return res.status(500).send(err.message);
       }
