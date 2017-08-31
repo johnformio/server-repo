@@ -699,7 +699,7 @@ module.exports = (redis) => {
      */
     app.get(
       '/project/:projectId/analytics/year/:year/month/:month',
-      redis.middleware.bind(redis),
+      (req, res, next) => redis.middleware(req, res, next),
       formioServer.formio.middleware.tokenHandler,
       formioServer.formio.middleware.permissionHandler,
       function(req, res, next) {
@@ -755,7 +755,7 @@ module.exports = (redis) => {
      */
     app.get(
       '/project/:projectId/analytics/year/:year/month/:month/day/:day',
-      redis.middleware.bind(redis),
+      (req, res, next) => redis.middleware(req, res, next),
       formioServer.formio.middleware.tokenHandler,
       formioServer.formio.middleware.permissionHandler,
       function(req, res, next) {
@@ -917,7 +917,7 @@ module.exports = (redis) => {
 
     app.get(
       '/analytics/project/year/:year',
-      redis.middleware.bind(redis),
+      (req, res, next) => redis.middleware(req, res, next),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -944,7 +944,7 @@ module.exports = (redis) => {
 
     app.get(
       '/analytics/project/year/:year/month/:month',
-      redis.middleware.bind(redis),
+      (req, res, next) => redis.middleware(req, res, next),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -976,7 +976,7 @@ module.exports = (redis) => {
 
     app.get(
       '/analytics/project/year/:year/month/:month/day/:day',
-      redis.middleware.bind(redis),
+      (req, res, next) => redis.middleware(req, res, next),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1013,7 +1013,7 @@ module.exports = (redis) => {
 
     app.get(
       '/analytics/created/projects/year/:year',
-      redis.middleware.bind(redis),
+      (req, res, next) => redis.middleware(req, res, next),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1043,7 +1043,7 @@ module.exports = (redis) => {
 
     app.get(
       '/analytics/created/projects/year/:year/month/:month',
-      redis.middleware.bind(redis),
+      (req, res, next) => redis.middleware(req, res, next),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1078,7 +1078,7 @@ module.exports = (redis) => {
 
     app.get(
       '/analytics/created/projects/year/:year/month/:month/day/:day',
-      redis.middleware.bind(redis),
+      (req, res, next) => redis.middleware(req, res, next),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1117,7 +1117,7 @@ module.exports = (redis) => {
 
     app.get(
       '/analytics/created/users/year/:year',
-      redis.middleware.bind(redis),
+      (req, res, next) => redis.middleware(req, res, next),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1147,7 +1147,7 @@ module.exports = (redis) => {
 
     app.get(
       '/analytics/created/users/year/:year/month/:month',
-      redis.middleware.bind(redis),
+      (req, res, next) => redis.middleware(req, res, next),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1182,7 +1182,7 @@ module.exports = (redis) => {
 
     app.get(
       '/analytics/created/users/year/:year/month/:month/day/:day',
-      redis.middleware.bind(redis),
+      (req, res, next) => redis.middleware(req, res, next),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1221,7 +1221,7 @@ module.exports = (redis) => {
 
     app.get(
       '/analytics/upgrades/projects/year/:year',
-      redis.middleware.bind(redis),
+      (req, res, next) => redis.middleware(req, res, next),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1251,7 +1251,7 @@ module.exports = (redis) => {
 
     app.get(
       '/analytics/upgrades/projects/year/:year/month/:month',
-      redis.middleware.bind(redis),
+      (req, res, next) => redis.middleware(req, res, next),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1286,7 +1286,7 @@ module.exports = (redis) => {
 
     app.get(
       '/analytics/upgrades/projects/year/:year/month/:month/day/:day',
-      redis.middleware.bind(redis),
+      (req, res, next) => redis.middleware(req, res, next),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1325,7 +1325,7 @@ module.exports = (redis) => {
 
     app.get(
       '/analytics/total/projects/year/:year',
-      redis.middleware.bind(redis),
+      (req, res, next) => redis.middleware(req, res, next),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1354,7 +1354,7 @@ module.exports = (redis) => {
 
     app.get(
       '/analytics/total/projects/year/:year/month/:month',
-      redis.middleware.bind(redis),
+      (req, res, next) => redis.middleware(req, res, next),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1388,7 +1388,7 @@ module.exports = (redis) => {
 
     app.get(
       '/analytics/total/projects/year/:year/month/:month/day/:day',
-      redis.middleware.bind(redis),
+      (req, res, next) => redis.middleware(req, res, next),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1426,7 +1426,7 @@ module.exports = (redis) => {
 
     app.get(
       '/analytics/total/users/year/:year',
-      redis.middleware.bind(redis),
+      (req, res, next) => redis.middleware(req, res, next),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1455,7 +1455,7 @@ module.exports = (redis) => {
 
     app.get(
       '/analytics/total/users/year/:year/month/:month',
-      redis.middleware.bind(redis),
+      (req, res, next) => redis.middleware(req, res, next),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
@@ -1489,7 +1489,7 @@ module.exports = (redis) => {
 
     app.get(
       '/analytics/total/users/year/:year/month/:month/day/:day',
-      redis.middleware.bind(redis),
+      (req, res, next) => redis.middleware(req, res, next),
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
