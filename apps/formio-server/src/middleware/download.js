@@ -1,7 +1,6 @@
 'use strict';
 var request = require('request');
 var FORMIO_FILES_SERVER = process.env.FORMIO_FILES_SERVER || 'https://files.form.io';
-const util = require('../util/util');
 module.exports = function(formio) {
   var cache = require('../cache/cache')(formio);
   return function(req, res, next) {
@@ -25,24 +24,11 @@ module.exports = function(formio) {
             filesServer = req.query.from;
             delete req.query.from;
           }
-          var downloadUrl = filesServer + '/pdf/' + req.params.projectId;
-          if (req.params.fileId) {
-            downloadUrl += '/file/' + req.params.fileId;
-          }
-          else if (form.settings && form.settings.pdf && form.settings.pdf.id) {
-            downloadUrl += '/file/' + form.settings.pdf.id;
-          }
-          downloadUrl += '/download';
-
-          // Pass along the query params.
-          let query = util.query(req.query);
-          if (query) {
-            downloadUrl += '?' + query;
-          }
 
           request({
             method: 'POST',
-            url: downloadUrl,
+            url: filesServer + '/pdf/' + req.params.projectId + '/download',
+            qs: req.query,
             headers: {
               'x-file-token': settings.filetoken
             },
