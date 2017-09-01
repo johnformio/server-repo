@@ -9,8 +9,18 @@ var docker = process.env.DOCKER;
 
 module.exports = function(app, template, hook) {
   describe('Analytics', function() {
-    var redis = app.formio.analytics.getRedis();
+    var redis = null;
     describe('Bootstrap', function() {
+      it('Should connect to redis', function(done) {
+        app.formio.redis.getDb((err, db) => {
+          if (err) {
+            return done(err);
+          }
+          redis = db;
+          done();
+        });
+      });
+
       it('Should clear all the redis data', function(done) {
         redis.flushall(function(err, val) {
           if (err) {
