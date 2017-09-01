@@ -9,21 +9,22 @@ module.exports = app => (req, res, next) => {
   delete req.query.token;
 
   // Get the jwt token for this user.
-  let redis = app.formio.analytics.getRedis();
-  if (!redis) {
-    return next('Redis not available');
-  }
-
-  redis.get(aliasToken, function(err, token) {
+  app.formio.redis.getDb((err, db) => {
     if (err) {
-      return next('Token not valid.');
+      return next(err.message);
     }
 
-    if (!token) {
-      return next('Token expired.');
-    }
+    db.get(aliasToken, function(err, token) {
+      if (err) {
+        return next('Token not valid.');
+      }
 
-    req.headers['x-jwt-token'] = token;
-    next();
+      if (!token) {
+        return next('Token expired.');
+      }
+
+      req.headers['x-jwt-token'] = token;
+      next();
+    });
   });
 };

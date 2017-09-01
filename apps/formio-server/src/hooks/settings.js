@@ -429,14 +429,20 @@ module.exports = function(app) {
        * @param expire
        * @param tempToken
        */
-      tempToken: function(req, res, token, allow, expire, tokenResponse) {
-        let redis = formioServer.analytics.getRedis();
-        if (redis) {
-          tokenResponse.key = chance.string({
+      tempToken: function(req, res, token, allow, expire, tokenResponse, cb) {
+        if (formioServer.redis.db) {
+          let tempToken = chance.string({
             pool: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
             length: 30
           });
-          redis.set(tokenResponse.key, tokenResponse.token, 'EX', expire);
+          formioServer.redis.db.set(tempToken, tokenResponse.token, 'EX', expire, (err) => {
+            if (err) {
+              return res.status(500).send(err.message);
+            }
+
+            tokenResponse.key = tempToken;
+            cb();
+          });
         }
       },
 
