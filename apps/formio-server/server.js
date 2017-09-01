@@ -60,14 +60,6 @@ module.exports = function(options) {
   app.use(bodyParser.json({limit: '16mb'}));
   app.use(methodOverride('X-HTTP-Method-Override'));
 
-  // Status response.
-  app.get('/status', (req, res) => {
-    res.json({
-      version: packageJson.version,
-      schema: packageJson.schema
-    });
-  });
-
   // Error handler for malformed JSON
   app.use(function(err, req, res, next) {
     if (err instanceof SyntaxError) {
@@ -114,6 +106,14 @@ module.exports = function(options) {
       return next();
     }
     corsRoute(req, res, next);
+  });
+
+  // Status response.
+  app.get('/status', (req, res) => {
+    res.json({
+      version: packageJson.version,
+      schema: packageJson.schema
+    });
   });
 
   // Secure the isPrimary for templates.
