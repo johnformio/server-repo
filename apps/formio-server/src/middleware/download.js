@@ -25,9 +25,11 @@ module.exports = function(formio) {
             delete req.query.from;
           }
 
+          let fileId = req.params.fileId || 'pdf';
+
           request({
             method: 'POST',
-            url: filesServer + '/pdf/' + req.params.projectId + '/download',
+            url: filesServer + '/pdf/' + req.params.projectId + '/file/' + fileId + '/download',
             qs: req.query,
             headers: {
               'x-file-token': settings.filetoken
