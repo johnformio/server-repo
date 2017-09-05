@@ -166,6 +166,14 @@ module.exports = function(app) {
       resources: function(resources) {
         return _.assign(resources, require('../resources/resources')(app, formioServer));
       },
+      resourceOptions: function(options, type) {
+        switch (type) {
+          case 'form':
+          case 'submission':
+            options.versions = true;
+        }
+        return options;
+      },
       models: function(models) {
         // Add the project to the form schema.
         models.form.schema.add({
@@ -178,6 +186,16 @@ module.exports = function(app) {
           revisions: {
             type: Boolean,
             default: false
+          }
+        });
+
+        models.submission.schema.add({
+          _fvid: {
+            type: Number,
+            description: 'The current version id of the form.',
+            index: true,
+            required: true,
+            default: 0
           }
         });
 
@@ -1350,6 +1368,14 @@ module.exports = function(app) {
           routes[handler].push(conditionalFilter);
         });
 
+        // Add the form version id to each submission.
+        _.each(['beforePost', 'beforePut'], function(handler) {
+          routes[handler].push(function(req, res, next) {
+            req.body._fvid = req.currentForm._vid || 0;
+            next();
+          });
+        });
+
         return routes;
       },
 
@@ -1518,6 +1544,9 @@ module.exports = function(app) {
         .exec(function(err, project) {
           if (err) {
             return done(err);
+          }
+          if (!project) {
+            return done(null, machineName);
           }
 
           if (!project) {
