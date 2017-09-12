@@ -120,6 +120,9 @@ module.exports = function(router) {
         default: router.config.plan || 'commercial',
         index: true
       },
+      billing: {
+        type: formio.mongoose.Schema.Types.Mixed
+      },
       steps: {
         type: [String]
       },

@@ -1531,7 +1531,7 @@ module.exports = (redis) => {
       restrictToFormioEmployees,
       function(req, res, next) {
         var _debug = require('debug')('formio:analytics:upgradeProject');
-        var plans = ['basic', 'independent', 'team', 'commercial'];
+        var plans = ['basic', 'independent', 'team', 'commercial', 'trial'];
         if (!req.body || !req.body.project || !req.body.plan) {
           return res.status(400).send('Expected params `project` and `plan`.');
         }

@@ -34,7 +34,7 @@ module.exports = function(router, formioServer) {
           debug('Removing payload settings: ' + JSON.stringify(req.body));
         }
 
-        formio.middleware.filterResourcejsResponse(['settings']).call(this, req, res, next);
+        formio.middleware.filterResourcejsResponse(['settings', 'billing']).call(this, req, res, next);
       });
     }
     else {
@@ -44,7 +44,7 @@ module.exports = function(router, formioServer) {
         debug('Removing payload settings: ' + JSON.stringify(req.body));
       }
 
-      formio.middleware.filterResourcejsResponse(['settings']).call(this, req, res, next);
+      formio.middleware.filterResourcejsResponse(['settings', 'billing']).call(this, req, res, next);
     }
   };
 
@@ -93,6 +93,10 @@ module.exports = function(router, formioServer) {
       formio.middleware.projectEnvCreatePlan,
       formio.middleware.projectEnvCreateAccess,
       function(req, res, next) {
+        // Don't allow setting billing.
+        if (req.body) {
+          delete req.body.billing;
+        }
         if (req.body && req.body.template) {
           req.template = req.body.template;
           req.templateMode = 'create';
@@ -131,6 +135,10 @@ module.exports = function(router, formioServer) {
     beforePut: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       function(req, res, next) {
+        // Don't allow setting billing.
+        if (req.body) {
+          delete req.body.billing;
+        }
         if (req.body && req.body.template) {
           req.template = req.body.template;
           req.templateMode = 'update';
