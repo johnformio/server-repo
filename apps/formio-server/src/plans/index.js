@@ -14,8 +14,8 @@ module.exports = function(formioServer, cache) {
     basic: 1000,
     independent: 10000,
     team: 250000,
-    trial: 250000,
-    commercial: Number.MAX_VALUE
+    trial: 10000,
+    commercial: 2000000
   };
 
   var basePlan = formioServer.config.plan || 'commercial';
@@ -31,11 +31,6 @@ module.exports = function(formioServer, cache) {
     if (err || !project) {
       debug.getPlan(err || 'Project not found.');
       return next(err || 'Project not found.');
-    }
-
-    if (project.primary && project.primary === true) {
-      debug.getPlan('commercial');
-      return next(null, 'commercial', project);
     }
 
     // Only allow plans defined within the limits definition.
