@@ -26,20 +26,28 @@ module.exports = function(formio) {
           }
 
           let fileId = req.params.fileId || 'pdf';
-
-          request({
-            method: 'POST',
-            url: filesServer + '/pdf/' + req.params.projectId + '/file/' + fileId + '/download',
-            qs: req.query,
-            headers: {
-              'x-file-token': settings.filetoken
-            },
-            json: true,
-            body: {
-              form: form,
-              submission: submission
-            }
-          }).pipe(res);
+          try {
+            request({
+              method: 'POST',
+              url: filesServer + '/pdf/' + req.params.projectId + '/file/' + fileId + '/download',
+              qs: req.query,
+              headers: {
+                'x-file-token': settings.filetoken
+              },
+              json: true,
+              body: {
+                form: form,
+                submission: submission
+              }
+            }, (err) => {
+              if (err) {
+                res.status(500).send(err.message);
+              }
+            }).pipe(res);
+          }
+          catch (err) {
+            res.status(500).send(err.message);
+          }
         });
       });
     });
