@@ -546,22 +546,24 @@ module.exports = function(router) {
         }
         else { // Use default configuration, good for most oauth providers
           var oauthSettings = _.get(settings, 'oauth.' + provider.name);
-          if (!oauthSettings.clientId || !oauthSettings.clientSecret) {
-            component.oauth = {
-              provider: provider.name,
-              error: provider.title + ' OAuth provider is missing client ID or client secret'
-            };
-          }
-          else {
-            component.oauth = {
-              provider: provider.name,
-              clientId: oauthSettings.clientId,
-              authURI: provider.authURI,
-              state: state,
-              scope: provider.scope
-            };
-            if (provider.display) {
-              component.oauth.display = provider.display;
+          if (oauthSettings) {
+            if (!oauthSettings.clientId || !oauthSettings.clientSecret) {
+              component.oauth = {
+                provider: provider.name,
+                error: provider.title + ' OAuth provider is missing client ID or client secret'
+              };
+            }
+            else {
+              component.oauth = {
+                provider: provider.name,
+                clientId: oauthSettings.clientId,
+                authURI: provider.authURI,
+                state: state,
+                scope: provider.scope
+              };
+              if (provider.display) {
+                component.oauth.display = provider.display;
+              }
             }
           }
         }
