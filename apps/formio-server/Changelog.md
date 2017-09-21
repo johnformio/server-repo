@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Remote environment support with remote authentication
  - New deployment options by sending the template with request
  - Add ADMIN_KEY option
+ - Add no-cache headers
  
 ### Removed
  - Install process for form.io project

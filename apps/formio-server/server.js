@@ -9,6 +9,7 @@ var favicon = require('serve-favicon');
 var packageJson = require('./package.json');
 var Q = require('q');
 var debug = require('debug')('formio:requestInfo');
+var cacheControl = require('express-cache-controller');
 
 module.exports = function(options) {
   options = options || {};
@@ -43,6 +44,11 @@ module.exports = function(options) {
   app.listen = function() {
     return app.server.listen.apply(app.server, arguments);
   };
+
+  // Make sure no-cache headers are sent to prevent IE from caching Ajax requests.
+  app.use(cacheControl({
+    noCache: true
+  }));
 
   // Debug request info.
   app.use(function(req, res, next) {
