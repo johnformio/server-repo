@@ -1,9 +1,7 @@
 'use strict';
 
-var request = require('request');
 var _ = require('lodash');
 var jwt = require('jsonwebtoken');
-var isURL = require('is-url');
 var debug = require('debug')('formio:middleware:projectTemplate');
 
 module.exports = function(formio) {
