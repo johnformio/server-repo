@@ -122,17 +122,6 @@ module.exports = function(options) {
     });
   });
 
-  // Secure the isPrimary for templates.
-  app.use((req, res, next) => {
-    if (req.body && req.body.template) {
-      if (typeof req.body.template === 'string') {
-        req.body.template = JSON.parse(req.body.template);
-      }
-      delete req.body.template.isPrimary;
-    }
-    next();
-  });
-
   // Handle our API Keys.
   app.use(require('./src/middleware/apiKey')(app.formio.formio));
 
