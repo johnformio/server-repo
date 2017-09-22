@@ -4,7 +4,7 @@ var FORMIO_FILES_SERVER = process.env.FORMIO_FILES_SERVER || 'https://files.form
 module.exports = function(formio) {
   var cache = require('../cache/cache')(formio);
   return function(req, res, next) {
-    cache.loadCurrentProject(req, function(err, project) {
+    cache.loadPrimaryProject(req, function(err, project) {
       if (err) {
         return next(err);
       }
@@ -29,7 +29,7 @@ module.exports = function(formio) {
           try {
             request({
               method: 'POST',
-              url: filesServer + '/pdf/' + req.params.projectId + '/file/' + fileId + '/download',
+              url: filesServer + '/pdf/' + project._id + '/file/' + fileId + '/download',
               qs: req.query,
               headers: {
                 'x-file-token': settings.filetoken
