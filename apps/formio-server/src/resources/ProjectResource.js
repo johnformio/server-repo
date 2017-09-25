@@ -90,6 +90,7 @@ module.exports = function(router, formioServer) {
     ],
     beforePost: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
+      require('../middleware/fetchTemplate'),
       formio.middleware.projectEnvCreatePlan,
       formio.middleware.projectEnvCreateAccess,
       function(req, res, next) {
@@ -100,13 +101,7 @@ module.exports = function(router, formioServer) {
         if (req.body && req.body.template) {
           req.template = req.body.template;
           req.templateMode = 'create';
-          //  Allow primary if using access key.
-          if (req.template.primary && req.isAdmin && req.adminKey) {
-            req.template.isPrimary = true;
-          }
-          else {
-            req.template.isPrimary = false;
-          }
+          req.template.isPrimary = (req.template.primary && req.isAdmin && req.adminKey);
           delete req.body.template;
         }
         next();

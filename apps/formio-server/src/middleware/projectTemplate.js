@@ -1,9 +1,7 @@
 'use strict';
 
-var request = require('request');
 var _ = require('lodash');
 var jwt = require('jsonwebtoken');
-var isURL = require('is-url');
 var debug = require('debug')('formio:middleware:projectTemplate');
 
 module.exports = function(formio) {
@@ -141,31 +139,10 @@ module.exports = function(formio) {
     };
 
     // Allow external templates.
-    debug('template: ' + template + ', typeof ' + typeof template);
     if (typeof template === 'object') {
-      debug('importing object');
+      debug('Importing template');
       // Import the template.
       return importTemplate(template);
-    }
-    // Allow templates from http://help.form.io/templates.
-    else if (isURL(template)) {
-      debug('importing URL');
-      return request({
-        url: template,
-        json: true
-      }, function(err, response, body) {
-        if (err) {
-          debug(err);
-          return next(err.message || err);
-        }
-
-        if (response.statusCode !== 200) {
-          return res.status(400).send('Unable to load template.');
-        }
-
-        // Import the template.
-        return importTemplate(body);
-      });
     }
     // New environments should copy their primary project template.
     else if ('project' in project && project.project) {
@@ -185,7 +162,7 @@ module.exports = function(formio) {
       });
     }
     // Check for template that is already provided.
-    else if (formio.templates.hasOwnProperty(template)) {
+    else if ((typeof template === 'string') && formio.templates.hasOwnProperty(template)) {
       debug('importing template:' + template);
       // Import the template.
       return importTemplate(_.cloneDeep(formio.templates[template]));
