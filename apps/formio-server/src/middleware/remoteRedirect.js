@@ -38,6 +38,10 @@ module.exports = app => (req, res, next) => {
   };
 
   cache.loadCurrentProject(req, function(err, project) {
+    if (!project) {
+      return res.status(400).send('Project not found');
+    }
+
     const currentProject = project.toObject();
     if (currentProject.remote) {
       return res.redirect(301, projectPath(
