@@ -1,6 +1,11 @@
 'use strict';
 
 var _ = require('lodash');
+var crypto = require('crypto');
+var debug = {
+  decrypt: require('debug')('formio:util:decrypt')
+};
+
 module.exports = {
   tokenRegex: new RegExp(/\[\[\s*token\(\s*([^\)]+\s*)\)\s*,?\s*([0-9]*)\s*\]\]/i),
   query: (query) => {
@@ -33,5 +38,38 @@ module.exports = {
       };
     }
     return null;
+  },
+  encrypt: function(secret, rawData) {
+    if (!secret || !rawData) {
+      return null;
+    }
+
+    var cipher = crypto.createCipher('aes-256-cbc', secret);
+    var decryptedJSON = JSON.stringify(rawData);
+
+    return Buffer.concat([
+      cipher.update(decryptedJSON),
+      cipher.final()
+    ]);
+  },
+  decrypt: function(secret, cipherbuffer) {
+    if (!secret || !cipherbuffer) {
+      return null;
+    }
+    var data = {};
+
+    try {
+      var decipher = crypto.createDecipher('aes-256-cbc', secret);
+      var decryptedJSON = Buffer.concat([
+        decipher.update(cipherbuffer), // Buffer contains encrypted utf8
+        decipher.final()
+      ]);
+      data = JSON.parse(decryptedJSON);
+    }
+    catch (e) {
+      debug.decrypt(e);
+    }
+
+    return data;
   }
 };

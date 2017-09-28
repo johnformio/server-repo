@@ -16,6 +16,8 @@ let async = require('async');
 var chance = new (require('chance'))();
 var fs = require('fs');
 var url = require('url');
+var keygenerator = require('keygenerator');
+var Q = require('q');
 
 module.exports = function(app) {
   var formioServer = app.formio;
@@ -1328,6 +1330,58 @@ module.exports = function(app) {
       cacheInit: function(cache) {
         cache.projects = {};
         return cache;
+      },
+      submission: function(req, res, next) {
+        var handlerName = req.handlerName;
+
+        if ([
+            'beforePost',
+            'beforePut',
+            'afterGet',
+            'afterIndex'
+          ].indexOf(handlerName) !== -1) {
+            var secret = req.currentProject.settings.secret;
+            var secretSet = Q();
+
+            if (!secret) {
+              // Update project with randomly generated secret key.
+              secret = keygenerator._();
+              secretSet = app.formio.formio.resources.project.model.findById(req.projectId)
+                .exec()
+                .then(project => {
+                  project.settings = _.extend({}, project.settings, {
+                    secret
+                  });
+                  return project.save();
+                });
+            }
+
+            return secretSet
+              .then(() => ([
+              'beforePost',
+              'beforePut'
+            ].indexOf(handlerName) !== -1)
+              ? async.eachOfSeries(req.flattenedComponents, function(component, path, cb) {
+                  if (component.encrypted) {
+                    _.set(req.body.data, path, util.encrypt(secret, _.get(req.body.data, path)));
+                  }
+
+                  cb();
+                }, next)
+              : async.eachOfSeries(handlerName === 'afterIndex'
+                ? res.resource.item
+                : [res.resource.item], function(submission, index, cbSubmission) {
+                  async.eachOfSeries(req.flattenedComponents, function(component, path, cbComponent) {
+                    if (component.encrypted) {
+                      _.set(submission.data, path, util.decrypt(secret, _.get(submission.data, path).buffer));
+                    }
+
+                    cbComponent();
+                  }, cbSubmission);
+                }, next));
+        }
+
+        next();
       },
       submissionParams: function(params) {
         params.push('oauth');
