@@ -1339,7 +1339,8 @@ module.exports = function(app) {
             'beforePut',
             'afterGet',
             'afterIndex'
-          ].indexOf(handlerName) !== -1) {
+          ].indexOf(handlerName) !== -1 &&
+          req.currentProject.settings) {
             var secret = req.currentProject.settings.secret;
             var secretSet = Q();
 
@@ -1362,7 +1363,9 @@ module.exports = function(app) {
               'beforePut'
             ].indexOf(handlerName) !== -1)
               ? async.eachOfSeries(req.flattenedComponents, function(component, path, cb) {
-                  if (component.encrypted) {
+                  if (component.encrypted &&
+                      component.persistent &&
+                      _.has(req.body.data, path)) {
                     _.set(req.body.data, path, util.encrypt(secret, _.get(req.body.data, path)));
                   }
 
@@ -1372,7 +1375,9 @@ module.exports = function(app) {
                 ? res.resource.item
                 : [res.resource.item], function(submission, index, cbSubmission) {
                   async.eachOfSeries(req.flattenedComponents, function(component, path, cbComponent) {
-                    if (component.encrypted) {
+                    if (component.encrypted &&
+                        component.persistent &&
+                        _.get(submission.data, path)) {
                       _.set(submission.data, path, util.decrypt(secret, _.get(submission.data, path).buffer));
                     }
 
