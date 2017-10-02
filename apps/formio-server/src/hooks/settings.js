@@ -1332,24 +1332,59 @@ module.exports = function(app) {
         return cache;
       },
       submission: function(req, res, next) {
-        var handlerName = req.handlerName;
+        const {handlerName} = req;
 
-        if ([
-            'beforePost',
-            'beforePut',
+        function encryptedComponent(component) {
+          return component && component.encrypted && component.persistent;
+        }
+
+        function encryptDecryptHandler(handlerName) {
+          return encryptHandler(handlerName) || decryptHandler(handlerName);
+        }
+        function encryptHandler(handlerName) {
+          return [
+              'beforePost',
+              'beforePut'
+            ].indexOf(handlerName) !== -1;
+        }
+        function decryptHandler(handlerName) {
+          return [
             'afterGet',
             'afterIndex'
-          ].indexOf(handlerName) !== -1 &&
+          ].indexOf(handlerName) !== -1;
+        }
+
+        function containerBasedComponent(componentType) {
+          return arrayBasedComponent(componentType) || objectBasedComponent(componentType);
+        }
+        function arrayBasedComponent(componentType) {
+          return [
+            'datagrid',
+            'editgrid'
+          ].indexOf(componentType) !== -1;
+        }
+        function objectBasedComponent(componentType) {
+          return [
+            'container'
+          ].indexOf(componentType) !== -1;
+        }
+
+        function getParentPath(path) {
+          return path.substr(0, path.lastIndexOf('.'));
+        }
+
+        if (encryptDecryptHandler(handlerName) &&
+          // Protect from encryption on portal login.
           req.currentProject.settings) {
-            var secret = req.currentProject.settings.secret;
-            var secretSet = Q();
+            let {secret} = req.currentProject.settings;
+            let secretSet = Q();
 
             if (!secret) {
               // Update project with randomly generated secret key.
               secret = keygenerator._();
               secretSet = app.formio.formio.resources.project.model.findById(req.projectId)
                 .exec()
-                .then(project => {
+                .then((project) => {
                   project.settings = _.extend({}, project.settings, {
                     secret
                   });
@@ -1358,27 +1393,54 @@ module.exports = function(app) {
             }
 
             return secretSet
-              .then(() => ([
-              'beforePost',
-              'beforePut'
-            ].indexOf(handlerName) !== -1)
+              .then(() => encryptHandler(handlerName)
               ? async.eachOfSeries(req.flattenedComponents, function(component, path, cb) {
-                  if (component.encrypted &&
-                      component.persistent &&
-                      _.has(req.body.data, path)) {
-                    _.set(req.body.data, path, util.encrypt(secret, _.get(req.body.data, path)));
+                  if (encryptedComponent(component)) {
+                    const parentType = _.get(component, 'parent.type');
+
+                    // Skip component if parent already encrypted.
+                    if (containerBasedComponent(parentType) &&
+                      encryptedComponent(component.parent)) {
+                        return cb();
+                    }
+
+                    // Handle array-based components.
+                    if (arrayBasedComponent(parentType)) {
+                      _.get(req.body.data, getParentPath(path)).forEach((row) => {
+                        row[component.key] = util.encrypt(secret, row[component.key]);
+                      });
+                    }
+                    else if (_.has(req.body.data, path)) {
+                      // Handle other components including Container, which is object-based.
+                      _.set(req.body.data, path, util.encrypt(secret, _.get(req.body.data, path)));
+                    }
                   }
 
                   cb();
                 }, next)
               : async.eachOfSeries(handlerName === 'afterIndex'
                 ? res.resource.item
-                : [res.resource.item], function(submission, index, cbSubmission) {
-                  async.eachOfSeries(req.flattenedComponents, function(component, path, cbComponent) {
-                    if (component.encrypted &&
-                        component.persistent &&
-                        _.get(submission.data, path)) {
-                      _.set(submission.data, path, util.decrypt(secret, _.get(submission.data, path).buffer));
+                : [res.resource.item], (submission, index, cbSubmission) => {
+                  async.eachOfSeries(req.flattenedComponents, (component, path, cbComponent) => {
+                    if (encryptedComponent(component)) {
+                      const parentType = _.get(component, 'parent.type');
+
+                      // Skip component if parent already decrypted.
+                      if (containerBasedComponent(parentType) &&
+                        encryptedComponent(component.parent)) {
+                          return cbComponent();
+                      }
+
+                      // Handle array-based components.
+                      if (arrayBasedComponent(parentType)) {
+                        _.get(submission.data, getParentPath(path)).forEach((row) => {
+                          row[component.key] = util.decrypt(secret, row[component.key].buffer);
+                        });
+                      }
+                      else if (_.get(submission.data, path)) {
+                        // Handle other components including Container, which is object-based.
+                        _.set(submission.data, path, util.decrypt(secret, _.get(submission.data, path).buffer));
+                      }
                     }
 
                     cbComponent();
