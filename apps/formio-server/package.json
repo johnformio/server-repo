@@ -16,7 +16,7 @@
   },
   "main": "./server.js",
   "schema": "3.1.0-rc.1",
-  "version": "5.0.0-beta.12",
+  "version": "5.0.0-rc.1",
   "dependencies": {
     "JSONStream": "^1.3.0",
     "adal-node": "^0.1.15",
@@ -30,7 +30,7 @@
     "edit-google-spreadsheet": "^0.2.21",
     "express": "^4.15.2",
     "express-cache-controller": "^1.0.1",
-    "formio": "^1.19.6",
+    "formio": "^1.19.7",
     "formiojs": "^2.4.2",
     "is-url": "^1.2.1",
     "jira-connector": "^2.3.0",
