@@ -2,9 +2,12 @@
 
 var _ = require('lodash');
 var crypto = require('crypto');
+var keygenerator = require('keygenerator');
 var debug = {
   decrypt: require('debug')('formio:util:decrypt')
 };
+
+const defaultSaltLength = 40;
 
 module.exports = {
   tokenRegex: new RegExp(/\[\[\s*token\(\s*([^\)]+\s*)\)\s*,?\s*([0-9]*)\s*\]\]/i),
@@ -44,8 +47,11 @@ module.exports = {
       return null;
     }
 
-    var cipher = crypto.createCipher('aes-256-cbc', secret);
-    var decryptedJSON = JSON.stringify(rawData);
+    const salt = keygenerator._({
+      length: defaultSaltLength
+    });
+    const cipher = crypto.createCipher('aes-256-cbc', secret);
+    const decryptedJSON = JSON.stringify(rawData) + salt;
 
     return Buffer.concat([
       cipher.update(decryptedJSON),
@@ -64,7 +70,7 @@ module.exports = {
         decipher.update(cipherbuffer), // Buffer contains encrypted utf8
         decipher.final()
       ]);
-      data = JSON.parse(decryptedJSON);
+      data = JSON.parse(decryptedJSON.slice(0, -defaultSaltLength));
     }
     catch (e) {
       debug.decrypt(e);
