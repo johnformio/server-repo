@@ -62,12 +62,13 @@ module.exports = {
     if (!secret || !cipherbuffer) {
       return null;
     }
-    var data = {};
+    let data = {};
 
     try {
-      var decipher = crypto.createDecipher('aes-256-cbc', secret);
-      var decryptedJSON = Buffer.concat([
-        decipher.update(cipherbuffer), // Buffer contains encrypted utf8
+      const buffer = Buffer.isBuffer(cipherbuffer) ? cipherbuffer : cipherbuffer.buffer;
+      const decipher = crypto.createDecipher('aes-256-cbc', secret);
+      const decryptedJSON = Buffer.concat([
+        decipher.update(buffer), // Buffer contains encrypted utf8
         decipher.final()
       ]);
       data = JSON.parse(decryptedJSON.slice(0, -defaultSaltLength));

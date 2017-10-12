@@ -1350,7 +1350,9 @@ module.exports = function(app) {
         function decryptHandler(handlerName) {
           return [
             'afterGet',
-            'afterIndex'
+            'afterIndex',
+            'afterPost',
+            'afterPut'
           ].indexOf(handlerName) !== -1;
         }
 
@@ -1434,12 +1436,12 @@ module.exports = function(app) {
                       // Handle array-based components.
                       if (arrayBasedComponent(parentType)) {
                         _.get(submission.data, getParentPath(path)).forEach((row) => {
-                          row[component.key] = util.decrypt(secret, row[component.key].buffer);
+                          row[component.key] = util.decrypt(secret, row[component.key]);
                         });
                       }
                       else if (_.get(submission.data, path)) {
                         // Handle other components including Container, which is object-based.
-                        _.set(submission.data, path, util.decrypt(secret, _.get(submission.data, path).buffer));
+                        _.set(submission.data, path, util.decrypt(secret, _.get(submission.data, path)));
                       }
                     }
 
