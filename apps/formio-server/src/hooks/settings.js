@@ -17,7 +17,6 @@ var chance = new (require('chance'))();
 var fs = require('fs');
 var url = require('url');
 var keygenerator = require('keygenerator');
-var Q = require('q');
 
 module.exports = function(app) {
   var formioServer = app.formio;
@@ -1379,7 +1378,7 @@ module.exports = function(app) {
           // Protect from encryption on portal login.
           req.currentProject.settings) {
             let {secret} = req.currentProject.settings;
-            let secretSet = Q();
+            let secretSet = Promise.resolve();
 
             if (!secret) {
               // Update project with randomly generated secret key.
