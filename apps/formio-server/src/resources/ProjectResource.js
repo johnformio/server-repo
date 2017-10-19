@@ -66,6 +66,7 @@ module.exports = function(router, formioServer) {
   // Load the Environment create middleware.
   formio.middleware.projectEnvCreatePlan = require('../middleware/projectEnvCreatePlan')(formio);
   formio.middleware.projectEnvCreateAccess = require('../middleware/projectEnvCreateAccess')(formio);
+  formio.middleware.projectTeamSync = require('../middleware/projectTeamSync')(formio);
 
   // Load custom hubspot action.
   formio.middleware.customHubspotAction = require('../middleware/customHubspotAction')(formio);
@@ -108,6 +109,7 @@ module.exports = function(router, formioServer) {
       },
       formio.middleware.bootstrapEntityOwner(false),
       formio.middleware.condensePermissionTypes,
+      formio.middleware.projectTeamSync,
       formio.middleware.projectPlanFilter
     ],
     afterPost: [
@@ -178,6 +180,7 @@ module.exports = function(router, formioServer) {
         next();
       },
       formio.middleware.projectAccessFilter,
+      formio.middleware.projectTeamSync,
       formio.middleware.projectPlanFilter,
       removeProjectSettings
     ],
