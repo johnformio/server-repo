@@ -25,15 +25,26 @@ module.exports = function(formio) {
             delete req.query.from;
           }
 
+          // Create the headers object.
+          let headers = {
+            'x-file-token': settings.filetoken
+          };
+
+          // Pass along the auth token to files server.
+          if (req.token) {
+            headers['x-jwt-token'] = formio.auth.getToken({
+              form: req.token.form,
+              user: req.token.user
+            });
+          }
+
           let fileId = req.params.fileId || 'pdf';
           try {
             request({
               method: 'POST',
               url: filesServer + '/pdf/' + project._id + '/file/' + fileId + '/download',
               qs: req.query,
-              headers: {
-                'x-file-token': settings.filetoken
-              },
+              headers: headers,
               json: true,
               body: {
                 form: form,
