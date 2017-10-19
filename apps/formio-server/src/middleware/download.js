@@ -4,7 +4,7 @@ var FORMIO_FILES_SERVER = process.env.FORMIO_FILES_SERVER || 'https://files.form
 module.exports = function(formio) {
   var cache = require('../cache/cache')(formio);
   return function(req, res, next) {
-    cache.loadCurrentProject(req, function(err, project) {
+    cache.loadPrimaryProject(req, function(err, project) {
       if (err) {
         return next(err);
       }
@@ -17,18 +17,48 @@ module.exports = function(formio) {
           if (err) {
             return next(err);
           }
-          request({
-            method: 'POST',
-            url: FORMIO_FILES_SERVER + '/pdf/' + req.params.projectId + '/file/' + req.params.fileId + '/download',
-            headers: {
-              'x-file-token': settings.filetoken
-            },
-            json: true,
-            body: {
-              form: form,
-              submission: submission
-            }
-          }).pipe(res);
+
+          // Allow them to dynamically download from any server.
+          var filesServer = FORMIO_FILES_SERVER;
+          if (req.query.from) {
+            filesServer = req.query.from;
+            delete req.query.from;
+          }
+
+          // Create the headers object.
+          let headers = {
+            'x-file-token': settings.filetoken
+          };
+
+          // Pass along the auth token to files server.
+          if (req.token) {
+            headers['x-jwt-token'] = formio.auth.getToken({
+              form: req.token.form,
+              user: req.token.user
+            });
+          }
+
+          let fileId = req.params.fileId || 'pdf';
+          try {
+            request({
+              method: 'POST',
+              url: filesServer + '/pdf/' + project._id + '/file/' + fileId + '/download',
+              qs: req.query,
+              headers: headers,
+              json: true,
+              body: {
+                form: form,
+                submission: submission
+              }
+            }, (err) => {
+              if (err) {
+                res.status(500).send(err.message);
+              }
+            }).pipe(res);
+          }
+          catch (err) {
+            res.status(500).send(err.message);
+          }
         });
       });
     });

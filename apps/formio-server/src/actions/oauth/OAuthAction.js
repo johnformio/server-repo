@@ -54,7 +54,7 @@ module.exports = function(router) {
   OAuthAction.settingsForm = function(req, res, next) {
     var fieldsSrc = formio.hook.alter('path', '/form/' + req.params.formId + '/components', req);
     var resourceSrc = formio.hook.alter('path', '/form?type=resource', req);
-    formio.resources.role.model.find(formio.hook.alter('roleQuery', {}, req))
+    formio.resources.role.model.find(formio.hook.alter('roleQuery', {deleted: {$eq: null}}, req))
       .sort({title: 1})
       .exec(function(err, roles) {
         if (err || !roles) {
@@ -546,22 +546,24 @@ module.exports = function(router) {
         }
         else { // Use default configuration, good for most oauth providers
           var oauthSettings = _.get(settings, 'oauth.' + provider.name);
-          if (!oauthSettings.clientId || !oauthSettings.clientSecret) {
-            component.oauth = {
-              provider: provider.name,
-              error: provider.title + ' OAuth provider is missing client ID or client secret'
-            };
-          }
-          else {
-            component.oauth = {
-              provider: provider.name,
-              clientId: oauthSettings.clientId,
-              authURI: provider.authURI,
-              state: state,
-              scope: provider.scope
-            };
-            if (provider.display) {
-              component.oauth.display = provider.display;
+          if (oauthSettings) {
+            if (!oauthSettings.clientId || !oauthSettings.clientSecret) {
+              component.oauth = {
+                provider: provider.name,
+                error: provider.title + ' OAuth provider is missing client ID or client secret'
+              };
+            }
+            else {
+              component.oauth = {
+                provider: provider.name,
+                clientId: oauthSettings.clientId,
+                authURI: provider.authURI,
+                state: state,
+                scope: provider.scope
+              };
+              if (provider.display) {
+                component.oauth.display = provider.display;
+              }
             }
           }
         }

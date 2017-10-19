@@ -3,7 +3,8 @@
 var _ = require('lodash');
 var debug = {
   settings: require('debug')('formio:settings'),
-  error: require('debug')('formio:error')
+  error: require('debug')('formio:error'),
+  import: require('debug')('formio:project:import')
 };
 var o365Util = require('../actions/office365/util');
 var kickboxValidate = require('../actions/kickbox/validate');
@@ -13,6 +14,8 @@ var semver = require('semver');
 var util = require('../util/util');
 let async = require('async');
 var chance = new (require('chance'))();
+var fs = require('fs');
+var url = require('url');
 
 module.exports = function(app) {
   var formioServer = app.formio;
@@ -31,8 +34,6 @@ module.exports = function(app) {
 
   // Handle Payeezy form signing requests and project upgrades
   app.formio.formio.payment = require('../payment/payment')(app, app.formio.formio);
-
-  app.storage = require('../storage/index.js')(app);
 
   return {
     settings: function(settings, req, cb) {
@@ -63,7 +64,10 @@ module.exports = function(app) {
           case 'alias':
             // Dynamically set the baseUrl.
             formio.middleware.alias.baseUrl = function(req) {
-              return '/project/' + req.projectId;
+              const baseUrl = '/project/' + req.projectId;
+              // Save the alias as well.
+              req.pathAlias = url.parse(req.url).pathname.substr(baseUrl.length);
+              return baseUrl;
             };
 
             // Add the alias handler.
@@ -73,6 +77,7 @@ module.exports = function(app) {
             app.use(formio.middleware.params);
             return true;
           case 'token':
+            app.use(require('../middleware/remoteToken')(app));
             app.use(formio.middleware.tokenHandler);
             app.use(require('../middleware/userProject')(cache));
             return true;
@@ -212,7 +217,10 @@ module.exports = function(app) {
           };
 
           // Set the username field to the email address this is getting sent to.
-          query[ssoToken.field] = mail.to;
+          query[ssoToken.field] = {
+            $regex: new RegExp('^' + formioServer.formio.util.escapeRegExp(mail.to) + '$'),
+            $options: 'i'
+          };
 
           // Find the submission.
           _debug(query);
@@ -293,6 +301,9 @@ module.exports = function(app) {
        * @param next
        */
       resolve: function(defaultReturn, action, handler, method, req, res) {
+        if (process.env.DISABLE_RESTRICTIONS) {
+          return true;
+        }
         var _debug = require('debug')('formio:settings:resolve');
         var premium = [
           'webhook', 'oauth', 'office365contact', 'office365calendar', 'hubspotContact', 'googlesheet', 'jira'
@@ -364,6 +375,7 @@ module.exports = function(app) {
        *   The modified token.
        */
       token: function(token, form) {
+        token.origin = formioServer.formio.config.apiHost;
         token.form.project = form.project;
         return token;
       },
@@ -378,19 +390,38 @@ module.exports = function(app) {
        * @param expire
        * @param tempToken
        */
-      tempToken: function(req, res, token, allow, expire, tokenResponse) {
-        let redis = formioServer.analytics.getRedis();
-        if (redis) {
-          tokenResponse.key = chance.string({
+      tempToken: function(req, res, token, allow, expire, tokenResponse, cb) {
+        if (formioServer.redis.db) {
+          let tempToken = chance.string({
             pool: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
             length: 30
           });
-          redis.set(tokenResponse.key, tokenResponse.token, 'EX', expire);
+          formioServer.redis.db.set(tempToken, tokenResponse.token, 'EX', expire, (err) => {
+            if (err) {
+              return res.status(500).send(err.message);
+            }
+
+            tokenResponse.key = tempToken;
+            cb();
+          });
         }
       },
 
       isAdmin: function(isAdmin, req) {
         var _debug = require('debug')('formio:settings:isAdmin');
+
+        // Allow admin key to act as admin.
+        if (process.env.ADMIN_KEY && process.env.ADMIN_KEY === req.headers['x-admin-key']) {
+          _debug('Admin Key');
+          req.adminKey = true;
+          return true;
+        }
+
+        // Allow remote team admins to have admin access.
+        if (req.remotePermission && ['admin', 'owner', 'team_admin'].indexOf(req.remotePermission)) {
+          _debug('Remote Admin');
+          return true;
+        }
 
         // If no user is found, then return false.
         if (!req.token || !req.token.user) {
@@ -405,9 +436,12 @@ module.exports = function(app) {
         }
 
         // Project owners are default admins.
-        isAdmin = (req.token.user._id === req.projectOwner);
-        _debug(isAdmin);
-        return isAdmin;
+        if (req.token.user._id === req.projectOwner) {
+          _debug('Project owner');
+          return true;
+        }
+
+        return false;
       },
 
       /**
@@ -518,6 +552,7 @@ module.exports = function(app) {
           }
 
           // Load the project.
+          /* eslint-disable camelcase, max-statements, no-fallthrough */
           cache.loadPrimaryProject(req, function(err, project) {
             if (err) {
               _debug(err);
@@ -539,142 +574,72 @@ module.exports = function(app) {
               var teamAccess = _.filter(project.access, function(permission) {
                 return _.startsWith(permission.type, 'team_');
               });
-              _debug('Team Permissions: ' + JSON.stringify(teamAccess));
+              //_debug('Team Permissions: ' + JSON.stringify(teamAccess));
+              // Initialize the project access.
+              access.project = access.project || {};
+              access.project.create_all = access.project.create_all || [];
+              access.project.read_all = access.project.read_all || [];
+              access.project.update_all = access.project.update_all || [];
+              access.project.delete_all = access.project.delete_all || [];
 
-              /* eslint-disable camelcase, max-statements */
+              // Initialize the form access.
+              access.form = access.form || {};
+              access.form.create_all = access.form.create_all || [];
+              access.form.read_all = access.form.read_all || [];
+              access.form.update_all = access.form.update_all || [];
+              access.form.delete_all = access.form.delete_all || [];
+
+              // Initialize the submission access.
+              access.submission = access.submission || {};
+              access.submission.create_all = access.submission.create_all || [];
+              access.submission.read_all = access.submission.read_all || [];
+              access.submission.update_all = access.submission.update_all || [];
+              access.submission.delete_all = access.submission.delete_all || [];
+
+              // Initialize the role access.
+              access.role = access.role || {};
+              access.role.create_all = access.role.create_all || [];
+              access.role.read_all = access.role.read_all || [];
+              access.role.update_all = access.role.update_all || [];
+              access.role.delete_all = access.role.delete_all || [];
+
               teamAccess.forEach(function(permission) {
                 _debug(permission);
-                /**
-                 * For the team_read permission, the following need to be added:
-                 *   - read_all permissions on the project
-                 *   - read_all permissions on all forms
-                 *   - read_all permissions on all submissions
-                 */
-                if (permission.type === 'team_read') {
-                  // Modify the project access.
-                  access.project = access.project || {};
-                  access.project.read_all = access.project.read_all || [];
-
-                  // Modify the form access.
-                  access.form = access.form || {};
-                  access.form.read_all = access.form.read_all || [];
-
-                  // Modify the submission access.
-                  access.submission = access.submission || {};
-                  access.submission.read_all = access.submission.read_all || [];
-
-                  // Iterate each team in the team_read roles, and add their permissions.
-                  permission.roles = permission.roles || [];
-                  permission.roles.forEach(function(id) {
-                    access.project.read_all.push(id.toString());
-                    access.form.read_all.push(id.toString());
-                    access.submission.read_all.push(id.toString());
-                  });
-                }
-
-                /**
-                 * For the team_write permission, the following need to be added:
-                 *   - create_all permissions on the project
-                 *   - create_all permissions on all forms
-                 *   - read_all permissions on the project
-                 *   - read_all permissions on all forms
-                 *   - update_all permissions on the project
-                 *   - update_all permissions on all forms
-                 *   - delete_all permissions on all forms
-                 */
-                else if (permission.type === 'team_write') {
-                  // Modify the project access.
-                  access.project = access.project || {};
-                  access.project.create_all = access.project.create_all || [];
-                  access.project.read_all = access.project.read_all || [];
-                  access.project.update_all = access.project.update_all || [];
-                  access.project.delete_all = access.project.delete_all || [];
-
-                  // Modify the form access.
-                  access.form = access.form || {};
-                  access.form.create_all = access.form.create_all || [];
-                  access.form.read_all = access.form.read_all || [];
-                  access.form.update_all = access.form.update_all || [];
-                  access.form.delete_all = access.form.delete_all || [];
-
-                  // Iterate each team in the team_write roles, and add their permissions.
-                  permission.roles = permission.roles || [];
-                  permission.roles.forEach(function(id) {
-                    access.project.create_all.push(id.toString());
-                    access.project.read_all.push(id.toString());
-                    access.project.update_all.push(id.toString());
-                    access.project.delete_all.push(id.toString());
-
-                    access.form.create_all.push(id.toString());
-                    access.form.read_all.push(id.toString());
-                    access.form.update_all.push(id.toString());
-                    access.form.delete_all.push(id.toString());
-                  });
-                }
-
-                /**
-                 * For the team_admin permission, the following need to be added:
-                 *   - create_all permissions on the project
-                 *   - create_all permissions on all forms
-                 *   - create_all permissions on all submissions
-                 *   - read_all permissions on the project
-                 *   - read_all permissions on all forms
-                 *   - read_all permissions on all submissions
-                 *   - update_all permissions on the project
-                 *   - update_all permissions on all forms
-                 *   - update_all permissions on all submissions
-                 *   - delete_all permissions on all forms
-                 *   - delete_all permissions on all submissions
-                 */
-                else if (permission.type === 'team_admin') {
-                  // Modify the project access.
-                  access.project = access.project || {};
-                  access.project.create_all = access.project.create_all || [];
-                  access.project.read_all = access.project.read_all || [];
-                  access.project.update_all = access.project.update_all || [];
-                  access.project.delete_all = access.project.delete_all || [];
-
-                  // Modify the form access.
-                  access.form = access.form || {};
-                  access.form.create_all = access.form.create_all || [];
-                  access.form.read_all = access.form.read_all || [];
-                  access.form.update_all = access.form.update_all || [];
-                  access.form.delete_all = access.form.delete_all || [];
-
-                  // Modify the submission access.
-                  access.submission = access.submission || {};
-                  access.submission.create_all = access.submission.create_all || [];
-                  access.submission.read_all = access.submission.read_all || [];
-                  access.submission.update_all = access.submission.update_all || [];
-                  access.submission.delete_all = access.submission.delete_all || [];
-
-                  // Iterate each team in the team_admin roles, and add their permissions.
-                  permission.roles = permission.roles || [];
-                  permission.roles.forEach(function(id) {
-                    access.project.create_all.push(id.toString());
-                    access.project.read_all.push(id.toString());
-                    access.project.update_all.push(id.toString());
-                    access.project.delete_all.push(id.toString());
-
-                    access.form.create_all.push(id.toString());
-                    access.form.read_all.push(id.toString());
-                    access.form.update_all.push(id.toString());
-                    access.form.delete_all.push(id.toString());
-
-                    access.submission.create_all.push(id.toString());
-                    access.submission.read_all.push(id.toString());
-                    access.submission.update_all.push(id.toString());
-                    access.submission.delete_all.push(id.toString());
-                  });
-                }
+                permission.roles = permission.roles || [];
+                // Note: These roles are additive. team_admin gets all roles in team_write and team_read.
+                // Iterate each team in the team roles, and add their permissions.
+                permission.roles.forEach(function(id) {
+                   switch (permission.type) {
+                    case 'team_admin':
+                      access.project.update_all.push(id.toString());
+                      access.project.delete_all.push(id.toString());
+                    case 'team_write':
+                      access.project.create_all.push(id.toString()); // This controls form creation.
+                      access.form.create_all.push(id.toString());
+                      access.form.update_all.push(id.toString());
+                      access.form.delete_all.push(id.toString());
+                      access.submission.create_all.push(id.toString());
+                      access.submission.update_all.push(id.toString());
+                      access.submission.delete_all.push(id.toString());
+                      access.role.create_all.push(id.toString());
+                      access.role.update_all.push(id.toString());
+                      access.role.delete_all.push(id.toString());
+                    case 'team_read':
+                      access.project.read_all.push(id.toString());
+                      access.form.read_all.push(id.toString());
+                      access.submission.read_all.push(id.toString());
+                      access.role.read_all.push(id.toString());
+                      break;
+                  }
+                });
               });
-              /* eslint-enable camelcase, max-statements */
             }
 
             // Pass the access of this Team to the next function.
-            _debug(JSON.stringify(access));
+            //_debug(JSON.stringify(access));
             return callback(null);
           });
+          /* eslint-enable camelcase, max-statements, no-fallthrough */
         };
 
         // Get the permissions for an Project with the given ObjectId.
@@ -846,6 +811,47 @@ module.exports = function(app) {
         var _debug = require('debug')('formio:settings:hasAccess');
         var _url = nodeUrl.parse(req.url).pathname;
 
+        // Allow access if admin.
+        if (req.isAdmin) {
+          return true;
+        }
+
+        /**
+         * Check access if the auth token is meant for a remote server.
+         */
+        if (req.remotePermission) {
+          let permission = false;
+          switch (req.remotePermission) {
+            case 'owner':
+            case 'team_admin':
+              permission = true;
+              break;
+            case 'team_write':
+              // Allow full access to forms, submissions and roles.
+              // TODO: currently projects also control forms so we can't easily restrict here.
+              if (['project', 'form', 'submission', 'role', 'action'].indexOf(entity.type) !== -1) {
+                permission = true;
+              }
+              // Only allow get access for projects.
+              //if (entity.type === 'project' && req.method === 'GET') {
+              //  permission = true;
+              //}
+              break;
+            case 'team_read':
+              if ([
+                  'form',
+                  'submission',
+                  'role',
+                  'project',
+                  'action'
+                ].indexOf(entity.type) !== -1 && req.method === 'GET') {
+                permission = true;
+              }
+              break;
+          }
+          return permission;
+        }
+
         // Check requests not pointed at specific projects.
         if (!entity && !req.projectId) {
           // No project but authenticated.
@@ -855,7 +861,6 @@ module.exports = function(app) {
               return req.userProject.primary;
             }
 
-            // @TODO: Should this be restricted to only primary projects as well?
             if (_url === '/project') {
               _debug('true');
               return true;
@@ -1034,7 +1039,10 @@ module.exports = function(app) {
         });
         let project = {};
         let projectKeys = ['title', 'name', 'tag', 'description', 'machineName'];
+
         project[template.machineName || template.name || 'export'] = _.pick(template, projectKeys);
+
+        project[template.machineName || template.name || 'export'].primary = !!template.isPrimary;
 
         steps.unshift(async.apply(_install, template, project));
 
@@ -1045,27 +1053,45 @@ module.exports = function(app) {
             }
 
             if ('access' in template) {
+              debug.import('start access');
               let permissions = ['create_all', 'read_all', 'update_all', 'delete_all'];
               project.access = _.filter(project.access, access => permissions.indexOf(access.type) === -1);
 
+              debug.import(template.roles);
               template.access.forEach(access => {
                 project.access.push({
                   type: access.type,
-                  roles: _.filter(access.roles).map(name => template.roles[name]._id)
+                  roles: _.filter(access.roles).map(name => {
+                    if (template.roles.hasOwnProperty(name)) {
+                      return template.roles[name]._id;
+                    }
+                    return name;
+                  })
                 });
               });
+              debug.import('end access');
             }
             else if (
               'roles' in template &&
               Object.keys(template.roles).length > 0 &&
               'administrator' in template.roles
             ) {
+              // Add all roles to read_all.
+              let readAllRoles = [];
+              Object.keys(template.roles).forEach(roleName => {
+                readAllRoles.push(template.roles[roleName]._id);
+              });
+
               project.access = [
                 {
                   type: 'create_all',
                   roles: [
                     template.roles.administrator._id
                   ]
+                },
+                {
+                  type: 'read_all',
+                  roles: readAllRoles
                 },
                 {
                   type: 'update_all',
@@ -1080,17 +1106,6 @@ module.exports = function(app) {
                   ]
                 }
               ];
-              const readAll = {
-                type: 'read_all',
-                roles: []
-              };
-
-              // Add all roles to read_all.
-              Object.keys(template.roles).forEach(roleName => {
-                readAll.roles.push(template.roles[roleName]._id);
-              });
-
-              project.access.push(readAll);
             }
             project.save(done);
           });
@@ -1135,6 +1150,16 @@ module.exports = function(app) {
 
         return options;
       },
+
+      importOptions: function(options, req, res) {
+        var currentProject = cache.currentProject(req);
+        options._id = currentProject._id;
+        options.name = currentProject.name;
+        options.machineName = currentProject.machineName;
+
+        return options;
+      },
+
       requestParams: function(req, params) {
         var projectId = params.project;
         if (projectId && projectId === 'available') {
@@ -1534,8 +1559,7 @@ module.exports = function(app) {
         var _debug = require('debug')('formio:settings:config');
 
         // Hook the schema var to load the latest public/private schema.
-        require('pkginfo')(module);
-        var pkg = module.exports;
+        var pkg = JSON.parse(fs.readFileSync('./package.json'));
         if (pkg && pkg.schema && pkg.schema !== null && semver.gt(pkg.schema, config.schema)) {
           config.schema = pkg.schema;
         }

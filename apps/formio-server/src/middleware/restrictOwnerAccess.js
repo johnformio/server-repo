@@ -15,6 +15,11 @@ module.exports = function(formio) {
         return reject('No project id found with the request.');
       }
 
+      // Allow access if access key is set.
+      if (req.isAdmin) {
+        return resolve();
+      }
+
       if (!req.user || !req.user._id) {
         debug('No user id found with the request.');
         return reject();

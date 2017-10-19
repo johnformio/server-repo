@@ -50,7 +50,7 @@ module.exports = function(app, template, hook) {
         request(app)
           .post('/project/' + project._id + '/upgrade')
           .set('x-jwt-token', template.formio.owner.token)
-          .send({plan: 'team'})
+          .send({plan: 'commercial'})
           .expect(200)
           .end(done);
       });
@@ -655,7 +655,39 @@ module.exports = function(app, template, hook) {
           .end(done);
       });
 
-      it('Should allow deploying for a team plans', done => {
+      it('Should not allow deploying for a team plans', done => {
+        request(app)
+          .post('/project/' + project._id + '/deploy')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            type: 'tag',
+            tag: '0.0.1'
+          })
+          .expect(402)
+          .end(done);
+      });
+
+      it('Should not allow tagging for a team plans', done => {
+        request(app)
+          .post('/project/' + project._id + '/tag')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            tag: '0.0.3'
+          })
+          .expect(402)
+          .end(done);
+      });
+
+      it('Set to commercial plan', done => {
+        request(app)
+          .post('/project/' + project._id + '/upgrade')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({plan: 'commercial'})
+          .expect(200)
+          .end(done);
+      });
+
+      it('Should allow deploying for a commercial plans', done => {
         request(app)
           .post('/project/' + project._id + '/deploy')
           .set('x-jwt-token', template.formio.owner.token)
@@ -667,12 +699,44 @@ module.exports = function(app, template, hook) {
           .end(done);
       });
 
-      it('Should allow tagging for a team plans', done => {
+      it('Should allow tagging for a commercial plans', done => {
         request(app)
           .post('/project/' + project._id + '/tag')
           .set('x-jwt-token', template.formio.owner.token)
           .send({
             tag: '0.0.3'
+          })
+          .expect(201)
+          .end(done);
+      });
+
+      it('Set to trial plan', done => {
+        request(app)
+          .post('/project/' + project._id + '/upgrade')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({plan: 'trial'})
+          .expect(200)
+          .end(done);
+      });
+
+      it('Should allow deploying for a trial plans', done => {
+        request(app)
+          .post('/project/' + project._id + '/deploy')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            type: 'tag',
+            tag: '0.0.1'
+          })
+          .expect(200)
+          .end(done);
+      });
+
+      it('Should allow tagging for a trial plans', done => {
+        request(app)
+          .post('/project/' + project._id + '/tag')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            tag: '0.1.0'
           })
           .expect(201)
           .end(done);

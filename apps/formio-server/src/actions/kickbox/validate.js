@@ -28,7 +28,7 @@ module.exports = function(project, component, path, req, res, next) {
   var verification = kickbox.client(project.settings.kickbox.apikey).kickbox();
   verification.verify(email, function(err, response) {
     if (err) {
-      return res.status(400).json(err.message);
+      return res.status(400).json('Kickbox.io - ' + err.message);
     }
     var msgEnd = 'Please provide a different email address.';
     if (response.body && response.body.result) {

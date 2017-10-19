@@ -34,7 +34,7 @@ module.exports = function(router, formioServer) {
           debug('Removing payload settings: ' + JSON.stringify(req.body));
         }
 
-        formio.middleware.filterResourcejsResponse(['settings']).call(this, req, res, next);
+        formio.middleware.filterResourcejsResponse(['settings', 'billing']).call(this, req, res, next);
       });
     }
     else {
@@ -44,7 +44,7 @@ module.exports = function(router, formioServer) {
         debug('Removing payload settings: ' + JSON.stringify(req.body));
       }
 
-      formio.middleware.filterResourcejsResponse(['settings']).call(this, req, res, next);
+      formio.middleware.filterResourcejsResponse(['settings', 'billing']).call(this, req, res, next);
     }
   };
 
@@ -67,6 +67,12 @@ module.exports = function(router, formioServer) {
   formio.middleware.projectEnvCreatePlan = require('../middleware/projectEnvCreatePlan')(formio);
   formio.middleware.projectEnvCreateAccess = require('../middleware/projectEnvCreateAccess')(formio);
 
+  // Load custom hubspot action.
+  formio.middleware.customHubspotAction = require('../middleware/customHubspotAction')(formio);
+
+  // Load custom CRM action.
+  formio.middleware.customCrmAction = require('../middleware/customCrmAction')(formio);
+
   var hiddenFields = ['deleted', '__v', 'machineName', 'primary'];
   var resource = Resource(
     router,
@@ -84,12 +90,18 @@ module.exports = function(router, formioServer) {
     ],
     beforePost: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
+      require('../middleware/fetchTemplate'),
       formio.middleware.projectEnvCreatePlan,
       formio.middleware.projectEnvCreateAccess,
       function(req, res, next) {
+        // Don't allow setting billing.
+        if (req.body) {
+          delete req.body.billing;
+        }
         if (req.body && req.body.template) {
           req.template = req.body.template;
           req.templateMode = 'create';
+          req.template.isPrimary = (req.template.primary && req.isAdmin && req.adminKey);
           delete req.body.template;
         }
         next();
@@ -103,37 +115,8 @@ module.exports = function(router, formioServer) {
       formio.middleware.filterResourcejsResponse(hiddenFields),
       removeProjectSettings,
       formio.middleware.projectAnalytics,
-      function(req, res, next) {
-        // move on as we don't need to wait on results.
-        /* eslint-disable callback-return */
-        next();
-        /* eslint-enable callback-return */
-
-        if (process.env.hasOwnProperty('HUBSPOT_PROJECT_FIELD')) {
-          formio.resources.project.model.findOne({
-            name: 'formio',
-            primary: true
-          }).exec(function(err, project) {
-            if (err) {
-              return;
-            }
-
-            var modReq = _.cloneDeep(req);
-            modReq.projectId = project._id;
-            var projectFieldName = process.env.HUBSPOT_PROJECT_FIELD;
-            var options = {settings: {}};
-            options.settings[projectFieldName + '_action'] = 'increment';
-            options.settings[projectFieldName + '_value'] = '1';
-            options.settings['lifecyclestage_action'] = 'value';
-            options.settings['lifecyclestage_value'] = 'opportunity';
-            options.settings['customer_status_action'] = 'value';
-            options.settings['customer_status_value'] = 'Created Project';
-            var ActionClass = formio.actions.actions['hubspotContact'];
-            var action = new ActionClass(options, modReq, res);
-            action.resolve('after', 'create', modReq, res, function() {});
-          });
-        }
-      }
+      formio.middleware.customHubspotAction,
+      formio.middleware.customCrmAction('newproject')
     ],
     beforeIndex: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
@@ -147,6 +130,10 @@ module.exports = function(router, formioServer) {
     beforePut: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       function(req, res, next) {
+        // Don't allow setting billing.
+        if (req.body) {
+          delete req.body.billing;
+        }
         if (req.body && req.body.template) {
           req.template = req.body.template;
           req.templateMode = 'update';
@@ -198,7 +185,8 @@ module.exports = function(router, formioServer) {
       require('../middleware/projectTemplate')(formio),
       formio.middleware.filterResourcejsResponse(hiddenFields),
       removeProjectSettings,
-      formio.middleware.projectAnalytics
+      formio.middleware.projectAnalytics,
+      formio.middleware.customCrmAction('updateproject')
     ],
     beforeDelete: [
       require('../middleware/projectProtectAccess')(formio),
@@ -207,6 +195,7 @@ module.exports = function(router, formioServer) {
     ],
     afterDelete: [
       formio.middleware.filterResourcejsResponse(hiddenFields),
+      formio.middleware.customCrmAction('deleteproject'),
       removeProjectSettings
     ]
   });

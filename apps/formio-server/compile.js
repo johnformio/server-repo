@@ -2,9 +2,18 @@
 
 var fs = require('fs');
 var path = require('path');
-var NodeOptimizer = require('node-optimize');
-var UglifyJS = require('uglify-js');
+var webpack = require('webpack');
+var UglifyJS = require('uglify-es');
 var outputDir = 'build';
+
+var nodeModules = {};
+fs.readdirSync('node_modules')
+  //.filter(function(x) {
+  //  return ['.bin'].indexOf(x) === -1;
+  //})
+  .forEach(function(mod) {
+    nodeModules[mod] = 'commonjs ' + mod;
+  });
 
 // Ensure build directory exists.
 try {
@@ -23,31 +32,34 @@ var copyFile = function(file) {
 [
   'favicon.ico',
   'package.json',
-  'project.json',
   'server.sh'
 ].forEach(copyFile);
 
-var optimizer = new NodeOptimizer({
-  ignore: []
+var compiler = webpack({
+  entry: './main.js',
+  target: 'node',
+  node: {
+    __filename: true,
+    __dirname: true,
+    module: true
+  },
+  output: {
+    path: path.join(__dirname, 'build'),
+    filename: 'main.js'
+  },
+  externals: nodeModules
 });
 
-var mergedJs = optimizer.merge('main.js');
+compiler.run(function(err, stats) {
+  var code = UglifyJS.minify(fs.readFileSync("build/main.js", "utf8"), {
+    mangle: {
+      reserved: [
+        '__filename',
+        '__dirname',
+        'module'
+      ]
+    }
+  }).code;
 
-// compress and mangle the result
-var toplevelAst = UglifyJS.parse(mergedJs);
-toplevelAst.figure_out_scope();
-
-/* eslint-disable new-cap */
-var compressor = UglifyJS.Compressor();
-var compressedAst = toplevelAst.transform(compressor);
-
-compressedAst.figure_out_scope();
-compressedAst.compute_char_frequency();
-compressedAst.mangle_names();
-
-var stream = UglifyJS.OutputStream();
-compressedAst.print(stream);
-
-stream = stream.toString().replace(new RegExp(__dirname, 'gi'), '');
-
-fs.writeFile(path.resolve(outputDir + '/main.js'), stream);
+  fs.writeFile('build/main.js', code);
+});

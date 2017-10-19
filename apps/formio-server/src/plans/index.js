@@ -14,8 +14,8 @@ module.exports = function(formioServer, cache) {
     basic: 1000,
     independent: 10000,
     team: 250000,
-    trial: 250000,
-    commercial: Number.MAX_VALUE
+    trial: 10000,
+    commercial: 2000000
   };
 
   var basePlan = formioServer.config.plan || 'commercial';
@@ -31,11 +31,6 @@ module.exports = function(formioServer, cache) {
     if (err || !project) {
       debug.getPlan(err || 'Project not found.');
       return next(err || 'Project not found.');
-    }
-
-    if (project.primary && project.primary === true) {
-      debug.getPlan('commercial');
-      return next(null, 'commercial', project);
     }
 
     // Only allow plans defined within the limits definition.
@@ -63,12 +58,19 @@ module.exports = function(formioServer, cache) {
    * @returns {*}
    */
   var getPlan = function(req, next) {
-    // Environment Create is tricky as we have to use permissions of the referenced project before it exists.
-    if (req.method === 'POST' && req.path === '/project' && req.body.hasOwnProperty('project')) {
-      debug.getPlan('Project from environment create.');
-      return cache.loadProject(req, req.body.project, function(err, project) {
-        return getProjectPlan(err, project, next);
-      });
+    if (req.method === 'POST' && req.path === '/project') {
+      // Environment Create is tricky as we have to use permissions of the referenced project before it exists.
+      if (req.body.hasOwnProperty('project')) {
+        debug.getPlan('Project from environment create.');
+        return cache.loadProject(req, req.body.project, function(err, project) {
+          return getProjectPlan(err, project, next);
+        });
+      }
+
+      // Allow admins to set plan.
+      if (req.body.plan && req.isAdmin) {
+        return next(null, req.body.plan);
+      }
     }
 
     // Ignore project plans, if not interacting with a project.
@@ -153,6 +155,9 @@ module.exports = function(formioServer, cache) {
 
     debug.allowForPlans(plans);
     return function(req, res, next) {
+      if (process.env.DISABLE_RESTRICTIONS) {
+        return next();
+      }
       getPlan(req, function(err, plan) {
         if (err) {
           debug.allowForPlans(err);

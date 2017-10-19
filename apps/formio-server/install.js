@@ -1,151 +1,75 @@
 'use strict';
 
-var async = require('async');
-var fs = require('fs');
-var debug = require('debug')('formio:error');
+const fs = require('fs');
+const request = require('request');
 
-module.exports = function(router, done) {
-  let formio = router.formio;
-  var hook = require('formio/src/util/hook')(formio);
+const server = process.env.SERVER || 'http://localhost:3000';
+const email = process.env.ADMIN_EMAIL || 'admin@example.com';
+const password = process.env.ADMIN_PASSWORD || 'password';
+const adminKey = process.env.ADMIN_KEY;
 
-  if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASS) {
-    return done(
-      'Cannot set up server. Please set environment variables for ADMIN_EMAIL and ADMIN_PASS and restart the server.'
-    );
-  }
+fs.readFile('./project.json', 'utf8', function(err, data) {
+  const template = JSON.parse(data);
 
-  var importer = require('formio/src/templates/import')(router);
-  var template;
-  var user;
-
-  // Add project id to roles and forms.
-  let alters;
-
-  var steps = {
-    readJson: function(done) {
-      /* eslint-disable no-console */
-      console.log(' > Setting up formio project.');
-      /* eslint-enable no-console */
-
-      try {
-        fs.readFile('./project.json', function(err, data) {
-          if (err) {
-            return done(err);
-          }
-
-          template = JSON.parse(data);
-          done();
-        });
-      }
-      catch (err) {
-        debug(err);
-        return done(err);
-      }
+  request({
+    method: 'POST',
+    uri: server + '/project',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-admin-key': adminKey
     },
-    importItems: function(done) {
-      alters = hook.alter(`templateAlters`, {}, template);
-
-      /* eslint-disable no-console */
-      console.log(' > Importing roles, forms, resources, and actions.');
-      /* eslint-enable no-console */
-      importer.template(template, alters, function(err) {
-        if (err) {
-          return done(err);
-        }
-
-        done();
-      });
-    },
-    createRootAccount: function(done) {
-      /* eslint-disable no-console */
-      console.log(' > Creating root user account.');
-      /* eslint-enable no-console */
-
-      formio.encrypt(process.env.ADMIN_PASS, function(err, hash) {
-        if (err) {
-          return done(err);
-        }
-
-        // Create the root user submission.
-        formio.resources.submission.model.create({
-          form: template.resources.user._id,
-          data: {
-            email: process.env.ADMIN_EMAIL,
-            password: hash
-          },
-          roles: [
-            template.roles.administrator._id
-          ]
-        }, function(err, data) {
-          if (err) {
-            return done(err);
-          }
-
-          user = data;
-          done();
-        });
-      });
-    },
-    updateProject: function(done) {
-      /* eslint-disable no-console */
-      console.log(' > Updating project with owner and roles.');
-      /* eslint-enable no-console */
-      formio.resources.project.model.findOne({_id: template._id}, function(err, project) {
-        if (err) {
-          return done(err);
-        }
-
-        project.access = [
-          {
-            type: 'create_all',
-            roles: [
-              template.roles.administrator._id
-            ]
-          },
-          {
-            type: 'read_all',
-            roles: [
-              template.roles.administrator._id,
-              template.roles.authenticated._id,
-              template.roles.anonymous._id
-            ]
-          },
-          {
-            type: 'update_all',
-            roles: [
-              template.roles.administrator._id
-            ]
-          },
-          {
-            type: 'delete_all',
-            roles: [
-              template.roles.administrator._id
-            ]
-          }
-        ];
-        project.owner = user._id;
-        project.primary = true;
-        project.save(done);
-      });
+    json: {
+      template: template,
+      title: template.title,
+      name: template.name,
+      plan: 'commercial'
     }
-  };
-
-  async.series([
-    steps.readJson,
-    steps.importItems,
-    steps.createRootAccount,
-    steps.updateProject
-  ], function(err) {
-    if (err) {
-      /* eslint-disable no-console */
-      console.log(err);
-      /* eslint-enable no-console */
-      return done(err);
-    }
-
+  }, function(err, response, project) {
     /* eslint-disable no-console */
-    console.log(' > Finished setting up formio project.');
-    /* eslint-enable no-console */
-    done();
+    if (err) {
+      console.log(err);
+      process.exit(1);
+    }
+    else {
+      console.log('project', response.statusCode, response.statusMessage, project._id);
+      request({
+        method: 'POST',
+        uri: server + '/project/' + project._id + '/user',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': adminKey
+        },
+        json: {
+          data: {
+            name: 'admin',
+            email,
+            password
+          }
+        }
+      }, function(err, response, user) {
+        if (err) {
+          console.log(err);
+          process.exit(1);
+        }
+        console.log('user', response.statusCode, response.statusMessage, user._id);
+        request({
+          method: 'POST',
+          uri: server + '/project/' + project._id + '/owner',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-key': adminKey
+          },
+          json: {
+            owner: user._id
+          }
+        }, function(err, response, project) {
+          if (err) {
+            console.log(err);
+            process.exit(1);
+          }
+          console.log('set owner', response.statusCode, response.statusMessage);
+        });
+      });
+    }
   });
-};
+});

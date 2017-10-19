@@ -5,8 +5,10 @@ var Primus = require('primus');
 var Redis = require('redis');
 var Q = require('q');
 var _ = require('lodash');
-var chance = new require('chance')(); // eslint-disable-line new-cap
+var Chance = require('chance'); // eslint-disable-line new-cap
 var debug = require('debug')('formio:error');
+
+var chance = new Chance();
 
 module.exports = function(formio) {
   var cache = require('../../cache/cache')(formio);

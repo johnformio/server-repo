@@ -4,7 +4,7 @@
 let request = require('supertest');
 let assert = require('assert');
 let jwt = require('jsonwebtoken');
-let config = require('../config');
+let config = require('../../config');
 let docker = process.env.DOCKER;
 
 module.exports = function(app, template, hook) {

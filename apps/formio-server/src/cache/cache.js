@@ -25,7 +25,6 @@ module.exports = function(formio) {
           return cb('Project not found');
         }
 
-        project = project.toObject();
         var projectId = project._id.toString();
         if (!cache.projectNames) {
           cache.projectNames = {};
@@ -102,7 +101,12 @@ module.exports = function(formio) {
         return cb(null, cache.projects[id]);
       }
 
-      var query = {_id: formio.util.idToBson(id), deleted: {$eq: null}};
+      let projectId = formio.util.idToBson(id);
+      if (!projectId) {
+        return cb('Project not found');
+      }
+
+      var query = {_id: projectId, deleted: {$eq: null}};
       var params = req.params;
       formio.resources.project.model.findOne(query, function(err, result) {
         // @todo: Figure out why we have to reset the params after project load.
@@ -120,7 +124,7 @@ module.exports = function(formio) {
 
         try {
           var currTime = (new Date()).getTime();
-          var projTime = (new Date(result.created.toString())).getTime();
+          var projTime = (new Date(result.trial.toString())).getTime();
           var delta = Math.ceil(parseInt((currTime - projTime) / 1000));
           var day = 86400;
           var remaining = 30 - parseInt(delta / day);

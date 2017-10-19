@@ -8,6 +8,60 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
  - Added user management support with the moxtra login action.
 
+## 5.0.0
+### Added
+ - Remote environment support with remote authentication
+ - New deployment options by sending the template with request
+ - Add ADMIN_KEY option
+ - Add no-cache headers
+ 
+### Removed
+ - Install process for form.io project
+
+## 4.1.17
+### Removed
+ - Passing API Keys as querystrings in CORS requests. Must use headers from now on.
+
+## 4.1.16
+### Updated
+ - formio library to 1.8.11
+
+## 4.1.14
+### Fixed
+ - Issue where the clearOnHide flag was clobbering data when it was unchecked.
+
+## [Unreleased]
+### Changed
+ - Allow overriding of new plan restrictions based on an environment variable.
+
+### Added
+ - CRM Tigger when projects are updated
+ 
+## 4.1.11
+### Added
+ - CRM Triggers for creating, upgrading and deleting projects.
+
+## 4.1.10
+### Added
+ - Trial date to projects and update hook to set all basic to trials.
+ 
+### Changed
+ - Disallow environments, tagging and deploying on team plans.
+
+### Fixed
+ - Fixed issue with oauth action, where the roles weren't being filtered for non-deleted status.
+
+### Changed
+ - Changed the way team permissions were calculated and made them additive.
+ - Updated formio to 1.17.6
+
+## 4.1.8
+### Added
+ - When creating a tag, project is updated with that tag.
+ 
+### Fixed
+ - Protected projects can now update other settings that aren't protected.
+
 ## 4.1.7
 ### Changed
  - The submission pdf download to use POST instead of GET so it works with ELB.

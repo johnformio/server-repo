@@ -45,6 +45,7 @@ config.formio.reservedForms = [
   'report',
   'version',
   'tag',
+  'owner',
   'exists',
   'export',
   'import',
@@ -187,6 +188,7 @@ config.formio.dropbox.clientSecret = process.env.DROPBOX_CLIENTSECRET || '';
 config.formio.jwt = {};
 config.formio.jwt.secret = process.env.JWT_SECRET || 'abc123';
 config.formio.jwt.expireTime = process.env.JWT_EXPIRE_TIME || 240;
+config.remoteSecret = process.env.PORTAL_SECRET || '';
 
 // Logging config.
 config.jslogger = process.env.JS_LOGGER || null;

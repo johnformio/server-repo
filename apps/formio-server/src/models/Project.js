@@ -82,11 +82,46 @@ module.exports = function(router) {
         ref: 'project',
         index: true
       },
+      remote: {
+        type: formio.mongoose.Schema.Types.Mixed,
+        description: 'The remote project definition.',
+        validate: [
+          {
+            async: true,
+            message: 'Remote already connected to an environment.',
+            validator: function(value, done) {
+              if (!value || !value.project || !value.project._id) {
+                return done(true);
+              }
+
+              var search = {
+                'remote.project._id': value.project._id,
+                deleted: {$eq: null}
+              };
+
+              if (this._id) {
+                search._id = {$ne: this._id};
+              }
+
+              formio.mongoose.model('project').findOne(search).exec(function(err, result) {
+                if (err || result) {
+                  return done(false);
+                }
+
+                return done(true);
+              });
+            }
+          }
+        ]
+      },
       plan: {
         type: String,
         enum: ['basic', 'independent', 'team', 'trial', 'commercial'],
         default: router.config.plan || 'commercial',
         index: true
+      },
+      billing: {
+        type: formio.mongoose.Schema.Types.Mixed
       },
       steps: {
         type: [String]
@@ -110,7 +145,13 @@ module.exports = function(router) {
         type: Number,
         default: null
       },
-      access: [formio.schemas.PermissionSchema]
+      access: [formio.schemas.PermissionSchema],
+      trial: {
+        type: Date,
+        description: 'The start date of the trial.',
+        'default': Date.now,
+        __readonly: true
+      }
     })
   });
   /* eslint-enable new-cap, max-len */

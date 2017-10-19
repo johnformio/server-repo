@@ -26,8 +26,8 @@ module.exports = function(formioServer) {
       var limit = formioServer.formio.plans.limits[project.plan];
       var info = {
         used: used,
-        remaining: project.plan === 'commercial' ? null : limit - used,
-        limit: project.plan === 'commercial' ? null : limit,
+        remaining: limit - used,
+        limit: limit,
         reset: moment().startOf('month').add(1, 'month').toISOString()
       };
       debug('API Call Info:', info);
@@ -37,6 +37,11 @@ module.exports = function(formioServer) {
 
   return function(req, res, next) {
     if (req.method === 'DELETE') {
+      return next();
+    }
+
+    // This happens when an error occurred. Don't count it.
+    if (!res.resource.item) {
       return next();
     }
 
