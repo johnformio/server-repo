@@ -53,7 +53,7 @@
     "request": "^2.83.0",
     "resourcejs": "^1.8.0",
     "restler": "^3.4.0",
-    "semver": "^5.1.0",
+    "semver": "^5.4.1",
     "serve-favicon": "^2.3.0",
     "spreadsheet-column": "^1.1.1",
     "squel": "^5.3.3",
@@ -61,7 +61,7 @@
     "tldjs": "^1.5.3",
     "traverse": "^0.6.6",
     "universal-analytics": "^0.3.9",
-    "uuid": "^3.0.0",
+    "uuid": "^3.1.0",
     "ws": "^1.1.4"
   },
   "devDependencies": {
