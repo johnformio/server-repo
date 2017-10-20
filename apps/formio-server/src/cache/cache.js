@@ -151,6 +151,23 @@ module.exports = function(formio) {
           return cb(null, result);
         }
       });
+    },
+
+    loadStages: function(req, id, cb) {
+      id = formio.util.idToString(id);
+
+      let projectId = formio.util.idToBson(id);
+      if (!projectId) {
+        return cb('Project not found');
+      }
+
+      var query = {project: projectId, deleted: {$eq: null}};
+      formio.resources.project.model.find(query, function(err, result) {
+        if (err) {
+          return cb(err);
+        }
+        return cb(null, result);
+      });
     }
   };
 };
