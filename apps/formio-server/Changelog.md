@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
+ - Added user management support with the moxtra login action.
  - Field encryption possibility
 
 ## 5.0.0

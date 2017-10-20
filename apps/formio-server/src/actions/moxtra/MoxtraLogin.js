@@ -32,13 +32,17 @@ module.exports = function(router) {
       priority: -10,
       defaults: {
         handler: ['after'],
-        method: ['create']
+        method: ['create', 'delete']
       },
       access: {
         handler: false,
         method: false
       }
     });
+  };
+  MoxtraLogin.access = {
+    handler: false,
+    method: false
   };
 
   /**
@@ -119,6 +123,29 @@ module.exports = function(router) {
    *   The callback function to execute upon completion.
    */
   MoxtraLogin.prototype.resolve = function(handler, method, req, res, next) {
+    if (method === 'delete') {
+      // If the current project does not have any orgId, dont worry about deleting the user. There is no moxtra support.
+      if (
+        !_.has(req.currentProject, 'settings.moxtra.orgId')
+        || !_.has(req.currentProject, 'settings.moxtra.partnerId')
+      ) {
+        return next();
+      }
+
+      let orgId = _.get(req.currentProject, 'settings.moxtra.orgId');
+      return Moxtra.getFormioBotToken(req, req.projectId)
+      .then(token => Moxtra.removeUserFromOrg(req, orgId, req.subId, token))
+      .then(results => {
+        // Ignore the moxtra results.
+        debug(results);
+        return next();
+      })
+      .catch(e => {
+        debug(e);
+        return next();
+      });
+    }
+
     if (!_.has(res, 'resource.item')) {
       return res.status(400).send('No resource was loaded for authentication.');
     }
@@ -195,9 +222,7 @@ module.exports = function(router) {
 
     // If the user was supplied (just created, make the user in moxtra).
     Moxtra.getToken(req, user, this.settings.firstname, this.settings.lastname)
-    .then(function(token) {
-      return updateUsersToken(token);
-    })
+    .then(token => updateUsersToken(token))
     .then(function(response) {
       debug(response);
       return next(null, response);
