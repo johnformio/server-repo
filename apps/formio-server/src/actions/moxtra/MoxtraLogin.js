@@ -50,7 +50,7 @@ module.exports = function(router) {
    */
   MoxtraLogin.settingsForm = function(req, res, next) {
     var basePath = hook.alter('path', '/form', req);
-    var dataSrc = basePath + '/{{ data.resource }}/components';
+    var dataSrc = basePath + '/{{ data.settings.resource }}/components';
     next(null, [
       {
         type: 'select',

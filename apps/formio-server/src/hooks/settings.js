@@ -16,6 +16,7 @@ let async = require('async');
 var chance = new (require('chance'))();
 var fs = require('fs');
 var url = require('url');
+var keygenerator = require('keygenerator');
 
 module.exports = function(app) {
   var formioServer = app.formio;
@@ -1328,6 +1329,127 @@ module.exports = function(app) {
       cacheInit: function(cache) {
         cache.projects = {};
         return cache;
+      },
+      submission: function(req, res, next) {
+        const {handlerName} = req;
+
+        function encryptedComponent(component) {
+          return component && component.encrypted && component.persistent;
+        }
+
+        function encryptDecryptHandler(handlerName) {
+          return encryptHandler(handlerName) || decryptHandler(handlerName);
+        }
+        function encryptHandler(handlerName) {
+          return [
+              'beforePost',
+              'beforePut'
+            ].indexOf(handlerName) !== -1;
+        }
+        function decryptHandler(handlerName) {
+          return [
+            'afterGet',
+            'afterIndex',
+            'afterPost',
+            'afterPut'
+          ].indexOf(handlerName) !== -1;
+        }
+
+        function containerBasedComponent(componentType) {
+          return arrayBasedComponent(componentType) || objectBasedComponent(componentType);
+        }
+        function arrayBasedComponent(componentType) {
+          return [
+            'datagrid',
+            'editgrid'
+          ].indexOf(componentType) !== -1;
+        }
+        function objectBasedComponent(componentType) {
+          return [
+            'container'
+          ].indexOf(componentType) !== -1;
+        }
+
+        function getParentPath(path) {
+          return path.substr(0, path.lastIndexOf('.'));
+        }
+
+        if (encryptDecryptHandler(handlerName) &&
+          // Protect from encryption on portal login.
+          req.currentProject.settings) {
+            let {secret} = req.currentProject.settings;
+            let secretSet = Promise.resolve();
+
+            if (!secret) {
+              // Update project with randomly generated secret key.
+              secret = keygenerator._();
+              secretSet = app.formio.formio.resources.project.model.findById(req.projectId)
+                .exec()
+                .then((project) => {
+                  project.settings = _.extend({}, project.settings, {
+                    secret
+                  });
+                  return project.save();
+                });
+            }
+
+            return secretSet
+              .then(() => encryptHandler(handlerName)
+              ? async.eachOfSeries(req.flattenedComponents, function(component, path, cb) {
+                  if (encryptedComponent(component)) {
+                    const parentType = _.get(component, 'parent.type');
+
+                    // Skip component if parent already encrypted.
+                    if (containerBasedComponent(parentType) &&
+                      encryptedComponent(component.parent)) {
+                        return cb();
+                    }
+
+                    // Handle array-based components.
+                    if (arrayBasedComponent(parentType)) {
+                      _.get(req.body.data, getParentPath(path)).forEach((row) => {
+                        row[component.key] = util.encrypt(secret, row[component.key]);
+                      });
+                    }
+                    else if (_.has(req.body.data, path)) {
+                      // Handle other components including Container, which is object-based.
+                      _.set(req.body.data, path, util.encrypt(secret, _.get(req.body.data, path)));
+                    }
+                  }
+
+                  cb();
+                }, next)
+              : async.eachOfSeries(handlerName === 'afterIndex'
+                ? res.resource.item
+                : [res.resource.item], (submission, index, cbSubmission) => {
+                  async.eachOfSeries(req.flattenedComponents, (component, path, cbComponent) => {
+                    if (encryptedComponent(component)) {
+                      const parentType = _.get(component, 'parent.type');
+
+                      // Skip component if parent already decrypted.
+                      if (containerBasedComponent(parentType) &&
+                        encryptedComponent(component.parent)) {
+                          return cbComponent();
+                      }
+
+                      // Handle array-based components.
+                      if (arrayBasedComponent(parentType)) {
+                        _.get(submission.data, getParentPath(path)).forEach((row) => {
+                          row[component.key] = util.decrypt(secret, row[component.key]);
+                        });
+                      }
+                      else if (_.get(submission.data, path)) {
+                        // Handle other components including Container, which is object-based.
+                        _.set(submission.data, path, util.decrypt(secret, _.get(submission.data, path)));
+                      }
+                    }
+
+                    cbComponent();
+                  }, cbSubmission);
+                }, next));
+        }
+
+        next();
       },
       submissionParams: function(params) {
         params.push('oauth');
