@@ -29,8 +29,7 @@ module.exports = function(formio) {
       // Only update when modifying a project. When creating a project, there are no stages.
       if (req.method === 'PUT') {
         debug('modifying project.');
-        req.body.access = req.body.access || [];
-        const teamAccess = _.filter(req.body.access, access => _.startsWith(access.type, 'team_'));
+        const teamAccess = _.filter(req.body.access || [], access => _.startsWith(access.type, 'team_'));
 
         cache.loadStages(req, req.body._id, (err, result) => {
           if (err) {
