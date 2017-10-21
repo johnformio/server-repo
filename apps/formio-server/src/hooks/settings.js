@@ -328,45 +328,6 @@ module.exports = function(app) {
         return true;
       },
 
-      actionRoutes: function(handlers) {
-        handlers.beforePost = handlers.beforePost || [];
-        handlers.beforePut = handlers.beforePut || [];
-        handlers.beforeDelete = handlers.beforeDelete || [];
-
-        var projectProtectAccess = require('../middleware/projectProtectAccess')(formioServer.formio);
-
-        _.each(['beforePost', 'beforePut', 'beforeDelete'], function(handler) {
-          handlers[handler].unshift(projectProtectAccess);
-        });
-
-        // On action creation, if the action is a moxtraMessage action, add the user _id to the request payload.
-        let addCurrentUserToAction = (req, res, next) => {
-          if (['POST', 'PUT'].indexOf(req.method) === -1 || !req.user) {
-            return next();
-          }
-          let userActions = ['moxtraMessage', 'moxtraTodo'];
-          if (userActions.indexOf(_.get(req.body, 'name')) === -1) {
-            return next();
-          }
-
-          let user;
-          try {
-            user = req.user.toObject();
-          }
-          catch (e) {
-            user = req.user;
-          }
-
-          _.set(req.body, 'settings.user', user._id);
-          return next();
-        };
-
-        handlers.beforePost.push(addCurrentUserToAction);
-        handlers.beforePut.push(addCurrentUserToAction);
-
-        return handlers;
-      },
-
       emailTransports: function(transports, settings) {
         settings = settings || {};
         var office365 = settings.office365 || {};
@@ -1498,6 +1459,69 @@ module.exports = function(app) {
 
         return routes;
       },
+
+      actionRoutes: function(routes) {
+        routes.beforePost = routes.beforePost || [];
+        routes.beforePut = routes.beforePut || [];
+        routes.beforeDelete = routes.beforeDelete || [];
+
+        let Moxtra = require('../actions/moxtra/utils')(app.formio);
+        let projectProtectAccess = require('../middleware/projectProtectAccess')(formioServer.formio);
+
+        _.each(['beforePost', 'beforePut', 'beforeDelete'], handler => {
+          routes[handler].unshift(projectProtectAccess);
+        });
+
+        // On action creation, if the action is a moxtraMessage action, add the user _id to the request payload.
+        let addCurrentUserToAction = (req, res, next) => {
+          if (['POST', 'PUT'].indexOf(req.method) === -1 || !req.user) {
+            return next();
+          }
+          let userActions = ['moxtraMessage', 'moxtraTodo'];
+          if (userActions.indexOf(_.get(req.body, 'name')) === -1) {
+            return next();
+          }
+
+          let user;
+          try {
+            user = req.user.toObject();
+          }
+          catch (e) {
+            user = req.user;
+          }
+
+          _.set(req.body, 'settings.user', user._id);
+          return next();
+        };
+
+        let addFormioBotToMoxtraOrg = (req, res, next) => {
+          if (['POST', 'PUT'].indexOf(req.method) === -1 || !req.user) {
+            return next();
+          }
+          if (_.get(req.body, 'name') !== 'moxtraLogin') {
+            return next();
+          }
+
+          // Create a formio bot token, which will authenticate or create a user. Ignore the token, as we just need the
+          // user to exist.
+          return Moxtra.getFormioBotToken(req, req.projectId)
+          .then(token => {
+            debug.settings(`moxtra formiobot token: ${token}`);
+
+            return next();
+          })
+          .catch(error => {
+            debug.error(error);
+            return next();
+          });
+        };
+
+        routes.beforePost.push(addCurrentUserToAction, addFormioBotToMoxtraOrg);
+        routes.beforePut.push(addCurrentUserToAction, addFormioBotToMoxtraOrg);
+
+        return routes;
+      },
+
       roleRoutes: function(routes) {
         routes.before.unshift(require('../middleware/bootstrapEntityProject'), require('../middleware/projectFilter'));
         routes.before.unshift(require('../middleware/projectProtectAccess')(formioServer.formio));
