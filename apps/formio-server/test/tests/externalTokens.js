@@ -13,7 +13,7 @@ module.exports = function(app, template, hook) {
     return;
   }
   let Helper = require('formio/test/helper')(app);
-  
+
   describe('External Tokens', function() {
     let tempForm;
     let tempSubmission;
@@ -40,6 +40,7 @@ module.exports = function(app, template, hook) {
 
         // Delete iat to forge generate a new token.
         delete payload.iat;
+        delete payload.exp;
 
         // Generate the new custom token.
         customToken = app.formio.formio.auth.getToken(payload);
@@ -76,7 +77,7 @@ module.exports = function(app, template, hook) {
           if (err) {
             return done;
           }
-          
+
           tempForm = results.getForm('externalToken');
           request(app)
             .put(hook.alter(`url`, `/form/${tempForm._id}`, template))
