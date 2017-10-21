@@ -42,6 +42,10 @@ module.exports = app => (req, res, next) => {
         }
       });
     }
+
+    // Delete the expiration.
+    delete response.exp;
+
     return res.status(200).send(jwt.sign(response, project.settings.remoteSecret, {
       expiresIn: app.formio.config.jwt.expireTime * 60
     }));

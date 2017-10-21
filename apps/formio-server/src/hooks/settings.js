@@ -244,6 +244,9 @@ module.exports = function(app) {
                 }
               }, formObjs[submission.form.toString()]);
 
+              // Make sure this token does not have an expiration.
+              delete token.exp;
+
               // Create a token that expires in 30 minutes.
               token = jwt.sign(token, formioServer.formio.config.jwt.secret, {
                 expiresIn: ssoToken.expireTime * 60
