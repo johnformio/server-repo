@@ -95,6 +95,10 @@ module.exports = function(router) {
    *   The callback function to execute upon completion.
    */
   GroupAction.prototype.resolve = function(handler, method, req, res, next) {
+    if (_.get(router, 'formio.config.mongo', '').indexOf('documents.azure.com') !== -1) {
+      return res.status(400).send('MongoDB Aggregation is not supported in Azure Cosmos DB');
+    }
+
     try {
       /**
        * Load the submission with the given _id, but using the current project as a filter restriction.
