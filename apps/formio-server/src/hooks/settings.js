@@ -1629,6 +1629,10 @@ module.exports = function(app) {
             return done(err);
           }
 
+          if (!project) {
+            return done(null, document.project + ':' + machineName);
+          }
+
           done(null, project.machineName + ':' + machineName);
         });
       },
