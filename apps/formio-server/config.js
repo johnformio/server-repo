@@ -40,6 +40,7 @@ config.reservedSubdomains = [
   'files',
   'pdf'
 ];
+/* eslint-disable no-useless-escape */
 config.formio.reservedForms = [
   'submission',
   'report',
@@ -69,6 +70,7 @@ config.formio.reservedForms = [
   'sqlconnector',
   'token'
 ];
+/* eslint-enable no-useless-escape */
 // If it isn't allowed as a form, it isn't allowed as a project either.
 config.reservedSubdomains.concat(config.formio.reservedForms);
 
