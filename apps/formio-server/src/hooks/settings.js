@@ -670,6 +670,11 @@ module.exports = function(app) {
           return callback(null, query);
         }
 
+        // Do not perform if the database is CosmosDB.
+        if (_.get(formioServer, 'formio.config.mongo', '').indexOf('documents.azure.com') !== -1) {
+          return callback(null, query);
+        }
+
         formioServer.formio.plans.getPlan(req, function(err, plan) {
           if (err) {
             _debug(err);
