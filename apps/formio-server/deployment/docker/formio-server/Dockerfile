@@ -5,7 +5,7 @@ COPY ./build /src
 WORKDIR /src
 
 # Install git
-RUN apk update && apk upgrade && apk add --no-cache git
+RUN apk update && apk upgrade && apk add --no-cache bash git
 
 # node modules need to be compiled for the host platform.
 RUN npm install --production
