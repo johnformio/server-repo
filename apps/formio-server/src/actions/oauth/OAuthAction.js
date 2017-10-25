@@ -495,6 +495,7 @@ module.exports = function(router) {
    * @param next
    *   The callback function to execute upon completion.
    */
+  /* eslint-disable max-depth */
   OAuthAction.prototype.resolve = function(handler, method, req, res, next) {
     if (!hook.alter('resolve', true, this, handler, method, req, res)) {
       return next();
@@ -587,6 +588,7 @@ module.exports = function(router) {
       return next();
     }
   };
+  /* eslint-enable max-depth */
 
   OAuthAction.prototype.onError = function(req, res, next) {
     return function(err) {

@@ -71,6 +71,7 @@ module.exports = function(formio) {
         const plans = ['trial', 'basic', 'independent', 'team', 'commercial'];
         const direction = plans.indexOf(project.plan) < plans.indexOf(req.body.plan) ? 'Upgrade' : 'Downgrade';
 
+        /* eslint-disable max-len */
         var emailSettings = {
           transport: 'default',
           from: 'no-reply@form.io',
@@ -90,6 +91,7 @@ module.exports = function(formio) {
           '<li>PDF Servers: {{servers.pdf}}</li>' +
           '</ul></p>'
         };
+        /* eslint-enable max-len */
         var params = {project: project, user: req.user, newPlan: req.body.plan, servers: billing.servers};
         return Q.ninvoke(emailer, 'send', req, res, emailSettings, params);
       });

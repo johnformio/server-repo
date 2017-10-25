@@ -10,7 +10,9 @@ var debug = {
 const defaultSaltLength = 40;
 
 module.exports = {
+  /* eslint-disable no-useless-escape */
   tokenRegex: new RegExp(/\[\[\s*token\(\s*([^\)]+\s*)\)\s*,?\s*([0-9]*)\s*\]\]/i),
+  /* eslint-enable no-useless-escape */
   query: (query) => {
     return Object.keys(query).map((k) => {
       return encodeURIComponent(k) + '=' + encodeURIComponent(query[k]);

@@ -21,7 +21,7 @@ module.exports = function(app, template, hook) {
     let helper = new Helper(template.formio.owner, template);
 
     before(function(done) {
-      return new Promise((resolve, reject) => {
+      new Promise((resolve, reject) => {
         // Get the old token payload
         jwt.verify(template.users.user1.token, config.formio.jwt.secret, (err, decoded) => {
           if (err) {

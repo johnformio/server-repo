@@ -1,8 +1,10 @@
 'use strict';
 
+/* eslint-disable no-useless-escape */
 var _ = require('lodash');
 var EncryptedProperty = require('../plugins/EncryptedProperty');
 var invalidRegex = /[^0-9a-zA-Z\-]|^\-|\-$/;
+/* eslint-enable no-useless-escape */
 
 module.exports = function(router) {
   var formio = router.formio;
