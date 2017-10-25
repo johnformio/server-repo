@@ -1,14 +1,17 @@
-FROM node:alpine
+FROM node:6-alpine
 MAINTAINER Form.io <support@form.io>
 
 COPY ./build /src
 WORKDIR /src
 
 # Install git
-RUN apk update && apk upgrade && apk add --no-cache bash git
-
-# node modules need to be compiled for the host platform.
-RUN npm install --production
+RUN apk update && \
+    apk upgrade && \
+    apk add --no-cache --virtual .build-deps bash git make gcc g++ python && \
+    npm install --production --build-from-source=bcrypt && \
+    npm cache clean && \
+    npm uninstall -g npm && \
+    apk del .build-deps
 
 EXPOSE      80
 ENTRYPOINT  ["node", "main"]
