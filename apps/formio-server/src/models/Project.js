@@ -165,7 +165,7 @@ module.exports = function(router) {
   });
 
   // Add machineName to the schema.
-  model.schema.plugin(require('formio/src/plugins/machineName'));
+  model.schema.plugin(require('formio/src/plugins/machineName')('project'));
 
   model.schema.machineName = function(document, done) {
     done(null, document.name);

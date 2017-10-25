@@ -18,7 +18,7 @@ module.exports = function(router, formioServer) {
     router,
     '/project/:projectId',
     'tag',
-    formio.mongoose.model('tag', formio.schemas.tag)
+    formio.mongoose.model('tag')
   ).rest({
     beforeGet: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),

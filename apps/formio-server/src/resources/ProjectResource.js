@@ -79,7 +79,7 @@ module.exports = function(router, formioServer) {
     router,
     '',
     'project',
-    formio.mongoose.model('project', formio.schemas.project)
+    formio.mongoose.model('project')
   ).rest({
     beforeGet: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true})
