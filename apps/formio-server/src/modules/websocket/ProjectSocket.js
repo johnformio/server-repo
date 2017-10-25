@@ -62,8 +62,8 @@ module.exports = function(formio) {
       this.primus = new Primus(server, primusConfig);
 
       // Include the plugins.
-      this.primus.use('omega-supreme', require('omega-supreme'));
-      this.primus.use('metroplex', require('metroplex'));
+      this.primus.plugin('omega-supreme', require('omega-supreme'));
+      this.primus.plugin('metroplex', require('metroplex'));
 
       // Authorize each request.
       this.primus.authorize(this.authorize.bind(this));
