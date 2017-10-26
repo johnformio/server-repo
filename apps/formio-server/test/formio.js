@@ -367,6 +367,7 @@ describe('Initial Tests', function() {
       describe('Project Tests', function() {
         require('./tests/project')(app, template, hook);
         require('./tests/domain')(app, template, hook);
+        require('./tests/encrypt')(app, template, hook);
         require('./tests/email')(app, template, hook);
         require('formio/test/unit')(app, template, hook);
         require('formio/test/auth')(app, template, hook);

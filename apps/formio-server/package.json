@@ -71,6 +71,7 @@
     "eslint": "^4.9.0",
     "eslint-config-formio": "^1.1.2",
     "mocha": "^4.0.1",
+    "mongodb": "^2.2.33",
     "pre-commit": "^1.2.2",
     "prepack": "^0.2.10",
     "sinon": "^4.0.1",
