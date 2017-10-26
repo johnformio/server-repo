@@ -3,6 +3,7 @@
 
 const request = require('supertest');
 const assert = require('assert');
+const async = require('async');
 const ObjectID = require('mongodb').ObjectID;
 
 module.exports = function(app, template, hook) {
@@ -16,6 +17,28 @@ module.exports = function(app, template, hook) {
 
     before(function(done) {
       done();
+    });
+
+    after((done) => {
+      var deleteUrls = [
+        hook.alter('url', '/form', template) + '/' + tempForm._id + '/submission/' + tempSubmission._id,
+        hook.alter('url', '/form', template) + '/' + tempForm._id + '/submission/' + tempSubmission2._id,
+        hook.alter('url', '/form', template) + '/' + tempForm._id
+      ];
+
+      // Cleanup shop.
+      async.eachSeries(deleteUrls, (url, next) => {
+        request(app)
+          .delete(url)
+          .set('x-jwt-token', template.formio.owner.token)
+          .end(function(err, res) {
+            if (err) {
+              return next(err);
+            }
+
+            next();
+          });
+      }, done);
     });
 
     it('Create a temporary form for with encrypted fields', function(done) {
