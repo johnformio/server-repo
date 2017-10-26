@@ -47,7 +47,7 @@ module.exports = function(config, formio) {
       var timestamp = (new Date()).toISOString();
       var content_digest = crypto.createHash('sha1').update(transactionBody, 'utf8').digest('hex');
 
-      var hmac = crypto.createHmac('sha1', config.payeezy.hmacKey)
+      var hmac = crypto.createHmac('sha1', config.payeezy.hmacKey || '')
       .update('POST\napplication/json\n' + content_digest + '\n' + timestamp + '\n' + config.payeezy.endpoint, 'utf8')
       .digest('base64');
 

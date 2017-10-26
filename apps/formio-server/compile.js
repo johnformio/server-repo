@@ -31,8 +31,7 @@ var copyFile = function(file) {
 };
 [
   'favicon.ico',
-  'package.json',
-  'server.sh'
+  'package.json'
 ].forEach(copyFile);
 
 var compiler = webpack({
