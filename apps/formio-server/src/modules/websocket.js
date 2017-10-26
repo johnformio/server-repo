@@ -3,7 +3,6 @@
 var _ = require('lodash');
 
 module.exports = function(app, config) {
-  var formio = app.formio.formio;
   var ProjectSocket = require('./websocket/ProjectSocket')(app.formio);
 
   // Create a project socket.

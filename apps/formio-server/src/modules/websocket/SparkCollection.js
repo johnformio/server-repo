@@ -2,7 +2,6 @@
 
 var Q = require('q');
 var async = require('async');
-var Redis = require('redis');
 
 /**
  * Keep track of spark mappings across multiple servers.
