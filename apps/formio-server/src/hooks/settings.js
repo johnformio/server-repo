@@ -1623,6 +1623,9 @@ module.exports = function(app) {
         return schema;
       },
       formMachineName: function(machineName, document, done) {
+        if (!document) {
+          return done(null, machineName);
+        }
         formioServer.formio.resources.project.model.findOne({_id: document.project, deleted: {$eq: null}})
         .exec(function(err, project) {
           if (err) {
@@ -1640,6 +1643,9 @@ module.exports = function(app) {
         this.formMachineName(machineName, document, done);
       },
       actionMachineName: function(machineName, document, done) {
+        if (!document) {
+          return this.formMachineName(machineName, null, done);
+        }
         formioServer.formio.resources.form.model.findOne({_id: document.form, deleted: {$eq: null}})
           .exec((err, form) => {
             if (err) {
