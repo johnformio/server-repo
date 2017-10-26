@@ -20,6 +20,8 @@ module.exports = function(app, template, hook) {
     });
 
     after((done) => {
+      delete template.forms.encryptedFields;
+
       var deleteUrls = [
         hook.alter('url', '/form', template) + '/' + tempForm._id + '/submission/' + tempSubmission._id,
         hook.alter('url', '/form', template) + '/' + tempForm._id + '/submission/' + tempSubmission2._id,
