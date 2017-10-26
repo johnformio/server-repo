@@ -2,7 +2,7 @@
 
 var jwt = require('jsonwebtoken');
 var Primus = require('primus');
-var Redis = require('redis');
+var Redis = require('ioredis');
 var Q = require('q');
 var _ = require('lodash');
 var Chance = require('chance'); // eslint-disable-line new-cap
@@ -10,8 +10,8 @@ var debug = require('debug')('formio:error');
 
 var chance = new Chance();
 
-module.exports = function(formio) {
-  var cache = require('../../cache/cache')(formio);
+module.exports = function(formioServer) {
+  var cache = require('../../cache/cache')(formioServer.formio);
   var SparkCollection = require('./SparkCollection');
 
   /**
@@ -27,20 +27,17 @@ module.exports = function(formio) {
     this.server = server;
     this.requests = [];
 
-    var redis = {
-      url: config.redis.url
-    };
+    var redisUrl = config.redis.url;
 
     if (config.redis.password) {
-      /* eslint-disable camelcase */
-      redis.auth_pass = config.redis.password;
-      /* eslint-enable camelcase */
+      var urlParts = redisUrl.split('://');
+      redisUrl = 'redis://:' + config.redis.password + '@' + urlParts[1];
     }
 
     // Get the redis server.
     var redisServer = null;
     try {
-      redisServer = Redis.createClient(redis);
+      redisServer = new Redis(redisUrl);
     }
     catch (err) {
       debug.error(err);
@@ -49,7 +46,7 @@ module.exports = function(formio) {
 
     // Create the place to store all of our sparks.
     this.sparks = new SparkCollection();
-    this.sparks.connect(redisServer).then(function() {
+    this.sparks.connect(formioServer.redis).then(function() {
       var primusConfig = {
         transformer: 'websockets'
       };
@@ -120,49 +117,70 @@ module.exports = function(formio) {
           spark.on('data', function(data) {
             // Allow them to bind to certain messages within a project.
             if (data.type === 'bind') {
-              // Load the existing sparks for this project.
-              this.sparks.get(projectId).then(function(connection) {
-                // Use the existing connection or create a new one.
-                connection = connection ? JSON.parse(connection) : {
-                  token: spark.request.apitoken,
-                  sparkId: spark.id,
-                  bindings: []
-                };
-
-                // Do not allow them to create more than 100 bindings within a connection.
-                if (connection.bindings.length > 100) {
-                  return;
-                }
-
-                // The binding definition.
-                var binding = {
-                  method: data.bind.method.toUpperCase(),
-                  form: data.bind.form,
-                  sync: data.bind.sync || false
-                };
-
-                // Look for an existing binding.
-                var currentIndex = _.findIndex(connection.bindings, _.pick(binding, 'method', 'form'));
-                if (currentIndex !== -1) {
-                  connection.bindings[currentIndex] = binding;
-                }
-                else {
-                  connection.bindings.push(binding);
-                }
-
-                // Store the connection back into redis.
-                this.sparks.set(projectId, JSON.stringify(connection)).then(function() {
-                  spark.write({
-                    type: 'ack',
-                    msg: data
-                  });
-                }).catch(function(err) {
-                  spark.write({
+              // Make sure they have the correct plan to bind.
+              formioServer.formio.plans.getPlan({
+                method: data.bind.method.toUpperCase(),
+                projectId: projectId,
+                params: {}
+              }, (err, plan) => {
+                if (err) {
+                  return spark.write({
                     type: 'ack',
                     error: err.toString()
                   });
+                }
+                // Skip the websocket stuff, because the plan is not upgraded.
+                if (['team', 'commercial'].indexOf(plan) === -1) {
+                  return spark.write({
+                    type: 'ack',
+                    error: 'Project must be a "team" or "commercial" plan to bind websockets.'
+                  });
+                }
+
+                // Load the existing sparks for this project.
+                this.sparks.get(projectId).then((connection) => {
+                  // Use the existing connection or create a new one.
+                  connection = connection ? JSON.parse(connection) : {
+                    token: spark.request.apitoken,
+                    sparkId: spark.id,
+                    bindings: []
+                  };
+
+                  // Do not allow them to create more than 100 bindings within a connection.
+                  if (connection.bindings.length > 100) {
+                    return;
+                  }
+
+                  // The binding definition.
+                  var binding = {
+                    method: data.bind.method.toUpperCase(),
+                    form: data.bind.form,
+                    sync: data.bind.sync || false
+                  };
+
+                  // Look for an existing binding.
+                  var currentIndex = _.findIndex(connection.bindings, _.pick(binding, 'method', 'form'));
+                  if (currentIndex !== -1) {
+                    connection.bindings[currentIndex] = binding;
+                  }
+                  else {
+                    connection.bindings.push(binding);
+                  }
+
+                  // Store the connection back into redis.
+                  this.sparks.set(projectId, JSON.stringify(connection)).then(function() {
+                    spark.write({
+                      type: 'ack',
+                      msg: data
+                    });
+                  }).catch(function(err) {
+                    spark.write({
+                      type: 'ack',
+                      error: err.toString()
+                    });
+                  });
                 });
-              }.bind(this));
+              });
             }
 
             // A request that was forwarded from another server.
@@ -291,16 +309,16 @@ module.exports = function(formio) {
         }
 
         // Find the user object.
-        formio.resources.submission.model.findOne({
-          _id: formio.util.idToBson(req.user._id)
+        formioServer.formio.resources.submission.model.findOne({
+          _id: formioServer.formio.util.idToBson(req.user._id)
         }, (err, user) => {
           if (err) {
             return authorized(new Error('Unauthorized'));
           }
 
           // Check if they have the admin role.
-          var userRoles = _.map(user.roles, formio.util.idToString);
-          formio.resources.role.model.find({
+          var userRoles = _.map(user.roles, formioServer.formio.util.idToString);
+          formioServer.formio.resources.role.model.find({
             deleted: {$eq: null},
             project: project._id.toString(),
             admin: true
@@ -324,13 +342,13 @@ module.exports = function(formio) {
             }
 
             // Check the teams they are on.
-            formio.teams.getTeams(req.user._id, true, false).then((teams) => {
+            formioServer.formio.teams.getTeams(req.user._id, true, false).then((teams) => {
               teams = teams || [];
-              teams = _.map(_.map(teams, '_id'), formio.util.idToString);
+              teams = _.map(_.map(teams, '_id'), formioServer.formio.util.idToString);
               var userTeams = [];
               _.each(project.access, (projectAccess) => {
                 if (projectAccess.type === 'team_admin') {
-                  var teamRoles = _.map(projectAccess.roles, formio.util.idToString);
+                  var teamRoles = _.map(projectAccess.roles, formioServer.formio.util.idToString);
                   userTeams = _.intersection(teamRoles, teams);
                   if (userTeams && userTeams.length) {
                     return false;

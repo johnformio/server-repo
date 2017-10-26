@@ -2,6 +2,7 @@
 
 var Q = require('q');
 var async = require('async');
+var Redis = require('redis');
 
 /**
  * Keep track of spark mappings across multiple servers.
@@ -22,28 +23,33 @@ var SparkCollection = function() {
  */
 SparkCollection.prototype.connect = function(redis) {
   var deferred = Q.defer();
-  this.redis = redis;
-  if (this.redis) {
-    this.redis.on('error', function() {
-      this.ready = false;
+  redis.getDb((err, db) => {
+    if (err) {
+      return deferred.reject(err.message);
+    }
+    this.redis = db;
+    if (this.redis) {
+      this.redis.on('error', function() {
+        this.ready = false;
+        this.redis = null;
+        deferred.reject();
+      }.bind(this));
+      this.redis.on('ready', function() {
+        this.ready = true;
+        deferred.resolve();
+      }.bind(this));
+      this.redis.on('end', function() {
+        this.ready = false;
+        this.redis = null;
+        deferred.reject();
+      }.bind(this));
+    }
+    else {
       this.redis = null;
-      deferred.reject();
-    }.bind(this));
-    this.redis.on('ready', function() {
       this.ready = true;
       deferred.resolve();
-    }.bind(this));
-    this.redis.on('end', function() {
-      this.ready = false;
-      this.redis = null;
-      deferred.reject();
-    }.bind(this));
-  }
-  else {
-    this.redis = null;
-    this.ready = true;
-    deferred.resolve();
-  }
+    }
+  });
   return deferred.promise;
 };
 
