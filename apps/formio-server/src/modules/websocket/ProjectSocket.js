@@ -27,29 +27,28 @@ module.exports = function(formioServer) {
     this.server = server;
     this.requests = [];
 
-    var redisUrl = config.redis.url;
-
-    if (config.redis.password) {
-      var urlParts = redisUrl.split('://');
-      redisUrl = 'redis://:' + config.redis.password + '@' + urlParts[1];
-    }
-
-    // Get the redis server.
-    var redisServer = null;
-    try {
-      redisServer = new Redis(redisUrl);
-    }
-    catch (err) {
-      debug.error(err);
-      redisServer = null;
-    }
-
     // Create the place to store all of our sparks.
     this.sparks = new SparkCollection();
     this.sparks.connect(formioServer.redis).then(function() {
       var primusConfig = {
         transformer: 'websockets'
       };
+
+      var redisUrl = config.redis.url;
+      if (config.redis.password) {
+        var urlParts = redisUrl.split('://');
+        redisUrl = 'redis://:' + config.redis.password + '@' + urlParts[1];
+      }
+
+      // Get the redis server.
+      var redisServer = null;
+      try {
+        redisServer = new Redis(redisUrl);
+      }
+      catch (err) {
+        debug.error(err);
+        redisServer = null;
+      }
 
       if (redisServer) {
         primusConfig.redis = redisServer;

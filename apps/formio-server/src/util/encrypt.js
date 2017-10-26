@@ -2,16 +2,14 @@
 
 const keygenerator = require('keygenerator');
 const _ = require('lodash');
+const eachSeries = require('async/eachSeries');
 const util = require('./util');
 
 module.exports = (formioServer) => {
+  const cache = require('../cache/cache')(formioServer.formio);
   const Encryptor = {
     encryptedComponent: (component) => {
       return component && component.encrypted && component.persistent;
-    },
-
-    encryptDecryptHandler: (handlerName) => {
-      return Encryptor.encryptHandler(handlerName) || Encryptor.decryptHandler(handlerName);
     },
 
     encryptHandler: (handlerName) => {
@@ -30,111 +28,108 @@ module.exports = (formioServer) => {
       ].indexOf(handlerName) !== -1;
     },
 
-    containerBasedComponent: (componentType) => {
-      return Encryptor.arrayBasedComponent(componentType) || Encryptor.objectBasedComponent(componentType);
+    containerBasedComponent: (component) => {
+      return Encryptor.arrayBasedComponent(component) || Encryptor.objectBasedComponent(component);
     },
 
-    arrayBasedComponent: (componentType) => {
+    arrayBasedComponent: (component) => {
       return [
         'datagrid',
         'editgrid'
-      ].indexOf(componentType) !== -1;
+      ].indexOf(component.type) !== -1;
     },
 
-    objectBasedComponent: (componentType) => {
+    objectBasedComponent: (component) => {
       return [
         'container'
-      ].indexOf(componentType) !== -1;
+      ].indexOf(component.type) !== -1;
     },
 
-    getParentPath: (path) => {
-      return path.substr(0, path.lastIndexOf('.'));
+    hasEncryptedComponents(req) {
+      if (!req.encryptedComponents) {
+        req.encryptedComponents = {};
+        _.each(req.flattenedComponents, (component, path) => {
+          if (Encryptor.encryptedComponent(component)) {
+            req.encryptedComponents[path] = component;
+          }
+        });
+      }
+
+      return !_.isEmpty(req.encryptedComponents);
+    },
+
+    getProjectSecret: (req) => {
+      return new Promise((resolve, reject) => {
+        cache.loadCurrentProject(req, (err, project) => {
+          if (err) {
+            return reject(err);
+          }
+
+          if (project.settings.secret) {
+            return resolve(project.settings.secret);
+          }
+
+          // Update project with randomly generated secret key.
+          let secret = keygenerator._();
+          project.settings = _.extend({}, project.settings, {
+            secret: secret
+          });
+          project.save(); // Asynchronously save the project for performance reasons.
+          return resolve(secret);
+        });
+      });
+    },
+
+    encryptDecrypt: (req, submission, operation, next) => {
+      Encryptor.getProjectSecret(req).then((secret) => {
+        _.each(req.encryptedComponents, (component, path) => {
+          let parent = null;
+          const pathParts = path.split('.');
+          pathParts.pop();
+          if (pathParts.length) {
+            // Get the parent.
+            parent = req.flattenedComponents[pathParts[(pathParts.length - 1)]];
+          }
+
+          // Skip component if parent already encrypted.
+          if (parent && Encryptor.containerBasedComponent(parent) && Encryptor.encryptedComponent(parent)) {
+            return;
+          }
+
+          // Handle array-based components.
+          if (parent && Encryptor.arrayBasedComponent(parent)) {
+            _.get(submission.data, pathParts.join('.')).forEach((row) => {
+              row[component.key] = util[operation](secret, row[component.key]);
+            });
+          }
+          else if (_.has(submission.data, path)) {
+            // Handle other components including Container, which is object-based.
+            _.set(submission.data, path, util[operation](secret, _.get(submission.data, path)));
+          }
+        });
+
+        next();
+      }).catch(next);
     },
 
     handle: (req, res, next) => {
       if (
         req.handlerName &&
-        Encryptor.encryptDecryptHandler(req.handlerName) &&
-        req.currentProject &&
-        req.currentProject.settings &&
-        req.flattenedComponents
+        req.flattenedComponents &&
+        Encryptor.hasEncryptedComponents(req)
       ) {
-        let {secret} = req.currentProject.settings;
-        let secretSet = Promise.resolve();
-
-        if (!secret) {
-          // Update project with randomly generated secret key.
-          secret = keygenerator._();
-          secretSet = formioServer.formio.resources.project.model.findById(req.projectId)
-            .exec()
-            .then((project) => {
-              project.settings = _.extend({}, project.settings, {
-                secret: secret
-              });
-              return project.save();
-            });
+        if (Encryptor.encryptHandler(req.handlerName)) {
+          Encryptor.encryptDecrypt(req, req.body, 'encrypt', next);
         }
-
-        return secretSet.then(() => {
-          let encryptedComponents = [];
-          _.each(req.flattenedComponents, (component, path) => {
-            if (Encryptor.encryptedComponent(component)) {
-              encryptedComponents.push(component);
-            }
-          });
-
-          if (!encryptedComponents.length) {
-            return next();
-          }
-
-          if (Encryptor.encryptHandler(req.handlerName)) {
-            _.each(encryptedComponents, (component, path) => {
-              const parentType = _.get(component, 'parent.type');
-
-              // Skip component if parent already encrypted.
-              if (Encryptor.containerBasedComponent(parentType) && Encryptor.encryptedComponent(component.parent)) {
-                return;
-              }
-
-              // Handle array-based components.
-              if (Encryptor.arrayBasedComponent(parentType)) {
-                _.get(req.body.data, Encryptor.getParentPath(path)).forEach((row) => {
-                  row[component.key] = util.encrypt(secret, row[component.key]);
-                });
-              }
-              else if (_.has(req.body.data, path)) {
-                // Handle other components including Container, which is object-based.
-                _.set(req.body.data, path, util.encrypt(secret, _.get(req.body.data, path)));
-              }
-            });
-          }
-          else {
+        else if (Encryptor.decryptHandler(req.handlerName)) {
+          if (res.resource && res.resource.item) {
             let items = (req.handlerName === 'afterIndex') ? res.resource.item : [res.resource.item];
-            _.each(items, (submission, index) => {
-              _.each(encryptedComponents, (component, path) => {
-                const parentType = _.get(component, 'parent.type');
-
-                // Skip component if parent already decrypted.
-                if (Encryptor.containerBasedComponent(parentType) && Encryptor.encryptedComponent(component.parent)) {
-                  return;
-                }
-
-                // Handle array-based components.
-                if (Encryptor.arrayBasedComponent(parentType)) {
-                  _.get(submission.data, Encryptor.getParentPath(path)).forEach((row) => {
-                    row[component.key] = util.decrypt(secret, row[component.key]);
-                  });
-                }
-                else if (_.get(submission.data, path)) {
-                  // Handle other components including Container, which is object-based.
-                  _.set(submission.data, path, util.decrypt(secret, _.get(submission.data, path)));
-                }
-              });
-            });
+            eachSeries(items, (submission, done) => Encryptor.encryptDecrypt(req, submission, 'decrypt', done), next);
           }
-
+        }
+        else {
           return next();
-        });
+        }
       }
       else {
         return next();

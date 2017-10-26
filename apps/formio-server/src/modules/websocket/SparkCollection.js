@@ -26,6 +26,9 @@ SparkCollection.prototype.connect = function(redis) {
     if (err) {
       return deferred.reject(err.message);
     }
+    if (!db) {
+      return deferred.reject('Could not create Redis database');
+    }
     this.redis = db;
     if (this.redis) {
       this.redis.on('error', function() {
