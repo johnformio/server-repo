@@ -66,7 +66,7 @@ module.exports = (formioServer) => {
           }
 
           if (project.settings.secret) {
-            return resolve(project.settings.secret);
+            return resolve(project);
           }
 
           // Update project with randomly generated secret key.
@@ -75,13 +75,28 @@ module.exports = (formioServer) => {
             secret: secret
           });
           project.save(); // Asynchronously save the project for performance reasons.
-          return resolve(secret);
+          return resolve(project);
         });
       });
     },
 
+    getValue: (project, operation, data) => {
+      let decrypt = (operation === 'decrypt');
+      if (decrypt && project.plan !== 'commercial') {
+        return 'Encryption requires Commercial Plan';
+      }
+
+      // If the value is already decrypted, then just return here.
+      if (decrypt && (!data || (typeof data === 'string'))) {
+        return data;
+      }
+
+      // Return the value.
+      return util[operation](project.settings.secret, data);
+    },
+
     encryptDecrypt: (req, submission, operation, next) => {
-      Encryptor.getProjectSecret(req).then((secret) => {
+      Encryptor.getProjectSecret(req).then((project) => {
         _.each(req.encryptedComponents, (component, path) => {
           let parent = null;
           const pathParts = path.split('.');
@@ -99,12 +114,12 @@ module.exports = (formioServer) => {
           // Handle array-based components.
           if (parent && Encryptor.arrayBasedComponent(parent)) {
             _.get(submission.data, pathParts.join('.')).forEach((row) => {
-              row[component.key] = util[operation](secret, row[component.key]);
+              row[component.key] = Encryptor.getValue(project, operation, row[component.key]);
             });
           }
           else if (_.has(submission.data, path)) {
             // Handle other components including Container, which is object-based.
-            _.set(submission.data, path, util[operation](secret, _.get(submission.data, path)));
+            _.set(submission.data, path, Encryptor.getValue(project, operation, _.get(submission.data, path)));
           }
         });
 
