@@ -81,8 +81,14 @@ module.exports = (formioServer) => {
     },
 
     getValue: (project, operation, data) => {
-      if (operation === 'decrypt' && project.plan !== 'commercial') {
+      let decrypt = (operation === 'decrypt');
+      if (decrypt && project.plan !== 'commercial') {
         return 'Encryption requires Commercial Plan';
+      }
+
+      // If the value is already decrypted, then just return here.
+      if (decrypt && (!data || (typeof data === 'string'))) {
+        return data;
       }
 
       // Return the value.
