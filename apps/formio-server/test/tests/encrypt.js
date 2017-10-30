@@ -347,11 +347,65 @@ module.exports = function(app, template, hook) {
 
           tempSubmission = response.getLastSubmission();
 
-          // Make sure the response shows that it is decrypted.
-          assert.equal(tempSubmission.data.ssn, '123-23-2345');
-          assert.equal(tempSubmission.data.secret, 'sshhhhhhh');
-          assert.equal(tempSubmission.data.datagrid[0].c, 'private');
-          assert.equal(tempSubmission.data.datagrid[1].c, 'private2');
+          // Make sure the response does not allow encryption for anything other than commercial plans.
+          assert.equal(tempSubmission.data.ssn, 'Encryption requires Commercial Plan');
+          assert.equal(tempSubmission.data.secret, 'Encryption requires Commercial Plan');
+          assert.equal(tempSubmission.data.datagrid[0].c, 'Encryption requires Commercial Plan');
+          assert.equal(tempSubmission.data.datagrid[1].c, 'Encryption requires Commercial Plan');
+          return done();
+        });
+    });
+
+    it('Should not decrypt for anything other than commercial plan.', (done) => {
+      request(app)
+        .get(hook.alter(`url`, `/form/${tempForm._id}/submission/${tempSubmission._id}`, template))
+        .set(`x-jwt-token`, template.formio.owner.token)
+        .expect(200)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+
+          assert.equal(res.body.data.ssn, 'Encryption requires Commercial Plan');
+          assert.equal(res.body.data.secret, 'Encryption requires Commercial Plan');
+          assert.equal(res.body.data.datagrid[0].c, 'Encryption requires Commercial Plan');
+          assert.equal(res.body.data.datagrid[1].c, 'Encryption requires Commercial Plan');
+          return done();
+        });
+    });
+
+
+    it('Should upgrade the project to "commercial"', (done) => {
+      app.formio.formio.mongoose.model('project').update({
+        _id: ObjectID(template.project._id)
+      }, {
+        '$set': {
+          plan: 'commercial'
+        }
+      }, (err, project) => {
+        if (err) {
+          return done(err);
+        }
+
+        done();
+      });
+    });
+
+    it('Should let you load the individual submission and show unencrypted.', (done) => {
+      request(app)
+        .get(hook.alter(`url`, `/form/${tempForm._id}/submission/${tempSubmission._id}`, template))
+        .set(`x-jwt-token`, template.formio.owner.token)
+        .expect(200)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+
+          tempSubmission = res.body;
+          assert.equal(res.body.data.ssn, '123-23-2345');
+          assert.equal(res.body.data.secret, 'sshhhhhhh');
+          assert.equal(res.body.data.datagrid[0].c, 'private');
+          assert.equal(res.body.data.datagrid[1].c, 'private2');
           return done();
         });
     });
@@ -370,24 +424,6 @@ module.exports = function(app, template, hook) {
         assert(submission.data.datagrid[1].c.toString() !== tempSubmission.data.datagrid[1].c);
         done();
       });
-    });
-
-    it('Should let you load the individual submission and show unencrypted.', (done) => {
-      request(app)
-        .get(hook.alter(`url`, `/form/${tempForm._id}/submission/${tempSubmission._id}`, template))
-        .set(`x-jwt-token`, template.formio.owner.token)
-        .expect(200)
-        .end((err, res) => {
-          if (err) {
-            return done(err);
-          }
-
-          assert.equal(res.body.data.ssn, tempSubmission.data.ssn);
-          assert.equal(res.body.data.secret, tempSubmission.data.secret);
-          assert.equal(res.body.data.datagrid[0].c, tempSubmission.data.datagrid[0].c);
-          assert.equal(res.body.data.datagrid[1].c, tempSubmission.data.datagrid[1].c);
-          return done();
-        });
     });
 
     it('Updating the submission should not double encrypt.', (done) => {
@@ -528,6 +564,22 @@ module.exports = function(app, template, hook) {
           assert.equal(res.body[1].data.datagrid[1].c, tempSubmission2.data.datagrid[1].c);
           return done();
         });
+    });
+
+    it('Should downgrade the project to "trial"', (done) => {
+      app.formio.formio.mongoose.model('project').update({
+        _id: ObjectID(template.project._id)
+      }, {
+        '$set': {
+          plan: 'trial'
+        }
+      }, (err, project) => {
+        if (err) {
+          return done(err);
+        }
+
+        done();
+      });
     });
   });
 };
