@@ -40,7 +40,7 @@ module.exports = function(db, config, tools, done) {
       async.eachSeries(results, (result, resultDone) => {
         let i = 0;
         async.eachSeries(result.ids, (id, idDone) => {
-          if ((i++ > 0)) {
+          if ((i++ > 0) || !result._id.machineName) {
             console.log('Updating machineName ' + result._id.machineName + ': Instance ' + i + ' (' + id + ')');
 
             if (!result._id.machineName) {
