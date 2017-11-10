@@ -67,5 +67,14 @@ module.exports = function(db, config, tools, done) {
     async.apply(fixDuplicates, 'roles'),
     async.apply(fixDuplicates, 'forms'),
     async.apply(fixDuplicates, 'actions')
-  ], () => done());
+  ], () => {
+    // Run again to make sure they are all taken care of.
+    async.series([
+      async.apply(fixDuplicates, 'roles'),
+      async.apply(fixDuplicates, 'forms'),
+      async.apply(fixDuplicates, 'actions')
+    ], () => {
+      done();
+    });
+  });
 };
