@@ -174,6 +174,10 @@ module.exports = function(app) {
             ref: 'project',
             index: true,
             required: true
+          },
+          revisions: {
+            type: Boolean,
+            default: false
           }
         });
 
