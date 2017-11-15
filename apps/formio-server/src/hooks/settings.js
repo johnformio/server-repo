@@ -9,9 +9,7 @@ var debug = {
 var o365Util = require('../actions/office365/util');
 var kickboxValidate = require('../actions/kickbox/validate');
 var nodeUrl = require('url');
-var jwt = require('jsonwebtoken');
 var semver = require('semver');
-var util = require('../util/util');
 let async = require('async');
 var chance = new (require('chance'))();
 var fs = require('fs');
@@ -153,138 +151,13 @@ module.exports = function(app) {
       }
     },
     alter: {
-      formio: function(app) {
-        if (app.formio && app.formio.formio) {
-          return app.formio.formio;
-        }
-        else if (app.formio) {
-          return app.formio;
-        }
-
-        return app;
-      },
+      formio: require('./alter/formio')(app),
       resources: function(resources) {
         return _.assign(resources, require('../resources/resources')(app, formioServer));
       },
-      resourceOptions: function(options, type) {
-        switch (type) {
-          case 'form':
-          case 'submission':
-            options.versions = true;
-        }
-        return options;
-      },
-      models: function(models) {
-        // Add the project to the form schema.
-        models.form.schema.add({
-          project: {
-            type: formioServer.formio.mongoose.Schema.Types.ObjectId,
-            ref: 'project',
-            index: true,
-            required: true
-          },
-          revisions: {
-            type: Boolean,
-            default: false
-          }
-        });
-
-        models.submission.schema.add({
-          _fvid: {
-            type: Number,
-            description: 'The current version id of the form.',
-            index: true,
-            required: true,
-            default: 0
-          }
-        });
-
-        // Add additional models.
-        return _.assign(models, require('../models/models')(formioServer));
-      },
-      email: function(mail, req, res, params, cb) {
-        let _debug = require('debug')('formio:hook:email');
-        _debug(mail);
-        if (mail.to.indexOf(',') !== -1) {
-          return cb(null, mail);
-        }
-
-        // Find the ssoToken.
-        var ssoToken = util.ssoToken(mail.html);
-        if (!ssoToken) {
-          _debug(`No ssoToken`);
-          return cb(null, mail);
-        }
-
-        var query = formioServer.formio.hook.alter('formQuery', {
-          name: {'$in': ssoToken.resources},
-          deleted: {$eq: null}
-        }, req);
-
-        // Find the forms to search the record within.
-        _debug(query);
-        formioServer.formio.resources.form.model.find(query).exec(function(err, result) {
-          if (err || !result) {
-            _debug(err || `No form was found`);
-            return cb(err, mail);
-          }
-
-          var forms = [];
-          var formObjs = {};
-          result.forEach(function(form) {
-            formObjs[form._id.toString()] = form;
-            forms.push(form._id);
-          });
-
-          var query = {
-            form: {'$in': forms},
-            deleted: {$eq: null}
-          };
-
-          // Set the username field to the email address this is getting sent to.
-          query[ssoToken.field] = {
-            $regex: new RegExp('^' + formioServer.formio.util.escapeRegExp(mail.to) + '$'),
-            $options: 'i'
-          };
-
-          // Find the submission.
-          _debug(query);
-          formioServer.formio.resources.submission.model
-            .findOne(query)
-            .select('_id, form')
-            .exec(function(err, submission) {
-              if (err || !submission) {
-                _debug(err || `No submission found`);
-                return cb(null, mail);
-              }
-
-              // Create a new JWT token for the SSO.
-              var token = formioServer.formio.hook.alter('token', {
-                user: {
-                  _id: submission._id.toString()
-                },
-                form: {
-                  _id: submission.form.toString()
-                }
-              }, formObjs[submission.form.toString()]);
-
-              // Make sure this token does not have an expiration.
-              delete token.exp;
-
-              // Create a token that expires in 30 minutes.
-              token = jwt.sign(token, formioServer.formio.config.jwt.secret, {
-                expiresIn: ssoToken.expireTime * 60
-              });
-
-              // Replace the string token with the one generated here.
-              mail.html = mail.html.replace(util.tokenRegex, token);
-
-              // TO-DO: Generate the token for this user.
-              _debug(mail);
-              return cb(null, mail);
-            });
-        }.bind(this));
-      },
+      FormResource: require('./alter/FormResource')(app),
+      models: require('./alter/models')(app),
+      email: require('./alter/email')(app),
       actions: function(actions) {
         actions.office365contact = require('../actions/office365/Office365Contact')(formioServer);
         actions.office365calendar = require('../actions/office365/Office365Calendar')(formioServer);
@@ -1338,46 +1211,8 @@ module.exports = function(app) {
         query.projectId = token.form.project;
         return query;
       },
-      formRoutes: function(routes) {
-        routes.before.unshift(require('../middleware/projectProtectAccess')(formioServer.formio));
-        return routes;
-      },
-      submissionRoutes: function(routes) {
-        var filterExternalTokens = formioServer.formio.middleware.filterResourcejsResponse(['externalTokens']);
-        var conditionalFilter = function(req, res, next) {
-          if (req.token && res.resource && res.resource.item && res.resource.item._id) {
-            // Only allow tokens for the actual user.
-            if (req.token.user._id !== res.resource.item._id.toString()) {
-              return filterExternalTokens(req, res, next);
-            }
-
-            // Whitelist which tokens can be seen on the frontend.
-            var allowedTokens = ['dropbox'];
-            res.resource.item.externalTokens = _.filter(res.resource.item.externalTokens, function(token) {
-              return _.indexOf(allowedTokens, token.type) > -1;
-            });
-
-            return next();
-          }
-          else {
-            return filterExternalTokens(req, res, next);
-          }
-        };
-
-        _.each(['afterGet', 'afterIndex', 'afterPost', 'afterPut', 'afterDelete'], function(handler) {
-          routes[handler].push(conditionalFilter);
-        });
-
-        // Add the form version id to each submission.
-        _.each(['beforePost', 'beforePut'], function(handler) {
-          routes[handler].push(function(req, res, next) {
-            req.body._fvid = req.currentForm._vid || 0;
-            next();
-          });
-        });
-
-        return routes;
-      },
+      formRoutes: require('./alter/formRoutes')(app),
+      submissionRoutes: require('./alter/submissionRoutes')(app),
 
       actionRoutes: function(routes) {
         routes.beforePost = routes.beforePost || [];
