@@ -13,7 +13,7 @@ module.exports = app => routes => {
     var versionBody = item.toObject();
     versionBody._rid = versionBody._id;
     delete versionBody._id;
-    //this.versionModel.create(versionBody);
+    app.formio.formio.mongoose.models.formrevision.create(versionBody);
   };
 
   routes.hooks.put = {

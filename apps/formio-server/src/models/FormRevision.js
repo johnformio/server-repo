@@ -22,10 +22,21 @@ module.exports = (router, models) => {
     }
   });
 
-  schema.remove('machineName');
-
-  /* eslint-disable new-cap */
-  return router.formio.BaseModel({
-    schema: schema
+  // Remove the name unique validator.
+  schema.path('name', {
+    validators: schema.obj.name.validators.slice(0, schema.obj.name.validators.length - 2)
   });
+
+  // Remove the path unique validator.
+  schema.path('path', {
+    validators: schema.obj.path.validators.slice(0, schema.obj.path.validators.length - 2)
+  });
+
+  schema.remove('machineName');
+  // This removes the machinename index which will throw errors.
+  schema._indexes = [];
+
+  return {
+    schema: schema
+  };
 };

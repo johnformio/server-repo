@@ -29,6 +29,7 @@ module.exports = app => Resource => {
         // Get the find query.
         var findQuery = this.getFindQuery(req);
 
+        // TODO: Fix the queries.
         // Get the query object.
         //var countQuery = req.countQuery || req.modelQuery || this.versionModel;
         //var query = req.modelQuery || this.versionModel;
