@@ -248,6 +248,7 @@ module.exports = (app, template, hook) => {
     });
 
     it('It does not create a revision for basic plans', done => {
+      form.components[0].prefix = 'basic';
       helper
         .plan('basic')
         .execute(() => {
@@ -279,6 +280,7 @@ module.exports = (app, template, hook) => {
     });
 
     it('It does not create a revision for independent plans', done => {
+      form.components[0].prefix = 'independent';
       helper
         .plan('independent')
         .execute(() => {
@@ -310,6 +312,7 @@ module.exports = (app, template, hook) => {
     });
 
     it('It does not create a revision for team pro plans', done => {
+      form.components[0].prefix = 'team';
       helper
         .plan('team')
         .execute(() => {
@@ -341,36 +344,7 @@ module.exports = (app, template, hook) => {
     });
 
     it('It creates a revision for commercial plans', done => {
-      form.components.push({
-        input: true,
-        tableView: true,
-        inputType: 'text',
-        inputMask: '',
-        label: 'ename',
-        key: 'ename',
-        placeholder: '',
-        prefix: '',
-        suffix: '',
-        multiple: false,
-        defaultValue: '',
-        protected: false,
-        unique: false,
-        persistent: true,
-        validate: {
-          required: false,
-          minLength: '',
-          maxLength: '',
-          pattern: '',
-          custom: '',
-          customPrivate: false
-        },
-        conditional: {
-          show: '',
-          when: null,
-          eq: ''
-        },
-        type: 'textfield'
-      });
+      form.components[0].prefix = 'commercial';
       helper
         .plan('commercial')
         .execute(() => {
@@ -395,7 +369,7 @@ module.exports = (app, template, hook) => {
               assert.equal(result[2]._rid, form._id);
               assert.equal(result[2].name, form.name);
               assert(result[2].hasOwnProperty('machineName') === false);
-              assert.equal(result[3].components.length, 5);
+              assert.equal(result[3].components.length, 4);
               assert.equal(result[3]._vid, 4);
               assert.equal(result[3]._rid, form._id);
               assert.equal(result[3].name, form.name);
@@ -466,7 +440,7 @@ module.exports = (app, template, hook) => {
           assert.equal(result[2]._rid, form._id);
           assert.equal(result[2].name, form.name);
           assert(result[2].hasOwnProperty('machineName') === false);
-          assert.equal(result[3].components.length, 5);
+          assert.equal(result[3].components.length, 4);
           assert.equal(result[3]._vid, 4);
           assert.equal(result[3]._rid, form._id);
           assert.equal(result[3].name, form.name);
