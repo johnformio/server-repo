@@ -62,6 +62,27 @@ module.exports = function(app, Helper) {
       }.bind(this));
   };
 
+  Helper.prototype.getFormRevisions = function(form, done) {
+    let url = '';
+    if (this.template.project && this.template.project._id) {
+      url += '/project/' + this.template.project._id;
+    }
+    url += '/form/' + form._id + '/v';
+
+    request(app).get(url)
+      .send()
+      .set('x-jwt-token', this.owner.token)
+      .expect('Content-Type', /json/)
+      .expect(200)
+      .end((err, res) => {
+        if (err) {
+          return done(err, res);
+        }
+        this.owner.token = res.headers['x-jwt-token'];
+        done(null, res.body);
+      });
+  };
+
   if (!docker && !customer)
   Helper.prototype.settings = function(settings) {
     this.series.push(async.apply(this.setProjectSettings.bind(this), settings));

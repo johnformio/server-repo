@@ -93,6 +93,115 @@ module.exports = (app, template, hook) => {
       });
     });
 
+    it('Creates a new revision when a form is updated', done => {
+      form.components.push({
+        input: true,
+        tableView: true,
+        inputType: 'text',
+        inputMask: '',
+        label: 'mname',
+        key: 'mname',
+        placeholder: '',
+        prefix: '',
+        suffix: '',
+        multiple: false,
+        defaultValue: '',
+        protected: false,
+        unique: false,
+        persistent: true,
+        validate: {
+          required: false,
+          minLength: '',
+          maxLength: '',
+          pattern: '',
+          custom: '',
+          customPrivate: false
+        },
+        conditional: {
+          show: '',
+          when: null,
+          eq: ''
+        },
+        type: 'textfield'
+      });
+      helper.updateForm(form, (err, result) => {
+        helper.getFormRevisions(result, (err, result) => {
+          if (err) {
+            return done(err);
+          }
+          assert.equal(result.length, 2);
+          assert.equal(result[0].components.length, 2);
+          assert.equal(result[0]._vid, 1);
+          assert.equal(result[0]._rid, form._id);
+          assert.equal(result[0].name, form.name);
+          assert(result[0].hasOwnProperty('machineName') === false);
+          assert.equal(result[1].components.length, 3);
+          assert.equal(result[1]._vid, 2);
+          assert.equal(result[1]._rid, form._id);
+          assert.equal(result[1].name, form.name);
+          assert(result[1].hasOwnProperty('machineName') === false);
+          done();
+        });
+      });
+    });
+
+    it('Creates another new revision when a form is updated', done => {
+      form.components.push({
+        input: true,
+        tableView: true,
+        inputType: 'text',
+        inputMask: '',
+        label: 'pname',
+        key: 'pname',
+        placeholder: '',
+        prefix: '',
+        suffix: '',
+        multiple: false,
+        defaultValue: '',
+        protected: false,
+        unique: false,
+        persistent: true,
+        validate: {
+          required: false,
+          minLength: '',
+          maxLength: '',
+          pattern: '',
+          custom: '',
+          customPrivate: false
+        },
+        conditional: {
+          show: '',
+          when: null,
+          eq: ''
+        },
+        type: 'textfield'
+      });
+      helper.updateForm(form, (err, result) => {
+        helper.getFormRevisions(result, (err, result) => {
+          if (err) {
+            return done(err);
+          }
+          assert.equal(result.length, 3);
+          assert.equal(result[0].components.length, 2);
+          assert.equal(result[0]._vid, 1);
+          assert.equal(result[0]._rid, form._id);
+          assert.equal(result[0].name, form.name);
+          assert(result[0].hasOwnProperty('machineName') === false);
+          assert.equal(result[1].components.length, 3);
+          assert.equal(result[1]._vid, 2);
+          assert.equal(result[1]._rid, form._id);
+          assert.equal(result[1].name, form.name);
+          assert(result[1].hasOwnProperty('machineName') === false);
+          assert.equal(result[2].components.length, 4);
+          assert.equal(result[2]._vid, 3);
+          assert.equal(result[2]._rid, form._id);
+          assert.equal(result[2].name, form.name);
+          assert(result[2].hasOwnProperty('machineName') === false);
+          done();
+        });
+      });
+    });
+
     it('Sets a form to not use revisions', done => {
       form.revisions = false;
       helper.updateForm(form, (err, result) => {
@@ -101,6 +210,4 @@ module.exports = (app, template, hook) => {
       });
     });
   });
-
-
-}
+};

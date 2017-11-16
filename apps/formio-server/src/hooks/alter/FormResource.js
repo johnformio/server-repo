@@ -161,7 +161,7 @@ module.exports = app => Resource => {
     };
 
     FormResource.rest = function(options) {
-      parent.rest(options);
+      parent.rest.call(this, options);
       return this
         .indexVersion(options)
         .getVersion(options);
