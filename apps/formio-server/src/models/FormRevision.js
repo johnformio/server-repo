@@ -14,7 +14,7 @@ module.exports = (router, models) => {
       required: true
     },
     _vid: {
-      type: Number,
+      type: mongoose.Schema.Types.Mixed,
       description: 'The version id of the Resource.',
       index: true,
       required: true,

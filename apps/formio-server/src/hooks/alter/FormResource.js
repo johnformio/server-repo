@@ -31,10 +31,10 @@ module.exports = app => Resource => {
 
         // TODO: Fix the queries.
         // Get the query object.
-        //var countQuery = req.countQuery || req.modelQuery || this.versionModel;
-        //var query = req.modelQuery || this.versionModel;
-        var countQuery = this.versionModel;
-        var query = this.versionModel;
+        //var countQuery = req.countQuery || req.modelQuery;
+        //var query = req.modelQuery;
+        var countQuery = app.formio.mongoose.models.formrevision;
+        var query = app.formio.mongoose.models.formrevision;
 
         findQuery['_rid'] = req.params[this.name + 'Id'];
 
@@ -126,10 +126,12 @@ module.exports = app => Resource => {
         }
 
         //var query = req.modelQuery || this.versionModel;
-        var query = this.versionModel;
+        var query = app.formio.mongoose.models.formrevision;
         var search = {
           '_rid': req.params[this.name + 'Id'],
-          '_vid': req.params[this.name + 'Vid']
+          '_vid': !isNaN(req.params[this.name + 'Vid']) ?
+            parseInt(req.params[this.name + 'Vid']) :
+            req.params[this.name + 'Vid']
         };
 
         options.hooks.get.before.call(
@@ -159,16 +161,10 @@ module.exports = app => Resource => {
     };
 
     FormResource.rest = function(options) {
+      parent.rest(options);
       return this
-        .index(options)
-        //.indexVersion(options)
-        .get(options)
-        //.getVersion(options)
-        .virtual(options)
-        .put(options)
-        .patch(options)
-        .post(options)
-        .delete(options);
+        .indexVersion(options)
+        .getVersion(options);
     };
 
     return FormResource;

@@ -4,16 +4,20 @@ const _ = require('lodash');
 
 module.exports = app => routes => {
   const incrementVersion = function(item) {
-    // TODO: Only do this if on enterprise plan and enabled.
-    item.set('_vid', item.get('_vid') + 1);
+    if (item.revisions) {
+      // TODO: Only do this if on enterprise plan and enabled.
+      item.set('_vid', item.get('_vid') + 1);
+    }
   };
 
   const createVersion = function(item) {
-    // TODO: Only do this if on enterprise plan and enabled.
-    var versionBody = item.toObject();
-    versionBody._rid = versionBody._id;
-    delete versionBody._id;
-    app.formio.formio.mongoose.models.formrevision.create(versionBody);
+    if (item.revisions) {
+      // TODO: Only do this if on enterprise plan and enabled.
+      var versionBody = item.toObject();
+      versionBody._rid = versionBody._id;
+      delete versionBody._id;
+      app.formio.formio.mongoose.models.formrevision.create(versionBody);
+    }
   };
 
   routes.hooks.put = {
