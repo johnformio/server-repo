@@ -202,6 +202,24 @@ module.exports = (app, template, hook) => {
       });
     });
 
+    it('Can access a revision by id', done => {
+      helper.getFormRevision(form, 3, (err, result) => {
+        assert.equal(result.components.length, 4);
+        assert.equal(result._vid, 3);
+        assert.equal(result._rid, form._id);
+        assert.equal(result.name, form.name);
+        assert(result.hasOwnProperty('machineName') === false);
+        done();
+      });
+    });
+
+    it('Returns a 404 for a non-existent revision', done => {
+      helper.getFormRevision(form, 4, (err, result) => {
+        assert.equal(result.status, 404);
+        done();
+      });
+    });
+
     it('Sets a form to not use revisions', done => {
       form.revisions = false;
       helper.updateForm(form, (err, result) => {
