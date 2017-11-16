@@ -4,20 +4,20 @@ const _ = require('lodash');
 
 module.exports = app => routes => {
   const incrementVersion = function(item) {
-    if (item.revisions) {
-      // TODO: Only do this if on enterprise plan and enabled.
-      item.set('_vid', item.get('_vid') + 1);
-    }
+    item.set('_vid', item.get('_vid') + 1);
   };
 
   const createVersion = function(item) {
-    if (item.revisions) {
-      // TODO: Only do this if on enterprise plan and enabled.
-      var versionBody = item.toObject();
-      versionBody._rid = versionBody._id;
-      delete versionBody._id;
-      app.formio.formio.mongoose.models.formrevision.create(versionBody);
-    }
+    var versionBody = item.toObject();
+    versionBody._rid = versionBody._id;
+    delete versionBody._id;
+    app.formio.formio.mongoose.models.formrevision.create(versionBody);
+  };
+
+  const revisionPlans = ['trial', 'commercial'];
+
+  const revisionEnabled = (project) => {
+    return revisionPlans.includes(project.plan);
   };
 
   routes.hooks.put = {
@@ -25,32 +25,42 @@ module.exports = app => routes => {
       if (item.components) {
         item.markModified('components');
       }
-      incrementVersion(item);
+      if (item.revisions && revisionEnabled(req.primaryProject)) {
+        incrementVersion(item);
+      }
       return next();
     },
     after: function(req, res, item, next) {
-      createVersion(item);
+      if (item.revisions && revisionEnabled(req.primaryProject)) {
+        createVersion(item);
+      }
       next();
     }
   };
 
   routes.hooks.patch = {
     before: function(req, res, item, next) {
-      if (item.components) {
+      if (item.components && revisionEnabled(req.primaryProject)) {
         item.markModified('components');
       }
-      incrementVersion(item);
+      if (item.revisions && revisionEnabled(req.primaryProject)) {
+        incrementVersion(item);
+      }
       return next();
     },
     after: function(req, res, item, next) {
-      createVersion(item);
+      if (item.revisions && revisionEnabled(req.primaryProject)) {
+        createVersion(item);
+      }
       next();
     }
   };
 
   routes.hooks.post = {
     after: function(req, res, item, next) {
-      createVersion(item);
+      if (item.revisions && revisionEnabled(req.primaryProject)) {
+        createVersion(item);
+      }
       next();
     }
   };

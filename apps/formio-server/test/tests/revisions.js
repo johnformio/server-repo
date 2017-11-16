@@ -220,6 +220,135 @@ module.exports = (app, template, hook) => {
       });
     });
 
+    it('It does not create a revision for basic plans', done => {
+      helper
+        .plan('basic')
+        .execute(() => {
+          helper.updateForm(form, (err, result) => {
+            helper.getFormRevisions(result, (err, result) => {
+              if (err) {
+                return done(err);
+              }
+              assert.equal(result.length, 3);
+              assert.equal(result[0].components.length, 2);
+              assert.equal(result[0]._vid, 1);
+              assert.equal(result[0]._rid, form._id);
+              assert.equal(result[0].name, form.name);
+              assert(result[0].hasOwnProperty('machineName') === false);
+              assert.equal(result[1].components.length, 3);
+              assert.equal(result[1]._vid, 2);
+              assert.equal(result[1]._rid, form._id);
+              assert.equal(result[1].name, form.name);
+              assert(result[1].hasOwnProperty('machineName') === false);
+              assert.equal(result[2].components.length, 4);
+              assert.equal(result[2]._vid, 3);
+              assert.equal(result[2]._rid, form._id);
+              assert.equal(result[2].name, form.name);
+              assert(result[2].hasOwnProperty('machineName') === false);
+              done();
+            });
+          });
+        });
+    });
+
+    it('It does not create a revision for independent plans', done => {
+      helper
+        .plan('independent')
+        .execute(() => {
+          helper.updateForm(form, (err, result) => {
+            helper.getFormRevisions(result, (err, result) => {
+              if (err) {
+                return done(err);
+              }
+              assert.equal(result.length, 3);
+              assert.equal(result[0].components.length, 2);
+              assert.equal(result[0]._vid, 1);
+              assert.equal(result[0]._rid, form._id);
+              assert.equal(result[0].name, form.name);
+              assert(result[0].hasOwnProperty('machineName') === false);
+              assert.equal(result[1].components.length, 3);
+              assert.equal(result[1]._vid, 2);
+              assert.equal(result[1]._rid, form._id);
+              assert.equal(result[1].name, form.name);
+              assert(result[1].hasOwnProperty('machineName') === false);
+              assert.equal(result[2].components.length, 4);
+              assert.equal(result[2]._vid, 3);
+              assert.equal(result[2]._rid, form._id);
+              assert.equal(result[2].name, form.name);
+              assert(result[2].hasOwnProperty('machineName') === false);
+              done();
+            });
+          });
+        });
+    });
+
+    it('It does not create a revision for team pro plans', done => {
+      helper
+        .plan('team')
+        .execute(() => {
+          helper.updateForm(form, (err, result) => {
+            helper.getFormRevisions(result, (err, result) => {
+              if (err) {
+                return done(err);
+              }
+              assert.equal(result.length, 3);
+              assert.equal(result[0].components.length, 2);
+              assert.equal(result[0]._vid, 1);
+              assert.equal(result[0]._rid, form._id);
+              assert.equal(result[0].name, form.name);
+              assert(result[0].hasOwnProperty('machineName') === false);
+              assert.equal(result[1].components.length, 3);
+              assert.equal(result[1]._vid, 2);
+              assert.equal(result[1]._rid, form._id);
+              assert.equal(result[1].name, form.name);
+              assert(result[1].hasOwnProperty('machineName') === false);
+              assert.equal(result[2].components.length, 4);
+              assert.equal(result[2]._vid, 3);
+              assert.equal(result[2]._rid, form._id);
+              assert.equal(result[2].name, form.name);
+              assert(result[2].hasOwnProperty('machineName') === false);
+              done();
+            });
+          });
+        });
+    });
+
+    it('It create a revision for commercial plans', done => {
+      helper
+        .plan('commercial')
+        .execute(() => {
+          helper.updateForm(form, (err, result) => {
+            helper.getFormRevisions(result, (err, result) => {
+              if (err) {
+                return done(err);
+              }
+              assert.equal(result.length, 4);
+              assert.equal(result[0].components.length, 2);
+              assert.equal(result[0]._vid, 1);
+              assert.equal(result[0]._rid, form._id);
+              assert.equal(result[0].name, form.name);
+              assert(result[0].hasOwnProperty('machineName') === false);
+              assert.equal(result[1].components.length, 3);
+              assert.equal(result[1]._vid, 2);
+              assert.equal(result[1]._rid, form._id);
+              assert.equal(result[1].name, form.name);
+              assert(result[1].hasOwnProperty('machineName') === false);
+              assert.equal(result[2].components.length, 4);
+              assert.equal(result[2]._vid, 3);
+              assert.equal(result[2]._rid, form._id);
+              assert.equal(result[2].name, form.name);
+              assert(result[2].hasOwnProperty('machineName') === false);
+              assert.equal(result[3].components.length, 4);
+              assert.equal(result[3]._vid, 4);
+              assert.equal(result[3]._rid, form._id);
+              assert.equal(result[3].name, form.name);
+              assert(result[3].hasOwnProperty('machineName') === false);
+              done();
+            });
+          });
+        });
+    });
+
     it('Sets a form to not use revisions', done => {
       form.revisions = false;
       helper.updateForm(form, (err, result) => {
@@ -227,5 +356,69 @@ module.exports = (app, template, hook) => {
         done();
       });
     });
+
+    it('Does not create a new revision when a non-revision form is updated', done => {
+      form.components.push({
+        input: true,
+        tableView: true,
+        inputType: 'text',
+        inputMask: '',
+        label: 'dname',
+        key: 'dname',
+        placeholder: '',
+        prefix: '',
+        suffix: '',
+        multiple: false,
+        defaultValue: '',
+        protected: false,
+        unique: false,
+        persistent: true,
+        validate: {
+          required: false,
+          minLength: '',
+          maxLength: '',
+          pattern: '',
+          custom: '',
+          customPrivate: false
+        },
+        conditional: {
+          show: '',
+          when: null,
+          eq: ''
+        },
+        type: 'textfield'
+      });
+      helper.updateForm(form, (err, result) => {
+        helper.getFormRevisions(result, (err, result) => {
+          if (err) {
+            return done(err);
+          }
+          assert.equal(result.length, 4);
+          assert.equal(result[0].components.length, 2);
+          assert.equal(result[0]._vid, 1);
+          assert.equal(result[0]._rid, form._id);
+          assert.equal(result[0].name, form.name);
+          assert(result[0].hasOwnProperty('machineName') === false);
+          assert.equal(result[1].components.length, 3);
+          assert.equal(result[1]._vid, 2);
+          assert.equal(result[1]._rid, form._id);
+          assert.equal(result[1].name, form.name);
+          assert(result[1].hasOwnProperty('machineName') === false);
+          assert.equal(result[2].components.length, 4);
+          assert.equal(result[2]._vid, 3);
+          assert.equal(result[2]._rid, form._id);
+          assert.equal(result[2].name, form.name);
+          assert(result[2].hasOwnProperty('machineName') === false);
+          assert.equal(result[3].components.length, 4);
+          assert.equal(result[3]._vid, 4);
+          assert.equal(result[3]._rid, form._id);
+          assert.equal(result[3].name, form.name);
+          assert(result[3].hasOwnProperty('machineName') === false);
+          done();
+        });
+      });
+    });
+
+
   });
 };
