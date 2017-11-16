@@ -46,36 +46,6 @@ module.exports = (app, template, hook) => {
               eq: ''
             },
             type: 'textfield'
-          },
-          {
-            input: true,
-            tableView: true,
-            inputType: 'text',
-            inputMask: '',
-            label: 'lname',
-            key: 'lname',
-            placeholder: '',
-            prefix: '',
-            suffix: '',
-            multiple: false,
-            defaultValue: '',
-            protected: false,
-            unique: false,
-            persistent: true,
-            validate: {
-              required: false,
-              minLength: '',
-              maxLength: '',
-              pattern: '',
-              custom: '',
-              customPrivate: false
-            },
-            conditional: {
-              show: '',
-              when: null,
-              eq: ''
-            },
-            type: 'textfield'
           }
         ])
         .execute(function() {
@@ -87,6 +57,36 @@ module.exports = (app, template, hook) => {
 
     it('Sets a form to use revisions', done => {
       form.revisions = true;
+      form.components.push({
+        input: true,
+        tableView: true,
+        inputType: 'text',
+        inputMask: '',
+        label: 'lname',
+        key: 'lname',
+        placeholder: '',
+        prefix: '',
+        suffix: '',
+        multiple: false,
+        defaultValue: '',
+        protected: false,
+        unique: false,
+        persistent: true,
+        validate: {
+          required: false,
+          minLength: '',
+          maxLength: '',
+          pattern: '',
+          custom: '',
+          customPrivate: false
+        },
+        conditional: {
+          show: '',
+          when: null,
+          eq: ''
+        },
+        type: 'textfield'
+      });
       helper.updateForm(form, (err, result) => {
         assert.equal(result.revisions, true);
         done();
@@ -176,6 +176,33 @@ module.exports = (app, template, hook) => {
         },
         type: 'textfield'
       });
+      helper.updateForm(form, (err, result) => {
+        helper.getFormRevisions(result, (err, result) => {
+          if (err) {
+            return done(err);
+          }
+          assert.equal(result.length, 3);
+          assert.equal(result[0].components.length, 2);
+          assert.equal(result[0]._vid, 1);
+          assert.equal(result[0]._rid, form._id);
+          assert.equal(result[0].name, form.name);
+          assert(result[0].hasOwnProperty('machineName') === false);
+          assert.equal(result[1].components.length, 3);
+          assert.equal(result[1]._vid, 2);
+          assert.equal(result[1]._rid, form._id);
+          assert.equal(result[1].name, form.name);
+          assert(result[1].hasOwnProperty('machineName') === false);
+          assert.equal(result[2].components.length, 4);
+          assert.equal(result[2]._vid, 3);
+          assert.equal(result[2]._rid, form._id);
+          assert.equal(result[2].name, form.name);
+          assert(result[2].hasOwnProperty('machineName') === false);
+          done();
+        });
+      });
+    });
+
+    it('Does not Create a new revision when a form is not updated', done => {
       helper.updateForm(form, (err, result) => {
         helper.getFormRevisions(result, (err, result) => {
           if (err) {
@@ -313,7 +340,37 @@ module.exports = (app, template, hook) => {
         });
     });
 
-    it('It create a revision for commercial plans', done => {
+    it('It creates a revision for commercial plans', done => {
+      form.components.push({
+        input: true,
+        tableView: true,
+        inputType: 'text',
+        inputMask: '',
+        label: 'ename',
+        key: 'ename',
+        placeholder: '',
+        prefix: '',
+        suffix: '',
+        multiple: false,
+        defaultValue: '',
+        protected: false,
+        unique: false,
+        persistent: true,
+        validate: {
+          required: false,
+          minLength: '',
+          maxLength: '',
+          pattern: '',
+          custom: '',
+          customPrivate: false
+        },
+        conditional: {
+          show: '',
+          when: null,
+          eq: ''
+        },
+        type: 'textfield'
+      });
       helper
         .plan('commercial')
         .execute(() => {
@@ -338,7 +395,7 @@ module.exports = (app, template, hook) => {
               assert.equal(result[2]._rid, form._id);
               assert.equal(result[2].name, form.name);
               assert(result[2].hasOwnProperty('machineName') === false);
-              assert.equal(result[3].components.length, 4);
+              assert.equal(result[3].components.length, 5);
               assert.equal(result[3]._vid, 4);
               assert.equal(result[3]._rid, form._id);
               assert.equal(result[3].name, form.name);
@@ -409,7 +466,7 @@ module.exports = (app, template, hook) => {
           assert.equal(result[2]._rid, form._id);
           assert.equal(result[2].name, form.name);
           assert(result[2].hasOwnProperty('machineName') === false);
-          assert.equal(result[3].components.length, 4);
+          assert.equal(result[3].components.length, 5);
           assert.equal(result[3]._vid, 4);
           assert.equal(result[3]._rid, form._id);
           assert.equal(result[3].name, form.name);

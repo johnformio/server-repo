@@ -16,52 +16,78 @@ module.exports = app => routes => {
 
   const revisionPlans = ['trial', 'commercial'];
 
-  const revisionEnabled = (project) => {
-    return revisionPlans.includes(project.plan);
-  };
-
   routes.hooks.put = {
     before: function(req, res, item, next) {
       if (item.components) {
         item.markModified('components');
       }
-      if (item.revisions && revisionEnabled(req.primaryProject)) {
-        incrementVersion(item);
-      }
-      return next();
+      app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
+        if (
+          item.revisions &&
+          revisionPlans.includes(req.primaryProject.plan) &&
+          !_.isEqual(form.components, req.body.components)
+        ) {
+          incrementVersion(item);
+        }
+        next();
+      });
     },
     after: function(req, res, item, next) {
-      if (item.revisions && revisionEnabled(req.primaryProject)) {
-        createVersion(item);
-      }
-      next();
+      app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
+        if (
+          item.revisions &&
+          revisionPlans.includes(req.primaryProject.plan) &&
+          !_.isEqual(form.components, req.body.components)
+        ) {
+          createVersion(item);
+        }
+        next();
+      });
     }
   };
 
   routes.hooks.patch = {
     before: function(req, res, item, next) {
-      if (item.components && revisionEnabled(req.primaryProject)) {
+      if (item.components) {
         item.markModified('components');
       }
-      if (item.revisions && revisionEnabled(req.primaryProject)) {
-        incrementVersion(item);
-      }
-      return next();
+      app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
+        if (
+          item.revisions &&
+          revisionPlans.includes(req.primaryProject.plan) &&
+          !_.isEqual(form.components, req.body.components)
+        ) {
+          incrementVersion(item);
+        }
+        return next();
+      });
     },
     after: function(req, res, item, next) {
-      if (item.revisions && revisionEnabled(req.primaryProject)) {
-        createVersion(item);
-      }
-      next();
+      app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
+        if (
+          item.revisions &&
+          revisionPlans.includes(req.primaryProject.plan) &&
+          !_.isEqual(form.components, req.body.components)
+        ) {
+          createVersion(item);
+        }
+        next();
+      });
     }
   };
 
   routes.hooks.post = {
     after: function(req, res, item, next) {
-      if (item.revisions && revisionEnabled(req.primaryProject)) {
-        createVersion(item);
-      }
-      next();
+      app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
+        if (
+          item.revisions &&
+          revisionPlans.includes(req.primaryProject.plan) &&
+          !_.isEqual(form.components, req.body.components)
+        ) {
+          createVersion(item);
+        }
+        next();
+      });
     }
   };
 
