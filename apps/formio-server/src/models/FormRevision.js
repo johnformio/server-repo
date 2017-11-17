@@ -19,6 +19,16 @@ module.exports = (router, models) => {
       index: true,
       required: true,
       default: 0
+    },
+    _vnote: {
+      type: String,
+      description: 'A note about the version.',
+      default: ''
+    },
+    _vuser: {
+      type: String,
+      description: 'The user who created the version',
+      default: 'anonymous'
     }
   });
 

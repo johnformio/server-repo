@@ -7,11 +7,13 @@ module.exports = app => routes => {
     item.set('_vid', item.get('_vid') + 1);
   };
 
-  const createVersion = function(item) {
-    var versionBody = item.toObject();
-    versionBody._rid = versionBody._id;
-    delete versionBody._id;
-    app.formio.formio.mongoose.models.formrevision.create(versionBody);
+  const createVersion = function(item, user, note) {
+    var body = item.toObject();
+    body._rid = body._id;
+    body._vuser = user.data.name;
+    body._vnote = note;
+    delete body._id;
+    app.formio.formio.mongoose.models.formrevision.create(body);
   };
 
   const revisionPlans = ['trial', 'commercial'];
@@ -39,7 +41,7 @@ module.exports = app => routes => {
           revisionPlans.includes(req.primaryProject.plan) &&
           !_.isEqual(form.components, req.body.components)
         ) {
-          createVersion(item);
+          createVersion(item, req.user, req.body._vnote);
         }
         next();
       });
@@ -69,7 +71,7 @@ module.exports = app => routes => {
           revisionPlans.includes(req.primaryProject.plan) &&
           !_.isEqual(form.components, req.body.components)
         ) {
-          createVersion(item);
+          createVersion(item, req.user);
         }
         next();
       });
@@ -84,7 +86,7 @@ module.exports = app => routes => {
           revisionPlans.includes(req.primaryProject.plan) &&
           !_.isEqual(form.components, req.body.components)
         ) {
-          createVersion(item);
+          createVersion(item, req.user, req.body._vnote);
         }
         next();
       });

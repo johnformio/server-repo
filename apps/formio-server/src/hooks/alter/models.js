@@ -20,11 +20,6 @@ module.exports = app => models => {
       index: true,
       required: true,
       default: 0
-    },
-    _vnote: {
-      type: String,
-      description: 'A note about the version.',
-      default: ''
     }
   });
 
@@ -35,11 +30,6 @@ module.exports = app => models => {
       index: true,
       required: true,
       default: 0
-    },
-    _vnote: {
-      type: String,
-      description: 'A note about the version.',
-      default: ''
     },
     _fvid: {
       type: Number,
