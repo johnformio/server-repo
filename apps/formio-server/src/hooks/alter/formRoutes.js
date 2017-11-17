@@ -7,13 +7,31 @@ module.exports = app => routes => {
     item.set('_vid', item.get('_vid') + 1);
   };
 
-  const createVersion = function(item, user, note) {
+  const createVersion = function(item, user, note, done) {
+    const formRevision = app.formio.formio.mongoose.models.formrevision;
+
     var body = item.toObject();
     body._rid = body._id;
     body._vuser = user.data.name;
-    body._vnote = note;
+    body._vnote = note || '';
     delete body._id;
-    app.formio.formio.mongoose.models.formrevision.create(body);
+    delete body.__v;
+
+    formRevision.findOne({
+      _rid: body._rid,
+      _vid: 'draft'
+    }, (err, result) => {
+      if (err) {
+        return done(err);
+      }
+      // If a draft exists, overwrite it.
+      if (result) {
+        result.set(body);
+        return result.save(done);
+      }
+      // Otherwise create a new entry.
+      formRevision.create(body, done);
+    });
   };
 
   const revisionPlans = ['trial', 'commercial'];
@@ -25,9 +43,8 @@ module.exports = app => routes => {
       }
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
         if (
-          (
-            item.revisions && !form.revisions
-          ) ||
+          req.isDraft ||
+          item.revisions && !form.revisions ||
           (
             item.revisions &&
             revisionPlans.includes(req.primaryProject.plan) &&
@@ -42,16 +59,15 @@ module.exports = app => routes => {
     after: function(req, res, item, next) {
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
         if (
-          (
-            item.revisions && !form.revisions
-          ) ||
+          req.isDraft ||
+          item.revisions && !form.revisions ||
           (
             item.revisions &&
             revisionPlans.includes(req.primaryProject.plan) &&
             !_.isEqual(form.components, req.body.components)
           )
         ) {
-          createVersion(item, req.user, req.body._vnote);
+          return createVersion(item, req.user, req.body._vnote, next);
         }
         next();
       });
@@ -65,9 +81,8 @@ module.exports = app => routes => {
       }
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
         if (
-          (
-            item.revisions && !form.revisions
-          ) ||
+          req.isDraft ||
+          item.revisions && !form.revisions ||
           (
             item.revisions &&
             revisionPlans.includes(req.primaryProject.plan) &&
@@ -82,16 +97,15 @@ module.exports = app => routes => {
     after: function(req, res, item, next) {
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
         if (
-          (
-            item.revisions && !form.revisions
-          ) ||
+          req.isDraft ||
+          item.revisions && !form.revisions ||
           (
             item.revisions &&
             revisionPlans.includes(req.primaryProject.plan) &&
             !_.isEqual(form.components, req.body.components)
           )
         ) {
-          createVersion(item, req.user);
+          return createVersion(item, req.user, '', next);
         }
         next();
       });
@@ -104,7 +118,7 @@ module.exports = app => routes => {
         item.revisions &&
         revisionPlans.includes(req.primaryProject.plan)
       ) {
-        createVersion(item, req.user, req.body._vnote);
+        return createVersion(item, req.user, req.body._vnote, next);
       }
       next();
     }
@@ -113,6 +127,9 @@ module.exports = app => routes => {
   routes.before.unshift((req, res, next) => {
     // Remove _vid from any updates so it is set automatically.
     if (['PUT', 'PATCH', 'POST'].includes(req.method)) {
+      if (req.body.hasOwnProperty('_vid') && req.body._vid === 'draft') {
+        req.isDraft = true;
+      }
       req.body = _.omit(req.body, ['_vid']);
     }
     next();

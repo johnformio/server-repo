@@ -38,6 +38,7 @@ module.exports = function(router, formioServer) {
     }
   };
 
+  // We only want index and get endpoints for formrevisions. They are currently uneditable.
   return Resource(
     router,
     '/project/:projectId/form/:formId',
