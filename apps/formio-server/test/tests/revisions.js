@@ -46,6 +46,36 @@ module.exports = (app, template, hook) => {
               eq: ''
             },
             type: 'textfield'
+          },
+          {
+            input: true,
+            tableView: true,
+            inputType: 'text',
+            inputMask: '',
+            label: 'lname',
+            key: 'lname',
+            placeholder: '',
+            prefix: '',
+            suffix: '',
+            multiple: false,
+            defaultValue: '',
+            protected: false,
+            unique: false,
+            persistent: true,
+            validate: {
+              required: false,
+              minLength: '',
+              maxLength: '',
+              pattern: '',
+              custom: '',
+              customPrivate: false
+            },
+            conditional: {
+              show: '',
+              when: null,
+              eq: ''
+            },
+            type: 'textfield'
           }
         ])
         .execute(function() {
@@ -57,39 +87,21 @@ module.exports = (app, template, hook) => {
 
     it('Sets a form to use revisions', done => {
       form.revisions = true;
-      form.components.push({
-        input: true,
-        tableView: true,
-        inputType: 'text',
-        inputMask: '',
-        label: 'lname',
-        key: 'lname',
-        placeholder: '',
-        prefix: '',
-        suffix: '',
-        multiple: false,
-        defaultValue: '',
-        protected: false,
-        unique: false,
-        persistent: true,
-        validate: {
-          required: false,
-          minLength: '',
-          maxLength: '',
-          pattern: '',
-          custom: '',
-          customPrivate: false
-        },
-        conditional: {
-          show: '',
-          when: null,
-          eq: ''
-        },
-        type: 'textfield'
-      });
+      form.components.push();
       helper.updateForm(form, (err, result) => {
         assert.equal(result.revisions, true);
-        done();
+        helper.getFormRevisions(result, (err, result) => {
+          if (err) {
+            return done(err);
+          }
+          assert.equal(result.length, 1);
+          assert.equal(result[0].components.length, 2);
+          assert.equal(result[0]._vid, 1);
+          assert.equal(result[0]._rid, form._id);
+          assert.equal(result[0].name, form.name);
+          assert(result[0].hasOwnProperty('machineName') === false);
+          done();
+        });
       });
     });
 

@@ -25,9 +25,14 @@ module.exports = app => routes => {
       }
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
         if (
-          item.revisions &&
-          revisionPlans.includes(req.primaryProject.plan) &&
-          !_.isEqual(form.components, req.body.components)
+          (
+            item.revisions && !form.revisions
+          ) ||
+          (
+            item.revisions &&
+            revisionPlans.includes(req.primaryProject.plan) &&
+            !_.isEqual(form.components, req.body.components)
+          )
         ) {
           incrementVersion(item);
         }
@@ -37,9 +42,14 @@ module.exports = app => routes => {
     after: function(req, res, item, next) {
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
         if (
-          item.revisions &&
-          revisionPlans.includes(req.primaryProject.plan) &&
-          !_.isEqual(form.components, req.body.components)
+          (
+            item.revisions && !form.revisions
+          ) ||
+          (
+            item.revisions &&
+            revisionPlans.includes(req.primaryProject.plan) &&
+            !_.isEqual(form.components, req.body.components)
+          )
         ) {
           createVersion(item, req.user, req.body._vnote);
         }
@@ -55,9 +65,14 @@ module.exports = app => routes => {
       }
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
         if (
-          item.revisions &&
-          revisionPlans.includes(req.primaryProject.plan) &&
-          !_.isEqual(form.components, req.body.components)
+          (
+            item.revisions && !form.revisions
+          ) ||
+          (
+            item.revisions &&
+            revisionPlans.includes(req.primaryProject.plan) &&
+            !_.isEqual(form.components, req.body.components)
+          )
         ) {
           incrementVersion(item);
         }
@@ -67,9 +82,14 @@ module.exports = app => routes => {
     after: function(req, res, item, next) {
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
         if (
-          item.revisions &&
-          revisionPlans.includes(req.primaryProject.plan) &&
-          !_.isEqual(form.components, req.body.components)
+          (
+            item.revisions && !form.revisions
+          ) ||
+          (
+            item.revisions &&
+            revisionPlans.includes(req.primaryProject.plan) &&
+            !_.isEqual(form.components, req.body.components)
+          )
         ) {
           createVersion(item, req.user);
         }
@@ -80,16 +100,13 @@ module.exports = app => routes => {
 
   routes.hooks.post = {
     after: function(req, res, item, next) {
-      app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
-        if (
-          item.revisions &&
-          revisionPlans.includes(req.primaryProject.plan) &&
-          !_.isEqual(form.components, req.body.components)
-        ) {
-          createVersion(item, req.user, req.body._vnote);
-        }
-        next();
-      });
+      if (
+        item.revisions &&
+        revisionPlans.includes(req.primaryProject.plan)
+      ) {
+        createVersion(item, req.user, req.body._vnote);
+      }
+      next();
     }
   };
 
