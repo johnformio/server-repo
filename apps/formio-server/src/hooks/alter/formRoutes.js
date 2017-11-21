@@ -135,6 +135,18 @@ module.exports = app => routes => {
     next();
   });
 
+  routes.before.unshift((req, res, next) => {
+    // Don't allow editing drafts if not on enterprise plan.
+    if (
+      ['PUT'].includes(req.method) &&
+      !revisionPlans.includes(req.primaryProject.plan) &&
+      req.url.endsWith('/draft')
+    ) {
+      return res.status(402).send('Payment Required. Project must be on an Enterprise plan.');
+    }
+    next();
+  });
+
   routes.before.unshift(require('../../middleware/projectProtectAccess')(app.formio.formio));
 
   return routes;

@@ -470,7 +470,7 @@ module.exports = (app, template, hook) => {
       });
     });
 
-    it('It does not create a revision for basic plans', done => {
+    it('does not create a revision for basic plans', done => {
       form.components[0].prefix = 'basic';
       helper
         .plan('basic')
@@ -515,7 +515,15 @@ module.exports = (app, template, hook) => {
         });
     });
 
-    it('It does not create a revision for independent plans', done => {
+    it('does not save a draft for basic plans', done => {
+      helper.putFormDraft(form, (err, result) => {
+        assert.equal(result.status, 402);
+        assert.equal(result.text, 'Payment Required. Project must be on an Enterprise plan.');
+        done();
+      });
+    });
+
+    it('does not create a revision for independent plans', done => {
       form.components[0].prefix = 'independent';
       helper
         .plan('independent')
@@ -557,7 +565,15 @@ module.exports = (app, template, hook) => {
         });
     });
 
-    it('It does not create a revision for team pro plans', done => {
+    it('does not save a draft for independent plans', done => {
+      helper.putFormDraft(form, (err, result) => {
+        assert.equal(result.status, 402);
+        assert.equal(result.text, 'Payment Required. Project must be on an Enterprise plan.');
+        done();
+      });
+    });
+
+    it('does not create a revision for team pro plans', done => {
       form.components[0].prefix = 'team';
       helper
         .plan('team')
@@ -599,7 +615,15 @@ module.exports = (app, template, hook) => {
         });
     });
 
-    it('It creates a revision for commercial plans', done => {
+    it('does not save a draft for team pro plans', done => {
+      helper.putFormDraft(form, (err, result) => {
+        assert.equal(result.status, 402);
+        assert.equal(result.text, 'Payment Required. Project must be on an Enterprise plan.');
+        done();
+      });
+    });
+
+    it('creates a revision for commercial plans', done => {
       form.components[0].prefix = 'commercial';
       helper
         .plan('commercial')
@@ -725,7 +749,5 @@ module.exports = (app, template, hook) => {
         });
       });
     });
-
-
   });
 };
