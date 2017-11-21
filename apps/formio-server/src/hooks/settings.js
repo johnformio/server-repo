@@ -158,6 +158,7 @@ module.exports = function(app) {
       FormResource: require('./alter/FormResource')(app),
       models: require('./alter/models')(app),
       email: require('./alter/email')(app),
+      validateSubmissionForm: require('./alter/validateSubmissionForm')(app),
       actions: function(actions) {
         actions.office365contact = require('../actions/office365/Office365Contact')(formioServer);
         actions.office365calendar = require('../actions/office365/Office365Calendar')(formioServer);
@@ -1200,7 +1201,7 @@ module.exports = function(app) {
         encrypt.handle(req, res, next);
       },
       submissionParams: function(params) {
-        params.push('oauth');
+        params.push('oauth', '_fvid');
         return params;
       },
       submissionRequestQuery: function(query, req) {

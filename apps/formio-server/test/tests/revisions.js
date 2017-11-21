@@ -33,7 +33,7 @@ module.exports = (app, template, hook) => {
             unique: false,
             persistent: true,
             validate: {
-              required: false,
+              required: true,
               minLength: '',
               maxLength: '',
               pattern: '',
@@ -63,7 +63,7 @@ module.exports = (app, template, hook) => {
             unique: false,
             persistent: true,
             validate: {
-              required: false,
+              required: true,
               minLength: '',
               maxLength: '',
               pattern: '',
@@ -122,7 +122,7 @@ module.exports = (app, template, hook) => {
         unique: false,
         persistent: true,
         validate: {
-          required: false,
+          required: true,
           minLength: '',
           maxLength: '',
           pattern: '',
@@ -174,7 +174,7 @@ module.exports = (app, template, hook) => {
         unique: false,
         persistent: true,
         validate: {
-          required: false,
+          required: true,
           minLength: '',
           maxLength: '',
           pattern: '',
@@ -470,6 +470,77 @@ module.exports = (app, template, hook) => {
       });
     });
 
+    it('Validates a submission against version 1', done => {
+      helper.createSubmission('revisionForm', {
+        data: {},
+        _fvid: 1
+      }, (err, result) => {
+        assert.equal(result.name, 'ValidationError');
+        assert.equal(result.details.length, 2);
+        assert.equal(result.details[0].message, '"fname" is required');
+        assert.equal(result.details[0].type, 'any.required');
+        assert.equal(result.details[1].message, '"lname" is required');
+        assert.equal(result.details[1].type, 'any.required');
+        done();
+      });
+    });
+
+    it('Validates a submission against version 2', done => {
+      helper.createSubmission('revisionForm', {
+        data: {},
+        _fvid: 2
+      }, (err, result) => {
+        assert.equal(result.name, 'ValidationError');
+        assert.equal(result.details.length, 3);
+        assert.equal(result.details[0].message, '"fname" is required');
+        assert.equal(result.details[0].type, 'any.required');
+        assert.equal(result.details[1].message, '"lname" is required');
+        assert.equal(result.details[1].type, 'any.required');
+        assert.equal(result.details[2].message, '"mname" is required');
+        assert.equal(result.details[2].type, 'any.required');
+        done();
+      });
+    });
+
+    it('Validates a submission against version 3', done => {
+      helper.createSubmission('revisionForm', {
+        data: {},
+        _fvid: 3
+      }, (err, result) => {
+        assert.equal(result.name, 'ValidationError');
+        assert.equal(result.details.length, 4);
+        assert.equal(result.details[0].message, '"fname" is required');
+        assert.equal(result.details[0].type, 'any.required');
+        assert.equal(result.details[1].message, '"lname" is required');
+        assert.equal(result.details[1].type, 'any.required');
+        assert.equal(result.details[2].message, '"mname" is required');
+        assert.equal(result.details[2].type, 'any.required');
+        assert.equal(result.details[3].message, '"pname" is required');
+        assert.equal(result.details[3].type, 'any.required');
+        done();
+      });
+    });
+
+
+    it('Submits to form version 2', done => {
+      const data = {
+        fname: 'joe',
+        lname: 'test',
+        mname: 'bob'
+      };
+      helper.createSubmission('revisionForm', {
+        data,
+        _fvid: 2
+      }, (err, result) => {
+        if (err) {
+          done(err);
+        }
+        assert.equal(result._fvid, 2);
+        assert.deepEqual(result.data, data);
+        done();
+      });
+    });
+
     it('does not create a revision for basic plans', done => {
       form.components[0].prefix = 'basic';
       helper
@@ -695,7 +766,7 @@ module.exports = (app, template, hook) => {
         unique: false,
         persistent: true,
         validate: {
-          required: false,
+          required: true,
           minLength: '',
           maxLength: '',
           pattern: '',
