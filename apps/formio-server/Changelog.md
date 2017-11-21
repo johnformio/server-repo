@@ -4,17 +4,16 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
-### Added
- - Added user management support with the moxtra login action.
- - Field encryption possibility
-
 ## 5.0.0
 ### Added
  - Remote environment support with remote authentication
  - New deployment options by sending the template with request
  - Add ADMIN_KEY option
  - Add no-cache headers
+ - Added user management support with the moxtra login action.
+ - Field encryption
+ - Form Revisions
+ - Staging and Tagging
  
 ### Removed
  - Install process for form.io project

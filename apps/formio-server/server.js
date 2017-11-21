@@ -18,6 +18,15 @@ module.exports = function(options) {
   // Use the express application.
   var app = options.app || express();
 
+  app.get('/api', (req, res, next) => {
+    let test = app._router.stack
+      .filter(route => route.route)
+      .map(route => route.route.path);
+
+    test = test.sort();
+    res.send(test);
+  });
+
   // Use the given config.
   var config = options.config || require('./config');
 
