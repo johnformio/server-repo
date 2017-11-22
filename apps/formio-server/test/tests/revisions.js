@@ -86,10 +86,10 @@ module.exports = (app, template, hook) => {
     });
 
     it('Sets a form to use revisions', done => {
-      form.revisions = true;
+      form.revisions = 'current';
       form.components.push();
       helper.updateForm(form, (err, result) => {
-        assert.equal(result.revisions, true);
+        assert.equal(result.revisions, 'current');
         helper.getFormRevisions(result, (err, result) => {
           if (err) {
             return done(err);
@@ -742,9 +742,9 @@ module.exports = (app, template, hook) => {
     });
 
     it('Sets a form to not use revisions', done => {
-      form.revisions = false;
+      form.revisions = '';
       helper.updateForm(form, (err, result) => {
-        assert.equal(result.revisions, false);
+        assert.equal(result.revisions, '');
         done();
       });
     });

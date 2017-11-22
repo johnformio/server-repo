@@ -11,8 +11,9 @@ module.exports = app => models => {
       required: true
     },
     revisions: {
-      type: Boolean,
-      default: false
+      type: String,
+      enum: ['', 'current', 'original'],
+      default: ''
     },
     _vid: {
       type: Number,
