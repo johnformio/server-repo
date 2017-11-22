@@ -134,6 +134,8 @@ module.exports = {
      */
     templateImportComponent: function(forms) {
       Object.keys(forms).forEach(machineName => {
+        forms[machineName].revisions = '';
+        forms[machineName]._vid = 0;
         formioUtils.eachComponent(forms[machineName].components, component => {
           if (component.type === 'resource') {
             component.project = 'project';
