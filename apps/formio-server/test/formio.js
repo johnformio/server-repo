@@ -111,11 +111,13 @@ describe('Initial Tests', function() {
       .then(function(state) {
         app = state.app;
         hook = require('formio/src/util/hook')(app.formio.formio);
+        state.app.listen(state.config.port);
 
         // Establish the helper library.
         template.Helper = require('./tests/Helper')(app, require('formio/test/helper')(app));
         template.hooks = app.formio.formio.hooks || {};
         template.hooks.addEmitter(new EventEmitter());
+        template.config = state.config;
         return done();
       });
   });
