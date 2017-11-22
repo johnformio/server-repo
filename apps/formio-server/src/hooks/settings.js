@@ -1198,7 +1198,7 @@ module.exports = function(app) {
         return cache;
       },
       submission: function(req, res, next) {
-        if (req.body.hasOwnProperty('_fvid')) {
+        if (req.body.hasOwnProperty('_fvid') && typeof res.submission === 'object') {
           res.submission._fvid = req.body._fvid;
         }
         encrypt.handle(req, res, next);

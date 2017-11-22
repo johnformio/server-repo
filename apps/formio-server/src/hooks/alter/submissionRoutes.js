@@ -31,7 +31,9 @@ module.exports = app => routes => {
   // Add the form version id to each submission.
   _.each(['beforePost', 'beforePut'], function(handler) {
     routes[handler].push(function(req, res, next) {
-      req.body._fvid = req.body._fvid || req.currentForm._vid || 0;
+      if (typeof req.body === 'object') {
+        req.body._fvid = req.body._fvid || req.currentForm._vid || 0;
+      }
       next();
     });
   });
