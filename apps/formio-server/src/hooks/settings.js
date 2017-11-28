@@ -908,7 +908,44 @@ module.exports = function(app) {
             }
 
             item.machineName = machineName;
-            done(null, item);
+
+            formioServer.formio.resources.form.model.findOne({
+              machineName: item.machineName,
+              deleted: {$eq: null},
+              project: formioServer.formio.util.idToBson(item.project)
+            }, (err, doc) => {
+              if (err) {
+                return done(err);
+              }
+              // If form doesn't exist or revisions are disabled, don't worry about revisions.
+              if (!doc || !doc.revisions) {
+                return done(null, item);
+              }
+
+              // If form isn't changing.
+              if (_.isEqual(item.components, doc.components.toObject())) {
+                return done(null, item);
+              }
+
+              doc.set('_vid', parseInt(doc._vid) + 1);
+              doc.save((err, result) => {
+                if (err) {
+                  return done(err);
+                }
+
+                let body = Object.assign({}, item);
+                body._rid = result._id;
+                body._vid = result._vid;
+                body._vuser = 'system';
+                body._vnote = 'Deploy version tag ' + template.tag;
+                delete body._id;
+                delete body.__v;
+
+                formioServer.formio.mongoose.models.formrevision.create(body, () => {
+                  done(null, item);
+                });
+              });
+            });
           });
         };
 
