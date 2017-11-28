@@ -32,7 +32,9 @@ module.exports = app => routes => {
   _.each(['beforePost', 'beforePut'], function(handler) {
     routes[handler].push(function(req, res, next) {
       if (typeof req.body === 'object') {
-        req.body._fvid = req.body._fvid || req.currentForm._vid || 0;
+        if (!req.body.hasOwnProperty('_fvid') || isNaN(parseInt(req.body._fvid))) {
+          req.body._fvid = req.currentForm._vid || 0;
+        }
       }
       next();
     });
