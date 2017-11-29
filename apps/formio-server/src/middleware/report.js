@@ -28,7 +28,7 @@ module.exports = function(formioServer) {
 
       debug.report('Plan: ' + project.plan);
       if (['trial', 'team', 'commercial'].indexOf(project.plan) === -1) {
-        return res.status(402).send('The report framework requires a Team or Commercial plan.');
+        return res.status(402).send('The report framework requires a Team Pro or Enterprise plan.');
       }
 
       // Do not perform for Azure Cosmos DB since it does not support aggregation framework.
