@@ -252,7 +252,7 @@ module.exports = function(formioServer) {
             return performAggregation();
           }
 
-          // Determine the count query by limiting based on the formIds.
+          // Replace the limit with a count to get the total items.
           var countStages = stages.filter(stage => !stage.hasOwnProperty('$limit'));
 
           countStages.push({$count: 'total'});
