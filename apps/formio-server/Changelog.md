@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.0.1
+### Fixed
+ - Fix permissions for report endpoint to properly read read_own permissions.
+ - Filter out stages from list of team projects.
+
 ## 5.0.0
 ### Added
  - Remote environment support with remote authentication
