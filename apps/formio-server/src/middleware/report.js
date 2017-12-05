@@ -253,7 +253,7 @@ module.exports = function(formioServer) {
           }
 
           // Replace the limit with a count to get the total items.
-          var countStages = stages.filter(stage => !stage.hasOwnProperty('$limit'));
+          var countStages = stages.filter(stage => !stage.hasOwnProperty('$limit') && !stage.hasOwnProperty('$skip'));
 
           countStages.push({$count: 'total'});
 
@@ -272,7 +272,8 @@ module.exports = function(formioServer) {
             }
 
             // Get the page range.
-            var pageRange = paginate(req, res, result[0].total, limit) || {
+            var total = result.length ? result[0].total : 0;
+            var pageRange = paginate(req, res, total, limit) || {
                 limit: limit,
                 skip: skip
               };
