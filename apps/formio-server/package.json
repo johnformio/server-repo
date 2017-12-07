@@ -53,7 +53,7 @@
     "q": "^1.5.1",
     "redis": "^2.8.0",
     "request": "^2.83.0",
-    "resourcejs": "^1.10.0",
+    "resourcejs": "^1.11.0",
     "restler": "^3.4.0",
     "semver": "^5.4.1",
     "serve-favicon": "^2.4.5",
