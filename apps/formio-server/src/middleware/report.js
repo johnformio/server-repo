@@ -28,7 +28,7 @@ module.exports = function(formioServer) {
 
       debug.report('Plan: ' + project.plan);
       if (['trial', 'team', 'commercial'].indexOf(project.plan) === -1) {
-        return res.status(402).send('The report framework requires a Team or Commercial plan.');
+        return res.status(402).send('The report framework requires a Team Pro or Enterprise plan.');
       }
 
       // Do not perform for Azure Cosmos DB since it does not support aggregation framework.
@@ -135,111 +135,130 @@ module.exports = function(formioServer) {
 
       // Get the user roles.
       var userRoles = _.map(req.user.roles, formio.util.idToBson);
+      var readAllForms = [];
+      var readOwnForms = [];
+      var forms = {};
 
       // Find all forms that this user has "read_all" access to or owns and only give them
       // aggregate access to those forms.
       formio.resources.form.model.find({
         '$and': [
           {project: formio.util.idToBson(req.projectId)},
-          {'$or': [
-            {access: {
-              '$elemMatch': {
-                type: 'read_all',
-                roles: {
-                  '$in': userRoles
-                }
+          {submissionAccess: {
+            '$elemMatch': {
+              type: 'read_all',
+              roles: {
+                '$in': userRoles
               }
-            }},
-            {owner: formio.util.idToBson(req.user._id)}
-          ]}
+            }
+          }}
         ]
       }).exec(function(err, result) {
         if (err) {
           return next(err);
         }
-
-        var formIds = [];
-        var forms = {};
-
-        // Add all these forms to a forms array.
+        // Add these forms to a forms array.
         _.each(result, function(form) {
-          formIds.push(form._id);
+          readAllForms.push(form._id);
           forms[form._id.toString()] = form;
         });
-
-        // Make sure to not include deleted submissions.
-        if (!req.query.deleted) {
-          query.deleted = {$eq: null};
-        }
-
-        // Start with the query, then add the remaining stages.
-        stages = [{'$match': {form: {'$in': formIds}}}].concat([{'$match': query}]).concat(stages);
-
-        // Add the skip stage first if applicable.
-        if (skipStage) {
-          stages = stages.concat([skipStage]);
-        }
-
-        // Next add the limit stage if applicable.
-        if (limitStage) {
-          stages = stages.concat([limitStage]);
-        }
-
-        // Start out the filter to only include those forms.
-        debug.report('final pipeline', stages);
-
-        res.setHeader('Content-Type', 'application/json');
-
-        // Method to perform the aggregation.
-        var performAggregation = function() {
-          formio.resources.submission.model.aggregate(stages)
-            .cursor()
-            .exec()
-            .stream()
-            .pipe(through(function(doc) {
-              if (doc && doc.form) {
-                var formId = doc.form.toString();
-                if (forms.hasOwnProperty(formId)) {
-                  _.each(formioUtils.flattenComponents(forms[doc.form.toString()].components), function(component) {
-                    if (component.protected && doc.data && doc.data.hasOwnProperty(component.key)) {
-                      delete doc.data[component.key];
-                    }
-                  });
+        formio.resources.form.model.find({
+          '$and': [
+            {project: formio.util.idToBson(req.projectId)},
+            {submissionAccess: {
+              '$elemMatch': {
+                type: 'read_own',
+                roles: {
+                  '$in': userRoles
                 }
               }
-              this.queue(doc);
-            }))
-            .pipe(JSONStream.stringify())
-            .pipe(res);
-        };
+            }}
+          ]
+        }).exec(function(err, result) {
+          if (err) {
+            return next(err);
+          }
 
-        // If a limit is provided, then we need to include some pagination stuff.
-        if (!limitStage) {
-          return performAggregation();
-        }
+          // Add these forms to a forms array.
+          _.each(result, function(form) {
+            readOwnForms.push(form._id);
+            forms[form._id.toString()] = form;
+          });
 
-        // Determine the count query by limiting based on the formIds.
-        var countQuery = _.cloneDeep(query);
+          // Make sure to not include deleted submissions.
+          if (!req.query.deleted) {
+            query.deleted = {$eq: null};
+          }
 
-        // Add the filtered formIds to the query.
-        if (
-          query.hasOwnProperty('form') &&
-          query.form.hasOwnProperty('$in') &&
-          (query.form['$in'].length > 0)
-        ) {
-          countQuery.form['$in'] = formIds.concat(query.form['$in']);
-        }
-        else if (query.form) {
-          formIds.push(query.form);
-          countQuery.form = {'$in': formIds};
-        }
-        else {
-          countQuery.form = {'$in': formIds};
-        }
+          // Start with the query, then add the remaining stages.
+          stages = [
+            {
+              '$match': {'$or': [
+                {
+                  form: {
+                    '$in': readAllForms
+                  }
+                },
+                {
+                  form: {
+                    '$in': readOwnForms
+                  },
+                  owner: formio.util.idToBson(req.user._id)
+                }
+              ]}
+            }
+          ].concat([{'$match': query}]).concat(stages);
 
-        // Find the total count based on the query.
-        formio.resources.submission.model.find(countQuery)
-          .count(function(err, count) {
+          // Add the skip stage first if applicable.
+          if (skipStage) {
+            stages = stages.concat([skipStage]);
+          }
+
+          // Next add the limit stage if applicable.
+          if (limitStage) {
+            stages = stages.concat([limitStage]);
+          }
+
+          // Start out the filter to only include those forms.
+          debug.report('final pipeline', stages);
+
+          res.setHeader('Content-Type', 'application/json');
+
+          // Method to perform the aggregation.
+          var performAggregation = function() {
+            formio.resources.submission.model.aggregate(stages)
+              .cursor()
+              .exec()
+              .stream()
+              .pipe(through(function(doc) {
+                if (doc && doc.form) {
+                  var formId = doc.form.toString();
+                  if (forms.hasOwnProperty(formId)) {
+                    _.each(formioUtils.flattenComponents(forms[doc.form.toString()].components), function(component) {
+                      if (component.protected && doc.data && doc.data.hasOwnProperty(component.key)) {
+                        delete doc.data[component.key];
+                      }
+                    });
+                  }
+                }
+                this.queue(doc);
+              }))
+              .pipe(JSONStream.stringify())
+              .pipe(res);
+          };
+
+          // If a limit is provided, then we need to include some pagination stuff.
+          if (!limitStage) {
+            return performAggregation();
+          }
+
+          // Replace the limit with a count to get the total items.
+          var countStages = stages.filter(stage => !stage.hasOwnProperty('$limit') && !stage.hasOwnProperty('$skip'));
+
+          countStages.push({$count: 'total'});
+
+          // Find the total count based on the query.
+          formio.resources.submission.model.aggregate(countStages, function(err, result) {
             if (err) {
               debug.error(err);
               return next(err);
@@ -253,7 +272,8 @@ module.exports = function(formioServer) {
             }
 
             // Get the page range.
-            var pageRange = paginate(req, res, count, limit) || {
+            var total = result.length ? result[0].total : 0;
+            var pageRange = paginate(req, res, total, limit) || {
                 limit: limit,
                 skip: skip
               };
@@ -267,6 +287,7 @@ module.exports = function(formioServer) {
             // Perform the aggregation command.
             performAggregation();
           });
+        });
       });
     });
   };

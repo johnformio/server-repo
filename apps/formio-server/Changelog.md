@@ -15,6 +15,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Ability to save submissions into separate collections.
  - Ability to select certain fields as database indexes.
 
+## 5.0.2
+### Fixed
+ - Crash in report API when no results are returned.
+
+## 5.0.1
+### Fixed
+ - Fix permissions for report endpoint to properly read read_own permissions.
+ - Filter out stages from list of team projects.
+
 ## 5.0.0
 ### Added
  - Remote environment support with remote authentication
