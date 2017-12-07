@@ -2,9 +2,8 @@
 var request = require('request');
 var FORMIO_FILES_SERVER = process.env.FORMIO_FILES_SERVER || 'https://files.form.io';
 module.exports = function(formio) {
-  var cache = require('../cache/cache')(formio);
   return function(req, res, next) {
-    cache.loadPrimaryProject(req, function(err, project) {
+    formio.cache.loadPrimaryProject(req, function(err, project) {
       if (err) {
         return next(err);
       }

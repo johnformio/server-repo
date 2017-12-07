@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.1.0
+### Changed
+ - Upgraded all dependencies.
+ 
+### Fixed
+ - Performance improvements with loading forms, resources, submissions, and projects.
+ 
+### Added
+ - Ability to save submissions into separate collections.
+ - Ability to select certain fields as database indexes.
+
 ## 5.0.0
 ### Added
  - Remote environment support with remote authentication

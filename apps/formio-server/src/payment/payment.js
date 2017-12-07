@@ -7,17 +7,15 @@ module.exports = function(app, formio) {
   // Load custom CRM action.
   formio.middleware.customCrmAction = require('../middleware/customCrmAction')(formio);
 
-  var cache = require('../cache/cache')(formio);
-
   app.post('/payeezy',
     formio.middleware.tokenHandler,
-    require('../middleware/userProject')(cache),
+    require('../middleware/userProject')(formio),
     require('./payeezy')(app.formio.config, formio)
   );
 
   app.post('/project/:projectId/upgrade',
     formio.middleware.tokenHandler,
-    require('../middleware/userProject')(cache),
+    require('../middleware/userProject')(formio),
     require('../middleware/restrictOwnerAccess')(formio),
     require('./upgrade')(formio),
     formio.middleware.customCrmAction('upgradeproject')

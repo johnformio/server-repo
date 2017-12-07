@@ -6,7 +6,6 @@ var debug = require('debug')('formio:resources:tag');
 
 module.exports = function(router, formioServer) {
   var formio = formioServer.formio;
-  var cache = require('../cache/cache')(formio);
   var hook = require('formio/src/util/hook')(formio);
   formio.middleware.tagHandler = require('../middleware/tagHandler')(router);
   formio.middleware.restrictToPlans = require('../middleware/restrictToPlans')(router);
@@ -32,7 +31,7 @@ module.exports = function(router, formioServer) {
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       formio.middleware.tagHandler,
       function(req, res, next) {
-        cache.loadCurrentProject(req, (err, project) => {
+        formio.cache.loadCurrentProject(req, (err, project) => {
           // Allow passing template from frontend. This is useful for remote environments.
           if (!req.body.template) {
             let options = router.formio.formio.hook.alter('exportOptions', {}, req, res);
@@ -56,7 +55,7 @@ module.exports = function(router, formioServer) {
     ],
     afterPost: [
       function(req, res, next) {
-        cache.loadCurrentProject(req, (err, project) => {
+        formio.cache.loadCurrentProject(req, (err, project) => {
           project.tag = req.body.tag;
           project.markModified('tag');
           project.save();
@@ -91,7 +90,7 @@ module.exports = function(router, formioServer) {
   router.get(
     '/project/:projectId/tag/current',
     function(req, res, next) {
-      cache.loadCurrentProject(req, (err, project) => {
+      formio.cache.loadCurrentProject(req, (err, project) => {
         if (err) {
           return res.status(400).send(err);
         }

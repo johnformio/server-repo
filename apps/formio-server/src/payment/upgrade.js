@@ -5,7 +5,6 @@ let debug = require('debug')('formio:payment:upgrade');
 const _merge = require('lodash/merge');
 
 module.exports = function(formio) {
-  var cache = require('../cache/cache')(formio);
   var emailer = require('formio/src/util/email')(formio);
 
   return function(req, res, next) {
@@ -23,7 +22,7 @@ module.exports = function(formio) {
       }
 
       // Check user has payment info saved
-      return resolve(Q.ninvoke(cache, 'loadProject', req, req.projectId));
+      return resolve(Q.ninvoke(formio.cache, 'loadProject', req, req.projectId));
     })
     .then(function(project) {
       if (project.owner.toString() !== req.user._id.toString()) {

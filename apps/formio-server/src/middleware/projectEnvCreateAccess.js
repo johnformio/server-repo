@@ -10,8 +10,7 @@ module.exports = function(formio) {
       return next();
     }
 
-    var cache = require('../cache/cache')(formio);
-    cache.loadProject(req, req.body.project, function(err, project) {
+    formio.cache.loadProject(req, req.body.project, function(err, project) {
       if (err) {
         debug(err);
         return res.status(400).send(err);

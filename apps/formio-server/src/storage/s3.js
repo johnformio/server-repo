@@ -5,8 +5,6 @@ var AWS = require('aws-sdk');
 var debug = require('debug')('formio:storage:s3');
 
 module.exports = function(router) {
-  var cache = require('../cache/cache')(router.formio.formio);
-
   router.get('/project/:projectId/form/:formId/storage/s3',
     router.formio.formio.middleware.tokenHandler,
     function(req, res, next) {
@@ -23,7 +21,7 @@ module.exports = function(router) {
     router.formio.formio.plans.disableForPlans(['basic', 'independent']),
     function(req, res) {
       debug('Signing GET request');
-      cache.loadProject(req, req.projectId, function(err, project) {
+      router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
         if (err) {
           return res.status(400).send('Project not found.');
         }
@@ -72,7 +70,7 @@ module.exports = function(router) {
     router.formio.formio.plans.disableForPlans(['basic', 'independent']),
     function(req, res) {
       debug('Signing POST request');
-      cache.loadProject(req, req.projectId, function(err, project) {
+      router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
         if (err) {
           return res.status(400).send('Project not found.');
         }

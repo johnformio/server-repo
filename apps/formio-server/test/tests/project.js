@@ -15,6 +15,8 @@ var docker = process.env.DOCKER;
 var customer = process.env.CUSTOMER;
 
 module.exports = function(app, template, hook) {
+  let Helper = require('formio/test/helper')(app);
+
   /**
    * Helper function to confirm the given properties are not present.
    */
@@ -3320,6 +3322,211 @@ module.exports = function(app, template, hook) {
             });
           });
       });
+    });
+  });
+
+  if (!docker)
+  describe('Separate Collections', function() {
+    let helper = null;
+    let project = null;
+    let collectionName = '';
+    before(function(done) {
+      helper = new Helper(template.formio.owner);
+      helper.project().execute((err) => {
+        if (err) {
+          return done(err);
+        }
+        collectionName = helper.template.project.name + '_testing';
+        done();
+      });
+    });
+
+    it ('Should create a new form within the project', (done) => {
+      helper.form('collection', [
+        {
+          type: 'textfield',
+          key: 'firstName',
+          label: 'First Name',
+          input: true
+        },
+        {
+          type: 'textfield',
+          key: 'lastName',
+          label: 'Last Name',
+          input: true,
+          dbIndex: true
+        },
+        {
+          type: 'email',
+          key: 'email',
+          label: 'Email',
+          input: true,
+          dbIndex: true
+        }
+      ]).execute(done);
+    });
+
+    it('Should not allow you to configure the form to use separate collection', (done) => {
+      assert(!helper.template.forms.collection.settings, 'Should not have any settings yet');
+      helper.template.forms.collection.settings = {collection: 'testing'};
+      request(app)
+        .put('/project/' + helper.template.project._id + '/form/' + helper.template.forms.collection._id)
+        .set('x-jwt-token', template.formio.owner.token)
+        .send(helper.template.forms.collection)
+        .end((err, res) => {
+          assert.equal(res.status, 500);
+          assert.equal(res.body.message, 'Only Enterprise projects can set different form collections.');
+          done();
+        });
+    });
+
+    it('Should upgrade the project to a Enterprise', function(done) {
+      request(app)
+        .post('/project/' + helper.template.project._id + '/upgrade')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send({plan: 'commercial'})
+        .expect(200)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+          done();
+        });
+    });
+
+    it('Should allow you to configure the form to use separate collection', (done) => {
+      helper.template.forms.collection.settings = {collection: 'testing'};
+      request(app)
+        .put('/project/' + helper.template.project._id + '/form/' + helper.template.forms.collection._id)
+        .set('x-jwt-token', template.formio.owner.token)
+        .send(helper.template.forms.collection)
+        .expect(200)
+        .end((err, res) => {
+          assert.equal(res.body.settings.collection, 'testing');
+          done();
+        });
+    });
+
+    it('Should have configured the mongo database collection', (done) => {
+      // Give the db time to build indexes.
+      setTimeout(() => {
+        app.formio.formio.mongoose.model('submission').collection.indexInformation((err, subIndexes) => {
+          app.formio.formio.mongoose.model(collectionName).collection.indexInformation((err, indexes) => {
+            _.each(subIndexes, (subIndex, key) => {
+              assert(indexes.hasOwnProperty(key), key + ' index not found');
+              assert.deepEqual(subIndex, indexes[key]);
+            });
+            assert(indexes.hasOwnProperty('data.email_1'), 'No email index found');
+            assert(indexes['data.email_1'][0][0], 'data.email');
+            assert(indexes['data.email_1'][0][1], 1);
+            assert(indexes.hasOwnProperty('data.lastName_1'), 'No last name index found');
+            assert(indexes['data.lastName_1'][0][0], 'data.lastName');
+            assert(indexes['data.lastName_1'][0][1], 1);
+            done();
+          });
+        });
+      }, 200);
+    });
+
+    it('Should remove all existing submissions in the previous collection', (done) => {
+      app.formio.formio.mongoose.model(collectionName).remove({}, done);
+    });
+
+    it('Should be able to create some new submissions within the collection', (done) => {
+      helper
+        .submission('collection', {
+          data: {
+            firstName: 'Bob',
+            lastName: 'Smith',
+            email: 'bob@example.com'
+          }
+        })
+        .submission('collection', {
+          data: {
+            firstName: 'Joe',
+            lastName: 'Thompson',
+            email: 'joe@example.com'
+          }
+        })
+        .execute(done);
+    });
+
+    it('Should have saved these submissions within the Mongo collection', (done) => {
+      app.formio.formio.mongoose.model(collectionName).find({}, (err, records) => {
+        assert.equal(records.length, 2);
+        assert.equal(records[0]._id, helper.template.submissions.collection[0]._id);
+        assert.deepEqual(records[0].data, helper.template.submissions.collection[0].data);
+        assert.equal(records[1]._id, helper.template.submissions.collection[1]._id);
+        assert.deepEqual(records[1].data, helper.template.submissions.collection[1].data);
+        done();
+      });
+    });
+
+    it('Should also allow you to get a single submission', (done) => {
+      let subUrl = '/project/' + helper.template.project._id + '/form/' + helper.template.forms.collection._id;
+      subUrl += '/submission/' + helper.template.submissions.collection[0]._id;
+      request(app)
+        .get(subUrl)
+        .set('x-jwt-token', template.formio.owner.token)
+        .expect(200)
+        .end((err, res) => {
+          assert.equal(res.body._id, helper.template.submissions.collection[0]._id);
+          assert.deepEqual(res.body.data, helper.template.submissions.collection[0].data);
+          done();
+        });
+    });
+
+    it('Should fetch the index view', (done) => {
+      request(app)
+        .get('/project/' + helper.template.project._id + '/form/' + helper.template.forms.collection._id + '/submission')
+        .set('x-jwt-token', template.formio.owner.token)
+        .expect(200)
+        .end((err, res) => {
+          assert.equal(res.body.length, 2);
+          assert.deepEqual(res.body[0], _.find(helper.template.submissions.collection, {_id: res.body[0]._id}));
+          assert.deepEqual(res.body[1], _.find(helper.template.submissions.collection, {_id: res.body[1]._id}));
+          done();
+        });
+    });
+
+    it('Should be able to update a submission', (done) => {
+      helper.template.submissions.collection[0].data.email = 'updated@example.com';
+      let subUrl = '/project/' + helper.template.project._id + '/form/' + helper.template.forms.collection._id;
+      subUrl += '/submission/' + helper.template.submissions.collection[0]._id;
+      request(app)
+        .put(subUrl)
+        .set('x-jwt-token', template.formio.owner.token)
+        .send(helper.template.submissions.collection[0])
+        .expect(200)
+        .end((err, res) => {
+          assert.equal(res.body._id, helper.template.submissions.collection[0]._id);
+          assert.deepEqual(res.body.data, helper.template.submissions.collection[0].data);
+          app.formio.formio.mongoose.model(collectionName).findOne({_id: helper.template.submissions.collection[0]._id}, (err, record) => {
+            if (err) {
+              return done(err);
+            }
+            assert.equal(record.data.email, 'updated@example.com');
+            done();
+          });
+        });
+    });
+
+    it('Should delete a submission', (done) => {
+      helper.template.submissions.collection[0].data.email = 'updated@example.com';
+      let subUrl = '/project/' + helper.template.project._id + '/form/' + helper.template.forms.collection._id;
+      subUrl += '/submission/' + helper.template.submissions.collection[0]._id;
+      request(app)
+        .delete(subUrl)
+        .set('x-jwt-token', template.formio.owner.token)
+        .end((err) => {
+          app.formio.formio.mongoose.model(collectionName).findOne({_id: helper.template.submissions.collection[0]._id}, (err, record) => {
+            if (err) {
+              return done(err);
+            }
+            assert(record.deleted !== null, 'Record should be deleted.');
+            done();
+          });
+        });
     });
   });
 };

@@ -247,15 +247,13 @@ module.exports = function(app, formioServer) {
    *   The callback function to invoke after getting the project teams.
    */
   var getProjectTeams = function(req, project, next) {
-    var cache = require('../cache/cache')(formioServer.formio);
-
     if (!project || project.hasOwnProperty('_id') && !project._id) {
       debug.getProjectTeams('No project given to find its teams.');
       return next('No project given.');
     }
 
     project = project._id || project;
-    cache.loadProject(req, project, function(err, project) {
+    formioServer.formio.cache.loadProject(req, project, function(err, project) {
       if (err) {
         debug.getProjectTeams(err);
         return next(err);

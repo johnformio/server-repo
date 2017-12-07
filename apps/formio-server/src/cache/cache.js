@@ -5,8 +5,10 @@ var debug = {
   error: require('debug')('formio:error')
 };
 
+const util = require('../util/util');
+
 module.exports = function(formio) {
-  return {
+  const ProjectCache = {
     loadProjectByName: function(req, name, cb) {
       var cache = formio.cache.cache(req);
       if (cache.projectNames && cache.projectNames[name]) {
@@ -170,4 +172,37 @@ module.exports = function(formio) {
       });
     }
   };
+
+  ProjectCache.setSubmissionModel = (req, formId, cb) => {
+    formio.cache.loadForm(req, null, formId, function(err, form) {
+      if (err) {
+        // deliberately do not return an error.
+        return cb();
+      }
+
+      util.getSubmissionModel(formio, req, form, true, (err, submissionModel) => {
+        if (err) {
+          return cb(err);
+        }
+
+        if (!submissionModel) {
+          return cb();
+        }
+
+        req.model = req.submissionModel = submissionModel;
+        return cb();
+      });
+    });
+  };
+  ProjectCache._loadSubmission = formio.cache.loadSubmission.bind(formio.cache);
+  ProjectCache.loadSubmission = function(req, formId, subId, cb) {
+    ProjectCache.setSubmissionModel(req, formId, (err) => {
+      if (err) {
+        return cb(err);
+      }
+      return ProjectCache._loadSubmission(req, formId, subId, cb);
+    });
+  };
+
+  return ProjectCache;
 };

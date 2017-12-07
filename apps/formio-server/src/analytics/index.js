@@ -314,8 +314,6 @@ module.exports = (redis) => {
    * @param formioServer
    */
   var endpoints = function(app, formioServer) {
-    var cache = require('../cache/cache')(formioServer.formio);
-
     /**
      * Get the formio form, by name, for consumption elsewhere.
      *
@@ -324,7 +322,7 @@ module.exports = (redis) => {
      * @param next
      */
     var getFormioFormByName = function(name, req, next) {
-      cache.loadProjectByName(req, 'formio', function(err, project) {
+      formioServer.formio.cache.loadProjectByName(req, 'formio', function(err, project) {
         if (err || !project) {
           return next('Could not load Form.io project.');
         }
@@ -366,7 +364,7 @@ module.exports = (redis) => {
         return res.sendStatus(401);
       }
 
-      cache.loadProjectByName(req, 'formio', function(err, project) {
+      formioServer.formio.cache.loadProjectByName(req, 'formio', function(err, project) {
         if (err || !project) {
           debug.restrictToFormioEmployees('err: ' + err);
           debug.restrictToFormioEmployees('project: ' + project);
@@ -862,7 +860,7 @@ module.exports = (redis) => {
           .value();
         _debug(owners);
 
-        cache.loadProjectByName(req, 'formio', function(err, project) {
+        formioServer.formio.cache.loadProjectByName(req, 'formio', function(err, project) {
           if (err || !project) {
             return res.sendStatus(401);
           }

@@ -39,7 +39,7 @@ module.exports = app => Resource => {
             );
           }
           // No draft was found. Return current form version instead.
-          var query = req.modelQuery || this.model;
+          var query = req.modelQuery || req.model || this.model;
           var search = {'_id': req.params[this.name + 'Id']};
 
           options.hooks.get.before.call(

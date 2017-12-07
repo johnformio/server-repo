@@ -28,9 +28,24 @@ module.exports = app => routes => {
     routes[handler].push(conditionalFilter);
   });
 
+  // Add a submission model set before the index.
+  routes.beforeIndex.unshift((req, res, next) => app.formio.formio.cache.setSubmissionModel(
+    req,
+    app.formio.formio.cache.getCurrentFormId(req),
+    next
+  ));
+
   // Add the form version id to each submission.
-  _.each(['beforePost', 'beforePut'], function(handler) {
-    routes[handler].push(function(req, res, next) {
+  _.each(['beforePost', 'beforePut'], (handler) => {
+    if (handler === 'beforePost') {
+      routes[handler].unshift((req, res, next) => app.formio.formio.cache.setSubmissionModel(
+        req,
+        app.formio.formio.cache.getCurrentFormId(req),
+        next
+      ));
+    }
+
+    routes[handler].push((req, res, next) => {
       if (typeof req.body === 'object') {
         if (!req.body.hasOwnProperty('_fvid') || isNaN(parseInt(req.body._fvid))) {
           req.body._fvid = req.currentForm._vid || 0;

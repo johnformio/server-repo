@@ -4,8 +4,6 @@ var _ = require('lodash');
 var debug = require('debug')('formio:middleware:projectTeamSync');
 
 module.exports = function(formio) {
-  const cache = require('../cache/cache')(formio);
-
   const replaceAccess = (project, access) => {
     if ('toObject' in access.roles) {
       access.roles = access.roles.toObject();
@@ -31,7 +29,7 @@ module.exports = function(formio) {
         debug('modifying project.');
         const teamAccess = _.filter(req.body.access || [], access => _.startsWith(access.type, 'team_'));
 
-        cache.loadStages(req, req.body._id, (err, result) => {
+        formio.cache.loadStages(req, req.body._id, (err, result) => {
           if (err) {
             return next(err);
           }
@@ -52,7 +50,7 @@ module.exports = function(formio) {
     // Creating/Modifying a stage.
     else {
       debug('creating or modifying stage.');
-      cache.loadProject(req, req.body.project, function(err, project) {
+      formio.cache.loadProject(req, req.body.project, function(err, project) {
         if (err || !project) {
           debug(err || 'No Project');
           return next();

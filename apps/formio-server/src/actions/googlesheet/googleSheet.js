@@ -1,8 +1,8 @@
 'use strict';
 
 var _ = require('lodash');
-var Q = require('q');
 var util = require('./util');
+var formioUtil = require('formio/src/util/util');
 var debug = require('debug')('formio:action:googlesheet');
 var Spreadsheet = require('edit-google-spreadsheet');
 var SpreadsheetColumn = (new (require('spreadsheet-column'))());
@@ -48,10 +48,15 @@ module.exports = function(router) {
         return res.status(400).send(err);
       }
 
-      // Creating the field for Google Sheet Action.
-      Q.all([
-        Q.ninvoke(formio.cache, 'loadCurrentForm', req)
-      ]).spread(function(availableProviders) {
+      formio.cache.loadCurrentForm(req, (err, form) => {
+        if (err) {
+          return res.status(400).send(err);
+        }
+
+        if (!form) {
+          return res.status(400).send('No form found.');
+        }
+
         // Create the panel for all the fields.
         var fieldPanel = {
           type: 'panel',
@@ -60,18 +65,19 @@ module.exports = function(router) {
           input: false,
           components: []
         };
-        _.each(availableProviders.componentMap, function(field, fieldKey) {
-          if (field.action !== 'submit' && field.input) {
+
+        formioUtil.eachComponent(form.components, function(component) {
+          if (component.action !== 'submit' && component.input) {
             fieldPanel.components.push({
               type: 'textfield',
               input: true,
-              label: (field.label || field.key) + ' Column',
-              key: fieldKey,
+              label: (component.label || component.key) + ' Column',
+              key: component.key,
               placeholder: 'Enter a Column Key. Example: C',
               multiple: false
             });
           }
-        });
+        }, true);
 
         next(null, [
           {

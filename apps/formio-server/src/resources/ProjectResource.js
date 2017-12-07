@@ -13,8 +13,7 @@ module.exports = function(router, formioServer) {
       return next();
     }
     else if (req.projectId && req.user) {
-      var cache = require('../cache/cache')(formio);
-      cache.loadPrimaryProject(req, function(err, project) {
+      formio.cache.loadPrimaryProject(req, function(err, project) {
         if (!err) {
           var access = _.map(_.map(_.filter(project.access, {type: 'team_admin'}), 'roles'), formio.util.idToString);
           var roles = _.map(req.user.roles, formio.util.idToString);
@@ -75,14 +74,21 @@ module.exports = function(router, formioServer) {
   formio.middleware.customCrmAction = require('../middleware/customCrmAction')(formio);
 
   var hiddenFields = ['deleted', '__v', 'machineName', 'primary'];
+  const projectModel = formio.mongoose.model('project');
   var resource = Resource(
     router,
     '',
     'project',
-    formio.mongoose.model('project')
+    projectModel
   ).rest({
     beforeGet: [
-      formio.middleware.filterMongooseExists({field: 'deleted', isNull: true})
+      formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
+      (req, res, next) => {
+        // Use project cache for performance reasons.
+        req.modelQuery = req.modelQuery || req.model || projectModel;
+        req.modelQuery.findOne = (query, cb) => formio.cache.loadCurrentProject(req, cb);
+        next();
+      }
     ],
     afterGet: [
       formio.middleware.filterResourcejsResponse(hiddenFields),

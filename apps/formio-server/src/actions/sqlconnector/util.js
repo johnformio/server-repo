@@ -13,7 +13,6 @@ var squel = require('squel');
 
 module.exports = function(router) {
   var formio = router.formio;
-  var cache = require('../../cache/cache')(formio);
   var required = formio.plans.limits.team;
   var util = formio.util;
 
@@ -204,7 +203,7 @@ module.exports = function(router) {
   };
 
   var actionsToRoutes = function(req, actions) {
-    return Q.ninvoke(cache, 'loadCurrentProject', req)
+    return Q.ninvoke(formio.cache, 'loadCurrentProject', req)
       .then(function(project) {
         debug.actionsToRoutes(project);
         var type = _.get(project, 'settings.sqlconnector.type');
@@ -243,7 +242,7 @@ module.exports = function(router) {
    * @returns {*}
    */
   var getConnectorActions = function(req) {
-    return Q.ninvoke(cache, 'loadCurrentProject', req)
+    return Q.ninvoke(formio.cache, 'loadCurrentProject', req)
       .then(function(project) {
         var projectId = util.idToBson(project._id);
 

@@ -1,6 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
+const util = require('../../util/util');
 
 module.exports = app => routes => {
   const incrementVersion = function(item) {
@@ -12,7 +13,7 @@ module.exports = app => routes => {
 
     var body = item.toObject();
     body._rid = body._id;
-    body._vuser = user.data.name;
+    body._vuser = user.data ? user.data.name : user._id;
     body._vnote = note || '';
     delete body._id;
     delete body.__v;
@@ -123,6 +124,40 @@ module.exports = app => routes => {
       next();
     }
   };
+
+  // Setup a form for separate collection.
+  routes.before.unshift((req, res, next) => {
+    if (
+      (req.method !== 'POST' && req.method !== 'PUT') ||
+      !req.body
+    ) {
+      return next();
+    }
+
+    // Get the submissionModel.
+    util.getSubmissionModel(app.formio.formio, req, req.body, false, (err, submissionModel) => {
+      if (err) {
+        return next(err);
+      }
+
+      if (!submissionModel) {
+        return next();
+      }
+
+      // Set the indexes.
+      app.formio.formio.util.eachComponent(req.body.components, (component, path) => {
+        if (component.dbIndex) {
+          let index = {};
+          index['data.' + path] = 1;
+          submissionModel.collection.createIndex(index, {
+            background: true
+          });
+        }
+      });
+
+      return next();
+    });
+  });
 
   routes.before.unshift((req, res, next) => {
     // Remove _vid from any updates so it is set automatically.

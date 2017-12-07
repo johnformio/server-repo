@@ -11,7 +11,6 @@ var debug = require('debug')('formio:error');
 var chance = new Chance();
 
 module.exports = function(formioServer) {
-  var cache = require('../../cache/cache')(formioServer.formio);
   var SparkCollection = require('./SparkCollection');
 
   /**
@@ -238,10 +237,10 @@ module.exports = function(formioServer) {
    */
   ProjectSocket.prototype.loadProject = function(req, id, name, fn) {
     if (id) {
-      cache.loadProject(req, id, fn);
+      formioServer.formio.cache.loadProject(req, id, fn);
     }
     else {
-      cache.loadProjectByName(req, name, fn);
+      formioServer.formio.cache.loadProjectByName(req, name, fn);
     }
   };
 

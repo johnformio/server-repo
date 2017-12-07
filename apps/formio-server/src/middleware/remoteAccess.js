@@ -4,8 +4,6 @@ const jwt = require('jsonwebtoken');
 const _ = require('lodash');
 
 module.exports = app => (req, res, next) => {
-  const cache = require('../cache/cache')(app.formio);
-
   let response = {
     project: {},
     permission: 'none',
@@ -15,7 +13,7 @@ module.exports = app => (req, res, next) => {
   // Permission heirarchy.
   const permissions = ['none', 'team_read', 'team_write', 'team_admin', 'owner'];
 
-  cache.loadCurrentProject(req, function(err, project) {
+  app.formio.cache.loadCurrentProject(req, function(err, project) {
     response.project = {
       _id: project._id,
       title: project.title,

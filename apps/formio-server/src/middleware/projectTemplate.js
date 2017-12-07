@@ -6,7 +6,6 @@ var debug = require('debug')('formio:middleware:projectTemplate');
 
 module.exports = function(formio) {
   var hook = require('formio/src/util/hook')(formio);
-  var cache = require('../cache/cache')(formio);
   return function(req, res, next) {
     // If we are creating a project without a template, use the default template.
     if (res.resource.status === 201 && !req.templateMode) {
@@ -147,7 +146,7 @@ module.exports = function(formio) {
     // New environments should copy their primary project template.
     else if ('project' in project && project.project) {
       debug('importing primary project');
-      cache.loadProject(req, project.project, function(err, primaryProject) {
+      formio.cache.loadProject(req, project.project, function(err, primaryProject) {
         formio.template.export({
           projectId: project.project,
           access: primaryProject.access.toObject()
