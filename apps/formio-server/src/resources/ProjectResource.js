@@ -86,7 +86,6 @@ module.exports = function(router, formioServer) {
       (req, res, next) => {
         // Use project cache for performance reasons.
         req.modelQuery = req.modelQuery || req.model || projectModel;
-        req.modelQuery.findOne = (query, cb) => formio.cache.loadCurrentProject(req, cb);
         next();
       }
     ],
