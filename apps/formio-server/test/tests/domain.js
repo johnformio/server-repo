@@ -754,13 +754,13 @@ module.exports = function(app, template, hook) {
         .set('host', 'form.io')
         .set('x-jwt-token', template.formio.owner.token)
         .send()
-        .expect(500)
+        .expect(400)
         .end(function(err, res) {
           if (err) {
             return done(err);
           }
 
-          assert.equal(res.text, 'Internal Server Error');
+          assert.equal(res.text, 'Project not found');
           done();
         });
     });
@@ -771,13 +771,13 @@ module.exports = function(app, template, hook) {
         .set('host', 'bad.form.io')
         .set('x-jwt-token', template.formio.owner.token)
         .send()
-        .expect(500)
+        .expect(400)
         .end(function(err, res) {
           if (err) {
             return done(err);
           }
 
-          assert.equal(res.text, 'Internal Server Error');
+          assert.equal(res.text, 'Project not found');
           done();
         });
     });

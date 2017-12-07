@@ -1218,7 +1218,9 @@ module.exports = function(app) {
         }
         else {
           req.projectId = req.projectId || (req.params ? req.params.projectId : undefined) || req._id;
-          query.project = formioServer.formio.mongoose.Types.ObjectId(req.projectId);
+          if (formioServer.formio.mongoose.Types.ObjectId.isValid(req.projectId)) {
+            query.project = formioServer.formio.mongoose.Types.ObjectId(req.projectId);
+          }
           _debug(query);
           return query;
         }
