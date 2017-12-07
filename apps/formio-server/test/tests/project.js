@@ -3373,11 +3373,8 @@ module.exports = function(app, template, hook) {
         .put('/project/' + helper.template.project._id + '/form/' + helper.template.forms.collection._id)
         .set('x-jwt-token', template.formio.owner.token)
         .send(helper.template.forms.collection)
-        .end((err, res) => {
-          assert.equal(res.status, 500);
-          assert.equal(res.body.message, 'Only Enterprise projects can set different form collections.');
-          done();
-        });
+        .expect(500)
+        .end(done);
     });
 
     it('Should upgrade the project to a Enterprise', function(done) {
