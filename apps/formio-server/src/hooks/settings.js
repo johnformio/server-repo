@@ -18,14 +18,11 @@ var url = require('url');
 module.exports = function(app) {
   var formioServer = app.formio;
 
-  // Include the request cache.
-  var cache = require('../cache/cache')(formioServer.formio);
-
   // Add the encrypt handler.
   var encrypt = require('../util/encrypt')(formioServer);
 
   // Attach the project plans to the formioServer
-  formioServer.formio.plans = require('../plans/index')(formioServer, cache);
+  formioServer.formio.plans = require('../plans/index')(formioServer);
 
   // Attach the teams to formioServer.
   formioServer.formio.teams = require('../teams/index')(app, formioServer);
@@ -47,7 +44,7 @@ module.exports = function(app) {
       }
 
       // Load the project settings.
-      cache.loadProject(req, req.projectId, function(err, project) {
+      formioServer.formio.cache.loadProject(req, req.projectId, function(err, project) {
         if (err) {
           return cb(err);
         }
@@ -80,7 +77,7 @@ module.exports = function(app) {
           case 'token':
             app.use(require('../middleware/remoteToken')(app));
             app.use(formio.middleware.tokenHandler);
-            app.use(require('../middleware/userProject')(cache));
+            app.use(require('../middleware/userProject')(formioServer.formio));
             return true;
           case 'logout':
             app.get('/logout', formio.auth.logout);
@@ -114,7 +111,7 @@ module.exports = function(app) {
           component.kickbox.enabled
         ) {
           // Load the project settings.
-          cache.loadProject(req, req.projectId, function(err, project) {
+          formioServer.formio.cache.loadProject(req, req.projectId, function(err, project) {
             if (err) {
               return next(err);
             }
@@ -261,7 +258,7 @@ module.exports = function(app) {
       },
       host: function(host, req) {
         // Load the project settings.
-        var project = cache.currentProject(req);
+        var project = formioServer.formio.cache.currentProject(req);
         return project.name + '.' + host;
       },
 
@@ -381,7 +378,7 @@ module.exports = function(app) {
           }
 
           // Load the project.
-          cache.loadProject(req, req.projectId, function(err, project) {
+          formioServer.formio.cache.loadProject(req, req.projectId, function(err, project) {
             if (err) {
               _debug(err);
               return callback(err);
@@ -399,7 +396,7 @@ module.exports = function(app) {
               req.currentProject = project;
             }
 
-            cache.loadPrimaryProject(req, function(err, primaryProject) {
+            formioServer.formio.cache.loadPrimaryProject(req, function(err, primaryProject) {
               // Add the current project to the req.
               try {
                 req.primaryProject = primaryProject.toObject();
@@ -455,7 +452,7 @@ module.exports = function(app) {
 
           // Load the project.
           /* eslint-disable camelcase, max-statements, no-fallthrough */
-          cache.loadPrimaryProject(req, function(err, project) {
+          formioServer.formio.cache.loadPrimaryProject(req, function(err, project) {
             if (err) {
               _debug(err);
               return callback(err);
@@ -1084,7 +1081,7 @@ module.exports = function(app) {
       },
 
       exportOptions: function(options, req, res) {
-        var currentProject = cache.currentProject(req);
+        var currentProject = formioServer.formio.cache.currentProject(req);
         options.title = currentProject.title;
         options.tag = currentProject.tag;
         options.name = currentProject.name;
@@ -1096,7 +1093,7 @@ module.exports = function(app) {
       },
 
       importOptions: function(options, req, res) {
-        var currentProject = cache.currentProject(req);
+        var currentProject = formioServer.formio.cache.currentProject(req);
         options._id = currentProject._id;
         options.name = currentProject.name;
         options.machineName = currentProject.machineName;
@@ -1208,7 +1205,7 @@ module.exports = function(app) {
         // Determine which project to use, one in the request, or formio.
         _debug('formio: ' + formio);
         if (formio && formio === true) {
-          return cache.loadProjectByName(req, 'formio', function(err, _id) {
+          return formioServer.formio.cache.loadProjectByName(req, 'formio', function(err, _id) {
             if (err || !_id) {
               _debug(err || 'The formio project was not found.');
               return query;
@@ -1221,7 +1218,9 @@ module.exports = function(app) {
         }
         else {
           req.projectId = req.projectId || (req.params ? req.params.projectId : undefined) || req._id;
-          query.project = formioServer.formio.mongoose.Types.ObjectId(req.projectId);
+          if (formioServer.formio.mongoose.Types.ObjectId.isValid(req.projectId)) {
+            query.project = formioServer.formio.mongoose.Types.ObjectId(req.projectId);
+          }
           _debug(query);
           return query;
         }

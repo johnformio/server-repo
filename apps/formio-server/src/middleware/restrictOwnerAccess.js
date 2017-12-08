@@ -3,8 +3,6 @@
 var debug = require('debug')('formio:middleware:restrictOwnerAccess');
 
 module.exports = function(formio) {
-  var cache = require('../cache/cache')(formio);
-
   /**
    * Formio Middleware to access to only project owners.
    */
@@ -26,7 +24,7 @@ module.exports = function(formio) {
       }
 
       // Get the owner of the Project
-      cache.loadPrimaryProject(req, function(err, project) {
+      formio.cache.loadPrimaryProject(req, function(err, project) {
         if (err) {
           return reject(err);
         }

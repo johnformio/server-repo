@@ -9,8 +9,7 @@ module.exports = function(formio) {
       return next();
     }
 
-    var cache = require('../cache/cache')(formio);
-    cache.loadCurrentProject(req, function(err, project) {
+    formio.cache.loadCurrentProject(req, function(err, project) {
       debug('Entering Protect Test');
       if (err) {
         return next(err);

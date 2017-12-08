@@ -1,8 +1,6 @@
 'use strict';
 
 module.exports = app => (req, res, next) => {
-  const cache = require('../cache/cache')(app.formio);
-
   // Paths to let through.
   if (['/', '/role', '/access/remote'].indexOf(req.url) !== -1) {
     return next();
@@ -37,7 +35,7 @@ module.exports = app => (req, res, next) => {
     return path;
   };
 
-  cache.loadCurrentProject(req, function(err, project) {
+  app.formio.cache.loadCurrentProject(req, function(err, project) {
     if (!project) {
       return res.status(400).send('Project not found');
     }

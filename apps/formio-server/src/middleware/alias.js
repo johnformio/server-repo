@@ -12,8 +12,6 @@ var debug = {
  * Middleware to resolve a form alias into its components.
  */
 module.exports = function(formio) {
-  var cache = require('../cache/cache')(formio);
-
   // Skip the alias handler.
   var skip = function(req, res, next) {
     var params = formio.util.getUrlParams(req.url);
@@ -72,7 +70,7 @@ module.exports = function(formio) {
     }
 
     // Look up the subdomain.
-    cache.loadProjectByName(req, projectName, function(err, project) {
+    formio.cache.loadProjectByName(req, projectName, function(err, project) {
       debug.alias('Loading project: ' + projectName);
 
       if (err || !project) {
@@ -85,7 +83,7 @@ module.exports = function(formio) {
             return next();
           }
           else {
-            cache.loadProjectByName(req, subdirectory, function(err, project) {
+            formio.cache.loadProjectByName(req, subdirectory, function(err, project) {
               debug.alias('Loading project from subdir: ' + projectName);
 
               if (err || !project) {

@@ -13,10 +13,10 @@ module.exports = function(req, res, next) {
     return res.sendStatus(404);
   }
 
-  req.modelQuery = req.modelQuery || this.model;
+  req.modelQuery = req.modelQuery || req.model || this.model;
   req.modelQuery = req.modelQuery.find({project: projectId});
 
-  req.countQuery = req.countQuery || this.model;
+  req.countQuery = req.countQuery || req.model || this.model;
   req.countQuery = req.countQuery.find({project: projectId});
   next();
 };

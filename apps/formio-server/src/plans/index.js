@@ -9,7 +9,7 @@ var debug = {
   disableForPlans: require('debug')('formio:plans:disableForPlans')
 };
 
-module.exports = function(formioServer, cache) {
+module.exports = function(formioServer) {
   var limits = {
     basic: 1000,
     independent: 10000,
@@ -62,7 +62,7 @@ module.exports = function(formioServer, cache) {
       // Environment Create is tricky as we have to use permissions of the referenced project before it exists.
       if (req.body.hasOwnProperty('project')) {
         debug.getPlan('Project from environment create.');
-        return cache.loadProject(req, req.body.project, function(err, project) {
+        return formioServer.formio.cache.loadProject(req, req.body.project, function(err, project) {
           return getProjectPlan(err, project, next);
         });
       }
@@ -79,7 +79,7 @@ module.exports = function(formioServer, cache) {
       return next(null, basePlan);
     }
 
-    cache.loadPrimaryProject(req, function(err, project) {
+    formioServer.formio.cache.loadPrimaryProject(req, function(err, project) {
       getProjectPlan(err, project, next);
     });
   };

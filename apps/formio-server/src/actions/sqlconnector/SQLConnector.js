@@ -365,8 +365,7 @@ module.exports = function(router) {
       };
 
       var primary = this.settings.primary;
-      var cache = require('../../cache/cache')(formio);
-      var project = cache.currentProject(req);
+      var project = formio.cache.currentProject(req);
       if (project === null || project === undefined) {
         return handleErrors('No project found.');
       }

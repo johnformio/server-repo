@@ -80,5 +80,61 @@ module.exports = {
     }
 
     return data;
+  },
+  getSubmissionModel: (formio, req, form, init, next) => {
+    if (!form) {
+      return next('No form provided');
+    }
+
+    // No collection provided.
+    if (!form.settings || !form.settings.collection) {
+      return next();
+    }
+
+    // Load the project in context.
+    formio.cache.loadCurrentProject(req, (err, project) => {
+      if (err) {
+        delete form.settings.collection;
+        return next(err);
+      }
+
+      if (!project) {
+        delete form.settings.collection;
+        return next('No project found');
+      }
+
+      if (project.plan !== 'commercial') {
+        delete form.settings.collection;
+        return next('Only Enterprise projects can set different form collections.');
+      }
+
+      // Get the project name.
+      let projectName = project.name.replace(/[^A-Za-z0-9]+/g, '');
+      if (!projectName) {
+        return next('Invalid project name');
+      }
+
+      // Set the collection name.
+      let collectionName = projectName + '_' + form.settings.collection;
+
+      // Make sure they don't clobber reserved collections.
+      let reservedCollections = [
+        'projects',
+        'forms',
+        'submissions',
+        'actions',
+        'roles',
+        'formrevisions',
+        'schema',
+        'tags'
+      ];
+      if (reservedCollections.indexOf(collectionName) !== -1) {
+        delete form.settings.collection;
+        return next(collectionName + ' is a reserved collection name.');
+      }
+
+      // Establish a model using the schema.
+      return next(null, formio.mongoose.model(collectionName, formio.schemas.submission, collectionName, init));
+    });
   }
 };

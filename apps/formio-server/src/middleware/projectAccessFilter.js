@@ -4,8 +4,6 @@ var _ = require('lodash');
 var debug = require('debug')('formio:middleware:projectAccessFilter');
 
 module.exports = function(formio) {
-  var cache = require('../cache/cache')(formio);
-
   /**
    * Formio Middleware to ensure that the roles in the project access payload are valid.
    *
@@ -43,7 +41,7 @@ module.exports = function(formio) {
     }
 
     // Get the owner of the Project
-    cache.loadProject(req, req.projectId, function(err, project) {
+    formio.cache.loadProject(req, req.projectId, function(err, project) {
       if (err) {
         debug(err);
         return res.sendStatus(400);

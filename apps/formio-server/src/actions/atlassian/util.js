@@ -14,7 +14,6 @@ var debug = {
 
 module.exports = function(router) {
   var formio = router.formio;
-  var cache = require('../../cache/cache')(formio);
 
   /**
    * Check to see if the connection settings are present.
@@ -155,7 +154,7 @@ module.exports = function(router) {
             return res.sendStatus(400);
           }
 
-          cache.loadProject(req, formio.util.idToBson(req.projectId), function(err, project) {
+          formio.cache.loadProject(req, formio.util.idToBson(req.projectId), function(err, project) {
             if (err) {
               debug.authorizeOAuth(err);
               return res.sendStatus(400);
@@ -217,7 +216,7 @@ module.exports = function(router) {
             return res.sendStatus(400);
           }
 
-          cache.loadProject(req, formio.util.idToBson(req.projectId), function(err, project) {
+          formio.cache.loadProject(req, formio.util.idToBson(req.projectId), function(err, project) {
             if (err) {
               debug.authorizeOAuth(err);
               return res.sendStatus(400);

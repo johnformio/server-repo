@@ -10,10 +10,10 @@ var debug = require('debug')('formio:middleware:userProject');
  * @param cache
  * @returns {Function}
  */
-module.exports = function(cache) {
+module.exports = function(formio) {
   return function(req, res, next) {
     if (req.token && !req.userProject) {
-      cache.loadProject(req, req.token.form.project, function(err, project) {
+      formio.cache.loadProject(req, req.token.form.project, function(err, project) {
         if (err) {
           return next(err);
         }

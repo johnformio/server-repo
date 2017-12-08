@@ -10,7 +10,6 @@ var upload = multer({storage: storage});
 /* eslint-disable camelcase */
 module.exports = function(router) {
   var restrictOwnerAccess = require('../middleware/restrictOwnerAccess')(router.formio.formio);
-  var cache = require('../cache/cache')(router.formio.formio);
 
   // Return necessary settings for making the oauth request to dropbox.
   router.get('/project/:projectId/dropbox/auth',
@@ -72,7 +71,7 @@ module.exports = function(router) {
             res.send(dropbox);
 
             // Write token to project settings
-            cache.loadProject(req, req.projectId, function(err, project) {
+            router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
               if (!err) {
                 // Cannot directly set project.settings.storage.dropbox due to encryption.
                 var settings = project.settings;
@@ -94,7 +93,7 @@ module.exports = function(router) {
         res.send({});
         // If a code is not sent, this is a disconnect.
         // Write token to project settings
-        cache.loadProject(req, req.projectId, function(err, project) {
+        router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
           if (!err) {
             // Cannot directly set project.settings.storage.dropbox due to encryption.
             var settings = project.settings;
@@ -126,7 +125,7 @@ module.exports = function(router) {
     router.formio.formio.middleware.permissionHandler,
     function(req, res) {
       debug('Getting dropbox file');
-      cache.loadProject(req, req.projectId, function(err, project) {
+      router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
         if (err) {
           return res.status(400).send('Project not found.');
         }
@@ -191,7 +190,7 @@ module.exports = function(router) {
     upload.single('file'),
     function(req, res) {
       debug('Sending POST request');
-      cache.loadProject(req, req.projectId, function(err, project) {
+      router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
         if (err) {
           return res.status(400).send('Project not found.');
         }

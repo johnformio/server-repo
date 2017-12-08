@@ -38,7 +38,7 @@ module.exports = function(formioServer) {
     }
 
     debug('Query: ' + JSON.stringify(query));
-    req.modelQuery = req.modelQuery || this.model;
+    req.modelQuery = req.modelQuery || req.model || this.model;
     req.modelQuery = req.modelQuery.find(query);
     next();
   };

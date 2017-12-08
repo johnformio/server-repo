@@ -17,8 +17,7 @@ module.exports = function(formio) {
       return next();
     }
 
-    var cache = require('../cache/cache')(formio);
-    cache.loadPrimaryProject(req, function(err, project) {
+    formio.cache.loadPrimaryProject(req, function(err, project) {
       if (err) {
         debug(err);
         return next();

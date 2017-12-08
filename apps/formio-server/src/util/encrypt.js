@@ -6,7 +6,6 @@ const eachSeries = require('async/eachSeries');
 const util = require('./util');
 
 module.exports = (formioServer) => {
-  const cache = require('../cache/cache')(formioServer.formio);
   const Encryptor = {
     encryptedComponent: (component) => {
       return component && component.encrypted && component.persistent;
@@ -60,7 +59,7 @@ module.exports = (formioServer) => {
 
     getProjectSecret: (req) => {
       return new Promise((resolve, reject) => {
-        cache.loadCurrentProject(req, (err, project) => {
+        formioServer.formio.cache.loadCurrentProject(req, (err, project) => {
           if (err) {
             return reject(err);
           }
