@@ -67,10 +67,10 @@ test:
     - docker run -itd --name formio-server --net formio -e "DEBUG=formio:*" -e "PROJECT_PLAN=trial" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "JWT_SECRET=CHANGEME" -e "JWT_EXPIRE_TIME=240" -e "DB_SECRET=CHANGEME" -e "ADMIN_KEY=dockertest" --link formio-redis:redis --link formio-mongo:mongo -p 127.0.0.1:3000:3000 $IMAGE_PATH
     - docker ps -a
     - sleep 5
-    - ADMIN_KEY=dockertest node install
-    - curl -f --retry 10 http://api.localhost:3000/health
-    - npm run docker
-    - docker logs formio-server &> $CIRCLE_ARTIFACTS/docker-server.log
+#    - ADMIN_KEY=dockertest node install
+#    - curl -f --retry 10 http://api.localhost:3000/health
+#    - npm run docker
+#    - docker logs formio-server &> $CIRCLE_ARTIFACTS/docker-server.log
     # Test Formio as a client would run it.
     #- docker rm -vf formio-server
     #- docker rm -vf formio-mongo
