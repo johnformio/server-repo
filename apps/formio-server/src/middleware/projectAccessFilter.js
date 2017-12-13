@@ -47,7 +47,7 @@ module.exports = function(formio) {
         return res.sendStatus(400);
       }
       if (!project.owner) {
-        debug('No project owner found... ' + JSON.stringify(project));
+        debug('No project owner found... ' + project._id);
         return res.sendStatus(500);
       }
 
@@ -67,20 +67,12 @@ module.exports = function(formio) {
          * Filter the access obj in the current request based on the calculated accessIds.
          */
         var filterAccess = function() {
-          // Check the accessIds in the original request.
-          debug('Allowed Roles: ' + JSON.stringify(accessIds));
-          debug('Given access: ' + JSON.stringify(req.body.access));
-
           // Filter each set of roles to only include roles in the accessIds list.
           req.body.access = _.filter(req.body.access, function(permission) {
-            debug('Roles before filter: ' + JSON.stringify(permission.roles));
             permission.roles = permission.roles || [];
             permission.roles = _.intersection(permission.roles, accessIds);
-            debug('Roles after filter: ' + JSON.stringify(permission.roles));
             return permission;
           });
-
-          debug('New Access: ' + JSON.stringify(req.body.access));
         };
 
         // Only proceed with teams access check if the project plan supports teams.

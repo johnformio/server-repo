@@ -426,7 +426,6 @@ module.exports = function(app) {
               }
 
               // Pass the access of this project to the next function.
-              _debug(JSON.stringify(access));
               return callback(null);
             });
           });
@@ -463,7 +462,6 @@ module.exports = function(app) {
             }
 
             // Skip teams processing, if this projects plan does not support teams.
-            _debug(JSON.stringify(project));
             if (!project.plan || project.plan === 'basic' || project.plan === 'independent') {
               return callback(null);
             }
@@ -473,7 +471,6 @@ module.exports = function(app) {
               var teamAccess = _.filter(project.access, function(permission) {
                 return _.startsWith(permission.type, 'team_');
               });
-              //_debug('Team Permissions: ' + JSON.stringify(teamAccess));
               // Initialize the project access.
               access.project = access.project || {};
               access.project.create_all = access.project.create_all || [];
@@ -535,7 +532,6 @@ module.exports = function(app) {
             }
 
             // Pass the access of this Team to the next function.
-            //_debug(JSON.stringify(access));
             return callback(null);
           });
           /* eslint-enable camelcase, max-statements, no-fallthrough */
@@ -1150,7 +1146,6 @@ module.exports = function(app) {
         formioServer.formio.teams.getTeams(user, true, true)
           .then(function(teams) {
             // Filter the teams to only contain the team ids.
-            _debug('RAW: ' + JSON.stringify(teams));
             teams = _(teams)
               .map('_id')
               .filter()
@@ -1161,8 +1156,6 @@ module.exports = function(app) {
                 user.roles.push(team);
               });
 
-            _debug('Teams: ' + JSON.stringify(teams));
-            _debug('Final User Roles: ' + JSON.stringify(user.roles));
             return user;
           })
           .nodeify(next);
@@ -1355,7 +1348,6 @@ module.exports = function(app) {
             }
 
             // Add the new roleId to the access list for read_all (project).
-            _debug('Loaded project: ' + JSON.stringify(project));
             project.access = project.access || [];
             var found = false;
             for (var a = 0; a < project.access.length; a++) {
@@ -1381,8 +1373,6 @@ module.exports = function(app) {
                 _debug(err);
                 return done(err);
               }
-
-              _debug('Updated Project: ' + JSON.stringify(project.toObject()));
               done();
             });
           });

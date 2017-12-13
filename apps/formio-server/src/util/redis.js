@@ -74,7 +74,7 @@ class RedisInterface {
     }
     else {
       this.db = null;
-      debug('Redis options not found or incomplete: ' + JSON.stringify(this.config.redis || {}));
+      debug('Redis options not found or incomplete');
     }
   }
 }

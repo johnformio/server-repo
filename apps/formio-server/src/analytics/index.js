@@ -172,7 +172,6 @@ module.exports = (redis) => {
           return next();
         }
 
-        debug.getCalls('RAW: ' + JSON.stringify(response));
         var daysInMonth = (new Date(parseInt(year), parseInt(month)+1, 0)).getUTCDate();
         response = _.sum(response.slice(0, daysInMonth));
         return next(null, response);
@@ -297,7 +296,6 @@ module.exports = (redis) => {
           return res.status(500).send(err);
         }
 
-        _debug('RAW: ' + JSON.stringify(response));
         var final = _(response)
           .zip(wrapped)
           .value();
@@ -360,7 +358,6 @@ module.exports = (redis) => {
      */
     var restrictToFormioEmployees = function(req, res, next) {
       if (!req.user) {
-        debug.restrictToFormioEmployees('No req.user: ' + JSON.stringify(req.user));
         return res.sendStatus(401);
       }
 
@@ -403,9 +400,6 @@ module.exports = (redis) => {
               debug.restrictToFormioEmployees('permissions: ' + permissions);
               return res.sendStatus(401);
             }
-
-            debug.restrictToFormioEmployees('req.user: ' + JSON.stringify(req.user));
-            debug.restrictToFormioEmployees('teams: ' + JSON.stringify(teams));
 
             var member = _.some(teams, function(team) {
               debug.restrictToFormioEmployees('req.user.roles.indexOf(' + team + '): ' + req.user.roles.indexOf(team));
@@ -670,15 +664,12 @@ module.exports = (redis) => {
             return res.sendStatus(500);
           }
 
-          debug.getYearlyAnalytics('RAW: ' + JSON.stringify(response));
           var output = [];
 
           // Slice the response into 12 segments and add the submissions.
           for (var month = 0; month < 12; month++) {
             var monthData = response.slice((month * 31), ((month + 1) * 31));
             var daysInMonth = (new Date(parseInt(year), parseInt(month)+1, 0)).getUTCDate();
-
-            debug.getYearlyAnalytics('Month ' + month + ', RAW: ' + JSON.stringify(monthData));
             output.push({
               month: month,
               days: daysInMonth,
@@ -730,7 +721,6 @@ module.exports = (redis) => {
             return res.sendStatus(500);
           }
 
-          debug.getMonthlyAnalytics('RAW: ' + JSON.stringify(response));
           var daysInMonth = (new Date(parseInt(year), parseInt(month)+1, 0)).getUTCDate();
           response = response.slice(0, daysInMonth);
 
@@ -786,7 +776,6 @@ module.exports = (redis) => {
             return res.sendStatus(500);
           }
 
-          debug.getDailyAnalytics('RAW: ' + JSON.stringify(response));
           response = _.map(response, function(_request) {
             var parts = _request.split(':');
             return parts[parts.length - 2];

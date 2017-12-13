@@ -31,8 +31,6 @@ module.exports = function(formio) {
         if (!project.owner) {
           let error = new Error('No project owner found');
           error.status = 500;
-
-          debug('No project owner found... ' + JSON.stringify(project));
           return reject(error);
         }
 
