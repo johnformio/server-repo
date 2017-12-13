@@ -44,8 +44,6 @@ module.exports = function(app, formioServer) {
    *   The permission that the given team has within the given project.
    */
   var getProjectPermission = function(project, team) {
-    debug.getProjectPermission('project: ' + JSON.stringify(project));
-    debug.getProjectPermission('team: ' + team);
     project.access = project.access || [];
 
     // Get the permission type starting with team_.
@@ -56,10 +54,6 @@ module.exports = function(app, formioServer) {
 
       var starts = _.startsWith(access.type, 'team_');
       var contains = _.includes(access.roles, formioServer.formio.util.idToString(team));
-
-      debug.getProjectPermission('access: ' + JSON.stringify(access));
-      debug.getProjectPermission('starts: ' + starts);
-      debug.getProjectPermission('contains: ' + contains);
       return starts && contains;
     });
     debug.getProjectPermission(type);
@@ -69,7 +63,7 @@ module.exports = function(app, formioServer) {
       /* eslint-disable no-console */
       console.error(
         'The given project: '
-        + JSON.stringify(project)
+        + project._id
         + '\n has a team with more than one permission: ' + team
       );
       /* eslint-enable no-console */
@@ -215,7 +209,6 @@ module.exports = function(app, formioServer) {
         return q.resolve([]);
       }
 
-      debug.getTeams('Query: ' + JSON.stringify(query));
       formioServer.formio.resources.submission.model.find(query, function(err, documents) {
         if (err) {
           debug.getTeams(err);
@@ -223,7 +216,6 @@ module.exports = function(app, formioServer) {
         }
 
         // Coerce results into an array and return the teams as objects.
-        debug.getTeams('Teams: ' + JSON.stringify(documents));
         documents = documents || [];
         documents = _.map(documents, function(team) {
           return team.toObject();
@@ -339,7 +331,6 @@ module.exports = function(app, formioServer) {
         _id: {$in: teams}
       };
 
-      debug.getDisplayableTeams('Query: ' + JSON.stringify(query));
       formioServer.formio.resources.submission.model.find(query, function(err, documents) {
         if (err) {
           debug.getDisplayableTeams(err);
@@ -372,7 +363,6 @@ module.exports = function(app, formioServer) {
       return [];
     }
     if (!(teams instanceof Array)) {
-      debug.filterTeamsForDisplay('One team given: ' + JSON.stringify(teams));
       singleTeam = true;
       teams = [teams];
     }
@@ -393,7 +383,6 @@ module.exports = function(app, formioServer) {
       team.data.admins = team.data.admins || [];
 
       // The sanitized version of the team.
-      debug.filterTeamsForDisplay('Team: ' + JSON.stringify(team));
       return {
         _id: team._id || '',
         owner: team.owner || '',
@@ -480,7 +469,6 @@ module.exports = function(app, formioServer) {
       }
 
       var query = req.query || null;
-      debug.teamUsers('search: ' + JSON.stringify(query));
       if (!query) {
         return res.status(400).send('A search query is required.');
       }
@@ -639,7 +627,6 @@ module.exports = function(app, formioServer) {
         },
         deleted: {$eq: null}
       };
-      debug.leaveTeams(JSON.stringify(query));
 
       formioServer.formio.resources.submission.model.findOne(query, function(err, document) {
         if (err || !document) {

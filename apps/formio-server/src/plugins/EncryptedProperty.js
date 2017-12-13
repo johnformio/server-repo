@@ -98,7 +98,6 @@ module.exports = function(schema, options) {
       // Decrypt the value
       if (this[encryptedName]) {
         var plaintext = decrypt(options.secret, this[encryptedName]);
-        debug.plugin('plaintext: ' + JSON.stringify(plaintext));
         return plaintext;
       }
 
@@ -107,7 +106,6 @@ module.exports = function(schema, options) {
     .set(function(value) {
       // Encrypt and set the value
       var ciphertext = encrypt(options.secret, value);
-      debug.plugin('Encrypting: ' + JSON.stringify(value));
       this[encryptedName] = ciphertext;
     });
 
@@ -119,7 +117,6 @@ module.exports = function(schema, options) {
 
       if (temp) {
         ret[options.plainName] = temp;
-        debug.plugin('JSON Transform: ' + JSON.stringify(ret[options.plainName]));
       }
 
       debug.plugin(ret);
@@ -135,7 +132,6 @@ module.exports = function(schema, options) {
 
       if (temp) {
         ret[options.plainName] = temp;
-        debug.plugin('Object Transform: ' + JSON.stringify(ret[options.plainName]));
       }
 
       debug.plugin(ret);

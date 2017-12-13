@@ -12,6 +12,9 @@ module.exports = function(router, formioServer) {
       debug('Allowing the project owner to see/change project settings.');
       return next();
     }
+    else if (req.remotePermission && (['admin', 'owner', 'team_admin'].indexOf(req.remotePermission) !== -1)) {
+      return next();
+    }
     else if (req.projectId && req.user) {
       formio.cache.loadPrimaryProject(req, function(err, project) {
         if (!err) {
@@ -19,7 +22,6 @@ module.exports = function(router, formioServer) {
           var roles = _.map(req.user.roles, formio.util.idToString);
 
           if ( _.intersection(access, roles).length !== 0) {
-            debug('Allowing a team_admin user to see/change project settings.');
             return next();
           }
         }
@@ -30,7 +32,6 @@ module.exports = function(router, formioServer) {
         debug('Skipping project settings!');
         if (req.method === 'PUT' || req.method === 'POST') {
           req.body = _.omit(req.body, 'settings');
-          debug('Removing payload settings: ' + JSON.stringify(req.body));
         }
 
         formio.middleware.filterResourcejsResponse(['settings', 'billing']).call(this, req, res, next);
@@ -40,7 +41,6 @@ module.exports = function(router, formioServer) {
       debug('Skipping project settings!');
       if (req.method === 'PUT' || req.method === 'POST') {
         req.body = _.omit(req.body, 'settings');
-        debug('Removing payload settings: ' + JSON.stringify(req.body));
       }
 
       formio.middleware.filterResourcejsResponse(['settings', 'billing']).call(this, req, res, next);

@@ -41,7 +41,6 @@ module.exports = function(formio) {
         return next(err);
       }
       if (!submissions || submissions.length === 0) {
-        debug('No submissions found for the forms: ' + JSON.stringify(forms));
         return next();
       }
 
@@ -54,7 +53,6 @@ module.exports = function(formio) {
             return cb(err);
           }
 
-          debug('Final submission: ' + JSON.stringify(submission));
           cb();
         });
       }, function(err) {
@@ -99,7 +97,6 @@ module.exports = function(formio) {
         return next(err);
       }
       if (!actions || actions.length === 0) {
-        debug('No action found with form _id\'s: ' + JSON.stringify(forms));
         return next();
       }
 
@@ -112,7 +109,6 @@ module.exports = function(formio) {
             return cb(err);
           }
 
-          debug('Final action:' + JSON.stringify(action));
           cb();
         });
       }, function(err) {
@@ -167,7 +163,6 @@ module.exports = function(formio) {
           return next(err);
         }
         if (!forms || forms.length === 0) {
-          debug('No forms found with with _id\'s: ' + JSON.stringify(formIds));
           return next();
         }
 
@@ -180,7 +175,6 @@ module.exports = function(formio) {
               return cb(err);
             }
 
-            debug('Final form: ' + JSON.stringify(form));
             cb();
           });
         }, function(err) {
@@ -247,7 +241,6 @@ module.exports = function(formio) {
             return cb(err);
           }
 
-          debug('Final role: ' + JSON.stringify(role));
           cb();
         });
       }, function(err) {
@@ -309,7 +302,6 @@ module.exports = function(formio) {
               return next(err.message || err);
             }
 
-            debug('Final project: ' + JSON.stringify(project));
             next();
           });
         });

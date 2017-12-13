@@ -208,7 +208,6 @@ module.exports = function(router) {
       var searchUser = userDefined
         ? _.get(req.submission, 'data.' + user)
         : _.get(res, 'resource.item._id');
-      debug.resolve('searchUser: ' + JSON.stringify(searchUser));
       // If the _id is present in a resource object, then pluck only the _id.
       if (_.has(searchUser, '_id')) {
         searchUser = _.get(searchUser, '_id');

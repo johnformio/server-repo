@@ -96,7 +96,6 @@ module.exports = function(formio) {
     // Method to import the template.
     var importTemplate = function(template) {
       var _debug = require('debug')('formio:middleware:projectTemplate#importTemplate');
-      _debug(JSON.stringify(template));
 
       let _project;
       try {

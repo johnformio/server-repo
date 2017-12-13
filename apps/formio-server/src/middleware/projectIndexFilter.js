@@ -22,8 +22,6 @@ module.exports = function(formioServer) {
       var roles = _.flattenDeep(_.map(req.user.roles, function(role) {
         return [formioServer.formio.util.idToString(role), formioServer.formio.util.idToBson(role)];
       }));
-
-      debug('Roles: ' + JSON.stringify(roles));
       query = {
         $or: [
           {owner: req.token.user._id},
@@ -37,7 +35,6 @@ module.exports = function(formioServer) {
       };
     }
 
-    debug('Query: ' + JSON.stringify(query));
     req.modelQuery = req.modelQuery || req.model || this.model;
     req.modelQuery = req.modelQuery.find(query);
     next();

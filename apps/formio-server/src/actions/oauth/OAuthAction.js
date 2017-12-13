@@ -317,14 +317,12 @@ module.exports = function(router) {
 
       // Add and store unique roles only.
       var temp = submission.toObject().roles || [];
-      debug('Submission Roles: ' + JSON.stringify(temp));
       temp = _.map(temp, function(r) {
         return r.toString();
       });
       debug('Adding: ' + role);
       temp.push(role);
       temp = _.uniq(temp);
-      debug('Final Roles: ' + JSON.stringify(temp));
       temp = _.map(temp, function(r) {
         return formio.mongoose.Types.ObjectId(r);
       });
