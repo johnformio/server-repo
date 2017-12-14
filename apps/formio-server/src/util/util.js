@@ -115,7 +115,7 @@ module.exports = {
       }
 
       // Set the collection name.
-      let collectionName = projectName + '_' + form.settings.collection;
+      let collectionName = projectName + '_' + form.settings.collection.replace(/[^A-Za-z0-9]+/g, '');
 
       // Make sure they don't clobber reserved collections.
       let reservedCollections = [
