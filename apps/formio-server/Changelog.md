@@ -4,9 +4,19 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.1.3
+### Changed
+ - Upgrade formio to 1.23.3 to fix issue with importing subforms.
+
+### Fixed
+ - Only allow collections with valid characters.
+
 ## 5.1.2
 ### Fixed
  - Team support for remote environments to load project settings.
+
+## 5.1.1
+No changes
 
 ## 5.1.0
 ### Changed
