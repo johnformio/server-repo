@@ -76,6 +76,7 @@ module.exports = function(app) {
             return true;
           case 'token':
             app.use(require('../middleware/remoteToken')(app));
+            app.use(require('../middleware/aliasToken')(app));
             app.use(formio.middleware.tokenHandler);
             app.use(require('../middleware/userProject')(formioServer.formio));
             return true;
@@ -289,7 +290,7 @@ module.exports = function(app) {
        * @param expire
        * @param tempToken
        */
-      tempToken: function(req, res, token, allow, expire, tokenResponse, cb) {
+      tempToken: function(req, res, allow, expire, tokenResponse, cb) {
         if (formioServer.redis.db) {
           let tempToken = chance.string({
             pool: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
@@ -303,6 +304,9 @@ module.exports = function(app) {
             tokenResponse.key = tempToken;
             cb();
           });
+        }
+        else {
+          return cb();
         }
       },
 
