@@ -77,6 +77,7 @@ module.exports = {
     }
     catch (e) {
       debug.decrypt(e);
+      data = null;
     }
 
     return data;

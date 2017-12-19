@@ -435,10 +435,10 @@ module.exports = function(app, template, hook) {
 
           submissions[2] = response.getLastSubmission();
           // Make sure the response does not allow encryption for anything other than commercial plans.
-          assert.equal(submissions[2].data.ssn, 'Encryption requires Commercial Plan');
-          assert.equal(submissions[2].data.secret, 'Encryption requires Commercial Plan');
-          assert.equal(submissions[2].data.datagrid[0].c, 'Encryption requires Commercial Plan');
-          assert.equal(submissions[2].data.datagrid[1].c, 'Encryption requires Commercial Plan');
+          assert.equal(submissions[2].data.ssn, 'Encryption requires Enterprise Plan');
+          assert.equal(submissions[2].data.secret, 'Encryption requires Enterprise Plan');
+          assert.equal(submissions[2].data.datagrid[0].c, 'Encryption requires Enterprise Plan');
+          assert.equal(submissions[2].data.datagrid[1].c, 'Encryption requires Enterprise Plan');
           return done();
         });
     });
@@ -453,10 +453,10 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
-          assert.equal(res.body.data.ssn, 'Encryption requires Commercial Plan');
-          assert.equal(res.body.data.secret, 'Encryption requires Commercial Plan');
-          assert.equal(res.body.data.datagrid[0].c, 'Encryption requires Commercial Plan');
-          assert.equal(res.body.data.datagrid[1].c, 'Encryption requires Commercial Plan');
+          assert.equal(res.body.data.ssn, 'Encryption requires Enterprise Plan');
+          assert.equal(res.body.data.secret, 'Encryption requires Enterprise Plan');
+          assert.equal(res.body.data.datagrid[0].c, 'Encryption requires Enterprise Plan');
+          assert.equal(res.body.data.datagrid[1].c, 'Encryption requires Enterprise Plan');
           return done();
         });
     });
