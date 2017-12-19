@@ -14,6 +14,11 @@ module.exports = app => (req, res, next) => {
       return next(err.message);
     }
 
+    if (!db) {
+      // No db is found, so just continue...
+      return next();
+    }
+
     db.get(aliasToken, function(err, token) {
       if (err) {
         return next('Token not valid.');

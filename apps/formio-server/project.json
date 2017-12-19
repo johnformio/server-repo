@@ -3259,7 +3259,7 @@
             "required": false
           },
           "persistent": true,
-          "unique": true,
+          "unique": false,
           "protected": false,
           "refreshDelay": 0,
           "refresh": false,
