@@ -476,7 +476,7 @@ module.exports = function(app, formioServer) {
         return res.status(400).send('Expected a query of type: `name`');
       }
       else {
-        query = new RegExp(query.name);
+        query = new RegExp(query.name, 'i');
       }
 
       loadUsers(function(users) {
