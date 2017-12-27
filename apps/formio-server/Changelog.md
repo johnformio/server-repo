@@ -1,8 +1,12 @@
-# Change Log 
+# Change Log
 All notable changes to this project will be documented in this file
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
+
+## [UNRELEASED]
+### Fixed
+ - Case insensitive searching of team members.
 
 ## 5.1.3
 ### Changed
@@ -21,10 +25,10 @@ No changes
 ## 5.1.0
 ### Changed
  - Upgraded all dependencies.
- 
+
 ### Fixed
  - Performance improvements with loading forms, resources, submissions, and projects.
- 
+
 ### Added
  - Ability to save submissions into separate collections.
  - Ability to select certain fields as database indexes.
@@ -48,7 +52,7 @@ No changes
  - Field encryption
  - Form Revisions
  - Staging and Tagging
- 
+
 ### Removed
  - Install process for form.io project
 
@@ -70,7 +74,7 @@ No changes
 
 ### Added
  - CRM Tigger when projects are updated
- 
+
 ## 4.1.11
 ### Added
  - CRM Triggers for creating, upgrading and deleting projects.
@@ -78,7 +82,7 @@ No changes
 ## 4.1.10
 ### Added
  - Trial date to projects and update hook to set all basic to trials.
- 
+
 ### Changed
  - Disallow environments, tagging and deploying on team plans.
 
@@ -92,7 +96,7 @@ No changes
 ## 4.1.8
 ### Added
  - When creating a tag, project is updated with that tag.
- 
+
 ### Fixed
  - Protected projects can now update other settings that aren't protected.
 
@@ -127,8 +131,8 @@ No changes
  - Issue with download pdf using query to get the token and it is too long.
 
 ## 4.1.1
- - No changes. 
- 
+ - No changes.
+
 ## 4.1.0
 ### Added
  - New download PDF endpoint that allows for downloading submissions as PDFs using the file server.
@@ -157,9 +161,9 @@ No changes
  - Ability to have domains as more than two parts. (eg. mydomain.co.uk or sub.mydomain.co.uk)
  - Added Date support to report API endpoint
  - Added mongo indices to all entities
- 
+
 ### Fixed
  - Error messages return a proper error code instead of bubbling to final error handler with 500 response.
- 
+
 ### Changed
  - Updated formio to 1.16.3
