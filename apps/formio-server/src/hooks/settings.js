@@ -292,6 +292,7 @@ module.exports = function(app) {
        */
       token: function(token, form) {
         token.origin = formioServer.formio.config.apiHost;
+        token.form.project = form.project;
         token.project = {
           _id: form.project
         };
@@ -1192,6 +1193,7 @@ module.exports = function(app) {
        */
       external: function(decoded, req) {
         // If external is provided in the signed token, use the decoded token as the request token.
+        // Only allow external tokens for the projects they originated in.
         if (decoded.external === true && req.projectId && req.projectId === decoded.project._id) {
           req.token = decoded;
           req.user = decoded.user;

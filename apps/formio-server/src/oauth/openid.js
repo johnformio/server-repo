@@ -87,7 +87,7 @@ module.exports = function(formio) {
           var status = response.statusCode;
           throw {
             status: status,
-            message: status + ' response from Dropbox: ' + response.statusMessage
+            message: status + ' response from OpenID Provider: ' + response.statusMessage
           };
         }
         // Make it easier to reference items in userInfo.name
@@ -102,7 +102,7 @@ module.exports = function(formio) {
       return user._id || user.sub;
     },
 
-    // Dropbox tokens have no expiration date. If it is invalidated it means they have disabled the app.
+    // OpenID tokens have no expiration date. If it is invalidated it means they have disabled the app.
     refreshTokens: function(req, res, user, next) {
       return Q.reject('Token has been invalidated, please reauthenticate with ' + this.title + '.')
         .nodeify(next);
