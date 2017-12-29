@@ -13,7 +13,8 @@ var debug = require('debug')('formio:middleware:userProject');
 module.exports = function(formio) {
   return function(req, res, next) {
     if (req.token && !req.userProject) {
-      formio.cache.loadProject(req, req.token.form.project, function(err, project) {
+      const projectId = req.token.project ? req.token.project._id : req.tokent.form.project;
+      formio.cache.loadProject(req, projectId, function(err, project) {
         if (err) {
           return next(err);
         }

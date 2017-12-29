@@ -21,6 +21,12 @@ module.exports = app => models => {
       index: true,
       required: true,
       default: 0
+    },
+    owner: {
+      type: app.formio.formio.mongoose.Schema.Types.Mixed,
+      ref: 'submission',
+      index: true,
+      default: null
     }
   });
 
@@ -38,6 +44,12 @@ module.exports = app => models => {
       index: true,
       required: true,
       default: 0
+    },
+    owner: {
+      type: app.formio.formio.mongoose.Schema.Types.Mixed,
+      ref: 'submission',
+      index: true,
+      default: null
     }
   });
 

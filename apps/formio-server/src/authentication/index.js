@@ -46,6 +46,9 @@ module.exports = function(formio) {
         form: {
           _id: form._id,
           project: form.project
+        },
+        project: {
+          _id: form.project
         }
       };
 

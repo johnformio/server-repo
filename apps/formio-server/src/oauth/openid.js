@@ -7,41 +7,22 @@ var util = require('formio/src/util/util');
 
 var MAX_TIMESTAMP = 8640000000000000;
 
-var debug = require('debug')('formio:action:oauth');
-
-// Export the Google oauth provider.
+// Export the generic openId provider.
 module.exports = function(formio) {
   var oauthUtil = require('../util/oauth')(formio);
   return {
     // Name of the oauth provider (used as property name in settings)
-    name: 'google',
+    name: 'openid',
 
     // Display name of the oauth provider
-    title: 'Google',
+    title: 'OpenID',
 
-    authURI: 'https://accounts.google.com/o/oauth2/auth',
+    authURI: '',
 
-    scope: 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+    scope: '',
 
     // List of field data that can be autofilled from user info API request
-    autofillFields: [
-      {
-        title: 'Email',
-        name: 'email'
-      },
-      {
-        title: 'First Name',
-        name: 'given_name'
-      },
-      {
-        title: 'Last Name',
-        name: 'family_name'
-      },
-      {
-        title: 'Display Name',
-        name: 'name'
-      }
-    ],
+    autofillFields: [],
 
     // Exchanges authentication code for auth token
     // Returns a promise, or you can provide the next callback arg
@@ -53,7 +34,7 @@ module.exports = function(formio) {
           return util.request({
             method: 'POST',
             json: true,
-            url: 'https://accounts.google.com/o/oauth2/token',
+            url: settings.tokenURI,
             form: {
               client_id: settings.clientId,
               client_secret: settings.clientSecret,
@@ -65,9 +46,8 @@ module.exports = function(formio) {
           /* eslint-enable camelcase */
         })
         .spread(function(response, body) {
-          debug(body);
           if (!body) {
-            throw 'No response from Google.';
+            throw 'No response from OpenID Provider.';
           }
           if (body.error) {
             throw body.error_description;
@@ -76,7 +56,7 @@ module.exports = function(formio) {
             {
               type: this.name,
               token: body.access_token,
-              exp: new Date(MAX_TIMESTAMP) // google tokens never expire
+              exp: new Date(MAX_TIMESTAMP) // Github tokens never expire
             }
           ];
         }.bind(this))
@@ -90,39 +70,39 @@ module.exports = function(formio) {
       if (!accessToken) {
         return Q.reject('No access token found');
       }
-      /* eslint-disable camelcase */
       return util.request({
         method: 'GET',
-        url: 'https://www.googleapis.com/oauth2/v1/userinfo',
+        url: settings.userInfoURI,
         json: true,
-        qs: {
-          access_token: accessToken.token
-        }
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + accessToken.token,
+          'User-Agent': 'form.io/1.0'
+        },
+        body: null
       })
       .spread(function(response, userInfo) {
         if (!userInfo) {
           var status = response.statusCode;
           throw {
             status: status,
-            message: status + ' response from Google: ' + response.statusMessage
+            message: status + ' response from Dropbox: ' + response.statusMessage
           };
         }
         // Make it easier to reference items in userInfo.name
-
         userInfo = _.merge(userInfo, userInfo.name);
-        debug(userInfo);
         return userInfo;
       })
       .nodeify(next);
-      /* eslint-enable camelcase */
     },
 
     // Gets user ID from provider user response from getUser()
     getUserId: function(user) {
-      return user.id;
+      return user._id || user.sub;
     },
 
-    // Google tokens have no expiration date. If it is invalidated it means they have disabled the app.
+    // Dropbox tokens have no expiration date. If it is invalidated it means they have disabled the app.
     refreshTokens: function(req, res, user, next) {
       return Q.reject('Token has been invalidated, please reauthenticate with ' + this.title + '.')
         .nodeify(next);

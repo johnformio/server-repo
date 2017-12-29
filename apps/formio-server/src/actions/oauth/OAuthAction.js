@@ -26,6 +26,7 @@ module.exports = function(router) {
   // Derive from Action.
   OAuthAction.prototype = Object.create(formio.Action.prototype);
   OAuthAction.prototype.constructor = OAuthAction;
+
   OAuthAction.info = function(req, res, next) {
     next(null, hook.alter('actionInfo', {
       name: 'oauth',
@@ -38,6 +39,7 @@ module.exports = function(router) {
       }
     }));
   };
+
   // Disable editing handler and method settings
   OAuthAction.access = {
     handler: false,
@@ -65,7 +67,7 @@ module.exports = function(router) {
           Q.ninvoke(formio.cache, 'loadCurrentForm', req)
         ])
         .spread(function(availableProviders, form) {
-          next(null, [
+          let settingForm = [
             {
               type: 'select',
               input: true,
@@ -93,6 +95,10 @@ module.exports = function(router) {
               dataSrc: 'json',
               data: {
                 json: JSON.stringify([
+                  {
+                    association: 'remote',
+                    title: 'Remote Authentication'
+                  },
                   {
                     association: 'existing',
                     title: 'Login Existing Resource'
@@ -126,7 +132,8 @@ module.exports = function(router) {
               multiple: false,
               validate: {
                 required: true
-              }
+              },
+              customConditional: "show = ['existing', 'new'].indexOf(data.settings.association) !== -1;"
             },
             {
               type: 'select',
@@ -138,7 +145,8 @@ module.exports = function(router) {
               dataSrc: 'json',
               data: {json: roles},
               valueProperty: '_id',
-              multiple: false
+              multiple: false,
+              customConditional: "show = ['new'].indexOf(data.settings.association) !== -1;"
             },
             {
               type: 'select',
@@ -156,9 +164,85 @@ module.exports = function(router) {
               validate: {
                 required: true
               }
+            },
+            {
+              input: true,
+              tree: true,
+              components: [
+                {
+                  input: true,
+                  inputType: "text",
+                  label: "Claim",
+                  key: "claim",
+                  multiple: false,
+                  placeholder: "Leave empty for everyone",
+                  defaultValue: "",
+                  protected: false,
+                  unique: false,
+                  persistent: true,
+                  hidden: false,
+                  clearOnHide: true,
+                  type: "textfield"
+                },
+                {
+                  input: true,
+                  inputType: "text",
+                  label: "Value",
+                  key: "value",
+                  multiple: false,
+                  defaultValue: "",
+                  protected: false,
+                  unique: false,
+                  persistent: true,
+                  hidden: false,
+                  clearOnHide: true,
+                  type: "textfield"
+                },
+                {
+                  input: true,
+                  tableView: true,
+                  label: "Role",
+                  key: "role",
+                  placeholder: "",
+                  dataSrc: 'json',
+                  data: {json: roles},
+                  valueProperty: '_id',
+                  defaultValue: "",
+                  refreshOn: "",
+                  filter: "",
+                  template: "<span>{{ item.title }}</span>",
+                  multiple: false,
+                  protected: false,
+                  unique: false,
+                  persistent: true,
+                  hidden: false,
+                  clearOnHide: true,
+                  validate: {
+                    required: true
+                  },
+                  type: "select"
+                }
+              ],
+              tableView: true,
+              label: "Assign Roles",
+              key: "roles",
+              protected: false,
+              persistent: true,
+              hidden: false,
+              clearOnHide: true,
+              type: "datagrid",
+              customConditional: "show = ['remote'].indexOf(data.settings.association) !== -1;"
             }
-          ]
-          .concat(
+          ];
+          const fieldMap = {
+            type: "fieldset",
+            components: [],
+            legend: "Field Mapping",
+            input: false,
+            key: "fieldset",
+            customConditional: "show = ['new'].indexOf(data.settings.association) !== -1;"
+          };
+          fieldMap.components = fieldMap.components.concat(
             _(formio.oauth.providers)
             .map(function(provider) {
               return _.map(provider.autofillFields, function(field) {
@@ -172,13 +256,16 @@ module.exports = function(router) {
                   dataSrc: 'url',
                   data: {url: fieldsSrc},
                   valueProperty: 'key',
-                  multiple: false
+                  multiple: false,
+                  customConditional: "show = ['" + provider.name + "'].indexOf(data.settings.provider) !== -1;"
                 };
               });
             })
             .flatten()
             .value()
-          ));
+          );
+          settingForm = settingForm.concat(fieldMap);
+          next(null, settingForm);
         })
         .catch(next);
       });
@@ -397,85 +484,143 @@ module.exports = function(router) {
     req.skipResource = true;
 
     var tokensPromise = provider.getTokens(req, oauthResponse.code, oauthResponse.state, oauthResponse.redirectURI);
-    if (self.settings.association === 'new' || self.settings.association === 'existing') {
-      return tokensPromise.then(function(tokens) {
+    switch (self.settings.association) {
+      case 'new':
+      case 'existing':
+        return tokensPromise.then(function(tokens) {
           return self.authenticate(req, res, provider, tokens);
         })
-        .then(function() {
-          next();
-        }).catch(this.onError(req, res, next));
-    }
-    else if (self.settings.association === 'link') {
-      var userId, currentUser, newTokens;
-      req.skipSave = true;
-      return tokensPromise.then(function(tokens) {
+          .then(function() {
+            next();
+          }).catch(this.onError(req, res, next));
+      case 'link':
+        var userId, currentUser, newTokens;
+        req.skipSave = true;
+        return tokensPromise.then(function(tokens) {
           newTokens = tokens;
           return Q.all([
             provider.getUser(tokens),
             Q.ninvoke(formio.auth, 'currentUser', req, res)
           ]);
         })
-        .then(function(results) {
-          userId = provider.getUserId(results[0]);
-          currentUser = res.resource.item;
-          debug('userId:', userId);
-          debug('currentUser:', currentUser);
+          .then(function(results) {
+            userId = provider.getUserId(results[0]);
+            currentUser = res.resource.item;
+            debug('userId:', userId);
+            debug('currentUser:', currentUser);
 
-          if (!currentUser) {
-            throw {
-              status: 401,
-              message: 'Must be logged in to link ' + provider.title + ' account.'
-            };
-          }
+            if (!currentUser) {
+              throw {
+                status: 401,
+                message: 'Must be logged in to link ' + provider.title + ' account.'
+              };
+            }
 
-          // Check if this account has already been linked
-          return formio.resources.submission.model.findOne(
-            {
-              form: currentUser.form,
-              externalIds: {
-                $elemMatch: {
+            // Check if this account has already been linked
+            return formio.resources.submission.model.findOne(
+              {
+                form: currentUser.form,
+                externalIds: {
+                  $elemMatch: {
+                    type: provider.name,
+                    id: userId
+                  }
+                },
+                deleted: {$eq: null}
+              }
+            );
+          })
+          .then(function(linkedSubmission) {
+            if (linkedSubmission) {
+              throw {
+                status: 400,
+                message: 'This ' + provider.title + ' account has already been linked.'
+              };
+            }
+            // Need to get the raw user data so we can see the old externalTokens
+            return formio.resources.submission.model.findOne({
+              _id: currentUser._id
+            });
+          })
+          .then(function(user) {
+            return formio.resources.submission.model.update({
+              _id: user._id
+            }, {
+              $push: {
+                // Add the external ids
+                externalIds: {
                   type: provider.name,
                   id: userId
                 }
               },
-              deleted: {$eq: null}
-            }
-          );
-        }).then(function(linkedSubmission) {
-          if (linkedSubmission) {
-            throw {
-              status: 400,
-              message: 'This ' + provider.title + ' account has already been linked.'
-            };
-          }
-          // Need to get the raw user data so we can see the old externalTokens
-          return formio.resources.submission.model.findOne({
-            _id: currentUser._id
-          });
-        }).then(function(user) {
-          return formio.resources.submission.model.update({
-            _id: user._id
-          }, {
-            $push: {
-              // Add the external ids
-              externalIds: {
-                type: provider.name,
-                id: userId
+              $set: {
+                // Update external tokens with new tokens
+                externalTokens: _(newTokens).concat(user.externalTokens || []).uniq('type').value()
               }
-            },
-            $set: {
-              // Update external tokens with new tokens
-              externalTokens: _(newTokens).concat(user.externalTokens || []).uniq('type').value()
-            }
-          });
-        })
-        .then(function() {
-          // Update current user response
-          return Q.ninvoke(formio.auth, 'currentUser', req, res);
-        })
-        .then(function() {
-          next();
-        }).catch(this.onError(req, res, next));
+            });
+          })
+          .then(function() {
+            // Update current user response
+            return Q.ninvoke(formio.auth, 'currentUser', req, res);
+          })
+          .then(function() {
+            next();
+          })
+          .catch(this.onError(req, res, next));
+      case 'remote':
+        return tokensPromise
+          .then(function(tokens) {
+            const accessToken = _.find(tokens, {type: provider.name});
+            return oauthUtil.settings(req, provider.name)
+              .then(settings => {
+                return provider.getUser(tokens, settings)
+                  .then(data => {
+                    if (data.errorCode) {
+                      throw new Error(data.errorSummary);
+                    }
+
+                    // Assign roles based on settings.
+                    const roles = [];
+                    self.settings.roles.map(map => {
+                      if (!map.claim || _.get(data, map.claim) === map.value) {
+                        roles.push(map.role);
+                      }
+                    });
+
+                    const user = {
+                      _id: provider.getUserId(data),
+                      data,
+                      roles
+                    };
+
+                    const token = {
+                      external: true,
+                      user,
+                      form: {
+                        _id: req.currentForm._id.toString()
+                      },
+                      project: {
+                        _id: req.currentProject._id.toString()
+                      },
+                      externalToken: accessToken
+                    };
+
+                    req.user = user;
+                    req.token = token;
+                    res.token = formio.auth.getToken(token);
+                    req['x-jwt-token'] = res.token;
+
+                    // Set the headers if they haven't been sent yet.
+                    if (!res.headersSent) {
+                      res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
+                      res.setHeader('x-jwt-token', res.token);
+                    }
+                    res.send(user);
+                    return user;
+                  });
+              });
+          })
+          .catch(this.onError(req, res, next));
     }
   };
 
@@ -512,7 +657,7 @@ module.exports = function(router) {
     }
 
     // Non-link association requires a resource setting
-    if (this.settings.association !== 'link' && !this.settings.resource) {
+    if (['existing', 'new'].indexOf(this.settings.association) !== -1 && !this.settings.resource) {
       return res.status(400).send('OAuth Action is missing Resource setting.');
     }
 
@@ -556,9 +701,9 @@ module.exports = function(router) {
               component.oauth = {
                 provider: provider.name,
                 clientId: oauthSettings.clientId,
-                authURI: provider.authURI,
+                authURI: oauthSettings.authURI || provider.authURI,
                 state: state,
-                scope: provider.scope
+                scope: oauthSettings.scope || provider.scope
               };
               if (provider.display) {
                 component.oauth.display = provider.display;
