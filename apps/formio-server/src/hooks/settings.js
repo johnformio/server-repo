@@ -978,12 +978,14 @@ module.exports = function(app) {
             return done();
           }
         });
-        let projectImport = {};
-        let projectKeys = ['name', 'machineName'];
+        let project = {};
+        let projectKeys = ['title', 'name', 'tag', 'description', 'machineName'];
 
-        projectImport[template.machineName || template.name || 'export'] = _.pick(template, projectKeys);
-        projectImport[template.machineName || template.name || 'export'].primary = !!template.isPrimary;
-        steps.unshift(async.apply(_install, template, projectImport));
+        project[template.machineName || template.name || 'export'] = _.pick(template, projectKeys);
+
+        project[template.machineName || template.name || 'export'].primary = !!template.isPrimary;
+
+        steps.unshift(async.apply(_install, template, project));
 
         let _importAccess = (template, items, done) => {
           formioServer.formio.resources.project.model.findOne({_id: template._id}, function(err, project) {
@@ -1050,7 +1052,7 @@ module.exports = function(app) {
           });
         };
 
-        steps.push(async.apply(_importAccess, template, projectImport));
+        steps.push(async.apply(_importAccess, template, project));
         return steps;
       },
 
