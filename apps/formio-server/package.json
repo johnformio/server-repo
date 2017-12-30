@@ -31,7 +31,7 @@
     "edit-google-spreadsheet": "0.2.21",
     "express": "^4.16.2",
     "express-cache-controller": "^1.0.1",
-    "formio": "^1.23.9",
+    "formio": "^1.23.10",
     "formiojs": "^2.25.2",
     "ioredis": "^3.2.2",
     "is-url": "^1.2.1",
