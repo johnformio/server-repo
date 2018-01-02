@@ -1012,6 +1012,10 @@ module.exports = function(app) {
               return done(err);
             }
 
+            if (!project) {
+              return done();
+            }
+
             if ('access' in template) {
               debug.import('start access');
               let permissions = ['create_all', 'read_all', 'update_all', 'delete_all'];
