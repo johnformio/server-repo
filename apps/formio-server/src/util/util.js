@@ -18,7 +18,7 @@ module.exports = {
       return `${encodeURIComponent(k)}=${encodeURIComponent(query[k])}`;
     }).join('&');
   },
-  ssoToken: function(text) {
+  ssoToken(text) {
     const matches = text.match(this.tokenRegex);
     if (matches && matches.length > 1) {
       const parts = matches[1].split('=');
@@ -44,7 +44,7 @@ module.exports = {
     }
     return null;
   },
-  encrypt: function(secret, rawData) {
+  encrypt(secret, rawData) {
     if (!secret || !rawData) {
       return null;
     }
@@ -60,7 +60,7 @@ module.exports = {
       cipher.final()
     ]);
   },
-  decrypt: function(secret, cipherbuffer) {
+  decrypt(secret, cipherbuffer) {
     if (!secret || !cipherbuffer) {
       return null;
     }

@@ -38,7 +38,7 @@ module.exports = app => routes => {
   const revisionPlans = ['trial', 'commercial'];
 
   routes.hooks.put = {
-    before: function(req, res, item, next) {
+    before(req, res, item, next) {
       if (item.components) {
         item.markModified('components');
       }
@@ -57,7 +57,7 @@ module.exports = app => routes => {
         next();
       });
     },
-    after: function(req, res, item, next) {
+    after(req, res, item, next) {
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
         if (
           req.isDraft ||
@@ -76,7 +76,7 @@ module.exports = app => routes => {
   };
 
   routes.hooks.patch = {
-    before: function(req, res, item, next) {
+    before(req, res, item, next) {
       if (item.components) {
         item.markModified('components');
       }
@@ -95,7 +95,7 @@ module.exports = app => routes => {
         return next();
       });
     },
-    after: function(req, res, item, next) {
+    after(req, res, item, next) {
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
         if (
           req.isDraft ||
@@ -114,7 +114,7 @@ module.exports = app => routes => {
   };
 
   routes.hooks.post = {
-    after: function(req, res, item, next) {
+    after(req, res, item, next) {
       if (
         item.revisions &&
         revisionPlans.includes(req.primaryProject.plan)

@@ -24,7 +24,7 @@ module.exports = function(router) {
      * @param payload
      * @returns {Promise.<T>|*}
      */
-    request: function(router, req, res, resource, type, authType, payload) {
+    request(router, req, res, resource, type, authType, payload) {
       // Store the current resource.
       const currentResource = res.resource;
 
@@ -110,7 +110,7 @@ module.exports = function(router) {
      * @param req
      * @returns {*}
      */
-    connectWithCertificate: function(router, req) {
+    connectWithCertificate(router, req) {
       if (req.o365) {
         return req.o365;
       }
@@ -159,7 +159,7 @@ module.exports = function(router) {
      * @param res
      * @returns {*}
      */
-    connectWithOAuth: function(router, req, res) {
+    connectWithOAuth(router, req, res) {
       const token = req.token;
       if (!token) {
         return Q.reject('Must be logged in to connect with Office 365 via OAuth.');
@@ -193,7 +193,7 @@ module.exports = function(router) {
      * @param value
      * @returns {*}
      */
-    getAddress: function(value) {
+    getAddress(value) {
       const address = {};
       if (!value || !value.address_components) {
         return {};
@@ -224,7 +224,7 @@ module.exports = function(router) {
      * @param params
      * @returns {*}
      */
-    getArray: function(array, params) {
+    getArray(array, params) {
       return router.formio.nunjucks.renderObj(array, params);
     },
 
@@ -234,7 +234,7 @@ module.exports = function(router) {
      * @param value
      * @returns {*}
      */
-    getCoordinates: function(value) {
+    getCoordinates(value) {
       if (!value || !value.geometry || !value.geometry.location) {
         return {};
       }
@@ -251,7 +251,7 @@ module.exports = function(router) {
      * @param value
      * @returns {{DisplayName: *, Address: *, Coordinates: *}}
      */
-    getLocation: function(value) {
+    getLocation(value) {
       if (!value) {
         return {};
       }
@@ -269,7 +269,7 @@ module.exports = function(router) {
      * @param value
      * @returns {{Name: *, Address: *}}
      */
-    getEmail: function(value) {
+    getEmail(value) {
       return {
         Name: value,
         Address: value
@@ -282,7 +282,7 @@ module.exports = function(router) {
      * @param value
      * @returns {{EmailAddress: *}}
      */
-    getRecipient: function(value, required) {
+    getRecipient(value, required) {
       const recipient = {
         EmailAddress: this.getEmail(value)
       };
@@ -301,7 +301,7 @@ module.exports = function(router) {
      * @param params
      * @returns {Array}
      */
-    getRecipientsObject: function(emails, required) {
+    getRecipientsObject(emails, required) {
       const recipients = [];
       _.each(emails, function(email) {
         recipients.push(this.getRecipient(email, required));
@@ -316,7 +316,7 @@ module.exports = function(router) {
      * @param params
      * @returns {Array}
      */
-    getRecipients: function(value, params) {
+    getRecipients(value, params) {
       return this.getRecipientsObject(router.formio.nunjucks.renderObj(value, params), true);
     },
 
@@ -326,7 +326,7 @@ module.exports = function(router) {
      * @param body The HTML body of the content.
      * @returns {{ContentType: string, Content: *}}
      */
-    getBodyObject: function(body) {
+    getBodyObject(body) {
       return {
         ContentType: 'HTML',
         Content: body
@@ -340,7 +340,7 @@ module.exports = function(router) {
      * @param params
      * @returns {*|{ContentType, Content}|{ContentType: string, Content: *}}
      */
-    getBody: function(value, params) {
+    getBody(value, params) {
       return this.getBodyObject(router.formio.nunjucks.render(value, params));
     }
   };

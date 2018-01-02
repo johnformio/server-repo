@@ -9,7 +9,7 @@ const util = require('../util/util');
 
 module.exports = function(formio) {
   const ProjectCache = {
-    loadProjectByName: function(req, name, cb) {
+    loadProjectByName(req, name, cb) {
       const cache = formio.cache.cache(req);
       if (cache.projectNames && cache.projectNames[name]) {
         return this.loadProject(req, cache.projectNames[name], cb);
@@ -42,7 +42,7 @@ module.exports = function(formio) {
      * @param req
      * @returns {*}
      */
-    currentProject: function(req) {
+    currentProject(req) {
       const cache = formio.cache.cache(req);
       const id = req.projectId || req.params.projectId;
       if (cache.projects[id]) {
@@ -56,7 +56,7 @@ module.exports = function(formio) {
      * @param req
      * @param cb
      */
-    loadCurrentProject: function(req, cb) {
+    loadCurrentProject(req, cb) {
       let projectId = req.projectId;
       if (req.params.projectId) {
         projectId = req.params.projectId;
@@ -68,7 +68,7 @@ module.exports = function(formio) {
       this.loadProject(req, projectId, cb);
     },
 
-    loadPrimaryProject: function(req, cb) {
+    loadPrimaryProject(req, cb) {
       this.loadCurrentProject(req, function(err, currentProject) {
         if (err) {
           return cb(err);
@@ -96,7 +96,7 @@ module.exports = function(formio) {
      * @param id
      * @param cb
      */
-    loadProject: function(req, id, cb) {
+    loadProject(req, id, cb) {
       id = formio.util.idToString(id);
       const cache = formio.cache.cache(req);
       if (cache.projects[id]) {
@@ -155,7 +155,7 @@ module.exports = function(formio) {
       });
     },
 
-    loadStages: function(req, id, cb) {
+    loadStages(req, id, cb) {
       id = formio.util.idToString(id);
 
       const projectId = formio.util.idToBson(id);

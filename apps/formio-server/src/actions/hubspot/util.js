@@ -11,7 +11,7 @@ module.exports = {
    * @param req
    * @returns {*}
    */
-  connect: function(router, req, next) {
+  connect(router, req, next) {
     router.formio.hook.settings(req, function(err, settings) {
       if (err) {
         debug(err.message || err);

@@ -33,7 +33,7 @@ module.exports = function(formio) {
     // Exchanges authentication code for auth token
     // Returns a promise, or you can provide the next callback arg
     // Resolves with array of tokens defined like externalTokenSchema
-    getTokens: function(req, code, state, redirectURI, next) {
+    getTokens(req, code, state, redirectURI, next) {
       return oauthUtil.settings(req, this.name)
         .then(function(settings) {
           /* eslint-disable camelcase */
@@ -72,7 +72,7 @@ module.exports = function(formio) {
 
     // Gets user information from oauth access token
     // Returns a promise, or you can provide the next callback arg
-    getUser: function(tokens, next) {
+    getUser(tokens, next) {
       const accessToken = _.find(tokens, {type: this.name});
       if (!accessToken) {
         return Q.reject('No access token found');
@@ -105,12 +105,12 @@ module.exports = function(formio) {
     },
 
     // Gets user ID from provider user response from getUser()
-    getUserId: function(user) {
+    getUserId(user) {
       return user.id;
     },
 
     // LinkedIn tokens have no expiration date. If it is invalidated it means they have disabled the app.
-    refreshTokens: function(req, res, user, next) {
+    refreshTokens(req, res, user, next) {
       return Q.reject(`Token has been invalidated, please reauthenticate with ${this.title}.`)
         .nodeify(next);
     }

@@ -19,7 +19,7 @@ module.exports = function(formio) {
     // Gets user token for a provider, and attempts to refresh it
     // if it is expired
     // Returns a promise, or you can provide the next callback arg
-    getUserToken: function(req, res, providerName, userId, next) {
+    getUserToken(req, res, providerName, userId, next) {
       const provider = this.providers[providerName];
       if (!provider) {
         return Q.reject('Invalid provider name');

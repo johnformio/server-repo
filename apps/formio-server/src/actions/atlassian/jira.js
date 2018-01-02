@@ -259,7 +259,7 @@ module.exports = function(router) {
     }
 
     const issue = {
-      create: function(cb) {
+      create(cb) {
         jira.issue.createIssue({
           fields: {
             project: {
@@ -298,7 +298,7 @@ module.exports = function(router) {
           );
         });
       },
-      update: function(cb) {
+      update(cb) {
         // Only update submissions that have been connected to jira.
         if (_.has(res, 'resource.item')) {
           const item = res.resource.item.toObject();
@@ -345,7 +345,7 @@ module.exports = function(router) {
           cb();
         });
       },
-      delete: function(cb) {
+      delete(cb) {
         const deleted = _.get(req, `formioCache.submissions.${_.get(req, 'subId')}`);
         if (!deleted) {
           return cb();

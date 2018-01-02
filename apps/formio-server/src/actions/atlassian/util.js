@@ -251,7 +251,7 @@ module.exports = function(router) {
   return {
     storeOAuthReply: storeOAuthReply,
     authorizeOAuth: authorizeOAuth,
-    getJira: function(settings) {
+    getJira(settings) {
       const opts = {
         host: _.get(settings, 'atlassian.url')
       };

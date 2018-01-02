@@ -34,11 +34,11 @@ module.exports = function(formio) {
     // Display name of the oauth provider
     title: 'Office 365',
 
-    getAuthURI: function(tenant) {
+    getAuthURI(tenant) {
       return `https://login.microsoftonline.com/${tenant}/oauth2/authorize`;
     },
 
-    configureOAuthButton: function(component, settings, state) {
+    configureOAuthButton(component, settings, state) {
       const missing = checkMissing(settings);
 
       if (missing) {
@@ -58,7 +58,7 @@ module.exports = function(formio) {
       }
     },
 
-    isAvailable: function(settings) {
+    isAvailable(settings) {
       return !checkMissing(settings);
     },
 
@@ -77,7 +77,7 @@ module.exports = function(formio) {
     // Exchanges authentication code for auth token
     // Returns a promise, or you can provide the next callback arg
     // Resolves with array of tokens defined like externalTokenSchema
-    getTokens: function(req, code, state, redirectURI, next) {
+    getTokens(req, code, state, redirectURI, next) {
       return Q.ninvoke(formio.hook, 'settings', req)
       .then(function(settings) {
         const missing = checkMissing(settings);
@@ -122,7 +122,7 @@ module.exports = function(formio) {
 
     // Gets user information from oauth access token
     // Returns a promise, or you can provide the next callback arg
-    getUser: function(tokens, next) {
+    getUser(tokens, next) {
       const accessToken = _.find(tokens, {type: this.name});
       if (!accessToken) {
         return Q.reject('No access token found');
@@ -154,13 +154,13 @@ module.exports = function(formio) {
     },
 
     // Gets user ID from provider user response from getUser()
-    getUserId: function(user) {
+    getUserId(user) {
       return user.Id;
     },
 
     // Sends a request to refresh tokens and resolves with new tokens
     // Returns a promise, or you can provide the next callback arg
-    refreshTokens: function(req, res, user, next) {
+    refreshTokens(req, res, user, next) {
       return Q.ninvoke(formio.hook, 'settings', req)
       .then(function(settings) {
         if (

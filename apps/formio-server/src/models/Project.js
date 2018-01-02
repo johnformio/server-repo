@@ -26,20 +26,20 @@ module.exports = function(router) {
         validate: [
           {
             message: 'A Project domain name may only contain letters, numbers, and hyphens (but cannot start or end with a hyphen)',
-            validator: function(value) {
+            validator(value) {
               return !invalidRegex.test(value);
             }
           },
           {
             message: 'This domain is reserved. Please use a different domain.',
-            validator: function(value) {
+            validator(value) {
               return !formio.config.reservedSubdomains || !_.includes(formio.config.reservedSubdomains, value);
             }
           },
           {
             isAsync: true,
             message: 'The Project name must be unique.',
-            validator: function(value, done) {
+            validator(value, done) {
               const search = {
                 name: value,
                 deleted: {$eq: null}
@@ -91,7 +91,7 @@ module.exports = function(router) {
           {
             async: true,
             message: 'Remote already connected to an environment.',
-            validator: function(value, done) {
+            validator(value, done) {
               if (!value || !value.project || !value.project._id) {
                 return done(true);
               }

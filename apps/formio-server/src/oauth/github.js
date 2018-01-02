@@ -41,7 +41,7 @@ module.exports = function(formio) {
     // Exchanges authentication code for access tokens
     // Returns a promise, or you can provide the next callback arg
     // Resolves with array of tokens defined like externalTokenSchema
-    getTokens: function(req, code, state, redirectURI, next) {
+    getTokens(req, code, state, redirectURI, next) {
       return oauthUtil.settings(req, this.name)
       .then(function(settings) {
         /* eslint-disable camelcase */
@@ -78,7 +78,7 @@ module.exports = function(formio) {
 
     // Gets user information from oauth access token
     // Returns a promise, or you can provide the next callback arg
-    getUser: function(tokens, next) {
+    getUser(tokens, next) {
       const accessToken = _.find(tokens, {type: this.name});
       if (!accessToken) {
         return Q.reject('No access token found');
@@ -128,13 +128,13 @@ module.exports = function(formio) {
     },
 
     // Gets user ID from provider user response from getUser()
-    getUserId: function(user) {
+    getUserId(user) {
       return user.id;
     },
 
     // This should never get called, since GitHub tokens don't expire
     // Returns a promise, or you can provide the next callback arg
-    refreshTokens: function(req, res, user, next) {
+    refreshTokens(req, res, user, next) {
       return Q.reject(
         'GitHub tokens don\'t expire for another 200,000 years. Either something went wrong or the end times fallen '
         + 'upon us.'

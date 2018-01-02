@@ -8,7 +8,7 @@ module.exports = function(formio) {
     // Gets available providers
     // Returns a promise, or you can provide the next callback arg
     // Resolves with array of {name, title}
-    availableProviders: function(req, next) {
+    availableProviders(req, next) {
       return Q.ninvoke(formio.hook, 'settings', req)
       .then(function(settings) {
         return _(formio.oauth.providers)
@@ -27,7 +27,7 @@ module.exports = function(formio) {
 
     // Gets settings for given oauth provider name
     // Returns a promise, or you can provide the next callback arg
-    settings: function(req, name, next) {
+    settings(req, name, next) {
       return Q.ninvoke(formio.hook, 'settings', req)
       .then(_.property(`oauth.${name}`))
       .nodeify(next);

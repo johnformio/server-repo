@@ -111,7 +111,7 @@ module.exports = function(schema, options) {
 
   // Decrypt data when converted using toJSON.
   schema.set('toJSON', {
-    transform: function(doc, ret, opts) {
+    transform(doc, ret, opts) {
       delete ret[encryptedName];
       const temp = decrypt(options.secret, doc[encryptedName]);
 
@@ -126,7 +126,7 @@ module.exports = function(schema, options) {
 
   // Decrypt data when converted using toObject.
   schema.set('toObject', {
-    transform: function(doc, ret, opts) {
+    transform(doc, ret, opts) {
       delete ret[encryptedName];
       const temp = decrypt(options.secret, doc[encryptedName]);
 
