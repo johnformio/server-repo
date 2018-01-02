@@ -1,14 +1,14 @@
 'use strict';
 
-var Q = require('q');
-var async = require('async');
+const Q = require('q');
+const async = require('async');
 
 /**
  * Keep track of spark mappings across multiple servers.
  *
  * @constructor
  */
-var SparkCollection = function() {
+const SparkCollection = function() {
   this.sparks = {};
   this.ready = false;
   this.redis = null;
@@ -21,7 +21,7 @@ var SparkCollection = function() {
  * @returns {*|promise}
  */
 SparkCollection.prototype.connect = function(redis) {
-  var deferred = Q.defer();
+  const deferred = Q.defer();
   redis.getDb((err, db) => {
     if (err) {
       return deferred.reject(err.message);
@@ -62,9 +62,9 @@ SparkCollection.prototype.connect = function(redis) {
  * @returns {*}
  */
 SparkCollection.prototype.get = function(key) {
-  var deferred = Q.defer();
+  const deferred = Q.defer();
   if (this.redis) {
-    var promise = Q.ninvoke(this.redis, 'get', 'spark:' + key);
+    const promise = Q.ninvoke(this.redis, 'get', `spark:${key}`);
     if (promise) {
       return promise;
     }
@@ -90,10 +90,10 @@ SparkCollection.prototype.get = function(key) {
  */
 SparkCollection.prototype.set = function(key, obj) {
   if (this.redis) {
-    return Q.ninvoke(this.redis, 'set', 'spark:' + key, obj);
+    return Q.ninvoke(this.redis, 'set', `spark:${key}`, obj);
   }
   else {
-    var deferred = Q.defer();
+    const deferred = Q.defer();
     this.sparks[key] = obj;
     deferred.resolve();
     return deferred.promise;
@@ -106,7 +106,7 @@ SparkCollection.prototype.set = function(key, obj) {
  * @returns {*|promise}
  */
 SparkCollection.prototype.clear = function() {
-  var deferred = Q.defer();
+  const deferred = Q.defer();
   if (this.redis) {
     this.redis.keys('spark:*', function(err, keys) {
       if (err) {
@@ -133,10 +133,10 @@ SparkCollection.prototype.clear = function() {
  */
 SparkCollection.prototype.del = function(key) {
   if (this.redis) {
-    return Q.ninvoke(this.redis, 'del', 'spark:' + key);
+    return Q.ninvoke(this.redis, 'del', `spark:${key}`);
   }
   else if (this.sparks.hasOwnProperty(key)) {
-    var deferred = Q.defer();
+    const deferred = Q.defer();
     delete this.sparks[key];
     deferred.resolve();
     return deferred.promise;

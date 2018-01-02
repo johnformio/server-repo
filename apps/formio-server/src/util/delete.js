@@ -1,7 +1,7 @@
 'use strict';
 
-var _ = require('lodash');
-var async = require('async');
+const _ = require('lodash');
+const async = require('async');
 
 /**
  *
@@ -17,9 +17,9 @@ module.exports = function(formio) {
    * @param {Function} next
    *   The callback function to return the results.
    */
-  var deleteSubmission = function(forms, next) {
-    var debug = require('debug')('formio:delete:project_submission');
-    var util = formio.util;
+  const deleteSubmission = function(forms, next) {
+    const debug = require('debug')('formio:delete:project_submission');
+    const util = formio.util;
     if (!forms) {
       debug('Skipping');
       return next();
@@ -33,7 +33,7 @@ module.exports = function(formio) {
       .map(util.idToBson)
       .value();
 
-    var query = {form: {$in: forms}, deleted: {$eq: null}};
+    const query = {form: {$in: forms}, deleted: {$eq: null}};
     debug(query);
     formio.resources.submission.model.find(query, function(err, submissions) {
       if (err) {
@@ -73,9 +73,9 @@ module.exports = function(formio) {
    * @param {Function} next
    *   The callback function to return the results.
    */
-  var deleteAction = function(forms, next) {
-    var debug = require('debug')('formio:delete:project_action');
-    var util = formio.util;
+  const deleteAction = function(forms, next) {
+    const debug = require('debug')('formio:delete:project_action');
+    const util = formio.util;
     if (!forms) {
       debug('Skipping');
       return next();
@@ -89,7 +89,7 @@ module.exports = function(formio) {
       .map(util.idToBson)
       .value();
 
-    var query = {form: {$in: forms}, deleted: {$eq: null}};
+    const query = {form: {$in: forms}, deleted: {$eq: null}};
     debug(query);
     formio.actions.model.find(query, function(err, actions) {
       if (err) {
@@ -129,16 +129,16 @@ module.exports = function(formio) {
    * @param {Function} next
    *   The callback function to return the results.
    */
-  var deleteForm = function(projectId, next) {
-    var debug = require('debug')('formio:delete:project_form');
-    var util = formio.util;
+  const deleteForm = function(projectId, next) {
+    const debug = require('debug')('formio:delete:project_form');
+    const util = formio.util;
     if (!projectId) {
       debug('Skipping');
       return next();
     }
 
     // Find all the forms that are associated with the given projectId and have not been deleted.
-    var query = {project: util.idToBson(projectId), deleted: {$eq: null}};
+    let query = {project: util.idToBson(projectId), deleted: {$eq: null}};
     debug(query);
     formio.resources.form.model.find(query).select('_id').exec(function(err, formIds) {
       if (err) {
@@ -146,7 +146,7 @@ module.exports = function(formio) {
         return next(err);
       }
       if (!formIds || formIds.length === 0) {
-        debug('No forms found with the project: ' + projectId);
+        debug(`No forms found with the project: ${projectId}`);
         return next();
       }
 
@@ -213,15 +213,15 @@ module.exports = function(formio) {
    * @param {Function} next
    *   The callback function to return the results.
    */
-  var deleteRole = function(projectId, next) {
-    var debug = require('debug')('formio:delete:project_role');
-    var util = formio.util;
+  const deleteRole = function(projectId, next) {
+    const debug = require('debug')('formio:delete:project_role');
+    const util = formio.util;
     if (!projectId) {
       debug('Skipping');
       return next();
     }
 
-    var query = {project: util.idToBson(projectId), deleted: {$eq: null}};
+    const query = {project: util.idToBson(projectId), deleted: {$eq: null}};
     debug(query);
     formio.resources.role.model.find(query, function(err, roles) {
       if (err) {
@@ -229,7 +229,7 @@ module.exports = function(formio) {
         return next(err);
       }
       if (!roles || roles.length === 0) {
-        debug('No roles found with the project: ' + projectId);
+        debug(`No roles found with the project: ${projectId}`);
         return next();
       }
 
@@ -262,15 +262,15 @@ module.exports = function(formio) {
    * @param {Function} next
    *   The callback function to return the results.
    */
-  var deleteProject = function(projectId, next) {
-    var debug = require('debug')('formio:delete:project');
-    var util = formio.util;
+  const deleteProject = function(projectId, next) {
+    const debug = require('debug')('formio:delete:project');
+    const util = formio.util;
     if (!projectId) {
       debug('Skipping');
       return next();
     }
 
-    var query = {_id: util.idToBson(projectId), deleted: {$eq: null}};
+    const query = {_id: util.idToBson(projectId), deleted: {$eq: null}};
     debug(query);
     formio.resources.project.model.findOne(query, function(err, project) {
       if (err) {
@@ -278,7 +278,7 @@ module.exports = function(formio) {
         return next(err.message || err);
       }
       if (!project) {
-        debug('No project found with _id: ' + projectId);
+        debug(`No project found with _id: ${projectId}`);
         return next();
       }
 

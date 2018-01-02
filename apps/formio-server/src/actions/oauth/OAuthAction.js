@@ -1,17 +1,17 @@
 'use strict';
 
-var util = require('formio/src/util/util');
-var debug = require('debug')('formio:action:oauth');
-var _ = require('lodash');
-var crypto = require('crypto');
-var Q = require('q');
-var chance = require('chance').Chance();
+const util = require('formio/src/util/util');
+const debug = require('debug')('formio:action:oauth');
+const _ = require('lodash');
+const crypto = require('crypto');
+const Q = require('q');
+const chance = require('chance').Chance();
 
 module.exports = function(router) {
-  var formio = router.formio;
-  var hook = router.formio.hook;
-  var oauthUtil = require('../../util/oauth')(formio);
-  var auth = require('../../authentication/index')(formio);
+  const formio = router.formio;
+  const hook = router.formio.hook;
+  const oauthUtil = require('../../util/oauth')(formio);
+  const auth = require('../../authentication/index')(formio);
 
   /**
    * OAuthAction class.
@@ -19,7 +19,7 @@ module.exports = function(router) {
    *
    * @constructor
    */
-  var OAuthAction = function(data, req, res) {
+  const OAuthAction = function(data, req, res) {
     formio.Action.call(this, data, req, res);
   };
 
@@ -52,8 +52,8 @@ module.exports = function(router) {
    * @param next
    */
   OAuthAction.settingsForm = function(req, res, next) {
-    var fieldsSrc = formio.hook.alter('path', '/form/' + req.params.formId + '/components', req);
-    var resourceSrc = formio.hook.alter('path', '/form?type=resource', req);
+    const fieldsSrc = formio.hook.alter('path', `/form/${req.params.formId}/components`, req);
+    const resourceSrc = formio.hook.alter('path', '/form?type=resource', req);
     formio.resources.role.model.find(formio.hook.alter('roleQuery', {deleted: {$eq: null}}, req))
       .sort({title: 1})
       .exec(function(err, roles) {
@@ -165,9 +165,9 @@ module.exports = function(router) {
                 return {
                   type: 'select',
                   input: true,
-                  label: 'Autofill ' + field.title + ' Field',
-                  key: 'autofill-' + provider.name + '-' + field.name,
-                  placeholder: 'Select which field to autofill with ' + provider.title + ' account ' + field.title,
+                  label: `Autofill ${field.title} Field`,
+                  key: `autofill-${provider.name}-${field.name}`,
+                  placeholder: `Select which field to autofill with ${provider.title} account ${field.title}`,
                   template: '<span>{{ item.label || item.key }}</span>',
                   dataSrc: 'url',
                   data: {url: fieldsSrc},
@@ -187,8 +187,8 @@ module.exports = function(router) {
   OAuthAction.prototype.authenticate = function(req, res, provider, tokens) {
     debug('Authenticating with Tokens:', tokens);
 
-    var userInfo = null, userId = null, resource = null;
-    var self = this;
+    let userInfo = null, userId = null, resource = null;
+    const self = this;
 
     return Q.all([
       provider.getUser(tokens),
@@ -229,7 +229,7 @@ module.exports = function(router) {
         if (self.settings.association === 'existing') {
           throw {
             status: '404',
-            message: provider.title + ' account has not yet been linked.'
+            message: `${provider.title} account has not yet been linked.`
           };
         }
 
@@ -237,9 +237,9 @@ module.exports = function(router) {
         req.submission = req.submission || {data: {}};
 
         // Find and fill in all the autofill fields
-        var regex = new RegExp('autofill-' + provider.name + '-(.+)');
+        const regex = new RegExp(`autofill-${provider.name}-(.+)`);
         _.each(self.settings, function(value, key) {
-          var match = key.match(regex);
+          const match = key.match(regex);
           if (match && value && userInfo[match[1]]) {
             req.submission.data[value] = userInfo[match[1]];
           }
@@ -254,8 +254,8 @@ module.exports = function(router) {
         debug('oauthDeferredAuth: ', req.oauthDeferredAuth);
 
         debug('Filling in dummy passwords');
-        var tmpPassword = 'temp_' + chance.string({length: 16});
-        var fillPasswords = function(_form) {
+        const tmpPassword = `temp_${chance.string({length: 16})}`;
+        const fillPasswords = function(_form) {
           util.eachComponent(_form.components, function(component) {
             if (
               (component.type === 'password') &&
@@ -278,10 +278,10 @@ module.exports = function(router) {
   };
 
   OAuthAction.prototype.reauthenticateNewResource = function(req, res, provider) {
-    var self = this;
+    const self = this;
     // New resource was created and we need to authenticate it again and assign it an externalId
     // Also confirm role is actually accessible
-    var roleQuery = formio.hook.alter('roleQuery', {_id: self.settings.role, deleted: {$eq: null}}, req);
+    const roleQuery = formio.hook.alter('roleQuery', {_id: self.settings.role, deleted: {$eq: null}}, req);
     return Q.all([
       // Load submission
       formio.resources.submission.model.findOne({_id: res.resource.item._id, deleted: {$eq: null}}),
@@ -294,13 +294,13 @@ module.exports = function(router) {
       if (!submission) {
         throw {
           status: 404,
-          message: 'No submission found with _id: ' + res.resource.item._id
+          message: `No submission found with _id: ${res.resource.item._id}`
         };
       }
       if (!resource) {
         throw {
           status: 404,
-          message: 'No resource found with name: ' + self.settings.resource
+          message: `No resource found with name: ${self.settings.resource}`
         };
       }
       if (!role) {
@@ -316,11 +316,11 @@ module.exports = function(router) {
       role = role.toObject()._id.toString();
 
       // Add and store unique roles only.
-      var temp = submission.toObject().roles || [];
+      let temp = submission.toObject().roles || [];
       temp = _.map(temp, function(r) {
         return r.toString();
       });
-      debug('Adding: ' + role);
+      debug(`Adding: ${role}`);
       temp.push(role);
       temp = _.uniq(temp);
       temp = _.map(temp, function(r) {
@@ -377,8 +377,8 @@ module.exports = function(router) {
    * @param next
    */
   OAuthAction.prototype.initialize = function(method, req, res, next) {
-    var self = this;
-    var provider = formio.oauth.providers[this.settings.provider];
+    const self = this;
+    const provider = formio.oauth.providers[this.settings.provider];
     if (!req.body.oauth || !req.body.oauth[provider.name]) {
       return next();
     }
@@ -387,7 +387,7 @@ module.exports = function(router) {
     req.skipAuth = true;
 
     // Get the response from OAuth.
-    var oauthResponse = req.body.oauth[provider.name];
+    const oauthResponse = req.body.oauth[provider.name];
 
     if (!oauthResponse.code || !oauthResponse.state || !oauthResponse.redirectURI) {
       return res.status(400).send('No authorization code provided.');
@@ -396,7 +396,7 @@ module.exports = function(router) {
     // Do not execute the form CRUD methods.
     req.skipResource = true;
 
-    var tokensPromise = provider.getTokens(req, oauthResponse.code, oauthResponse.state, oauthResponse.redirectURI);
+    const tokensPromise = provider.getTokens(req, oauthResponse.code, oauthResponse.state, oauthResponse.redirectURI);
     if (self.settings.association === 'new' || self.settings.association === 'existing') {
       return tokensPromise.then(function(tokens) {
           return self.authenticate(req, res, provider, tokens);
@@ -406,7 +406,7 @@ module.exports = function(router) {
         }).catch(this.onError(req, res, next));
     }
     else if (self.settings.association === 'link') {
-      var userId, currentUser, newTokens;
+      let userId, currentUser, newTokens;
       req.skipSave = true;
       return tokensPromise.then(function(tokens) {
           newTokens = tokens;
@@ -424,7 +424,7 @@ module.exports = function(router) {
           if (!currentUser) {
             throw {
               status: 401,
-              message: 'Must be logged in to link ' + provider.title + ' account.'
+              message: `Must be logged in to link ${provider.title} account.`
             };
           }
 
@@ -445,7 +445,7 @@ module.exports = function(router) {
           if (linkedSubmission) {
             throw {
               status: 400,
-              message: 'This ' + provider.title + ' account has already been linked.'
+              message: `This ${provider.title} account has already been linked.`
             };
           }
           // Need to get the raw user data so we can see the old externalTokens
@@ -520,8 +520,8 @@ module.exports = function(router) {
       return res.status(400).send('OAuth Action is missing Button setting.');
     }
 
-    var self = this;
-    var provider = formio.oauth.providers[this.settings.provider];
+    const self = this;
+    const provider = formio.oauth.providers[this.settings.provider];
 
     // Modify the button to be an OAuth button
     if (
@@ -535,21 +535,21 @@ module.exports = function(router) {
       debug('Modifying Oauth Button');
       return Q.ninvoke(formio.hook, 'settings', req)
       .then(function(settings) {
-        var component = util.getComponent(res.resource.item.components, self.settings.button);
+        const component = util.getComponent(res.resource.item.components, self.settings.button);
         if (!component) {
           return next();
         }
-        var state = crypto.randomBytes(64).toString('hex');
+        const state = crypto.randomBytes(64).toString('hex');
         if (provider.configureOAuthButton) { // Use custom provider configuration
           provider.configureOAuthButton(component, settings, state);
         }
         else { // Use default configuration, good for most oauth providers
-          var oauthSettings = _.get(settings, 'oauth.' + provider.name);
+          const oauthSettings = _.get(settings, `oauth.${provider.name}`);
           if (oauthSettings) {
             if (!oauthSettings.clientId || !oauthSettings.clientSecret) {
               component.oauth = {
                 provider: provider.name,
-                error: provider.title + ' OAuth provider is missing client ID or client secret'
+                error: `${provider.title} OAuth provider is missing client ID or client secret`
               };
             }
             else {

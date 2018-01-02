@@ -1,13 +1,13 @@
 'use strict';
 
-var Resource = require('resourcejs');
-var config = require('../../config');
-var _ = require('lodash');
-var debug = require('debug')('formio:resources:projects');
+const Resource = require('resourcejs');
+const config = require('../../config');
+const _ = require('lodash');
+const debug = require('debug')('formio:resources:projects');
 
 module.exports = function(router, formioServer) {
-  var formio = formioServer.formio;
-  var removeProjectSettings = function(req, res, next) {
+  const formio = formioServer.formio;
+  const removeProjectSettings = function(req, res, next) {
     if (req.token && req.projectOwner && (req.token.user._id === req.projectOwner)) {
       debug('Allowing the project owner to see/change project settings.');
       return next();
@@ -18,8 +18,8 @@ module.exports = function(router, formioServer) {
     else if (req.projectId && req.user) {
       formio.cache.loadPrimaryProject(req, function(err, project) {
         if (!err) {
-          var access = _.map(_.map(_.filter(project.access, {type: 'team_admin'}), 'roles'), formio.util.idToString);
-          var roles = _.map(req.user.roles, formio.util.idToString);
+          const access = _.map(_.map(_.filter(project.access, {type: 'team_admin'}), 'roles'), formio.util.idToString);
+          const roles = _.map(req.user.roles, formio.util.idToString);
 
           if ( _.intersection(access, roles).length !== 0) {
             return next();
@@ -73,9 +73,9 @@ module.exports = function(router, formioServer) {
   // Load custom CRM action.
   formio.middleware.customCrmAction = require('../middleware/customCrmAction')(formio);
 
-  var hiddenFields = ['deleted', '__v', 'machineName', 'primary'];
+  const hiddenFields = ['deleted', '__v', 'machineName', 'primary'];
   const projectModel = formio.mongoose.model('project');
-  var resource = Resource(
+  const resource = Resource(
     router,
     '',
     'project',
@@ -153,7 +153,7 @@ module.exports = function(router, formioServer) {
       function(req, res, next) {
         // Don't allow some changes if project is protected.
         if ('protect' in req.currentProject && req.currentProject.protect === true && req.body.protect !== false) {
-          let accesses = {};
+          const accesses = {};
           req.currentProject.access.forEach(access => {
             accesses[access.type] = access.roles;
           });
@@ -222,13 +222,13 @@ module.exports = function(router, formioServer) {
         return next(err);
       }
 
-      debug('Project is available: ' + !project);
+      debug(`Project is available: ${!project}`);
       return res.status(200).json({available: !project});
     });
   });
 
   // Expose the atlassian oauth endpoints.
-  var atlassian = require('../actions/atlassian/util')(formioServer);
+  const atlassian = require('../actions/atlassian/util')(formioServer);
   router.post(
     '/project/:projectId/atlassian/oauth/authorize',
     formio.middleware.tokenHandler,
@@ -244,7 +244,7 @@ module.exports = function(router, formioServer) {
   );
 
   // Expose the sql connector endpoint
-  var sqlconnector = require('../actions/sqlconnector/util')(formioServer);
+  const sqlconnector = require('../actions/sqlconnector/util')(formioServer);
   router.get(
     '/project/:projectId/sqlconnector',
     formio.middleware.tokenHandler,

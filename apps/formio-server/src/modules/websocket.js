@@ -1,17 +1,17 @@
 'use strict';
 
-var _ = require('lodash');
+const _ = require('lodash');
 
 module.exports = function(app, config) {
-  var ProjectSocket = require('./websocket/ProjectSocket')(app.formio);
+  const ProjectSocket = require('./websocket/ProjectSocket')(app.formio);
 
   // Create a project socket.
-  var socket = new ProjectSocket(app.server, config);
+  const socket = new ProjectSocket(app.server, config);
 
   // Register all traffic coming through submissions.
   app.use('/project/:projectId/form/:formId/submission', function(req, res, next) {
     // Create the socket request.
-    var request = _.pick(req, [
+    const request = _.pick(req, [
       'method',
       'body',
       'url',

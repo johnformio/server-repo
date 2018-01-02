@@ -1,6 +1,6 @@
 'use strict';
 
-var debug = require('debug')('formio:middleware:projectEnvCreatePlan');
+const debug = require('debug')('formio:middleware:projectEnvCreatePlan');
 
 module.exports = function(formio) {
   return function(req, res, next) {

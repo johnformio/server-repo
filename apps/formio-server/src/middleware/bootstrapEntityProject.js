@@ -1,6 +1,6 @@
 'use strict';
 
-var debug = require('debug')('formio:middleware:bootstrapEntityProject');
+const debug = require('debug')('formio:middleware:bootstrapEntityProject');
 
 /**
  * The Bootstrap Entity Project middleware.

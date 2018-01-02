@@ -1,15 +1,15 @@
 'use strict';
 
 /* eslint-disable no-useless-escape */
-var _ = require('lodash');
-var EncryptedProperty = require('../plugins/EncryptedProperty');
-var invalidRegex = /[^0-9a-zA-Z\-]|^\-|\-$/;
+const _ = require('lodash');
+const EncryptedProperty = require('../plugins/EncryptedProperty');
+const invalidRegex = /[^0-9a-zA-Z\-]|^\-|\-$/;
 /* eslint-enable no-useless-escape */
 
 module.exports = function(router) {
-  var formio = router.formio;
+  const formio = router.formio;
   /* eslint-disable new-cap, max-len */
-  var model = formio.BaseModel({
+  const model = formio.BaseModel({
     schema: new formio.mongoose.Schema({
       title: {
         type: String,
@@ -40,7 +40,7 @@ module.exports = function(router) {
             isAsync: true,
             message: 'The Project name must be unique.',
             validator: function(value, done) {
-              var search = {
+              const search = {
                 name: value,
                 deleted: {$eq: null}
               };
@@ -96,7 +96,7 @@ module.exports = function(router) {
                 return done(true);
               }
 
-              var search = {
+              const search = {
                 'remote.project._id': value.project._id,
                 deleted: {$eq: null}
               };

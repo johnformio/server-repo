@@ -7,7 +7,7 @@
  */
 module.exports = function(router) {
   return function(req, callback) {
-    var whitelist = [
+    let whitelist = [
       'https://form.io',
       'https://test-form.io',
       'https://develop-form.io',
@@ -21,10 +21,10 @@ module.exports = function(router) {
       'http://portal.localhost:3001',
       'http://portal.localhost:9002'
     ];
-    var pass = {
+    const pass = {
       origin: true
     };
-    var fail = {
+    const fail = {
       origin: 'https://form.io'
     };
 
@@ -50,7 +50,7 @@ module.exports = function(router) {
 
       // Build the list of supported domains.
       settings = settings || {};
-      var cors = settings.cors || '*';
+      const cors = settings.cors || '*';
       whitelist = whitelist.concat(cors.split(/[\s,]+/));
 
       // Support * for domain name.

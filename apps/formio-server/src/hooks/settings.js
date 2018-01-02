@@ -1,25 +1,25 @@
 'use strict';
 
-var _ = require('lodash');
-var debug = {
+const _ = require('lodash');
+const debug = {
   settings: require('debug')('formio:settings'),
   error: require('debug')('formio:error'),
   import: require('debug')('formio:project:import')
 };
-var o365Util = require('../actions/office365/util');
-var kickboxValidate = require('../actions/kickbox/validate');
-var nodeUrl = require('url');
-var semver = require('semver');
-let async = require('async');
-var chance = new (require('chance'))();
-var fs = require('fs');
-var url = require('url');
+const o365Util = require('../actions/office365/util');
+const kickboxValidate = require('../actions/kickbox/validate');
+const nodeUrl = require('url');
+const semver = require('semver');
+const async = require('async');
+const chance = new (require('chance'))();
+const fs = require('fs');
+const url = require('url');
 
 module.exports = function(app) {
-  var formioServer = app.formio;
+  const formioServer = app.formio;
 
   // Add the encrypt handler.
-  var encrypt = require('../util/encrypt')(formioServer);
+  const encrypt = require('../util/encrypt')(formioServer);
 
   // Attach the project plans to the formioServer
   formioServer.formio.plans = require('../plans/index')(formioServer);
@@ -62,7 +62,7 @@ module.exports = function(app) {
           case 'alias':
             // Dynamically set the baseUrl.
             formio.middleware.alias.baseUrl = function(req) {
-              const baseUrl = '/project/' + req.projectId;
+              const baseUrl = `/project/${req.projectId}`;
               // Save the alias as well.
               req.pathAlias = url.parse(req.url).pathname.substr(baseUrl.length);
               return baseUrl;
@@ -132,7 +132,7 @@ module.exports = function(app) {
         return false;
       },
       email: function(transport, settings, projectSettings, req, res, params) {
-        var transporter = {};
+        const transporter = {};
         if ((transport === 'outlook') && projectSettings.office365.email) {
           transporter.sendMail = function(mail) {
             o365Util.request(formioServer, req, res, 'sendmail', 'Office365Mail', 'application', {
@@ -179,7 +179,7 @@ module.exports = function(app) {
        */
       actionInfo: function(action) {
         // Modify premium actions if present.
-        var premium = [
+        const premium = [
           'webhook', 'oauth', 'office365contact', 'office365calendar', 'hubspotContact', 'googlesheet', 'jira'
         ];
         if (action.title && action.name && !action.premium && premium.indexOf(action.name) !== -1) {
@@ -204,8 +204,8 @@ module.exports = function(app) {
         if (process.env.DISABLE_RESTRICTIONS) {
           return true;
         }
-        var _debug = require('debug')('formio:settings:resolve');
-        var premium = [
+        const _debug = require('debug')('formio:settings:resolve');
+        const premium = [
           'webhook', 'oauth', 'office365contact', 'office365calendar', 'hubspotContact', 'googlesheet', 'jira'
         ];
 
@@ -217,7 +217,7 @@ module.exports = function(app) {
           return true;
         }
         if (['basic'].indexOf(req.primaryProject.plan) !== -1) {
-          _debug('Skipping ' + action.name + ' action, because the project plan is ' + req.primaryProject.plan);
+          _debug(`Skipping ${action.name} action, because the project plan is ${req.primaryProject.plan}`);
           return false;
         }
 
@@ -226,7 +226,7 @@ module.exports = function(app) {
 
       emailTransports: function(transports, settings) {
         settings = settings || {};
-        var office365 = settings.office365 || {};
+        const office365 = settings.office365 || {};
         if (office365.tenant && office365.clientId && office365.email && office365.cert && office365.thumbprint) {
           transports.push(
             {
@@ -238,7 +238,7 @@ module.exports = function(app) {
         return transports;
       },
       path: function(url, req) {
-        return '/project/' + req.projectId + url;
+        return `/project/${req.projectId}${url}`;
       },
       skip: function(_default, req) {
         if (req.method !== 'GET') {
@@ -255,12 +255,12 @@ module.exports = function(app) {
         return false;
       },
       fieldUrl: function(url, form, field) {
-        return '/project/' + form.project + url;
+        return `/project/${form.project}${url}`;
       },
       host: function(host, req) {
         // Load the project settings.
-        var project = formioServer.formio.cache.currentProject(req);
-        return project.name + '.' + host;
+        const project = formioServer.formio.cache.currentProject(req);
+        return `${project.name}.${host}`;
       },
 
       /**
@@ -292,7 +292,7 @@ module.exports = function(app) {
        */
       tempToken: function(req, res, allow, expire, tokenResponse, cb) {
         if (formioServer.redis.db) {
-          let tempToken = chance.string({
+          const tempToken = chance.string({
             pool: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
             length: 30
           });
@@ -311,7 +311,7 @@ module.exports = function(app) {
       },
 
       isAdmin: function(isAdmin, req) {
-        var _debug = require('debug')('formio:settings:isAdmin');
+        const _debug = require('debug')('formio:settings:isAdmin');
 
         // Allow admin key to act as admin.
         if (process.env.ADMIN_KEY && process.env.ADMIN_KEY === req.headers['x-admin-key']) {
@@ -369,8 +369,8 @@ module.exports = function(app) {
          * @param callback {Function}
          *   The callback function to invoke after completion.
          */
-        var getProjectAccess = function(callback) {
-          var _debug = require('debug')('formio:settings:getAccess#getProjectAccess');
+        const getProjectAccess = function(callback) {
+          const _debug = require('debug')('formio:settings:getAccess#getProjectAccess');
 
           // Build the access object for this project.
           access.project = {};
@@ -388,8 +388,8 @@ module.exports = function(app) {
               return callback(err);
             }
             if (!project) {
-              _debug('No project found with projectId: ' + req.projectId);
-              return callback('No project found with projectId: ' + req.projectId);
+              _debug(`No project found with projectId: ${req.projectId}`);
+              return callback(`No project found with projectId: ${req.projectId}`);
             }
 
             // Add the current project to the req.
@@ -441,8 +441,8 @@ module.exports = function(app) {
          * @param callback {Function}
          *   The callback function to invoke after completion.
          */
-        var getTeamAccess = function(callback) {
-          var _debug = require('debug')('formio:settings:getAccess#getTeamAccess');
+        const getTeamAccess = function(callback) {
+          const _debug = require('debug')('formio:settings:getAccess#getTeamAccess');
 
           // Modify the project access with teams functionality.
           access.project = access.project || {};
@@ -461,8 +461,8 @@ module.exports = function(app) {
               return callback(err);
             }
             if (!project) {
-              _debug('No project found with projectId: ' + req.projectId);
-              return callback('No project found with projectId: ' + req.projectId);
+              _debug(`No project found with projectId: ${req.projectId}`);
+              return callback(`No project found with projectId: ${req.projectId}`);
             }
 
             // Skip teams processing, if this projects plan does not support teams.
@@ -472,7 +472,7 @@ module.exports = function(app) {
 
             // Iterate the project access permissions, and search for teams functionality.
             if (project.access) {
-              var teamAccess = _.filter(project.access, function(permission) {
+              const teamAccess = _.filter(project.access, function(permission) {
                 return _.startsWith(permission.type, 'team_');
               });
               // Initialize the project access.
@@ -559,7 +559,7 @@ module.exports = function(app) {
        * @returns {*}
        */
       resourceAccessFilter: function(query, req, callback) {
-        var _debug = require('debug')('formio:settings:resourceAccessFilter');
+        const _debug = require('debug')('formio:settings:resourceAccessFilter');
         if (!req.projectId || !_.get(req, 'token.user._id')) {
           _debug('Required items not available.');
           return callback(null, query);
@@ -671,8 +671,8 @@ module.exports = function(app) {
         }
         else if (entity && entity.type === 'form') {
           // If this is a create form or index form, use the project as the access entity.
-          var createForm = ((req.method === 'POST') && (Boolean(req.formId) === false));
-          var indexForm = ((req.method === 'GET') && (Boolean(req.formId) === false));
+          const createForm = ((req.method === 'POST') && (Boolean(req.formId) === false));
+          const indexForm = ((req.method === 'GET') && (Boolean(req.formId) === false));
           if (createForm || indexForm) {
             entity = {
               type: 'project',
@@ -681,7 +681,7 @@ module.exports = function(app) {
           }
         }
 
-        var url = nodeUrl.parse(req.url).pathname.split('/');
+        const url = nodeUrl.parse(req.url).pathname.split('/');
         debug.settings(url);
         if (url[5] === 'storage' && ['s3', 'dropbox'].indexOf(url[6]) !== -1) {
           entity = {
@@ -712,8 +712,8 @@ module.exports = function(app) {
        */
       /* eslint-disable max-statements */
       hasAccess: function(_hasAccess, req, access, entity, res) {
-        var _debug = require('debug')('formio:settings:hasAccess');
-        var _url = nodeUrl.parse(req.url).pathname;
+        const _debug = require('debug')('formio:settings:hasAccess');
+        const _url = nodeUrl.parse(req.url).pathname;
 
         // Allow access if admin.
         if (req.isAdmin) {
@@ -781,7 +781,7 @@ module.exports = function(app) {
             }
 
             _debug('Checking for Formio Access.');
-            _debug('Formio URL: ' + _url);
+            _debug(`Formio URL: ${_url}`);
             if (_url === '/current' || _url === '/logout') {
               _debug('true');
               return true;
@@ -807,22 +807,22 @@ module.exports = function(app) {
           }
         }
 
-        else if (req.projectId && req.token && req.url === '/project/' + req.projectId + '/report') {
+        else if (req.projectId && req.token && req.url === `/project/${req.projectId}/report`) {
           return true;
         }
 
         // Allow access to current tag endpoint.
-        else if (req.projectId && req.url === '/project/' + req.projectId + '/tag/current') {
+        else if (req.projectId && req.url === `/project/${req.projectId}/tag/current`) {
           return true;
         }
 
         else if (req.token && access.project && access.project.owner) {
-          var url = req.url.split('/');
+          const url = req.url.split('/');
 
           // Use submission permissions for access to file signing endpoints.
           if (url[5] === 'storage' && ['s3', 'dropbox'].indexOf(url[6]) !== -1) {
             _debug('Checking storage access');
-            var _access = formioServer.formio.access.hasAccess(req, access, {
+            const _access = formioServer.formio.access.hasAccess(req, access, {
               type: 'submission',
               id: req.submissionId
             });
@@ -930,11 +930,11 @@ module.exports = function(app) {
                   return done(err);
                 }
 
-                let body = Object.assign({}, item);
+                const body = Object.assign({}, item);
                 body._rid = result._id;
                 body._vid = result._vid;
                 body._vuser = 'system';
-                body._vnote = 'Deploy version tag ' + template.tag;
+                body._vnote = `Deploy version tag ${template.tag}`;
                 delete body._id;
                 delete body.__v;
 
@@ -962,10 +962,10 @@ module.exports = function(app) {
       },
 
       templateImportSteps: (steps, install, template) => {
-        let _install = install({
+        const _install = install({
           model: formioServer.formio.resources.project.model,
           valid: entity => {
-            let project = entity[template.machineName || template.name || 'project'];
+            const project = entity[template.machineName || template.name || 'project'];
             if (!project || !project.title) {
               return false;
             }
@@ -978,8 +978,8 @@ module.exports = function(app) {
             return done();
           }
         });
-        let project = {};
-        let projectKeys = ['title', 'name', 'tag', 'description', 'machineName'];
+        const project = {};
+        const projectKeys = ['title', 'name', 'tag', 'description', 'machineName'];
 
         project[template.machineName || template.name || 'export'] = _.pick(template, projectKeys);
 
@@ -987,7 +987,7 @@ module.exports = function(app) {
 
         steps.unshift(async.apply(_install, template, project));
 
-        let _importAccess = (template, items, done) => {
+        const _importAccess = (template, items, done) => {
           formioServer.formio.resources.project.model.findOne({_id: template._id}, function(err, project) {
             if (err) {
               return done(err);
@@ -999,7 +999,7 @@ module.exports = function(app) {
 
             if ('access' in template) {
               debug.import('start access');
-              let permissions = ['create_all', 'read_all', 'update_all', 'delete_all'];
+              const permissions = ['create_all', 'read_all', 'update_all', 'delete_all'];
               project.access = _.filter(project.access, access => permissions.indexOf(access.type) === -1);
 
               debug.import(template.roles);
@@ -1022,7 +1022,7 @@ module.exports = function(app) {
               'administrator' in template.roles
             ) {
               // Add all roles to read_all.
-              let readAllRoles = [];
+              const readAllRoles = [];
               Object.keys(template.roles).forEach(roleName => {
                 readAllRoles.push(template.roles[roleName]._id);
               });
@@ -1061,9 +1061,9 @@ module.exports = function(app) {
       },
 
       templateExportSteps: (steps, template, map, options) => {
-        let _exportAccess = function(_export, _map, options, next) {
+        const _exportAccess = function(_export, _map, options, next) {
           // Clean up roles to point to machine names.
-          let accesses = _.cloneDeep(_export.access);
+          const accesses = _.cloneDeep(_export.access);
           _export.access = [];
           _.each(accesses, function(access) {
             if (access.type.indexOf('team_') === -1) {
@@ -1085,7 +1085,7 @@ module.exports = function(app) {
       },
 
       exportOptions: function(options, req, res) {
-        var currentProject = formioServer.formio.cache.currentProject(req);
+        const currentProject = formioServer.formio.cache.currentProject(req);
         options.title = currentProject.title;
         options.tag = currentProject.tag;
         options.name = currentProject.name;
@@ -1097,7 +1097,7 @@ module.exports = function(app) {
       },
 
       importOptions: function(options, req, res) {
-        var currentProject = formioServer.formio.cache.currentProject(req);
+        const currentProject = formioServer.formio.cache.currentProject(req);
         options._id = currentProject._id;
         options.name = currentProject.name;
         options.machineName = currentProject.machineName;
@@ -1106,7 +1106,7 @@ module.exports = function(app) {
       },
 
       requestParams: function(req, params) {
-        var projectId = params.project;
+        let projectId = params.project;
         if (projectId && projectId === 'available') {
           projectId = null;
         }
@@ -1127,8 +1127,8 @@ module.exports = function(app) {
           return next();
         }
 
-        var _debug = require('debug')('formio:settings:user');
-        var util = formioServer.formio.util;
+        const _debug = require('debug')('formio:settings:user');
+        const util = formioServer.formio.util;
         _debug(user);
 
         // Force the user reference to be an object rather than a mongoose document.
@@ -1201,10 +1201,10 @@ module.exports = function(app) {
        *   The modified mongoose request object.
        */
       formQuery: function(query, req, formio) {
-        var _debug = require('debug')('formio:settings:formQuery');
+        const _debug = require('debug')('formio:settings:formQuery');
 
         // Determine which project to use, one in the request, or formio.
-        _debug('formio: ' + formio);
+        _debug(`formio: ${formio}`);
         if (formio && formio === true) {
           return formioServer.formio.cache.loadProjectByName(req, 'formio', function(err, _id) {
             if (err || !_id) {
@@ -1260,19 +1260,19 @@ module.exports = function(app) {
         routes.beforePut = routes.beforePut || [];
         routes.beforeDelete = routes.beforeDelete || [];
 
-        let Moxtra = require('../actions/moxtra/utils')(app.formio);
-        let projectProtectAccess = require('../middleware/projectProtectAccess')(formioServer.formio);
+        const Moxtra = require('../actions/moxtra/utils')(app.formio);
+        const projectProtectAccess = require('../middleware/projectProtectAccess')(formioServer.formio);
 
         _.each(['beforePost', 'beforePut', 'beforeDelete'], handler => {
           routes[handler].unshift(projectProtectAccess);
         });
 
         // On action creation, if the action is a moxtraMessage action, add the user _id to the request payload.
-        let addCurrentUserToAction = (req, res, next) => {
+        const addCurrentUserToAction = (req, res, next) => {
           if (['POST', 'PUT'].indexOf(req.method) === -1 || !req.user) {
             return next();
           }
-          let userActions = ['moxtraMessage', 'moxtraTodo'];
+          const userActions = ['moxtraMessage', 'moxtraTodo'];
           if (userActions.indexOf(_.get(req.body, 'name')) === -1) {
             return next();
           }
@@ -1289,7 +1289,7 @@ module.exports = function(app) {
           return next();
         };
 
-        let addFormioBotToMoxtraOrg = (req, res, next) => {
+        const addFormioBotToMoxtraOrg = (req, res, next) => {
           if (['POST', 'PUT'].indexOf(req.method) === -1 || !req.user) {
             return next();
           }
@@ -1324,7 +1324,7 @@ module.exports = function(app) {
       },
       submissionSchema: function(schema) {
         // Defines what each external Token should be.
-        var ExternalTokenSchema = formioServer.formio.mongoose.Schema({
+        const ExternalTokenSchema = formioServer.formio.mongoose.Schema({
           type: String,
           token: String,
           exp: Date
@@ -1333,15 +1333,15 @@ module.exports = function(app) {
         return schema;
       },
       newRoleAccess: function(handlers, req) {
-        var projectId = req.projectId;
+        const projectId = req.projectId;
 
         /**
          * Async function to add the new role to the read_all access of the project.
          *
          * @param done
          */
-        var updateProject = function(_role, done) {
-          var _debug = require('debug')('formio:settings:updateProject');
+        const updateProject = function(_role, done) {
+          const _debug = require('debug')('formio:settings:updateProject');
 
           formioServer.formio.resources.project.model.findOne({
             _id: formioServer.formio.mongoose.Types.ObjectId(projectId)
@@ -1351,14 +1351,14 @@ module.exports = function(app) {
               return done(err);
             }
             if (!project) {
-              _debug('No Project found with projectId: ' + projectId);
+              _debug(`No Project found with projectId: ${projectId}`);
               return done();
             }
 
             // Add the new roleId to the access list for read_all (project).
             project.access = project.access || [];
-            var found = false;
-            for (var a = 0; a < project.access.length; a++) {
+            let found = false;
+            for (let a = 0; a < project.access.length; a++) {
               if (project.access[a].type === 'read_all') {
                 project.access[a].roles = project.access[a].roles || [];
                 project.access[a].roles.push(_role);
@@ -1391,7 +1391,7 @@ module.exports = function(app) {
         return handlers;
       },
       roleQuery: function(query, req) {
-        var projectId = req.projectId || (req.params ? req.params.projectId : undefined) || req._id;
+        const projectId = req.projectId || (req.params ? req.params.projectId : undefined) || req._id;
         query.project = formioServer.formio.util.idToBson(projectId);
         return query;
       },
@@ -1423,10 +1423,10 @@ module.exports = function(app) {
           }
 
           if (!project) {
-            return done(null, document.project + ':' + machineName);
+            return done(null, `${document.project}:${machineName}`);
           }
 
-          done(null, project.machineName + ':' + machineName);
+          done(null, `${project.machineName}:${machineName}`);
         });
       },
       roleMachineName: function(machineName, document, done) {
@@ -1450,7 +1450,7 @@ module.exports = function(app) {
           return 'export';
         }
 
-        var parts = machineName.split(':');
+        const parts = machineName.split(':');
         if (parts.length === 1) {
           return parts.pop();
         }
@@ -1486,10 +1486,10 @@ module.exports = function(app) {
        *   The current formio core config.
        */
       updateConfig: function(config) {
-        var _debug = require('debug')('formio:settings:config');
+        const _debug = require('debug')('formio:settings:config');
 
-        // Hook the schema var to load the latest public/private schema.
-        var pkg = JSON.parse(fs.readFileSync('./package.json'));
+        // Hook the schema let to load the latest public/private schema.
+        const pkg = JSON.parse(fs.readFileSync('./package.json'));
         if (pkg && pkg.schema && pkg.schema !== null && semver.gt(pkg.schema, config.schema)) {
           config.schema = pkg.schema;
         }
@@ -1510,11 +1510,11 @@ module.exports = function(app) {
        *   The next function to invoke after altering the file list.
        */
       getUpdates: function(files, next) {
-        var _debug = require('debug')('formio:settings:getUpdates');
+        const _debug = require('debug')('formio:settings:getUpdates');
         files = files || [];
 
         _debug(files);
-        var _files = require('../db/updates/index.js');
+        let _files = require('../db/updates/index.js');
         _files = Object.keys(_files);
         // Add the private updates to the original file list and continue.
         files = files.concat(_files);
@@ -1529,18 +1529,18 @@ module.exports = function(app) {
        *   The
        */
       updateLocation: function(name) {
-        var _debug = require('debug')('formio:settings:updateLocation');
-        var update = null;
+        const _debug = require('debug')('formio:settings:updateLocation');
+        let update = null;
 
         try {
           // Attempt to resolve the private update.
-          var _files = require('../db/updates/index.js');
+          const _files = require('../db/updates/index.js');
           if (_files.hasOwnProperty(name)) {
-            _debug('Using ' + name);
+            _debug(`Using ${name}`);
             update = _files[name];
           }
           else {
-            _debug('update not found (' + name + '): ' + Object.keys(_files).join(', '));
+            _debug(`update not found (${name}): ${Object.keys(_files).join(', ')}`);
           }
         }
         catch (e) {

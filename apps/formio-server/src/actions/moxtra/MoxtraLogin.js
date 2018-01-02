@@ -1,15 +1,15 @@
 'use strict';
 
-var Q = require('q');
-var _ = require('lodash');
-var debug = require('debug')('formio:actions:moxtralogin');
+const Q = require('q');
+const _ = require('lodash');
+const debug = require('debug')('formio:actions:moxtralogin');
 
 module.exports = function(router) {
-  var formio = router.formio;
-  var Action = formio.Action;
-  var hook = formio.hook;
-  var util = formio.util;
-  let Moxtra = require('./utils')(router);
+  const formio = router.formio;
+  const Action = formio.Action;
+  const hook = formio.hook;
+  const util = formio.util;
+  const Moxtra = require('./utils')(router);
 
   /**
    * AuthAction class.
@@ -17,7 +17,7 @@ module.exports = function(router) {
    *
    * @constructor
    */
-  var MoxtraLogin = function(data, req, res) {
+  const MoxtraLogin = function(data, req, res) {
     Action.call(this, data, req, res);
   };
 
@@ -53,8 +53,8 @@ module.exports = function(router) {
    * @param next
    */
   MoxtraLogin.settingsForm = function(req, res, next) {
-    var basePath = hook.alter('path', '/form', req);
-    var dataSrc = basePath + '/{{ data.settings.resource }}/components';
+    const basePath = hook.alter('path', '/form', req);
+    const dataSrc = `${basePath}/{{ data.settings.resource }}/components`;
     next(null, [
       {
         type: 'select',
@@ -63,7 +63,7 @@ module.exports = function(router) {
         key: 'resource',
         placeholder: 'Select the resource we should login against.',
         dataSrc: 'url',
-        data: {url: basePath + '?type=resource'},
+        data: {url: `${basePath}?type=resource`},
         valueProperty: '_id',
         template: '<span>{{ item.title }}</span>',
         multiple: false,
@@ -132,7 +132,7 @@ module.exports = function(router) {
         return next();
       }
 
-      let orgId = _.get(req.currentProject, 'settings.moxtra.orgId');
+      const orgId = _.get(req.currentProject, 'settings.moxtra.orgId');
       return Moxtra.getFormioBotToken(req, req.projectId)
       .then(token => Moxtra.removeUserFromOrg(req, orgId, req.subId, token))
       .then(results => {
@@ -151,7 +151,7 @@ module.exports = function(router) {
     }
 
     // Grab the user obj.
-    var user;
+    let user;
     try {
       user = res.resource.item.toObject();
     }
@@ -164,14 +164,14 @@ module.exports = function(router) {
     }
 
     // Check for the require action settings.
-    var errors = [];
+    const errors = [];
     ['firstname', 'lastname'].forEach(function(item) {
       if (!_.has(this.settings, item)) {
         errors.push(item);
       }
     }.bind(this));
     if (errors.length !== 0) {
-      return res.status(400).send('The Moxtra project settings are incomplete. Missing: ' + errors.join(', '));
+      return res.status(400).send(`The Moxtra project settings are incomplete. Missing: ${errors.join(', ')}`);
     }
 
     // They must provide a firstname.
@@ -184,8 +184,8 @@ module.exports = function(router) {
       return res.status(400).send('Last name not provided.');
     }
 
-    var updateUsersToken = function(token) {
-      var deferred = Q.defer();
+    const updateUsersToken = function(token) {
+      const deferred = Q.defer();
 
       // We have to manually manage the externalId upsert, because $ doesnt work with upsert.
       formio.resources.submission.model.find({_id: util.idToBson(user._id)}, function(err, user) {
@@ -193,7 +193,7 @@ module.exports = function(router) {
           return deferred.reject('Could not load the user.');
         }
 
-        var external = user.externalIds || [];
+        let external = user.externalIds || [];
         external = _.reject(external, {type: 'moxtra'});
         external.push({
           type: 'moxtra',

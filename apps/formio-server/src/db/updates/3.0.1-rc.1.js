@@ -1,7 +1,7 @@
 'use strict';
 
-var _ = require('lodash');
-var async = require('async');
+let _ = require('lodash');
+let async = require('async');
 
 /**
  * Update 3.0.1-rc.1
@@ -14,12 +14,12 @@ var async = require('async');
  * @param done
  */
 module.exports = function(db, config, tools, done) {
-  var projects = db.collection('projects');
-  var forms = db.collection('forms');
-  var submissions = db.collection('submissions');
+  let projects = db.collection('projects');
+  let forms = db.collection('forms');
+  let submissions = db.collection('submissions');
 
   // Get the formio project.
-  var getFormio = function(cb) {
+  let getFormio = function(cb) {
     projects.findOne({deleted: {$eq: null}, name: 'formio'}, function(err, project) {
       if(err) {
         return cb(err);
@@ -30,7 +30,7 @@ module.exports = function(db, config, tools, done) {
   };
 
   // Get the formio form for teams.
-  var getTeams = function(project, cb) {
+  let getTeams = function(project, cb) {
     forms.findOne({deleted: {$eq: null}, project: project._id, name: 'team'}, function(err, form) {
       if(err) {
         return cb(err);
@@ -41,7 +41,7 @@ module.exports = function(db, config, tools, done) {
   };
 
   // Remove the old teams with private information inside them.
-  var removeOldTeams = function(project, form, cb) {
+  let removeOldTeams = function(project, form, cb) {
     submissions.deleteMany({form: form._id}, function(err) {
       if(err) {
         return cb(err);
@@ -52,7 +52,7 @@ module.exports = function(db, config, tools, done) {
   };
 
   // Update the formio teams form to be up-to-date.
-  var updateTeams = function(project, form, cb) {
+  let updateTeams = function(project, form, cb) {
     // Update the name to be required.
     form.components[0].validate.required = true;
 
@@ -133,7 +133,7 @@ module.exports = function(db, config, tools, done) {
     });
   };
 
-  var convertProjectPlan = function(from, to, cb) {
+  let convertProjectPlan = function(from, to, cb) {
     projects.updateMany({plan: from}, {$set: {plan: to}}, function(err) {
       if(err) {
         return cb(err);
@@ -143,7 +143,7 @@ module.exports = function(db, config, tools, done) {
     });
   };
 
-  var updateProjectPlans = function(cb) {
+  let updateProjectPlans = function(cb) {
     async.series([
       async.apply(convertProjectPlan, 'basic', 'independent'),
       async.apply(convertProjectPlan, 'community', 'basic'),

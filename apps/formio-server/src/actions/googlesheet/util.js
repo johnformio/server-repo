@@ -1,7 +1,7 @@
 /*jslint node: true */
 'use strict';
 
-var _ = require('lodash');
+const _ = require('lodash');
 
 module.exports = {
   /**

@@ -1,14 +1,14 @@
 'use strict';
 
-var _ = require('lodash');
-var debug = require('debug')('formio:actions:jira');
-var async = require('async');
+const _ = require('lodash');
+const debug = require('debug')('formio:actions:jira');
+const async = require('async');
 
 module.exports = function(router) {
-  var atlassian = require('./util')(router);
-  var Action = router.formio.Action;
-  var formio = router.formio;
-  var hook = router.formio.hook;
+  const atlassian = require('./util')(router);
+  const Action = router.formio.Action;
+  const formio = router.formio;
+  const hook = router.formio.hook;
 
   /**
    * JiraAction class.
@@ -16,7 +16,7 @@ module.exports = function(router) {
    *
    * @constructor
    */
-  var JiraAction = function(data, req, res) {
+  const JiraAction = function(data, req, res) {
     Action.call(this, data, req, res);
   };
 
@@ -37,8 +37,8 @@ module.exports = function(router) {
   };
 
   JiraAction.settingsForm = function(req, res, next) {
-    var jira = null;
-    var settingsForm = [
+    let jira = null;
+    const settingsForm = [
       {
         conditional: {
           eq: '',
@@ -159,8 +159,8 @@ module.exports = function(router) {
             }
 
             // Filter non-input components.
-            var components = [];
-            var emailComponents = [];
+            const components = [];
+            const emailComponents = [];
             formio.util.eachComponent(form.components, function(component) {
               if (
                 !formio.util.isLayoutComponent(component) &&
@@ -249,16 +249,16 @@ module.exports = function(router) {
       return next();
     }
 
-    var jira = null;
-    var settings = this.settings;
-    var _issue = undefined;
+    let jira = null;
+    const settings = this.settings;
+    let _issue = undefined;
 
     // Only block on the external request, if configured
     if (!_.has(settings, 'block') || settings.block === false) {
       return next();
     }
 
-    var issue = {
+    const issue = {
       create: function(cb) {
         jira.issue.createIssue({
           fields: {
@@ -301,7 +301,7 @@ module.exports = function(router) {
       update: function(cb) {
         // Only update submissions that have been connected to jira.
         if (_.has(res, 'resource.item')) {
-          var item = res.resource.item.toObject();
+          const item = res.resource.item.toObject();
           if (!_.has(item, 'externalIds')) {
             return cb('No Jira issue is connected to this submission');
           }
@@ -324,7 +324,7 @@ module.exports = function(router) {
           return cb('No Jira issue id set on this submission');
         }
 
-        debug('issueId: ' + _issue);
+        debug(`issueId: ${_issue}`);
         jira.issue.editIssue({
           issue: {
             fields: {
@@ -346,7 +346,7 @@ module.exports = function(router) {
         });
       },
       delete: function(cb) {
-        var deleted = _.get(req, 'formioCache.submissions.' + _.get(req, 'subId'));
+        const deleted = _.get(req, `formioCache.submissions.${_.get(req, 'subId')}`);
         if (!deleted) {
           return cb();
         }
@@ -364,7 +364,7 @@ module.exports = function(router) {
           return cb('No Jira issue id set on this submission');
         }
 
-        debug('issueId: ' + _issue);
+        debug(`issueId: ${_issue}`);
         jira.issue.deleteIssue({
           issueId: _issue
         }, function(err, issue) {
@@ -428,7 +428,7 @@ module.exports = function(router) {
             issue.delete(cb);
             break;
           default:
-            return cb('Unknown method: ' + req.method.toLowerCase());
+            return cb(`Unknown method: ${req.method.toLowerCase()}`);
         }
       },
       function assignUsers(cb) {
@@ -438,7 +438,7 @@ module.exports = function(router) {
          * @param user
          * @param callback
          */
-        var assign = function(user, callback) {
+        const assign = function(user, callback) {
           jira.issue.assignIssue({
             issueId: _issue,
             assignee: _.get(user, 'name') || null
@@ -456,7 +456,7 @@ module.exports = function(router) {
 
         // Only attempt to assign users on post/put methods.
         if (req.method.toLowerCase() === 'delete' || req.method.toLowerCase() === 'get') {
-          debug('Skipping user assignment (' + req.method.toLowerCase() + ')');
+          debug(`Skipping user assignment (${req.method.toLowerCase()})`);
           return cb(null, _issue);
         }
 
@@ -483,8 +483,8 @@ module.exports = function(router) {
 
           // If no users were returned, attempt to create one.
           if (users.length === 0) {
-            var email = _.get(_.get(req, 'body.data'), _.get(settings, 'user'));
-            var username = email;
+            const email = _.get(_.get(req, 'body.data'), _.get(settings, 'user'));
+            let username = email;
             if (email.toString().indexOf('@') !== -1) {
               username = _.first(email.split('@'));
             }

@@ -1,11 +1,11 @@
 'use strict';
 
-var Q = require('q');
-let debug = require('debug')('formio:payment:upgrade');
+const Q = require('q');
+const debug = require('debug')('formio:payment:upgrade');
 const _merge = require('lodash/merge');
 
 module.exports = function(formio) {
-  var emailer = require('formio/src/util/email')(formio);
+  const emailer = require('formio/src/util/email')(formio);
 
   return function(req, res, next) {
     new Promise((resolve, reject) => {
@@ -28,7 +28,7 @@ module.exports = function(formio) {
       if (project.owner.toString() !== req.user._id.toString()) {
         throw 'Only project owners can upgrade a project';
       }
-      let billing = project.billing || {};
+      const billing = project.billing || {};
 
       return formio.payment.userHasPaymentInfo(req)
       .then(function(hasPayment) {
@@ -71,27 +71,27 @@ module.exports = function(formio) {
         const direction = plans.indexOf(project.plan) < plans.indexOf(req.body.plan) ? 'Upgrade' : 'Downgrade';
 
         /* eslint-disable max-len */
-        var emailSettings = {
+        const emailSettings = {
           transport: 'default',
           from: 'no-reply@form.io',
           emails: ['payment@form.io'],
-          subject: 'Project ' + direction + ' Notification',
-          message: '<p>A project has been ' + direction.toLowerCase() + 'd from <strong>{{project.plan}}</strong> to <strong>{{newPlan}}</strong>.</p>' +
-          '<p><ul>' +
-          '<li>Username: {{user.data.name}}</li>' +
-          '<li>Name: {{user.data.fullName}}</li>' +
-          '<li>Email: {{user.data.email}}</li>' +
-          '<li>User ID: {{user._id}}</li><br>' +
-          '<li>Project Title: {{project.title}}</li>' +
-          '<li>Old Plan: {{project.plan}}</li>' +
-          '<li>New Plan: {{newPlan}}</li>' +
-          '<li>Project ID: {{project._id}}</li>' +
-          '<li>API Servers: {{servers.api}}</li>' +
-          '<li>PDF Servers: {{servers.pdf}}</li>' +
-          '</ul></p>'
+          subject: `Project ${direction} Notification`,
+          message: `<p>A project has been ${direction.toLowerCase()}d from <strong>{{project.plan}}</strong> to <strong>{{newPlan}}</strong>.</p>` +
+          `<p><ul>` +
+          `<li>Username: {{user.data.name}}</li>` +
+          `<li>Name: {{user.data.fullName}}</li>` +
+          `<li>Email: {{user.data.email}}</li>` +
+          `<li>User ID: {{user._id}}</li><br>` +
+          `<li>Project Title: {{project.title}}</li>` +
+          `<li>Old Plan: {{project.plan}}</li>` +
+          `<li>New Plan: {{newPlan}}</li>` +
+          `<li>Project ID: {{project._id}}</li>` +
+          `<li>API Servers: {{servers.api}}</li>` +
+          `<li>PDF Servers: {{servers.pdf}}</li>` +
+          `</ul></p>`
         };
         /* eslint-enable max-len */
-        var params = {project: project, user: req.user, newPlan: req.body.plan, servers: billing.servers};
+        const params = {project: project, user: req.user, newPlan: req.body.plan, servers: billing.servers};
         return Q.ninvoke(emailer, 'send', req, res, emailSettings, params);
       });
     })

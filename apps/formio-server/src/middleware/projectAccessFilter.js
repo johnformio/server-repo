@@ -1,7 +1,7 @@
 'use strict';
 
-var _ = require('lodash');
-var debug = require('debug')('formio:middleware:projectAccessFilter');
+const _ = require('lodash');
+const debug = require('debug')('formio:middleware:projectAccessFilter');
 
 module.exports = function(formio) {
   /**
@@ -30,7 +30,7 @@ module.exports = function(formio) {
     }
 
     // All of the valid access ids for this project.
-    var accessIds = [];
+    let accessIds = [];
 
     // If this is remote access, check the permissions.
     if (req.remotePermission) {
@@ -47,7 +47,7 @@ module.exports = function(formio) {
         return res.sendStatus(400);
       }
       if (!project.owner) {
-        debug('No project owner found... ' + project._id);
+        debug(`No project owner found... ${project._id}`);
         return res.sendStatus(500);
       }
 
@@ -66,7 +66,7 @@ module.exports = function(formio) {
         /**
          * Filter the access obj in the current request based on the calculated accessIds.
          */
-        var filterAccess = function() {
+        const filterAccess = function() {
           // Filter each set of roles to only include roles in the accessIds list.
           req.body.access = _.filter(req.body.access, function(permission) {
             permission.roles = permission.roles || [];
@@ -78,7 +78,7 @@ module.exports = function(formio) {
         // Only proceed with teams access check if the project plan supports teams.
         project.plan = project.plan || '';
         if (!(project.plan === 'team' || project.plan === 'commercial' || project.plan === 'trial')) {
-          debug('Skipping team access check, plan: ' + project.plan);
+          debug(`Skipping team access check, plan: ${project.plan}`);
           filterAccess();
           return next();
         }

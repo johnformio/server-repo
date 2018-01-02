@@ -1,11 +1,11 @@
 'use strict';
 
-var debug = require('debug')('formio:resource:tag');
+const debug = require('debug')('formio:resource:tag');
 
 module.exports = function(router) {
-  var formio = router.formio;
+  const formio = router.formio;
   /* eslint-disable new-cap */
-  var model = formio.BaseModel({
+  const model = formio.BaseModel({
     schema: new formio.mongoose.Schema({
       project: {
         type: router.formio.mongoose.Schema.Types.ObjectId,
@@ -39,7 +39,7 @@ module.exports = function(router) {
 
   // Validate the uniqueness of the value given for the tag.
   model.schema.path('tag').validate(function(value, done) {
-    var search = {
+    const search = {
       project: this.project,
       tag: value,
       deleted: {$eq: null}

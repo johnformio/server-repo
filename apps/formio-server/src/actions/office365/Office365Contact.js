@@ -1,13 +1,13 @@
 'use strict';
 
-var _ = require('lodash');
+const _ = require('lodash');
 
 module.exports = function(router) {
-  var util = require('./util')(router);
-  var hook = router.formio.hook;
+  const util = require('./util')(router);
+  const hook = router.formio.hook;
 
   // The available fields.
-  var office365Fields = {
+  const office365Fields = {
     AssistantName: {
       title: 'Assistant Name',
       type: 'string'
@@ -124,7 +124,7 @@ module.exports = function(router) {
    *
    * @constructor
    */
-  var Office365ContactAction = function(data, req, res) {
+  const Office365ContactAction = function(data, req, res) {
     router.formio.Action.call(this, data, req, res);
   };
 
@@ -146,7 +146,7 @@ module.exports = function(router) {
 
   Office365ContactAction.settingsForm = function(req, res, next) {
     // Create the panel for all the fields.
-    var fieldPanel = {
+    const fieldPanel = {
       type: 'panel',
       theme: 'info',
       title: 'Office 365 Fields',
@@ -155,14 +155,14 @@ module.exports = function(router) {
     };
 
     // Create the select items for each office 365 field.
-    var dataSrc = router.formio.hook.alter('path', '/form/' + req.params.formId + '/components', req);
+    const dataSrc = router.formio.hook.alter('path', `/form/${req.params.formId}/components`, req);
     _.each(office365Fields, function(field, fieldKey) {
       fieldPanel.components.push({
         type: 'select',
         input: true,
-        label: field.title + ' Field',
+        label: `${field.title} Field`,
         key: fieldKey,
-        placeholder: 'Select the ' + field.title + ' field',
+        placeholder: `Select the ${field.title} field`,
         template: '<span>{{ item.label || item.key }}</span>',
         dataSrc: 'url',
         data: {url: dataSrc},
@@ -222,7 +222,7 @@ module.exports = function(router) {
       return next();
     }
 
-    var payload = {};
+    const payload = {};
 
     // Skip if there are no settings.
     if (!this.settings) {
@@ -230,7 +230,7 @@ module.exports = function(router) {
     }
 
     // Default authType to 'application'
-    var authType = this.settings.authType || 'application';
+    const authType = this.settings.authType || 'application';
 
     // Only add the payload for post and put.
     if (req.method === 'POST' || req.method === 'PUT') {
@@ -242,11 +242,11 @@ module.exports = function(router) {
         }
 
         // Get the data.
-        var data = req.body.data[formKey];
+        let data = req.body.data[formKey];
 
         // Get the data type and normalize it.
-        var dataType = office365Fields[o365Key].type;
-        var isArray = (dataType.indexOf('array[') === 0);
+        let dataType = office365Fields[o365Key].type;
+        const isArray = (dataType.indexOf('array[') === 0);
         dataType = dataType.replace(/^array\[/, '');
         dataType = dataType.replace(/]$/, '');
 

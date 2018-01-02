@@ -1,12 +1,12 @@
 'use strict';
 
-let _ = require('lodash');
-let debug = require('debug')('formio:logger');
+const _ = require('lodash');
+const debug = require('debug')('formio:logger');
 
 module.exports = (config) => {
-  let utils = require('./utils');
-  let ConsoleLogger = require('./transports/console')(config, utils);
-  let FormioLogger = require('./transports/formio')(config, utils);
+  const utils = require('./utils');
+  const ConsoleLogger = require('./transports/console')(config, utils);
+  const FormioLogger = require('./transports/formio')(config, utils);
 
   /**
    * Middleware to catch any generic error originating in an express route.
@@ -19,9 +19,9 @@ module.exports = (config) => {
    * @param next
    * @returns {Promise.<TResult>}
    */
-  let middleware = (err, req, res, next) => {
+  const middleware = (err, req, res, next) => {
     // Build the handlers list, and invoke each with the err and req.
-    let handlers = _([
+    const handlers = _([
       ConsoleLogger,
       FormioLogger
     ])

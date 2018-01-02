@@ -79,17 +79,17 @@ config.reservedSubdomains.concat(config.formio.reservedForms);
 // Set the App settings.
 var domain = process.env.DOMAIN || 'form.io';
 var port = process.env.PORT || 80;
-var host = protocol + '://' + domain;
-var apiHost = protocol + '://api.' + domain;
-var formioHost = protocol + '://' + project + '.' + domain;
+var host = `${protocol  }://${  domain}`;
+var apiHost = `${protocol  }://api.${  domain}`;
+var formioHost = `${protocol  }://${  project  }.${  domain}`;
 
 // Setup Google Analytics.
 config.gaTid = process.env.GOOGLE_ANALYTICS_TID || '';
 
 if (port !== 80) {
-  host += ':' + port;
-  apiHost += ':' + port;
-  formioHost += ':' + port;
+  host += `:${  port}`;
+  apiHost += `:${  port}`;
+  formioHost += `:${  port}`;
 }
 
 // Configure app server settings.
@@ -99,7 +99,7 @@ config.protocol = protocol;
 config.domain = domain;
 config.formio.domain = domain;
 config.formio.protocol = protocol;
-config.formio.baseUrl = domain + (port !== 80 ? ':' + port : '');
+config.formio.baseUrl = domain + (port !== 80 ? `:${  port}` : '');
 config.port = port;
 config.host = host;
 
@@ -126,15 +126,15 @@ if (process.env.MONGO_PORT_27017_TCP_ADDR) {
   // This is compatible with docker legacy linking.
   var mongoAddr = process.env.MONGO_PORT_27017_TCP_ADDR || 'mongo';
   var mongoPort = process.env.MONGO_PORT_27017_TCP_PORT || 27017;
-  config.formio.mongo = 'mongodb://' + mongoAddr + ':' + mongoPort + '/' + mongoCollection;
+  config.formio.mongo = `mongodb://${  mongoAddr  }:${  mongoPort  }/${  mongoCollection}`;
 }
 else {
   if (config.docker) {
     // New docker network linking. Assumes linked with 'mongo' alias.
-    config.formio.mongo = 'mongodb://mongo/' + mongoCollection;
+    config.formio.mongo = `mongodb://mongo/${  mongoCollection}`;
   }
   else {
-    config.formio.mongo = 'mongodb://localhost:27017/' + mongoCollection;
+    config.formio.mongo = `mongodb://localhost:27017/${  mongoCollection}`;
   }
 }
 
@@ -143,7 +143,7 @@ if (process.env.REDIS_ADDR || process.env.REDIS_PORT_6379_TCP_ADDR) {
   var addr = process.env.REDIS_ADDR || process.env.REDIS_PORT_6379_TCP_ADDR;
   var redisPort = process.env.REDIS_PORT || process.env.REDIS_PORT_6379_TCP_PORT;
   config.redis = {
-    url: 'redis://' + addr + ':' + redisPort
+    url: `redis://${  addr  }:${  redisPort}`
   };
 }
 else {

@@ -1,14 +1,14 @@
 'use strict';
 
-var _ = require('lodash');
-var async = require('async');
-var debug = require('debug')('formio:action:sqlconnector');
-var Q = require('q');
-var request = require('request');
+const _ = require('lodash');
+const async = require('async');
+const debug = require('debug')('formio:action:sqlconnector');
+const Q = require('q');
+const request = require('request');
 
 module.exports = function(router) {
-  var Action = router.formio.Action;
-  var formio = router.formio;
+  const Action = router.formio.Action;
+  const formio = router.formio;
 
   /**
    * SQLConnector class.
@@ -16,7 +16,7 @@ module.exports = function(router) {
    *
    * @constructor
    */
-  var SQLConnector = function(data, req, res) {
+  const SQLConnector = function(data, req, res) {
     Action.call(this, data, req, res);
   };
 
@@ -48,7 +48,7 @@ module.exports = function(router) {
         return res.status(400).send('No project settings were found for the SQL Connector.');
       }
 
-      var missingSetting = _.find(['host', 'type'], function(prop) {
+      const missingSetting = _.find(['host', 'type'], function(prop) {
         return !settings.sqlconnector[prop];
       });
       if (missingSetting) {
@@ -56,7 +56,7 @@ module.exports = function(router) {
         return res.status(400).send('The SQL Connector is missing required settings.');
       }
 
-      var form = [];
+      const form = [];
       async.waterfall([
         function addBlockCheckbox(cb) {
           form.push({
@@ -126,7 +126,7 @@ module.exports = function(router) {
               }
 
               // Filter non-input components.
-              var components = [];
+              const components = [];
               formio.util.eachComponent(form.components, function(component) {
                 if (
                   !formio.util.isLayoutComponent(component) &&
@@ -248,9 +248,9 @@ module.exports = function(router) {
    * @param {string} remoteId
    *   The external resource id.
    */
-  var addExternalId = function(localId, remoteId) {
-    var _find = {_id: localId};
-    var _update = {
+  const addExternalId = function(localId, remoteId) {
+    const _find = {_id: localId};
+    const _update = {
       $push: {
         externalIds: {
           type: 'sqlconnector',
@@ -271,9 +271,8 @@ module.exports = function(router) {
    * @returns {string|undefined}
    *   The external id for the sqlconnector in the submission if defined.
    */
-  var getSubmissionId = function(req, res) {
-    var id;
-    var external;
+  const getSubmissionId = function(req, res) {
+    let external;
 
     // If an item was included in the response
     if (_.has(res, 'resource.item') && req.method !== 'DELETE') {
@@ -282,7 +281,7 @@ module.exports = function(router) {
       });
     }
     else if (req.method === 'DELETE') {
-      var deleted = _.get(req, 'formioCache.submissions.' + _.get(req, 'subId'));
+      const deleted = _.get(req, `formioCache.submissions.${_.get(req, 'subId')}`);
       if (!deleted) {
         return undefined;
       }
@@ -291,7 +290,7 @@ module.exports = function(router) {
       });
     }
 
-    id = external
+    const id = external
       ? _.get(external, 'id')
       : undefined;
 
@@ -311,7 +310,7 @@ module.exports = function(router) {
    *   The callback function to execute upon completion.
    */
   SQLConnector.prototype.resolve = function(handler, method, req, res, next) { // eslint-disable-line max-statements
-    var settings = this.settings;
+    const settings = this.settings;
     debug('settings:', settings);
 
     // Only block on the external request, if configured
@@ -319,7 +318,7 @@ module.exports = function(router) {
       next(); // eslint-disable-line callback-return
     }
 
-    var handleErrors = function(err) {
+    const handleErrors = function(err) {
       debug(err);
       try {
         return Q()
@@ -329,13 +328,13 @@ module.exports = function(router) {
             return;
           }
 
-          var localId = _.get(res, 'resource.item._id');
+          const localId = _.get(res, 'resource.item._id');
           if (!localId) {
             return;
           }
 
-          var _find = {_id: localId};
-          var _update = {
+          const _find = {_id: localId};
+          const _update = {
             $set: {
               deleted: Date.now()
             }
@@ -360,12 +359,12 @@ module.exports = function(router) {
 
     try {
       method = req.method.toString().toLowerCase();
-      var options = {
+      const options = {
         method: method
       };
 
-      var primary = this.settings.primary;
-      var project = formio.cache.currentProject(req);
+      const primary = this.settings.primary;
+      let project = formio.cache.currentProject(req);
       if (project === null || project === undefined) {
         return handleErrors('No project found.');
       }
@@ -387,20 +386,20 @@ module.exports = function(router) {
       }
 
       // Build the base url.
-      options.url = _.get(project, 'settings.sqlconnector.host') + '/' + this.settings.table;
+      options.url = `${_.get(project, 'settings.sqlconnector.host')}/${this.settings.table}`;
 
       // If this was not a post request, determine which existing resource we are modifying.
       if (method !== 'post') {
-        var externalId = getSubmissionId(req, res);
+        const externalId = getSubmissionId(req, res);
         if (externalId !== undefined) {
-          options.url += '/' + externalId;
+          options.url += `/${externalId}`;
         }
       }
 
       // If this is a create/update, determine what to send in the request body.
       if (['post', 'put'].indexOf(method) !== -1) {
         options.json = true;
-        var item = _.has(res, 'resource.item')
+        const item = _.has(res, 'resource.item')
           ? (_.get(res, 'resource.item')).toObject()
           : _.get(req, 'body');
 
@@ -435,29 +434,29 @@ module.exports = function(router) {
                 throw new Error((response.body || '').toString().replace(/<br>/, ''));
               }
 
-              var results = _.get(response, 'body.rows');
+              const results = _.get(response, 'body.rows');
               if (!(results instanceof Array)) {
                 // No clue what to do here.
                 throw new Error(
-                  'Expected array of results, got ' + typeof results + '(' + JSON.stringify(results) + ')'
+                  `Expected array of results, got ${typeof results}(${JSON.stringify(results)})`
                 );
               }
               if (results.length === 1) {
                 return results[0];
               }
 
-              throw new Error('More than one result: ' + results.length);
+              throw new Error(`More than one result: ${results.length}`);
             })
             .then(function(remoteItem) {
               // Get the localId
-              var localId = _.get(res, 'resource.item._id');
+              const localId = _.get(res, 'resource.item._id');
               if (!localId) {
-                throw new Error('Unknown local item id: ' + localId);
+                throw new Error(`Unknown local item id: ${localId}`);
               }
               // Get the remoteId
-              var remoteId = _.get(remoteItem, primary);
+              const remoteId = _.get(remoteItem, primary);
               if (!remoteId && remoteId !== 0) {
-                throw new Error('Unknown remote item id (' + remoteId + ') for primary key.');
+                throw new Error(`Unknown remote item id (${remoteId}) for primary key.`);
               }
 
               if (method === 'post') {

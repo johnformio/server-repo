@@ -1,14 +1,14 @@
 'use strict';
 
-let _ = require('lodash');
-let debug = require('debug')('formio:actions:moxtramessage');
+const _ = require('lodash');
+const debug = require('debug')('formio:actions:moxtramessage');
 
 module.exports = function(router) {
-  let formio = router.formio;
-  let Action = formio.Action;
-  let Moxtra = require('./utils')(router);
-  let Thread = require('formio/src/worker/Thread');
-  let Nunjucks = require('formio/src/util/email')(formio);
+  const formio = router.formio;
+  const Action = formio.Action;
+  const Moxtra = require('./utils')(router);
+  const Thread = require('formio/src/worker/Thread');
+  const Nunjucks = require('formio/src/util/email')(formio);
 
   /**
    * AuthAction class.
@@ -16,7 +16,7 @@ module.exports = function(router) {
    *
    * @constructor
    */
-  var MoxtraMessage = function(data, req, res) {
+  const MoxtraMessage = function(data, req, res) {
     Action.call(this, data, req, res);
   };
 
@@ -54,7 +54,7 @@ module.exports = function(router) {
     if (!_.has(req.user, 'externalIds')) {
       return res.status(400).send(`Could not access user token.`);
     }
-    let userToken = _.filter(req.user.externalIds, {type: `moxtra`});
+    const userToken = _.filter(req.user.externalIds, {type: `moxtra`});
     if (!userToken) {
       return res.status(400).send(`Moxtra token not found for the current user.`);
     }
@@ -62,7 +62,7 @@ module.exports = function(router) {
     Moxtra.getToken(req, req.user)
     .then(token => Moxtra.getBinder(req, token))
     .then(response => {
-      let binders = response.binders;
+      const binders = response.binders;
 
       return next(null, [
         {
@@ -153,7 +153,7 @@ module.exports = function(router) {
       // Get the Nunjucks parameters.
       Nunjucks.getParams(res, form, req.body)
       .then(params => {
-        let query = {
+        const query = {
           _id: params.owner,
           deleted: {$eq: null}
         };

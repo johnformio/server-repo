@@ -1,7 +1,7 @@
 'use strict';
 
-var Q = require('q');
-var _ = require('lodash');
+const Q = require('q');
+const _ = require('lodash');
 
 module.exports = function(formio) {
   return {
@@ -29,7 +29,7 @@ module.exports = function(formio) {
     // Returns a promise, or you can provide the next callback arg
     settings: function(req, name, next) {
       return Q.ninvoke(formio.hook, 'settings', req)
-      .then(_.property('oauth.' + name))
+      .then(_.property(`oauth.${name}`))
       .nodeify(next);
     }
   };

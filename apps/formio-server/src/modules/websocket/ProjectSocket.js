@@ -1,17 +1,17 @@
 'use strict';
 
-var jwt = require('jsonwebtoken');
-var Primus = require('primus');
-var Redis = require('ioredis');
-var Q = require('q');
-var _ = require('lodash');
-var Chance = require('chance'); // eslint-disable-line new-cap
-var debug = require('debug')('formio:error');
+const jwt = require('jsonwebtoken');
+const Primus = require('primus');
+const Redis = require('ioredis');
+const Q = require('q');
+const _ = require('lodash');
+const Chance = require('chance'); // eslint-disable-line new-cap
+const debug = require('debug')('formio:error');
 
-var chance = new Chance();
+const chance = new Chance();
 
 module.exports = function(formioServer) {
-  var SparkCollection = require('./SparkCollection');
+  const SparkCollection = require('./SparkCollection');
 
   /**
    * ProjectSocket
@@ -21,7 +21,7 @@ module.exports = function(formioServer) {
    * @param config
    * @constructor
    */
-  var ProjectSocket = function(server, config) {
+  const ProjectSocket = function(server, config) {
     this.config = config;
     this.server = server;
     this.requests = [];
@@ -29,18 +29,18 @@ module.exports = function(formioServer) {
     // Create the place to store all of our sparks.
     this.sparks = new SparkCollection();
     this.sparks.connect(formioServer.redis).then(function() {
-      var primusConfig = {
+      const primusConfig = {
         transformer: 'websockets'
       };
 
-      var redisUrl = config.redis.url;
+      let redisUrl = config.redis.url;
       if (config.redis.password) {
-        var urlParts = redisUrl.split('://');
-        redisUrl = 'redis://:' + config.redis.password + '@' + urlParts[1];
+        const urlParts = redisUrl.split('://');
+        redisUrl = `redis://:${config.redis.password}@${urlParts[1]}`;
       }
 
       // Get the redis server.
-      var redisServer = null;
+      let redisServer = null;
       try {
         redisServer = new Redis(redisUrl);
       }
@@ -71,7 +71,7 @@ module.exports = function(formioServer) {
 
         // End an existing spark.
         if (data.type === 'remove') {
-          var currentSpark = this.primus.spark(data.connection.sparkId);
+          const currentSpark = this.primus.spark(data.connection.sparkId);
           if (currentSpark) {
             currentSpark.end();
             this.sparks.del(data.projectId);
@@ -81,14 +81,14 @@ module.exports = function(formioServer) {
 
       // Trigger when a new connection is made.
       this.primus.on('connection', function(spark) {
-        var projectId = spark.request.project._id.toString();
+        const projectId = spark.request.project._id.toString();
 
         // Get the sparkId from the project.
         this.sparks.get(projectId).then(function(connection) {
           // Close existing connections open for this project.
           if (connection) {
             connection = JSON.parse(connection);
-            var currentSpark = this.primus.spark(connection.sparkId);
+            const currentSpark = this.primus.spark(connection.sparkId);
             if (currentSpark) {
               currentSpark.end();
               this.sparks.del(projectId);
@@ -150,14 +150,14 @@ module.exports = function(formioServer) {
                   }
 
                   // The binding definition.
-                  var binding = {
+                  const binding = {
                     method: data.bind.method.toUpperCase(),
                     form: data.bind.form,
                     sync: data.bind.sync || false
                   };
 
                   // Look for an existing binding.
-                  var currentIndex = _.findIndex(connection.bindings, _.pick(binding, 'method', 'form'));
+                  const currentIndex = _.findIndex(connection.bindings, _.pick(binding, 'method', 'form'));
                   if (currentIndex !== -1) {
                     connection.bindings[currentIndex] = binding;
                   }
@@ -217,9 +217,9 @@ module.exports = function(formioServer) {
    * @param data
    */
   ProjectSocket.prototype.handleResponse = function(data) {
-    var index = _.findIndex(this.requests, {id: data.id});
+    const index = _.findIndex(this.requests, {id: data.id});
     if (index !== -1) {
-      var promise = this.requests[index].promise;
+      const promise = this.requests[index].promise;
       this.requests.splice(index, 1);
       promise.resolve(data);
       return true;
@@ -255,9 +255,9 @@ module.exports = function(formioServer) {
    * @returns {*}
    */
   ProjectSocket.prototype.authorize = function(req, authorized) {
-    var token = req.query.token;
-    var project = req.query.project;
-    var projectId = req.query.projectId;
+    const token = req.query.token;
+    const project = req.query.project;
+    const projectId = req.query.projectId;
     if (!token) {
       return authorized(new Error('Missing access token'));
     }
@@ -315,7 +315,7 @@ module.exports = function(formioServer) {
           }
 
           // Check if they have the admin role.
-          var userRoles = _.map(user.roles, formioServer.formio.util.idToString);
+          const userRoles = _.map(user.roles, formioServer.formio.util.idToString);
           formioServer.formio.resources.role.model.find({
             deleted: {$eq: null},
             project: project._id.toString(),
@@ -325,11 +325,11 @@ module.exports = function(formioServer) {
               return authorized(new Error('Unauthorized'));
             }
 
-            var roleIds = _.map(roles, function(role) {
+            const roleIds = _.map(roles, function(role) {
               return role._id.toString();
             });
 
-            var access = _.filter(_.map(roleIds, function(roleId) {
+            const access = _.filter(_.map(roleIds, function(roleId) {
               return (userRoles.indexOf(roleId) === -1) ? null : roleId;
             }));
 
@@ -343,10 +343,10 @@ module.exports = function(formioServer) {
             formioServer.formio.teams.getTeams(req.user._id, true, false).then((teams) => {
               teams = teams || [];
               teams = _.map(_.map(teams, '_id'), formioServer.formio.util.idToString);
-              var userTeams = [];
+              let userTeams = [];
               _.each(project.access, (projectAccess) => {
                 if (projectAccess.type === 'team_admin') {
-                  var teamRoles = _.map(projectAccess.roles, formioServer.formio.util.idToString);
+                  const teamRoles = _.map(projectAccess.roles, formioServer.formio.util.idToString);
                   userTeams = _.intersection(teamRoles, teams);
                   if (userTeams && userTeams.length) {
                     return false;
@@ -405,7 +405,7 @@ module.exports = function(formioServer) {
    */
   ProjectSocket.prototype.handle = function(request) {
     // Allow for a deferred execution.
-    var deferred = Q.defer();
+    const deferred = Q.defer();
 
     // Ensure we have everything we need for socket connection.
     if (
@@ -430,7 +430,7 @@ module.exports = function(formioServer) {
       connection = JSON.parse(connection);
 
       // Get the binding.
-      var binding = _.find(connection.bindings, {
+      const binding = _.find(connection.bindings, {
         method: request.request.method.toUpperCase(),
         form: request.request.params.formId
       });
@@ -445,7 +445,7 @@ module.exports = function(formioServer) {
       if (binding.sync) {
         // Only allow up to 1000 concurrent requests...
         if (this.requests.length > 1000) {
-          var expired = this.requests.shift();
+          const expired = this.requests.shift();
           expired.promise.resolve();
         }
 
@@ -457,7 +457,7 @@ module.exports = function(formioServer) {
 
         // Timeout the promise after 10 seconds.
         setTimeout(function() {
-          var index = _.findIndex(this.requests, {id: request.id});
+          const index = _.findIndex(this.requests, {id: request.id});
           if (index !== -1) {
             this.requests.splice(index, 1);
           }
@@ -466,7 +466,7 @@ module.exports = function(formioServer) {
       }
 
       // Get the web socket connection.
-      var spark = this.primus.spark(connection.sparkId);
+      const spark = this.primus.spark(connection.sparkId);
       if (!spark) {
         // If this spark does not exist, then forward it on...
         this.forward(connection, request, function(err, result) {

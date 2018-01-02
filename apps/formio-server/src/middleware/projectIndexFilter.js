@@ -1,6 +1,6 @@
 'use strict';
 
-var _ = require('lodash');
+const _ = require('lodash');
 
 /**
  * Middleware to filter the project index request by owner and team access.
@@ -9,9 +9,9 @@ var _ = require('lodash');
  * @returns {Function}
  */
 module.exports = function(formioServer) {
-  var debug = require('debug')('formio:middleware:projectIndexFilter');
+  const debug = require('debug')('formio:middleware:projectIndexFilter');
   return function projectIndexFilter(req, res, next) {
-    var query;
+    let query;
 
     // Allow access to all projects for admins, otherwise restrict to user.
     if (!req.isAdmin) {
@@ -19,7 +19,7 @@ module.exports = function(formioServer) {
         debug(req.user);
         return res.sendStatus(401);
       }
-      var roles = _.flattenDeep(_.map(req.user.roles, function(role) {
+      const roles = _.flattenDeep(_.map(req.user.roles, function(role) {
         return [formioServer.formio.util.idToString(role), formioServer.formio.util.idToBson(role)];
       }));
       query = {

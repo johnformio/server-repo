@@ -1,7 +1,7 @@
 'use strict';
 const request = require('request');
 const isURL = require('is-url');
-var debug = require('debug')('formio:middleware:projectTemplate');
+const debug = require('debug')('formio:middleware:projectTemplate');
 module.exports = (req, res, next) => {
   if (!req.body || !req.body.template) {
     return next();

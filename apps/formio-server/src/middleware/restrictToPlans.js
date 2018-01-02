@@ -1,6 +1,6 @@
 'use strict';
 
-var debug = require('debug')('formio:middleware:restrictToPlans');
+const debug = require('debug')('formio:middleware:restrictToPlans');
 
 module.exports = function(router) {
   return function(plans) {

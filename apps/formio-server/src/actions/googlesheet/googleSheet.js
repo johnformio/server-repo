@@ -1,16 +1,16 @@
 'use strict';
 
-var _ = require('lodash');
-var util = require('./util');
-var formioUtil = require('formio/src/util/util');
-var debug = require('debug')('formio:action:googlesheet');
-var Spreadsheet = require('edit-google-spreadsheet');
-var SpreadsheetColumn = (new (require('spreadsheet-column'))());
-var async = require('async');
+const _ = require('lodash');
+const util = require('./util');
+const formioUtil = require('formio/src/util/util');
+const debug = require('debug')('formio:action:googlesheet');
+const Spreadsheet = require('edit-google-spreadsheet');
+const SpreadsheetColumn = (new (require('spreadsheet-column'))());
+const async = require('async');
 
 module.exports = function(router) {
-  var formio = router.formio;
-  var hook = router.formio.hook;
+  const formio = router.formio;
+  const hook = router.formio.hook;
 
   /**
    * GoogleSheetAction class.
@@ -18,7 +18,7 @@ module.exports = function(router) {
    *
    * @constructor
    */
-  var GoogleSheetAction = function(data, req, res) {
+  const GoogleSheetAction = function(data, req, res) {
     formio.Action.call(this, data, req, res);
   };
 
@@ -58,7 +58,7 @@ module.exports = function(router) {
         }
 
         // Create the panel for all the fields.
-        var fieldPanel = {
+        const fieldPanel = {
           type: 'panel',
           theme: 'info',
           title: 'Google Sheet Fields',
@@ -71,7 +71,7 @@ module.exports = function(router) {
             fieldPanel.components.push({
               type: 'textfield',
               input: true,
-              label: (component.label || component.key) + ' Column',
+              label: `${component.label || component.key} Column`,
               key: component.key,
               placeholder: 'Enter a Column Key. Example: C',
               multiple: false
@@ -117,21 +117,21 @@ module.exports = function(router) {
     // No feedback needed directly. Call next immediately.
     next(); // eslint-disable-line callback-return
 
-    var actionName = _.get(this, 'name');
-    var actionSettings = _.get(this, 'settings');
-    var sheetId = _.get(this, 'settings.sheetID');
-    var sheetName = _.get(this, 'settings.worksheetName');
+    const actionName = _.get(this, 'name');
+    const actionSettings = _.get(this, 'settings');
+    const sheetId = _.get(this, 'settings.sheetID');
+    const sheetName = _.get(this, 'settings.worksheetName');
 
     // Load the project settings.
     formio.hook.settings(req, function(err, settings) {
-      var requestData = _.get(req, 'body.data');
+      const requestData = _.get(req, 'body.data');
       if (err) {
         debug(err);
         return;
       }
 
       // Map each piece of submission data to a column using the custom mapping in the action settings.
-      var columnIds = {};
+      const columnIds = {};
       _.each(requestData, function(value, key) {
         _.each(actionSettings, function(_value, _key) {
           if (_key === key) {
@@ -146,7 +146,7 @@ module.exports = function(router) {
        * @param {Object} spreadsheet
        *   A loaded Google Spreadsheet.
        */
-      var addRow = function(spreadsheet) {
+      const addRow = function(spreadsheet) {
         async.waterfall([
           function getAvailableRows(callback) {
             spreadsheet.metadata(function(err, metadata) {
@@ -154,7 +154,7 @@ module.exports = function(router) {
                 return callback(err);
               }
 
-              var rows = parseInt(_.get(metadata, 'rowCount') || 0);
+              const rows = parseInt(_.get(metadata, 'rowCount') || 0);
               callback(null, rows);
             });
           },
@@ -167,7 +167,7 @@ module.exports = function(router) {
               }
 
               // Determine how many rows are filled out currently.
-              var currentRows = (info.nextRow - 1);
+              const currentRows = (info.nextRow - 1);
               if (currentRows < rows) {
                 return callback(null, currentRows);
               }
@@ -184,15 +184,15 @@ module.exports = function(router) {
           },
           function addColumnLabels(rows, callback) {
             // Build a map of pretty display column labels and the columnId
-            var columnLabels = {};
+            const columnLabels = {};
             _.each(columnIds, function(value, key) {
               columnLabels[key] = _.startCase(key);
             });
 
             // If there are no rows, add the column labels before adding row 1.
             if (rows === 0) {
-              var rowData = {};
-              var column = 1;
+              const rowData = {};
+              let column = 1;
 
               // Iterate the columns to get the column label and its position.
               _.each(columnIds, function(value, key) {
@@ -212,10 +212,10 @@ module.exports = function(router) {
             callback(null, rows);
           },
           function addNewRow(rows, callback) {
-            var rowId = rows + 1;
+            const rowId = rows + 1;
 
             // Build our new row of the spreadsheet, by iterating each column label.
-            var rowData = {};
+            const rowData = {};
             _.each(columnIds, function(value, key) {
               rowData[value] = {
                 name: key,
@@ -224,7 +224,7 @@ module.exports = function(router) {
             });
 
             // Finally, add all of the new row data to the spreadsheet.
-            var update = {};
+            const update = {};
             update[rowId] = rowData;
             spreadsheet.add(update);
             spreadsheet.send(function(err) {
@@ -267,14 +267,14 @@ module.exports = function(router) {
        * @param {Object} spreadsheet
        *   A loaded Google Spreadsheet.
        */
-      var updateRow = function(spreadsheet) {
+      const updateRow = function(spreadsheet) {
         // Only proceed with updating a row, if applicable to this request.
         if (!_.has(res, 'resource.item') || !_.has(res, 'resource.item.externalIds')) {
           return;
         }
 
         // The row number to update.
-        var rowId = _.find(res.resource.item.externalIds, function(item) {
+        let rowId = _.find(res.resource.item.externalIds, function(item) {
           return item.type === actionName;
         });
         rowId = _.get(rowId, 'id');
@@ -283,8 +283,8 @@ module.exports = function(router) {
         }
 
         // Build our new row of the spreadsheet, by iterating each column label.
-        var rowData = {};
-        var submission = _.get(res, 'resource.item.data');
+        const rowData = {};
+        const submission = _.get(res, 'resource.item.data');
 
         // Iterate the columns to get the column label and its position.
         _.each(columnIds, function(value, key) {
@@ -295,7 +295,7 @@ module.exports = function(router) {
         });
 
         // Finally, add all of the data to the row and commit the changes.
-        var update = {};
+        const update = {};
         update[rowId] = rowData;
         spreadsheet.add(update);
         spreadsheet.send(function(err) {
@@ -313,15 +313,15 @@ module.exports = function(router) {
        * @param {Object} spreadsheet
        *   A loaded Google Spreadsheet.
        */
-      var deleteRow = function(spreadsheet) {
+      const deleteRow = function(spreadsheet) {
         // Only proceed with deleting a row, if applicable to this request.
-        var deleted = _.get(req, 'formioCache.submissions.' + _.get(req, 'subId'));
+        const deleted = _.get(req, `formioCache.submissions.${_.get(req, 'subId')}`);
         if (!deleted) {
           return;
         }
 
         // The row number to delete.
-        var rowId = _.find(deleted.externalIds, function(item) {
+        let rowId = _.find(deleted.externalIds, function(item) {
           return item.type === actionName;
         });
         rowId = _.get(rowId, 'id');
@@ -330,16 +330,16 @@ module.exports = function(router) {
         }
 
         // Build our blank row of data, by iterating each column label.
-        var rowData = [];
+        const rowData = [];
 
         // Get the number of fields from the action settings; subtract 2 for the sheetId and worksheet name.
-        var fields = ((Object.keys(actionSettings)).length - 2) || 0;
-        for (var a = 0; a < fields; a++) {
+        const fields = ((Object.keys(actionSettings)).length - 2) || 0;
+        for (let a = 0; a < fields; a++) {
           rowData.push('');
         }
 
         // Finally, update our determined row with empty data.
-        var update = {};
+        const update = {};
         update[rowId] = rowData;
         spreadsheet.add(update);
         spreadsheet.send(function(err) {

@@ -1,15 +1,15 @@
 'use strict';
 
-var Q = require('q');
-var _ = require('lodash');
+const Q = require('q');
+const _ = require('lodash');
 
-var util = require('formio/src/util/util');
+const util = require('formio/src/util/util');
 
-var MAX_TIMESTAMP = 8640000000000000;
+const MAX_TIMESTAMP = 8640000000000000;
 
 // Export the Github oauth provider.
 module.exports = function(formio) {
-  var oauthUtil = require('../util/oauth')(formio);
+  const oauthUtil = require('../util/oauth')(formio);
   return {
     // Name of the oauth provider (used as property name in settings)
     name: 'github',
@@ -79,7 +79,7 @@ module.exports = function(formio) {
     // Gets user information from oauth access token
     // Returns a promise, or you can provide the next callback arg
     getUser: function(tokens, next) {
-      var accessToken = _.find(tokens, {type: this.name});
+      const accessToken = _.find(tokens, {type: this.name});
       if (!accessToken) {
         return Q.reject('No access token found');
       }
@@ -88,7 +88,7 @@ module.exports = function(formio) {
         url: 'https://api.github.com/user',
         json: true,
         headers: {
-          Authorization: 'token ' + accessToken.token,
+          Authorization: `token ${accessToken.token}`,
           'User-Agent': 'formio'
         }
       })
@@ -107,7 +107,7 @@ module.exports = function(formio) {
             url: 'https://api.github.com/user/emails',
             json: true,
             headers: {
-              Authorization: 'token ' + accessToken.token,
+              Authorization: `token ${accessToken.token}`,
               'User-Agent': 'formio'
             }
           })
@@ -115,7 +115,7 @@ module.exports = function(formio) {
             if (!body) {
               throw 'No response from GitHub';
             }
-            var primaryEmail = _.find(body, 'primary');
+            const primaryEmail = _.find(body, 'primary');
             if (!primaryEmail) {
               throw 'Could not retrieve primary email';
             }

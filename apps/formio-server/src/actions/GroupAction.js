@@ -1,8 +1,8 @@
 'use strict';
 
-var Q = require('q');
-var _ = require('lodash');
-var debug = {
+const Q = require('q');
+const _ = require('lodash');
+const debug = {
   settingsForm: require('debug')('formio:actions:GroupAction#settingsForm'),
   resolve: require('debug')('formio:actions:GroupAction#resolve'),
   canAssignGroup: require('debug')('formio:actions:GroupAction#canAssignGroup'),
@@ -10,8 +10,8 @@ var debug = {
 };
 
 module.exports = function(router) {
-  var Action = router.formio.Action;
-  var hook = router.formio.hook;
+  const Action = router.formio.Action;
+  const hook = router.formio.hook;
 
   /**
    * GroupAction class.
@@ -19,7 +19,7 @@ module.exports = function(router) {
    *
    * @constructor
    */
-  var GroupAction = function(data, req, res) {
+  const GroupAction = function(data, req, res) {
     Action.call(this, data, req, res);
   };
 
@@ -44,8 +44,8 @@ module.exports = function(router) {
     });
   };
   GroupAction.settingsForm = function(req, res, next) {
-    var basePath = hook.alter('path', '/form', req);
-    var dataSrc = basePath + '/' + req.params.formId + '/components';
+    const basePath = hook.alter('path', '/form', req);
+    const dataSrc = `${basePath}/${req.params.formId}/components`;
     next(null, [
       {
         type: 'select',
@@ -107,26 +107,26 @@ module.exports = function(router) {
        * @param id
        * @returns {*}
        */
-      var loadFilteredSubmission = function(name, id) {
-        var deferred = Q.defer();
+      const loadFilteredSubmission = function(name, id) {
+        const deferred = Q.defer();
 
-        var filter = {deleted: {$eq: null}};
+        const filter = {deleted: {$eq: null}};
         filter[name] = {$exists: true, $ne: []};
 
-        var match = {};
-        match[name + '._id'] = router.formio.util.idToBson(id);
+        const match = {};
+        match[`${name}._id`] = router.formio.util.idToBson(id);
 
         router.formio.resources.form.model.aggregate(
           {$match: {project: router.formio.util.idToBson(_.get(req, 'projectId')), deleted: {$eq: null}}},
           {$project: {_id: 1}},
           {$lookup: {from: 'submissions', localField: '_id', foreignField: 'form', as: name}},
           {$match: filter},
-          {$unwind: '$' + name},
+          {$unwind: `$${name}`},
           {$match: match},
           function(err, submissions) {
             if (err || !submissions || submissions.length !== 1) {
-              debug.loadFilteredSubmission(err || 'Submission: ' + (!submissions ? 'none' : submissions.length));
-              deferred.reject('Could not the ' + name + ' for assignment.');
+              debug.loadFilteredSubmission(err || `Submission: ${!submissions ? 'none' : submissions.length}`);
+              deferred.reject(`Could not the ${name} for assignment.`);
             }
 
             // We only want to deal with the single result.
@@ -147,10 +147,10 @@ module.exports = function(router) {
        * @param gid
        * @returns {*}
        */
-      var canAssignGroup = function(gid) {
+      const canAssignGroup = function(gid) {
         return loadFilteredSubmission('group', gid)
         .then(function(group) {
-          var context = _.cloneDeep(req);
+          const context = _.cloneDeep(req);
           context.formioCache = hook.alter('cacheInit', {
             names: {},
             aliases: {},
@@ -162,10 +162,10 @@ module.exports = function(router) {
           context.subId = router.formio.util.idToString(group._id);
 
           debug.loadFilteredSubmission(group);
-          debug.loadFilteredSubmission('context.formId: ' + context.formId);
-          debug.loadFilteredSubmission('context.subId: ' + context.subId);
+          debug.loadFilteredSubmission(`context.formId: ${context.formId}`);
+          debug.loadFilteredSubmission(`context.subId: ${context.subId}`);
 
-          var deferred = Q.defer();
+          const deferred = Q.defer();
           router.formio.middleware.permissionHandler(context, res, function(err) {
             if (err) {
               debug.canAssignGroup(err);
@@ -179,9 +179,9 @@ module.exports = function(router) {
         });
       };
 
-      var user = _.get(this.settings, 'user');
-      var group = _.get(this.settings, 'group');
-      group = _.get(req.submission, 'data.' + group); // Set the group to its search value.
+      const user = _.get(this.settings, 'user');
+      let group = _.get(this.settings, 'group');
+      group = _.get(req.submission, `data.${group}`); // Set the group to its search value.
       // If the _id is present in a resource object, then pluck only the _id.
       if (_.has(group, '_id')) {
         group = _.get(group, '_id');
@@ -196,17 +196,17 @@ module.exports = function(router) {
       }
 
       // Check for the user, either just created (with this) or defined in the submission.
-      var userDefined = user && _.has(req.submission, 'data.' + user);
-      var thisUser = !user && _.has(res, 'resource.item');
+      const userDefined = user && _.has(req.submission, `data.${user}`);
+      const thisUser = !user && _.has(res, 'resource.item');
       if (!userDefined && !thisUser) {
         return res.status(400).send('A User reference is required for group assignment.');
       }
-      debug.resolve('userDefined: ' + userDefined);
-      debug.resolve('thisUser: ' + thisUser);
+      debug.resolve(`userDefined: ${userDefined}`);
+      debug.resolve(`thisUser: ${thisUser}`);
 
       // Search for the user within the cache.
-      var searchUser = userDefined
-        ? _.get(req.submission, 'data.' + user)
+      let searchUser = userDefined
+        ? _.get(req.submission, `data.${user}`)
         : _.get(res, 'resource.item._id');
       // If the _id is present in a resource object, then pluck only the _id.
       if (_.has(searchUser, '_id')) {
@@ -217,10 +217,10 @@ module.exports = function(router) {
       .then(function(user) {
         return canAssignGroup(group)
         .then(function() {
-          var deferred = Q.defer();
+          const deferred = Q.defer();
 
           // Add the new role and make sure its unique.
-          var newRoles = user.roles || [];
+          let newRoles = user.roles || [];
           newRoles.map(router.formio.util.idToString);
           newRoles.push(router.formio.util.idToString(group));
           newRoles = _.uniq(newRoles);
@@ -250,7 +250,7 @@ module.exports = function(router) {
                 debug.canAssignGroup(res.resource.item);
               }
 
-              debug.canAssignGroup('Updated: ' + user._id);
+              debug.canAssignGroup(`Updated: ${user._id}`);
               return deferred.fulfill();
             }
           );

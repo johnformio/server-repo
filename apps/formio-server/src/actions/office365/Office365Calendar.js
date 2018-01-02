@@ -1,9 +1,9 @@
 'use strict';
-var moment = require('moment');
+const moment = require('moment');
 
 module.exports = function(router) {
-  var util = require('./util')(router);
-  var hook = router.formio.hook;
+  const util = require('./util')(router);
+  const hook = router.formio.hook;
 
   /**
    * Office365CalendarAction class.
@@ -11,7 +11,7 @@ module.exports = function(router) {
    *
    * @constructor
    */
-  var Office365CalendarAction = function(data, req, res) {
+  const Office365CalendarAction = function(data, req, res) {
     router.formio.Action.call(this, data, req, res);
   };
 
@@ -34,10 +34,10 @@ module.exports = function(router) {
 
   Office365CalendarAction.settingsForm = function(req, res, next) {
     // Create the select items for each office 365 field.
-    var dataSrc = router.formio.hook.alter('path', '/form/' + req.params.formId + '/components', req);
+    const dataSrc = router.formio.hook.alter('path', `/form/${req.params.formId}/components`, req);
 
     // The Microsoft Timezones JSON.
-    var timeZones = 'https://gist.githubusercontent.com/travist/1c7b4ba5289e38dc3a9e/raw/306d24a1efefcb0d70e8978d7272a575625c1843/timezones.json';
+    const timeZones = 'https://gist.githubusercontent.com/travist/1c7b4ba5289e38dc3a9e/raw/306d24a1efefcb0d70e8978d7272a575625c1843/timezones.json';
 
     next(null, [
       {
@@ -192,7 +192,7 @@ module.exports = function(router) {
       return next();
     }
 
-    var payload = {};
+    let payload = {};
 
     // Skip if there are no settings.
     if (!this.settings) {
@@ -200,7 +200,7 @@ module.exports = function(router) {
     }
 
     // Default authType to 'application'
-    var authType = this.settings.authType || 'application';
+    const authType = this.settings.authType || 'application';
 
     // Only add the payload for post and put.
     if (req.method === 'POST' || req.method === 'PUT') {
@@ -220,7 +220,7 @@ module.exports = function(router) {
 
     // If there isn't an end set, then make the event an hour long.
     if (!payload.End) {
-      var start = moment(payload.Start);
+      const start = moment(payload.Start);
       payload.End = start.add(1, 'h').toISOString();
     }
 

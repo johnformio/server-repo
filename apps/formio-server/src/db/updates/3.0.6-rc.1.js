@@ -1,8 +1,8 @@
 'use strict';
 
-var async = require('async');
-var _ = require('lodash');
-var debug = {
+let async = require('async');
+let _ = require('lodash');
+let debug = {
   uniquifyName: require('debug')('formio:update:3.0.6-rc.1-uniquifyName'),
   updateSubmissionNames: require('debug')('formio:update:3.0.6-rc.1-updateSubmissionNames'),
   getAllSubmissions: require('debug')('formio:update:3.0.6-rc.1-getAllSubmissions'),
@@ -27,15 +27,15 @@ var debug = {
  * @param done
  */
 module.exports = function(db, config, tools, done) {
-  var projectCollection = db.collection('projects');
-  var submissionCollection = db.collection('submissions');
+  let projectCollection = db.collection('projects');
+  let submissionCollection = db.collection('submissions');
 
   // the user resource.
-  var form = '553db94e72f702e714dd9779';
+  let form = '553db94e72f702e714dd9779';
 
   // Unique map for all submissions
-  var uniques = {};
-  var duplicates = {};
+  let uniques = {};
+  let duplicates = {};
 
   /**
    * Attempt to update the given submissions username to be unique, limited to 10 iterations.
@@ -43,9 +43,9 @@ module.exports = function(db, config, tools, done) {
    * @param submission
    * @param next
    */
-  var uniquifyName = function(submission, next) {
-    var tries = 2;
-    var found = false;
+  let uniquifyName = function(submission, next) {
+    let tries = 2;
+    let found = false;
 
     async.whilst(function() {
       return (tries < 12) && (found === false);
@@ -92,7 +92,7 @@ module.exports = function(db, config, tools, done) {
    * @param submissions
    * @param next
    */
-  var updateSubmissionNames = function(submissions, next) {
+  let updateSubmissionNames = function(submissions, next) {
     debug.updateSubmissionNames(submissions.length);
     async.each(submissions, function(submission, cb) {
       return uniquifyName(submission, cb);
@@ -117,7 +117,7 @@ module.exports = function(db, config, tools, done) {
         }
 
         // determine which names are unique
-        var name = _.get(submission, 'data.name');
+        let name = _.get(submission, 'data.name');
         uniques[name] = uniques[name] || [];
         uniques[name].push(submission._id);
       }, next)
@@ -135,8 +135,8 @@ module.exports = function(db, config, tools, done) {
     },
     // filter the known duplicates, to determine if they are duplicate users, or individual users with duplicate names
     function filterDuplicates(next) {
-      var dupUser = []; // [[id, id], [id, id]] - array of duplicate users arrays
-      var dupName = {}; // name:[id] map
+      let dupUser = []; // [[id, id], [id, id]] - array of duplicate users arrays
+      let dupName = {}; // name:[id] map
 
       debug.filterDuplicates(duplicates);
       async.each(Object.keys(duplicates), function(value, cb) {
@@ -151,12 +151,12 @@ module.exports = function(db, config, tools, done) {
             return cb(err);
           }
 
-          var sameUser = {}; // email:[_id] map
-          var idToName = {}; // _id:name map
+          let sameUser = {}; // email:[_id] map
+          let idToName = {}; // _id:name map
 
           subs.forEach(function(user) {
-            var email = user.data.email.toString().toLowerCase();
-            var name = user.data.name.toString().toLowerCase();
+            let email = user.data.email.toString().toLowerCase();
+            let name = user.data.name.toString().toLowerCase();
 
             sameUser[email] = sameUser[email] || [];
             sameUser[email].push(user._id);
@@ -172,7 +172,7 @@ module.exports = function(db, config, tools, done) {
             }
             else if (sameUser[email].length === 1) {
               // name and email was no duplicated, different users
-              var id = sameUser[email][0];
+              let id = sameUser[email][0];
               dupName[idToName[id]] = dupName[idToName[id]] || [];
 
               debug.filterDuplicates('duplicate/different users (' + idToName[id] + '): ' + id);
@@ -193,7 +193,7 @@ module.exports = function(db, config, tools, done) {
     // fix duplicate user accounts by flagging the least used as deleted
     function uniquifyDupUsers(dupUsers, dupNames, next) {
       async.each(dupUsers, function(users, cb) {
-        var most = {
+        let most = {
           id: null,
           count: null
         };
@@ -223,7 +223,7 @@ module.exports = function(db, config, tools, done) {
           }
 
           // Make the user defined in most, be the primary account holder.
-          var flagAsDeleted = [];
+          let flagAsDeleted = [];
           users.forEach(function(u) {
             if (tools.util.idToString(u) !== tools.util.idToString(most.id)) {
               flagAsDeleted.push(tools.util.idToBson(u));
@@ -255,7 +255,7 @@ module.exports = function(db, config, tools, done) {
     // fix duplicate user names by granting the original name to the oldest account and iterating the name for the newest.
     function uniquifyDupNames(dupNames, next) {
       async.each(Object.keys(dupNames), function(name, cb) {
-        var ids = dupNames[name];
+        let ids = dupNames[name];
 
         debug.uniquifyDupNames('name: ' + name + ', dups: ' + ids.length);
         submissionCollection
