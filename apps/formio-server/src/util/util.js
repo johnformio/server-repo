@@ -23,13 +23,10 @@ module.exports = {
     if (matches && matches.length > 1) {
       var parts = matches[1].split('=');
       var field = _.trim(parts[0]);
-      var resources = _.map(parts[1].split(','), _.trim);
+      var resources = parts[1] ? _.map(parts[1].split(','), _.trim) : [];
       var expireTime = parseInt(_.trim(matches[2]), 10);
       if (!expireTime || isNaN(expireTime)) {
         expireTime = 120;
-      }
-      if (!resources || !resources.length) {
-        return null;
       }
       if (!field) {
         return null;
