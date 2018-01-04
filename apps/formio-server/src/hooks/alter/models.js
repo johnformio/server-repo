@@ -21,21 +21,6 @@ module.exports = app => models => {
       index: true,
       required: true,
       default: 0
-    },
-    owner: {
-      type: app.formio.formio.mongoose.Schema.Types.Mixed,
-      ref: 'submission',
-      index: true,
-      default: null,
-      set: owner => {
-        // Attempt to convert to objectId.
-        try {
-          return app.formio.formio.util.ObjectId(owner);
-        }
-        catch (e) {
-          return owner;
-        }
-      }
     }
   });
 
@@ -53,21 +38,6 @@ module.exports = app => models => {
       index: true,
       required: true,
       default: 0
-    },
-    owner: {
-      type: app.formio.formio.mongoose.Schema.Types.Mixed,
-      ref: 'submission',
-      index: true,
-      default: null,
-      set: owner => {
-        // Attempt to convert to objectId.
-        try {
-          return app.formio.formio.util.ObjectId(owner);
-        }
-        catch (e) {
-          return owner;
-        }
-      }
     }
   });
 
