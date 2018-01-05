@@ -1,9 +1,9 @@
 'use strict';
 
-var _ = require('lodash');
-var crypto = require('crypto');
-var keygenerator = require('keygenerator');
-var debug = {
+const _ = require('lodash');
+const crypto = require('crypto');
+const keygenerator = require('keygenerator');
+const debug = {
   decrypt: require('debug')('formio:util:decrypt')
 };
 
@@ -15,16 +15,17 @@ module.exports = {
   /* eslint-enable no-useless-escape */
   query: (query) => {
     return Object.keys(query).map((k) => {
-      return encodeURIComponent(k) + '=' + encodeURIComponent(query[k]);
+      return `${encodeURIComponent(k)}=${encodeURIComponent(query[k])}`;
     }).join('&');
   },
-  ssoToken: function(text) {
-    var matches = text.match(this.tokenRegex);
+  ssoToken(text) {
+    const matches = text.match(this.tokenRegex);
     if (matches && matches.length > 1) {
-      var parts = matches[1].split('=');
-      var field = _.trim(parts[0]);
-      var resources = parts[1] ? _.map(parts[1].split(','), _.trim) : [];
-      var expireTime = parseInt(_.trim(matches[2]), 10);
+      const parts = matches[1].split('=');
+      const field = _.trim(parts[0]);
+      const resources = parts[1] ? _.map(parts[1].split(','), _.trim) : [];
+      let expireTime = parseInt(_.trim(matches[2]), 10);
+
       if (!expireTime || isNaN(expireTime)) {
         expireTime = 120;
       }
@@ -41,7 +42,7 @@ module.exports = {
     }
     return null;
   },
-  encrypt: function(secret, rawData) {
+  encrypt(secret, rawData) {
     if (!secret || !rawData) {
       return null;
     }
@@ -57,7 +58,7 @@ module.exports = {
       cipher.final()
     ]);
   },
-  decrypt: function(secret, cipherbuffer) {
+  decrypt(secret, cipherbuffer) {
     if (!secret || !cipherbuffer) {
       return null;
     }
@@ -107,16 +108,16 @@ module.exports = {
       }
 
       // Get the project name.
-      let projectName = project.name.replace(/[^A-Za-z0-9]+/g, '');
+      const projectName = project.name.replace(/[^A-Za-z0-9]+/g, '');
       if (!projectName) {
         return next('Invalid project name');
       }
 
       // Set the collection name.
-      let collectionName = projectName + '_' + form.settings.collection.replace(/[^A-Za-z0-9]+/g, '');
+      const collectionName = `${projectName}_${form.settings.collection.replace(/[^A-Za-z0-9]+/g, '')}`;
 
       // Make sure they don't clobber reserved collections.
-      let reservedCollections = [
+      const reservedCollections = [
         'projects',
         'forms',
         'submissions',
@@ -128,7 +129,7 @@ module.exports = {
       ];
       if (reservedCollections.indexOf(collectionName) !== -1) {
         delete form.settings.collection;
-        return next(collectionName + ' is a reserved collection name.');
+        return next(`${collectionName} is a reserved collection name.`);
       }
 
       // Establish a model using the schema.

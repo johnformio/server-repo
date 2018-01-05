@@ -69,7 +69,7 @@ module.exports = (formioServer) => {
           }
 
           // Update project with randomly generated secret key.
-          let secret = keygenerator._();
+          const secret = keygenerator._();
           project.settings = _.extend({}, project.settings, {
             secret: secret
           });
@@ -80,7 +80,7 @@ module.exports = (formioServer) => {
     },
 
     getValue: (project, operation, data) => {
-      let decrypt = (operation === 'decrypt');
+      const decrypt = (operation === 'decrypt');
       if (decrypt && project.plan !== 'commercial') {
         return 'Encryption requires Enterprise Plan';
       }
@@ -91,7 +91,7 @@ module.exports = (formioServer) => {
       }
 
       // Return the value.
-      let result = util[operation](project.settings.secret, data);
+      const result = util[operation](project.settings.secret, data);
       if (!result) {
         return data;
       }
@@ -143,7 +143,7 @@ module.exports = (formioServer) => {
         }
         else if (Encryptor.decryptHandler(req.handlerName)) {
           if (res.resource && res.resource.item) {
-            let items = (req.handlerName === 'afterIndex') ? res.resource.item : [res.resource.item];
+            const items = (req.handlerName === 'afterIndex') ? res.resource.item : [res.resource.item];
             eachSeries(items, (submission, done) => Encryptor.encryptDecrypt(req, submission, 'decrypt', done), next);
           }
         }

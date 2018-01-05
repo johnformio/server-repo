@@ -1,6 +1,6 @@
 'use strict';
 
-var debug = require('debug')('formio:middleware:deleteTagHandler');
+const debug = require('debug')('formio:middleware:deleteTagHandler');
 
 /**
  * The deleteTagHandler middleware.
@@ -17,7 +17,7 @@ module.exports = function(formio, formioServer) {
       return next();
     }
 
-    var query = {_id: formioServer.formio.util.idToBson(req.params.tagId), deleted: {$eq: null}};
+    const query = {_id: formioServer.formio.util.idToBson(req.params.tagId), deleted: {$eq: null}};
     debug(query);
     formioServer.formio.resources.tag.model.findOne(query, function(err, tag) {
       if (err) {
@@ -25,7 +25,7 @@ module.exports = function(formio, formioServer) {
         return next(err.message || err);
       }
       if (!tag) {
-        debug('No tag found with _id: ' + req.params.tagId);
+        debug(`No tag found with _id: ${req.params.tagId}`);
         return next();
       }
 

@@ -5,7 +5,7 @@ const Resource = require('resourcejs');
 module.exports = function(router, formioServer) {
   const formio = formioServer.formio;
 
-  let options = {
+  const options = {
     before: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       formio.middleware.bootstrapEntityOwner(false),

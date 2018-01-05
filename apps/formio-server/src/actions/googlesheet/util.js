@@ -1,14 +1,14 @@
 /*jslint node: true */
 'use strict';
 
-var _ = require('lodash');
+const _ = require('lodash');
 
 module.exports = {
   /**
    * Verifying setting form data and restricting action form loading
    * if any of the setting field data missing.
    */
-  checkOauthParameters: function(router, req, next) {
+  checkOauthParameters(router, req, next) {
     router.formio.hook.settings(req, function(err, settings) {
       if (err) {
         return next(err.message || err);

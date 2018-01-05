@@ -1,9 +1,9 @@
 'use strict';
 
-var _ = require('lodash');
-var Q = require('q');
-var moment = require('moment');
-var debug = require('debug')('formio:middleware:projectAnalytics');
+const _ = require('lodash');
+const Q = require('q');
+const moment = require('moment');
+const debug = require('debug')('formio:middleware:projectAnalytics');
 
 module.exports = function(formioServer) {
   /**
@@ -11,7 +11,7 @@ module.exports = function(formioServer) {
    * @param project
    * @return [info, project]
    */
-  var getCallInfo = function(project) {
+  const getCallInfo = function(project) {
     if (!project) {
       return Q.reject('No project');
     }
@@ -20,11 +20,11 @@ module.exports = function(formioServer) {
     }
 
     project._id = project._id.toString();
-    var curr = new Date();
+    const curr = new Date();
     return Q.nfcall(formioServer.analytics.getCalls, curr.getUTCFullYear(), curr.getUTCMonth(), null, project._id)
     .then(function(used) {
-      var limit = formioServer.formio.plans.limits[project.plan];
-      var info = {
+      const limit = formioServer.formio.plans.limits[project.plan];
+      const info = {
         used: used,
         remaining: limit - used,
         limit: limit,

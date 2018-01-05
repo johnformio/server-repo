@@ -14,7 +14,7 @@ module.exports = app => Resource => {
     FormResource.getDraft = function(options) {
       options = this.getMethodOptions('get', options);
       this.methods.push('get');
-      this.register(app, 'get', this.route + '/:' + this.name + 'Id/draft', function(req, res, next) {
+      this.register(app, 'get', `${this.route}/:${this.name}Id/draft`, function(req, res, next) {
         // Store the internal method for response manipulation.
         req.__rMethod = 'get';
 
@@ -39,8 +39,8 @@ module.exports = app => Resource => {
             );
           }
           // No draft was found. Return current form version instead.
-          var query = req.modelQuery || req.model || this.model;
-          var search = {'_id': req.params[this.name + 'Id']};
+          const query = req.modelQuery || req.model || this.model;
+          const search = {'_id': req.params[`${this.name}Id`]};
 
           options.hooks.get.before.call(
             this,
@@ -75,7 +75,7 @@ module.exports = app => Resource => {
     FormResource.putDraft = function(options) {
       options = this.getMethodOptions('put', options);
       this.methods.push('put');
-      this.register(app, 'put', this.route + '/:' + this.name + 'Id/draft', (req, res, next) => {
+      this.register(app, 'put', `${this.route}/:${this.name}Id/draft`, (req, res, next) => {
         // Store the internal method for response manipulation.
         req.__rMethod = 'put';
 
@@ -84,13 +84,13 @@ module.exports = app => Resource => {
         }
 
         // Remove __v field
-        var update = _.omit(req.body, ['__v', '_id']);
-        update._rid = req.params[this.name + 'Id'];
+        const update = _.omit(req.body, ['__v', '_id']);
+        update._rid = req.params[`${this.name}Id`];
         update._vuser = req.user.data.name;
         update._vid = 'draft';
 
         app.formio.mongoose.models.formrevision.findOne({
-          _rid: req.params[this.name + 'Id'],
+          _rid: req.params[`${this.name}Id`],
           _vid: 'draft'
         }, (err, item) => {
           if (err) {

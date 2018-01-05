@@ -1,11 +1,11 @@
 'use strict';
 
-let rest = require('restler');
-var _ = require('lodash');
+const rest = require('restler');
+const _ = require('lodash');
 
 module.exports = (router) => {
-  let formio = router.formio;
-  let hook = formio.hook;
+  const formio = router.formio;
+  const hook = formio.hook;
 
   /**
    * Wrap the project settings request in a promise.
@@ -14,7 +14,7 @@ module.exports = (router) => {
    *
    * @returns {*|promise}
    */
-  let getProjectSettings = req => new Promise((resolve, reject) => {
+  const getProjectSettings = req => new Promise((resolve, reject) => {
     hook.settings(req, (err, settings) => {
       if (err) {
         return reject(err);
@@ -34,12 +34,12 @@ module.exports = (router) => {
    *
    * @returns {*|promise}
    */
-  let getEnvironmentUrl = req => getProjectSettings(req).then(settings => {
+  const getEnvironmentUrl = req => getProjectSettings(req).then(settings => {
     if (!_.has(settings, 'moxtra.environment')) {
       throw 'No Moxtra environment found in the project settings.';
     }
 
-    let url = _.get(settings, 'moxtra.environment');
+    const url = _.get(settings, 'moxtra.environment');
     if (url.match(/api\.moxtra\.com/i)) {
       return `https://api.moxtra.com/v1`;
     }
@@ -60,7 +60,7 @@ module.exports = (router) => {
    *
    * @returns {*|promise}
    */
-  let getToken = (req, user, firstname, lastname) => getProjectSettings(req).then(settings => {
+  const getToken = (req, user, firstname, lastname) => getProjectSettings(req).then(settings => {
     if (!_.has(settings, 'moxtra.clientId')) {
       throw 'No Moxtra clientId found in the project settings.';
     }
@@ -74,7 +74,7 @@ module.exports = (router) => {
     }
 
     /* eslint-disable camelcase */
-    let body = {
+    const body = {
       data: {
         client_id: _.get(settings, 'moxtra.clientId'),
         client_secret: _.get(settings, 'moxtra.clientSecret'),
@@ -120,7 +120,7 @@ module.exports = (router) => {
    *
    * @returns {*|promise}
    */
-  let getFormioBotToken = (req, project) => getProjectSettings(req).then(settings => {
+  const getFormioBotToken = (req, project) => getProjectSettings(req).then(settings => {
     if (!_.has(settings, 'moxtra.clientId')) {
       throw 'No Moxtra clientId found in the project settings.';
     }
@@ -134,7 +134,7 @@ module.exports = (router) => {
     }
 
     /* eslint-disable camelcase */
-    let data = {
+    const data = {
       client_id: _.get(settings, 'moxtra.clientId'),
       client_secret: _.get(settings, 'moxtra.clientSecret'),
       grant_type: 'http://www.moxtra.com/auth_uniqueid',
@@ -175,9 +175,9 @@ module.exports = (router) => {
    *
    * @returns {*|promise}
    */
-  let getBinder = (req, token, filter) => getEnvironmentUrl(req).then(baseUrl => {
-    let url = `${baseUrl}/${filter ? filter : `me`}/binders`;
-    let headers = {
+  const getBinder = (req, token, filter) => getEnvironmentUrl(req).then(baseUrl => {
+    const url = `${baseUrl}/${filter ? filter : `me`}/binders`;
+    const headers = {
       'Authorization': `BEARER ${token}`,
       'Accept': `*/*`
     };
@@ -204,9 +204,9 @@ module.exports = (router) => {
    *
    * @returns {*|promise}
    */
-  let addMessageToBinder = (req, message, binder, token) => getEnvironmentUrl(req).then(baseUrl => {
-    let url = `${baseUrl}/${binder}/comments`;
-    let headers = {
+  const addMessageToBinder = (req, message, binder, token) => getEnvironmentUrl(req).then(baseUrl => {
+    const url = `${baseUrl}/${binder}/comments`;
+    const headers = {
       'Authorization': `BEARER ${token}`,
       'Accept': `*/*`
     };
@@ -234,9 +234,9 @@ module.exports = (router) => {
    *
    * @returns {*|promise}
    */
-  let addTodoToBinder = (req, name, description, binder, token) => getEnvironmentUrl(req).then(baseUrl => {
-    let url = `${baseUrl}/${binder}/todos`;
-    let headers = {
+  const addTodoToBinder = (req, name, description, binder, token) => getEnvironmentUrl(req).then(baseUrl => {
+    const url = `${baseUrl}/${binder}/todos`;
+    const headers = {
       'Authorization': `BEARER ${token}`,
       'Accept': `*/*`
     };
@@ -263,9 +263,9 @@ module.exports = (router) => {
    *
    * @returns {*|promise}
    */
-  let removeUserFromOrg = (req, org, user, token) => getEnvironmentUrl(req).then(baseUrl => {
-    let url = `${baseUrl}/${org}/users/${user}?remove=true&binders=true`;
-    let headers = {
+  const removeUserFromOrg = (req, org, user, token) => getEnvironmentUrl(req).then(baseUrl => {
+    const url = `${baseUrl}/${org}/users/${user}?remove=true&binders=true`;
+    const headers = {
       'Authorization': `BEARER ${token}`,
       'Accept': `*/*`
     };

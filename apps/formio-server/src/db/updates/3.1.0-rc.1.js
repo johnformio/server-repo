@@ -1,6 +1,6 @@
 'use strict';
 
-var debug = {
+let debug = {
   updateProjects: require('debug')('formio:update:3.1.0-rc.1-updateProjects')
 };
 
@@ -20,7 +20,7 @@ var debug = {
  */
 module.exports = function(db, config, tools, done) {
   done();
-  //var projectCollection = db.collection('projects');
+  //let projectCollection = db.collection('projects');
   //
   //// fix broken projects
   //projectCollection

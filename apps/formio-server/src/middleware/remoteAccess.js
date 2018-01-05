@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const _ = require('lodash');
 
 module.exports = app => (req, res, next) => {
-  let response = {
+  const response = {
     project: {},
     permission: 'none',
     user: _.pick(req.user, ['_id', 'data.name', 'data.email', 'created', 'modified'])

@@ -1,7 +1,7 @@
 'use strict';
 
-var _ = require('lodash');
-var debug = require('debug')('formio:middleware:projectEnvCreateAccess');
+const _ = require('lodash');
+const debug = require('debug')('formio:middleware:projectEnvCreateAccess');
 
 module.exports = function(formio) {
   return function(req, res, next) {
@@ -26,8 +26,8 @@ module.exports = function(formio) {
         return next();
       }
       else if (req.user) {
-        var access = _.map(_.map(_.filter(project.access, {type: 'team_admin'}), 'roles'), formio.util.idToString);
-        var roles = _.map(req.user.roles, formio.util.idToString);
+        const access = _.map(_.map(_.filter(project.access, {type: 'team_admin'}), 'roles'), formio.util.idToString);
+        const roles = _.map(req.user.roles, formio.util.idToString);
 
         if ( _.intersection(access, roles).length !== 0) {
           debug('Allowing a team_admin user to add environment..');

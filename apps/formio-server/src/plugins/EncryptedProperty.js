@@ -5,8 +5,8 @@
  *  https://github.com/digitaledgeit/js-mongoose-encrypted-property/issues/1
  *  https://github.com/joegoldbeck/mongoose-encryption/issues/12
  */
-var crypto = require('crypto');
-var debug = {
+const crypto = require('crypto');
+const debug = {
   plugin: require('debug')('formio:plugins:EncryptedProperty'),
   error: require('debug')('formio:error')
 };
@@ -45,8 +45,8 @@ module.exports = function(schema, options) {
       return null;
     }
 
-    var cipher = crypto.createCipher('aes-256-cbc', secret);
-    var decryptedJSON = JSON.stringify(mixed);
+    const cipher = crypto.createCipher('aes-256-cbc', secret);
+    const decryptedJSON = JSON.stringify(mixed);
 
     return Buffer.concat([
       cipher.update(decryptedJSON),
@@ -69,11 +69,11 @@ module.exports = function(schema, options) {
     if (!secret || !cipherbuffer) {
       return null;
     }
-    var data = {};
+    let data = {};
 
     try {
-      var decipher = crypto.createDecipher('aes-256-cbc', secret);
-      var decryptedJSON = Buffer.concat([
+      const decipher = crypto.createDecipher('aes-256-cbc', secret);
+      const decryptedJSON = Buffer.concat([
         decipher.update(cipherbuffer), // Buffer contains encrypted utf8
         decipher.final()
       ]);
@@ -87,8 +87,8 @@ module.exports = function(schema, options) {
   }
 
   // Add a Buffer property to store the encrypted data
-  var encryptedName = options.plainName + '_encrypted';
-  var bufferProperty = {};
+  const encryptedName = `${options.plainName}_encrypted`;
+  const bufferProperty = {};
   bufferProperty[encryptedName] = 'Buffer';
   schema.add(bufferProperty);
 
@@ -97,7 +97,7 @@ module.exports = function(schema, options) {
     .get(function() {
       // Decrypt the value
       if (this[encryptedName]) {
-        var plaintext = decrypt(options.secret, this[encryptedName]);
+        const plaintext = decrypt(options.secret, this[encryptedName]);
         return plaintext;
       }
 
@@ -105,15 +105,15 @@ module.exports = function(schema, options) {
     })
     .set(function(value) {
       // Encrypt and set the value
-      var ciphertext = encrypt(options.secret, value);
+      const ciphertext = encrypt(options.secret, value);
       this[encryptedName] = ciphertext;
     });
 
   // Decrypt data when converted using toJSON.
   schema.set('toJSON', {
-    transform: function(doc, ret, opts) {
+    transform(doc, ret, opts) {
       delete ret[encryptedName];
-      var temp = decrypt(options.secret, doc[encryptedName]);
+      const temp = decrypt(options.secret, doc[encryptedName]);
 
       if (temp) {
         ret[options.plainName] = temp;
@@ -126,9 +126,9 @@ module.exports = function(schema, options) {
 
   // Decrypt data when converted using toObject.
   schema.set('toObject', {
-    transform: function(doc, ret, opts) {
+    transform(doc, ret, opts) {
       delete ret[encryptedName];
-      var temp = decrypt(options.secret, doc[encryptedName]);
+      const temp = decrypt(options.secret, doc[encryptedName]);
 
       if (temp) {
         ret[options.plainName] = temp;

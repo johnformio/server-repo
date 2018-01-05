@@ -31,7 +31,7 @@ class RedisInterface {
   connect() {
     // Redis is not currently connected, attempt to configure the connection.
     if (this.config.redis && this.config.redis.url) {
-      var opts = {
+      const opts = {
         'retry_strategy': (options) => {
           if (options.error && options.error.code === 'ECONNREFUSED') {
             // End reconnecting on a specific error and flush all commands with

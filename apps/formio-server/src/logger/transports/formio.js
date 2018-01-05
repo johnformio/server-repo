@@ -1,8 +1,8 @@
 'use strict';
 
-let _ = require('lodash');
-let rest = require('restler');
-let debug = require('debug')('formio:logger:formio');
+const _ = require('lodash');
+const rest = require('restler');
+const debug = require('debug')('formio:logger:formio');
 
 module.exports = (config, utils) => {
   if (!_.get(config, 'logging.formio')) {
@@ -11,10 +11,10 @@ module.exports = (config, utils) => {
   }
 
   return (err, req) => new Promise((resolve, reject) => {
-    let url = _.get(config, 'logging.formio');
+    const url = _.get(config, 'logging.formio');
     debug(url);
 
-    let data = {data: utils.message(err, req)};
+    const data = {data: utils.message(err, req)};
     debug(data);
 
     rest.postJson(url, data).on('complete', function(result) {
