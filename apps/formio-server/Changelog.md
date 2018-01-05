@@ -4,7 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [UNRELEASED]
+## 5.1.7
+### Added
+ - A way to create inline email tokens for submissions.
+ 
 ### Fixed
  - Case insensitive searching of team members.
 
