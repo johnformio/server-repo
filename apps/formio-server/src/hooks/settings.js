@@ -14,6 +14,7 @@ let async = require('async');
 var chance = new (require('chance'))();
 var fs = require('fs');
 var url = require('url');
+const util = require('../util/util');
 
 module.exports = function(app) {
   var formioServer = app.formio;
@@ -170,6 +171,21 @@ module.exports = function(app) {
         actions.moxtraMessage = require('../actions/moxtra/MoxtraMessage')(formioServer);
         actions.moxtraTodo = require('../actions/moxtra/MoxtraTodo')(formioServer);
         return actions;
+      },
+
+      'export': (req, query, form, exporter, cb) => {
+        util.getSubmissionModel(formioServer.formio, req, form, true, (err, submissionModel) => {
+          if (err) {
+            return cb(err);
+          }
+
+          if (!submissionModel) {
+            return cb();
+          }
+
+          req.submissionModel = submissionModel;
+          return cb();
+        });
       },
 
       /**
