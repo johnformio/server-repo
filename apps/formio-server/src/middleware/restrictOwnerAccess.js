@@ -1,6 +1,6 @@
 'use strict';
 
-var debug = require('debug')('formio:middleware:restrictOwnerAccess');
+const debug = require('debug')('formio:middleware:restrictOwnerAccess');
 
 module.exports = function(formio) {
   /**
@@ -29,7 +29,7 @@ module.exports = function(formio) {
           return reject(err);
         }
         if (!project.owner) {
-          let error = new Error('No project owner found');
+          const error = new Error('No project owner found');
           error.status = 500;
           return reject(error);
         }

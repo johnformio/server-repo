@@ -1,9 +1,9 @@
 'use strict';
 
-var _ = require('lodash');
+const _ = require('lodash');
 
 module.exports = function(formioServer) {
-  var formio = formioServer.formio;
+  const formio = formioServer.formio;
   return function(req, res, next) {
     // Only allow admins to change owner for now.
     if (req.projectId && req.isAdmin && req.adminKey) {

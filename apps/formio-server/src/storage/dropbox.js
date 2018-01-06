@@ -1,15 +1,15 @@
 'use strict';
 
-var crypto = require('crypto');
-var debug = require('debug')('formio:storage:dropbox');
-var request = require('request');
-var multer  = require('multer');
-var storage = multer.memoryStorage();
-var upload = multer({storage: storage});
+const crypto = require('crypto');
+const debug = require('debug')('formio:storage:dropbox');
+const request = require('request');
+const multer  = require('multer');
+const storage = multer.memoryStorage();
+const upload = multer({storage: storage});
 
 /* eslint-disable camelcase */
 module.exports = function(router) {
-  var restrictOwnerAccess = require('../middleware/restrictOwnerAccess')(router.formio.formio);
+  const restrictOwnerAccess = require('../middleware/restrictOwnerAccess')(router.formio.formio);
 
   // Return necessary settings for making the oauth request to dropbox.
   router.get('/project/:projectId/dropbox/auth',
@@ -52,7 +52,7 @@ module.exports = function(router) {
     },
     restrictOwnerAccess,
     function(req, res) {
-      debug('Handling Dropbox request: ' + req.body.code);
+      debug(`Handling Dropbox request: ${req.body.code}`);
       if (req.body.code) {
         // Send code to dropbox for token.
         request.post('https://api.dropboxapi.com/1/oauth2/token', {
@@ -66,7 +66,7 @@ module.exports = function(router) {
         },
         function(error, response, body) {
           if (response.statusCode === 200) {
-            var dropbox = JSON.parse(body);
+            const dropbox = JSON.parse(body);
             // return token to app
             res.send(dropbox);
 
@@ -74,7 +74,7 @@ module.exports = function(router) {
             router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
               if (!err) {
                 // Cannot directly set project.settings.storage.dropbox due to encryption.
-                var settings = project.settings;
+                const settings = project.settings;
                 if (!settings.storage) {
                   settings.storage = {};
                 }
@@ -96,7 +96,7 @@ module.exports = function(router) {
         router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
           if (!err) {
             // Cannot directly set project.settings.storage.dropbox due to encryption.
-            var settings = project.settings;
+            const settings = project.settings;
             if (!settings.storage) {
               settings.storage = {};
             }
@@ -130,16 +130,16 @@ module.exports = function(router) {
           return res.status(400).send('Project not found.');
         }
 
-        debug('Project Loaded: ' + req.projectId);
+        debug(`Project Loaded: ${req.projectId}`);
         if (!project.settings.storage || !project.settings.storage.dropbox) {
           return res.status(400).send('Storage settings not set.');
         }
-        var path = req.query.path_lower;
-        var name = path.split('/').slice(-1)[0];
+        const path = req.query.path_lower;
+        const name = path.split('/').slice(-1)[0];
         request.post('https://content.dropboxapi.com/2/files/download',
           {
             headers: {
-              'Authorization': 'Bearer ' + project.settings.storage.dropbox.access_token,
+              'Authorization': `Bearer ${project.settings.storage.dropbox.access_token}`,
               'Dropbox-API-Arg': JSON.stringify({
                 path: path
               })
@@ -148,7 +148,7 @@ module.exports = function(router) {
           },
           function(error, response, body) {
             if (response.statusCode === 200) {
-              var headers = [
+              const headers = [
                 'content-type',
                 'content-length',
                 'original-content-length',
@@ -162,7 +162,7 @@ module.exports = function(router) {
                   res.setHeader(header, response.headers[header]);
                 }
               });
-              res.setHeader('content-disposition', 'filename=' + name);
+              res.setHeader('content-disposition', `filename=${name}`);
               res.send(body);
             }
             else {
@@ -195,7 +195,7 @@ module.exports = function(router) {
           return res.status(400).send('Project not found.');
         }
 
-        debug('Project Loaded: ' + req.projectId);
+        debug(`Project Loaded: ${req.projectId}`);
         if (!project.settings.storage ||
           !project.settings.storage.dropbox ||
           !project.settings.storage.dropbox.access_token
@@ -203,7 +203,7 @@ module.exports = function(router) {
           return res.status(400).send('Storage settings not set.');
         }
 
-        var fileInfo = req.body;
+        const fileInfo = req.body;
 
         // Restrict file uploads to 150MB as this is a limit in Dropbox unless we use a different endpoint.
         if (Buffer.byteLength(req.file.buffer) > 157286400) {
@@ -214,10 +214,10 @@ module.exports = function(router) {
         request.post('https://content.dropboxapi.com/2/files/upload',
           {
             headers: {
-              'Authorization': 'Bearer ' + project.settings.storage.dropbox.access_token,
+              'Authorization': `Bearer ${project.settings.storage.dropbox.access_token}`,
               'Content-Type': 'application/octet-stream',
               'Dropbox-API-Arg': JSON.stringify({
-                path: '/' + fileInfo.dir + fileInfo.name,
+                path: `/${fileInfo.dir}${fileInfo.name}`,
                 mode: 'add',
                 autorename: true,
                 mute: false
@@ -227,7 +227,7 @@ module.exports = function(router) {
           },
           function(error, response, body) {
             if (response.statusCode === 200) {
-              var result = JSON.parse(body);
+              const result = JSON.parse(body);
               // return token to app
               res.send(result);
             }

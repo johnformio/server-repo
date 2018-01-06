@@ -1,6 +1,6 @@
 'use strict';
 
-var debug = require('debug')('formio:middleware:projectProtectAccess');
+const debug = require('debug')('formio:middleware:projectProtectAccess');
 
 module.exports = function(formio) {
   return function(req, res, next) {

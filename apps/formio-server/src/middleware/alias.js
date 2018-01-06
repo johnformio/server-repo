@@ -1,8 +1,8 @@
 'use strict';
 
-var config = require('../../config');
-var tld = require('tldjs');
-var debug = {
+const config = require('../../config');
+const tld = require('tldjs');
+const debug = {
   alias: require('debug')('formio:alias')
 };
 
@@ -13,8 +13,8 @@ var debug = {
  */
 module.exports = function(formio) {
   // Skip the alias handler.
-  var skip = function(req, res, next) {
-    var params = formio.util.getUrlParams(req.url);
+  const skip = function(req, res, next) {
+    const params = formio.util.getUrlParams(req.url);
     if (params.project) {
       req.projectId = params.project;
     }
@@ -24,7 +24,7 @@ module.exports = function(formio) {
   // Handle the request.
   return function(req, res, next) {
     // Determine if this is a local domain or not.
-    var local = false;
+    let local = false;
 
     // Ignore the subdomain if they provide the config.
     if (config.noalias) {
@@ -37,7 +37,7 @@ module.exports = function(formio) {
     }
 
     // Get the hostname.
-    var hostname = req.headers.host.split(':')[0];
+    let hostname = req.headers.host.split(':')[0];
 
     // Determine if localhost and cleanup hostname.
     if ((hostname.indexOf('127.0.0.1') !== -1) || (hostname.indexOf('localhost') !== -1)) {
@@ -46,8 +46,8 @@ module.exports = function(formio) {
     }
 
     // Determine if there is a subdomain, and break it down to the Project name.
-    var subdomain = tld.getSubdomain(hostname);
-    var projectName = null;
+    const subdomain = tld.getSubdomain(hostname);
+    let projectName = null;
 
     // Handle edge-cases for local connections.
     if (local) {
@@ -71,20 +71,20 @@ module.exports = function(formio) {
 
     // Look up the subdomain.
     formio.cache.loadProjectByName(req, projectName, function(err, project) {
-      debug.alias('Loading project: ' + projectName);
+      debug.alias(`Loading project: ${projectName}`);
 
       if (err || !project) {
         // If project is not found by subdomain, check if the directory refers to the project.
         if (err === 'Project not found') {
           // Allow using subdomains as subdirectories as well.
-          var subdirectory = req.url.split('/')[1];
+          const subdirectory = req.url.split('/')[1];
           // Quick confirmation that we have an projectName.
           if (subdirectory === 'api' || config.reservedSubdomains.indexOf(subdirectory) !== -1) {
             return next();
           }
           else {
             formio.cache.loadProjectByName(req, subdirectory, function(err, project) {
-              debug.alias('Loading project from subdir: ' + projectName);
+              debug.alias(`Loading project from subdir: ${projectName}`);
 
               if (err || !project) {
                 return next();
@@ -92,7 +92,7 @@ module.exports = function(formio) {
 
               // Set the Project Id in the request.
               req.projectId = project._id.toString();
-              req.url = '/project/' + project._id + req.url.slice(subdirectory.length + 1);
+              req.url = `/project/${project._id}${req.url.slice(subdirectory.length + 1)}`;
               return next();
             });
           }
@@ -104,7 +104,7 @@ module.exports = function(formio) {
       else {
         // Set the Project Id in the request.
         req.projectId = project._id.toString();
-        req.url = '/project/' + project._id + req.url;
+        req.url = `/project/${project._id}${req.url}`;
         return next();
       }
     });

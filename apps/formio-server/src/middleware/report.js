@@ -3,30 +3,30 @@
 /**
  * This file serves as an aggregation mechanism for projects.
  */
-var express = require('express');
-var router = express.Router();
-var JSONStream = require('JSONStream');
-var through = require('through');
-var traverse = require('traverse');
-var formioUtils = require('formiojs/utils');
-var paginate = require('node-paginate-anything');
-var _ = require('lodash');
-var debug = {
+const express = require('express');
+const router = express.Router();
+const JSONStream = require('JSONStream');
+const through = require('through');
+const traverse = require('traverse');
+const formioUtils = require('formiojs/utils');
+const paginate = require('node-paginate-anything');
+const _ = require('lodash');
+const debug = {
   report: require('debug')('formio:middleware:report'),
   error: require('debug')('formio:error')
 };
 
 module.exports = function(formioServer) {
-  var formio = formioServer.formio;
+  const formio = formioServer.formio;
 
-  var report = function(req, res, next, filter) {
+  const report = function(req, res, next, filter) {
     formio.cache.loadPrimaryProject(req, function(err, project) {
       if (err) {
         debug.report(err);
         return res.status(400).send('Could not load the project.');
       }
 
-      debug.report('Plan: ' + project.plan);
+      debug.report(`Plan: ${project.plan}`);
       if (['trial', 'team', 'commercial'].indexOf(project.plan) === -1) {
         return res.status(402).send('The report framework requires a Team Pro or Enterprise plan.');
       }
@@ -60,13 +60,13 @@ module.exports = function(formioServer) {
         }
 
         if (node.match(/^ObjectId\(['|"](.{24})['|"]\)$/)) {
-          let result = node.match(/^ObjectId\(['|"](.{24})['|"]\)$/m);
+          const result = node.match(/^ObjectId\(['|"](.{24})['|"]\)$/m);
           this.update(formio.util.idToBson(result[1]));
         }
         if (node.match(/^Date\(['|"]?(.[^']+)['|"]?\)$/)) {
-          let result = node.match(/^Date\(['|"]?(.[^']+)['|"]?\)$/m);
+          const result = node.match(/^Date\(['|"]?(.[^']+)['|"]?\)$/m);
           // If a non digit exists, use the input as a string.
-          let test = result[1].match(/[^\d]/g);
+          const test = result[1].match(/[^\d]/g);
           if (test && test[1]) {
             return this.update(new Date(result[1].toString()));
           }
@@ -82,22 +82,22 @@ module.exports = function(formioServer) {
         }
       });
 
-      var query = {};
-      var stages = [];
-      var limitStage = null;
-      var skipStage = null;
-      var filterStages = function() {
+      const query = {};
+      let stages = [];
+      let limitStage = null;
+      let skipStage = null;
+      const filterStages = function() {
         // Ensure there are no disallowed stages in the aggregation.
         // We may want to include additional stages but better to start with less.
-        var allowedStages = ['$match', '$limit', '$sort', '$skip', '$group', '$unwind'];
+        const allowedStages = ['$match', '$limit', '$sort', '$skip', '$group', '$unwind'];
         /* eslint-disable */
-        for (var i in filter) {
-          var stage = filter[i];
-          var includeStage = false;
-          for (var key in stage) {
+        for (let i in filter) {
+          let stage = filter[i];
+          let includeStage = false;
+          for (let key in stage) {
             // Only allow boolean values for $project
             if (key === '$project') {
-              for (var param in stage[key]) {
+              for (let param in stage[key]) {
                 if (['number', 'boolean'].indexOf((typeof stage[key][param])) === -1) {
                   return true;
                 }
@@ -133,9 +133,9 @@ module.exports = function(formioServer) {
         return res.status(400).send('Disallowed stage used in aggregation.');
       }
 
-      var readAllForms = [];
-      var readOwnForms = [];
-      var forms = {};
+      const readAllForms = [];
+      const readOwnForms = [];
+      const forms = {};
 
       // Get all forms in a project.
       formio.resources.form.model.find({
@@ -212,14 +212,14 @@ module.exports = function(formioServer) {
         res.setHeader('Content-Type', 'application/json');
 
         // Method to perform the aggregation.
-        var performAggregation = function() {
+        const performAggregation = function() {
           formio.resources.submission.model.aggregate(stages)
             .cursor()
             .exec()
             .stream()
             .pipe(through(function(doc) {
               if (doc && doc.form) {
-                var formId = doc.form.toString();
+                const formId = doc.form.toString();
                 if (forms.hasOwnProperty(formId)) {
                   _.each(formioUtils.flattenComponents(forms[doc.form.toString()].components), function(component) {
                     if (component.protected && doc.data && doc.data.hasOwnProperty(component.key)) {
@@ -240,7 +240,7 @@ module.exports = function(formioServer) {
         }
 
         // Replace the limit with a count to get the total items.
-        var countStages = stages.filter(stage => !stage.hasOwnProperty('$limit') && !stage.hasOwnProperty('$skip'));
+        const countStages = stages.filter(stage => !stage.hasOwnProperty('$limit') && !stage.hasOwnProperty('$skip'));
 
         countStages.push({$count: 'total'});
 
@@ -251,16 +251,16 @@ module.exports = function(formioServer) {
             return next(err);
           }
 
-          var skip = skipStage ? skipStage['$skip'] : 0;
-          var limit = limitStage['$limit'];
+          const skip = skipStage ? skipStage['$skip'] : 0;
+          const limit = limitStage['$limit'];
           if (!req.headers.range) {
             req.headers['range-unit'] = 'items';
-            req.headers.range = skip + '-' + (skip + (limit - 1));
+            req.headers.range = `${skip}-${skip + (limit - 1)}`;
           }
 
           // Get the page range.
-          var total = result.length ? result[0].total : 0;
-          var pageRange = paginate(req, res, total, limit) || {
+          const total = result.length ? result[0].total : 0;
+          const pageRange = paginate(req, res, total, limit) || {
             limit: limit,
             skip: skip
           };
@@ -286,7 +286,7 @@ module.exports = function(formioServer) {
 
   // Allow them to provide the query via headers on a GET request.
   router.get('/', function(req, res, next) {
-    var pipeline = [];
+    let pipeline = [];
     if (req.headers.hasOwnProperty('x-query')) {
       debug.report('GET', req.headers['x-query']);
       try {

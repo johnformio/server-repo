@@ -1,7 +1,7 @@
 'use strict';
 
 const jwt = require('jsonwebtoken');
-var util = require('../../util/util');
+const util = require('../../util/util');
 
 module.exports = app => (mail, req, res, params, cb) => {
   const formioServer = app.formio;
@@ -13,13 +13,13 @@ module.exports = app => (mail, req, res, params, cb) => {
   }
 
   // Find the ssoToken.
-  var ssoToken = util.ssoToken(mail.html);
+  const ssoToken = util.ssoToken(mail.html);
   if (!ssoToken) {
     _debug(`No ssoToken`);
     return cb(null, mail);
   }
 
-  var query = formioServer.formio.hook.alter('formQuery', {
+  const query = formioServer.formio.hook.alter('formQuery', {
     deleted: {$eq: null}
   }, req);
 
@@ -42,8 +42,8 @@ module.exports = app => (mail, req, res, params, cb) => {
       return cb(err, mail);
     }
 
-    var forms = [];
-    var formObjs = {};
+    const forms = [];
+    const formObjs = {};
     result.forEach(function(form) {
       formObjs[form._id.toString()] = form;
       forms.push(form._id);
@@ -54,14 +54,14 @@ module.exports = app => (mail, req, res, params, cb) => {
         return next(res.resource.item);
       }
 
-      var query = {
+      const query = {
         form: {'$in': forms},
         deleted: {$eq: null}
       };
 
       // Set the username field to the email address this is getting sent to.
       query[ssoToken.field] = {
-        $regex: new RegExp('^' + formioServer.formio.util.escapeRegExp(mail.to) + '$'),
+        $regex: new RegExp(`^${formioServer.formio.util.escapeRegExp(mail.to)}$`),
         $options: 'i'
       };
 
@@ -82,7 +82,7 @@ module.exports = app => (mail, req, res, params, cb) => {
 
     getSubmission(function(submission) {
       // Create a new JWT token for the SSO.
-      var token = formioServer.formio.hook.alter('token', {
+      let token = formioServer.formio.hook.alter('token', {
         user: {
           _id: submission._id.toString()
         },

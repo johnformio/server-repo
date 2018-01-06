@@ -1,12 +1,12 @@
 'use strict';
 
-var _ = require('lodash');
-var adal = require('adal-node');
-var uuid = require('uuid');
-var AuthenticationContext = adal.AuthenticationContext;
-var request = require('request');
-var Q = require('q');
-var qRequest = Q.denodeify(request);
+const _ = require('lodash');
+const adal = require('adal-node');
+const uuid = require('uuid');
+const AuthenticationContext = adal.AuthenticationContext;
+const request = require('request');
+const Q = require('q');
+const qRequest = Q.denodeify(request);
 module.exports = function(router) {
   return {
     /**
@@ -24,12 +24,12 @@ module.exports = function(router) {
      * @param payload
      * @returns {Promise.<T>|*}
      */
-    request: function(router, req, res, resource, type, authType, payload) {
+    request(router, req, res, resource, type, authType, payload) {
       // Store the current resource.
-      var currentResource = res.resource;
+      const currentResource = res.resource;
 
       // Connect to Office 365.
-      var connectPromise;
+      let connectPromise;
       if (authType === 'application') {
         connectPromise = this.connectWithCertificate(router, req);
       }
@@ -38,9 +38,9 @@ module.exports = function(router) {
       }
       return connectPromise.then(function(connection) {
         // The URL to request.
-        var url = this.baseUrl + "/api/v1.0/users('" + connection.settings.office365.email + "')/" + resource;
-        var externalId = '';
-        var method = 'POST';
+        let url = `${this.baseUrl}/api/v1.0/users('${connection.settings.office365.email}')/${resource}`;
+        let externalId = '';
+        let method = 'POST';
 
         // Handle PUT and DELETE methods.
         if (req.method !== 'POST') {
@@ -53,7 +53,7 @@ module.exports = function(router) {
           }
 
           // Add to the url.
-          url += "('" + externalId + "')";
+          url += `('${externalId}')`;
 
           // Set the method.
           method = (req.method === 'PUT') ? 'PATCH' : 'DELETE';
@@ -66,7 +66,7 @@ module.exports = function(router) {
           json: true,
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + connection.accessToken,
+            'Authorization': `Bearer ${connection.accessToken}`,
             'User-Agent': 'form.io/1.0',
             'client-request-id': uuid.v4(),
             'return-client-request-id': true,
@@ -110,7 +110,7 @@ module.exports = function(router) {
      * @param req
      * @returns {*}
      */
-    connectWithCertificate: function(router, req) {
+    connectWithCertificate(router, req) {
       if (req.o365) {
         return req.o365;
       }
@@ -131,11 +131,11 @@ module.exports = function(router) {
         }
 
         // Create the AuthenticationContext.
-        var context = new AuthenticationContext('https://login.windows.net/' + settings.office365.tenant);
+        const context = new AuthenticationContext(`https://login.windows.net/${settings.office365.tenant}`);
 
           // Authenticate to Office 365.
         return Q.ninvoke(context, 'acquireTokenWithClientCertificate',
-          this.baseUrl + '/',
+          `${this.baseUrl}/`,
           settings.office365.clientId,
           settings.office365.cert,
           settings.office365.thumbprint
@@ -159,8 +159,8 @@ module.exports = function(router) {
      * @param res
      * @returns {*}
      */
-    connectWithOAuth: function(router, req, res) {
-      var token = req.token;
+    connectWithOAuth(router, req, res) {
+      const token = req.token;
       if (!token) {
         return Q.reject('Must be logged in to connect with Office 365 via OAuth.');
       }
@@ -193,8 +193,8 @@ module.exports = function(router) {
      * @param value
      * @returns {*}
      */
-    getAddress: function(value) {
-      var address = {};
+    getAddress(value) {
+      const address = {};
       if (!value || !value.address_components) {
         return {};
       }
@@ -205,7 +205,7 @@ module.exports = function(router) {
         });
       });
 
-      var streetName = address.street_number ? (address.street_number.long_name + ' ') : '';
+      let streetName = address.street_number ? (`${address.street_number.long_name} `) : '';
       streetName += address.route ? address.route.short_name : '';
 
       return {
@@ -224,7 +224,7 @@ module.exports = function(router) {
      * @param params
      * @returns {*}
      */
-    getArray: function(array, params) {
+    getArray(array, params) {
       return router.formio.nunjucks.renderObj(array, params);
     },
 
@@ -234,7 +234,7 @@ module.exports = function(router) {
      * @param value
      * @returns {*}
      */
-    getCoordinates: function(value) {
+    getCoordinates(value) {
       if (!value || !value.geometry || !value.geometry.location) {
         return {};
       }
@@ -251,7 +251,7 @@ module.exports = function(router) {
      * @param value
      * @returns {{DisplayName: *, Address: *, Coordinates: *}}
      */
-    getLocation: function(value) {
+    getLocation(value) {
       if (!value) {
         return {};
       }
@@ -269,7 +269,7 @@ module.exports = function(router) {
      * @param value
      * @returns {{Name: *, Address: *}}
      */
-    getEmail: function(value) {
+    getEmail(value) {
       return {
         Name: value,
         Address: value
@@ -282,8 +282,8 @@ module.exports = function(router) {
      * @param value
      * @returns {{EmailAddress: *}}
      */
-    getRecipient: function(value, required) {
-      var recipient = {
+    getRecipient(value, required) {
+      const recipient = {
         EmailAddress: this.getEmail(value)
       };
 
@@ -301,8 +301,8 @@ module.exports = function(router) {
      * @param params
      * @returns {Array}
      */
-    getRecipientsObject: function(emails, required) {
-      var recipients = [];
+    getRecipientsObject(emails, required) {
+      const recipients = [];
       _.each(emails, function(email) {
         recipients.push(this.getRecipient(email, required));
       }.bind(this));
@@ -316,7 +316,7 @@ module.exports = function(router) {
      * @param params
      * @returns {Array}
      */
-    getRecipients: function(value, params) {
+    getRecipients(value, params) {
       return this.getRecipientsObject(router.formio.nunjucks.renderObj(value, params), true);
     },
 
@@ -326,7 +326,7 @@ module.exports = function(router) {
      * @param body The HTML body of the content.
      * @returns {{ContentType: string, Content: *}}
      */
-    getBodyObject: function(body) {
+    getBodyObject(body) {
       return {
         ContentType: 'HTML',
         Content: body
@@ -340,7 +340,7 @@ module.exports = function(router) {
      * @param params
      * @returns {*|{ContentType, Content}|{ContentType: string, Content: *}}
      */
-    getBody: function(value, params) {
+    getBody(value, params) {
       return this.getBodyObject(router.formio.nunjucks.render(value, params));
     }
   };

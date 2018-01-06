@@ -1,5 +1,5 @@
 'use strict';
-var nodeUrl = require('url');
+const nodeUrl = require('url');
 
 /**
  * A handler for form based requests.
@@ -9,10 +9,10 @@ var nodeUrl = require('url');
  */
 module.exports = function(router) {
   return function tagHandler(req, res, next) {
-    var _url = nodeUrl.parse(req.url).pathname;
+    const _url = nodeUrl.parse(req.url).pathname;
 
     // Allow access to tag/current
-    if (req.method === 'GET' && req.projectId && _url === '/project/' + req.projectId + '/tag/current') {
+    if (req.method === 'GET' && req.projectId && _url === `/project/${req.projectId}/tag/current`) {
       req.skipResource = true;
       return next();
     }

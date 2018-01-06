@@ -1,14 +1,14 @@
 'use strict';
 
-var Q = require('q');
-var _ = require('lodash');
-var uuid = require('uuid');
-var AuthenticationContext = require('adal-node').AuthenticationContext;
+const Q = require('q');
+const _ = require('lodash');
+const uuid = require('uuid');
+const AuthenticationContext = require('adal-node').AuthenticationContext;
 
-var util = require('formio/src/util/util');
+const util = require('formio/src/util/util');
 
-var checkMissing = function(settings) {
-  var o365Settings = settings.office365;
+const checkMissing = function(settings) {
+  const o365Settings = settings.office365;
 
   // Check if any required settings are missing
   if (!o365Settings) {
@@ -34,21 +34,21 @@ module.exports = function(formio) {
     // Display name of the oauth provider
     title: 'Office 365',
 
-    getAuthURI: function(tenant) {
-      return 'https://login.microsoftonline.com/' + tenant + '/oauth2/authorize';
+    getAuthURI(tenant) {
+      return `https://login.microsoftonline.com/${tenant}/oauth2/authorize`;
     },
 
-    configureOAuthButton: function(component, settings, state) {
-      var missing = checkMissing(settings);
+    configureOAuthButton(component, settings, state) {
+      const missing = checkMissing(settings);
 
       if (missing) {
         component.oauth = {
           provider: this.name,
-          error: this.title + ' OAuth provider is missing ' + missing
+          error: `${this.title} OAuth provider is missing ${missing}`
         };
       }
       else {
-        var o365Settings = settings.office365;
+        const o365Settings = settings.office365;
         component.oauth = {
           provider: this.name,
           clientId: o365Settings.clientId,
@@ -58,7 +58,7 @@ module.exports = function(formio) {
       }
     },
 
-    isAvailable: function(settings) {
+    isAvailable(settings) {
       return !checkMissing(settings);
     },
 
@@ -77,18 +77,18 @@ module.exports = function(formio) {
     // Exchanges authentication code for auth token
     // Returns a promise, or you can provide the next callback arg
     // Resolves with array of tokens defined like externalTokenSchema
-    getTokens: function(req, code, state, redirectURI, next) {
+    getTokens(req, code, state, redirectURI, next) {
       return Q.ninvoke(formio.hook, 'settings', req)
       .then(function(settings) {
-        var missing = checkMissing(settings);
+        const missing = checkMissing(settings);
         if (missing) {
           throw {
             status: 400,
-            message: this.title + ' OAuth provider is missing ' + missing
+            message: `${this.title} OAuth provider is missing ${missing}`
           };
         }
-        var o365Settings = settings.office365;
-        var authContext = new AuthenticationContext('https://login.windows.net/' + o365Settings.tenant);
+        const o365Settings = settings.office365;
+        const authContext = new AuthenticationContext(`https://login.windows.net/${o365Settings.tenant}`);
         return Q.ninvoke(authContext, 'acquireTokenWithAuthorizationCode',
           code,
           redirectURI,
@@ -111,7 +111,7 @@ module.exports = function(formio) {
             exp: new Date(result.expiresOn)
           },
           {
-            type: this.name + '_refresh',
+            type: `${this.name}_refresh`,
             token: result.refreshToken,
             exp: null // Expiration of refresh token is unknown
           }
@@ -122,8 +122,8 @@ module.exports = function(formio) {
 
     // Gets user information from oauth access token
     // Returns a promise, or you can provide the next callback arg
-    getUser: function(tokens, next) {
-      var accessToken = _.find(tokens, {type: this.name});
+    getUser(tokens, next) {
+      const accessToken = _.find(tokens, {type: this.name});
       if (!accessToken) {
         return Q.reject('No access token found');
       }
@@ -133,7 +133,7 @@ module.exports = function(formio) {
         json: true,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + accessToken.token,
+          'Authorization': `Bearer ${accessToken.token}`,
           'User-Agent': 'form.io/1.0',
           'client-request-id': uuid.v4(),
           'return-client-request-id': true,
@@ -142,10 +142,10 @@ module.exports = function(formio) {
       })
       .spread(function(response, userInfo) {
         if (!userInfo) {
-          var status = response.statusCode;
+          const status = response.statusCode;
           throw {
             status: status,
-            message: status + ' response from Microsoft: ' + response.statusMessage
+            message: `${status} response from Microsoft: ${response.statusMessage}`
           };
         }
         return userInfo;
@@ -154,13 +154,13 @@ module.exports = function(formio) {
     },
 
     // Gets user ID from provider user response from getUser()
-    getUserId: function(user) {
+    getUserId(user) {
       return user.Id;
     },
 
     // Sends a request to refresh tokens and resolves with new tokens
     // Returns a promise, or you can provide the next callback arg
-    refreshTokens: function(req, res, user, next) {
+    refreshTokens(req, res, user, next) {
       return Q.ninvoke(formio.hook, 'settings', req)
       .then(function(settings) {
         if (
@@ -171,12 +171,12 @@ module.exports = function(formio) {
         ) {
           throw 'Office 365 OAuth settings not configured.';
         }
-        var refreshToken = _.find(user.externalTokens, {type: 'office365_refresh'});
+        const refreshToken = _.find(user.externalTokens, {type: 'office365_refresh'});
         if (!refreshToken) {
           throw 'No refresh token available. Please reauthenticate with Office 365';
         }
 
-        var context = new AuthenticationContext('https://login.windows.net/' + settings.office365.tenant);
+        const context = new AuthenticationContext(`https://login.windows.net/${settings.office365.tenant}`);
         return Q.ninvoke(context, 'acquireTokenWithRefreshToken',
           refreshToken.token,
           settings.office365.clientId,

@@ -14,22 +14,22 @@ module.exports = app => (req, res, next) => {
     switch (type) {
       case 'Subdomains':
         if (project.hasOwnProperty('name')) {
-          path = protocol + '//' + project.name + '.' + server;
+          path = `${protocol}//${project.name}.${server}`;
         }
         else if (project.hasOwnProperty('_id')) {
-          path = serverBase + '/project/' + project._id;
+          path = `${serverBase}/project/${project._id}`;
         }
         break;
       case 'Subdirectories':
         if (project.hasOwnProperty('name')) {
-          path = serverBase + '/' + project.name;
+          path = `${serverBase}/${project.name}`;
         }
         else if (project.hasOwnProperty('_id')) {
-          path = serverBase + '/project/' + project._id;
+          path = `${serverBase}/project/${project._id}`;
         }
         break;
       case 'ProjectId':
-        path = serverBase + '/project/' + project._id;
+        path = `${serverBase}/project/${project._id}`;
         break;
     }
     return path;

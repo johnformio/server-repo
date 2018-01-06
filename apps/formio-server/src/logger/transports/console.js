@@ -1,7 +1,7 @@
 'use strict';
 
-let _ = require('lodash');
-let debug = require('debug')('formio:logger:console');
+const _ = require('lodash');
+const debug = require('debug')('formio:logger:console');
 
 module.exports = (config, utils) => {
   if (!_.get(config, 'logging.console')) {
@@ -11,7 +11,7 @@ module.exports = (config, utils) => {
 
   return (err, req) => Promise.resolve()
   .then(() => {
-    let message = utils.message(err, req);
+    const message = utils.message(err, req);
     message.date = new Date();
 
     /* eslint-disable no-console */

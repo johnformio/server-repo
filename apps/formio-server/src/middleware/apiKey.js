@@ -1,6 +1,6 @@
 'use strict';
 
-var _ = require('lodash');
+const _ = require('lodash');
 
 /**
  * Provides URL alias capabilities.
@@ -11,7 +11,7 @@ module.exports = function(formio) {
   // Handle the request.
   return function(req, res, next) {
     // Get the API Token
-    var token = req.headers.hasOwnProperty('x-token') ? req.headers['x-token'] : req.query['token'];
+    const token = req.headers.hasOwnProperty('x-token') ? req.headers['x-token'] : req.query['token'];
 
     // Load the current project.
     formio.cache.loadCurrentProject(req, function(err, currentProject) {
@@ -39,7 +39,7 @@ module.exports = function(formio) {
         }
 
         // Load the user object.
-        var query = {
+        const query = {
           name: 'user',
           project: formioProject._id,
           deleted: {$eq: null}

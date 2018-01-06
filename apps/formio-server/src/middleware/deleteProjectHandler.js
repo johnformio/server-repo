@@ -1,6 +1,6 @@
 'use strict';
 
-var debug = require('debug')('formio:middleware:deleteProjectHandler');
+const debug = require('debug')('formio:middleware:deleteProjectHandler');
 
 /**
  * The deleteProjectHandler middleware.
@@ -23,11 +23,11 @@ module.exports = function(formio) {
         return next();
       }
 
-      var owner = (formio.util.idToString(req.user._id) === formio.util.idToString(project.owner));
-      debug('Owner: ' + owner);
+      const owner = (formio.util.idToString(req.user._id) === formio.util.idToString(project.owner));
+      debug(`Owner: ${owner}`);
       if (owner) {
-        var prune = require('../util/delete')(formio);
-        debug('Prune project w/ projectId: ' + req.projectId);
+        const prune = require('../util/delete')(formio);
+        debug(`Prune project w/ projectId: ${req.projectId}`);
         prune.project(req.projectId, function(err) {
           if (err) {
             debug(err);

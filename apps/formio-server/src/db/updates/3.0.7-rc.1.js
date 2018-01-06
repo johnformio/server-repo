@@ -1,6 +1,6 @@
 'use strict';
 
-var debug = {
+let debug = {
   updateProjects: require('debug')('formio:update:3.0.7-rc.1-updateProjects')
 };
 
@@ -18,8 +18,8 @@ var debug = {
  * @param done
  */
 module.exports = function(db, config, tools, done) {
-  var projectCollection = db.collection('projects');
-  var valid = ['basic', 'independent', 'team', 'commercial'];
+  let projectCollection = db.collection('projects');
+  let valid = ['basic', 'independent', 'team', 'commercial'];
 
   // fix broken projects
   projectCollection

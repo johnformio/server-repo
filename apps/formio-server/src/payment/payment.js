@@ -1,7 +1,7 @@
 'use strict';
 
-var Q = require('q');
-var debug = require('debug')('formio:payment');
+const Q = require('q');
+const debug = require('debug')('formio:payment');
 
 module.exports = function(app, formio) {
   // Load custom CRM action.
@@ -21,10 +21,10 @@ module.exports = function(app, formio) {
     formio.middleware.customCrmAction('upgradeproject')
   );
 
-  var paymentFormId;
-  var projectHistoryId;
+  let paymentFormId;
+  let projectHistoryId;
 
-  var getPaymentFormId = function(projectId) {
+  const getPaymentFormId = function(projectId) {
     if (paymentFormId) {
       return Q(paymentFormId);
     }
@@ -43,7 +43,7 @@ module.exports = function(app, formio) {
     });
   };
 
-  var getUpgradeHistoryFormId = function(projectId) {
+  const getUpgradeHistoryFormId = function(projectId) {
     if (projectHistoryId) {
       return Q(projectHistoryId);
     }
@@ -62,7 +62,7 @@ module.exports = function(app, formio) {
     });
   };
 
-  var userHasPaymentInfo = function(req) {
+  const userHasPaymentInfo = function(req) {
     if (!req.user || !req.userProject.primary) {
       return Q.reject('Must be logged in to get payment info');
     }

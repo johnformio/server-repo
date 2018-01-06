@@ -1,10 +1,10 @@
 'use strict';
 
 /* eslint camelcase: 0 */
-var crypto = require('crypto');
-var _ = require('lodash');
-var Q = require('q');
-var util = require('formio/src/util/util');
+const crypto = require('crypto');
+const _ = require('lodash');
+const Q = require('q');
+const util = require('formio/src/util/util');
 
 module.exports = function(config, formio) {
   return function(req, res, next) {
@@ -15,25 +15,25 @@ module.exports = function(config, formio) {
     if (!req.body || !req.body.data) {
       return res.status(400).send('No data received');
     }
-    var list = ['ccNumber', 'ccExpiryMonth', 'ccExpiryYear', 'cardholderName', 'securityCode'];
-    var missingFields = _.filter(list, function(prop) {
+    const list = ['ccNumber', 'ccExpiryMonth', 'ccExpiryYear', 'cardholderName', 'securityCode'];
+    const missingFields = _.filter(list, function(prop) {
       return !req.body.data[prop];
     });
     if (missingFields.length !== 0) {
-      return res.status(400).send('JSON request is missing ' + missingFields.join(', ') + ' properties');
+      return res.status(400).send(`JSON request is missing ${missingFields.join(', ')} properties`);
     }
 
-    var userId = req.user._id.toString();
+    const userId = req.user._id.toString();
 
     formio.payment.getPaymentFormId(req.userProject._id)
     .then(function(formId) {
-      var transactionRequest = {
+      const transactionRequest = {
         gateway_id: config.payeezy.gatewayId,
         password: config.payeezy.gatewayPassword,
         transaction_type: '01', // Pre-Authorization
         amount: 0,
         cardholder_name: req.body.data.cardholderName,
-        cc_number: '' + req.body.data.ccNumber,
+        cc_number: `${req.body.data.ccNumber}`,
         cc_expiry: req.body.data.ccExpiryMonth + req.body.data.ccExpiryYear,
         cc_verification_str2: req.body.data.securityCode,
         // Wont fit 20 char limit unless converted to base64
@@ -43,17 +43,17 @@ module.exports = function(config, formio) {
         client_email: req.user.data.email,
         currency_code: 'USD'
       };
-      var transactionBody = JSON.stringify(transactionRequest);
-      var timestamp = (new Date()).toISOString();
-      var content_digest = crypto.createHash('sha1').update(transactionBody, 'utf8').digest('hex');
+      const transactionBody = JSON.stringify(transactionRequest);
+      const timestamp = (new Date()).toISOString();
+      const content_digest = crypto.createHash('sha1').update(transactionBody, 'utf8').digest('hex');
 
-      var hmac = crypto.createHmac('sha1', config.payeezy.hmacKey || '')
-      .update('POST\napplication/json\n' + content_digest + '\n' + timestamp + '\n' + config.payeezy.endpoint, 'utf8')
+      const hmac = crypto.createHmac('sha1', config.payeezy.hmacKey || '')
+      .update(`POST\napplication/json\n${content_digest}\n${timestamp}\n${  config.payeezy.endpoint}`, 'utf8')
       .digest('base64');
 
       return util.request({
         method: 'POST',
-        url: 'https://' + config.payeezy.host + config.payeezy.endpoint,
+        url: `https://${config.payeezy.host}${config.payeezy.endpoint}`,
         body: transactionRequest,
         json: true,
         headers: {
@@ -61,7 +61,7 @@ module.exports = function(config, formio) {
           'Content-Type': 'application/json',
           'x-gge4-content-sha1': content_digest,
           'x-gge4-date': timestamp,
-          'Authorization': 'GGE4_API ' + config.payeezy.keyId + ':' + hmac
+          'Authorization': `GGE4_API ${config.payeezy.keyId}:${hmac}`
         }
       })
       .spread(function(response, body) {
