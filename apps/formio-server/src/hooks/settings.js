@@ -173,7 +173,7 @@ module.exports = function(app) {
         return actions;
       },
 
-      'export': (req, query, form, exporter, cb) => {
+      'export': function(req, query, form, exporter, cb) {
         util.getSubmissionModel(formioServer.formio, req, form, true, (err, submissionModel) => {
           if (err) {
             return cb(err);
