@@ -19,6 +19,7 @@ const debug = {
 module.exports = function(formioServer) {
   const formio = formioServer.formio;
 
+  /* eslint-disable max-statements */
   const report = function(req, res, next, filter) {
     formio.cache.loadPrimaryProject(req, function(err, project) {
       if (err) {
@@ -372,6 +373,7 @@ module.exports = function(formioServer) {
       });
     });
   };
+  /* eslint-enable max-statements */
 
   // Use post to crete aggregation criteria.
   router.post('/', function(req, res, next) {
