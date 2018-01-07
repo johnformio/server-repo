@@ -142,6 +142,7 @@ module.exports = function(formioServer) {
         })
       ));
 
+      const forms = [];
       const protectedFields = {};
       const formQuery = {
         project: formio.util.idToBson(req.projectId),
@@ -161,6 +162,7 @@ module.exports = function(formioServer) {
 
         // Find all forms that this user has "read_all" or "read_own" access
         _.each(result, function(form) {
+          forms.push(form._id);
           protectedFields[form._id.toString()] = [];
           formioUtils.eachComponent(form.components, (component, path) => {
             if (component.protected) {
@@ -172,6 +174,11 @@ module.exports = function(formioServer) {
         // Make sure to not include deleted submissions.
         if (!req.query.deleted) {
           query.deleted = {$eq: null};
+        }
+
+        // If they do not provide a form limit, it should at least be the forms.
+        if (!query.form) {
+          query.form = {$in: forms};
         }
 
         // A query to determine if the users roles are within the forms submission access.
