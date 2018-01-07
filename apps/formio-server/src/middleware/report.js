@@ -143,12 +143,18 @@ module.exports = function(formioServer) {
       ));
 
       const protectedFields = {};
-
-      // Get all forms in a project.
-      formio.resources.form.model.find({
+      const formQuery = {
         project: formio.util.idToBson(req.projectId),
         deleted:  {'$eq': null}
-      }).exec(function(err, result) {
+      };
+
+      // If they are already filtering on the form, then include that in the form query.
+      if (query.form) {
+        formQuery.form = query.form;
+      }
+
+      // Get all forms in a project.
+      formio.resources.form.model.find(formQuery).exec(function(err, result) {
         if (err) {
           return next(err);
         }
