@@ -3096,7 +3096,7 @@ module.exports = function(app, template, hook) {
             }
             Q(app.formio.formio.resources.form.model.findOne({name: 'paymentAuthorization'}))
             .then(function(form) {
-              return app.formio.formio.resources.submission.model.findOne({form: form._id, owner: template.formio.owner._id});
+              return app.formio.formio.resources.submission.model.findOne({form: form._id, owner: util.ObjectId(template.formio.owner._id)});
             })
             .then(function(submission) {
               assert.equal(submission.data.ccNumber, '************1111', 'Only the last 4 digits of the cc number should be stored.');
@@ -3133,7 +3133,7 @@ module.exports = function(app, template, hook) {
               }
               Q(app.formio.formio.resources.form.model.findOne({name: 'projectUpgradeHistory'}))
               .then(function(form) {
-                return app.formio.formio.resources.submission.model.find({form: form._id, owner: template.formio.owner._id}).sort('-created');
+                return app.formio.formio.resources.submission.model.find({form: form._id, owner: util.ObjectId(template.formio.owner._id)}).sort('-created');
               })
               .then(function(submissions) {
                 assert.equal(submissions.length, 1, 'There should only be one upgrade history submission.');
@@ -3168,7 +3168,7 @@ module.exports = function(app, template, hook) {
               }
               Q(app.formio.formio.resources.form.model.findOne({name: 'projectUpgradeHistory'}))
               .then(function(form) {
-                return app.formio.formio.resources.submission.model.find({form: form._id, owner: template.formio.owner._id}).sort('-created');
+                return app.formio.formio.resources.submission.model.find({form: form._id, owner: util.ObjectId(template.formio.owner._id)}).sort('-created');
               })
               .then(function(submissions) {
                 assert.equal(submissions.length, 2, 'There should be two upgrades history submission.');
@@ -3202,7 +3202,7 @@ module.exports = function(app, template, hook) {
               }
               Q(app.formio.formio.resources.form.model.findOne({name: 'projectUpgradeHistory'}))
               .then(function(form) {
-                return app.formio.formio.resources.submission.model.find({form: form._id, owner: template.formio.owner._id}).sort('-created');
+                return app.formio.formio.resources.submission.model.find({form: form._id, owner: util.ObjectId(template.formio.owner._id)}).sort('-created');
               })
               .then(function(submissions) {
                 assert.equal(submissions.length, 3, 'There should be three upgrades history submission.');
@@ -3236,7 +3236,7 @@ module.exports = function(app, template, hook) {
               }
               Q(app.formio.formio.resources.form.model.findOne({name: 'projectUpgradeHistory'}))
               .then(function(form) {
-                return app.formio.formio.resources.submission.model.find({form: form._id, owner: template.formio.owner._id}).sort('-created');
+                return app.formio.formio.resources.submission.model.find({form: form._id, owner: util.ObjectId(template.formio.owner._id)}).sort('-created');
               })
               .then(function(submissions) {
                 assert.equal(submissions.length, 4, 'There should be four upgrades history submission.');
@@ -3270,7 +3270,7 @@ module.exports = function(app, template, hook) {
               }
               Q(app.formio.formio.resources.form.model.findOne({name: 'projectUpgradeHistory'}))
               .then(function(form) {
-                return app.formio.formio.resources.submission.model.find({form: form._id, owner: template.formio.owner._id}).sort('-created');
+                return app.formio.formio.resources.submission.model.find({form: form._id, owner: util.ObjectId(template.formio.owner._id)}).sort('-created');
               })
               .then(function(submissions) {
                 assert.equal(submissions.length, 5, 'There should be five upgrades history submission.');
@@ -3305,7 +3305,7 @@ module.exports = function(app, template, hook) {
               }
               Q(app.formio.formio.resources.form.model.findOne({name: 'projectUpgradeHistory'}))
               .then(function(form) {
-                return app.formio.formio.resources.submission.model.find({form: form._id, owner: template.formio.owner._id}).sort('-created');
+                return app.formio.formio.resources.submission.model.find({form: form._id, owner: util.ObjectId(template.formio.owner._id)}).sort('-created');
               })
               .then(function(submissions) {
                 assert.equal(submissions.length, 6, 'There should only be six upgrade history submissions.');

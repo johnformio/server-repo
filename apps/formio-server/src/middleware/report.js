@@ -19,6 +19,7 @@ const debug = {
 module.exports = function(formioServer) {
   const formio = formioServer.formio;
 
+  /* eslint-disable max-statements */
   const report = function(req, res, next, filter) {
     formio.cache.loadPrimaryProject(req, function(err, project) {
       if (err) {
@@ -133,43 +134,42 @@ module.exports = function(formioServer) {
         return res.status(400).send('Disallowed stage used in aggregation.');
       }
 
-      const readAllForms = [];
-      const readOwnForms = [];
-      const forms = {};
+      const userRoles = _.filter(_.concat(
+        _.map(req.user.roles, (role) => {
+          return role ? formio.util.idToBson(role) : '';
+        }),
+        _.map(req.user.roles, (role) => {
+          return role ? role.toString() : '';
+        })
+      ));
 
-      // Get all forms in a project.
-      formio.resources.form.model.find({
+      const forms = [];
+      const protectedFields = {};
+      const formQuery = {
         project: formio.util.idToBson(req.projectId),
         deleted:  {'$eq': null}
-      }).exec(function(err, result) {
+      };
+
+      // If they are already filtering on the form, then include that in the form query.
+      if (query.form) {
+        formQuery.form = query.form;
+      }
+
+      // Get all forms in a project.
+      formio.resources.form.model.find(formQuery).exec(function(err, result) {
         if (err) {
           return next(err);
         }
 
         // Find all forms that this user has "read_all" or "read_own" access
         _.each(result, function(form) {
-          const access = form.submissionAccess.toObject();
-
-          // If admin, add to read_all forms.
-          if (req.isAdmin) {
-            readAllForms.push(form._id);
-            forms[form._id.toString()] = form;
-          }
-          else {
-            access.map(item => {
-              const roles = item.roles.map(role => role.toString());
-              // If has a role with read_all.
-              if (item.type === 'read_all' && req.user.roles.some(role => roles.includes(role))) {
-                readAllForms.push(form._id);
-                forms[form._id.toString()] = form;
-              }
-              // If has a role with read_own.
-              else if (item.type === 'read_own' && req.user.roles.some(role => roles.includes(role))) {
-                readOwnForms.push(form._id);
-                forms[form._id.toString()] = form;
-              }
-            });
-          }
+          forms.push(form._id);
+          protectedFields[form._id.toString()] = [];
+          formioUtils.eachComponent(form.components, (component, path) => {
+            if (component.protected) {
+              protectedFields[form._id.toString()].push(path);
+            }
+          });
         });
 
         // Make sure to not include deleted submissions.
@@ -177,24 +177,124 @@ module.exports = function(formioServer) {
           query.deleted = {$eq: null};
         }
 
-        // Start with the query, then add the remaining stages.
-        stages = [
-          {
-            '$match': {'$or': [
-                {
-                  form: {
-                    '$in': readAllForms
-                  }
-                },
-                {
-                  form: {
-                    '$in': readOwnForms
-                  },
-                  owner: formio.util.idToBson(req.user._id)
+        // If they do not provide a form limit, it should at least be the forms.
+        if (!query.form) {
+          query.form = {$in: forms};
+        }
+
+        // A query to determine if the users roles are within the forms submission access.
+        const userAccessQuery = function(type) {
+          return {
+            $gt: [
+              {
+                $size: {
+                  $setIntersection: [
+                    {
+                      $reduce: {
+                        input: '$formObj.submissionAccess',
+                        initialValue: [],
+                        in: {
+                          $setUnion: [
+                            '$$value',
+                            {
+                              $cond: {
+                                if: {
+                                  $eq: ["$$this.type", type]
+                                },
+                                then: '$$this.roles',
+                                else: []
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    userRoles
+                  ]
                 }
-              ]}
+              }, 0
+            ]
+          };
+        };
+
+        let preStages = [
+          // Perform the query.
+          {'$match': query},
+
+          // Load in the form object into the submission.
+          {
+            '$lookup': {
+              from: 'forms',
+              localField: 'form',
+              foreignField: '_id',
+              as: 'formObj'
+            }
+          },
+          {'$unwind': '$formObj'}
+        ];
+
+        // If they are not an admin, then add the access checks.
+        if (!req.isAdmin) {
+          preStages = preStages.concat([
+            {
+              '$addFields': {
+                'hasAccess': {
+                  $or: [
+                    // User roles are within any read_all roles.
+                    userAccessQuery('read_all'),
+                    {
+                      $and: [
+                        // User roles are within read_own roles
+                        userAccessQuery('read_own'),
+
+                        // AND the owner of the submission is the current user.
+                        {$in: ['$owner', [req.user._id.toString(), req.user._id]]}
+                      ]}
+                  ]
+                }
+              }
+            },
+
+            // Ensure that this user has access to this submission.
+            {
+              '$match': {
+                'hasAccess': true
+              }
+            }
+          ]);
+        }
+
+        preStages = preStages.concat([
+          // Load the project for this form.
+          {
+            '$lookup': {
+              from: 'projects',
+              localField: 'formObj.project',
+              foreignField: '_id',
+              as: 'project'
+            }
+          },
+          {'$unwind': '$project'},
+
+          // Ensure that they can only grab submissions from this project.
+          {
+            '$match': {
+              'project._id': formio.util.idToBson(req.projectId)
+            }
+          },
+
+          // Remove the fields that were used for the query.
+          {
+            '$project': {
+              'formObj': 0,
+              'project': 0,
+              'hasAccess': 0
+            }
           }
-        ].concat([{'$match': query}]).concat(stages);
+        ]);
+
+        // Add the prestages to the beginning of the stages.
+        stages = preStages.concat(stages);
 
         // Add the skip stage first if applicable.
         if (skipStage) {
@@ -218,14 +318,10 @@ module.exports = function(formioServer) {
             .exec()
             .stream()
             .pipe(through(function(doc) {
-              if (doc && doc.form) {
-                const formId = doc.form.toString();
-                if (forms.hasOwnProperty(formId)) {
-                  _.each(formioUtils.flattenComponents(forms[doc.form.toString()].components), function(component) {
-                    if (component.protected && doc.data && doc.data.hasOwnProperty(component.key)) {
-                      delete doc.data[component.key];
-                    }
-                  });
+              if (doc && doc.form && doc.data) {
+                var formId = doc.form.toString();
+                if (protectedFields.hasOwnProperty(formId)) {
+                  _.each(protectedFields[formId], (path) => _.set(doc.data, path, '--- PROTECTED ---'));
                 }
               }
               this.queue(doc);
@@ -277,6 +373,7 @@ module.exports = function(formioServer) {
       });
     });
   };
+  /* eslint-enable max-statements */
 
   // Use post to crete aggregation criteria.
   router.post('/', function(req, res, next) {
