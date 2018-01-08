@@ -6,6 +6,7 @@ const debug = {
   error: require('debug')('formio:error'),
   import: require('debug')('formio:project:import')
 };
+
 const o365Util = require('../actions/office365/util');
 const kickboxValidate = require('../actions/kickbox/validate');
 const nodeUrl = require('url');
@@ -14,6 +15,7 @@ const async = require('async');
 const chance = new (require('chance'))();
 const fs = require('fs');
 const url = require('url');
+const util = require('../util/util');
 
 module.exports = function(app) {
   const formioServer = app.formio;
@@ -170,6 +172,21 @@ module.exports = function(app) {
         actions.moxtraMessage = require('../actions/moxtra/MoxtraMessage')(formioServer);
         actions.moxtraTodo = require('../actions/moxtra/MoxtraTodo')(formioServer);
         return actions;
+      },
+
+      export(req, query, form, exporter, cb) {
+        util.getSubmissionModel(formioServer.formio, req, form, true, (err, submissionModel) => {
+          if (err) {
+            return cb(err);
+          }
+
+          if (!submissionModel) {
+            return cb();
+          }
+
+          req.submissionModel = submissionModel;
+          return cb();
+        });
       },
 
       /**
