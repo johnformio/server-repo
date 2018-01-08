@@ -1,7 +1,7 @@
 'use strict';
 
-var onFinished = require('on-finished');
-var debug = {
+const onFinished = require('on-finished');
+const debug = {
   connect: require('debug')('formio:analytics:connect'),
   record: require('debug')('formio:analytics:record'),
   hook: require('debug')('formio:analytics:hook'),
@@ -12,10 +12,10 @@ var debug = {
   restrictToFormioEmployees: require('debug')('formio:analytics:restrictToFormioEmployees'),
   getFormioFormByName: require('debug')('formio:analytics:getFormioFormByName')
 };
-var url = require('url');
-var submission = /(\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}\/submission)/i;
-var _ = require('lodash');
-var BSON = new RegExp('^[0-9a-fA-F]{24}$');
+const url = require('url');
+const submission = /(\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}\/submission)/i;
+const _ = require('lodash');
+const BSON = new RegExp('^[0-9a-fA-F]{24}$');
 
 module.exports = (redis) => {
   /**
@@ -35,13 +35,13 @@ module.exports = (redis) => {
    * @returns {String|Null}
    *   The redis key for the given params.
    */
-  var getAnalyticsKey = function(project, year, month, day, type) {
+  const getAnalyticsKey = function(project, year, month, day, type) {
     if (!project || !year || (!month && month !== 0) || !day || !type) {
       return null;
     }
 
-    return year.toString() + ':' + month.toString() + ':' + day.toString() + ':' + project.toString() + ':'
-      + type.toString();
+    return `${year.toString()  }:${month.toString()  }:${day.toString()}:${  project.toString()}:${
+       type.toString()}`;
   };
 
   /**
@@ -58,40 +58,40 @@ module.exports = (redis) => {
    * @param start {Number}
    *   The date timestamp this request started.
    */
-  var record = function(db, project, path, method, start) {
+  const record = function(db, project, path, method, start) {
     if (!db) {
       debug.record('No redis instance found.');
       return;
     }
     if (!project) {
-      debug.record('Skipping non-project request: ' + path);
+      debug.record(`Skipping non-project request: ${path}`);
       return;
     }
     if (!method) {
-      debug.record('Skipping request, unknown method: ' + method);
+      debug.record(`Skipping request, unknown method: ${method}`);
       return;
     }
     if (!path) {
-      debug.record('Skipping request, unknown path: ' + path);
+      debug.record(`Skipping request, unknown path: ${path}`);
       return;
     }
     if (!_.isString(project) || !BSON.test(project)) {
-      debug.record('Skipping malformed project request: ' + project);
+      debug.record(`Skipping malformed project request: ${project}`);
       return;
     }
 
     // Update the redis key, dependent on if this is a submission or non-submission request.
-    var now = new Date();
-    var type = submission.test(path) ? 's' : 'ns';
-    var key = getAnalyticsKey(project, now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), type);
+    const now = new Date();
+    const type = submission.test(path) ? 's' : 'ns';
+    const key = getAnalyticsKey(project, now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), type);
 
-    debug.record('Start: ' + start);
-    debug.record('dt: ' + (now.getTime() - Number.parseInt(start, 10)).toString());
-    var delta = start
+    debug.record(`Start: ${start}`);
+    debug.record(`dt: ${(now.getTime() - Number.parseInt(start, 10)).toString()}`);
+    const delta = start
       ? now.getTime() - start
       : 0;
     method = method.toString().toUpperCase();
-    var value = path + ':' + method + ':' + now.getTime() + ':' + delta;
+    const value = `${path  }:${method}:${now.getTime()}:${  delta}`;
 
     // Add this record, to the end of the list at the position of the key.
     db.rpush(key, value, function(err, length) {
@@ -100,7 +100,7 @@ module.exports = (redis) => {
         return;
       }
 
-      debug.record(key + ' => ' + value + ' => ' + length);
+      debug.record(`${key} => ${value} => ${length}`);
     });
   };
 
@@ -111,7 +111,7 @@ module.exports = (redis) => {
    * @param res
    * @param next
    */
-  var hook = function(req, res, next) {
+  const hook = function(req, res, next) {
     redis.getDb((err, db) => {
       if (err) {
         return;
@@ -130,9 +130,9 @@ module.exports = (redis) => {
           return;
         }
 
-        var id = req.projectId;
-        var path = url.parse(req.url).pathname;
-        var start = req._start;
+        const id = req.projectId;
+        const path = url.parse(req.url).pathname;
+        const start = req._start;
         record(db, id, path, req.method, start);
       });
     });
@@ -148,14 +148,14 @@ module.exports = (redis) => {
    *   The Project Id to search for.
    * @param next {function}
    */
-  var getCalls = function(year, month, day, project, next) {
+  const getCalls = function(year, month, day, project, next) {
     redis.getDb((err, db) => {
       if (err || !db || !year || (!month && month !== 0) || !project) {
         debug.getCalls('Skipping');
         return next();
       }
 
-      var transaction = db.multi();
+      const transaction = db.multi();
 
       if (!day) {
         for (day = 1; day < 32; day++) {
@@ -172,7 +172,7 @@ module.exports = (redis) => {
           return next();
         }
 
-        var daysInMonth = (new Date(parseInt(year), parseInt(month)+1, 0)).getUTCDate();
+        const daysInMonth = (new Date(parseInt(year), parseInt(month)+1, 0)).getUTCDate();
         response = _.sum(response.slice(0, daysInMonth));
         return next(null, response);
       });
@@ -187,17 +187,17 @@ module.exports = (redis) => {
    * @param {Function} next
    *   The callback function to invoke when complete.
    */
-  var getAllKeys = function(glob, next) {
+  const getAllKeys = function(glob, next) {
     redis.getDb((err, db) => {
       if (err || !db) {
         return next();
       }
 
-      var _debug = require('debug')('formio:analytics:getAllKeys');
-      var keys = [];
+      const _debug = require('debug')('formio:analytics:getAllKeys');
+      let keys = [];
 
       // Recursively get all the keys matching the glob.
-      var started = false;
+      let started = false;
       (function scan(cursor, cb) {
         _debug(cursor);
         if (cursor === '0' && started) {
@@ -211,7 +211,7 @@ module.exports = (redis) => {
 
         db.scan(cursor, 'MATCH', glob, function(err, _keys) {
           if (err || !_keys) {
-            _debug(cursor + ',' + glob);
+            _debug(`${cursor},${glob}`);
             return cb(err);
           }
 
@@ -245,7 +245,7 @@ module.exports = (redis) => {
    * @returns {boolean}
    *   If the given value is in the range of low to high.
    */
-  var between = function(value, low, high) {
+  const between = function(value, low, high) {
     if (!value || !low || !high) {
       return false;
     }
@@ -272,9 +272,9 @@ module.exports = (redis) => {
    * @param {Object} res
    *   The Express response object.
    */
-  var getFormioAnalytics = function(glob, _debug, res) {
+  const getFormioAnalytics = function(glob, _debug, res) {
     // Start the transaction and all the keys in question.
-    var transaction = res.redis.multi();
+    const transaction = res.redis.multi();
     getAllKeys(glob, function(err, keys) {
       if (err) {
         _debug(err);
@@ -282,7 +282,7 @@ module.exports = (redis) => {
       }
 
       // Confirm the keys are unique and add them to the transaction.
-      var wrapped = _(keys)
+      const wrapped = _(keys)
         .uniq()
         .value();
 
@@ -296,7 +296,7 @@ module.exports = (redis) => {
           return res.status(500).send(err);
         }
 
-        var final = _(response)
+        const final = _(response)
           .zip(wrapped)
           .value();
 
@@ -311,7 +311,7 @@ module.exports = (redis) => {
    * @param app
    * @param formioServer
    */
-  var endpoints = function(app, formioServer) {
+  const endpoints = function(app, formioServer) {
     /**
      * Get the formio form, by name, for consumption elsewhere.
      *
@@ -319,7 +319,7 @@ module.exports = (redis) => {
      * @param req
      * @param next
      */
-    var getFormioFormByName = function(name, req, next) {
+    const getFormioFormByName = function(name, req, next) {
       formioServer.formio.cache.loadProjectByName(req, 'formio', function(err, project) {
         if (err || !project) {
           return next('Could not load Form.io project.');
@@ -356,15 +356,15 @@ module.exports = (redis) => {
      * @param res
      * @param next
      */
-    var restrictToFormioEmployees = function(req, res, next) {
+    const restrictToFormioEmployees = function(req, res, next) {
       if (!req.user) {
         return res.sendStatus(401);
       }
 
       formioServer.formio.cache.loadProjectByName(req, 'formio', function(err, project) {
         if (err || !project) {
-          debug.restrictToFormioEmployees('err: ' + err);
-          debug.restrictToFormioEmployees('project: ' + project);
+          debug.restrictToFormioEmployees(`err: ${err}`);
+          debug.restrictToFormioEmployees(`project: ${project}`);
           return res.sendStatus(401);
         }
 
@@ -395,14 +395,14 @@ module.exports = (redis) => {
           // Team member of Formio.
           formioServer.formio.teams.getProjectTeams(req, project._id, function(err, teams, permissions) {
             if (err || !teams || !permissions) {
-              debug.restrictToFormioEmployees('err: ' + err);
-              debug.restrictToFormioEmployees('teams: ' + teams);
-              debug.restrictToFormioEmployees('permissions: ' + permissions);
+              debug.restrictToFormioEmployees(`err: ${err}`);
+              debug.restrictToFormioEmployees(`teams: ${teams}`);
+              debug.restrictToFormioEmployees(`permissions: ${permissions}`);
               return res.sendStatus(401);
             }
 
-            var member = _.some(teams, function(team) {
-              debug.restrictToFormioEmployees('req.user.roles.indexOf(' + team + '): ' + req.user.roles.indexOf(team));
+            const member = _.some(teams, function(team) {
+              debug.restrictToFormioEmployees(`req.user.roles.indexOf(${team}): ${req.user.roles.indexOf(team)}`);
               if (req.user.roles.indexOf(team) !== -1) {
                 return true;
               }
@@ -415,7 +415,7 @@ module.exports = (redis) => {
             }
 
             debug.restrictToFormioEmployees('Denied');
-            debug.restrictToFormioEmployees('Member: ' + member);
+            debug.restrictToFormioEmployees(`Member: ${member}`);
             return res.sendStatus(401);
           });
         });
@@ -428,14 +428,14 @@ module.exports = (redis) => {
      * @param {Object} query
      * @param {Object} res
      */
-    var getFormioProjectsCreated = function(query, _debug, res) {
+    const getFormioProjectsCreated = function(query, _debug, res) {
       _debug(query);
       formioServer.formio.resources.project.model.find(query, function(err, projects) {
         if (err) {
           return res.status(500).send(err);
         }
 
-        var final = _(projects)
+        const final = _(projects)
           .map(function(project) {
             return {
               _id: project._id,
@@ -462,7 +462,7 @@ module.exports = (redis) => {
      * @param req
      * @param res
      */
-    var getFormioUsersCreated = function(query, _debug, req, res) {
+    const getFormioUsersCreated = function(query, _debug, req, res) {
       getFormioFormByName('user', req, function(err, form) {
         if (err) {
           return res.status(500).send(err);
@@ -478,7 +478,7 @@ module.exports = (redis) => {
             return res.status(500).send(err);
           }
 
-          var final = _(users)
+          const final = _(users)
             .map(function(user) {
               return {
                 _id: user._id,
@@ -506,7 +506,7 @@ module.exports = (redis) => {
      * @param req
      * @param res
      */
-    var getProjectUpgrades = function(query, _debug, req, res) {
+    const getProjectUpgrades = function(query, _debug, req, res) {
       getFormioFormByName('projectUpgradeHistory', req, function(err, form) {
         if (err) {
           return res.status(500).send(err);
@@ -521,7 +521,7 @@ module.exports = (redis) => {
             return res.status(500).send(err);
           }
 
-          var projects = upgrades.map(function(item) {
+          const projects = upgrades.map(function(item) {
             return formioServer.formio.util.idToBson(item.data.projectId);
           });
           _debug(projects);
@@ -561,13 +561,13 @@ module.exports = (redis) => {
                 return res.status(500).send(err);
               }
 
-              var projMap = {};
+              const projMap = {};
               results.forEach(function(p) {
                 projMap[p._id] = p;
               });
 
               // Update the original upgrade submissions.
-              var final = upgrades.map(function(sub) {
+              const final = upgrades.map(function(sub) {
                 sub.data.project = projMap[sub.data.projectId];
                 delete sub.data.projectId;
                 return sub;
@@ -588,7 +588,7 @@ module.exports = (redis) => {
      * @param req
      * @param res
      */
-    var getProjectsCreated = function(query, _debug, req, res) {
+    const getProjectsCreated = function(query, _debug, req, res) {
       formioServer.formio.resources.project.model.aggregate(
         {$match: query},
         {$lookup: {
@@ -643,17 +643,17 @@ module.exports = (redis) => {
         }
 
         // Param validation.
-        var curr = new Date();
+        const curr = new Date();
         req.params.year = parseInt(req.params.year);
         if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
-          return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
+          return res.status(400).send(`Expected a year in the range of 2015-${curr.getUTCFullYear()}.`);
         }
 
-        var project = req.params.projectId.toString();
-        var year = req.params.year.toString();
-        var transaction = req.redis.multi();
-        for (var month = 0; month < 12; month++) {
-          for (var day = 1; day < 32; day++) {
+        const project = req.params.projectId.toString();
+        const year = req.params.year.toString();
+        const transaction = req.redis.multi();
+        for (let month = 0; month < 12; month++) {
+          for (let day = 1; day < 32; day++) {
             transaction.llen(getAnalyticsKey(project, year, month, day, 's'));
           }
         }
@@ -664,12 +664,12 @@ module.exports = (redis) => {
             return res.sendStatus(500);
           }
 
-          var output = [];
+          const output = [];
 
           // Slice the response into 12 segments and add the submissions.
-          for (var month = 0; month < 12; month++) {
-            var monthData = response.slice((month * 31), ((month + 1) * 31));
-            var daysInMonth = (new Date(parseInt(year), parseInt(month)+1, 0)).getUTCDate();
+          for (let month = 0; month < 12; month++) {
+            const monthData = response.slice((month * 31), ((month + 1) * 31));
+            const daysInMonth = (new Date(parseInt(year), parseInt(month)+1, 0)).getUTCDate();
             output.push({
               month: month,
               days: daysInMonth,
@@ -697,21 +697,21 @@ module.exports = (redis) => {
         }
 
         // Param validation.
-        var curr = new Date();
+        const curr = new Date();
         req.params.year = parseInt(req.params.year);
         req.params.month = parseInt(req.params.month);
         if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
-          return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
+          return res.status(400).send(`Expected a year in the range of 2015-${curr.getUTCFullYear()}.`);
         }
         if (!between(req.params.month, 1, 12)) {
           return res.status(400).send('Expected a month in the range of 1-12.');
         }
 
-        var project = req.params.projectId.toString();
-        var year = req.params.year.toString();
-        var month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
-        var transaction = req.redis.multi();
-        for (var day = 1; day < 32; day++) {
+        const project = req.params.projectId.toString();
+        const year = req.params.year.toString();
+        const month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
+        const transaction = req.redis.multi();
+        for (let day = 1; day < 32; day++) {
           transaction.llen(getAnalyticsKey(project, year, month, day, 's'));
         }
 
@@ -721,11 +721,11 @@ module.exports = (redis) => {
             return res.sendStatus(500);
           }
 
-          var daysInMonth = (new Date(parseInt(year), parseInt(month)+1, 0)).getUTCDate();
+          const daysInMonth = (new Date(parseInt(year), parseInt(month)+1, 0)).getUTCDate();
           response = response.slice(0, daysInMonth);
 
-          var output = [];
-          for (var day = 0; day < response.length; day++) {
+          const output = [];
+          for (let day = 0; day < response.length; day++) {
             output.push({
               day: day,
               submissions: response[day]
@@ -752,12 +752,12 @@ module.exports = (redis) => {
         }
 
         // Param validation.
-        var curr = new Date();
+        const curr = new Date();
         req.params.year = parseInt(req.params.year);
         req.params.month = parseInt(req.params.month);
         req.params.day = parseInt(req.params.day);
         if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
-          return res.status(400).send('Expected a year in the range of 2015 - ' + curr.getUTCFullYear() + '.');
+          return res.status(400).send(`Expected a year in the range of 2015 - ${curr.getUTCFullYear()}.`);
         }
         if (!between(req.params.month, 1, 12)) {
           return res.status(400).send('Expected a month in the range of 1 - 12.');
@@ -766,10 +766,10 @@ module.exports = (redis) => {
           return res.status(400).send('Expected a day in the range of 1 - 31.');
         }
 
-        var project = req.params.projectId.toString();
-        var year = req.params.year.toString();
-        var month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
-        var day = req.params.day.toString();
+        const project = req.params.projectId.toString();
+        const year = req.params.year.toString();
+        const month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
+        const day = req.params.day.toString();
         req.redis.lrange(getAnalyticsKey(project, year, month, day, 's'), 0, -1, function(err, response) {
           if (err) {
             debug.getDailyAnalytics(err);
@@ -777,7 +777,7 @@ module.exports = (redis) => {
           }
 
           response = _.map(response, function(_request) {
-            var parts = _request.split(':');
+            const parts = _request.split(':');
             return parts[parts.length - 2];
           });
           response = {
@@ -795,12 +795,12 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        var _debug = require('debug')('formio:analytics:tranlateProjects');
+        const _debug = require('debug')('formio:analytics:tranlateProjects');
         if (!req.body || !(req.body instanceof Array)) {
           return res.status(500).send('Expected array payload of project _id\'s.');
         }
 
-        var projects = _(req.body)
+        const projects = _(req.body)
           .uniq()
           .flattenDeep()
           .filter()
@@ -837,12 +837,12 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        var _debug = require('debug')('formio:analytics:tranlateOwner');
+        const _debug = require('debug')('formio:analytics:tranlateOwner');
         if (!req.body || !(req.body instanceof Array)) {
           return res.status(500).send('Expected array payload of owner _id\'s.');
         }
 
-        var owners = _(req.body)
+        const owners = _(req.body)
           .uniq()
           .flattenDeep()
           .filter()
@@ -908,21 +908,21 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        var _debug = require('debug')('formio:analytics:getFormioYearAnalytics');
+        const _debug = require('debug')('formio:analytics:getFormioYearAnalytics');
         if (!req.params.year) {
           return res.status(400).send('Expected params `year`.');
         }
 
         // Param validation.
-        var curr = new Date();
+        const curr = new Date();
         req.params.year = parseInt(req.params.year);
         if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
-          return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
+          return res.status(400).send(`Expected a year in the range of 2015-${curr.getUTCFullYear()}.`);
         }
 
         // Build the glob
-        var year = req.params.year.toString();
-        var glob = getAnalyticsKey('*', year, '*', '*', '*');
+        const year = req.params.year.toString();
+        const glob = getAnalyticsKey('*', year, '*', '*', '*');
 
         // Get the data and respond.
         getFormioAnalytics(glob, _debug, res);
@@ -935,26 +935,26 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        var _debug = require('debug')('formio:analytics:getFormioMonthAnalytics');
+        const _debug = require('debug')('formio:analytics:getFormioMonthAnalytics');
         if (!req.params.year || !req.params.month) {
           return res.status(400).send('Expected params `year` and `month`.');
         }
 
         // Param validation.
-        var curr = new Date();
+        const curr = new Date();
         req.params.year = parseInt(req.params.year);
         req.params.month = parseInt(req.params.month);
         if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
-          return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
+          return res.status(400).send(`Expected a year in the range of 2015-${curr.getUTCFullYear()}.`);
         }
         if (!between(req.params.month, 1, 12)) {
           return res.status(400).send('Expected a month in the range of 1-12.');
         }
 
         // Build the glob.
-        var year = req.params.year.toString();
-        var month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
-        var glob = getAnalyticsKey('*', year, month, '*', '*');
+        const year = req.params.year.toString();
+        const month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
+        const glob = getAnalyticsKey('*', year, month, '*', '*');
 
         // Get the data and respond.
         getFormioAnalytics(glob, _debug, res);
@@ -967,18 +967,18 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        var _debug = require('debug')('formio:analytics:getFormioDayAnalytics');
+        const _debug = require('debug')('formio:analytics:getFormioDayAnalytics');
         if (!req.params.year || !req.params.month || !req.params.day) {
           return res.status(400).send('Expected params `year`, `month`, and `day`.');
         }
 
         // Param validation.
-        var curr = new Date();
+        const curr = new Date();
         req.params.year = parseInt(req.params.year);
         req.params.month = parseInt(req.params.month);
         req.params.day = parseInt(req.params.day);
         if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
-          return res.status(400).send('Expected a year in the range of 2015 - ' + curr.getUTCFullYear() + '.');
+          return res.status(400).send(`Expected a year in the range of 2015 - ${curr.getUTCFullYear()}.`);
         }
         if (!between(req.params.month, 1, 12)) {
           return res.status(400).send('Expected a month in the range of 1 - 12.');
@@ -988,10 +988,10 @@ module.exports = (redis) => {
         }
 
         // Build the glob.
-        var year = req.params.year.toString();
-        var month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
-        var day = req.params.day.toString();
-        var glob = getAnalyticsKey('*', year, month, day, '*');
+        const year = req.params.year.toString();
+        const month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
+        const day = req.params.day.toString();
+        const glob = getAnalyticsKey('*', year, month, day, '*');
 
         // Get the data and respond.
         getFormioAnalytics(glob, _debug, res);
@@ -1004,19 +1004,19 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        var _debug = require('debug')('formio:analytics:yearlyProjectsCreated');
+        const _debug = require('debug')('formio:analytics:yearlyProjectsCreated');
         if (!req.params.year) {
           return res.status(400).send('Expected params `year`.');
         }
 
         // Param validation.
-        var curr = new Date();
+        const curr = new Date();
         req.params.year = parseInt(req.params.year);
         if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
-          return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
+          return res.status(400).send(`Expected a year in the range of 2015-${curr.getUTCFullYear()}.`);
         }
 
-        var query = {
+        const query = {
           created: {
             $gte: new Date(req.params.year.toString()),
             $lt: new Date((req.params.year + 1).toString())
@@ -1034,24 +1034,24 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        var _debug = require('debug')('formio:analytics:monthlyProjectsCreated');
+        const _debug = require('debug')('formio:analytics:monthlyProjectsCreated');
         if (!req.params.year || !req.params.month) {
           return res.status(400).send('Expected params `year` and `month`.');
         }
 
         // Param validation.
-        var curr = new Date();
+        const curr = new Date();
         req.params.year = parseInt(req.params.year);
         req.params.month = parseInt(req.params.month);
         if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
-          return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
+          return res.status(400).send(`Expected a year in the range of 2015-${curr.getUTCFullYear()}.`);
         }
         if (!between(req.params.month, 1, 12)) {
           return res.status(400).send('Expected a month in the range of 1-12.');
         }
 
         // Adjust the month for zero index in timestamp.
-        var query = {
+        const query = {
           created: {
             $gte: new Date(req.params.year.toString(), (req.params.month - 1).toString()),
             $lt: new Date(req.params.year.toString(), (req.params.month).toString())
@@ -1069,18 +1069,18 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        var _debug = require('debug')('formio:analytics:dailyProjectsCreated');
+        const _debug = require('debug')('formio:analytics:dailyProjectsCreated');
         if (!req.params.year || !req.params.month || !req.params.day) {
           return res.status(400).send('Expected params `year`, `month`, and `day`.');
         }
 
         // Param validation.
-        var curr = new Date();
+        const curr = new Date();
         req.params.year = parseInt(req.params.year);
         req.params.month = parseInt(req.params.month);
         req.params.day = parseInt(req.params.day);
         if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
-          return res.status(400).send('Expected a year in the range of 2015 - ' + curr.getUTCFullYear() + '.');
+          return res.status(400).send(`Expected a year in the range of 2015 - ${curr.getUTCFullYear()}.`);
         }
         if (!between(req.params.month, 1, 12)) {
           return res.status(400).send('Expected a month in the range of 1 - 12.');
@@ -1089,8 +1089,8 @@ module.exports = (redis) => {
           return res.status(400).send('Expected a day in the range of 1 - 31.');
         }
 
-        var month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
-        var query = {
+        const month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
+        const query = {
           created: {
             $gte: new Date(req.params.year.toString(), month, req.params.day.toString()),
             $lt: new Date(req.params.year.toString(), month, (req.params.day + 1).toString())
@@ -1108,19 +1108,19 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        var _debug = require('debug')('formio:analytics:yearlyUsersCreated');
+        const _debug = require('debug')('formio:analytics:yearlyUsersCreated');
         if (!req.params.year) {
           return res.status(400).send('Expected params `year`.');
         }
 
         // Param validation.
-        var curr = new Date();
+        const curr = new Date();
         req.params.year = parseInt(req.params.year);
         if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
-          return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
+          return res.status(400).send(`Expected a year in the range of 2015-${curr.getUTCFullYear()}.`);
         }
 
-        var query = {
+        const query = {
           created: {
             $gte: new Date(req.params.year.toString()),
             $lt: new Date((req.params.year + 1).toString())
@@ -1138,24 +1138,24 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        var _debug = require('debug')('formio:analytics:monthlyUsersCreated');
+        const _debug = require('debug')('formio:analytics:monthlyUsersCreated');
         if (!req.params.year || !req.params.month) {
           return res.status(400).send('Expected params `year` and `month`.');
         }
 
         // Param validation.
-        var curr = new Date();
+        const curr = new Date();
         req.params.year = parseInt(req.params.year);
         req.params.month = parseInt(req.params.month);
         if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
-          return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
+          return res.status(400).send(`Expected a year in the range of 2015-${curr.getUTCFullYear()}.`);
         }
         if (!between(req.params.month, 1, 12)) {
           return res.status(400).send('Expected a month in the range of 1-12.');
         }
 
         // Adjust the month for zero index in timestamp.
-        var query = {
+        const query = {
           created: {
             $gte: new Date(req.params.year.toString(), (req.params.month - 1).toString()),
             $lt: new Date(req.params.year.toString(), (req.params.month).toString())
@@ -1173,18 +1173,18 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        var _debug = require('debug')('formio:analytics:dailyUsersCreated');
+        const _debug = require('debug')('formio:analytics:dailyUsersCreated');
         if (!req.params.year || !req.params.month || !req.params.day) {
           return res.status(400).send('Expected params `year`, `month`, and `day`.');
         }
 
         // Param validation.
-        var curr = new Date();
+        const curr = new Date();
         req.params.year = parseInt(req.params.year);
         req.params.month = parseInt(req.params.month);
         req.params.day = parseInt(req.params.day);
         if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
-          return res.status(400).send('Expected a year in the range of 2015 - ' + curr.getUTCFullYear() + '.');
+          return res.status(400).send(`Expected a year in the range of 2015 - ${curr.getUTCFullYear()}.`);
         }
         if (!between(req.params.month, 1, 12)) {
           return res.status(400).send('Expected a month in the range of 1 - 12.');
@@ -1193,8 +1193,8 @@ module.exports = (redis) => {
           return res.status(400).send('Expected a day in the range of 1 - 31.');
         }
 
-        var month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
-        var query = {
+        const month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
+        const query = {
           created: {
             $gte: new Date(req.params.year.toString(), month, req.params.day.toString()),
             $lt: new Date(req.params.year.toString(), month, (req.params.day + 1).toString())
@@ -1212,19 +1212,19 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        var _debug = require('debug')('formio:analytics:yearlyProjectUpgrades');
+        const _debug = require('debug')('formio:analytics:yearlyProjectUpgrades');
         if (!req.params.year) {
           return res.status(400).send('Expected params `year`.');
         }
 
         // Param validation.
-        var curr = new Date();
+        const curr = new Date();
         req.params.year = parseInt(req.params.year);
         if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
-          return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
+          return res.status(400).send(`Expected a year in the range of 2015-${curr.getUTCFullYear()}.`);
         }
 
-        var query = {
+        const query = {
           created: {
             $gte: new Date(req.params.year.toString()),
             $lt: new Date((req.params.year + 1).toString())
@@ -1242,24 +1242,24 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        var _debug = require('debug')('formio:analytics:monthlyProjectUpgrades');
+        const _debug = require('debug')('formio:analytics:monthlyProjectUpgrades');
         if (!req.params.year || !req.params.month) {
           return res.status(400).send('Expected params `year` and `month`.');
         }
 
         // Param validation.
-        var curr = new Date();
+        const curr = new Date();
         req.params.year = parseInt(req.params.year);
         req.params.month = parseInt(req.params.month);
         if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
-          return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
+          return res.status(400).send(`Expected a year in the range of 2015-${curr.getUTCFullYear()}.`);
         }
         if (!between(req.params.month, 1, 12)) {
           return res.status(400).send('Expected a month in the range of 1-12.');
         }
 
         // Adjust the month for zero index in timestamp.
-        var query = {
+        const query = {
           created: {
             $gte: new Date(req.params.year.toString(), (req.params.month - 1).toString()),
             $lt: new Date(req.params.year.toString(), (req.params.month).toString())
@@ -1277,18 +1277,18 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        var _debug = require('debug')('formio:analytics:monthlyProjectUpgrades');
+        const _debug = require('debug')('formio:analytics:monthlyProjectUpgrades');
         if (!req.params.year || !req.params.month || !req.params.day) {
           return res.status(400).send('Expected params `year`, `month`, and `day`.');
         }
 
         // Param validation.
-        var curr = new Date();
+        const curr = new Date();
         req.params.year = parseInt(req.params.year);
         req.params.month = parseInt(req.params.month);
         req.params.day = parseInt(req.params.day);
         if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
-          return res.status(400).send('Expected a year in the range of 2015 - ' + curr.getUTCFullYear() + '.');
+          return res.status(400).send(`Expected a year in the range of 2015 - ${curr.getUTCFullYear()}.`);
         }
         if (!between(req.params.month, 1, 12)) {
           return res.status(400).send('Expected a month in the range of 1 - 12.');
@@ -1297,8 +1297,8 @@ module.exports = (redis) => {
           return res.status(400).send('Expected a day in the range of 1 - 31.');
         }
 
-        var month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
-        var query = {
+        const month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
+        const query = {
           created: {
             $gte: new Date(req.params.year.toString(), month, req.params.day.toString()),
             $lt: new Date(req.params.year.toString(), month, (req.params.day + 1).toString())
@@ -1316,19 +1316,19 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        var _debug = require('debug')('formio:analytics:yearlyProjectTotals');
+        const _debug = require('debug')('formio:analytics:yearlyProjectTotals');
         if (!req.params.year) {
           return res.status(400).send('Expected params `year`.');
         }
 
         // Param validation.
-        var curr = new Date();
+        const curr = new Date();
         req.params.year = parseInt(req.params.year);
         if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
-          return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
+          return res.status(400).send(`Expected a year in the range of 2015-${curr.getUTCFullYear()}.`);
         }
 
-        var query = {
+        const query = {
           created: {
             $lt: new Date((req.params.year + 1).toString())
           }
@@ -1345,24 +1345,24 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        var _debug = require('debug')('formio:analytics:monthlyProjectTotals');
+        const _debug = require('debug')('formio:analytics:monthlyProjectTotals');
         if (!req.params.year || !req.params.month) {
           return res.status(400).send('Expected params `year` and `month`.');
         }
 
         // Param validation.
-        var curr = new Date();
+        const curr = new Date();
         req.params.year = parseInt(req.params.year);
         req.params.month = parseInt(req.params.month);
         if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
-          return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
+          return res.status(400).send(`Expected a year in the range of 2015-${curr.getUTCFullYear()}.`);
         }
         if (!between(req.params.month, 1, 12)) {
           return res.status(400).send('Expected a month in the range of 1-12.');
         }
 
         // Adjust the month for zero index in timestamp.
-        var query = {
+        const query = {
           created: {
             $lt: new Date(req.params.year.toString(), (req.params.month - 1).toString())
           }
@@ -1379,18 +1379,18 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        var _debug = require('debug')('formio:analytics:monthlyProjectTotals');
+        const _debug = require('debug')('formio:analytics:monthlyProjectTotals');
         if (!req.params.year || !req.params.month || !req.params.day) {
           return res.status(400).send('Expected params `year`, `month`, and `day`.');
         }
 
         // Param validation.
-        var curr = new Date();
+        const curr = new Date();
         req.params.year = parseInt(req.params.year);
         req.params.month = parseInt(req.params.month);
         req.params.day = parseInt(req.params.day);
         if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
-          return res.status(400).send('Expected a year in the range of 2015 - ' + curr.getUTCFullYear() + '.');
+          return res.status(400).send(`Expected a year in the range of 2015 - ${curr.getUTCFullYear()}.`);
         }
         if (!between(req.params.month, 1, 12)) {
           return res.status(400).send('Expected a month in the range of 1 - 12.');
@@ -1399,8 +1399,8 @@ module.exports = (redis) => {
           return res.status(400).send('Expected a day in the range of 1 - 31.');
         }
 
-        var month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
-        var query = {
+        const month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
+        const query = {
           created: {
             $lt: new Date(req.params.year.toString(), month, (req.params.day + 1).toString())
           }
@@ -1417,19 +1417,19 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        var _debug = require('debug')('formio:analytics:yearlyUserTotals');
+        const _debug = require('debug')('formio:analytics:yearlyUserTotals');
         if (!req.params.year) {
           return res.status(400).send('Expected params `year`.');
         }
 
         // Param validation.
-        var curr = new Date();
+        const curr = new Date();
         req.params.year = parseInt(req.params.year);
         if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
-          return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
+          return res.status(400).send(`Expected a year in the range of 2015-${curr.getUTCFullYear()}.`);
         }
 
-        var query = {
+        const query = {
           created: {
             $lt: new Date((req.params.year + 1).toString())
           }
@@ -1446,24 +1446,24 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        var _debug = require('debug')('formio:analytics:monthlyUserTotals');
+        const _debug = require('debug')('formio:analytics:monthlyUserTotals');
         if (!req.params.year || !req.params.month) {
           return res.status(400).send('Expected params `year` and `month`.');
         }
 
         // Param validation.
-        var curr = new Date();
+        const curr = new Date();
         req.params.year = parseInt(req.params.year);
         req.params.month = parseInt(req.params.month);
         if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
-          return res.status(400).send('Expected a year in the range of 2015-' + curr.getUTCFullYear() + '.');
+          return res.status(400).send(`Expected a year in the range of 2015-${curr.getUTCFullYear()}.`);
         }
         if (!between(req.params.month, 1, 12)) {
           return res.status(400).send('Expected a month in the range of 1-12.');
         }
 
         // Adjust the month for zero index in timestamp.
-        var query = {
+        const query = {
           created: {
             $lt: new Date(req.params.year.toString(), (req.params.month).toString())
           }
@@ -1480,18 +1480,18 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        var _debug = require('debug')('formio:analytics:monthlyUserTotals');
+        const _debug = require('debug')('formio:analytics:monthlyUserTotals');
         if (!req.params.year || !req.params.month || !req.params.day) {
           return res.status(400).send('Expected params `year`, `month`, and `day`.');
         }
 
         // Param validation.
-        var curr = new Date();
+        const curr = new Date();
         req.params.year = parseInt(req.params.year);
         req.params.month = parseInt(req.params.month);
         req.params.day = parseInt(req.params.day);
         if (req.params.year < 2015 || req.params.year > curr.getUTCFullYear()) {
-          return res.status(400).send('Expected a year in the range of 2015 - ' + curr.getUTCFullYear() + '.');
+          return res.status(400).send(`Expected a year in the range of 2015 - ${curr.getUTCFullYear()}.`);
         }
         if (!between(req.params.month, 1, 12)) {
           return res.status(400).send('Expected a month in the range of 1 - 12.');
@@ -1500,8 +1500,8 @@ module.exports = (redis) => {
           return res.status(400).send('Expected a day in the range of 1 - 31.');
         }
 
-        var month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
-        var query = {
+        const month = (req.params.month - 1).toString(); // Adjust the month for zero index in timestamp.
+        const query = {
           created: {
             $lt: new Date(req.params.year.toString(), month, (req.params.day + 1).toString())
           }
@@ -1517,13 +1517,13 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        var _debug = require('debug')('formio:analytics:upgradeProject');
-        var plans = ['basic', 'independent', 'team', 'commercial', 'trial'];
+        const _debug = require('debug')('formio:analytics:upgradeProject');
+        const plans = ['basic', 'independent', 'team', 'commercial', 'trial'];
         if (!req.body || !req.body.project || !req.body.plan) {
           return res.status(400).send('Expected params `project` and `plan`.');
         }
         if (plans.indexOf(req.body.plan) === -1) {
-          return res.status(400).send('Expexted `plan` of type: ' + plans.join(',') + '.');
+          return res.status(400).send(`Expexted \`plan\` of type: ${plans.join(',')}.`);
         }
 
         formioServer.formio.resources.project.model.update({

@@ -1,6 +1,6 @@
 'use strict';
 
-var debug = require('debug')('formio:middleware:userProject');
+const debug = require('debug')('formio:middleware:userProject');
 
 /**
  * The userProject middleware.

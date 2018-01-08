@@ -1,13 +1,13 @@
 'use strict';
-var request = require('request');
-var FORMIO_FILES_SERVER = process.env.FORMIO_FILES_SERVER || 'https://files.form.io';
+const request = require('request');
+const FORMIO_FILES_SERVER = process.env.FORMIO_FILES_SERVER || 'https://files.form.io';
 module.exports = function(formio) {
   return function(req, res, next) {
     formio.cache.loadPrimaryProject(req, function(err, project) {
       if (err) {
         return next(err);
       }
-      let settings = project.settings;
+      const settings = project.settings;
       formio.cache.loadCurrentForm(req, function(err, form) {
         if (err) {
           return next(err);
@@ -18,14 +18,14 @@ module.exports = function(formio) {
           }
 
           // Allow them to dynamically download from any server.
-          var filesServer = FORMIO_FILES_SERVER;
+          let filesServer = FORMIO_FILES_SERVER;
           if (req.query.from) {
             filesServer = req.query.from;
             delete req.query.from;
           }
 
           // Create the headers object.
-          let headers = {
+          const headers = {
             'x-file-token': settings.filetoken
           };
 
@@ -37,11 +37,11 @@ module.exports = function(formio) {
             });
           }
 
-          let fileId = req.params.fileId || 'pdf';
+          const fileId = req.params.fileId || 'pdf';
           try {
             request({
               method: 'POST',
-              url: filesServer + '/pdf/' + project._id + '/file/' + fileId + '/download',
+              url: `${filesServer  }/pdf/${project._id}/file/${fileId}/download`,
               qs: req.query,
               headers: headers,
               json: true,

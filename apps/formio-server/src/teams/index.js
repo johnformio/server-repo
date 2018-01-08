@@ -1,8 +1,8 @@
 'use strict';
 
-var _ = require('lodash');
-var Q = require('q');
-var debug = {
+const _ = require('lodash');
+const Q = require('q');
+const debug = {
   error: require('debug')('formio:error'),
   teamUsers: require('debug')('formio:teams:teamUsers'),
   teamAll: require('debug')('formio:teams:teamAll'),
@@ -20,14 +20,14 @@ var debug = {
 
 module.exports = function(app, formioServer) {
   // The formio teams resource id.
-  var _teamResource = null;
+  let _teamResource = null;
   // The formio user resource id.
-  var _userResource = null;
+  let _userResource = null;
 
   /**
    * Reset Cache for testing
    */
-  var resetTeams = function() {
+  const resetTeams = function() {
     _teamResource = null;
     _userResource = null;
   };
@@ -43,17 +43,17 @@ module.exports = function(app, formioServer) {
    * @returns {String}
    *   The permission that the given team has within the given project.
    */
-  var getProjectPermission = function(project, team) {
+  const getProjectPermission = function(project, team) {
     project.access = project.access || [];
 
     // Get the permission type starting with team_.
-    var type = _.filter(project.access, function(access) {
+    const type = _.filter(project.access, function(access) {
       access.type = access.type || '';
       access.roles = access.roles || [];
       access.roles = _.map(access.roles, formioServer.formio.util.idToString);
 
-      var starts = _.startsWith(access.type, 'team_');
-      var contains = _.includes(access.roles, formioServer.formio.util.idToString(team));
+      const starts = _.startsWith(access.type, 'team_');
+      const contains = _.includes(access.roles, formioServer.formio.util.idToString(team));
       return starts && contains;
     });
     debug.getProjectPermission(type);
@@ -62,14 +62,14 @@ module.exports = function(app, formioServer) {
     if (type.length > 1) {
       /* eslint-disable no-console */
       console.error(
-        'The given project: '
-        + project._id
-        + '\n has a team with more than one permission: ' + team
+        `The given project: ${
+         project._id
+         }\n has a team with more than one permission: ${team}`
       );
       /* eslint-enable no-console */
 
       // Return the highest access permission.
-      var permissions = _.map(type, 'type');
+      const permissions = _.map(type, 'type');
       debug.getProjectPermission(permissions);
 
       if (_.includes(permissions, 'team_admin')) {
@@ -92,7 +92,7 @@ module.exports = function(app, formioServer) {
    * @param next {Function}
    *   The callback to invoke once the teams resource is loaded.
    */
-  var loadTeams = function(next) {
+  const loadTeams = function(next) {
     if (_teamResource) {
       return next(_teamResource);
     }
@@ -103,7 +103,7 @@ module.exports = function(app, formioServer) {
         return next(null);
       }
 
-      debug.loadTeams('formio project: ' + formio._id);
+      debug.loadTeams(`formio project: ${formio._id}`);
       formioServer.formio.resources.form.model.findOne({name: 'team', project: formio._id})
       .exec(function(err, teamResource) {
         if (err || !teamResource) {
@@ -111,7 +111,7 @@ module.exports = function(app, formioServer) {
           return next(null);
         }
 
-        debug.loadTeams('team resource: ' + teamResource._id);
+        debug.loadTeams(`team resource: ${teamResource._id}`);
         _teamResource = teamResource._id;
         return next(_teamResource);
       });
@@ -124,7 +124,7 @@ module.exports = function(app, formioServer) {
    * @param next {Function}
    *   The callback to invoke once the user resource is loaded.
    */
-  var loadUsers = function(next) {
+  const loadUsers = function(next) {
     if (_userResource) {
       return next(_userResource);
     }
@@ -135,7 +135,7 @@ module.exports = function(app, formioServer) {
         return next(null);
       }
 
-      debug.loadUsers('formio project: ' + formio._id);
+      debug.loadUsers(`formio project: ${formio._id}`);
       formioServer.formio.resources.form.model.findOne({name: 'user', project: formio._id})
       .exec(function(err, userResource) {
         if (err) {
@@ -143,7 +143,7 @@ module.exports = function(app, formioServer) {
           return next(null);
         }
 
-        debug.loadUsers('user resource: ' + userResource._id);
+        debug.loadUsers(`user resource: ${userResource._id}`);
         _userResource = userResource._id;
         return next(_userResource);
       });
@@ -162,9 +162,9 @@ module.exports = function(app, formioServer) {
    *
    * @returns {Promise}
    */
-  var getTeams = function(user, member, owner) {
-    var util = formioServer.formio.util;
-    var q = Q.defer();
+  const getTeams = function(user, member, owner) {
+    const util = formioServer.formio.util;
+    const q = Q.defer();
 
     loadTeams(function(teamResource) {
       // Skip the teams functionality if no user or resource is found.
@@ -180,13 +180,13 @@ module.exports = function(app, formioServer) {
       user = user._id || user;
 
       // Build the search query for teams.
-      var query = {
+      const query = {
         form: util.idToBson(teamResource),
         deleted: {$eq: null}
       };
 
       // Modify the search query based on the given criteria, search for BSON and string versions of ids.
-      debug.getTeams('User: ' + util.idToString(user) + ', Member: ' + member + ', Owner: ' + owner);
+      debug.getTeams(`User: ${util.idToString(user)}, Member: ${member}, Owner: ${  owner}`);
       if (member && owner) {
         query['$or'] = [
           {'data.members': {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}}},
@@ -238,7 +238,7 @@ module.exports = function(app, formioServer) {
    * @param next {Function}
    *   The callback function to invoke after getting the project teams.
    */
-  var getProjectTeams = function(req, project, next) {
+  const getProjectTeams = function(req, project, next) {
     if (!project || project.hasOwnProperty('_id') && !project._id) {
       debug.getProjectTeams('No project given to find its teams.');
       return next('No project given.');
@@ -252,7 +252,7 @@ module.exports = function(app, formioServer) {
       }
 
       // Get the teams and their access.
-      var teams = _.filter(project.access, function(permission) {
+      let teams = _.filter(project.access, function(permission) {
         if (_.startsWith(permission.type, 'team_')) {
           return true;
         }
@@ -262,7 +262,7 @@ module.exports = function(app, formioServer) {
       debug.getProjectTeams(teams);
 
       // Build the team:permission map.
-      var permissions = {};
+      const permissions = {};
       _.each(teams, function(permission) {
         // Iterate each permission role and associate it with the original permission type.
         permission.roles = permission.roles || [];
@@ -291,9 +291,9 @@ module.exports = function(app, formioServer) {
    *
    * @returns {Promise}
    */
-  var getDisplayableTeams = function(teams) {
-    var util = formioServer.formio.util;
-    var q = Q.defer();
+  const getDisplayableTeams = function(teams) {
+    const util = formioServer.formio.util;
+    const q = Q.defer();
 
     loadTeams(function(teamResource) {
       // Skip the teams functionality if no user or resource is found.
@@ -309,7 +309,7 @@ module.exports = function(app, formioServer) {
       debug.getDisplayableTeams(teams);
       if (teams instanceof Array) {
         teams = _.map(teams, function(team) {
-          var _id = team._id || team;
+          const _id = team._id || team;
           return util.idToString(_id);
         });
       }
@@ -325,7 +325,7 @@ module.exports = function(app, formioServer) {
       debug.getDisplayableTeams(teams);
 
       // Build the search query for teams.
-      var query = {
+      const query = {
         form: util.idToBson(teamResource),
         deleted: {$eq: null},
         _id: {$in: teams}
@@ -355,8 +355,8 @@ module.exports = function(app, formioServer) {
    * @return {Object|Array}
    *   The filtered results.
    */
-  var filterTeamsForDisplay = function(teams) {
-    var singleTeam = false;
+  const filterTeamsForDisplay = function(teams) {
+    let singleTeam = false;
 
     if (!teams) {
       debug.filterTeamsForDisplay('No teams given');
@@ -422,8 +422,8 @@ module.exports = function(app, formioServer) {
       return res.sendStatus(400);
     }
 
-    var _team = req.params.teamId;
-    var query = {
+    const _team = req.params.teamId;
+    const query = {
       $and: [
         {$or: [{'access.type': 'team_read'}, {'access.type': 'team_write'}, {'access.type': 'team_admin'}]},
         {'access.roles': {$in: [formioServer.formio.util.idToString(_team), formioServer.formio.util.idToBson(_team)]}},
@@ -439,7 +439,7 @@ module.exports = function(app, formioServer) {
         return res.sendStatus(400);
       }
 
-      var response = [];
+      const response = [];
       _.each(projects, function(project) {
         project = project.toObject();
 
@@ -468,7 +468,7 @@ module.exports = function(app, formioServer) {
         return res.sendStatus(401);
       }
 
-      var query = req.query || null;
+      let query = req.query || null;
       if (!query) {
         return res.status(400).send('A search query is required.');
       }
@@ -492,7 +492,7 @@ module.exports = function(app, formioServer) {
             }
 
             debug.teamUsers(users);
-            var clean = _.map(users, function(user) {
+            const clean = _.map(users, function(user) {
               user.data = user.data || {};
 
               return {
@@ -608,7 +608,7 @@ module.exports = function(app, formioServer) {
    * Expose the functionality to allow a user leave a team.
    */
   app.post('/team/:teamId/leave', formioServer.formio.middleware.tokenHandler, function(req, res, next) {
-    var util = formioServer.formio.util;
+    const util = formioServer.formio.util;
 
     if (!req.token || !req.token.user._id || !req.params.teamId) {
       return res.sendStatus(401);
@@ -620,7 +620,7 @@ module.exports = function(app, formioServer) {
       }
 
       // Search for the given team, and check if the current user is a member, but not the owner.
-      var query = {
+      const query = {
         form: team,
         'data.members': {
           $elemMatch: {_id: {$in: [util.idToBson(req.token.user._id), util.idToString(req.token.user._id)]}}

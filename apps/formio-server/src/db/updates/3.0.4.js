@@ -1,7 +1,7 @@
 'use strict';
 
-var async = require('async');
-var _ = require('lodash');
+let async = require('async');
+let _ = require('lodash');
 
 /**
  * Update 3.0.4
@@ -17,10 +17,10 @@ var _ = require('lodash');
  * @param done
  */
 module.exports = function(db, config, tools, done) {
-  var roleCollection = db.collection('roles');
-  var projectCollection = db.collection('projects');
+  let roleCollection = db.collection('roles');
+  let projectCollection = db.collection('projects');
 
-  var getProjectName = function(id, next) {
+  let getProjectName = function(id, next) {
     projectCollection.findOne({deleted: {$eq: null}, _id: tools.util.idToBson(id)}, function(err, project) {
       if (err) {
         return next(err);
@@ -41,7 +41,7 @@ module.exports = function(db, config, tools, done) {
           return callback(err);
         }
 
-        var projectIds = _.pluck(projects, '_id');
+        let projectIds = _.pluck(projects, '_id');
         projectIds = _.map(projectIds, tools.util.idToString);
         callback(err, projectIds);
       });
@@ -54,13 +54,13 @@ module.exports = function(db, config, tools, done) {
           return callback(err);
         }
 
-        var roleIds = _.pluck(roles, 'project');
+        let roleIds = _.pluck(roles, 'project');
         roleIds = _.map(roleIds, tools.util.idToString);
         callback(null, projectIds, roleIds);
       });
     },
     function createMissingDefaultRoles(projectIds, roleIds, callback) {
-      var todo = _.difference(projectIds, roleIds);
+      let todo = _.difference(projectIds, roleIds);
 
       // For each missing role, construct the correct role.
       async.each(todo, function(project, next) {
@@ -103,13 +103,13 @@ module.exports = function(db, config, tools, done) {
           return callback(err);
         }
 
-        var roleIds = _.pluck(roles, 'project');
+        let roleIds = _.pluck(roles, 'project');
         roleIds = _.map(roleIds, tools.util.idToString);
         callback(null, projectIds, roleIds);
       });
     },
     function createMissingAdminRoles(projectIds, roleIds, callback) {
-      var todo = _.difference(projectIds, roleIds);
+      let todo = _.difference(projectIds, roleIds);
 
       // For each missing role, construct the correct role.
       async.each(todo, function(project, next) {

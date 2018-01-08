@@ -1,7 +1,7 @@
 'use strict';
 
-var hubspotApi = require('node-hubspot');
-var debug = require('debug')('formio:hubspot:util');
+const hubspotApi = require('node-hubspot');
+const debug = require('debug')('formio:hubspot:util');
 
 module.exports = {
   /**
@@ -11,7 +11,7 @@ module.exports = {
    * @param req
    * @returns {*}
    */
-  connect: function(router, req, next) {
+  connect(router, req, next) {
     router.formio.hook.settings(req, function(err, settings) {
       if (err) {
         debug(err.message || err);
@@ -31,7 +31,7 @@ module.exports = {
       }
 
       /* eslint-disable */
-      var hubspot = hubspotApi({
+      let hubspot = hubspotApi({
         api_key: settings.hubspot.apikey,
         version: 'v3'
       });

@@ -1,19 +1,19 @@
 'use strict';
 
-var Resource = require('resourcejs');
-var _ = require('lodash');
-var debug = require('debug')('formio:resources:tag');
+const Resource = require('resourcejs');
+const _ = require('lodash');
+const debug = require('debug')('formio:resources:tag');
 
 module.exports = function(router, formioServer) {
-  var formio = formioServer.formio;
-  var hook = require('formio/src/util/hook')(formio);
+  const formio = formioServer.formio;
+  const hook = require('formio/src/util/hook')(formio);
   formio.middleware.tagHandler = require('../middleware/tagHandler')(router);
   formio.middleware.restrictToPlans = require('../middleware/restrictToPlans')(router);
   formio.middleware.deleteTagHandler = require('../middleware/deleteTagHandler')(router, formioServer);
 
-  var hiddenFields = ['deleted', '__v'];
+  const hiddenFields = ['deleted', '__v'];
 
-  var resource = Resource(
+  const resource = Resource(
     router,
     '/project/:projectId',
     'tag',
@@ -34,7 +34,7 @@ module.exports = function(router, formioServer) {
         formio.cache.loadCurrentProject(req, (err, project) => {
           // Allow passing template from frontend. This is useful for remote environments.
           if (!req.body.template) {
-            let options = router.formio.formio.hook.alter('exportOptions', {}, req, res);
+            const options = router.formio.formio.hook.alter('exportOptions', {}, req, res);
             formio.template.export(options, function(err, template) {
               if (err) {
                 return res.status(400).send(err);
@@ -135,10 +135,10 @@ module.exports = function(router, formioServer) {
                 return res.status(400).send('Tag not found.');
               }
 
-              let template = tag.template;
+              const template = tag.template;
 
               Object.assign(template, _.pick(project, ['name', 'title', 'description', 'machineName']));
-              let alters = hook.alter('templateAlters', {});
+              const alters = hook.alter('templateAlters', {});
               debug('import template', template);
 
               formio.template.import.template(template, alters, function(err, template) {
@@ -172,10 +172,10 @@ module.exports = function(router, formioServer) {
               res.status(400).send('Must send a template with a template deployment.');
             }
 
-            let template = deploy.template;
+            const template = deploy.template;
 
             Object.assign(template, _.pick(project, ['name', 'title', 'description', 'machineName']));
-            let alters = hook.alter('templateAlters', {});
+            const alters = hook.alter('templateAlters', {});
             debug('import template', template);
 
             formio.template.import.template(template, alters, function(err, template) {

@@ -1,37 +1,37 @@
 'use strict';
 
-var _ = require('lodash');
-var jwt = require('jsonwebtoken');
-var debug = require('debug')('formio:middleware:projectTemplate');
+const _ = require('lodash');
+const jwt = require('jsonwebtoken');
+const debug = require('debug')('formio:middleware:projectTemplate');
 
 module.exports = function(formio) {
-  var hook = require('formio/src/util/hook')(formio);
+  const hook = require('formio/src/util/hook')(formio);
   return function(req, res, next) {
     // If we are creating a project without a template, use the default template.
     if (res.resource.status === 201 && !req.templateMode) {
       req.templateMode = 'create';
     }
     // If the Project was not created, skip this bootstrapping process.
-    debug('Template Mode: ' + req.templateMode);
+    debug(`Template Mode: ${req.templateMode}`);
     if (!req.templateMode) {
       debug('Skipping template import');
       return next();
     }
 
     // The Project that was just created.
-    var project = res.resource.item;
+    const project = res.resource.item;
     if (!project) {
       return res.status(400).send('No project found.');
     }
 
     // The project template they wish to use.
-    var template = req.template || 'default';
+    const template = req.template || 'default';
 
     // Update the owner of the Project, and give them the Administrator Role.
-    var updateProjectOwner = function(template) {
+    const updateProjectOwner = function(template) {
       // Give the project owner all the administrator roles.
-      var adminRoles = [];
-      var roles = {};
+      const adminRoles = [];
+      const roles = {};
       // Normalize roles and access for processing.
       _.each(template.roles, function(role, name) {
         roles[name] = role._id;
@@ -59,7 +59,7 @@ module.exports = function(formio) {
           owner.roles.push(adminRole._id);
         });
 
-        var roles = owner.roles;
+        const roles = owner.roles;
         owner.save(function(err) {
           if (err) {
             debug(err.errors || err);
@@ -67,7 +67,7 @@ module.exports = function(formio) {
           }
 
           // Update the users jwt token to reflect the user role changes.
-          var token = formio.util.getHeader(req, 'x-jwt-token');
+          const token = formio.util.getHeader(req, 'x-jwt-token');
           jwt.verify(token, formio.config.jwt.secret, function(err, decoded) {
             if (err) {
               debug(err);
@@ -94,8 +94,8 @@ module.exports = function(formio) {
     };
 
     // Method to import the template.
-    var importTemplate = function(template) {
-      var _debug = require('debug')('formio:middleware:projectTemplate#importTemplate');
+    const importTemplate = function(template) {
+      const _debug = require('debug')('formio:middleware:projectTemplate#importTemplate');
 
       let _project;
       try {
@@ -106,11 +106,11 @@ module.exports = function(formio) {
       }
 
       // Set the project on the template.
-      let projectKeys = ['_id', 'title', 'name', 'description', 'machineName'];
+      const projectKeys = ['_id', 'title', 'name', 'description', 'machineName'];
       template = _.assign({}, template, _.pick(_project, projectKeys));
       debug('import template', template);
 
-      let alters = hook.alter('templateAlters', {});
+      const alters = hook.alter('templateAlters', {});
 
       // Import the template within formio.
       formio.template.import.template(template, alters, function(err, template) {
@@ -161,7 +161,7 @@ module.exports = function(formio) {
     }
     // Check for template that is already provided.
     else if ((typeof template === 'string') && formio.templates.hasOwnProperty(template)) {
-      debug('importing template:' + template);
+      debug(`importing template:${template}`);
       // Import the template.
       return importTemplate(_.cloneDeep(formio.templates[template]));
     }

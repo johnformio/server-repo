@@ -5,7 +5,7 @@ module.exports = app => (req, res, next) => {
     return next();
   }
 
-  let aliasToken = req.query.token;
+  const aliasToken = req.query.token;
   delete req.query.token;
 
   // Get the jwt token for this user.

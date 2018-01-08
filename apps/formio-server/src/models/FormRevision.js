@@ -1,6 +1,6 @@
 'use strict';
 
-var mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
 module.exports = (router, models) => {
   const schema = models.form.schema.clone();

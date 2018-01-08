@@ -1,7 +1,7 @@
 'use strict';
 
-var _ = require('lodash');
-var debug = require('debug')('formio:middleware:projectTeamSync');
+const _ = require('lodash');
+const debug = require('debug')('formio:middleware:projectTeamSync');
 
 module.exports = function(formio) {
   const replaceAccess = (project, access) => {
@@ -10,7 +10,7 @@ module.exports = function(formio) {
     }
     access.roles = access.roles.map(id => id.toString());
 
-    let found = false;
+    const found = false;
     project.access.forEach(projectAccess => {
       if (projectAccess.type === access.type) {
         projectAccess.roles = access.roles;
@@ -35,7 +35,7 @@ module.exports = function(formio) {
           }
 
           result.forEach(stage => {
-            let stageAccess = {access: stage.access.toObject()};
+            const stageAccess = {access: stage.access.toObject()};
             teamAccess.forEach(access => replaceAccess(stageAccess, access));
             stage.set('access', stageAccess.access);
             stage.save();

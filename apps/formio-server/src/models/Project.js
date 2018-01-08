@@ -1,15 +1,15 @@
 'use strict';
 
 /* eslint-disable no-useless-escape */
-var _ = require('lodash');
-var EncryptedProperty = require('../plugins/EncryptedProperty');
-var invalidRegex = /[^0-9a-zA-Z\-]|^\-|\-$/;
+const _ = require('lodash');
+const EncryptedProperty = require('../plugins/EncryptedProperty');
+const invalidRegex = /[^0-9a-zA-Z\-]|^\-|\-$/;
 /* eslint-enable no-useless-escape */
 
 module.exports = function(router) {
-  var formio = router.formio;
+  const formio = router.formio;
   /* eslint-disable new-cap, max-len */
-  var model = formio.BaseModel({
+  const model = formio.BaseModel({
     schema: new formio.mongoose.Schema({
       title: {
         type: String,
@@ -26,21 +26,21 @@ module.exports = function(router) {
         validate: [
           {
             message: 'A Project domain name may only contain letters, numbers, and hyphens (but cannot start or end with a hyphen)',
-            validator: function(value) {
+            validator(value) {
               return !invalidRegex.test(value);
             }
           },
           {
             message: 'This domain is reserved. Please use a different domain.',
-            validator: function(value) {
+            validator(value) {
               return !formio.config.reservedSubdomains || !_.includes(formio.config.reservedSubdomains, value);
             }
           },
           {
             isAsync: true,
             message: 'The Project name must be unique.',
-            validator: function(value, done) {
-              var search = {
+            validator(value, done) {
+              const search = {
                 name: value,
                 deleted: {$eq: null}
               };
@@ -91,12 +91,12 @@ module.exports = function(router) {
           {
             async: true,
             message: 'Remote already connected to an environment.',
-            validator: function(value, done) {
+            validator(value, done) {
               if (!value || !value.project || !value.project._id) {
                 return done(true);
               }
 
-              var search = {
+              const search = {
                 'remote.project._id': value.project._id,
                 deleted: {$eq: null}
               };
