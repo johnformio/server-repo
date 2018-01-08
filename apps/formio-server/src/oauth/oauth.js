@@ -8,6 +8,7 @@ module.exports = function(formio) {
   // Export the oauth providers.
   return {
     providers: {
+      openid: require('./openid')(formio),
       github: require('./github')(formio),
       facebook: require('./facebook')(formio),
       office365: require('./office365')(formio),

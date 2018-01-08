@@ -89,7 +89,23 @@ module.exports = function(app) {
             app.get('/token', formio.auth.tempToken);
             return false;
           case 'current':
-            app.get('/current', formio.auth.currentUser);
+            app.get('/current', (req, res, next) => {
+              // If this is an external token, return the user object directly.
+              if (req.token.external) {
+                if (!res.token || !req.token) {
+                  return res.sendStatus(401);
+                }
+
+                // Set the headers if they haven't been sent yet.
+                if (!res.headersSent) {
+                  res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
+                  res.setHeader('x-jwt-token', res.token);
+                }
+
+                return res.send(req.token.user);
+              }
+              return formio.auth.currentUser(req, res, next);
+            });
             return false;
           case 'access':
             app.get('/access', formio.middleware.accessHandler);
@@ -294,6 +310,9 @@ module.exports = function(app) {
       token(token, form) {
         token.origin = formioServer.formio.config.apiHost;
         token.form.project = form.project;
+        token.project = {
+          _id: form.project
+        };
         return token;
       },
 
@@ -1195,7 +1214,8 @@ module.exports = function(app) {
        */
       external(decoded, req) {
         // If external is provided in the signed token, use the decoded token as the request token.
-        if (decoded.external === true) {
+        // Only allow external tokens for the projects they originated in.
+        if (decoded.external === true && req.projectId && req.projectId === decoded.project._id) {
           req.token = decoded;
           req.user = decoded.user;
           return false;
@@ -1265,8 +1285,8 @@ module.exports = function(app) {
         query.projectId = req.projectId;
         return query;
       },
-      submissionRequestTokenQuery(query, token) {
-        query.projectId = token.form.project;
+      submissionRequestTokenQuery: function(query, token) {
+        query.projectId = token.project._id || token.form.project;
         return query;
       },
       formRoutes: require('./alter/formRoutes')(app),
