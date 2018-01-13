@@ -1189,6 +1189,10 @@ module.exports = function(app) {
 
         formioServer.formio.teams.getTeams(user, true, true)
           .then(function(teams) {
+            if (!teams) {
+              return user;
+            }
+
             // Filter the teams to only contain the team ids.
             teams = _(teams)
               .map('_id')
