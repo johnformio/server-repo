@@ -1189,7 +1189,7 @@ module.exports = function(app) {
 
         formioServer.formio.teams.getTeams(user, true, true)
           .then(function(teams) {
-            if (!teams) {
+            if (!teams || !teams.length) {
               return user;
             }
 
