@@ -40,7 +40,7 @@ module.exports = (redis) => {
       return null;
     }
 
-    return `${year.toString()  }:${month.toString()  }:${day.toString()}:${  project.toString()}:${
+    return `${year.toString()}:${month.toString()}:${day.toString()}:${project.toString()}:${
        type.toString()}`;
   };
 
@@ -91,7 +91,7 @@ module.exports = (redis) => {
       ? now.getTime() - start
       : 0;
     method = method.toString().toUpperCase();
-    const value = `${path  }:${method}:${now.getTime()}:${  delta}`;
+    const value = `${path}:${method}:${now.getTime()}:${delta}`;
 
     // Add this record, to the end of the list at the position of the key.
     db.rpush(key, value, function(err, length) {

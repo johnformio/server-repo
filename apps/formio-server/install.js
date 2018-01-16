@@ -13,7 +13,7 @@ fs.readFile('./project.json', 'utf8', function(err, data) {
 
   request({
     method: 'POST',
-    uri: `${server  }/project`,
+    uri: `${server}/project`,
     headers: {
       'Content-Type': 'application/json',
       'x-admin-key': adminKey
@@ -34,7 +34,7 @@ fs.readFile('./project.json', 'utf8', function(err, data) {
       console.log('project', response.statusCode, response.statusMessage, project._id);
       request({
         method: 'POST',
-        uri: `${server  }/project/${  project._id  }/user`,
+        uri: `${server}/project/${project._id}/user`,
         headers: {
           'Content-Type': 'application/json',
           'x-admin-key': adminKey
@@ -54,7 +54,7 @@ fs.readFile('./project.json', 'utf8', function(err, data) {
         console.log('user', response.statusCode, response.statusMessage, user._id);
         request({
           method: 'POST',
-          uri: `${server  }/project/${  project._id  }/owner`,
+          uri: `${server}/project/${project._id}/owner`,
           headers: {
             'Content-Type': 'application/json',
             'x-admin-key': adminKey
