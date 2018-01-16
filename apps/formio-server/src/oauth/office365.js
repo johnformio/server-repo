@@ -122,7 +122,7 @@ module.exports = function(formio) {
 
     // Gets user information from oauth access token
     // Returns a promise, or you can provide the next callback arg
-    getUser(tokens, next) {
+    getUser(tokens, settings, next) {
       const accessToken = _.find(tokens, {type: this.name});
       if (!accessToken) {
         return Q.reject('No access token found');

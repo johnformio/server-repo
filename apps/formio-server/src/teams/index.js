@@ -98,7 +98,7 @@ module.exports = function(app, formioServer) {
     }
 
     formioServer.formio.resources.project.model.findOne({name: 'formio'}, function(err, formio) {
-      if (err) {
+      if (err || !formio) {
         debug.loadTeams(err);
         return next(null);
       }
@@ -130,7 +130,7 @@ module.exports = function(app, formioServer) {
     }
 
     formioServer.formio.resources.project.model.findOne({name: 'formio'}, function(err, formio) {
-      if (err) {
+      if (err || !formio) {
         debug.loadUsers(err);
         return next(null);
       }
@@ -138,7 +138,7 @@ module.exports = function(app, formioServer) {
       debug.loadUsers(`formio project: ${formio._id}`);
       formioServer.formio.resources.form.model.findOne({name: 'user', project: formio._id})
       .exec(function(err, userResource) {
-        if (err) {
+        if (err || !userResource) {
           debug.loadUsers(err);
           return next(null);
         }
