@@ -186,7 +186,7 @@ module.exports = function(app, formioServer) {
       };
 
       // Modify the search query based on the given criteria, search for BSON and string versions of ids.
-      debug.getTeams(`User: ${util.idToString(user)}, Member: ${member}, Owner: ${  owner}`);
+      debug.getTeams(`User: ${util.idToString(user)}, Member: ${member}, Owner: ${owner}`);
       if (member && owner) {
         query['$or'] = [
           {'data.members': {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}}},

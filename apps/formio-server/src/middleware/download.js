@@ -41,7 +41,7 @@ module.exports = function(formio) {
           try {
             request({
               method: 'POST',
-              url: `${filesServer  }/pdf/${project._id}/file/${fileId}/download`,
+              url: `${filesServer}/pdf/${project._id}/file/${fileId}/download`,
               qs: req.query,
               headers: headers,
               json: true,

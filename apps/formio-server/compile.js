@@ -12,7 +12,7 @@ fs.readdirSync('node_modules')
   //  return ['.bin'].indexOf(x) === -1;
   //})
   .forEach(function(mod) {
-    nodeModules[mod] = `commonjs ${  mod}`;
+    nodeModules[mod] = `commonjs ${mod}`;
   });
 
 // Ensure build directory exists.
@@ -27,7 +27,7 @@ catch (e) {
 
 // Copy over files
 var copyFile = function(file) {
-  fs.createReadStream(file).pipe(fs.createWriteStream(`${outputDir  }/${  file}`));
+  fs.createReadStream(file).pipe(fs.createWriteStream(`${outputDir}/${file}`));
 };
 [
   'favicon.ico',

@@ -52,7 +52,7 @@ module.exports = function(options) {
 
   // Debug request info.
   app.use(function(req, res, next) {
-    debug(`${req.method  }: ${  req.originalUrl}`);
+    debug(`${req.method}: ${req.originalUrl}`);
     next();
   });
 
@@ -97,7 +97,7 @@ module.exports = function(options) {
       return next();
     }
 
-    res.redirect(`https://${  req.get('Host')  }${req.url}`);
+    res.redirect(`https://${req.get('Host')}${req.url}`);
   });
 
   // Establish our url alias middleware.
