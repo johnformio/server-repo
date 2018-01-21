@@ -40,7 +40,7 @@ module.exports = function(router) {
       });
     }
 
-    settingsForm(req, res, next) {
+    static settingsForm(req, res, next) {
       const basePath = hook.alter('path', '/form', req);
       const dataSrc = `${basePath}/${req.params.formId}/components`;
       next(null, [
