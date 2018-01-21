@@ -148,6 +148,7 @@ module.exports = function(router) {
           return loadFilteredSubmission('group', gid)
           .then(function(group) {
             const context = _.cloneDeep(req);
+            context.permissionsChecked = false;
             context.formioCache = hook.alter('cacheInit', {
               names: {},
               aliases: {},
