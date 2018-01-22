@@ -48,7 +48,7 @@ module.exports = function(config, formio) {
       const content_digest = crypto.createHash('sha1').update(transactionBody, 'utf8').digest('hex');
 
       const hmac = crypto.createHmac('sha1', config.payeezy.hmacKey || '')
-      .update(`POST\napplication/json\n${content_digest}\n${timestamp}\n${  config.payeezy.endpoint}`, 'utf8')
+      .update(`POST\napplication/json\n${content_digest}\n${timestamp}\n${config.payeezy.endpoint}`, 'utf8')
       .digest('base64');
 
       return util.request({
