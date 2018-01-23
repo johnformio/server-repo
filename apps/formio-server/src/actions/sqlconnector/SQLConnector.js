@@ -106,7 +106,6 @@ module.exports = function(router) {
           return !settings.sqlconnector[prop];
         });
         if (missingSetting) {
-          debug(missingSetting);
           return res.status(400).send('The SQL Connector is missing required settings.');
         }
 
@@ -192,8 +191,6 @@ module.exports = function(router) {
                   }
                 });
 
-                debug('components:');
-                debug(components);
                 return cb(null, components);
               });
             }
@@ -308,7 +305,6 @@ module.exports = function(router) {
      */
     resolve(handler, method, req, res, next) { // eslint-disable-line max-statements
       const settings = this.settings;
-      debug('settings:', settings);
 
       // Only block on the external request, if configured
       if (!_.has(settings, 'block') || settings.block === false) {
@@ -406,14 +402,11 @@ module.exports = function(router) {
         }
 
         options.timeout = 10000;
-        debug('options:', options);
         process.nextTick(function() {
           request(options, function(err, response, body) {
             if (err) {
               return handleErrors(err);
             }
-
-            debug('request response:', body);
 
             // If this is not a new resource, skip link phase for new resources.
             if (method !== 'post') {

@@ -18,15 +18,12 @@ module.exports = {
         return next(err.message || err);
       }
       if (!settings) {
-        debug('No settings found');
         return next('No settings found.');
       }
       if (!settings.hubspot) {
-        debug('No hubspot settings found');
         return next('Hubspot not configured.');
       }
       if (!settings.hubspot.apikey) {
-        debug('No hubspot api key found');
         return next('Hubspot not configured.');
       }
 

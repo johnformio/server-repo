@@ -1,7 +1,5 @@
 'use strict';
 
-const debug = require('debug')('formio:middleware:userProject');
-
 /**
  * The userProject middleware.
  *
@@ -18,7 +16,6 @@ module.exports = function(formio) {
         if (err) {
           return next(err);
         }
-        debug(project);
         req.userProject = project;
         next();
       });

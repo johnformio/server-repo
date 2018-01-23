@@ -1,7 +1,6 @@
 'use strict';
 
 const _ = require('lodash');
-const debug = require('debug')('formio:logger');
 
 module.exports = (config) => {
   const utils = require('./utils');
@@ -31,8 +30,6 @@ module.exports = (config) => {
 
     return Promise.all(handlers)
     .then((results) => {
-      debug(results);
-
       if (res !== undefined) {
         return res.sendStatus(500);
       }

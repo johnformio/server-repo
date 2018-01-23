@@ -7,8 +7,6 @@ const util = require('formio/src/util/util');
 
 const MAX_TIMESTAMP = 8640000000000000;
 
-const debug = require('debug')('formio:action:oauth');
-
 // Export the Dropbox oauth provider.
 module.exports = function(formio) {
   const oauthUtil = require('../util/oauth')(formio);
@@ -69,7 +67,6 @@ module.exports = function(formio) {
           /* eslint-enable camelcase */
         })
         .spread(function(response, body) {
-          debug(body);
           if (!body) {
             throw 'No response from Dropbox.';
           }
@@ -115,7 +112,6 @@ module.exports = function(formio) {
         }
         // Make it easier to reference items in userInfo.name
         userInfo = _.merge(userInfo, userInfo.name);
-        debug(userInfo);
         return userInfo;
       })
       .nodeify(next);

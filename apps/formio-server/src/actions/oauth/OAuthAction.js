@@ -1,7 +1,6 @@
 'use strict';
 
 const util = require('formio/src/util/util');
-const debug = require('debug')('formio:action:oauth');
 const _ = require('lodash');
 const crypto = require('crypto');
 const Q = require('q');
@@ -241,15 +240,15 @@ module.exports = router => {
                       return {
                         type: 'select',
                         input: true,
-                        label: `Autofill ${  field.title  } Field`,
-                        key: `autofill-${  provider.name  }-${  field.name}`,
-                        placeholder: `Select which field to autofill with ${  provider.title  } account ${  field.title}`,
+                        label: `Autofill ${field.title} Field`,
+                        key: `autofill-${provider.name}-${field.name}`,
+                        placeholder: `Select which field to autofill with ${provider.title} account ${field.title}`,
                         template: '<span>{{ item.label || item.key }}</span>',
                         dataSrc: 'url',
                         data: {url: fieldsSrc},
                         valueProperty: 'key',
                         multiple: false,
-                        customConditional: `show = ['${  provider.name  }'].indexOf(data.settings.provider) !== -1;`
+                        customConditional: `show = ['${provider.name}'].indexOf(data.settings.provider) !== -1;`
                       };
                     });
                   })
@@ -264,8 +263,6 @@ module.exports = router => {
     }
 
     authenticate(req, res, provider, tokens) {
-      debug('Authenticating with Tokens:', tokens);
-
       var userInfo = null, userId = null, resource = null;
       var self = this;
 
@@ -277,10 +274,6 @@ module.exports = router => {
           userInfo = results[0];
           userId = provider.getUserId(userInfo);
           resource = results[1];
-
-          debug('userInfo:', userInfo);
-          debug('userId:', userId);
-
           return auth.authenticateOAuth(resource, provider.name, userId);
         })
         .then(function(result) {
@@ -330,9 +323,7 @@ module.exports = router => {
               provider: provider.name,
               tokens: tokens
             };
-            debug('oauthDeferredAuth: ', req.oauthDeferredAuth);
 
-            debug('Filling in dummy passwords');
             var tmpPassword = `temp_${  chance.string({length: 16})}`;
             var fillPasswords = function(_form) {
               util.eachComponent(_form.components, function(component) {
@@ -342,7 +333,6 @@ module.exports = router => {
                   (!req.submission.data[component.key])
                 ) {
                   req.submission.data[component.key] = tmpPassword;
-                  debug(component.key, 'is now', req.submission.data[component.key]);
                 }
               });
             };
@@ -391,7 +381,6 @@ module.exports = router => {
 
           // Add role
           // Convert to just the roleId
-          debug(role);
           role = role.toObject()._id.toString();
 
           // Add and store unique roles only.
@@ -399,7 +388,6 @@ module.exports = router => {
           temp = _.map(temp, function(r) {
             return r.toString();
           });
-          debug(`Adding: ${  role}`);
           temp.push(role);
           temp = _.uniq(temp);
           temp = _.map(temp, function(r) {
@@ -424,7 +412,6 @@ module.exports = router => {
           submission.set('externalTokens',
             _(req.oauthDeferredAuth.tokens).concat(submission.externalTokens).uniq('type').value()
           );
-          debug('externalTokens: ', submission.externalTokens);
 
           return submission.save()
             .then(function() {
@@ -498,8 +485,6 @@ module.exports = router => {
             .then(function(results) {
               userId = provider.getUserId(results[0]);
               currentUser = res.resource.item;
-              debug('userId:', userId);
-              debug('currentUser:', currentUser);
 
               if (!currentUser) {
                 throw {
@@ -670,7 +655,6 @@ module.exports = router => {
         res.resource.hasOwnProperty('item') &&
         res.resource.item._id
       ) {
-        debug('Modifying Oauth Button');
         return Q.ninvoke(formio.hook, 'settings', req)
           .then(function(settings) {
             var component = util.getComponent(res.resource.item.components, self.settings.button);
@@ -730,7 +714,6 @@ module.exports = router => {
     onError(req, res, next) {
       return function(err) {
         if (err.status) {
-          debug('Error', err);
           return res.status(err.status).send(err.message);
         }
         next(err);

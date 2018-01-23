@@ -7,8 +7,6 @@ const util = require('formio/src/util/util');
 
 const MAX_TIMESTAMP = 8640000000000000;
 
-const debug = require('debug')('formio:action:oauth');
-
 // Export the LinkedIn oauth provider.
 module.exports = function(formio) {
   const oauthUtil = require('../util/oauth')(formio);
@@ -52,7 +50,6 @@ module.exports = function(formio) {
           /* eslint-enable camelcase */
         })
         .spread(function(response, body) {
-          debug(body);
           if (!body) {
             throw 'No response from LinkedIn.';
           }
@@ -97,7 +94,6 @@ module.exports = function(formio) {
             message: `${status} response from LinkedIn: ${response.statusMessage}`
           };
         }
-        debug(userInfo);
         return userInfo;
       })
       .nodeify(next);

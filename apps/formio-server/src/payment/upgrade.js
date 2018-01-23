@@ -96,7 +96,6 @@ module.exports = function(formio) {
       });
     })
     .then(function(response) {
-      debug(response);
       return res.sendStatus(200);
     })
     .catch(function(err) {

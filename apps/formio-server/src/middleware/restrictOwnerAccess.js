@@ -9,7 +9,6 @@ module.exports = function(formio) {
   return function(req, res, next) {
     new Promise((resolve, reject) => {
       if (!req.projectId) {
-        debug('No project id found with the request.');
         return reject('No project id found with the request.');
       }
 
@@ -19,7 +18,6 @@ module.exports = function(formio) {
       }
 
       if (!req.user || !req.user._id) {
-        debug('No user id found with the request.');
         return reject();
       }
 
@@ -35,11 +33,9 @@ module.exports = function(formio) {
         }
 
         if (project.owner.toString() !== req.user._id.toString()) {
-          debug('User is not project owner. Access restricted.');
           return reject();
         }
 
-        debug('User is project owner.');
         return resolve();
       });
     })
@@ -49,7 +45,6 @@ module.exports = function(formio) {
     .catch(err => {
       try {
         if (!err) {
-          debug('Could not load project');
           return res.sendStatus(401);
         }
 

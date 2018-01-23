@@ -1,12 +1,6 @@
 'use strict';
 
 const _ = require('lodash');
-const debug = {
-  settings: require('debug')('formio:settings'),
-  error: require('debug')('formio:error'),
-  import: require('debug')('formio:project:import')
-};
-
 const o365Util = require('../actions/office365/util');
 const kickboxValidate = require('../actions/kickbox/validate');
 const nodeUrl = require('url');
@@ -237,7 +231,6 @@ module.exports = function(app) {
         if (process.env.DISABLE_RESTRICTIONS) {
           return true;
         }
-        const _debug = require('debug')('formio:settings:resolve');
         const premium = [
           'webhook', 'oauth', 'office365contact', 'office365calendar', 'hubspotContact', 'googlesheet', 'jira'
         ];
@@ -250,7 +243,6 @@ module.exports = function(app) {
           return true;
         }
         if (['basic'].indexOf(req.primaryProject.plan) !== -1) {
-          _debug(`Skipping ${action.name} action, because the project plan is ${req.primaryProject.plan}`);
           return false;
         }
 
@@ -347,36 +339,29 @@ module.exports = function(app) {
       },
 
       isAdmin(isAdmin, req) {
-        const _debug = require('debug')('formio:settings:isAdmin');
-
         // Allow admin key to act as admin.
         if (process.env.ADMIN_KEY && process.env.ADMIN_KEY === req.headers['x-admin-key']) {
-          _debug('Admin Key');
           req.adminKey = true;
           return true;
         }
 
         // Allow remote team admins to have admin access.
         if (req.remotePermission && ['admin', 'owner', 'team_admin'].indexOf(req.remotePermission)) {
-          _debug('Remote Admin');
           return true;
         }
 
         // If no user is found, then return false.
         if (!req.token || !req.token.user) {
-          _debug('Skipping - No user given');
           return false;
         }
 
         // Ensure we have a projectOwner
         if (!req.projectOwner) {
-          _debug('Skipping - No project owner');
           return false;
         }
 
         // Project owners are default admins.
         if (req.token.user._id === req.projectOwner) {
-          _debug('Project owner');
           return true;
         }
 
@@ -406,25 +391,20 @@ module.exports = function(app) {
          *   The callback function to invoke after completion.
          */
         const getProjectAccess = function(callback) {
-          const _debug = require('debug')('formio:settings:getAccess#getProjectAccess');
-
           // Build the access object for this project.
           access.project = {};
 
           // Skip project access if no projectId was given.
           if (!req.projectId) {
-            _debug('Skipping, no req.projectId');
             return callback(null);
           }
 
           // Load the project.
           formioServer.formio.cache.loadProject(req, req.projectId, function(err, project) {
             if (err) {
-              _debug(err);
               return callback(err);
             }
             if (!project) {
-              _debug(`No project found with projectId: ${req.projectId}`);
               return callback(`No project found with projectId: ${req.projectId}`);
             }
 
@@ -478,14 +458,11 @@ module.exports = function(app) {
          *   The callback function to invoke after completion.
          */
         const getTeamAccess = function(callback) {
-          const _debug = require('debug')('formio:settings:getAccess#getTeamAccess');
-
           // Modify the project access with teams functionality.
           access.project = access.project || {};
 
           // Skip teams access if no projectId was given.
           if (!req.projectId) {
-            _debug('Skipping, no req.projectId');
             return callback(null);
           }
 
@@ -493,11 +470,9 @@ module.exports = function(app) {
           /* eslint-disable camelcase, max-statements, no-fallthrough */
           formioServer.formio.cache.loadPrimaryProject(req, function(err, project) {
             if (err) {
-              _debug(err);
               return callback(err);
             }
             if (!project) {
-              _debug(`No project found with projectId: ${req.projectId}`);
               return callback(`No project found with projectId: ${req.projectId}`);
             }
 
@@ -540,7 +515,6 @@ module.exports = function(app) {
               access.role.delete_all = access.role.delete_all || [];
 
               teamAccess.forEach(function(permission) {
-                _debug(permission);
                 permission.roles = permission.roles || [];
                 // Note: These roles are additive. team_admin gets all roles in team_write and team_read.
                 // Iterate each team in the team roles, and add their permissions.
@@ -595,9 +569,7 @@ module.exports = function(app) {
        * @returns {*}
        */
       resourceAccessFilter(query, req, callback) {
-        const _debug = require('debug')('formio:settings:resourceAccessFilter');
         if (!req.projectId || !_.get(req, 'token.user._id')) {
-          _debug('Required items not available.');
           return callback(null, query);
         }
 
@@ -608,13 +580,11 @@ module.exports = function(app) {
 
         formioServer.formio.plans.getPlan(req, function(err, plan) {
           if (err) {
-            _debug(err);
             return callback(err, query);
           }
 
           // FOR-209 - Skip group permission checks for non-team/commercial project plans.
           if (['team', 'commercial'].indexOf(plan) === -1) {
-            _debug('Skipping additional permission checks, plan: ', plan);
             return callback(null, query);
           }
 
@@ -671,11 +641,9 @@ module.exports = function(app) {
             function(err, groups) {
               if (err) {
                 // Try to recover from failure, but passing the original query on.
-                _debug(err);
                 return callback(err, query);
               }
 
-              _debug(groups);
               groups.forEach(function(group) {
                 query.push(formioServer.formio.util.idToBson(group._id));
               });
@@ -718,7 +686,6 @@ module.exports = function(app) {
         }
 
         const url = nodeUrl.parse(req.url).pathname.split('/');
-        debug.settings(url);
         if (url[5] === 'storage' && ['s3', 'dropbox'].indexOf(url[6]) !== -1) {
           entity = {
             type: 'submission',
@@ -748,7 +715,6 @@ module.exports = function(app) {
        */
       /* eslint-disable max-statements */
       hasAccess(_hasAccess, req, access, entity, res) {
-        const _debug = require('debug')('formio:settings:hasAccess');
         const _url = nodeUrl.parse(req.url).pathname;
 
         // Allow access if admin.
@@ -797,34 +763,26 @@ module.exports = function(app) {
           // No project but authenticated.
           if (req.token) {
             if (req.method === 'POST' && _url === '/project') {
-              _debug(req.userProject.primary);
               return req.userProject.primary;
             }
 
             if (_url === '/project') {
-              _debug('true');
               return true;
             }
 
             if (_url === '/project/available') {
-              _debug(req.userProject.primary);
               return req.userProject.primary;
             }
 
             if (_url === '/payeezy') {
-              _debug(req.userProject.primary);
               return req.userProject.primary;
             }
 
-            _debug('Checking for Formio Access.');
-            _debug(`Formio URL: ${_url}`);
             if (_url === '/current' || _url === '/logout') {
-              _debug('true');
               return true;
             }
 
             // This req is unauthorized/unknown.
-            _debug('false');
             if (res) {
               res.sendStatus(404);
             }
@@ -833,12 +791,10 @@ module.exports = function(app) {
           // No project but anonymous.
           else {
             if (_url === '/spec.json') {
-              _debug('true');
               return true;
             }
 
             // This req is unauthorized.
-            _debug('false');
             return false;
           }
         }
@@ -857,12 +813,10 @@ module.exports = function(app) {
 
           // Use submission permissions for access to file signing endpoints.
           if (url[5] === 'storage' && ['s3', 'dropbox'].indexOf(url[6]) !== -1) {
-            _debug('Checking storage access');
             const _access = formioServer.formio.access.hasAccess(req, access, {
               type: 'submission',
               id: req.submissionId
             });
-            _debug(_access);
             return _access;
           }
 
@@ -1034,11 +988,9 @@ module.exports = function(app) {
             }
 
             if ('access' in template) {
-              debug.import('start access');
               const permissions = ['create_all', 'read_all', 'update_all', 'delete_all'];
               project.access = _.filter(project.access, access => permissions.indexOf(access.type) === -1);
 
-              debug.import(template.roles);
               template.access.forEach(access => {
                 project.access.push({
                   type: access.type,
@@ -1050,7 +1002,6 @@ module.exports = function(app) {
                   })
                 });
               });
-              debug.import('end access');
             }
             else if (
               'roles' in template &&
@@ -1163,9 +1114,7 @@ module.exports = function(app) {
           return next();
         }
 
-        const _debug = require('debug')('formio:settings:user');
         const util = formioServer.formio.util;
-        _debug(user);
 
         // Force the user reference to be an object rather than a mongoose document.
         try {
@@ -1185,7 +1134,6 @@ module.exports = function(app) {
           .map(util.idToString)
           .uniq()
           .value();
-        debug.settings(user.roles);
 
         formioServer.formio.teams.getTeams(user, true, true)
           .then(function(teams) {
@@ -1242,19 +1190,14 @@ module.exports = function(app) {
        *   The modified mongoose request object.
        */
       formQuery(query, req, formio) {
-        const _debug = require('debug')('formio:settings:formQuery');
-
         // Determine which project to use, one in the request, or formio.
-        _debug(`formio: ${formio}`);
         if (formio && formio === true) {
           return formioServer.formio.cache.loadProjectByName(req, 'formio', function(err, _id) {
             if (err || !_id) {
-              _debug(err || 'The formio project was not found.');
               return query;
             }
 
             query.project = formioServer.formio.mongoose.Types.ObjectId(_id);
-            _debug(query);
             return query;
           });
         }
@@ -1263,7 +1206,6 @@ module.exports = function(app) {
           if (formioServer.formio.mongoose.Types.ObjectId.isValid(req.projectId)) {
             query.project = formioServer.formio.mongoose.Types.ObjectId(req.projectId);
           }
-          _debug(query);
           return query;
         }
       },
@@ -1342,12 +1284,9 @@ module.exports = function(app) {
           // user to exist.
           return Moxtra.getFormioBotToken(req, req.projectId)
           .then(token => {
-            debug.settings(`moxtra formiobot token: ${token}`);
-
             return next();
           })
           .catch(error => {
-            debug.error(error);
             return next();
           });
         };
@@ -1382,17 +1321,13 @@ module.exports = function(app) {
          * @param done
          */
         const updateProject = function(_role, done) {
-          const _debug = require('debug')('formio:settings:updateProject');
-
           formioServer.formio.resources.project.model.findOne({
             _id: formioServer.formio.mongoose.Types.ObjectId(projectId)
           }, function(err, project) {
             if (err) {
-              _debug(err);
               return done(err);
             }
             if (!project) {
-              _debug(`No Project found with projectId: ${projectId}`);
               return done();
             }
 
@@ -1419,7 +1354,6 @@ module.exports = function(app) {
             // Save the updated permissions.
             project.save(function(err) {
               if (err) {
-                _debug(err);
                 return done(err);
               }
               done();
@@ -1527,8 +1461,6 @@ module.exports = function(app) {
        *   The current formio core config.
        */
       updateConfig(config) {
-        const _debug = require('debug')('formio:settings:config');
-
         // Hook the schema let to load the latest public/private schema.
         const pkg = JSON.parse(fs.readFileSync('./package.json'));
         if (pkg && pkg.schema && pkg.schema !== null && semver.gt(pkg.schema, config.schema)) {
@@ -1537,8 +1469,6 @@ module.exports = function(app) {
 
         // Hook the config to add redis data for the update script: 3.0.1-rc.2
         config.redis = formioServer.config.redis;
-
-        _debug(config);
         return config;
       },
 
@@ -1551,15 +1481,12 @@ module.exports = function(app) {
        *   The next function to invoke after altering the file list.
        */
       getUpdates(files, next) {
-        const _debug = require('debug')('formio:settings:getUpdates');
         files = files || [];
 
-        _debug(files);
         let _files = require('../db/updates/index.js');
         _files = Object.keys(_files);
         // Add the private updates to the original file list and continue.
         files = files.concat(_files);
-        _debug(files);
         next(null, files);
       },
 
@@ -1570,23 +1497,16 @@ module.exports = function(app) {
        *   The
        */
       updateLocation(name) {
-        const _debug = require('debug')('formio:settings:updateLocation');
         let update = null;
 
         try {
           // Attempt to resolve the private update.
           const _files = require('../db/updates/index.js');
           if (_files.hasOwnProperty(name)) {
-            _debug(`Using ${name}`);
             update = _files[name];
-          }
-          else {
-            _debug(`update not found (${name}): ${Object.keys(_files).join(', ')}`);
           }
         }
         catch (e) {
-          _debug(e);
-          debug.error(e);
           update = null;
         }
 

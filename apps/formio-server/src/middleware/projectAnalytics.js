@@ -3,7 +3,6 @@
 const _ = require('lodash');
 const Q = require('q');
 const moment = require('moment');
-const debug = require('debug')('formio:middleware:projectAnalytics');
 
 module.exports = function(formioServer) {
   /**
@@ -30,7 +29,6 @@ module.exports = function(formioServer) {
         limit: limit,
         reset: moment().startOf('month').add(1, 'month').toISOString()
       };
-      debug('API Call Info:', info);
       return info;
     });
   };

@@ -2,7 +2,6 @@
 
 const Q = require('q');
 const _ = require('lodash');
-const debug = require('debug')('formio:oauth');
 
 module.exports = function(formio) {
   // Export the oauth providers.
@@ -38,8 +37,6 @@ module.exports = function(formio) {
         if (new Date() < accessToken.exp) {
           return accessToken.token;
         }
-
-        debug('Access Token is expired, refreshing...');
 
         return provider.refreshTokens(req, res, user)
         .then(function(tokens) {

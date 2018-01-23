@@ -1,7 +1,5 @@
 'use strict';
 
-const debug = require('debug')('formio:middleware:bootstrapEntityProject');
-
 /**
  * The Bootstrap Entity Project middleware.
  *
@@ -13,11 +11,9 @@ const debug = require('debug')('formio:middleware:bootstrapEntityProject');
  */
 module.exports = function(req, res, next) {
   if (req.method !== 'POST' && req.method !== 'PUT') {
-    debug('Skipping');
     return next();
   }
 
   req.body.project = req.projectId || req.params.projectId;
-  debug(req.body);
   next();
 };
