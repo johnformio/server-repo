@@ -2,7 +2,6 @@
 
 const onFinished = require('on-finished');
 const debug = {
-  connect: require('debug')('formio:analytics:connect'),
   record: require('debug')('formio:analytics:record'),
   hook: require('debug')('formio:analytics:hook'),
   getCalls: require('debug')('formio:analytics:getCalls'),
@@ -60,23 +59,18 @@ module.exports = (redis) => {
    */
   const record = function(db, project, path, method, start) {
     if (!db) {
-      debug.record('No redis instance found.');
       return;
     }
     if (!project) {
-      debug.record(`Skipping non-project request: ${path}`);
       return;
     }
     if (!method) {
-      debug.record(`Skipping request, unknown method: ${method}`);
       return;
     }
     if (!path) {
-      debug.record(`Skipping request, unknown path: ${path}`);
       return;
     }
     if (!_.isString(project) || !BSON.test(project)) {
-      debug.record(`Skipping malformed project request: ${project}`);
       return;
     }
 
@@ -84,9 +78,6 @@ module.exports = (redis) => {
     const now = new Date();
     const type = submission.test(path) ? 's' : 'ns';
     const key = getAnalyticsKey(project, now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), type);
-
-    debug.record(`Start: ${start}`);
-    debug.record(`dt: ${(now.getTime() - Number.parseInt(start, 10)).toString()}`);
     const delta = start
       ? now.getTime() - start
       : 0;
@@ -99,8 +90,6 @@ module.exports = (redis) => {
         debug.record(err);
         return;
       }
-
-      debug.record(`${key} => ${value} => ${length}`);
     });
   };
 
@@ -118,7 +107,6 @@ module.exports = (redis) => {
       }
       // Attach the request start time.
       req._start = (new Date()).getTime();
-      debug.hook(req._start);
 
       onFinished(res, function(err) {
         if (err) {
@@ -126,7 +114,6 @@ module.exports = (redis) => {
           return;
         }
         if (!req.projectId) {
-          debug.hook('No projectId found in the request, skipping redis record.');
           return;
         }
 
@@ -151,7 +138,6 @@ module.exports = (redis) => {
   const getCalls = function(year, month, day, project, next) {
     redis.getDb((err, db) => {
       if (err || !db || !year || (!month && month !== 0) || !project) {
-        debug.getCalls('Skipping');
         return next();
       }
 
@@ -193,30 +179,25 @@ module.exports = (redis) => {
         return next();
       }
 
-      const _debug = require('debug')('formio:analytics:getAllKeys');
       let keys = [];
 
       // Recursively get all the keys matching the glob.
       let started = false;
       (function scan(cursor, cb) {
-        _debug(cursor);
         if (cursor === '0' && started) {
           return cb();
         }
 
         if (!started) {
-          _debug('started=true');
           started = true;
         }
 
         db.scan(cursor, 'MATCH', glob, function(err, _keys) {
           if (err || !_keys) {
-            _debug(`${cursor},${glob}`);
             return cb(err);
           }
 
           if (_keys[1] &&_keys[1].length > 0) {
-            _debug(_keys[1]);
             keys = keys.concat(_keys[1]);
           }
 
@@ -267,17 +248,14 @@ module.exports = (redis) => {
    *
    * @param {String} glob
    *   The glob pattern to match.
-   * @param {Object} _debug
-   *   The debug object for logging.
    * @param {Object} res
    *   The Express response object.
    */
-  const getFormioAnalytics = function(glob, _debug, res) {
+  const getFormioAnalytics = function(glob, res) {
     // Start the transaction and all the keys in question.
     const transaction = res.redis.multi();
     getAllKeys(glob, function(err, keys) {
       if (err) {
-        _debug(err);
         return res.status(500).send(err);
       }
 
@@ -292,7 +270,6 @@ module.exports = (redis) => {
 
       transaction.exec(function(err, response) {
         if (err) {
-          _debug(err);
           return res.status(500).send(err);
         }
 
@@ -363,8 +340,6 @@ module.exports = (redis) => {
 
       formioServer.formio.cache.loadProjectByName(req, 'formio', function(err, project) {
         if (err || !project) {
-          debug.restrictToFormioEmployees(`err: ${err}`);
-          debug.restrictToFormioEmployees(`project: ${project}`);
           return res.sendStatus(401);
         }
 
@@ -395,14 +370,10 @@ module.exports = (redis) => {
           // Team member of Formio.
           formioServer.formio.teams.getProjectTeams(req, project._id, function(err, teams, permissions) {
             if (err || !teams || !permissions) {
-              debug.restrictToFormioEmployees(`err: ${err}`);
-              debug.restrictToFormioEmployees(`teams: ${teams}`);
-              debug.restrictToFormioEmployees(`permissions: ${permissions}`);
               return res.sendStatus(401);
             }
 
             const member = _.some(teams, function(team) {
-              debug.restrictToFormioEmployees(`req.user.roles.indexOf(${team}): ${req.user.roles.indexOf(team)}`);
               if (req.user.roles.indexOf(team) !== -1) {
                 return true;
               }
@@ -414,8 +385,6 @@ module.exports = (redis) => {
               return next();
             }
 
-            debug.restrictToFormioEmployees('Denied');
-            debug.restrictToFormioEmployees(`Member: ${member}`);
             return res.sendStatus(401);
           });
         });
@@ -428,8 +397,7 @@ module.exports = (redis) => {
      * @param {Object} query
      * @param {Object} res
      */
-    const getFormioProjectsCreated = function(query, _debug, res) {
-      _debug(query);
+    const getFormioProjectsCreated = function(query, res) {
       formioServer.formio.resources.project.model.find(query, function(err, projects) {
         if (err) {
           return res.status(500).send(err);
@@ -458,11 +426,10 @@ module.exports = (redis) => {
      * Get the formio users created using the given query.
      *
      * @param query
-     * @param _debug
      * @param req
      * @param res
      */
-    const getFormioUsersCreated = function(query, _debug, req, res) {
+    const getFormioUsersCreated = function(query, req, res) {
       getFormioFormByName('user', req, function(err, form) {
         if (err) {
           return res.status(500).send(err);
@@ -470,7 +437,6 @@ module.exports = (redis) => {
 
         // Attach the user form _id.
         query.form = form._id;
-        _debug(query);
 
         // Get the submissions.
         formioServer.formio.resources.submission.model.find(query, function(err, users) {
@@ -502,11 +468,10 @@ module.exports = (redis) => {
      * Get the formio project upgrade history using the given query.
      *
      * @param query
-     * @param _debug
      * @param req
      * @param res
      */
-    const getProjectUpgrades = function(query, _debug, req, res) {
+    const getProjectUpgrades = function(query, req, res) {
       getFormioFormByName('projectUpgradeHistory', req, function(err, form) {
         if (err) {
           return res.status(500).send(err);
@@ -514,7 +479,6 @@ module.exports = (redis) => {
 
         // Attach the form _id.
         query.form = formioServer.formio.util.idToBson(form._id);
-        _debug(query);
 
         formioServer.formio.resources.submission.model.find(query, function(err, upgrades) {
           if (err) {
@@ -524,7 +488,6 @@ module.exports = (redis) => {
           const projects = upgrades.map(function(item) {
             return formioServer.formio.util.idToBson(item.data.projectId);
           });
-          _debug(projects);
 
           formioServer.formio.resources.project.model.aggregate(
             {$match: {_id: {$in: projects}}},
@@ -584,11 +547,10 @@ module.exports = (redis) => {
      * Get the formio project upgrade history using the given query.
      *
      * @param query
-     * @param _debug
      * @param req
      * @param res
      */
-    const getProjectsCreated = function(query, _debug, req, res) {
+    const getProjectsCreated = function(query, req, res) {
       formioServer.formio.resources.project.model.aggregate(
         {$match: query},
         {$lookup: {
@@ -677,7 +639,6 @@ module.exports = (redis) => {
             });
           }
 
-          debug.getYearlyAnalytics(output);
           return res.status(200).json(output);
         });
       }
@@ -732,7 +693,6 @@ module.exports = (redis) => {
             });
           }
 
-          debug.getMonthlyAnalytics(output);
           return res.status(200).json(output);
         });
       }
@@ -784,7 +744,6 @@ module.exports = (redis) => {
             submissions: response
           };
 
-          debug.getDailyAnalytics(response);
           return res.status(200).json(response);
         });
       }
@@ -795,7 +754,6 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        const _debug = require('debug')('formio:analytics:tranlateProjects');
         if (!req.body || !(req.body instanceof Array)) {
           return res.status(500).send('Expected array payload of project _id\'s.');
         }
@@ -805,17 +763,14 @@ module.exports = (redis) => {
           .flattenDeep()
           .filter()
           .value();
-        _debug(projects);
 
         formioServer.formio.resources.project.model.find({_id: {$in: projects}}, function(err, projects) {
           if (err) {
-            _debug(err);
             return res.status(500).send(err);
           }
 
           projects = _(projects)
             .map(function(project) {
-              _debug(project);
               return {
                 _id: project._id.toString(),
                 name: project.name.toString() || '',
@@ -837,7 +792,6 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        const _debug = require('debug')('formio:analytics:tranlateOwner');
         if (!req.body || !(req.body instanceof Array)) {
           return res.status(500).send('Expected array payload of owner _id\'s.');
         }
@@ -847,7 +801,6 @@ module.exports = (redis) => {
           .flattenDeep()
           .filter()
           .value();
-        _debug(owners);
 
         formioServer.formio.cache.loadProjectByName(req, 'formio', function(err, project) {
           if (err || !project) {
@@ -864,7 +817,6 @@ module.exports = (redis) => {
           formioServer.formio.resources.form.model.findOne({project: project._id, name: 'user'})
             .exec(function(err, form) {
               if (err || !form) {
-                _debug(err);
                 return res.status(500).send(err);
               }
 
@@ -878,13 +830,11 @@ module.exports = (redis) => {
               formioServer.formio.resources.submission.model.find({form: form._id, _id: {$in: owners}})
                 .exec(function(err, owners) {
                   if (err) {
-                    _debug(err);
                     return res.status(500).send(err);
                   }
 
                   owners = _(owners)
                     .map(function(owner) {
-                      _debug(owner);
                       return {
                         _id: owner._id.toString(),
                         data: {
@@ -908,7 +858,6 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        const _debug = require('debug')('formio:analytics:getFormioYearAnalytics');
         if (!req.params.year) {
           return res.status(400).send('Expected params `year`.');
         }
@@ -925,7 +874,7 @@ module.exports = (redis) => {
         const glob = getAnalyticsKey('*', year, '*', '*', '*');
 
         // Get the data and respond.
-        getFormioAnalytics(glob, _debug, res);
+        getFormioAnalytics(glob, res);
       }
     );
 
@@ -935,7 +884,6 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        const _debug = require('debug')('formio:analytics:getFormioMonthAnalytics');
         if (!req.params.year || !req.params.month) {
           return res.status(400).send('Expected params `year` and `month`.');
         }
@@ -957,7 +905,7 @@ module.exports = (redis) => {
         const glob = getAnalyticsKey('*', year, month, '*', '*');
 
         // Get the data and respond.
-        getFormioAnalytics(glob, _debug, res);
+        getFormioAnalytics(glob, res);
       }
     );
 
@@ -967,7 +915,6 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        const _debug = require('debug')('formio:analytics:getFormioDayAnalytics');
         if (!req.params.year || !req.params.month || !req.params.day) {
           return res.status(400).send('Expected params `year`, `month`, and `day`.');
         }
@@ -994,7 +941,7 @@ module.exports = (redis) => {
         const glob = getAnalyticsKey('*', year, month, day, '*');
 
         // Get the data and respond.
-        getFormioAnalytics(glob, _debug, res);
+        getFormioAnalytics(glob, res);
       }
     );
 
@@ -1004,7 +951,6 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        const _debug = require('debug')('formio:analytics:yearlyProjectsCreated');
         if (!req.params.year) {
           return res.status(400).send('Expected params `year`.');
         }
@@ -1024,7 +970,7 @@ module.exports = (redis) => {
         };
 
         // Get the data and respond.
-        getFormioProjectsCreated(query, _debug, res);
+        getFormioProjectsCreated(query, res);
       }
     );
 
@@ -1034,7 +980,6 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        const _debug = require('debug')('formio:analytics:monthlyProjectsCreated');
         if (!req.params.year || !req.params.month) {
           return res.status(400).send('Expected params `year` and `month`.');
         }
@@ -1059,7 +1004,7 @@ module.exports = (redis) => {
         };
 
         // Get the data and respond.
-        getFormioProjectsCreated(query, _debug, res);
+        getFormioProjectsCreated(query, res);
       }
     );
 
@@ -1069,7 +1014,6 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        const _debug = require('debug')('formio:analytics:dailyProjectsCreated');
         if (!req.params.year || !req.params.month || !req.params.day) {
           return res.status(400).send('Expected params `year`, `month`, and `day`.');
         }
@@ -1098,7 +1042,7 @@ module.exports = (redis) => {
         };
 
         // Get the data and respond.
-        getFormioProjectsCreated(query, _debug, res);
+        getFormioProjectsCreated(query, res);
       }
     );
 
@@ -1108,7 +1052,6 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        const _debug = require('debug')('formio:analytics:yearlyUsersCreated');
         if (!req.params.year) {
           return res.status(400).send('Expected params `year`.');
         }
@@ -1128,7 +1071,7 @@ module.exports = (redis) => {
         };
 
         // Get the data and respond.
-        getFormioUsersCreated(query, _debug, req, res);
+        getFormioUsersCreated(query, req, res);
       }
     );
 
@@ -1138,7 +1081,6 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        const _debug = require('debug')('formio:analytics:monthlyUsersCreated');
         if (!req.params.year || !req.params.month) {
           return res.status(400).send('Expected params `year` and `month`.');
         }
@@ -1163,7 +1105,7 @@ module.exports = (redis) => {
         };
 
         // Get the data and respond.
-        getFormioUsersCreated(query, _debug, req, res);
+        getFormioUsersCreated(query, req, res);
       }
     );
 
@@ -1173,7 +1115,6 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        const _debug = require('debug')('formio:analytics:dailyUsersCreated');
         if (!req.params.year || !req.params.month || !req.params.day) {
           return res.status(400).send('Expected params `year`, `month`, and `day`.');
         }
@@ -1202,7 +1143,7 @@ module.exports = (redis) => {
         };
 
         // Get the data and respond.
-        getFormioUsersCreated(query, _debug, req, res);
+        getFormioUsersCreated(query, req, res);
       }
     );
 
@@ -1212,7 +1153,6 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        const _debug = require('debug')('formio:analytics:yearlyProjectUpgrades');
         if (!req.params.year) {
           return res.status(400).send('Expected params `year`.');
         }
@@ -1232,7 +1172,7 @@ module.exports = (redis) => {
         };
 
         // Get the data and respond.
-        getProjectUpgrades(query, _debug, req, res);
+        getProjectUpgrades(query, req, res);
       }
     );
 
@@ -1242,7 +1182,6 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        const _debug = require('debug')('formio:analytics:monthlyProjectUpgrades');
         if (!req.params.year || !req.params.month) {
           return res.status(400).send('Expected params `year` and `month`.');
         }
@@ -1267,7 +1206,7 @@ module.exports = (redis) => {
         };
 
         // Get the data and respond.
-        getProjectUpgrades(query, _debug, req, res);
+        getProjectUpgrades(query, req, res);
       }
     );
 
@@ -1277,7 +1216,6 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        const _debug = require('debug')('formio:analytics:monthlyProjectUpgrades');
         if (!req.params.year || !req.params.month || !req.params.day) {
           return res.status(400).send('Expected params `year`, `month`, and `day`.');
         }
@@ -1306,7 +1244,7 @@ module.exports = (redis) => {
         };
 
         // Get the data and respond.
-        getProjectUpgrades(query, _debug, req, res);
+        getProjectUpgrades(query, req, res);
       }
     );
 
@@ -1316,7 +1254,6 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        const _debug = require('debug')('formio:analytics:yearlyProjectTotals');
         if (!req.params.year) {
           return res.status(400).send('Expected params `year`.');
         }
@@ -1335,7 +1272,7 @@ module.exports = (redis) => {
         };
 
         // Get the data and respond.
-        getProjectsCreated(query, _debug, req, res);
+        getProjectsCreated(query, req, res);
       }
     );
 
@@ -1345,7 +1282,6 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        const _debug = require('debug')('formio:analytics:monthlyProjectTotals');
         if (!req.params.year || !req.params.month) {
           return res.status(400).send('Expected params `year` and `month`.');
         }
@@ -1369,7 +1305,7 @@ module.exports = (redis) => {
         };
 
         // Get the data and respond.
-        getProjectsCreated(query, _debug, req, res);
+        getProjectsCreated(query, req, res);
       }
     );
 
@@ -1379,7 +1315,6 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        const _debug = require('debug')('formio:analytics:monthlyProjectTotals');
         if (!req.params.year || !req.params.month || !req.params.day) {
           return res.status(400).send('Expected params `year`, `month`, and `day`.');
         }
@@ -1407,7 +1342,7 @@ module.exports = (redis) => {
         };
 
         // Get the data and respond.
-        getProjectsCreated(query, _debug, req, res);
+        getProjectsCreated(query, req, res);
       }
     );
 
@@ -1417,7 +1352,6 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        const _debug = require('debug')('formio:analytics:yearlyUserTotals');
         if (!req.params.year) {
           return res.status(400).send('Expected params `year`.');
         }
@@ -1436,7 +1370,7 @@ module.exports = (redis) => {
         };
 
         // Get the data and respond.
-        getFormioUsersCreated(query, _debug, req, res);
+        getFormioUsersCreated(query, req, res);
       }
     );
 
@@ -1446,7 +1380,6 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        const _debug = require('debug')('formio:analytics:monthlyUserTotals');
         if (!req.params.year || !req.params.month) {
           return res.status(400).send('Expected params `year` and `month`.');
         }
@@ -1470,7 +1403,7 @@ module.exports = (redis) => {
         };
 
         // Get the data and respond.
-        getFormioUsersCreated(query, _debug, req, res);
+        getFormioUsersCreated(query, req, res);
       }
     );
 
@@ -1480,7 +1413,6 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        const _debug = require('debug')('formio:analytics:monthlyUserTotals');
         if (!req.params.year || !req.params.month || !req.params.day) {
           return res.status(400).send('Expected params `year`, `month`, and `day`.');
         }
@@ -1508,7 +1440,7 @@ module.exports = (redis) => {
         };
 
         // Get the data and respond.
-        getFormioUsersCreated(query, _debug, req, res);
+        getFormioUsersCreated(query, req, res);
       }
     );
 
@@ -1517,7 +1449,6 @@ module.exports = (redis) => {
       formioServer.formio.middleware.tokenHandler,
       restrictToFormioEmployees,
       function(req, res, next) {
-        const _debug = require('debug')('formio:analytics:upgradeProject');
         const plans = ['basic', 'independent', 'team', 'commercial', 'trial'];
         if (!req.body || !req.body.project || !req.body.plan) {
           return res.status(400).send('Expected params `project` and `plan`.');
@@ -1531,11 +1462,9 @@ module.exports = (redis) => {
           deleted: {$eq: null}
         }, {$set: {plan: req.body.plan}}, function(err, results) {
           if (err) {
-            _debug(err);
             return res.status(400).send(err);
           }
 
-          _debug(results);
           return res.sendStatus(200);
         });
       }

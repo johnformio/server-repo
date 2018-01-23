@@ -1,7 +1,6 @@
 'use strict';
 
 const crypto = require('crypto');
-const debug = require('debug')('formio:storage:dropbox');
 const request = require('request');
 const multer  = require('multer');
 const storage = multer.memoryStorage();
@@ -15,7 +14,6 @@ module.exports = function(router) {
   router.get('/project/:projectId/dropbox/auth',
     router.formio.formio.middleware.tokenHandler,
     function(req, res, next) {
-      debug('Setting project and form ids for get');
       if (!req.projectId && req.params.projectId) {
         req.projectId = req.params.projectId;
       }
@@ -41,7 +39,6 @@ module.exports = function(router) {
   router.post('/project/:projectId/dropbox/auth',
     router.formio.formio.middleware.tokenHandler,
     function(req, res, next) {
-      debug('Setting project and form ids for get');
       if (!req.projectId && req.params.projectId) {
         req.projectId = req.params.projectId;
       }
@@ -52,7 +49,6 @@ module.exports = function(router) {
     },
     restrictOwnerAccess,
     function(req, res) {
-      debug(`Handling Dropbox request: ${req.body.code}`);
       if (req.body.code) {
         // Send code to dropbox for token.
         request.post('https://api.dropboxapi.com/1/oauth2/token', {
@@ -113,7 +109,6 @@ module.exports = function(router) {
   router.get('/project/:projectId/form/:formId/storage/dropbox',
     router.formio.formio.middleware.tokenHandler,
     function(req, res, next) {
-      debug('Setting project and form ids for get');
       if (!req.projectId && req.params.projectId) {
         req.projectId = req.params.projectId;
       }
@@ -124,13 +119,11 @@ module.exports = function(router) {
     },
     router.formio.formio.middleware.permissionHandler,
     function(req, res) {
-      debug('Getting dropbox file');
       router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
         if (err) {
           return res.status(400).send('Project not found.');
         }
 
-        debug(`Project Loaded: ${req.projectId}`);
         if (!project.settings.storage || !project.settings.storage.dropbox) {
           return res.status(400).send('Storage settings not set.');
         }
@@ -177,7 +170,6 @@ module.exports = function(router) {
   router.post('/project/:projectId/form/:formId/storage/dropbox',
     router.formio.formio.middleware.tokenHandler,
     function(req, res, next) {
-      debug('Setting project and form ids for post');
       if (!req.projectId && req.params.projectId) {
         req.projectId = req.params.projectId;
       }
@@ -189,13 +181,11 @@ module.exports = function(router) {
     router.formio.formio.middleware.permissionHandler,
     upload.single('file'),
     function(req, res) {
-      debug('Sending POST request');
       router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
         if (err) {
           return res.status(400).send('Project not found.');
         }
 
-        debug(`Project Loaded: ${req.projectId}`);
         if (!project.settings.storage ||
           !project.settings.storage.dropbox ||
           !project.settings.storage.dropbox.access_token

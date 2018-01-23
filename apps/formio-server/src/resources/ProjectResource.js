@@ -9,7 +9,6 @@ module.exports = function(router, formioServer) {
   const formio = formioServer.formio;
   const removeProjectSettings = function(req, res, next) {
     if (req.token && req.projectOwner && (req.token.user._id === req.projectOwner)) {
-      debug('Allowing the project owner to see/change project settings.');
       return next();
     }
     else if (req.remotePermission && (['admin', 'owner', 'team_admin'].indexOf(req.remotePermission) !== -1)) {
@@ -29,7 +28,6 @@ module.exports = function(router, formioServer) {
           debug(err);
         }
 
-        debug('Skipping project settings!');
         if (req.method === 'PUT' || req.method === 'POST') {
           req.body = _.omit(req.body, 'settings');
         }
@@ -38,7 +36,6 @@ module.exports = function(router, formioServer) {
       });
     }
     else {
-      debug('Skipping project settings!');
       if (req.method === 'PUT' || req.method === 'POST') {
         req.body = _.omit(req.body, 'settings');
       }
@@ -222,7 +219,6 @@ module.exports = function(router, formioServer) {
         return next(err);
       }
 
-      debug(`Project is available: ${!project}`);
       return res.status(200).json({available: !project});
     });
   });

@@ -10,15 +10,12 @@ module.exports = function(formio) {
     }
 
     formio.cache.loadCurrentProject(req, function(err, project) {
-      debug('Entering Protect Test');
       if (err) {
         return next(err);
       }
       if ('protect' in project && project.protect) {
-        debug('Project is protected');
         return res.status(403).send('Modifications not allowed. Project is protected.');
       }
-      debug('Project not protected');
       return next();
     });
   };

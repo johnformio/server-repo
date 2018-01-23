@@ -1,6 +1,5 @@
 'use strict';
 const Redis = require('redis');
-const debug = require('debug')('formio:redis');
 
 class RedisInterface {
   constructor(config) {
@@ -65,16 +64,13 @@ class RedisInterface {
 
       // Attach debugging to specific events, unset redis ref on error/disconnect.
       this.db.on('ready', () => {
-        debug('Connected');
       });
       this.db.on('end', () => {
         this.db = null;
-        debug('End');
       });
     }
     else {
       this.db = null;
-      debug('Redis options not found or incomplete');
     }
   }
 }

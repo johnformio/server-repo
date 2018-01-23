@@ -10,22 +10,17 @@ module.exports = function(formio) {
    * This middleware will filter all roles that are not part of the project or are not teams that the project owner, owns.
    */
   return function(req, res, next) {
-    debug(req.method);
     if (req.method !== 'PUT') {
-      debug('Skipping');
       return next();
     }
     if (!req.projectId) {
-      debug('No project id found with the request.');
       return res.sendStatus(400);
     }
 
-    debug(req.body);
     req.body = req.body || {};
 
     // Skip the role check if no access was defined.
     if (!req.body.access || req.body.access && req.body.access.length === 0) {
-      debug('Skipping, not access in payload.');
       return next();
     }
 
@@ -47,7 +42,6 @@ module.exports = function(formio) {
         return res.sendStatus(400);
       }
       if (!project.owner) {
-        debug(`No project owner found... ${project._id}`);
         return res.sendStatus(500);
       }
 
@@ -78,7 +72,6 @@ module.exports = function(formio) {
         // Only proceed with teams access check if the project plan supports teams.
         project.plan = project.plan || '';
         if (!(project.plan === 'team' || project.plan === 'commercial' || project.plan === 'trial')) {
-          debug(`Skipping team access check, plan: ${project.plan}`);
           filterAccess();
           return next();
         }
