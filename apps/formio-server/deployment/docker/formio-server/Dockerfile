@@ -14,4 +14,4 @@ RUN apk update && \
     apk del .build-deps
 
 EXPOSE      80
-ENTRYPOINT  ["node", "main"]
+ENTRYPOINT  ["node", "--max_old_space_size=4096", "main"]
