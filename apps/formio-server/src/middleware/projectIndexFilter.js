@@ -9,14 +9,12 @@ const _ = require('lodash');
  * @returns {Function}
  */
 module.exports = function(formioServer) {
-  const debug = require('debug')('formio:middleware:projectIndexFilter');
   return function projectIndexFilter(req, res, next) {
     let query;
 
     // Allow access to all projects for admins, otherwise restrict to user.
     if (!req.isAdmin) {
       if (!req.user || !req.user._id || !req.user.roles) {
-        debug(req.user);
         return res.sendStatus(401);
       }
       const roles = _.flattenDeep(_.map(req.user.roles, function(role) {

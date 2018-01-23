@@ -6,7 +6,6 @@ const debug = require('debug')('formio:middleware:projectEnvCreateAccess');
 module.exports = function(formio) {
   return function(req, res, next) {
     if (!('project' in req.body)) {
-      debug('Creating project, skip environment checks.');
       return next();
     }
 
@@ -17,12 +16,10 @@ module.exports = function(formio) {
       }
 
       if (!project) {
-        debug('No Project');
         return res.status(400).send('Environment project doesnt exist.');
       }
 
       if (req.token && req.token.user._id === project.owner.toString()) {
-        debug('Allowing the project owner to add environment.');
         return next();
       }
       else if (req.user) {
@@ -30,7 +27,6 @@ module.exports = function(formio) {
         const roles = _.map(req.user.roles, formio.util.idToString);
 
         if ( _.intersection(access, roles).length !== 0) {
-          debug('Allowing a team_admin user to add environment..');
           return next();
         }
       }

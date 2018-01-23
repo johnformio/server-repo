@@ -35,7 +35,6 @@ module.exports = function(router) {
     static settingsForm(req, res, next) {
       util.connect(router, req, function(err, hubspot) {
         if (err) {
-          debug(`hubspot connect err: ${err.message || err}`);
           return res.status(400).send(err.message || err);
         }
 
@@ -57,7 +56,6 @@ module.exports = function(router) {
               message = 'The configured HubSpot API key is not valid, please update it before continuing.';
             }
 
-            debug(`hubspot contacts_properties err: ${message}`);
             return next(message);
           }
 
@@ -199,25 +197,21 @@ module.exports = function(router) {
         });
 
         const getContactById = function(vid, done) {
-          debug(`vid: ${vid}`);
           hubspot.contacts_contact_by_id({vid: vid}, function(err, result) {
             if (err) {
               return done(err);
             }
 
-            debug(result);
             done(null, result);
           });
         };
 
         const createOrUpdate = function(email, user, done) {
-          debug(`searching for ${email}`);
           hubspot.contacts_create_update({email: email}, function(err, result) {
             if (err) {
               return done(err);
             }
 
-            debug(result);
             if (user) {
               // Save off the vid to the user's account.
               router.formio.resources.submission.model.update({
@@ -274,7 +268,6 @@ module.exports = function(router) {
             payload.properties[key] = processField(action, key, actionInfo.settings[key + extension], current);
           });
 
-          debug(payload);
           hubspot.contacts_properties_update(payload, function(err) {
             if (err) {
               debug(err);
@@ -314,7 +307,6 @@ module.exports = function(router) {
           }
 
           if (externalId) {
-            debug(`externalId: ${externalId}`);
             getContactById(externalId, function(err, contact) {
               if (err) {
                 return debug(err);
@@ -324,7 +316,6 @@ module.exports = function(router) {
             });
           }
           else if (email) {
-            debug(`email: ${email}`);
             createOrUpdate(email, user, function(err, contactId) {
               if (err) {
                 return debug(err);

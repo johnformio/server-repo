@@ -85,8 +85,6 @@ module.exports = function(router) {
                 return cb(err);
               }
 
-              debug('projects:');
-              debug(projects);
               settingsForm.push({
                 type: 'select',
                 input: true,
@@ -119,8 +117,6 @@ module.exports = function(router) {
                 return cb(err);
               }
 
-              debug('types:');
-              debug(types);
               settingsForm.push({
                 type: 'select',
                 input: true,
@@ -172,8 +168,6 @@ module.exports = function(router) {
                 }
               });
 
-              debug('components:');
-              debug(components);
               settingsForm.push(
                 {
                   type: 'select',
@@ -275,8 +269,6 @@ module.exports = function(router) {
               return cb(issue);
             }
 
-            debug('New Issue:');
-            debug(issue);
             _issue = issue;
 
             // Update the submission with an externalId ref to the issue.
@@ -320,7 +312,6 @@ module.exports = function(router) {
             return cb('No Jira issue id set on this submission');
           }
 
-          debug(`issueId: ${_issue}`);
           jira.issue.editIssue({
             issue: {
               fields: {
@@ -337,7 +328,6 @@ module.exports = function(router) {
               return cb(issue);
             }
 
-            debug(issue);
             cb();
           });
         },
@@ -360,7 +350,6 @@ module.exports = function(router) {
             return cb('No Jira issue id set on this submission');
           }
 
-          debug(`issueId: ${_issue}`);
           jira.issue.deleteIssue({
             issueId: _issue
           }, function(err, issue) {
@@ -368,7 +357,6 @@ module.exports = function(router) {
               debug(err);
             }
 
-            debug(issue);
             cb();
           });
         }
@@ -395,8 +383,6 @@ module.exports = function(router) {
           });
         },
         function checkConfiguration(cb) {
-          debug('settings:');
-          debug(settings);
           if (!settings) {
             return cb('No settings configured.');
           }
@@ -443,16 +429,12 @@ module.exports = function(router) {
                 return callback(err);
               }
 
-              debug('Response:');
-              debug(response);
-
               return callback();
             });
           };
 
           // Only attempt to assign users on post/put methods.
           if (req.method.toLowerCase() === 'delete' || req.method.toLowerCase() === 'get') {
-            debug(`Skipping user assignment (${req.method.toLowerCase()})`);
             return cb(null, _issue);
           }
 
@@ -496,8 +478,6 @@ module.exports = function(router) {
                   return cb(err);
                 }
 
-                debug('New user:');
-                debug(user);
                 return assign(user, cb);
               });
             }
@@ -505,13 +485,9 @@ module.exports = function(router) {
             // Check if we have our user
             else if (users.length === 1) {
               users = _.first(users);
-              debug('One user found');
-              debug(users);
               return assign(users, cb);
             }
             else {
-              debug('Too many users to select one..');
-              debug(users);
               return cb('Could not determine which user to assign the issue to.');
             }
           });
@@ -529,8 +505,6 @@ module.exports = function(router) {
           return;
         }
 
-        debug('results:');
-        debug(results);
         if (_.has(settings, 'block') && settings.block === true) {
           return next(null, results);
         }

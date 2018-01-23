@@ -91,7 +91,6 @@ module.exports = function(formio) {
    */
   const generateNameIfMissing = function(req) {
     if (!req.body.hasOwnProperty('name')) {
-      debug('No project name sent. Setting to random.');
       req.body.name = domain();
     }
   };
@@ -109,7 +108,6 @@ module.exports = function(formio) {
         return next(err || 'Project plan not found.');
       }
 
-      debug(plan);
       switch (plan.toString()) {
         case 'commercial':
         case 'team':
@@ -129,8 +127,6 @@ module.exports = function(formio) {
           return next();
         case 'basic':
         default:
-          debug(req.body);
-
           filterNameChanges(req);
           filterCorsChanges(req);
           if (process.env.DISABLE_RESTRICTIONS) {
@@ -140,8 +136,6 @@ module.exports = function(formio) {
           filterEmailSettings(req);
           filterStorageSettings(req);
           filterDataConnectionSettings(req);
-
-          debug(req.body);
           return next();
       }
     });

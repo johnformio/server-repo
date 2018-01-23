@@ -1,11 +1,9 @@
 'use strict';
 
 const _ = require('lodash');
-const debug = require('debug')('formio:logger:console');
 
 module.exports = (config, utils) => {
   if (!_.get(config, 'logging.console')) {
-    debug('Disabled');
     return false;
   }
 

@@ -139,7 +139,6 @@ module.exports = function(router, formioServer) {
 
               Object.assign(template, _.pick(project, ['name', 'title', 'description', 'machineName']));
               const alters = hook.alter('templateAlters', {});
-              debug('import template', template);
 
               formio.template.import.template(template, alters, function(err, template) {
                 if (err) {
@@ -176,7 +175,6 @@ module.exports = function(router, formioServer) {
 
             Object.assign(template, _.pick(project, ['name', 'title', 'description', 'machineName']));
             const alters = hook.alter('templateAlters', {});
-            debug('import template', template);
 
             formio.template.import.template(template, alters, function(err, template) {
               if (err) {

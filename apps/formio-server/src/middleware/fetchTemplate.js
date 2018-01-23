@@ -21,7 +21,6 @@ module.exports = (req, res, next) => {
     return next();
   }
 
-  debug('Importing Template URL');
   return request({
     url: req.body.template,
     json: true

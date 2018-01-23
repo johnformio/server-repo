@@ -1,7 +1,6 @@
 'use strict';
 
 const Q = require('q');
-const debug = require('debug')('formio:payment');
 
 module.exports = function(app, formio) {
   // Load custom CRM action.
@@ -69,14 +68,12 @@ module.exports = function(app, formio) {
 
     return getPaymentFormId(req.userProject._id)
     .then(function(formId) {
-      debug(formId, req.user._id);
       return Q(formio.resources.submission.model.count({
         form: formId,
         owner: req.user._id
       }));
     })
     .then(function(count) {
-      debug('Payment info count:', count);
       return count > 0;
     });
   };

@@ -12,9 +12,7 @@ module.exports = function(formio) {
       req.templateMode = 'create';
     }
     // If the Project was not created, skip this bootstrapping process.
-    debug(`Template Mode: ${req.templateMode}`);
     if (!req.templateMode) {
-      debug('Skipping template import');
       return next();
     }
 
@@ -95,8 +93,6 @@ module.exports = function(formio) {
 
     // Method to import the template.
     const importTemplate = function(template) {
-      const _debug = require('debug')('formio:middleware:projectTemplate#importTemplate');
-
       let _project;
       try {
         _project = project.toObject();
@@ -108,14 +104,13 @@ module.exports = function(formio) {
       // Set the project on the template.
       const projectKeys = ['_id', 'title', 'name', 'description', 'machineName'];
       template = _.assign({}, template, _.pick(_project, projectKeys));
-      debug('import template', template);
 
       const alters = hook.alter('templateAlters', {});
 
       // Import the template within formio.
       formio.template.import.template(template, alters, function(err, template) {
         if (err) {
-          _debug(err);
+          debug(err);
           return res.status(400).send('An error occurred with the template import.');
         }
 
@@ -138,19 +133,16 @@ module.exports = function(formio) {
 
     // Allow external templates.
     if (typeof template === 'object') {
-      debug('Importing template');
       // Import the template.
       return importTemplate(template);
     }
     // New environments should copy their primary project template.
     else if ('project' in project && project.project) {
-      debug('importing primary project');
       formio.cache.loadProject(req, project.project, function(err, primaryProject) {
         formio.template.export({
           projectId: project.project,
           access: primaryProject.access.toObject()
         }, function(err, template) {
-          debug('importing from primary', template);
           if (err) {
             // If something went wrong, just import the default template instead.
             return importTemplate(_.cloneDeep(formio.templates['default']));
@@ -161,12 +153,10 @@ module.exports = function(formio) {
     }
     // Check for template that is already provided.
     else if ((typeof template === 'string') && formio.templates.hasOwnProperty(template)) {
-      debug(`importing template:${template}`);
       // Import the template.
       return importTemplate(_.cloneDeep(formio.templates[template]));
     }
     else {
-      debug('importing nothing!');
       // Unknown template.
       return res.status(400).send('Unknown template.');
     }

@@ -13,19 +13,16 @@ const debug = require('debug')('formio:middleware:deleteTagHandler');
 module.exports = function(formio, formioServer) {
   return function(req, res, next) {
     if (req.method !== 'DELETE' || !req.projectId || !req.user._id) {
-      debug('Skipping');
       return next();
     }
 
     const query = {_id: formioServer.formio.util.idToBson(req.params.tagId), deleted: {$eq: null}};
-    debug(query);
     formioServer.formio.resources.tag.model.findOne(query, function(err, tag) {
       if (err) {
         debug(err);
         return next(err.message || err);
       }
       if (!tag) {
-        debug(`No tag found with _id: ${req.params.tagId}`);
         return next();
       }
 
@@ -35,7 +32,6 @@ module.exports = function(formio, formioServer) {
         if (err) {
           return next(err);
         }
-        debug('Complete');
         return res.sendStatus(200);
       });
     });

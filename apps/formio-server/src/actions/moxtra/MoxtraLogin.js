@@ -2,7 +2,6 @@
 
 const Q = require('q');
 const _ = require('lodash');
-const debug = require('debug')('formio:actions:moxtralogin');
 
 module.exports = function(router) {
   const formio = router.formio;
@@ -129,11 +128,9 @@ module.exports = function(router) {
         .then(token => Moxtra.removeUserFromOrg(req, orgId, req.subId, token))
         .then(results => {
           // Ignore the moxtra results.
-          debug(results);
           return next();
         })
         .catch(e => {
-          debug(e);
           return next();
         });
       }
@@ -216,11 +213,9 @@ module.exports = function(router) {
       Moxtra.getToken(req, user, this.settings.firstname, this.settings.lastname)
       .then(token => updateUsersToken(token))
       .then(function(response) {
-        debug(response);
         return next(null, response);
       })
       .catch(function(err) {
-        debug(err);
         return next(err);
       });
     }
