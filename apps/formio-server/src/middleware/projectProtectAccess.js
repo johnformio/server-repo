@@ -1,7 +1,5 @@
 'use strict';
 
-const debug = require('debug')('formio:middleware:projectProtectAccess');
-
 module.exports = function(formio) {
   return function(req, res, next) {
     // GET requests aren't modifications.
