@@ -8,9 +8,15 @@ const debug = require('debug')('formio:resources:projects');
 module.exports = function(router, formioServer) {
   const formio = formioServer.formio;
   const removeProjectSettings = function(req, res, next) {
+    // Allow admin key
+    if (req.adminKey) {
+      return next();
+    }
+    // Allow project owners.
     if (req.token && req.projectOwner && (req.token.user._id === req.projectOwner)) {
       return next();
     }
+    // Allow team admins on remote
     else if (req.remotePermission && (['admin', 'owner', 'team_admin'].indexOf(req.remotePermission) !== -1)) {
       return next();
     }
