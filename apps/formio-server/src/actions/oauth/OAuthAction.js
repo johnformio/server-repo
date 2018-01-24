@@ -559,7 +559,10 @@ module.exports = router => {
                       // Assign roles based on settings.
                       const roles = [];
                       self.settings.roles.map(map => {
-                        if (!map.claim || _.get(data, map.claim) === map.value) {
+                        if (!map.claim ||
+                          _.get(data, map.claim) === map.value ||
+                          _.includes(_.get(data, map.claim), map.value)
+                        ) {
                           roles.push(map.role);
                         }
                       });
