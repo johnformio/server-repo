@@ -30,6 +30,10 @@ module.exports = (req, res, next) => {
       return next(err.message || err);
     }
 
+    if (!response) {
+      return next('Invalid project template.');
+    }
+
     if (response.statusCode !== 200) {
       return res.status(400).send('Unable to load template.');
     }

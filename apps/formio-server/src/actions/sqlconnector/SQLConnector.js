@@ -420,6 +420,10 @@ module.exports = function(router) {
             // Attempt to modify linked resources.
             return Q()
               .then(function() {
+                if (!response) {
+                  throw new Error('Invalid response.');
+                }
+
                 if (!(/^2\d\d$/i.test(response.statusCode))) {
                   throw new Error((response.body || '').toString().replace(/<br>/, ''));
                 }

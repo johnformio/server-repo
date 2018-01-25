@@ -88,7 +88,7 @@ module.exports = function(formio) {
       })
       .spread(function(response, userInfo) {
         if (!userInfo) {
-          const status = response.statusCode;
+          const status = response ? response.statusCode : 500;
           throw {
             status: status,
             message: `${status} response from LinkedIn: ${response.statusMessage}`

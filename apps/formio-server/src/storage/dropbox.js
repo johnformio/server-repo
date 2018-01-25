@@ -61,6 +61,10 @@ module.exports = function(router) {
           }
         },
         function(error, response, body) {
+          if (!response) {
+            return res.status(400).send('Invalid response.');
+          }
+
           if (response.statusCode === 200) {
             const dropbox = JSON.parse(body);
             // return token to app
@@ -140,6 +144,10 @@ module.exports = function(router) {
             encoding: null
           },
           function(error, response, body) {
+            if (!response) {
+              return res.status(400).send('Invalid response.');
+            }
+
             if (response.statusCode === 200) {
               const headers = [
                 'content-type',
@@ -216,6 +224,10 @@ module.exports = function(router) {
             body: req.file.buffer
           },
           function(error, response, body) {
+            if (!response) {
+              return res.status(400).send('Invalid response.');
+            }
+
             if (response.statusCode === 200) {
               const result = JSON.parse(body);
               // return token to app
