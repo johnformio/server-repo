@@ -1232,7 +1232,15 @@ module.exports = function(app) {
         return query;
       },
       submissionRequestTokenQuery: function(query, token) {
-        query.projectId = token.project._id || token.form.project;
+        if (token.project) {
+          query.projectId = token.project._id;
+        }
+        else if (token.form.project) {
+          query.projectId = token.form.project;
+        }
+        else {
+          query.projectId = formioServer.formio.mongoose.Types.ObjectId('000000000000000000000000');
+        }
         return query;
       },
       formRoutes: require('./alter/formRoutes')(app),
