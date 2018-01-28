@@ -589,7 +589,7 @@ module.exports = function(app) {
           }
 
           // Get all the possible groups in the project
-          formioServer.formio.resources.form.model.aggregate(
+          formioServer.formio.resources.form.model.aggregate([
             // Get all the forms for the current project.
             {$match: {
               project: formioServer.formio.util.idToBson(req.projectId),
@@ -637,20 +637,19 @@ module.exports = function(app) {
             {$match: {$or: [
               {users: formioServer.formio.util.idToString(req.token.user._id)},
               {owner: formioServer.formio.util.idToBson(req.token.user._id)}
-            ]}},
-            function(err, groups) {
-              if (err) {
-                // Try to recover from failure, but passing the original query on.
-                return callback(err, query);
-              }
-
-              groups.forEach(function(group) {
-                query.push(formioServer.formio.util.idToBson(group._id));
-              });
-
-              return callback(null, query, groups);
+            ]}}
+          ]).exec(function(err, groups) {
+            if (err) {
+              // Try to recover from failure, but passing the original query on.
+              return callback(err, query);
             }
-          );
+
+            groups.forEach(function(group) {
+              query.push(formioServer.formio.util.idToBson(group._id));
+            });
+
+            return callback(null, query, groups);
+          });
         });
       },
 
