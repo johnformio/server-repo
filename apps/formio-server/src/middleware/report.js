@@ -316,7 +316,6 @@ module.exports = function(formioServer) {
           formio.resources.submission.model.aggregate(stages)
             .cursor()
             .exec()
-            .stream()
             .pipe(through(function(doc) {
               if (doc && doc.form && doc.data) {
                 var formId = doc.form.toString();
@@ -341,7 +340,7 @@ module.exports = function(formioServer) {
         countStages.push({$count: 'total'});
 
         // Find the total count based on the query.
-        formio.resources.submission.model.aggregate(countStages, function(err, result) {
+        formio.resources.submission.model.aggregate(countStages).exec(function(err, result) {
           if (err) {
             debug.error(err);
             return next(err);

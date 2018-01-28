@@ -32,7 +32,7 @@ module.exports = function(db, config, tools, done) {
       { $match: {
         count: { $gte: 2 }
       } }
-    ], function(err, results) {
+    ]).exec(function(err, results) {
       if (err) {
         return next(err);
       }
