@@ -89,7 +89,7 @@ module.exports = function(router) {
         description: 'The remote project definition.',
         validate: [
           {
-            async: true,
+            isAsync: true,
             message: 'Remote already connected to an environment.',
             validator(value, done) {
               if (!value || !value.project || !value.project._id) {
