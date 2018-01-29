@@ -91,15 +91,6 @@ module.exports = function(options) {
   // Import the OAuth providers
   app.formio.formio.oauth = require('./src/oauth/oauth')(app.formio.formio);
 
-  // Make sure to redirect all http requests to https.
-  app.use(function(req, res, next) {
-    if (!config.https || req.secure || (req.get('X-Forwarded-Proto') === 'https') || req.url === '/health') {
-      return next();
-    }
-
-    res.redirect(`https://${req.get('Host')}${req.url}`);
-  });
-
   // Establish our url alias middleware.
   app.use(require('./src/middleware/alias')(app.formio.formio));
 
