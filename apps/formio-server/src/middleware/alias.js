@@ -36,13 +36,8 @@ module.exports = function(formio) {
       return skip(req, res, next);
     }
 
-    // If there are not host headers, then skip aliasing.
-    if (!req.headers.host) {
-      return skip(req, res, next);
-    }
-
     // Get the hostname.
-    let hostname = req.headers.host.split(':')[0];
+    let hostname = req.hostname;
 
     // Determine if localhost and cleanup hostname.
     if ((hostname.indexOf('127.0.0.1') !== -1) || (hostname.indexOf('localhost') !== -1)) {
