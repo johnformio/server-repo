@@ -489,7 +489,7 @@ module.exports = (redis) => {
             return formioServer.formio.util.idToBson(item.data.projectId);
           });
 
-          formioServer.formio.resources.project.model.aggregate(
+          formioServer.formio.resources.project.model.aggregate([
             {$match: {_id: {$in: projects}}},
             {$lookup: {
               from: 'submissions',
@@ -518,27 +518,26 @@ module.exports = (redis) => {
                 created: 1,
                 _id: 1
               }
-            }},
-            function(err, results) {
-              if (err) {
-                return res.status(500).send(err);
-              }
-
-              const projMap = {};
-              results.forEach(function(p) {
-                projMap[p._id] = p;
-              });
-
-              // Update the original upgrade submissions.
-              const final = upgrades.map(function(sub) {
-                sub.data.project = projMap[sub.data.projectId];
-                delete sub.data.projectId;
-                return sub;
-              });
-
-              return res.status(200).json(final);
+            }}
+          ]).exec(function(err, results) {
+            if (err) {
+              return res.status(500).send(err);
             }
-          );
+
+            const projMap = {};
+            results.forEach(function(p) {
+              projMap[p._id] = p;
+            });
+
+            // Update the original upgrade submissions.
+            const final = upgrades.map(function(sub) {
+              sub.data.project = projMap[sub.data.projectId];
+              delete sub.data.projectId;
+              return sub;
+            });
+
+            return res.status(200).json(final);
+          });
         });
       });
     };
@@ -551,7 +550,7 @@ module.exports = (redis) => {
      * @param res
      */
     const getProjectsCreated = function(query, req, res) {
-      formioServer.formio.resources.project.model.aggregate(
+      formioServer.formio.resources.project.model.aggregate([
         {$match: query},
         {$lookup: {
           from: 'submissions',
@@ -580,15 +579,14 @@ module.exports = (redis) => {
             created: 1,
             _id: 1
           }
-        }},
-        function(err, results) {
-          if (err) {
-            return res.status(500).send(err);
-          }
-
-          return res.status(200).json(results);
+        }}
+      ]).exec(function(err, results) {
+        if (err) {
+          return res.status(500).send(err);
         }
-      );
+
+        return res.status(200).json(results);
+      });
     };
 
     /**

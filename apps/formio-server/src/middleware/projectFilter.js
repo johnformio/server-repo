@@ -1,4 +1,5 @@
 'use strict';
+const formioUtil = require('formio/src/util/util');
 
 /**
  * Middleware to filter the request, using the project projectId.
@@ -6,7 +7,7 @@
  * @returns {Function}
  */
 module.exports = function(req, res, next) {
-  const projectId = req.projectId || req.params.projectId;
+  const projectId = formioUtil.ObjectId(req.projectId || req.params.projectId);
 
   // Bad request if projectSupport is enabled and no projectId is present.
   if (!projectId) {

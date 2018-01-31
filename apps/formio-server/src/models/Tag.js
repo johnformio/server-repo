@@ -15,7 +15,33 @@ module.exports = function(router) {
         type: String,
         description: 'The tag identifier.',
         maxlength: 32,
-        required: true
+        required: true,
+        validate: [
+          {
+            isAsync: true,
+            message: 'The tag must be unique.',
+            validator(value, done) {
+              const search = {
+                project: this.project,
+                tag: value,
+                deleted: {$eq: null}
+              };
+
+              // Ignore the id if this is an update.
+              if (this._id) {
+                search._id = {$ne: this._id};
+              }
+
+              formio.mongoose.model('tag').findOne(search).exec(function(err, result) {
+                if (err || result) {
+                  return done(false);
+                }
+
+                done(true);
+              });
+            }
+          }
+        ]
       },
       template: {
         type: router.formio.mongoose.Schema.Types.Mixed,
@@ -34,28 +60,6 @@ module.exports = function(router) {
     })
   });
   /* eslint-enable new-cap */
-
-  // Validate the uniqueness of the value given for the tag.
-  model.schema.path('tag').validate(function(value, done) {
-    const search = {
-      project: this.project,
-      tag: value,
-      deleted: {$eq: null}
-    };
-
-    // Ignore the id if this is an update.
-    if (this._id) {
-      search._id = {$ne: this._id};
-    }
-
-    formio.mongoose.model('tag').findOne(search).exec(function(err, result) {
-      if (err || result) {
-        return done(false);
-      }
-
-      done(true);
-    });
-  }, 'The tag must be unique.');
 
   return model;
 };
