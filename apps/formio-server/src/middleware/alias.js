@@ -36,6 +36,11 @@ module.exports = function(formio) {
       return skip(req, res, next);
     }
 
+    // If there are not host headers, then skip aliasing.
+    if (!req.headers.host) {
+      return skip(req, res, next);
+    }
+
     // Get the hostname.
     let hostname = req.headers.host.split(':')[0];
 
