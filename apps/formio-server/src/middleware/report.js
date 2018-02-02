@@ -32,11 +32,6 @@ module.exports = function(formioServer) {
         return res.status(402).send('The report framework requires a Team Pro or Enterprise plan.');
       }
 
-      // Do not perform for Azure Cosmos DB since it does not support aggregation framework.
-      if (formio.config.mongo.indexOf('documents.azure.com') !== -1) {
-        return res.status(400).send('MongoDB Aggregation is not supported in Azure Cosmos DB');
-      }
-
       // A user is always required for this operation.
       if (!req.user || !req.user.roles || !req.user.roles.length) {
         debug.report('Unauthorized');
