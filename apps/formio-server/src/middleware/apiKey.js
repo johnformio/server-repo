@@ -35,6 +35,12 @@ module.exports = function(formio) {
       // Load the formio project.
       formio.cache.loadProjectByName(req, 'formio', function(err, formioProject) {
         if (err || !formioProject) {
+          // If there is no formio project, then this means we are a remote environment. Set as admin and skip
+          // permission check.
+          if (err === 'Project not found') {
+            req.permissionsChecked = true;
+            req.isAdmin = true;
+          }
           return next();
         }
 

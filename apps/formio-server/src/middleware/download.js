@@ -37,11 +37,12 @@ module.exports = function(formio) {
             });
           }
 
+          const pdfProject = req.query.project ? req.query.project : project._id.toString();
           const fileId = req.params.fileId || 'pdf';
           try {
             request({
               method: 'POST',
-              url: `${filesServer}/pdf/${project._id}/file/${fileId}/download`,
+              url: `${filesServer}/pdf/${pdfProject}/file/${fileId}/download`,
               qs: req.query,
               headers: headers,
               json: true,

@@ -85,7 +85,7 @@ module.exports = function(app) {
           case 'current':
             app.get('/current', (req, res, next) => {
               // If this is an external token, return the user object directly.
-              if (req.token.external) {
+              if (req.token && req.token.external) {
                 if (!res.token || !req.token) {
                   return res.sendStatus(401);
                 }
