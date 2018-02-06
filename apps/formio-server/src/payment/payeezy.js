@@ -85,7 +85,7 @@ module.exports = function(config, formio) {
         // Delete old submissions and replace with new transaction details
         return Q(formio.resources.submission.model.remove({
           form: formId,
-          owner: userId
+          owner: util.ObjectId(userId)
         }))
         .then(function() {
           return formio.resources.submission.model.create({
