@@ -208,6 +208,8 @@ sanitized = _.pick(sanitized, [
 ]);
 sanitized.formio = _.pick(_.clone(config.formio), ['domain', 'schema', 'mongo']);
 
+config.maxBodySize = process.env.MAX_BODY_SIZE || '16mb';
+
 // Only output sanitized data.
 debug.config(sanitized);
 module.exports = config;
