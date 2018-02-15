@@ -308,20 +308,25 @@ module.exports = function(formioServer) {
 
         // Method to perform the aggregation.
         const performAggregation = function() {
-          formio.resources.submission.model.aggregate(stages)
-            .cursor()
-            .exec()
-            .pipe(through(function(doc) {
-              if (doc && doc.form && doc.data) {
-                var formId = doc.form.toString();
-                if (protectedFields.hasOwnProperty(formId)) {
-                  _.each(protectedFields[formId], (path) => _.set(doc.data, path, '--- PROTECTED ---'));
+          try {
+            formio.resources.submission.model.aggregate(stages)
+              .cursor()
+              .exec()
+              .pipe(through(function(doc) {
+                if (doc && doc.form && doc.data) {
+                  var formId = doc.form.toString();
+                  if (protectedFields.hasOwnProperty(formId)) {
+                    _.each(protectedFields[formId], (path) => _.set(doc.data, path, '--- PROTECTED ---'));
+                  }
                 }
-              }
-              this.queue(doc);
-            }))
-            .pipe(JSONStream.stringify())
-            .pipe(res);
+                this.queue(doc);
+              }))
+              .pipe(JSONStream.stringify())
+              .pipe(res);
+          }
+          catch (err) {
+            res.send(400).send('Bad Request');
+          }
         };
 
         // If a limit is provided, then we need to include some pagination stuff.
@@ -335,35 +340,40 @@ module.exports = function(formioServer) {
         countStages.push({$count: 'total'});
 
         // Find the total count based on the query.
-        formio.resources.submission.model.aggregate(countStages).exec(function(err, result) {
-          if (err) {
-            debug.error(err);
-            return next(err);
-          }
+        try {
+          formio.resources.submission.model.aggregate(countStages).exec(function(err, result) {
+            if (err) {
+              debug.error(err);
+              return next(err);
+            }
 
-          const skip = skipStage ? skipStage['$skip'] : 0;
-          const limit = limitStage['$limit'];
-          if (!req.headers.range) {
-            req.headers['range-unit'] = 'items';
-            req.headers.range = `${skip}-${skip + (limit - 1)}`;
-          }
+            const skip = skipStage ? skipStage['$skip'] : 0;
+            const limit = limitStage['$limit'];
+            if (!req.headers.range) {
+              req.headers['range-unit'] = 'items';
+              req.headers.range = `${skip}-${skip + (limit - 1)}`;
+            }
 
-          // Get the page range.
-          const total = result.length ? result[0].total : 0;
-          const pageRange = paginate(req, res, total, limit) || {
-            limit: limit,
-            skip: skip
-          };
+            // Get the page range.
+            const total = result.length ? result[0].total : 0;
+            const pageRange = paginate(req, res, total, limit) || {
+              limit: limit,
+              skip: skip
+            };
 
-          // Alter the skip and limit stages.
-          if (skipStage) {
-            skipStage['$skip'] = pageRange.skip;
-          }
-          limitStage['$limit'] = pageRange.limit;
+            // Alter the skip and limit stages.
+            if (skipStage) {
+              skipStage['$skip'] = pageRange.skip;
+            }
+            limitStage['$limit'] = pageRange.limit;
 
-          // Perform the aggregation command.
-          performAggregation();
-        });
+            // Perform the aggregation command.
+            performAggregation();
+          });
+        }
+        catch (err) {
+          res.send(400).send('Bad Request');
+        }
       });
     });
   };
