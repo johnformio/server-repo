@@ -41,7 +41,7 @@ module.exports = app => (req, res, next) => {
     }
 
     const currentProject = project.toObject();
-    if (currentProject.remote) {
+    if (currentProject.remote && !res.headersSent) {
       return res.redirect(301, projectPath(
           currentProject.remote.project,
           currentProject.remote.url,

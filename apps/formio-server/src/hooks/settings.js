@@ -994,7 +994,7 @@ module.exports = function(app) {
                 project.access.push({
                   type: access.type,
                   roles: _.filter(access.roles).map(name => {
-                    if (template.roles.hasOwnProperty(name)) {
+                    if (template.roles && template.roles.hasOwnProperty(name)) {
                       return template.roles[name]._id;
                     }
                     return name;
