@@ -62,8 +62,8 @@ module.exports = function(options) {
   app.use(favicon('./favicon.ico'));
 
   // Add Middleware necessary for REST API's
-  app.use(bodyParser.urlencoded({extended: true, limit: '16mb'}));
-  app.use(bodyParser.json({limit: '16mb'}));
+  app.use(bodyParser.urlencoded({extended: true, limit: config.maxBodySize}));
+  app.use(bodyParser.json({limit: config.maxBodySize}));
   app.use(methodOverride('X-HTTP-Method-Override'));
 
   // Error handler for malformed JSON
