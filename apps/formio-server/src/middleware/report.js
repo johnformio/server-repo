@@ -129,15 +129,8 @@ module.exports = function(formioServer) {
         return res.status(400).send('Disallowed stage used in aggregation.');
       }
 
-      const userRoles = _.filter(_.concat(
-        _.map(req.user.roles, (role) => {
-          return role ? formio.util.idToBson(role) : '';
-        }),
-        _.map(req.user.roles, (role) => {
-          return role ? role.toString() : '';
-        })
-      ));
-
+      const readAllForms = [];
+      const readOwnForms = [];
       const forms = [];
       const protectedFields = {};
       const formQuery = {
@@ -147,7 +140,7 @@ module.exports = function(formioServer) {
 
       // If they are already filtering on the form, then include that in the form query.
       if (query.form) {
-        formQuery.form = query.form;
+        formQuery._id = query.form;
       }
 
       // Get all forms in a project.
@@ -158,6 +151,22 @@ module.exports = function(formioServer) {
 
         // Find all forms that this user has "read_all" or "read_own" access
         _.each(result, function(form) {
+          const access = form.submissionAccess.toObject();
+          if (req.isAdmin) {
+            readAllForms.push(form._id);
+          }
+          else {
+            access.map(item => {
+              const roles = item.roles.map(role => role.toString());
+              if (item.type === 'read_all' && req.user.roles.some(role => roles.includes(role))) {
+                readAllForms.push(form._id);
+              }
+              else if (item.type === 'read_own' && req.user.roles.some(role => roles.includes(role))) {
+                readOwnForms.push(form._id);
+              }
+            });
+          }
+
           forms.push(form._id);
           protectedFields[form._id.toString()] = [];
           formioUtils.eachComponent(form.components, (component, path) => {
@@ -177,119 +186,28 @@ module.exports = function(formioServer) {
           query.form = {$in: forms};
         }
 
-        // A query to determine if the users roles are within the forms submission access.
-        const userAccessQuery = function(type) {
-          return {
-            $gt: [
-              {
-                $size: {
-                  $setIntersection: [
-                    {
-                      $reduce: {
-                        input: '$formObj.submissionAccess',
-                        initialValue: [],
-                        in: {
-                          $setUnion: [
-                            '$$value',
-                            {
-                              $cond: {
-                                if: {
-                                  $eq: ["$$this.type", type]
-                                },
-                                then: '$$this.roles',
-                                else: []
-                              }
-                            }
-                          ]
-                        }
-                      }
-                    },
-                    userRoles
-                  ]
-                }
-              }, 0
-            ]
-          };
-        };
-
-        let preStages = [
+        // Add the prestages to the beginning of the stages.
+        stages = [
           // Perform the query.
           {'$match': query},
 
-          // Load in the form object into the submission.
+          // Ensure they have access to the records.
           {
-            '$lookup': {
-              from: 'forms',
-              localField: 'form',
-              foreignField: '_id',
-              as: 'formObj'
-            }
-          },
-          {'$unwind': '$formObj'}
-        ];
-
-        // If they are not an admin, then add the access checks.
-        if (!req.isAdmin) {
-          preStages = preStages.concat([
-            {
-              '$addFields': {
-                'hasAccess': {
-                  $or: [
-                    // User roles are within any read_all roles.
-                    userAccessQuery('read_all'),
-                    {
-                      $and: [
-                        // User roles are within read_own roles
-                        userAccessQuery('read_own'),
-
-                        // AND the owner of the submission is the current user.
-                        {$in: ['$owner', [req.user._id.toString(), req.user._id]]}
-                      ]}
-                  ]
+            '$match': {'$or': [
+                {
+                  form: {
+                    '$in': readAllForms
+                  }
+                },
+                {
+                  form: {
+                    '$in': readOwnForms
+                  },
+                  owner: formio.util.idToBson(req.user._id)
                 }
-              }
-            },
-
-            // Ensure that this user has access to this submission.
-            {
-              '$match': {
-                'hasAccess': true
-              }
-            }
-          ]);
-        }
-
-        preStages = preStages.concat([
-          // Load the project for this form.
-          {
-            '$lookup': {
-              from: 'projects',
-              localField: 'formObj.project',
-              foreignField: '_id',
-              as: 'project'
-            }
-          },
-          {'$unwind': '$project'},
-
-          // Ensure that they can only grab submissions from this project.
-          {
-            '$match': {
-              'project._id': formio.util.idToBson(req.projectId)
-            }
-          },
-
-          // Remove the fields that were used for the query.
-          {
-            '$project': {
-              'formObj': 0,
-              'project': 0,
-              'hasAccess': 0
-            }
+              ]}
           }
-        ]);
-
-        // Add the prestages to the beginning of the stages.
-        stages = preStages.concat(stages);
+        ].concat(stages);
 
         // Add the skip stage first if applicable.
         if (skipStage) {
