@@ -1164,9 +1164,12 @@ module.exports = function(app) {
        * @returns {boolean}
        */
       external(decoded, req) {
+        // Get the projectId from the remote token.
+        const projectId = decoded.project ? decoded.project._id : decoded.form.project;
+
         // If external is provided in the signed token, use the decoded token as the request token.
         // Only allow external tokens for the projects they originated in.
-        if (decoded.external === true && req.projectId && req.projectId === decoded.project._id) {
+        if (decoded.external === true && req.projectId && req.projectId === projectId) {
           req.token = decoded;
           req.user = decoded.user;
           return false;
