@@ -365,32 +365,37 @@ module.exports = function(router) {
           }
         };
 
-        Spreadsheet.load({
-          debug: true,
-          oauth2: {
-            client_id: _.get(settings, 'google.clientId'), // eslint-disable-line camelcase
-            client_secret: _.get(settings, 'google.cskey'), // eslint-disable-line camelcase
-            refresh_token: _.get(settings, 'google.refreshtoken') // eslint-disable-line camelcase
-          },
-          spreadsheetId: sheetId,
-          worksheetName: sheetName
-        }, function run(err, spreadsheet) {
-          if (err || !spreadsheet) {
-            debug(err);
-            return;
-          }
+        try {
+          Spreadsheet.load({
+            debug: true,
+            oauth2: {
+              client_id: _.get(settings, 'google.clientId'), // eslint-disable-line camelcase
+              client_secret: _.get(settings, 'google.cskey'), // eslint-disable-line camelcase
+              refresh_token: _.get(settings, 'google.refreshtoken') // eslint-disable-line camelcase
+            },
+            spreadsheetId: sheetId,
+            worksheetName: sheetName
+          }, function run(err, spreadsheet) {
+            if (err || !spreadsheet) {
+              debug(err);
+              return;
+            }
 
-          // Perform different sheet actions based on the request type.
-          if (req.method === 'POST') {
-            addRow(spreadsheet);
-          }
-          else if (req.method === 'PUT') {
-            updateRow(spreadsheet);
-          }
-          else if (req.method === 'DELETE') {
-            deleteRow(spreadsheet);
-          }
-        });
+            // Perform different sheet actions based on the request type.
+            if (req.method === 'POST') {
+              addRow(spreadsheet);
+            }
+            else if (req.method === 'PUT') {
+              updateRow(spreadsheet);
+            }
+            else if (req.method === 'DELETE') {
+              deleteRow(spreadsheet);
+            }
+          });
+        }
+        catch (err) {
+          debug(err);
+        }
       });
     }
   }

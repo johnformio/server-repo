@@ -13,7 +13,7 @@ module.exports = app => routes => {
 
     const body = item.toObject();
     body._rid = body._id;
-    body._vuser = user.data ? user.data.name : user._id;
+    body._vuser = user ? (user.data ? user.data.name : user._id) : '';
     body._vnote = note || '';
     delete body._id;
     delete body.__v;
