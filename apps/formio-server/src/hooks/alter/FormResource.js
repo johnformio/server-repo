@@ -87,7 +87,6 @@ module.exports = app => Resource => {
         const update = _.omit(req.body, ['__v', '_id']);
         update._rid = req.params[`${this.name}Id`];
         update._vuser = _.get(req, 'user.data.name', req.user._id);
-        update._vuser = req.user.data.name;
         update._vid = 'draft';
 
         app.formio.mongoose.models.formrevision.findOne({
