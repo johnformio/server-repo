@@ -174,6 +174,7 @@ module.exports = function(app) {
         actions.office365calendar = require('../actions/office365/Office365Calendar')(formioServer);
         actions.hubspotContact = require('../actions/hubspot/hubspotContact')(formioServer);
         actions.oauth = require('../actions/oauth/OAuthAction')(formioServer);
+        actions.ldap = require('../actions/LDAP')(formioServer);
         actions.googlesheet = require('../actions/googlesheet/googleSheet')(formioServer);
         actions.sqlconnector = require('../actions/sqlconnector/SQLConnector')(formioServer);
         actions.jira = require('../actions/atlassian/jira')(formioServer);
@@ -207,7 +208,7 @@ module.exports = function(app) {
       actionInfo(action) {
         // Modify premium actions if present.
         const premium = [
-          'webhook', 'oauth', 'office365contact', 'office365calendar', 'hubspotContact', 'googlesheet', 'jira'
+          'webhook', 'oauth', 'office365contact', 'office365calendar', 'hubspotContact', 'googlesheet', 'jira', 'ldap'
         ];
         if (action.title && action.name && !action.premium && premium.indexOf(action.name) !== -1) {
           action.title += ' (Premium)';
