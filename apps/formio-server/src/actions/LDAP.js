@@ -2,8 +2,7 @@
 
 const util = require('formio/src/util/util');
 const _ = require('lodash');
-const crypto = require('crypto');
-const Q = require('q');
+const LdapAuth = require('ldapauth-fork');
 
 module.exports = router => {
   const formio = router.formio;
@@ -26,7 +25,7 @@ module.exports = router => {
         name: 'ldap',
         title: 'LDAP Login',
         description: 'Provides ldap login.',
-        priority: 1, // Needs to be before LoginAction (2) so we can fall back on form.io login.
+        priority: 3, // Needs to be before LoginAction (2) so we can fall back on form.io login.
         defaults: {
           handler: ['before'],
           method: ['create']
@@ -58,7 +57,7 @@ module.exports = router => {
         });
         formio.resources.role.model.find(formio.hook.alter('roleQuery', {deleted: {$eq: null}}, req))
           .sort({title: 1})
-          .exec((err, roles) =>  {
+          .exec((err, roles) => {
             if (err || !roles) {
               return res.status(400).send('Could not load the Roles.');
             }
@@ -181,100 +180,80 @@ module.exports = router => {
      *   The callback function to execute upon completion.
      */
 
-    /* eslint-disable max-depth */
     resolve(handler, method, req, res, next) {
       if (!hook.alter('resolve', true, this, handler, method, req, res)) {
         return next();
       }
 
-      if (this.settings.association === 'new' && (!this.settings.hasOwnProperty('role') || !this.settings.role)) {
-        return res.status(400).send('The LDAP Action requires a Role to be selected for new resources.');
+      if (!this.settings.usernameField) {
+        return res.status(400).send('LDAP Action is missing Username Field setting.');
       }
 
-      if (this.settings.association === 'existing' && this.settings.hasOwnProperty('role') && this.settings.role) {
-        this.settings = _.omit(this.settings, 'role');
+      if (!this.settings.passwordField) {
+        return res.status(400).send('LDAP Action is missing Password Field setting.');
       }
 
-      if (!this.settings.provider) {
-        return res.status(400).send('LDAP Action is missing Provider setting.');
-      }
+      hook.settings(req, (err, settings) => {
+        if (!settings.ldap || !settings.ldap.url) {
+          return res.status(400).send('LDAP Project settings not configured.');
+        }
 
-      // Non-link association requires a resource setting
-      if (['existing', 'new'].indexOf(this.settings.association) !== -1 && !this.settings.resource) {
-        return res.status(400).send('LDAP Action is missing Resource setting.');
-      }
+        const auth = new LdapAuth(settings.ldap);
 
-      if (!this.settings.button) {
-        return res.status(400).send('LDAP Action is missing Button setting.');
-      }
-
-      var self = this;
-      var provider = formio.oauth.providers[this.settings.provider];
-
-      // Modify the button to be an LDAP button
-      if (
-        handler === 'after' &&
-        method === 'form' &&
-        req.query.hasOwnProperty('live') && (parseInt(req.query.live, 10) === 1) &&
-        res.hasOwnProperty('resource') &&
-        res.resource.hasOwnProperty('item') &&
-        res.resource.item._id
-      ) {
-        return Q.ninvoke(formio.hook, 'settings', req)
-          .then(function(settings) {
-            var component = util.getComponent(res.resource.item.components, self.settings.button);
-            if (!component) {
-              return next();
+        auth.authenticate(
+          _.get(req.submission.data, this.settings.usernameField),
+          _.get(req.submission.data, this.settings.passwordField),
+          (err, data) => {
+            // If something goes wrong, skip auth and pass through to other login handlers.
+            if (err || !data) {
+              return res.status(400).send(err);
+              // return next();
             }
-            var state = crypto.randomBytes(64).toString('hex');
-            if (provider.configureLDAPButton) { // Use custom provider configuration
-              provider.configureLDAPButton(component, settings, state);
-            }
-            else { // Use default configuration, good for most oauth providers
-              var oauthSettings = _.get(settings, `oauth.${  provider.name}`);
-              if (oauthSettings) {
-                if (!oauthSettings.clientId || !oauthSettings.clientSecret) {
-                  component.oauth = {
-                    provider: provider.name,
-                    error: `${provider.title  } LDAP provider is missing client ID or client secret`
-                  };
-                }
-                else {
-                  component.oauth = {
-                    provider: provider.name,
-                    clientId: oauthSettings.clientId,
-                    authURI: oauthSettings.authURI || provider.authURI,
-                    state: state,
-                    scope: oauthSettings.scope || provider.scope
-                  };
-                  if (provider.display) {
-                    component.oauth.display = provider.display;
-                  }
-                }
+
+            // Assign roles based on settings.
+            const roles = [];
+            this.settings.roles.map(map => {
+              if (!map.property ||
+                _.get(data, map.property) === map.value ||
+                _.includes(_.get(data, map.claim), map.value)
+              ) {
+                roles.push(map.role);
               }
-            }
-            next();
-          })
-          .catch(next);
-      }
-      else if (
-        handler === 'after' &&
-        method === 'create' &&
-        req.oauthDeferredAuth &&
-        req.oauthDeferredAuth.provider === provider.name
-      ) {
-        return self.reauthenticateNewResource(req, res, provider)
-          .then(function() {
-            next();
-          })
-          .catch(this.onError(req, res, next));
-      }
-      else {
-        return next();
-      }
-    }
+            });
 
-    /* eslint-enable max-depth */
+            const user = {
+              // _id: provider.getUserId(data),
+              data,
+              roles
+            };
+
+            const token = {
+              external: true,
+              user,
+              form: {
+                _id: req.currentForm._id.toString()
+              },
+              project: {
+                _id: req.currentProject._id.toString()
+              }
+            };
+
+            req.user = user;
+            req.token = token;
+            res.token = formio.auth.getToken(token);
+            req['x-jwt-token'] = res.token;
+
+            // Set the headers if they haven't been sent yet.
+            if (!res.headersSent) {
+              res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
+              res.setHeader('x-jwt-token', res.token);
+            }
+            res.send(user);
+            return user;
+          }
+        );
+      });
+    }
   }
 
   // Disable editing handler and method settings
