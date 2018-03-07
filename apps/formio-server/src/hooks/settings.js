@@ -233,7 +233,7 @@ module.exports = function(app) {
           return true;
         }
         const premium = [
-          'webhook', 'oauth', 'office365contact', 'office365calendar', 'hubspotContact', 'googlesheet', 'jira'
+          'webhook', 'oauth', 'office365contact', 'office365calendar', 'hubspotContact', 'googlesheet', 'jira', 'ldap'
         ];
 
         // If the action does not have a name, or is not flagged as being premium, ignore it.
