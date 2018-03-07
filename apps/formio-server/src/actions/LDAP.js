@@ -25,7 +25,7 @@ module.exports = router => {
         name: 'ldap',
         title: 'LDAP Login',
         description: 'Provides ldap login.',
-        priority: 3, // Needs to be before LoginAction (2) so we can fall back on form.io login.
+        priority: 3, // Needs to be after LoginAction (2) so we can fall back on form.io login.
         defaults: {
           handler: ['before'],
           method: ['create']
@@ -204,25 +204,50 @@ module.exports = router => {
           _.get(req.submission.data, this.settings.usernameField),
           _.get(req.submission.data, this.settings.passwordField),
           (err, data) => {
+            // If they have the wrong ldap credentials, return that error.
+            if (err && ['Invalid Credentials'].includes(err.lde_message)) {
+              return res.status(401).send(err.lde_message);
+            }
+
             // If something goes wrong, skip auth and pass through to other login handlers.
             if (err || !data) {
-              return res.status(400).send(err);
-              // return next();
+              return next();
             }
+
+            let skipfirst = true;
+            // Map the dn to be properties on data so we can assign roles based on them.
+            data.dn.split(',').forEach(part => {
+              // The first item is already in the data as it is the identifier.
+              if (skipfirst) {
+                skipfirst = false;
+                return;
+              }
+              const pieces = part.split('=');
+              if (data.hasOwnProperty(pieces[0])) {
+                // If it already exists but isn't an array, make it an array.
+                if (!Array.isArray(data[pieces[0]])) {
+                  data[pieces[0]] = [data[pieces[0]]];
+                }
+                data[pieces[0]].push(pieces[1]);
+              }
+              else {
+                data[pieces[0]] = pieces[1];
+              }
+            });
 
             // Assign roles based on settings.
             const roles = [];
             this.settings.roles.map(map => {
               if (!map.property ||
                 _.get(data, map.property) === map.value ||
-                _.includes(_.get(data, map.claim), map.value)
+                _.includes(_.get(data, map.property), map.value)
               ) {
                 roles.push(map.role);
               }
             });
 
             const user = {
-              // _id: provider.getUserId(data),
+              _id: data.uidNumber || data.uid || data.dn, // Try to use numbers but fall back to dn which is guaranteed.
               data,
               roles
             };
@@ -249,7 +274,9 @@ module.exports = router => {
               res.setHeader('x-jwt-token', res.token);
             }
             res.send(user);
-            return user;
+
+            req.skipAuth = true;
+            return next();
           }
         );
       });
