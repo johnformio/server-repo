@@ -94,6 +94,20 @@ module.exports = router => {
               },
               {
                 input: true,
+                inputType: "checkbox",
+                label: "Passthrough",
+                key: "passthrough",
+                defaultValue: false,
+                persistent: true,
+                hidden: false,
+                clearOnHide: true,
+                type: "checkbox",
+                labelPosition: "right",
+                properties: { },
+                tooltip: "If enabled, failed requests will pass through to the next action handler. This allows using multiple login actions. Incorrect passwords will still fail."
+              },
+              {
+                input: true,
                 tree: true,
                 components: [
                   {
@@ -205,8 +219,9 @@ module.exports = router => {
           _.get(req.submission.data, this.settings.passwordField),
           (err, data) => {
             // If they have the wrong ldap credentials, return that error.
-            if (err && ['Invalid Credentials'].includes(err.lde_message)) {
-              return res.status(401).send(err.lde_message);
+            err = err.hasOwnProperty('lde_message') ? err.lde_message : err.toString();
+            if (err && (['Invalid Credentials'].includes(err) || !this.settings.passthrough)) {
+              return res.status(401).send(err);
             }
 
             // If something goes wrong, skip auth and pass through to other login handlers.
