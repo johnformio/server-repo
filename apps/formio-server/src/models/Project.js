@@ -125,12 +125,6 @@ module.exports = function(router) {
           }
           value.project = _.pick(value.project, ['name', 'title', '_id']);
           return value;
-        },
-        get: function(value) {
-          if (value && value.project) {
-            value.project = _.pick(value.project, ['name', 'title', '_id']);
-          }
-          return value;
         }
       },
       plan: {
@@ -187,10 +181,6 @@ module.exports = function(router) {
   model.schema.machineName = function(document, done) {
     done(null, document.name);
   };
-
-  // Enable Mongoose getter functions
-  model.schema.set('toObject', {getters: true});
-  model.schema.set('toJSON', {getters: true});
 
   return model;
 };
