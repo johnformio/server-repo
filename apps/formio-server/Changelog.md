@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.3.3
+### Fixed
+ - Crash in ldap server on error.
+
+## 5.3.2
+???
+
 ## 5.3.1
 ### Fixed - SECURITY UPDATE
  - Remove excess data from remote settings.
