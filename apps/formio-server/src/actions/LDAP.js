@@ -219,7 +219,9 @@ module.exports = router => {
           _.get(req.submission.data, this.settings.passwordField),
           (err, data) => {
             // If they have the wrong ldap credentials, return that error.
-            err = err.hasOwnProperty('lde_message') ? err.lde_message : err.toString();
+            if (err) {
+              err = err.hasOwnProperty('lde_message') ? err.lde_message : err.toString();
+            }
             if (err && (['Invalid Credentials'].includes(err) || !this.settings.passthrough)) {
               return res.status(401).send(err);
             }
