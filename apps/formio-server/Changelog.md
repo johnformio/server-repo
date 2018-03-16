@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.3.4
+### Fixed
+ - Save-as-reference issue where updates could remove ObjectId's from references.
+
 ## 5.3.3
 ### Fixed
  - Crash in ldap server on error.
