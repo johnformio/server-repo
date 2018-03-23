@@ -169,6 +169,14 @@ module.exports = function(router) {
   });
   /* eslint-enable new-cap, max-len */
 
+  // Create a "recommended" index.
+  model.schema.index({
+    "access.roles": 1,
+    "access.type": 1,
+    "deleted": 1,
+    "project": 1
+  });
+
   // Encrypt 'settings' property at rest in MongoDB.
   model.schema.plugin(EncryptedProperty, {
     secret: formio.config.mongoSecret,
