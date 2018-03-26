@@ -104,7 +104,9 @@ module.exports = router => {
                 type: "checkbox",
                 labelPosition: "right",
                 properties: { },
+                /* eslint-disable max-len */
                 tooltip: "If enabled, failed requests will pass through to the next action handler. This allows using multiple login actions. Incorrect passwords will still fail."
+                /* eslint-enable max-len */
               },
               {
                 input: true,
