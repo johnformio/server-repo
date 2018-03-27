@@ -1,14 +1,11 @@
 'use strict';
 
 const _ = require('lodash');
-const o365Util = require('../actions/office365/util');
-const kickboxValidate = require('../actions/kickbox/validate');
 const nodeUrl = require('url');
 const semver = require('semver');
 const async = require('async');
 const chance = new (require('chance'))();
 const fs = require('fs');
-const url = require('url');
 const util = require('../util/util');
 
 module.exports = function(app) {
@@ -53,112 +50,10 @@ module.exports = function(app) {
       });
     },
     on: {
-      init(type, formio) {
-        switch (type) {
-          case 'alias':
-            // Dynamically set the baseUrl.
-            formio.middleware.alias.baseUrl = function(req) {
-              const baseUrl = `/project/${req.projectId}`;
-              // Save the alias as well.
-              req.pathAlias = url.parse(req.url).pathname.substr(baseUrl.length);
-              return baseUrl;
-            };
-
-            // Add the alias handler.
-            app.use(formio.middleware.alias);
-            return true;
-          case 'params':
-            app.use(formio.middleware.params);
-            return true;
-          case 'token':
-            app.use(require('../middleware/remoteToken')(app));
-            app.use(require('../middleware/aliasToken')(app));
-            app.use(formio.middleware.tokenHandler);
-            app.use(require('../middleware/userProject')(formioServer.formio));
-            return true;
-          case 'logout':
-            app.get('/logout', formio.auth.logout);
-            return false;
-          case 'getTempToken':
-            app.get('/token', formio.auth.tempToken);
-            return false;
-          case 'current':
-            app.get('/current', (req, res, next) => {
-              // If this is an external token, return the user object directly.
-              if (req.token && req.token.external) {
-                if (!res.token || !req.token) {
-                  return res.sendStatus(401);
-                }
-
-                // Set the headers if they haven't been sent yet.
-                if (!res.headersSent) {
-                  res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
-                  res.setHeader('x-jwt-token', res.token);
-                }
-
-                return res.send(req.token.user);
-              }
-              return formio.auth.currentUser(req, res, next);
-            });
-            return false;
-          case 'access':
-            app.get('/access', formio.middleware.accessHandler);
-            return false;
-          case 'perms':
-            app.use(formio.middleware.permissionHandler);
-            return true;
-        }
-
-        return false;
-      },
-      formRequest(req, res) {
-        // Make sure to always include the projectId in POST and PUT calls.
-        if (req.method === 'PUT' || req.method === 'POST') {
-          req.body.project = req.projectId || req.params.projectId;
-        }
-      },
-      validateEmail(component, path, req, res, next) {
-        if (
-          (component.type === 'email') &&
-          component.kickbox &&
-          component.kickbox.enabled
-        ) {
-          // Load the project settings.
-          formioServer.formio.cache.loadProject(req, req.projectId, function(err, project) {
-            if (err) {
-              return next(err);
-            }
-            if (!project) {
-              return res.status(400).send('Could not find project');
-            }
-
-            // Validate with kickbox.
-            kickboxValidate(project, component, path, req, res, next);
-          });
-
-          // Return true so that we can handle this request.
-          return true;
-        }
-
-        // Return false to move on with the request.
-        return false;
-      },
-      email(transport, settings, projectSettings, req, res, params) {
-        const transporter = {};
-        if ((transport === 'outlook') && projectSettings.office365.email) {
-          transporter.sendMail = function(mail) {
-            o365Util.request(formioServer, req, res, 'sendmail', 'Office365Mail', 'application', {
-              Message: {
-                Subject: mail.subject,
-                Body: o365Util.getBodyObject(mail.html),
-                ToRecipients: o365Util.getRecipientsObject(_.map(mail.to.split(','), _.trim)),
-                From: o365Util.getRecipient(projectSettings.office365.email)
-              }
-            });
-          };
-        }
-        return transporter;
-      }
+      init: require('./on/init')(app),
+      formRequest: require('./on/formRequest')(app),
+      validateEmail: require('./on/validateEmail')(app),
+      email: require('./on/email')(app)
     },
     alter: {
       formio: require('./alter/formio')(app),
