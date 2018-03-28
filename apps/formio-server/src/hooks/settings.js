@@ -64,6 +64,7 @@ module.exports = function(app) {
       models: require('./alter/models')(app),
       email: require('./alter/email')(app),
       validateSubmissionForm: require('./alter/validateSubmissionForm')(app),
+      currentUser: require('./alter/currentUser')(app),
       actions(actions) {
         actions.office365contact = require('../actions/office365/Office365Contact')(formioServer);
         actions.office365calendar = require('../actions/office365/Office365Calendar')(formioServer);

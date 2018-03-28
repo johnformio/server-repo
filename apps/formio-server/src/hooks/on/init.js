@@ -32,23 +32,7 @@ module.exports = app => (type, formio) => {
       app.get('/token', formio.auth.tempToken);
       return false;
     case 'current':
-      app.get('/current', (req, res, next) => {
-        // If this is an external token, return the user object directly.
-        if (req.token && req.token.external) {
-          if (!res.token || !req.token) {
-            return res.sendStatus(401);
-          }
-
-          // Set the headers if they haven't been sent yet.
-          if (!res.headersSent) {
-            res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
-            res.setHeader('x-jwt-token', res.token);
-          }
-
-          return res.send(req.token.user);
-        }
-        return formio.auth.currentUser(req, res, next);
-      });
+      app.get('/current', formio.hook.alter('currentUser', [formio.auth.currentUser]));
       return false;
     case 'access':
       app.get('/access', formio.middleware.accessHandler);
