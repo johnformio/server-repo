@@ -55,6 +55,19 @@ module.exports = function(formioServer) {
           return;
         }
 
+        if (
+          this.key.match(/(^|\.)(_id|form|owner)$/) ||
+          (
+            (this.parent && (this.parent.key === '$in')) &&
+            (this.parent.parent && this.parent.parent.key.match(/(^|\.)(_id|form|owner)$/))
+          )
+        ) {
+          if (node.match(/^(.{24})$/)) {
+            const result = node.match(/^(.{24})$/);
+            this.update(formio.util.idToBson(result[1]));
+          }
+        }
+
         if (node.match(/^ObjectId\(['|"](.{24})['|"]\)$/)) {
           const result = node.match(/^ObjectId\(['|"](.{24})['|"]\)$/m);
           this.update(formio.util.idToBson(result[1]));
