@@ -97,6 +97,7 @@ module.exports = function(router) {
               }
 
               const search = {
+                'remote.url': value.url,
                 'remote.project._id': value.project._id,
                 deleted: {$eq: null}
               };
