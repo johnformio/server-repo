@@ -265,6 +265,12 @@ module.exports = router => {
               }
             });
 
+            // Some fields may cause issues so remove them.
+            delete data.objectGUID;
+            delete data.objectSid;
+            delete data.msExchMailboxSecurityDescriptor;
+            delete data.protocolSettings;
+
             const user = {
               _id: data.uidNumber || data.uid || data.dn, // Try to use numbers but fall back to dn which is guaranteed.
               data,
@@ -292,10 +298,8 @@ module.exports = router => {
               res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
               res.setHeader('x-jwt-token', res.token);
             }
-            res.send(user);
 
-            req.skipAuth = true;
-            return next();
+            return res.send(user);
           }
         );
       });
