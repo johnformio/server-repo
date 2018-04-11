@@ -34,12 +34,12 @@ module.exports = (router, models) => {
 
   // Remove the name unique validator.
   schema.path('name', {
-    validators: schema.obj.name.validators.slice(0, schema.obj.name.validators.length - 2)
+    validators: schema.obj.name.validate.slice(0, schema.obj.name.validate.length - 2)
   });
 
   // Remove the path unique validator.
   schema.path('path', {
-    validators: schema.obj.path.validators.slice(0, schema.obj.path.validators.length - 2)
+    validators: schema.obj.path.validate.slice(0, schema.obj.path.validate.length - 2)
   });
 
   schema.remove('machineName');
