@@ -50,7 +50,7 @@ module.exports = function(router) {
           defaultValue: false,
           key: 'block',
           label: 'Block request for Jira feedback',
-          hideLabel: true,
+          hideLabel: false,
           tableView: true,
           inputType: 'checkbox',
           input: true
@@ -245,7 +245,9 @@ module.exports = function(router) {
 
       // Only block on the external request, if configured
       if (!_.has(settings, 'block') || settings.block === false) {
-        return next();
+        /* eslint-disable callback-return */
+        next();
+        /* eslint-enable callback-return */
       }
 
       const issue = {
