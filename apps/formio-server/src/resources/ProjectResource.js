@@ -8,9 +8,10 @@ const debug = require('debug')('formio:resources:projects');
 module.exports = function(router, formioServer) {
   const formio = formioServer.formio;
   const getProjectAccess = function(settings, permissions) {
-    return _(settings)
+    return _.chain(settings)
       .filter({type: permissions})
-      .map('roles')
+      .head()
+      .get('roles', [])
       .map(formio.util.idToString)
       .value();
   };
