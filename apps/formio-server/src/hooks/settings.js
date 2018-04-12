@@ -65,21 +65,7 @@ module.exports = function(app) {
       email: require('./alter/email')(app),
       validateSubmissionForm: require('./alter/validateSubmissionForm')(app),
       currentUser: require('./alter/currentUser')(app),
-      actions(actions) {
-        actions.office365contact = require('../actions/office365/Office365Contact')(formioServer);
-        actions.office365calendar = require('../actions/office365/Office365Calendar')(formioServer);
-        actions.hubspotContact = require('../actions/hubspot/hubspotContact')(formioServer);
-        actions.oauth = require('../actions/oauth/OAuthAction')(formioServer);
-        actions.ldap = require('../actions/LDAP')(formioServer);
-        actions.googlesheet = require('../actions/googlesheet/googleSheet')(formioServer);
-        actions.sqlconnector = require('../actions/sqlconnector/SQLConnector')(formioServer);
-        actions.jira = require('../actions/atlassian/jira')(formioServer);
-        actions.group = require('../actions/GroupAction')(formioServer);
-        actions.moxtraLogin = require('../actions/moxtra/MoxtraLogin')(formioServer);
-        actions.moxtraMessage = require('../actions/moxtra/MoxtraMessage')(formioServer);
-        actions.moxtraTodo = require('../actions/moxtra/MoxtraTodo')(formioServer);
-        return actions;
-      },
+      actions: require('./alter/actions')(app),
 
       export(req, query, form, exporter, cb) {
         util.getSubmissionModel(formioServer.formio, req, form, true, (err, submissionModel) => {
