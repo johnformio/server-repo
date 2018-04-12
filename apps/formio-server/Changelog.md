@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [UNRELEASED]
 ### Fixed
  - PDF uploading for team write members.
+ - Roles fetching for multiple teams.
 
 ## 5.4.0
 ### Fixed
