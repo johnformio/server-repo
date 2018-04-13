@@ -33,13 +33,15 @@ module.exports = (router, models) => {
   });
 
   // Remove the name unique validator.
+  const nameValidators = schema.obj.name.validate || schema.obj.name.validators;
   schema.path('name', {
-    validators: schema.obj.name.validators.slice(0, schema.obj.name.validators.length - 2)
+    validators: nameValidators.slice(0, nameValidators.length - 2)
   });
 
   // Remove the path unique validator.
+  const pathValidators = schema.obj.path.validate || schema.obj.path.validators;
   schema.path('path', {
-    validators: schema.obj.path.validators.slice(0, schema.obj.path.validators.length - 2)
+    validators: pathValidators.slice(0, pathValidators.length - 2)
   });
 
   schema.remove('machineName');
