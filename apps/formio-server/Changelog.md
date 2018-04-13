@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [UNRELEASED]
+### Fixed
+ - PDF uploading for team write members.
+ - Roles fetching for multiple teams.
+
 ## 5.4.0
 ### Fixed
  - Issues where some sub-documents do not store ObjectId's correctly in database.
