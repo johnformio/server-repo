@@ -44,13 +44,13 @@ module.exports = (router, models) => {
     if (schema.obj[property].validate) {
       propModifier.validate = schema.obj[property].validate;
       _.remove(propModifier.validate, (validator) => {
-        return (validator.message.indexOf('must be unique') !== -1);
+        return validator.message && (validator.message.indexOf('must be unique') !== -1);
       });
     }
     else if (schema.obj[property].validators) {
       propModifier.validators = schema.obj[property].validators;
       _.remove(propModifier.validators, (validator) => {
-        return (validator.message.indexOf('must be unique') !== -1);
+        return validator.message && (validator.message.indexOf('must be unique') !== -1);
       });
     }
     else {
