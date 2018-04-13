@@ -23,7 +23,12 @@ module.exports = function(formio) {
         return next();
       }
       else if (req.user) {
-        const access = _.map(_.map(_.filter(project.access, {type: 'team_admin'}), 'roles'), formio.util.idToString);
+        const access = _.chain(project.access)
+          .filter({type: 'team_admin'})
+          .head()
+          .get('roles', [])
+          .map(formio.util.idToString)
+          .value();
         const roles = _.map(req.user.roles, formio.util.idToString);
 
         if ( _.intersection(access, roles).length !== 0) {

@@ -7,6 +7,14 @@ const debug = require('debug')('formio:resources:projects');
 
 module.exports = function(router, formioServer) {
   const formio = formioServer.formio;
+  const getProjectAccess = function(settings, permissions) {
+    return _.chain(settings)
+      .filter({type: permissions})
+      .head()
+      .get('roles', [])
+      .map(formio.util.idToString)
+      .value();
+  };
   const removeProjectSettings = function(req, res, next) {
     // Allow admin key
     if (req.adminKey) {
@@ -22,12 +30,17 @@ module.exports = function(router, formioServer) {
     }
     else if (req.projectId && req.user) {
       formio.cache.loadPrimaryProject(req, function(err, project) {
+        let role = 'read';
         if (!err) {
-          const access = _.map(_.map(_.filter(project.access, {type: 'team_admin'}), 'roles'), formio.util.idToString);
+          const adminAccess = getProjectAccess(project.access, 'team_admin');
+          const writeAccess = getProjectAccess(project.access, 'team_write');
           const roles = _.map(req.user.roles, formio.util.idToString);
 
-          if ( _.intersection(access, roles).length !== 0) {
+          if ( _.intersection(adminAccess, roles).length !== 0) {
             return next();
+          }
+          if ( _.intersection(writeAccess, roles).length !== 0) {
+            role = 'write';
           }
         }
         else {
@@ -38,7 +51,12 @@ module.exports = function(router, formioServer) {
           req.body = _.omit(req.body, 'settings');
         }
 
+        const fileToken = role === 'write' && _.get(res, 'resource.item.settings.filetoken', null);
+
         formio.middleware.filterResourcejsResponse(['settings', 'billing']).call(this, req, res, next);
+        if (fileToken) {
+          _.set(res, 'resource.item.settings.filetoken', fileToken);
+        }
       });
     }
     else {
