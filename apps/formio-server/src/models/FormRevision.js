@@ -5,6 +5,7 @@ const _ = require('lodash');
 
 module.exports = (router, models) => {
   const schema = models.form.schema.clone();
+  schema.paths = _.cloneDeep(schema.paths);
 
   schema.add({
     _rid: {
@@ -49,7 +50,6 @@ module.exports = (router, models) => {
     }
     else if (schema.paths[property].validators) {
       // Schema clone apparently does not properly clone path validators.
-      schema.paths[property].validators = _.cloneDeep(schema.paths[property].validators);
       propModifier.validators = schema.paths[property].validators;
       _.remove(propModifier.validators, (validator) => {
         return (_.get(validator, 'message', '').indexOf('must be unique') !== -1);
