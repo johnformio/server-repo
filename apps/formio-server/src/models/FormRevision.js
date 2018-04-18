@@ -47,9 +47,9 @@ module.exports = (router, models) => {
         return (_.get(validator, 'message', '').indexOf('must be unique') !== -1);
       });
     }
-    else if (schema.obj[property].validate) {
-      propModifier.validate = schema.obj[property].validate;
-      _.remove(propModifier.validate, (validator) => {
+    else if (schema.paths[property].validators) {
+      propModifier.validators = schema.paths[property].validators;
+      _.remove(propModifier.validators, (validator) => {
         return (_.get(validator, 'message', '').indexOf('must be unique') !== -1);
       });
     }
