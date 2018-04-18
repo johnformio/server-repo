@@ -4,8 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [UNRELEASED]
+## 5.4.4
+### Updated
+  - Formio to version 1.28.0
+
 ### Fixed
+ - Mongoose update breaking change.
  - PDF uploading for team write members.
  - Roles fetching for multiple teams.
 
