@@ -1111,7 +1111,7 @@ module.exports = function(app) {
         encrypt.handle(req, res, next);
       },
       submissionParams(params) {
-        params.push('oauth', '_fvid');
+        params.push('oauth', '_fvid', 'state');
         return params;
       },
       submissionRequestQuery(query, req) {

@@ -38,6 +38,12 @@ module.exports = app => models => {
       index: true,
       required: true,
       default: 0
+    },
+    state: {
+      type: String,
+      description: 'The current state of the submission',
+      index: true,
+      default: 'submitted'
     }
   });
 
