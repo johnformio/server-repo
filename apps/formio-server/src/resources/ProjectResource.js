@@ -134,8 +134,8 @@ module.exports = function(router, formioServer) {
         next();
       },
       formio.middleware.bootstrapEntityOwner(false),
-      formio.middleware.condensePermissionTypes,
       formio.middleware.projectTeamSync,
+      formio.middleware.condensePermissionTypes,
       formio.middleware.projectPlanFilter
     ],
     afterPost: [
@@ -169,7 +169,6 @@ module.exports = function(router, formioServer) {
         }
         next();
       },
-      formio.middleware.condensePermissionTypes,
       // Protected Project Access.
       function(req, res, next) {
         // Don't allow some changes if project is protected.
@@ -207,6 +206,7 @@ module.exports = function(router, formioServer) {
       },
       formio.middleware.projectAccessFilter,
       formio.middleware.projectTeamSync,
+      formio.middleware.condensePermissionTypes,
       formio.middleware.projectPlanFilter,
       removeProjectSettings
     ],
