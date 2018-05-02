@@ -530,7 +530,6 @@ module.exports = function(app, template, hook) {
           .get('/project')
           .set('x-jwt-token', template.users.user1.token)
           .expect('Content-Type', /json/)
-          .expect(200)
           .end(function(err, res) {
             if (err) {
               return done(err);
