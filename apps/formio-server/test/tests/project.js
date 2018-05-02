@@ -440,8 +440,10 @@ module.exports = function(app, template, hook) {
 
           var response = res.body;
           var found = false;
+          var responseProject = {};
           response.forEach(function(project) {
             if (project.name === template.project.name) {
+              responseProject = project;
               found = true;
             }
           });
@@ -450,11 +452,11 @@ module.exports = function(app, template, hook) {
           // Check plan and api calls info
           if (!docker && !customer) {
             var plan = process.env.PROJECT_PLAN;
-            assert.equal(response[1].plan, plan, 'The plan should match the default new project plan.');
-            assert.deepEqual(response[1].apiCalls, {
+            assert.equal(responseProject.plan, plan, 'The plan should match the default new project plan.');
+            assert.deepEqual(responseProject.apiCalls, {
               used: 0,
-              remaining: app.formio.formio.plans.limits[response[1].plan],
-              limit: app.formio.formio.plans.limits[response[1].plan],
+              remaining: app.formio.formio.plans.limits[responseProject.plan],
+              limit: app.formio.formio.plans.limits[responseProject.plan],
               reset: moment().startOf('month').add(1, 'month').toISOString()
             });
           }

@@ -371,6 +371,7 @@ describe('Initial Tests', function() {
         require('./tests/domain')(app, template, hook);
         require('./tests/encrypt')(app, template, hook);
         require('./tests/email')(app, template, hook);
+        require('./tests/states')(app, template, hook);
         require('formio/test/unit')(app, template, hook);
         require('formio/test/auth')(app, template, hook);
         require('./tests/externalTokens')(app, template, hook);
