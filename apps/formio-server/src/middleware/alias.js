@@ -71,7 +71,7 @@ module.exports = function(formio) {
     }
 
     // Quick confirmation that we have an projectName.
-    if (Number.isInteger(parseInt(projectName, 10))) {
+    if (projectName && !isNaN(projectName)) {
       return skip(req, res, next);
     }
 
