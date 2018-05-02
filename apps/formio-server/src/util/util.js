@@ -127,7 +127,7 @@ module.exports = {
         'schema',
         'tags'
       ];
-      if (reservedCollections.indexOf(collectionName) !== -1) {
+      if (reservedCollections.includes(collectionName)) {
         delete form.settings.collection;
         return next(`${collectionName} is a reserved collection name.`);
       }
