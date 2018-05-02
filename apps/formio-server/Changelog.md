@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## 5.5.1
 ### Added
+ - Possibility to get report using form collection.
  - Submission states support.
 
 ### Fixed
