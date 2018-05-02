@@ -11,6 +11,7 @@ const traverse = require('traverse');
 const formioUtils = require('formiojs/utils');
 const paginate = require('node-paginate-anything');
 const _ = require('lodash');
+const util = require('../util/util');
 const debug = {
   report: require('debug')('formio:middleware:report'),
   error: require('debug')('formio:error')
@@ -28,7 +29,7 @@ module.exports = function(formioServer) {
       }
 
       debug.report(`Plan: ${project.plan}`);
-      if (['trial', 'team', 'commercial'].indexOf(project.plan) === -1) {
+      if (!['trial', 'team', 'commercial'].includes(project.plan)) {
         return res.status(402).send('The report framework requires a Team Pro or Enterprise plan.');
       }
 
@@ -107,7 +108,7 @@ module.exports = function(formioServer) {
             // Only allow boolean values for $project
             if (key === '$project') {
               for (let param in stage[key]) {
-                if (['number', 'boolean'].indexOf((typeof stage[key][param])) === -1) {
+                if (!['number', 'boolean'].includes((typeof stage[key][param]))) {
                   return true;
                 }
               }
@@ -123,7 +124,7 @@ module.exports = function(formioServer) {
               skipStage = stage;
             }
             // Make sure that this is an allowed stage.
-            else if (allowedStages.indexOf(key) === -1) {
+            else if (!allowedStages.includes(key)) {
               return true;
             }
             else {
@@ -169,12 +170,12 @@ module.exports = function(formioServer) {
             readAllForms.push(form._id);
           }
           else {
-            access.map(item => {
-              const roles = item.roles.map(role => role.toString());
-              if (item.type === 'read_all' && req.user.roles.some(role => roles.includes(role))) {
+            access.map((item) => {
+              const roles = item.roles.map((role) => role.toString());
+              if (item.type === 'read_all' && req.user.roles.some((role) => roles.includes(role))) {
                 readAllForms.push(form._id);
               }
-              else if (item.type === 'read_own' && req.user.roles.some(role => roles.includes(role))) {
+              else if (item.type === 'read_own' && req.user.roles.some((role) => roles.includes(role))) {
                 readOwnForms.push(form._id);
               }
             });
@@ -185,6 +186,17 @@ module.exports = function(formioServer) {
           formioUtils.eachComponent(form.components, (component, path) => {
             if (component.protected) {
               protectedFields[form._id.toString()].push(path);
+            }
+          });
+        });
+
+        const modelReady = new Promise((resolve, reject) => {
+          util.getSubmissionModel(formio, req, result[0], true, (err, collectionModel) => {
+            if (collectionModel) {
+              resolve(collectionModel);
+            }
+            else {
+              resolve(formio.resources.submission.model);
             }
           });
         });
@@ -238,9 +250,9 @@ module.exports = function(formioServer) {
         res.setHeader('Content-Type', 'application/json');
 
         // Method to perform the aggregation.
-        const performAggregation = function() {
-          try {
-            formio.resources.submission.model.aggregate(stages)
+        const performAggregation = () => modelReady
+          .then((model) => {
+            model.aggregate(stages)
               .cursor()
               .exec()
               .pipe(through(function(doc) {
@@ -254,11 +266,8 @@ module.exports = function(formioServer) {
               }))
               .pipe(JSONStream.stringify())
               .pipe(res);
-          }
-          catch (err) {
-            res.send(400).send('Bad Request');
-          }
-        };
+          })
+          .catch(() => res.send(400).send('Bad Request'));
 
         // If a limit is provided, then we need to include some pagination stuff.
         if (!limitStage) {
@@ -266,13 +275,13 @@ module.exports = function(formioServer) {
         }
 
         // Replace the limit with a count to get the total items.
-        const countStages = stages.filter(stage => !stage.hasOwnProperty('$limit') && !stage.hasOwnProperty('$skip'));
+        const countStages = stages.filter((stage) => !stage.hasOwnProperty('$limit') && !stage.hasOwnProperty('$skip'));
 
         countStages.push({$count: 'total'});
 
         // Find the total count based on the query.
-        try {
-          formio.resources.submission.model.aggregate(countStages).exec(function(err, result) {
+        modelReady
+          .then((model) => model.aggregate(countStages).exec(function(err, result) {
             if (err) {
               debug.error(err);
               return next(err);
@@ -300,11 +309,8 @@ module.exports = function(formioServer) {
 
             // Perform the aggregation command.
             performAggregation();
-          });
-        }
-        catch (err) {
-          res.send(400).send('Bad Request');
-        }
+          }))
+          .catch(() => res.send(400).send('Bad Request'));
       });
     });
   };
