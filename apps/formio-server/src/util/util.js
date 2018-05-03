@@ -90,6 +90,11 @@ module.exports = {
       return next();
     }
 
+    // Disable for hosted projects
+    if (process.env.FORMIO_HOSTED) {
+      return next();
+    }
+
     // Load the project in context.
     formio.cache.loadCurrentProject(req, (err, project) => {
       if (err) {
