@@ -132,7 +132,7 @@ module.exports = function(app) {
         return true;
       },
 
-      emailTransports(transports, settings) {
+      emailTransports(transports, settings, req, cb) {
         settings = settings || {};
         const office365 = settings.office365 || {};
         if (office365.tenant && office365.clientId && office365.email && office365.cert && office365.thumbprint) {
@@ -143,7 +143,23 @@ module.exports = function(app) {
             }
           );
         }
-        return transports;
+
+        // Limit basic and independent
+        if (req && req.primaryProject) {
+          if (req.primaryProject.plan === 'basic') {
+            transports = [{
+              transport: 'default',
+              title: 'Default (limit 100 per month)'
+            }];
+          }
+          if (req.primaryProject.plan === 'independent') {
+            transports = [{
+              transport: 'default',
+              title: 'Default (limit 1000 per month)'
+            }];
+          }
+        }
+        return cb(null, transports);
       },
       path(url, req) {
         return `/project/${req.projectId}${url}`;
