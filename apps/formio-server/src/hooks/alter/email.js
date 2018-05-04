@@ -20,8 +20,8 @@ module.exports = app => (mail, req, res, params, cb) => {
           return reject('Plan limited to default transport only.');
         }
         if (formioServer.redis && formioServer.redis.db) {
-          const redisKey = `email:${req.currentProject._id.toString()}:${(new Date()).getFullYear().toString()}${((new Date()).getMonth() + 1).toString()}`;
-            formioServer.redis.db.get(redisKey, (err, emailCount) => {
+          const redisKey = `email:${req.currentProject._id.toString()}:${(new Date()).getUTCFullYear().toString()}${((new Date()).getUTCMonth() + 1).toString()}`;
+          formioServer.redis.db.get(redisKey, (err, emailCount) => {
             if (err) {
               return reject(err);
             }

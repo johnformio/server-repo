@@ -21,15 +21,19 @@ module.exports = function(formioServer) {
     project._id = project._id.toString();
     const curr = new Date();
     return Q.nfcall(formioServer.analytics.getCalls, curr.getUTCFullYear(), curr.getUTCMonth(), null, project._id)
-    .then(function(used) {
-      const limit = formioServer.formio.plans.limits[project.plan];
-      const info = {
-        used: used,
-        remaining: limit - used,
-        limit: limit,
-        reset: moment().startOf('month').add(1, 'month').toISOString()
-      };
-      return info;
+    .then(used => {
+      return Q.nfcall(formioServer.analytics.getEmails, curr.getUTCFullYear(), curr.getUTCMonth() + 1, project._id)
+        .then(emails => {
+          const limit = formioServer.formio.plans.limits[project.plan];
+          const info = {
+            used,
+            remaining: limit - used,
+            limit,
+            reset: moment().startOf('month').add(1, 'month').toISOString(),
+            emails
+          };
+          return info;
+        });
     });
   };
 
