@@ -30,6 +30,17 @@ module.exports = app => (mail, req, res, params, cb) => {
               return reject('Over email limit');
             }
             formioServer.redis.db.set(redisKey, emailCount + 1);
+            mail.html += `
+<table style="margin: 0px;padding: 20px;background-color:#002941;color:white;width:100%;">
+  <tbody>
+  <tr>
+    <td align="center" style="font-size:24px;font-family:sans-serif;">
+      <div style="padding:10px;">Sent using the <a href="https://form.io" style="color:white;">form.io</a> platform</div>
+      <div style=""><img style="height:64px;" src="https://form.io/assets/images/formio-logo.png"></div>
+    </td>
+  </tr>
+  </tbody>
+</table>`;
             return resolve();
           });
         }
