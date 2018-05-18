@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.6.1
+### Fixed
+ - Update all remote projects to commercial. Many were accidently set to trial.
+ - Ensure all future remote projects are set at the minumum of the default.
+
 ## 5.6.0
 ### Added
  - Possibility to get report using form collection.
