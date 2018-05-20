@@ -18,9 +18,6 @@ module.exports = function(options) {
   // Use the express application.
   var app = options.app || express();
 
-  // Default to trust proxy.
-  app.set('trust proxy', process.env.TRUST_PROXY !== 'false');
-
   // Use the given config.
   var config = options.config || require('./config');
 
