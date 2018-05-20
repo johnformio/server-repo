@@ -13,5 +13,6 @@ module.exports = {
   '3.1.0-rc.1': require('./3.1.0-rc.1.js'),
   '3.1.0-rc.2': require('./3.1.0-rc.2.js'),
   '3.1.0': require('./3.1.0'),
-  '3.2.0': require('./3.2.0')
+  '3.2.0': require('./3.2.0'),
+  '3.3.0': require('./3.3.0')
 };
