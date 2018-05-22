@@ -125,25 +125,6 @@ module.exports = app => routes => {
     }
   };
 
-  /**
-   * Ensure primary project is loaded. May fail without Redis otherwise.
-   */
-  routes.before.unshift((req, res, next) => {
-    if (req.primaryProject) {
-      return next();
-    }
-    app.formio.formio.cache.loadPrimaryProject(req, (err, project) => {
-      if (err) {
-        /* eslint-disable no-console */
-        console.error(err);
-        /* eslint-enable no-console */
-        return next();
-      }
-      req.primaryProject = project.toObject();
-      next();
-    });
-  });
-
   // Setup a form for separate collection.
   routes.before.unshift((req, res, next) => {
     if (
@@ -202,6 +183,25 @@ module.exports = app => routes => {
   });
 
   routes.before.unshift(require('../../middleware/projectProtectAccess')(app.formio.formio));
+
+  /**
+   * Ensure primary project is loaded. May fail without Redis otherwise.
+   */
+  routes.before.unshift((req, res, next) => {
+    if (req.primaryProject) {
+      return next();
+    }
+    app.formio.formio.cache.loadPrimaryProject(req, (err, project) => {
+      if (err) {
+        /* eslint-disable no-console */
+        console.error(err);
+        /* eslint-enable no-console */
+        return next();
+      }
+      req.primaryProject = project.toObject();
+      next();
+    });
+  });
 
   return routes;
 };
