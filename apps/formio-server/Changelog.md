@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.6.4
+### Fixed
+ - Redo fix for 5.6.3 to ensure it is called before.
+
+## 5.6.3
+### Fixed
+ - Sometimes primary project is not loaded for form routes when not using redis.
+
+## 5.6.2
+### Fixed
+ - Rerun 5.6.1 update with correct spelling of commercial.
+
+## 5.6.1
+### Fixed
+ - Update all remote projects to commercial. Many were accidently set to trial.
+ - Ensure all future remote projects are set at the minumum of the default.
+
 ## 5.6.0
 ### Added
  - Possibility to get report using form collection.

@@ -70,6 +70,7 @@ module.exports = function(router, formioServer) {
 
   // Load the project plan filter for use.
   formio.middleware.projectPlanFilter = require('../middleware/projectPlanFilter')(formio);
+  formio.middleware.projectDefaultPlan = require('../middleware/projectDefaultPlan')(formioServer);
 
   // Load the project analytics middleware.
   formio.middleware.projectAnalytics = require('../middleware/projectAnalytics')(formioServer);
@@ -118,6 +119,7 @@ module.exports = function(router, formioServer) {
     beforePost: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       require('../middleware/fetchTemplate'),
+      formio.middleware.projectDefaultPlan,
       formio.middleware.projectEnvCreatePlan,
       formio.middleware.projectEnvCreateAccess,
       function(req, res, next) {
