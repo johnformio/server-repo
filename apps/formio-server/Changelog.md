@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.6.5
+### Changed
+ - Upgrade formio to 1.29.2
+
 ## 5.6.4
 ### Fixed
  - Redo fix for 5.6.3 to ensure it is called before.
