@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## 5.6.5
 ### Fixed
  - PDF permissions not checked properly.
+
 ### Changed
  - Upgrade formio to 1.29.2
 
