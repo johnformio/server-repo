@@ -80,7 +80,7 @@
     "sinon": "^4.5.0",
     "supertest": "^3.0.0",
     "uglify-es": "git+https://github.com/mishoo/UglifyJS2.git#harmony",
-    "webpack": "^4.5.0"
+    "webpack": "^4.8.0"
   },
   "pre-commit": [
     "lint"
