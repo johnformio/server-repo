@@ -35,6 +35,7 @@ var copyFile = function(file) {
 ].forEach(copyFile);
 
 var compiler = webpack({
+  mode: 'production',
   entry: './main.js',
   target: 'node',
   node: {
@@ -43,7 +44,7 @@ var compiler = webpack({
     module: true
   },
   output: {
-    path: path.join(__dirname, 'build'),
+    path: path.resolve(__dirname, 'build'),
     filename: 'main.js'
   },
   externals: nodeModules

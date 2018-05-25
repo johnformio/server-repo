@@ -120,6 +120,7 @@ module.exports = function(options) {
   const downloadPDF = [
     require('./src/middleware/aliasToken')(app),
     app.formio.formio.middleware.tokenHandler,
+    app.formio.formio.middleware.params,
     app.formio.formio.middleware.permissionHandler,
     require('./src/middleware/download')(app.formio.formio)
   ];
