@@ -7,7 +7,7 @@ module.exports = function(router) {
   const formio = router.formio;
   const Action = formio.Action;
   const Moxtra = require('./utils')(router);
-  const Thread = require('formio/src/worker/Thread');
+  const Thread = require('formio-workers/Thread');
   const Nunjucks = require('formio/src/util/email')(formio);
 
   /**
