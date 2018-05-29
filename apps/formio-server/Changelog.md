@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.7.0
+### Changed
+ - Now able to use external hosted service for Nunjucks email templating.
+ - Upgrade mongoose@5.1.3, aws-sdk@2.247.1, formio@1.30.0, resourcejs@1.24.0, webpack@4.10.1, sinon@5.0.10, prepack@0.2.36
+
 ## 5.6.5
 ### Fixed
  - PDF permissions not checked properly.
