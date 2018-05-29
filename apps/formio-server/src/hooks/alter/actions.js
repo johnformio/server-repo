@@ -2,7 +2,6 @@
 
 module.exports = app => actions => {
   const formioServer = app.formio;
-
   actions.office365contact = require('../../actions/office365/Office365Contact')(formioServer);
   actions.office365calendar = require('../../actions/office365/Office365Calendar')(formioServer);
   actions.hubspotContact = require('../../actions/hubspot/hubspotContact')(formioServer);
@@ -16,6 +15,6 @@ module.exports = app => actions => {
   actions.moxtraMessage = require('../../actions/moxtra/MoxtraMessage')(formioServer);
   actions.moxtraTodo = require('../../actions/moxtra/MoxtraTodo')(formioServer);
   actions.webhook = require('../../actions/WebhookAction')(formioServer);
-
+  actions.twilio = require('../../actions/twilio/twilio')(formioServer);
   return actions;
 };
