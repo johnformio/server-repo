@@ -165,6 +165,19 @@ module.exports = (redis) => {
     });
   };
 
+  const getEmails = function(year, month, project, next) {
+    redis.getDb((err, db) => {
+      if (err) {
+        return next();
+      }
+      const redisKey = `email:${project}:${year}${month}`;
+
+      db.get(redisKey, (err, count) => {
+        return next(null, count ? parseInt(count) : count);
+      });
+    });
+  };
+
   /**
    * Recursively get all the redis keys matching the glob.
    *
@@ -1476,6 +1489,7 @@ module.exports = (redis) => {
   return {
     hook: hook,
     getCalls: getCalls,
+    getEmails: getEmails,
     getAnalyticsKey: getAnalyticsKey,
     endpoints: endpoints
   };
