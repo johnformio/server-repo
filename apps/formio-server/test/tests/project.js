@@ -207,7 +207,8 @@ module.exports = function(app, template, hook) {
               used: 0,
               remaining: app.formio.formio.plans.limits[response.plan],
               limit: app.formio.formio.plans.limits[response.plan],
-              reset: moment().startOf('month').add(1, 'month').toISOString()
+              reset: moment().startOf('month').add(1, 'month').toISOString(),
+              emails: null
             });
           }
 
@@ -259,7 +260,8 @@ module.exports = function(app, template, hook) {
               used: 0,
               remaining: app.formio.formio.plans.limits[response.plan],
               limit: app.formio.formio.plans.limits[response.plan],
-              reset: moment().startOf('month').add(1, 'month').toISOString()
+              reset: moment().startOf('month').add(1, 'month').toISOString(),
+              emails: null
             });
           }
 
@@ -457,7 +459,8 @@ module.exports = function(app, template, hook) {
               used: 0,
               remaining: app.formio.formio.plans.limits[responseProject.plan],
               limit: app.formio.formio.plans.limits[responseProject.plan],
-              reset: moment().startOf('month').add(1, 'month').toISOString()
+              reset: moment().startOf('month').add(1, 'month').toISOString(),
+              emails: null
             });
           }
 
@@ -733,7 +736,8 @@ module.exports = function(app, template, hook) {
                 used: 0,
                 remaining: app.formio.formio.plans.limits[response.plan],
                 limit: app.formio.formio.plans.limits[response.plan],
-                reset: moment().startOf('month').add(1, 'month').toISOString()
+                reset: moment().startOf('month').add(1, 'month').toISOString(),
+                emails: null
               });
             }
 
