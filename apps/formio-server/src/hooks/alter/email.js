@@ -20,7 +20,9 @@ module.exports = app => (mail, req, res, params, cb) => {
           return reject('Plan limited to default transport only.');
         }
         if (formioServer.redis && formioServer.redis.db) {
+          /* eslint-disable max-len */
           const redisKey = `email:${req.currentProject._id.toString()}:${(new Date()).getUTCFullYear().toString()}${((new Date()).getUTCMonth() + 1).toString()}`;
+          /* eslint-enable max-len */
           formioServer.redis.db.get(redisKey, (err, emailCount) => {
             if (err) {
               return reject(err);
