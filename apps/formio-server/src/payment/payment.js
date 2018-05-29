@@ -1,32 +1,29 @@
 'use strict';
 
-var Q = require('q');
-var debug = require('debug')('formio:payment');
+const Q = require('q');
 
 module.exports = function(app, formio) {
   // Load custom CRM action.
   formio.middleware.customCrmAction = require('../middleware/customCrmAction')(formio);
 
-  var cache = require('../cache/cache')(formio);
-
   app.post('/payeezy',
     formio.middleware.tokenHandler,
-    require('../middleware/userProject')(cache),
+    require('../middleware/userProject')(formio),
     require('./payeezy')(app.formio.config, formio)
   );
 
   app.post('/project/:projectId/upgrade',
     formio.middleware.tokenHandler,
-    require('../middleware/userProject')(cache),
+    require('../middleware/userProject')(formio),
     require('../middleware/restrictOwnerAccess')(formio),
     require('./upgrade')(formio),
     formio.middleware.customCrmAction('upgradeproject')
   );
 
-  var paymentFormId;
-  var projectHistoryId;
+  let paymentFormId;
+  let projectHistoryId;
 
-  var getPaymentFormId = function(projectId) {
+  const getPaymentFormId = function(projectId) {
     if (paymentFormId) {
       return Q(paymentFormId);
     }
@@ -45,7 +42,7 @@ module.exports = function(app, formio) {
     });
   };
 
-  var getUpgradeHistoryFormId = function(projectId) {
+  const getUpgradeHistoryFormId = function(projectId) {
     if (projectHistoryId) {
       return Q(projectHistoryId);
     }
@@ -64,21 +61,19 @@ module.exports = function(app, formio) {
     });
   };
 
-  var userHasPaymentInfo = function(req) {
+  const userHasPaymentInfo = function(req) {
     if (!req.user || !req.userProject.primary) {
       return Q.reject('Must be logged in to get payment info');
     }
 
     return getPaymentFormId(req.userProject._id)
     .then(function(formId) {
-      debug(formId, req.user._id);
       return Q(formio.resources.submission.model.count({
         form: formId,
         owner: req.user._id
       }));
     })
     .then(function(count) {
-      debug('Payment info count:', count);
       return count > 0;
     });
   };

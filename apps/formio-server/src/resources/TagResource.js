@@ -1,24 +1,23 @@
 'use strict';
 
-var Resource = require('resourcejs');
-var _ = require('lodash');
-var debug = require('debug')('formio:resources:tag');
+const Resource = require('resourcejs');
+const _ = require('lodash');
+const debug = require('debug')('formio:resources:tag');
 
 module.exports = function(router, formioServer) {
-  var formio = formioServer.formio;
-  var cache = require('../cache/cache')(formio);
-  var hook = require('formio/src/util/hook')(formio);
+  const formio = formioServer.formio;
+  const hook = require('formio/src/util/hook')(formio);
   formio.middleware.tagHandler = require('../middleware/tagHandler')(router);
   formio.middleware.restrictToPlans = require('../middleware/restrictToPlans')(router);
   formio.middleware.deleteTagHandler = require('../middleware/deleteTagHandler')(router, formioServer);
 
-  var hiddenFields = ['deleted', '__v'];
+  const hiddenFields = ['deleted', '__v'];
 
-  var resource = Resource(
+  const resource = Resource(
     router,
     '/project/:projectId',
     'tag',
-    formio.mongoose.model('tag', formio.schemas.tag)
+    formio.mongoose.model('tag')
   ).rest({
     beforeGet: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
@@ -32,23 +31,31 @@ module.exports = function(router, formioServer) {
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       formio.middleware.tagHandler,
       function(req, res, next) {
-        cache.loadCurrentProject(req, (err, project) => {
-          let options = router.formio.formio.hook.alter('exportOptions', {}, req, res);
-          formio.template.export(options, function(err, template) {
-            if (err) {
-              return res.status(400).send(err);
-            }
-            template.tag = req.body.tag;
-            req.body.template = template;
+        formio.cache.loadCurrentProject(req, (err, project) => {
+          // Allow passing template from frontend. This is useful for remote environments.
+          if (!req.body.template) {
+            const options = router.formio.formio.hook.alter('exportOptions', {}, req, res);
+            formio.template.export(options, function(err, template) {
+              if (err) {
+                return res.status(400).send(err);
+              }
+              template.tag = req.body.tag;
+              req.body.template = template;
+              req.body.owner = project.owner.toString();
+              return next();
+            });
+          }
+          else {
+            req.body.template.tag = req.body.tag;
             req.body.owner = project.owner.toString();
             return next();
-          });
+          }
         });
       }
     ],
     afterPost: [
       function(req, res, next) {
-        cache.loadCurrentProject(req, (err, project) => {
+        formio.cache.loadCurrentProject(req, (err, project) => {
           project.tag = req.body.tag;
           project.markModified('tag');
           project.save();
@@ -83,7 +90,7 @@ module.exports = function(router, formioServer) {
   router.get(
     '/project/:projectId/tag/current',
     function(req, res, next) {
-      cache.loadCurrentProject(req, (err, project) => {
+      formio.cache.loadCurrentProject(req, (err, project) => {
         if (err) {
           return res.status(400).send(err);
         }
@@ -128,11 +135,10 @@ module.exports = function(router, formioServer) {
                 return res.status(400).send('Tag not found.');
               }
 
-              let template = tag.template;
+              const template = tag.template;
 
               Object.assign(template, _.pick(project, ['name', 'title', 'description', 'machineName']));
-              let alters = hook.alter('templateAlters', {});
-              debug('import template', template);
+              const alters = hook.alter('templateAlters', {});
 
               formio.template.import.template(template, alters, function(err, template) {
                 if (err) {
@@ -156,7 +162,36 @@ module.exports = function(router, formioServer) {
             if (!('environment' in deploy)) {
               return res.status(400).send('Deploy environment command must contain an environment name.');
             }
+            res.status(400).send('Deploy environment not yet supported');
             // TODO: do environment deploy.
+            break;
+          }
+          case 'template': {
+            if (!('template' in deploy) || typeof deploy.template !== 'object') {
+              res.status(400).send('Must send a template with a template deployment.');
+            }
+
+            const template = deploy.template;
+
+            Object.assign(template, _.pick(project, ['name', 'title', 'description', 'machineName']));
+            const alters = hook.alter('templateAlters', {});
+
+            formio.template.import.template(template, alters, function(err, template) {
+              if (err) {
+                debug(err);
+                return res.status(400).send('An error occurred with the template import.');
+              }
+
+              project.tag = template.tag;
+              project.markModified('tag');
+              project.save((err) => {
+                if (err) {
+                  return res.status(400).send(err.message || err);
+                }
+                return res.send('Tag Deployed');
+              });
+            });
+
             break;
           }
           default: {

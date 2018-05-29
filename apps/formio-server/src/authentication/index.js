@@ -1,5 +1,5 @@
 'use strict';
-var Q = require('q');
+const Q = require('q');
 
 module.exports = function(formio) {
   /**
@@ -12,7 +12,7 @@ module.exports = function(formio) {
    *
    * @returns {Promise}
    */
-  var authenticateOAuth = function(form, providerName, oauthId, next) {
+  const authenticateOAuth = function(form, providerName, oauthId, next) {
     if (!providerName) {
       return next(new Error('Missing provider'));
     }
@@ -38,7 +38,7 @@ module.exports = function(formio) {
       }
 
       // Respond with a token.
-      var token = {
+      const token = {
         user: {
           _id: user._id,
           roles: user.roles
@@ -46,6 +46,9 @@ module.exports = function(formio) {
         form: {
           _id: form._id,
           project: form.project
+        },
+        project: {
+          _id: form.project
         }
       };
 

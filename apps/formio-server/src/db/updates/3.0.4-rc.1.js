@@ -1,7 +1,7 @@
 'use strict';
 
-var async = require('async');
-var _ = require('lodash');
+let async = require('async');
+let _ = require('lodash');
 
 /**
  * Update 3.0.4-rc1
@@ -14,14 +14,14 @@ var _ = require('lodash');
  * @param done
  */
 module.exports = function(db, config, tools, done) {
-  var actionCollection = db.collection('actions');
-  var formCollection = db.collection('forms');
-  var projectCollection = db.collection('projects');
+  let actionCollection = db.collection('actions');
+  let formCollection = db.collection('forms');
+  let projectCollection = db.collection('projects');
 
   // Ensure that the machine name is unique.
-  var setMachineName = function(action, machineName, index, done) {
+  let setMachineName = function(action, machineName, index, done) {
     index = index || 0;
-    var uniqueName = machineName;
+    let uniqueName = machineName;
     if (index) {
       uniqueName += index;
     }
@@ -69,7 +69,7 @@ module.exports = function(db, config, tools, done) {
             return next();
           }
 
-          var machineName = project.name + ':' + form.name + ':' + action.name;
+          let machineName = project.name + ':' + form.name + ':' + action.name;
           setMachineName(action, machineName, 0, function() {
             next();
           });

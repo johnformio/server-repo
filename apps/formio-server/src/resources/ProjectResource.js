@@ -1,55 +1,76 @@
 'use strict';
 
-var Resource = require('resourcejs');
-var config = require('../../config');
-var _ = require('lodash');
-var debug = require('debug')('formio:resources:projects');
+const Resource = require('resourcejs');
+const config = require('../../config');
+const _ = require('lodash');
+const debug = require('debug')('formio:resources:projects');
 
 module.exports = function(router, formioServer) {
-  var formio = formioServer.formio;
-  var removeProjectSettings = function(req, res, next) {
+  const formio = formioServer.formio;
+  const getProjectAccess = function(settings, permissions) {
+    return _.chain(settings)
+      .filter({type: permissions})
+      .head()
+      .get('roles', [])
+      .map(formio.util.idToString)
+      .value();
+  };
+  const removeProjectSettings = function(req, res, next) {
+    // Allow admin key
+    if (req.adminKey) {
+      return next();
+    }
+    // Allow project owners.
     if (req.token && req.projectOwner && (req.token.user._id === req.projectOwner)) {
-      debug('Allowing the project owner to see/change project settings.');
+      return next();
+    }
+    // Allow team admins on remote
+    else if (req.remotePermission && (['admin', 'owner', 'team_admin'].indexOf(req.remotePermission) !== -1)) {
       return next();
     }
     else if (req.projectId && req.user) {
-      var cache = require('../cache/cache')(formio);
-      cache.loadPrimaryProject(req, function(err, project) {
+      formio.cache.loadPrimaryProject(req, function(err, project) {
+        let role = 'read';
         if (!err) {
-          var access = _.map(_.map(_.filter(project.access, {type: 'team_admin'}), 'roles'), formio.util.idToString);
-          var roles = _.map(req.user.roles, formio.util.idToString);
+          const adminAccess = getProjectAccess(project.access, 'team_admin');
+          const writeAccess = getProjectAccess(project.access, 'team_write');
+          const roles = _.map(req.user.roles, formio.util.idToString);
 
-          if ( _.intersection(access, roles).length !== 0) {
-            debug('Allowing a team_admin user to see/change project settings.');
+          if ( _.intersection(adminAccess, roles).length !== 0) {
             return next();
+          }
+          if ( _.intersection(writeAccess, roles).length !== 0) {
+            role = 'write';
           }
         }
         else {
           debug(err);
         }
 
-        debug('Skipping project settings!');
         if (req.method === 'PUT' || req.method === 'POST') {
           req.body = _.omit(req.body, 'settings');
-          debug('Removing payload settings: ' + JSON.stringify(req.body));
         }
 
-        formio.middleware.filterResourcejsResponse(['settings']).call(this, req, res, next);
+        const fileToken = role === 'write' && _.get(res, 'resource.item.settings.filetoken', null);
+
+        formio.middleware.filterResourcejsResponse(['settings', 'billing']).call(this, req, res, next);
+        if (fileToken) {
+          _.set(res, 'resource.item.settings.filetoken', fileToken);
+        }
       });
     }
     else {
-      debug('Skipping project settings!');
       if (req.method === 'PUT' || req.method === 'POST') {
         req.body = _.omit(req.body, 'settings');
-        debug('Removing payload settings: ' + JSON.stringify(req.body));
       }
 
-      formio.middleware.filterResourcejsResponse(['settings']).call(this, req, res, next);
+      formio.middleware.filterResourcejsResponse(['settings', 'billing']).call(this, req, res, next);
     }
   };
 
   // Load the project plan filter for use.
   formio.middleware.projectPlanFilter = require('../middleware/projectPlanFilter')(formio);
+  formio.middleware.projectDefaultPlan = require('../middleware/projectDefaultPlan')(formioServer);
 
   // Load the project analytics middleware.
   formio.middleware.projectAnalytics = require('../middleware/projectAnalytics')(formioServer);
@@ -66,6 +87,7 @@ module.exports = function(router, formioServer) {
   // Load the Environment create middleware.
   formio.middleware.projectEnvCreatePlan = require('../middleware/projectEnvCreatePlan')(formio);
   formio.middleware.projectEnvCreateAccess = require('../middleware/projectEnvCreateAccess')(formio);
+  formio.middleware.projectTeamSync = require('../middleware/projectTeamSync')(formio);
 
   // Load custom hubspot action.
   formio.middleware.customHubspotAction = require('../middleware/customHubspotAction')(formio);
@@ -73,15 +95,21 @@ module.exports = function(router, formioServer) {
   // Load custom CRM action.
   formio.middleware.customCrmAction = require('../middleware/customCrmAction')(formio);
 
-  var hiddenFields = ['deleted', '__v', 'machineName', 'primary'];
-  var resource = Resource(
+  const hiddenFields = ['deleted', '__v', 'machineName', 'primary'];
+  const projectModel = formio.mongoose.model('project');
+  const resource = Resource(
     router,
     '',
     'project',
-    formio.mongoose.model('project', formio.schemas.project)
+    projectModel
   ).rest({
     beforeGet: [
-      formio.middleware.filterMongooseExists({field: 'deleted', isNull: true})
+      formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
+      (req, res, next) => {
+        // Use project cache for performance reasons.
+        req.modelQuery = req.modelQuery || req.model || projectModel;
+        next();
+      }
     ],
     afterGet: [
       formio.middleware.filterResourcejsResponse(hiddenFields),
@@ -90,17 +118,25 @@ module.exports = function(router, formioServer) {
     ],
     beforePost: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
+      require('../middleware/fetchTemplate'),
+      formio.middleware.projectDefaultPlan,
       formio.middleware.projectEnvCreatePlan,
       formio.middleware.projectEnvCreateAccess,
       function(req, res, next) {
+        // Don't allow setting billing.
+        if (req.body) {
+          delete req.body.billing;
+        }
         if (req.body && req.body.template) {
           req.template = req.body.template;
           req.templateMode = 'create';
+          req.template.isPrimary = (req.template.primary && req.isAdmin && req.adminKey);
           delete req.body.template;
         }
         next();
       },
       formio.middleware.bootstrapEntityOwner(false),
+      formio.middleware.projectTeamSync,
       formio.middleware.condensePermissionTypes,
       formio.middleware.projectPlanFilter
     ],
@@ -124,6 +160,10 @@ module.exports = function(router, formioServer) {
     beforePut: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       function(req, res, next) {
+        // Don't allow setting billing.
+        if (req.body) {
+          delete req.body.billing;
+        }
         if (req.body && req.body.template) {
           req.template = req.body.template;
           req.templateMode = 'update';
@@ -131,12 +171,11 @@ module.exports = function(router, formioServer) {
         }
         next();
       },
-      formio.middleware.condensePermissionTypes,
       // Protected Project Access.
       function(req, res, next) {
         // Don't allow some changes if project is protected.
         if ('protect' in req.currentProject && req.currentProject.protect === true && req.body.protect !== false) {
-          let accesses = {};
+          const accesses = {};
           req.currentProject.access.forEach(access => {
             accesses[access.type] = access.roles;
           });
@@ -168,6 +207,8 @@ module.exports = function(router, formioServer) {
         next();
       },
       formio.middleware.projectAccessFilter,
+      formio.middleware.projectTeamSync,
+      formio.middleware.condensePermissionTypes,
       formio.middleware.projectPlanFilter,
       removeProjectSettings
     ],
@@ -204,13 +245,12 @@ module.exports = function(router, formioServer) {
         return next(err);
       }
 
-      debug('Project is available: ' + !project);
       return res.status(200).json({available: !project});
     });
   });
 
   // Expose the atlassian oauth endpoints.
-  var atlassian = require('../actions/atlassian/util')(formioServer);
+  const atlassian = require('../actions/atlassian/util')(formioServer);
   router.post(
     '/project/:projectId/atlassian/oauth/authorize',
     formio.middleware.tokenHandler,
@@ -226,7 +266,7 @@ module.exports = function(router, formioServer) {
   );
 
   // Expose the sql connector endpoint
-  var sqlconnector = require('../actions/sqlconnector/util')(formioServer);
+  const sqlconnector = require('../actions/sqlconnector/util')(formioServer);
   router.get(
     '/project/:projectId/sqlconnector',
     formio.middleware.tokenHandler,

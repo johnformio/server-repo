@@ -1,18 +1,17 @@
 'use strict';
 
-var _ = require('lodash');
+const _ = require('lodash');
 
 module.exports = function(app, config) {
-  var formio = app.formio.formio;
-  var ProjectSocket = require('./websocket/ProjectSocket')(formio);
+  const ProjectSocket = require('./websocket/ProjectSocket')(app.formio);
 
   // Create a project socket.
-  var socket = new ProjectSocket(app.server, config);
+  const socket = new ProjectSocket(app.server, config);
 
   // Register all traffic coming through submissions.
   app.use('/project/:projectId/form/:formId/submission', function(req, res, next) {
     // Create the socket request.
-    var request = _.pick(req, [
+    const request = _.pick(req, [
       'method',
       'body',
       'url',
@@ -20,28 +19,18 @@ module.exports = function(app, config) {
       'query'
     ]);
 
-    formio.plans.getPlan(req, function(err, plan) {
-      if (err) {
-        return next(err);
-      }
-      // Skip the websocket stuff, because the plan is not upgraded.
-      if (['team', 'commercial'].indexOf(plan) === -1) {
-        return next();
-      }
-
-      // Send the request to the socket.
-      socket.send(request).then(function(data) {
-        if (data && data.response) {
-          if (data.response.status && (data.response.status !== 200)) {
-            res.status(data.response.status).json(data.response.message);
-            return;
-          }
-          if (data.response.body) {
-            _.assign(req.body, data.response.body);
-          }
+    // Send the request to the socket.
+    socket.send(request).then(function(data) {
+      if (data && data.response) {
+        if (data.response.status && (data.response.status !== 200)) {
+          res.status(data.response.status).json(data.response.message);
+          return;
         }
-        next();
-      }).catch(next);
-    });
+        if (data.response.body) {
+          _.assign(req.body, data.response.body);
+        }
+      }
+      next();
+    }).catch(next);
   });
 };

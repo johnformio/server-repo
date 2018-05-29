@@ -1,8 +1,8 @@
 'use strict';
 
-var _ = require('lodash');
-var JiraClient = require('jira-connector');
-var debug = {
+const _ = require('lodash');
+const JiraClient = require('jira-connector');
+const debug = {
   createIssue: require('debug')('formio:atlassian:createIssue'),
   updateIssue: require('debug')('formio:atlassian:updateIssue'),
   deleteIssue: require('debug')('formio:atlassian:deleteIssue'),
@@ -13,8 +13,7 @@ var debug = {
 };
 
 module.exports = function(router) {
-  var formio = router.formio;
-  var cache = require('../../cache/cache')(formio);
+  const formio = router.formio;
 
   /**
    * Check to see if the connection settings are present.
@@ -25,7 +24,7 @@ module.exports = function(router) {
    * @returns {boolean}
    *   Whether or not the settings are correct to connect to atlassian.
    */
-  var checkSettings = function(settings) {
+  const checkSettings = function(settings) {
     if (!settings) {
       debug.checkSettings('No Project settings found');
       return false;
@@ -50,7 +49,7 @@ module.exports = function(router) {
     return true;
   };
 
-  var checkOAuthSetting = function(settings) {
+  const checkOAuthSetting = function(settings) {
     if (!settings) {
       debug.checkSettings('No Project settings found');
       return false;
@@ -79,7 +78,7 @@ module.exports = function(router) {
     return true;
   };
 
-  var checkOAuth = function(settings) {
+  const checkOAuth = function(settings) {
     if (!settings) {
       debug.checkOAuth('No OAuth settings found');
       return false;
@@ -98,7 +97,7 @@ module.exports = function(router) {
     return true;
   };
 
-  var checkOAuthFinal = function(settings) {
+  const checkOAuthFinal = function(settings) {
     if (!checkOAuth(settings)) {
       return false;
     }
@@ -116,7 +115,7 @@ module.exports = function(router) {
     return true;
   };
 
-  var storeOAuthReply = function(req, res, next) {
+  const storeOAuthReply = function(req, res, next) {
     formio.hook.settings(req, function(err, settings) {
       if (err) {
         debug.storeOAuthReply(err);
@@ -155,13 +154,13 @@ module.exports = function(router) {
             return res.sendStatus(400);
           }
 
-          cache.loadProject(req, formio.util.idToBson(req.projectId), function(err, project) {
+          formio.cache.loadProject(req, formio.util.idToBson(req.projectId), function(err, project) {
             if (err) {
               debug.authorizeOAuth(err);
               return res.sendStatus(400);
             }
 
-            var settings = _.cloneDeep(project.toObject().settings);
+            const settings = _.cloneDeep(project.toObject().settings);
             _.set(settings, 'atlassian.oauth.token', accessToken);
             project.set('settings', settings);
             project.markModified('settings');
@@ -187,7 +186,7 @@ module.exports = function(router) {
     });
   };
 
-  var authorizeOAuth = function(req, res, next) {
+  const authorizeOAuth = function(req, res, next) {
     formio.hook.settings(req, function(err, settings) {
       if (err) {
         debug.authorizeOAuth(err);
@@ -217,13 +216,13 @@ module.exports = function(router) {
             return res.sendStatus(400);
           }
 
-          cache.loadProject(req, formio.util.idToBson(req.projectId), function(err, project) {
+          formio.cache.loadProject(req, formio.util.idToBson(req.projectId), function(err, project) {
             if (err) {
               debug.authorizeOAuth(err);
               return res.sendStatus(400);
             }
 
-            var settings = _.cloneDeep(project.toObject().settings);
+            const settings = _.cloneDeep(project.toObject().settings);
             _.set(settings, 'atlassian.oauth.token', handshake.token);
             _.set(settings, 'atlassian.oauth.token_secret', handshake.token_secret);
             project.set('settings', settings);
@@ -252,8 +251,8 @@ module.exports = function(router) {
   return {
     storeOAuthReply: storeOAuthReply,
     authorizeOAuth: authorizeOAuth,
-    getJira: function(settings) {
-      var opts = {
+    getJira(settings) {
+      const opts = {
         host: _.get(settings, 'atlassian.url')
       };
 

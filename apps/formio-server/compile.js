@@ -12,7 +12,7 @@ fs.readdirSync('node_modules')
   //  return ['.bin'].indexOf(x) === -1;
   //})
   .forEach(function(mod) {
-    nodeModules[mod] = 'commonjs ' + mod;
+    nodeModules[mod] = `commonjs ${mod}`;
   });
 
 // Ensure build directory exists.
@@ -27,16 +27,15 @@ catch (e) {
 
 // Copy over files
 var copyFile = function(file) {
-  fs.createReadStream(file).pipe(fs.createWriteStream(outputDir + '/' + file));
+  fs.createReadStream(file).pipe(fs.createWriteStream(`${outputDir}/${file}`));
 };
 [
   'favicon.ico',
-  'package.json',
-  'project.json',
-  'server.sh'
+  'package.json'
 ].forEach(copyFile);
 
 var compiler = webpack({
+  mode: 'production',
   entry: './main.js',
   target: 'node',
   node: {
@@ -45,7 +44,7 @@ var compiler = webpack({
     module: true
   },
   output: {
-    path: path.join(__dirname, 'build'),
+    path: path.resolve(__dirname, 'build'),
     filename: 'main.js'
   },
   externals: nodeModules

@@ -4,13 +4,8 @@ var request = require('supertest');
 var assert = require('assert');
 var _ = require('lodash');
 var chance = new (require('chance'))();
-var docker = process.env.DOCKER;
 
 module.exports = function(app, template, hook) {
-  if (docker) {
-    // No docker tests.
-    return;
-  }
   let formio = app.formio.formio;
   let alters = hook.alter(`templateAlters`, {});
   let importer = formio.template;

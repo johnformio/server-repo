@@ -1,9 +1,8 @@
 'use strict';
 
-var _ = require('lodash');
-var Q = require('q');
-var moment = require('moment');
-var debug = require('debug')('formio:middleware:projectAnalytics');
+const _ = require('lodash');
+const Q = require('q');
+const moment = require('moment');
 
 module.exports = function(formioServer) {
   /**
@@ -11,7 +10,7 @@ module.exports = function(formioServer) {
    * @param project
    * @return [info, project]
    */
-  var getCallInfo = function(project) {
+  const getCallInfo = function(project) {
     if (!project) {
       return Q.reject('No project');
     }
@@ -20,23 +19,31 @@ module.exports = function(formioServer) {
     }
 
     project._id = project._id.toString();
-    var curr = new Date();
+    const curr = new Date();
     return Q.nfcall(formioServer.analytics.getCalls, curr.getUTCFullYear(), curr.getUTCMonth(), null, project._id)
-    .then(function(used) {
-      var limit = formioServer.formio.plans.limits[project.plan];
-      var info = {
-        used: used,
-        remaining: project.plan === 'commercial' ? null : limit - used,
-        limit: project.plan === 'commercial' ? null : limit,
-        reset: moment().startOf('month').add(1, 'month').toISOString()
-      };
-      debug('API Call Info:', info);
-      return info;
+    .then(used => {
+      return Q.nfcall(formioServer.analytics.getEmails, curr.getUTCFullYear(), curr.getUTCMonth() + 1, project._id)
+        .then(emails => {
+          const limit = formioServer.formio.plans.limits[project.plan];
+          const info = {
+            used,
+            remaining: limit - used,
+            limit,
+            reset: moment().startOf('month').add(1, 'month').toISOString(),
+            emails
+          };
+          return info;
+        });
     });
   };
 
   return function(req, res, next) {
     if (req.method === 'DELETE') {
+      return next();
+    }
+
+    // This happens when an error occurred. Don't count it.
+    if (!res.resource.item) {
       return next();
     }
 

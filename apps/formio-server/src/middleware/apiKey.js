@@ -1,6 +1,6 @@
 'use strict';
 
-var _ = require('lodash');
+const _ = require('lodash');
 
 /**
  * Provides URL alias capabilities.
@@ -8,15 +8,13 @@ var _ = require('lodash');
  * Middleware to resolve a form alias into its components.
  */
 module.exports = function(formio) {
-  var cache = require('../cache/cache')(formio);
-
   // Handle the request.
   return function(req, res, next) {
     // Get the API Token
-    var token = req.headers.hasOwnProperty('x-token') ? req.headers['x-token'] : req.query['token'];
+    const token = req.headers.hasOwnProperty('x-token') ? req.headers['x-token'] : req.query['token'];
 
     // Load the current project.
-    cache.loadCurrentProject(req, function(err, currentProject) {
+    formio.cache.loadCurrentProject(req, function(err, currentProject) {
       if (err || !currentProject) {
         return next();
       }
@@ -35,13 +33,19 @@ module.exports = function(formio) {
       }
 
       // Load the formio project.
-      cache.loadProjectByName(req, 'formio', function(err, formioProject) {
+      formio.cache.loadProjectByName(req, 'formio', function(err, formioProject) {
         if (err || !formioProject) {
+          // If there is no formio project, then this means we are a remote environment. Set as admin and skip
+          // permission check.
+          if (err === 'Project not found') {
+            req.permissionsChecked = true;
+            req.isAdmin = true;
+          }
           return next();
         }
 
         // Load the user object.
-        var query = {
+        const query = {
           name: 'user',
           project: formioProject._id,
           deleted: {$eq: null}

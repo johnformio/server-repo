@@ -1,7 +1,7 @@
 'use strict';
 
-var async = require('async');
-var _ = require('lodash');
+let async = require('async');
+let _ = require('lodash');
 
 /**
  * Update 3.0.2-rc1
@@ -15,9 +15,9 @@ var _ = require('lodash');
  * @param done
  */
 module.exports = function(db, config, tools, done) {
-  var actionCollection = db.collection('actions');
+  let actionCollection = db.collection('actions');
 
-  var updateHubSpot = function(then) {
+  let updateHubSpot = function(then) {
     actionCollection.find({
       name: 'hubspotContact'
     }).snapshot({$snapshot: true}).toArray(function(err, actions) {
@@ -29,7 +29,7 @@ module.exports = function(db, config, tools, done) {
       async.forEachOf(actions, function(action, key, next) {
         _.each(action.settings, function(value, key) {
           if (key.match(/_field$/) && value.indexOf('.') !== -1) {
-            var parts = value.split('.');
+            let parts = value.split('.');
             action.settings[key] = parts[1];
           }
         });

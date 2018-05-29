@@ -1,6 +1,6 @@
 'use strict';
 
-var debug = {
+let debug = {
   updateProjects: require('debug')('formio:update:3.1.0-rc.1-updateProjects')
 };
 
@@ -19,33 +19,34 @@ var debug = {
  * @param done
  */
 module.exports = function(db, config, tools, done) {
-  var projectCollection = db.collection('projects');
-
-  // fix broken projects
-  projectCollection
-    .update(
-      {
-        deleted: {$eq: null},
-        plan: 'basic'
-      },
-      {
-        $set: {
-          plan: 'trial',
-          trial: (new Date()).toISOString().replace('T', ' ')
-        }
-      },
-      {
-        upsert: false,
-        multi: true
-      },
-      function(err, results) {
-        if (err) {
-          debug.updateProjects(err);
-          return done(err);
-        }
-
-        debug.updateProjects(results);
-        return done();
-      }
-    );
+  done();
+  //let projectCollection = db.collection('projects');
+  //
+  //// fix broken projects
+  //projectCollection
+  //  .update(
+  //    {
+  //      deleted: {$eq: null},
+  //      plan: 'basic'
+  //    },
+  //    {
+  //      $set: {
+  //        plan: 'trial',
+  //        trial: (new Date()).toISOString().replace('T', ' ')
+  //      }
+  //    },
+  //    {
+  //      upsert: false,
+  //      multi: true
+  //    },
+  //    function(err, results) {
+  //      if (err) {
+  //        debug.updateProjects(err);
+  //        return done(err);
+  //      }
+  //
+  //      debug.updateProjects(results);
+  //      return done();
+  //    }
+  //  );
 };

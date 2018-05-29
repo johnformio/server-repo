@@ -1,13 +1,13 @@
 'use strict';
 
-var Q = require('q');
-var _ = require('lodash');
-var debug = require('debug')('formio:oauth');
+const Q = require('q');
+const _ = require('lodash');
 
 module.exports = function(formio) {
   // Export the oauth providers.
   return {
     providers: {
+      openid: require('./openid')(formio),
       github: require('./github')(formio),
       facebook: require('./facebook')(formio),
       office365: require('./office365')(formio),
@@ -19,8 +19,8 @@ module.exports = function(formio) {
     // Gets user token for a provider, and attempts to refresh it
     // if it is expired
     // Returns a promise, or you can provide the next callback arg
-    getUserToken: function(req, res, providerName, userId, next) {
-      var provider = this.providers[providerName];
+    getUserToken(req, res, providerName, userId, next) {
+      const provider = this.providers[providerName];
       if (!provider) {
         return Q.reject('Invalid provider name');
       }
@@ -30,15 +30,13 @@ module.exports = function(formio) {
         if (!user) {
           throw 'Could not find user';
         }
-        var accessToken = _.find(user.externalTokens, {type: provider.name});
+        const accessToken = _.find(user.externalTokens, {type: provider.name});
         if (!accessToken) {
-          throw 'No access token available. Make sure you have authenticated with ' + provider.title + '.';
+          throw `No access token available. Make sure you have authenticated with ${provider.title}.`;
         }
         if (new Date() < accessToken.exp) {
           return accessToken.token;
         }
-
-        debug('Access Token is expired, refreshing...');
 
         return provider.refreshTokens(req, res, user)
         .then(function(tokens) {

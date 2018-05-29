@@ -1,14 +1,13 @@
 'use strict';
-var request = require('request');
-var FORMIO_FILES_SERVER = process.env.FORMIO_FILES_SERVER || 'https://files.form.io';
+const request = require('request');
+const FORMIO_FILES_SERVER = process.env.FORMIO_FILES_SERVER || 'https://files.form.io';
 module.exports = function(formio) {
-  var cache = require('../cache/cache')(formio);
   return function(req, res, next) {
-    cache.loadCurrentProject(req, function(err, project) {
+    formio.cache.loadPrimaryProject(req, function(err, project) {
       if (err) {
         return next(err);
       }
-      let settings = project.settings;
+      const settings = project.settings;
       formio.cache.loadCurrentForm(req, function(err, form) {
         if (err) {
           return next(err);
@@ -19,19 +18,47 @@ module.exports = function(formio) {
           }
 
           // Allow them to dynamically download from any server.
-          var filesServer = req.query.from || FORMIO_FILES_SERVER;
-          request({
-            method: 'POST',
-            url: filesServer + '/pdf/' + req.params.projectId + '/file/' + req.params.fileId + '/download',
-            headers: {
-              'x-file-token': settings.filetoken
-            },
-            json: true,
-            body: {
-              form: form,
-              submission: submission
-            }
-          }).pipe(res);
+          let filesServer = FORMIO_FILES_SERVER;
+          if (req.query.from) {
+            filesServer = req.query.from;
+            delete req.query.from;
+          }
+
+          // Create the headers object.
+          const headers = {
+            'x-file-token': settings.filetoken
+          };
+
+          // Pass along the auth token to files server.
+          if (req.token) {
+            headers['x-jwt-token'] = formio.auth.getToken({
+              form: req.token.form,
+              user: req.token.user
+            });
+          }
+
+          const pdfProject = req.query.project ? req.query.project : project._id.toString();
+          const fileId = req.params.fileId || 'pdf';
+          try {
+            request({
+              method: 'POST',
+              url: `${filesServer}/pdf/${pdfProject}/file/${fileId}/download`,
+              qs: req.query,
+              headers: headers,
+              json: true,
+              body: {
+                form: form,
+                submission: submission
+              }
+            }, (err) => {
+              if (err) {
+                res.status(500).send(err.message);
+              }
+            }).pipe(res);
+          }
+          catch (err) {
+            res.status(500).send(err.message);
+          }
         });
       });
     });

@@ -5,7 +5,7 @@ var request = require('supertest');
 var assert = require('assert');
 var async = require('async');
 var chance = new (require('chance'))();
-var util = require('../src/util/util');
+var util = require('../../src/util/util');
 module.exports = function(app, template, hook) {
   describe('Malformed JSON', function() {
     it('should return a 400 error', function(done) {

@@ -1,14 +1,14 @@
 'use strict';
 
-var Q = require('q');
-var url = require('url');
-var _ = require('lodash');
+const Q = require('q');
+const url = require('url');
+const _ = require('lodash');
 
-var util = require('formio/src/util/util');
+const util = require('formio/src/util/util');
 
 // Export the Github oauth provider.
 module.exports = function(formio) {
-  var oauthUtil = require('../util/oauth')(formio);
+  const oauthUtil = require('../util/oauth')(formio);
   return {
     // Name of the oauth provider (used as property name in settings)
     name: 'facebook',
@@ -50,7 +50,7 @@ module.exports = function(formio) {
     // Exchanges authentication code for auth token
     // Returns a promise, or you can provide the next callback arg
     // Resolves with array of tokens defined like externalTokenSchema
-    getTokens: function(req, code, state, redirectURI, next) {
+    getTokens(req, code, state, redirectURI, next) {
       return oauthUtil.settings(req, this.name)
       .then(function(settings) {
         /* eslint-disable camelcase */
@@ -88,8 +88,8 @@ module.exports = function(formio) {
 
     // Gets user information from oauth access token
     // Returns a promise, or you can provide the next callback arg
-    getUser: function(tokens, next) {
-      var accessToken = _.find(tokens, {type: this.name});
+    getUser(tokens, settings, next) {
+      const accessToken = _.find(tokens, {type: this.name});
       if (!accessToken) {
         return Q.reject('No access token found');
       }
@@ -115,14 +115,14 @@ module.exports = function(formio) {
     },
 
     // Gets user ID from provider user response from getUser()
-    getUserId: function(user) {
+    getUserId(user) {
       return user.id;
     },
 
     // If a facebook token expires, just tell the user to reauthenticate
     // Returns a promise, or you can provide the next callback arg
-    refreshTokens: function(req, res, user, next) {
-      return Q.reject('Token has expired, please reauthenticate with ' + this.title + '.')
+    refreshTokens(req, res, user, next) {
+      return Q.reject(`Token has expired, please reauthenticate with ${this.title}.`)
       .nodeify(next);
     }
   };

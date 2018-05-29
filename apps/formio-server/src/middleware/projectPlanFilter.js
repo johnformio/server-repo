@@ -1,14 +1,14 @@
 'use strict';
 
-var _ = require('lodash');
-var debug = require('debug')('formio:middleware:projectPlanFilter');
+const _ = require('lodash');
+const debug = require('debug')('formio:middleware:projectPlanFilter');
 
 module.exports = function(formio) {
-  var domain = function() {
-    var chars = 'abcdefghijklmnopqrstuvwxyz';
-    var rand = '';
-    for (var i = 0; i < 15; i++) {
-      var randNum = Math.floor(Math.random() * chars.length);
+  const domain = function() {
+    const chars = 'abcdefghijklmnopqrstuvwxyz';
+    let rand = '';
+    for (let i = 0; i < 15; i++) {
+      const randNum = Math.floor(Math.random() * chars.length);
       rand += chars[randNum];
     }
 
@@ -22,10 +22,10 @@ module.exports = function(formio) {
    *
    * @param req
    */
-  var filterNameChanges = function(req) {
+  const filterNameChanges = function(req) {
     req.body = _.omit(req.body, 'name');
 
-    var isPost = req.method === 'POST';
+    const isPost = req.method === 'POST';
     if (isPost) {
       req.body.name = domain();
     }
@@ -38,7 +38,7 @@ module.exports = function(formio) {
    *
    * @param req
    */
-  var filterCorsChanges = function(req) {
+  const filterCorsChanges = function(req) {
     req.body.settings = req.body.settings || {};
     req.body.settings.cors = '*';
   };
@@ -48,7 +48,7 @@ module.exports = function(formio) {
    *
    * @param req
    */
-  var filterOAuthSettings = function(req) {
+  const filterOAuthSettings = function(req) {
     req.body.settings = req.body.settings || {};
     req.body.settings = _.omit(req.body.settings, 'oauth');
   };
@@ -58,7 +58,7 @@ module.exports = function(formio) {
    *
    * @param req
    */
-  var filterEmailSettings = function(req) {
+  const filterEmailSettings = function(req) {
     req.body.settings = req.body.settings || {};
     if (_.has(req.body, 'settings.email')) {
       req.body.settings.email = _.pick(req.body.settings.email, ['smtp']);
@@ -70,14 +70,14 @@ module.exports = function(formio) {
    *
    * @param req
    */
-  var filterStorageSettings = function(req) {
+  const filterStorageSettings = function(req) {
     req.body.settings = req.body.settings || {};
     if (_.has(req.body, 'settings.storage')) {
       req.body.settings = _.omit(req.body.settings, 'storage');
     }
   };
 
-  var filterDataConnectionSettings = function(req) {
+  const filterDataConnectionSettings = function(req) {
     req.body.settings = req.body.settings || {};
     req.body.settings = _.omit(req.body.settings, [
       'office365', 'databases', 'google', 'kickbox', 'hubspot', 'sqlconnector', 'atlassian'
@@ -89,16 +89,15 @@ module.exports = function(formio) {
    *
    * @param req
    */
-  var generateNameIfMissing = function(req) {
+  const generateNameIfMissing = function(req) {
     if (!req.body.hasOwnProperty('name')) {
-      debug('No project name sent. Setting to random.');
       req.body.name = domain();
     }
   };
 
   return function(req, res, next) {
-    var isPost = req.method === 'POST';
-    var isPut = req.method === 'PUT';
+    const isPost = req.method === 'POST';
+    const isPut = req.method === 'PUT';
     if (!isPost && !isPut) {
       return next();
     }
@@ -109,7 +108,6 @@ module.exports = function(formio) {
         return next(err || 'Project plan not found.');
       }
 
-      debug(plan);
       switch (plan.toString()) {
         case 'commercial':
         case 'team':
@@ -129,8 +127,6 @@ module.exports = function(formio) {
           return next();
         case 'basic':
         default:
-          debug(req.body);
-
           filterNameChanges(req);
           filterCorsChanges(req);
           if (process.env.DISABLE_RESTRICTIONS) {
@@ -140,8 +136,6 @@ module.exports = function(formio) {
           filterEmailSettings(req);
           filterStorageSettings(req);
           filterDataConnectionSettings(req);
-
-          debug(req.body);
           return next();
       }
     });

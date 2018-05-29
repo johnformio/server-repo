@@ -9,16 +9,7 @@ module.exports = function(formio) {
       return res.status(500).send('No Project model');
     }
 
-    formio.resources.project.model.findOne({primary: true}, function(err, result) {
-      if (err) {
-        return res.status(500).send(err);
-      }
-      if (!result) {
-        return res.status(500).send('No Primary Project not found');
-      }
-
-      // Proceed with db schema sanity check middleware.
-      return next();
-    });
+    // Proceed with db schema sanity check middleware.
+    return next();
   };
 };

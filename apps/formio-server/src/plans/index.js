@@ -1,7 +1,7 @@
 'use strict';
 
-var _ = require('lodash');
-var debug = {
+const _ = require('lodash');
+const debug = {
   plans: require('debug')('formio:plans'),
   checkRequest: require('debug')('formio:plans:checkRequest'),
   getPlan: require('debug')('formio:plans:getPlan'),
@@ -9,17 +9,17 @@ var debug = {
   disableForPlans: require('debug')('formio:plans:disableForPlans')
 };
 
-module.exports = function(formioServer, cache) {
-  var limits = {
+module.exports = function(formioServer) {
+  const limits = {
     basic: 1000,
     independent: 10000,
     team: 250000,
-    trial: 250000,
-    commercial: Number.MAX_VALUE
+    trial: 10000,
+    commercial: 2000000
   };
 
-  var basePlan = formioServer.config.plan || 'commercial';
-  debug.plans('Base Plan: ' + basePlan);
+  const basePlan = formioServer.config.plan || 'commercial';
+  debug.plans(`Base Plan: ${basePlan}`);
 
   /**
    * After loading, determine the plan from the projec
@@ -27,15 +27,10 @@ module.exports = function(formioServer, cache) {
    * @param project
    * @returns {*|{done, value}}
    */
-  var getProjectPlan = function(err, project, next) {
+  const getProjectPlan = function(err, project, next) {
     if (err || !project) {
       debug.getPlan(err || 'Project not found.');
       return next(err || 'Project not found.');
-    }
-
-    if (project.primary && project.primary === true) {
-      debug.getPlan('commercial');
-      return next(null, 'commercial', project);
     }
 
     // Only allow plans defined within the limits definition.
@@ -62,13 +57,20 @@ module.exports = function(formioServer, cache) {
    *   The callback to invoke with the results.
    * @returns {*}
    */
-  var getPlan = function(req, next) {
-    // Environment Create is tricky as we have to use permissions of the referenced project before it exists.
-    if (req.method === 'POST' && req.path === '/project' && req.body.hasOwnProperty('project')) {
-      debug.getPlan('Project from environment create.');
-      return cache.loadProject(req, req.body.project, function(err, project) {
-        return getProjectPlan(err, project, next);
-      });
+  const getPlan = function(req, next) {
+    if (req.method === 'POST' && req.path === '/project') {
+      // Environment Create is tricky as we have to use permissions of the referenced project before it exists.
+      if (req.body.hasOwnProperty('project')) {
+        debug.getPlan('Project from environment create.');
+        return formioServer.formio.cache.loadProject(req, req.body.project, function(err, project) {
+          return getProjectPlan(err, project, next);
+        });
+      }
+
+      // Allow admins to set plan.
+      if (req.body.plan && req.isAdmin) {
+        return next(null, req.body.plan);
+      }
     }
 
     // Ignore project plans, if not interacting with a project.
@@ -77,12 +79,12 @@ module.exports = function(formioServer, cache) {
       return next(null, basePlan);
     }
 
-    cache.loadPrimaryProject(req, function(err, project) {
+    formioServer.formio.cache.loadPrimaryProject(req, function(err, project) {
       getProjectPlan(err, project, next);
     });
   };
 
-  var checkRequest = function(req, res) {
+  const checkRequest = function(req, res) {
     return function(cb) {
       getPlan(req, function(err, plan, project) {
         // Ignore project plans, if not interacting with a project.
@@ -96,8 +98,8 @@ module.exports = function(formioServer, cache) {
           return cb(err);
         }
 
-        var curr = new Date();
-        var _plan = limits[plan];
+        const curr = new Date();
+        const _plan = limits[plan];
 
         // Ignore limits for the formio project.
         if (project.hasOwnProperty('name') && project.name && project.name === 'formio') {
@@ -105,8 +107,8 @@ module.exports = function(formioServer, cache) {
         }
 
         // Check the calls made this month.
-        var year = curr.getUTCFullYear();
-        var month = curr.getUTCMonth();
+        const year = curr.getUTCFullYear();
+        const month = curr.getUTCMonth();
         formioServer.analytics.getCalls(year, month, null, project._id, function(err, calls) {
           if (err) {
             debug.checkRequest(err);
@@ -114,8 +116,8 @@ module.exports = function(formioServer, cache) {
           }
 
           debug.checkRequest(
-            'API Calls for y/m/d: ' + year + '/' + month + '/* and project: '
-            + project._id + ' -> ' + calls
+            `API Calls for y/m/d: ${year}/${month}/* and project: ${
+             project._id  } -> ${calls}`
           );
           if (calls >= _plan) {
             process.nextTick(function() {
@@ -134,7 +136,7 @@ module.exports = function(formioServer, cache) {
   /**
    * Returns an array of all the plan types
    */
-  var getPlans = function() {
+  const getPlans = function() {
     return Object.keys(limits);
   };
 
@@ -146,7 +148,7 @@ module.exports = function(formioServer, cache) {
    *
    * @returns {Function}
    */
-  var allowForPlans = function(plans) {
+  const allowForPlans = function(plans) {
     if (!(plans instanceof Array)) {
       plans = [plans];
     }
@@ -163,7 +165,7 @@ module.exports = function(formioServer, cache) {
         }
 
         if (plans.indexOf(plan) === -1) {
-          debug.allowForPlans(plan + ' not found in whitelist: ' + plans.join(', '));
+          debug.allowForPlans(`${plan} not found in whitelist: ${plans.join(', ')}`);
           return res.sendStatus(402);
         }
 
@@ -180,13 +182,13 @@ module.exports = function(formioServer, cache) {
    *
    * @returns {Function}
    */
-  var disableForPlans = function(plans) {
+  const disableForPlans = function(plans) {
     if (!(plans instanceof Array)) {
       plans = [plans];
     }
 
-    var allow = _.difference(getPlans(), plans);
-    debug.disableForPlans('Inverting blacklist: ' + allow.join(', '));
+    const allow = _.difference(getPlans(), plans);
+    debug.disableForPlans(`Inverting blacklist: ${allow.join(', ')}`);
     return allowForPlans(allow);
   };
 

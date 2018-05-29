@@ -17,7 +17,6 @@ machine:
 
 dependencies:
   pre:
-    - pip install awscli
     - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test && sudo apt-get update
     - sudo apt-get install -y gcc-4.9 g++-4.9
     - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 10
@@ -25,25 +24,28 @@ dependencies:
     - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 20
     - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 20
   override:
-    - uname -r
+    - sudo bash -c "echo \"127.0.0.1 formio.localhost\" >> /etc/hosts"
+    - sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
+    - sudo bash -c "echo \"127.0.0.1 dockertest.localhost\" >> /etc/hosts"
+    - npm install
+    - pip install awscli
 
 database:
   pre:
     - sudo service mongod stop
-    - sleep 2
-    - wget http://downloads.mongodb.org/linux/mongodb-linux-x86_64-ubuntu1204-3.2.9.tgz && tar xvzf mongodb-linux-x86_64-ubuntu1204-3.2.9.tgz
-    - sudo cp -f mongodb-linux-x86_64-ubuntu1204-3.2.9/bin/* /usr/bin
+    - sleep 5
+    - wget http://downloads.mongodb.org/linux/mongodb-linux-x86_64-ubuntu1204-3.4.10.tgz && tar xvzf mongodb-linux-x86_64-ubuntu1204-3.4.10.tgz
+    - sudo cp -f mongodb-linux-x86_64-ubuntu1204-3.4.10/bin/* /usr/bin
     - sudo service mongod start
+    - redis-server &> $CIRCLE_ARTIFACTS/redis.log:
+          background: true
 
 compile:
   pre:
-    - ./serverSetup.sh
-    - npm run build
+    - npm i --g eslint-cli
   override:
-    # Run full suite of tests against natively running server.
-    - redis-server &> $CIRCLE_ARTIFACTS/redis.log:
-          background: true
-    # - DEBUG=formio:*,formio:*:* DROPBOX_CLIENTID=NOTREAL npm test &> $CIRCLE_ARTIFACTS/formio-server.log
+    - npm run build
+    # Test full suite against natively running server. Do it here so docker tests are skipped if fail.
     - npm test
 
 test:
@@ -51,58 +53,49 @@ test:
     - node --version
     - mongo --version
     - docker --version
-    - wget --version
-    - sudo bash -c "echo \"127.0.0.1 formio.localhost\" >> /etc/hosts"
-    - sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
-    - sudo bash -c "echo \"127.0.0.1 dockertest.localhost\" >> /etc/hosts"
-    - npm i --g eslint-cli
-    - ./deployment/scripts/importDb.sh formio
+    - uname -r
+
   override:
     # Test Formio in a docker environment.
-    - redis-server &> $CIRCLE_ARTIFACTS/docker-redis.log:
-          background: true
-    - ./deployment/scripts/restoreDb.sh formio
-    - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-    - docker build -t $IMAGE_PATH -f deployment/docker/formio-server/Dockerfile .
-    - docker network ls
-    - docker run -itd -e "MONGO1=$MONGO" -e "REDIS_ADDR=localhost" -e "REDIS_PORT=6379" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "DEBUG=*,*:*,*:*:*" -e "PROJECT_PLAN=trial" -e "DROPBOX_CLIENTID=NOTREAL" --name="formio-server" --net="host" $IMAGE_PATH
-    - docker ps -a
-    - docker logs formio-server
-    - sleep 5
-    - curl -f --retry 10 http://api.localhost:3000/health
-    - docker logs formio-server
-    - npm run docker
-    - docker logs formio-server &> $CIRCLE_ARTIFACTS/docker-server.log
-    # Test Formio in a customer docker environment.
-    - docker stop formio-server
     - sudo service mongod stop
-    - docker ps -a
-    - docker images
+    - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+    - docker build --no-cache -t $IMAGE_PATH -f deployment/docker/formio-server/Dockerfile .
     - docker network create formio
+    - docker network ls
     - docker run -itd --name formio-mongo --net formio -p 27017:27017 mongo
     - docker run -itd --name formio-redis --net formio -p 6380 redis
-    - docker run -itd -e "DEBUG=formio:*,formio:*:*" -e "PROJECT_PLAN=trial" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "REDIS_ADDR=localhost" -e "REDIS_PORT=6380" -e "JWT_SECRET=CHANGEME" -e "JWT_EXPIRE_TIME=240" -e "DB_SECRET=CHANGEME" -e "ADMIN_EMAIL=dockertest@form.io" -e "ADMIN_PASS=testdockertest" --name formio-server2 --net formio --link formio-redis:redis --link formio-mongo:mongo -p 127.0.0.1:3000:3000 $IMAGE_PATH
-    - docker ps
-    - docker network inspect formio
-    - docker logs formio-server2
+    - docker run -itd --name formio-server --net formio -e "DEBUG=formio:*" -e "PROJECT_PLAN=trial" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "JWT_SECRET=CHANGEME" -e "JWT_EXPIRE_TIME=240" -e "DB_SECRET=CHANGEME" -e "ADMIN_KEY=dockertest" --link formio-redis:redis --link formio-mongo:mongo -p 127.0.0.1:3000:3000 $IMAGE_PATH
+    - docker ps -a
     - sleep 5
-    - wget --tries=20 --retry-connrefused --wait=6 -v http://api.localhost:3000/health
-    - npm i --g formio-cli
-    - formio deploy --src-username dockertest@form.io --src-password testdockertest --dst-username dockertest@form.io --dst-password testdockertest https://dockertest.form.io http://dockertest.localhost:3000
-    - npm run customer
-    - docker logs formio-server2 &> $CIRCLE_ARTIFACTS/docker-customer-server.log
+#    - ADMIN_KEY=dockertest node install
+#    - curl -f --retry 10 http://api.localhost:3000/health
+#    - npm run docker
+#    - docker logs formio-server &> $CIRCLE_ARTIFACTS/docker-server.log
+    # Test Formio as a client would run it.
+    #- docker rm -vf formio-server
+    #- docker rm -vf formio-mongo
+    #- docker rm -vf formio-redis
+    #- docker ps -a
+    #- docker run -itd --name formio-mongo --net formio -p 27017:27017 mongo
+    #- docker run -itd --name formio-redis --net formio -p 6380 redis
+    #- docker run -itd --name formio-server --net formio -e "DEBUG=formio:*" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "JWT_SECRET=CHANGEME" -e "JWT_EXPIRE_TIME=240" -e "DB_SECRET=CHANGEME" -e "ACCESS_KEY=dockertest" --link formio-redis:redis --link formio-mongo:mongo -p 127.0.0.1:3000:3000 $IMAGE_PATH
+    #- docker ps -a
+    #- sleep 5
+    #- curl -f --retry 10 http://api.localhost:3000/health
+    #- npm run customer
+    #- docker logs formio-server &> $CIRCLE_ARTIFACTS/customer-server.log
 
 deployment:
+  prerelease:
+    tag: /^\d+\.\d+\.\d+(-.*)$/
+    commands:
+      - docker tag $IMAGE_PATH $IMAGE_PATH:$TAG
+      - docker push $IMAGE_PATH:$TAG
+      - ./deployment/scripts/createVersion.sh $TAG
   release:
     tag: /^\d+\.\d+\.\d+$/
     commands:
       - docker tag $IMAGE_PATH $IMAGE_PATH:$TAG
       - docker push $IMAGE_PATH
-      - docker push $IMAGE_PATH:$TAG
-      - ./deployment/scripts/createVersion.sh $TAG
-  build:
-    tag: /build-.*/
-    commands:
-      - docker tag $IMAGE_PATH $IMAGE_PATH:$TAG
       - docker push $IMAGE_PATH:$TAG
       - ./deployment/scripts/createVersion.sh $TAG

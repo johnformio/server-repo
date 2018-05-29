@@ -1,14 +1,16 @@
 'use strict';
 
-var debug = {
+const debug = {
   loadProject: require('debug')('formio:cache:loadProject'),
   error: require('debug')('formio:error')
 };
 
+const util = require('../util/util');
+
 module.exports = function(formio) {
-  return {
-    loadProjectByName: function(req, name, cb) {
-      var cache = formio.cache.cache(req);
+  const ProjectCache = {
+    loadProjectByName(req, name, cb) {
+      const cache = formio.cache.cache(req);
       if (cache.projectNames && cache.projectNames[name]) {
         return this.loadProject(req, cache.projectNames[name], cb);
       }
@@ -25,8 +27,7 @@ module.exports = function(formio) {
           return cb('Project not found');
         }
 
-        project = project.toObject();
-        var projectId = project._id.toString();
+        const projectId = project._id.toString();
         if (!cache.projectNames) {
           cache.projectNames = {};
         }
@@ -41,9 +42,9 @@ module.exports = function(formio) {
      * @param req
      * @returns {*}
      */
-    currentProject: function(req) {
-      var cache = formio.cache.cache(req);
-      var id = req.projectId || req.params.projectId;
+    currentProject(req) {
+      const cache = formio.cache.cache(req);
+      const id = req.projectId || req.params.projectId;
       if (cache.projects[id]) {
         return cache.projects[id];
       }
@@ -55,8 +56,8 @@ module.exports = function(formio) {
      * @param req
      * @param cb
      */
-    loadCurrentProject: function(req, cb) {
-      var projectId = req.projectId;
+    loadCurrentProject(req, cb) {
+      let projectId = req.projectId;
       if (req.params.projectId) {
         projectId = req.params.projectId;
       }
@@ -67,7 +68,7 @@ module.exports = function(formio) {
       this.loadProject(req, projectId, cb);
     },
 
-    loadPrimaryProject: function(req, cb) {
+    loadPrimaryProject(req, cb) {
       this.loadCurrentProject(req, function(err, currentProject) {
         if (err) {
           return cb(err);
@@ -95,15 +96,20 @@ module.exports = function(formio) {
      * @param id
      * @param cb
      */
-    loadProject: function(req, id, cb) {
+    loadProject(req, id, cb) {
       id = formio.util.idToString(id);
-      var cache = formio.cache.cache(req);
+      const cache = formio.cache.cache(req);
       if (cache.projects[id]) {
         return cb(null, cache.projects[id]);
       }
 
-      var query = {_id: formio.util.idToBson(id), deleted: {$eq: null}};
-      var params = req.params;
+      const projectId = formio.util.idToBson(id);
+      if (!projectId) {
+        return cb('Project not found');
+      }
+
+      const query = {_id: projectId, deleted: {$eq: null}};
+      const params = req.params;
       formio.resources.project.model.findOne(query, function(err, result) {
         // @todo: Figure out why we have to reset the params after project load.
         req.params = params;
@@ -119,12 +125,12 @@ module.exports = function(formio) {
         }
 
         try {
-          var currTime = (new Date()).getTime();
-          var projTime = (new Date(result.trial.toString())).getTime();
-          var delta = Math.ceil(parseInt((currTime - projTime) / 1000));
-          var day = 86400;
-          var remaining = 30 - parseInt(delta / day);
-          var trialDaysRemaining = remaining > 0 ? remaining : 0;
+          const currTime = (new Date()).getTime();
+          const projTime = (new Date(result.trial.toString())).getTime();
+          const delta = Math.ceil(parseInt((currTime - projTime) / 1000));
+          const day = 86400;
+          const remaining = 30 - parseInt(delta / day);
+          const trialDaysRemaining = remaining > 0 ? remaining : 0;
 
           if (trialDaysRemaining > 0) {
             cache.projects[id] = result;
@@ -147,6 +153,56 @@ module.exports = function(formio) {
           return cb(null, result);
         }
       });
+    },
+
+    loadStages(req, id, cb) {
+      id = formio.util.idToString(id);
+
+      const projectId = formio.util.idToBson(id);
+      if (!projectId) {
+        return cb('Project not found');
+      }
+
+      const query = {project: projectId, deleted: {$eq: null}};
+      formio.resources.project.model.find(query, function(err, result) {
+        if (err) {
+          return cb(err);
+        }
+        return cb(null, result);
+      });
     }
   };
+
+  ProjectCache.setSubmissionModel = (req, formId, cb) => {
+    formio.cache.loadForm(req, null, formId, function(err, form) {
+      if (err) {
+        // deliberately do not return an error.
+        return cb();
+      }
+
+      util.getSubmissionModel(formio, req, form, true, (err, submissionModel) => {
+        if (err) {
+          return cb(err);
+        }
+
+        if (!submissionModel) {
+          return cb();
+        }
+
+        req.model = req.submissionModel = submissionModel;
+        return cb();
+      });
+    });
+  };
+  ProjectCache._loadSubmission = formio.cache.loadSubmission.bind(formio.cache);
+  ProjectCache.loadSubmission = function(req, formId, subId, cb) {
+    ProjectCache.setSubmissionModel(req, formId, (err) => {
+      if (err) {
+        return cb(err);
+      }
+      return ProjectCache._loadSubmission(req, formId, subId, cb);
+    });
+  };
+
+  return ProjectCache;
 };

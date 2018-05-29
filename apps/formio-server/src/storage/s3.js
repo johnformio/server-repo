@@ -1,16 +1,12 @@
 'use strict';
 
-var CryptoJS = require('crypto-js');
-var AWS = require('aws-sdk');
-var debug = require('debug')('formio:storage:s3');
+const CryptoJS = require('crypto-js');
+const AWS = require('aws-sdk');
 
 module.exports = function(router) {
-  var cache = require('../cache/cache')(router.formio.formio);
-
   router.get('/project/:projectId/form/:formId/storage/s3',
     router.formio.formio.middleware.tokenHandler,
     function(req, res, next) {
-      debug('Setting project and form ids for get');
       if (!req.projectId && req.params.projectId) {
         req.projectId = req.params.projectId;
       }
@@ -22,21 +18,19 @@ module.exports = function(router) {
     router.formio.formio.middleware.permissionHandler,
     router.formio.formio.plans.disableForPlans(['basic', 'independent']),
     function(req, res) {
-      debug('Signing GET request');
-      cache.loadProject(req, req.projectId, function(err, project) {
+      router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
         if (err) {
           return res.status(400).send('Project not found.');
         }
 
-        debug('Project Loaded: ' + req.projectId);
         if (!project.settings.storage || !project.settings.storage.s3) {
           return res.status(400).send('Storage settings not set.');
         }
-        var file = {
+        const file = {
           bucket: req.query.bucket,
           key: req.query.key
         };
-        var s3 = new AWS.S3({
+        const s3 = new AWS.S3({
           accessKeyId: project.settings.storage.s3.AWSAccessKeyId,
           secretAccessKey: project.settings.storage.s3.AWSSecretKey
         });
@@ -47,7 +41,6 @@ module.exports = function(router) {
           if (err) {
             return res.status(400).send(err);
           }
-          debug(url);
           res.send({
             url: url
           });
@@ -59,7 +52,6 @@ module.exports = function(router) {
   router.post('/project/:projectId/form/:formId/storage/s3',
     router.formio.formio.middleware.tokenHandler,
     function(req, res, next) {
-      debug('Setting project and form ids for post');
       if (!req.projectId && req.params.projectId) {
         req.projectId = req.params.projectId;
       }
@@ -71,21 +63,19 @@ module.exports = function(router) {
     router.formio.formio.middleware.permissionHandler,
     router.formio.formio.plans.disableForPlans(['basic', 'independent']),
     function(req, res) {
-      debug('Signing POST request');
-      cache.loadProject(req, req.projectId, function(err, project) {
+      router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
         if (err) {
           return res.status(400).send('Project not found.');
         }
 
-        debug('Project Loaded: ' + req.projectId);
         if (!project.settings.storage || !project.settings.storage.s3) {
           return res.status(400).send('Storage settings not set.');
         }
-        var file = req.body;
-        var dir = project.settings.storage.s3.startsWith || '';
-        var expirationSeconds = project.settings.storage.s3.expiration || (15 * 60);
-        var expiration = new Date(Date.now() + (expirationSeconds * 1000));
-        var policy = {
+        const file = req.body;
+        const dir = project.settings.storage.s3.startsWith || '';
+        const expirationSeconds = project.settings.storage.s3.expiration || (15 * 60);
+        const expiration = new Date(Date.now() + (expirationSeconds * 1000));
+        const policy = {
           expiration: expiration.toISOString(),
           conditions: [
             {'bucket': project.settings.storage.s3.bucket},
@@ -97,8 +87,8 @@ module.exports = function(router) {
           ]
         };
 
-        var response = {
-          url: project.settings.storage.s3.bucketUrl || 'https://' + project.settings.storage.s3.bucket + '.s3.amazonaws.com/',
+        const response = {
+          url: project.settings.storage.s3.bucketUrl || `https://${project.settings.storage.s3.bucket}.s3.amazonaws.com/`,
           bucket: project.settings.storage.s3.bucket,
           data: {
             key: dir,
@@ -117,7 +107,6 @@ module.exports = function(router) {
         ).toString(CryptoJS.enc.Base64);
 
         /* eslint-enable new-cap */
-        debug(response);
         return res.send(response);
       });
     }

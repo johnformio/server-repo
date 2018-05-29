@@ -1,24 +1,23 @@
 'use strict';
 
-var _ = require('lodash');
-var Q = require('q');
-var debug = {
+const _ = require('lodash');
+const Q = require('q');
+const debug = {
   generateQueries: require('debug')('formio:sqlconnector:generateQueries'),
   getConnectorActions: require('debug')('formio:sqlconnector:getConnectorActions'),
   actionsToRoutes: require('debug')('formio:sqlconnector:actionsToRoutes'),
   getExpressRoute: require('debug')('formio:sqlconnector:getExpressRoute'),
   verifyPlan: require('debug')('formio:sqlconnector:verifyPlan')
 };
-var squel = require('squel');
+const squel = require('squel');
 
 module.exports = function(router) {
-  var formio = router.formio;
-  var cache = require('../../cache/cache')(formio);
-  var required = formio.plans.limits.team;
-  var util = formio.util;
+  const formio = router.formio;
+  const required = formio.plans.limits.team;
+  const util = formio.util;
 
   // Building blocks for sql statements.
-  var idFn = {
+  const idFn = {
     mysql: 'LAST_INSERT_ID()',
     mssql: 'SCOPE_IDENTITY()'
   };
@@ -29,7 +28,7 @@ module.exports = function(router) {
    * @param req
    * @returns {*}
    */
-  var verifyPlan = function(req) {
+  const verifyPlan = function(req) {
     // Get the plan
     return Q.nfcall(formio.plans.getPlan, req)
       .then(function(plan) {
@@ -39,7 +38,7 @@ module.exports = function(router) {
 
         // Check that this plan is acceptable for the sql connector.
         if (plan < required) {
-          debug.verifyPlan('The given plan is not high enough for sql connector access.. ' + plan + ' / ' + required);
+          debug.verifyPlan(`The given plan is not high enough for sql connector access.. ${plan} / ${required}`);
           throw new Error('The current project must be upgraded to access the SQL Connector');
         }
 
@@ -51,31 +50,31 @@ module.exports = function(router) {
       });
   };
 
-  var getExpressRoute = function(method, path, primary, data, type) {
+  const getExpressRoute = function(method, path, primary, data, type) {
     debug.getExpressRoute('type:');
     debug.getExpressRoute(type);
-    var isMssql = function() { // eslint-disable-line no-unused-vars
+    const isMssql = function() { // eslint-disable-line no-unused-vars
       return type === 'mssql';
     };
-    var isMysql = function() { // eslint-disable-line no-unused-vars
+    const isMysql = function() { // eslint-disable-line no-unused-vars
       return type === 'mysql';
     };
-    var isPostgresql = function() {
+    const isPostgresql = function() {
       return type === 'postgres';
     };
 
     // Only let valid types through.
-    var valid = ['mssql', 'mysql', 'postgres'];
+    const valid = ['mssql', 'mysql', 'postgres'];
     if (valid.indexOf(type) === -1) {
       type = 'mysql';
     }
 
     // Make an instanced type of squel.
-    var _squel = squel.useFlavour(type);
+    const _squel = squel.useFlavour(type);
 
     method = method.toString().toLowerCase();
-    var route = {
-      endpoint: '/' + path.toString()
+    const route = {
+      endpoint: `/${path.toString()}`
     };
 
     /**
@@ -83,8 +82,8 @@ module.exports = function(router) {
      *
      * @returns {*}
      */
-    var getPrimaryComparison = function() {
-      var comparison;
+    const getPrimaryComparison = function() {
+      let comparison;
       if (isPostgresql()) {
         comparison = ' = text(\'{{ params.id }}\')';
       }
@@ -95,7 +94,7 @@ module.exports = function(router) {
       return comparison;
     };
 
-    var _sql;
+    let _sql;
     switch (method) {
       case 'create':
         route.method = 'POST';
@@ -107,10 +106,10 @@ module.exports = function(router) {
         debug.getExpressRoute(data);
         _.each(data, function(value, column) {
           if (isPostgresql()) {
-            column = '"' + column + '"';
+            column = `"${column}"`;
           }
 
-          _sql.set(column, '{{ data.' + value + ' }}');
+          _sql.set(column, `{{ data.${value} }}`);
         });
 
         if (isPostgresql()) {
@@ -124,11 +123,11 @@ module.exports = function(router) {
           _sql = _squel
             .select()
             .from(path.toString())
-            .where(primary.toString() + '=' + _.get(idFn, type))
+            .where(`${primary.toString()}=${_.get(idFn, type)}`)
             .toString();
 
           // Get the select string for the new record.
-          route.query += '; ' +  _sql.toString();
+          route.query += `; ${ _sql.toString()}`;
         }
 
         break;
@@ -161,10 +160,10 @@ module.exports = function(router) {
         debug.getExpressRoute(data);
         _.each(data, function(value, column) {
           if (isPostgresql()) {
-            column = '"' + column + '"';
+            column = `"${column}"`;
           }
 
-          _sql.set(column, '{{ data.' + value + ' }}');
+          _sql.set(column, `{{ data.${value} }}`);
         });
 
         _sql.where(primary.toString() + (getPrimaryComparison()).toString());
@@ -184,7 +183,7 @@ module.exports = function(router) {
             .toString();
 
           // Get the select string for the updated record.
-          route.query += '; ' +  _sql.toString();
+          route.query += `; ${ _sql.toString()}`;
         }
 
         break;
@@ -203,14 +202,14 @@ module.exports = function(router) {
     return route;
   };
 
-  var actionsToRoutes = function(req, actions) {
-    return Q.ninvoke(cache, 'loadCurrentProject', req)
+  const actionsToRoutes = function(req, actions) {
+    return Q.ninvoke(formio.cache, 'loadCurrentProject', req)
       .then(function(project) {
         debug.actionsToRoutes(project);
-        var type = _.get(project, 'settings.sqlconnector.type');
+        const type = _.get(project, 'settings.sqlconnector.type');
 
-        var routes = [];
-        var path, primary, fields, data;
+        const routes = [];
+        let path, primary, fields, data;
         _.each(actions, function(action) {
           // Pluck out the core info from the action.
           path = _.get(action, 'settings.table');
@@ -242,16 +241,16 @@ module.exports = function(router) {
    * @param req
    * @returns {*}
    */
-  var getConnectorActions = function(req) {
-    return Q.ninvoke(cache, 'loadCurrentProject', req)
+  const getConnectorActions = function(req) {
+    return Q.ninvoke(formio.cache, 'loadCurrentProject', req)
       .then(function(project) {
-        var projectId = util.idToBson(project._id);
+        const projectId = util.idToBson(project._id);
 
         // Get all the forms for the current project, which havent been deleted.
         return Q.ninvoke(router.formio.resources.form.model, 'find', {project: projectId, deleted: {$eq: null}});
       })
       .then(function(forms) {
-        var formIds = _(forms)
+        const formIds = _(forms)
         .map(function(form) {
           return util.idToBson(form._id);
         })
@@ -266,7 +265,7 @@ module.exports = function(router) {
       })
       .then(function(actions) {
         // Get all the sql connector actions
-        var sqlActions = _(actions)
+        const sqlActions = _(actions)
         .map(function(action) {
           try {
             return action.toObject();
@@ -293,7 +292,7 @@ module.exports = function(router) {
    * @param res
    * @param next
    */
-  var generateQueries = function(req, res, next) {
+  const generateQueries = function(req, res, next) {
     return Q.fcall(verifyPlan, req)
       .then(function() {
         return Q.fcall(getConnectorActions, req);

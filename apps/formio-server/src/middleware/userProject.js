@@ -1,7 +1,5 @@
 'use strict';
 
-var debug = require('debug')('formio:middleware:userProject');
-
 /**
  * The userProject middleware.
  *
@@ -10,14 +8,14 @@ var debug = require('debug')('formio:middleware:userProject');
  * @param cache
  * @returns {Function}
  */
-module.exports = function(cache) {
+module.exports = function(formio) {
   return function(req, res, next) {
-    if (req.token) {
-      cache.loadProject(req, req.token.form.project, function(err, project) {
+    if (req.token && !req.userProject) {
+      const projectId = req.token.project ? req.token.project._id : req.token.form.project;
+      formio.cache.loadProject(req, projectId, function(err, project) {
         if (err) {
           return next(err);
         }
-        debug(project);
         req.userProject = project;
         next();
       });

@@ -1,47 +1,47 @@
 'use strict';
 
-var _ = require('lodash');
-var debug = require('debug')('formio:middleware:projectAccessFilter');
+const _ = require('lodash');
+const debug = require('debug')('formio:middleware:projectAccessFilter');
 
 module.exports = function(formio) {
-  var cache = require('../cache/cache')(formio);
-
   /**
    * Formio Middleware to ensure that the roles in the project access payload are valid.
    *
    * This middleware will filter all roles that are not part of the project or are not teams that the project owner, owns.
    */
   return function(req, res, next) {
-    debug(req.method);
     if (req.method !== 'PUT') {
-      debug('Skipping');
       return next();
     }
     if (!req.projectId) {
-      debug('No project id found with the request.');
       return res.sendStatus(400);
     }
 
-    debug(req.body);
     req.body = req.body || {};
 
     // Skip the role check if no access was defined.
     if (!req.body.access || req.body.access && req.body.access.length === 0) {
-      debug('Skipping, not access in payload.');
       return next();
     }
 
     // All of the valid access ids for this project.
-    var accessIds = [];
+    let accessIds = [];
+
+    // If this is remote access, check the permissions.
+    if (req.remotePermission) {
+      // Allow access if they have team access.
+      if (['admin', 'owner', 'team_admin', 'team_write', 'team_read'].indexOf(req.remotePermission) !== -1) {
+        return next();
+      }
+    }
 
     // Get the owner of the Project
-    cache.loadProject(req, req.projectId, function(err, project) {
+    formio.cache.loadProject(req, req.projectId, function(err, project) {
       if (err) {
         debug(err);
         return res.sendStatus(400);
       }
       if (!project.owner) {
-        debug('No project owner found... ' + JSON.stringify(project));
         return res.sendStatus(500);
       }
 
@@ -60,27 +60,18 @@ module.exports = function(formio) {
         /**
          * Filter the access obj in the current request based on the calculated accessIds.
          */
-        var filterAccess = function() {
-          // Check the accessIds in the original request.
-          debug('Allowed Roles: ' + JSON.stringify(accessIds));
-          debug('Given access: ' + JSON.stringify(req.body.access));
-
+        const filterAccess = function() {
           // Filter each set of roles to only include roles in the accessIds list.
           req.body.access = _.filter(req.body.access, function(permission) {
-            debug('Roles before filter: ' + JSON.stringify(permission.roles));
             permission.roles = permission.roles || [];
             permission.roles = _.intersection(permission.roles, accessIds);
-            debug('Roles after filter: ' + JSON.stringify(permission.roles));
             return permission;
           });
-
-          debug('New Access: ' + JSON.stringify(req.body.access));
         };
 
         // Only proceed with teams access check if the project plan supports teams.
         project.plan = project.plan || '';
         if (!(project.plan === 'team' || project.plan === 'commercial' || project.plan === 'trial')) {
-          debug('Skipping team access check, plan: ' + project.plan);
           filterAccess();
           return next();
         }

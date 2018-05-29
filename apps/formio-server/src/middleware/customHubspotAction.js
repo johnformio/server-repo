@@ -1,6 +1,6 @@
 'use strict';
 
-var _ = require('lodash');
+const _ = require('lodash');
 
 module.exports = function(formio) {
   return function(req, res, next) {
@@ -18,18 +18,18 @@ module.exports = function(formio) {
           return;
         }
 
-        var modReq = _.cloneDeep(req);
+        const modReq = _.cloneDeep(req);
         modReq.projectId = project._id;
-        var projectFieldName = process.env.HUBSPOT_PROJECT_FIELD;
-        var options = {settings: {}};
-        options.settings[projectFieldName + '_action'] = 'increment';
-        options.settings[projectFieldName + '_value'] = '1';
+        const projectFieldName = process.env.HUBSPOT_PROJECT_FIELD;
+        const options = {settings: {}};
+        options.settings[`${projectFieldName}_action`] = 'increment';
+        options.settings[`${projectFieldName}_value`] = '1';
         options.settings['lifecyclestage_action'] = 'value';
         options.settings['lifecyclestage_value'] = 'opportunity';
         options.settings['customer_status_action'] = 'value';
         options.settings['customer_status_value'] = 'Created Project';
-        var ActionClass = formio.actions.actions['hubspotContact'];
-        var action = new ActionClass(options, modReq, res);
+        const ActionClass = formio.actions.actions['hubspotContact'];
+        const action = new ActionClass(options, modReq, res);
         action.resolve('after', 'create', modReq, res, function() {});
       });
     }

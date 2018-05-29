@@ -6,10 +6,6 @@ var chance = new (require('chance'))();
 let EventEmitter = require('events');
 
 module.exports = function(app, template, hook) {
-  if (process.env.DOCKER) {
-    return;
-  }
-
   describe('Emails', function() {
     if (template.hooks.getEmitter() === null) {
       template.hooks.addEmitter(new EventEmitter());
@@ -104,6 +100,45 @@ module.exports = function(app, template, hook) {
           firstName: 'John',
           lastName: 'Example',
           email: 'john@example.com'
+        })
+        .resource('customer', [
+          {
+            type: 'email',
+            persistent: true,
+            unique: false,
+            protected: false,
+            defaultValue: '',
+            suffix: '',
+            prefix: '',
+            placeholder: 'Enter your email address',
+            key: 'email',
+            label: 'Email',
+            inputType: 'email',
+            tableView: true,
+            input: true,
+            validate: {
+              custom: '',
+              pattern: '',
+              maxLength: '',
+              minLength: '',
+              required: false
+            }
+          }
+        ])
+        .action('customer', {
+          title: 'Email',
+          name: 'email',
+          handler: ['after'],
+          method: ['create'],
+          priority: 1,
+          settings: {
+            transport: 'test',
+            from: 'travis@form.io',
+            emails: '{{ data.email }}',
+            sendEach: true,
+            subject: 'Inline Auth',
+            message: 'Your auth token is token=[[token(data.email)]]'
+          }
         })
         .form('resetpass', [
           {
@@ -267,6 +302,26 @@ module.exports = function(app, template, hook) {
           }
         })
         .execute(done);
+    });
+
+    it('Should create an inline token with current submission', function(done) {
+      let event = template.hooks.getEmitter();
+      event.on('newMail', (email) => {
+        assert.equal(email.from, 'travis@form.io');
+        let matches = email.html.match(/token=([^\s]+)/);
+        assert.equal(matches.length, 2);
+        assert(matches[1] && matches[1].length > 20, 'An auth token was not created.');
+        assert.equal(email.html.indexOf('Your auth token is token='), 0);
+        event.removeAllListeners('newMail');
+        done();
+      })
+      emailTest.createSubmission('customer', {
+        email: 'test@example.com'
+      }, function(err) {
+        if (err) {
+          return done(err);
+        }
+      });
     });
 
     it('Should send the separate emails with tokens', function(done) {

@@ -530,7 +530,6 @@ module.exports = function(app, template, hook) {
           .get('/project')
           .set('x-jwt-token', template.users.user1.token)
           .expect('Content-Type', /json/)
-          .expect(200)
           .end(function(err, res) {
             if (err) {
               return done(err);
@@ -1416,7 +1415,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
-            assert.deepEqual(_.omit(_.omit(template.project, 'settings'), 'modified'), _.omit(response, 'modified'));
+            assert.deepEqual(_.omit(_.omit(template.project, 'settings', 'billing'), 'modified'), _.omit(response, 'modified'));
 
             // Store the JWT for future API calls.
             template.formio.user1.token = res.headers['x-jwt-token'];
