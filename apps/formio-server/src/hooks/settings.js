@@ -125,7 +125,7 @@ module.exports = function(app) {
         if (premium.indexOf(action.name) === -1) {
           return true;
         }
-        if (['basic'].indexOf(req.primaryProject.plan) !== -1) {
+        if (['basic', 'independent'].indexOf(req.primaryProject.plan) !== -1) {
           return false;
         }
 
