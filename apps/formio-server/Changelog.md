@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.6.6
+### Changed
+ - Allow the Nunjucks templating to happen within an external service.
+ - Upgraded mongoose@5.1.3, aws-sdk@2.247.1, formio@1.30.0, formio-workers@1.5.0, resourcejs@1.24.0, webpack@4.10.1
+
 ## 5.6.5
 ### Fixed
  - PDF permissions not checked properly.
