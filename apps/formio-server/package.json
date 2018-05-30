@@ -68,7 +68,8 @@
     "tldjs": "^2.3.1",
     "traverse": "^0.6.6",
     "twilio": "^3.17.1",
-    "universal-analytics": "^0.4.16"
+    "universal-analytics": "^0.4.16",
+    "ws": "^5.2.0"
   },
   "devDependencies": {
     "eslint": "^4.19.1",
