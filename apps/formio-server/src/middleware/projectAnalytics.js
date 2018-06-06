@@ -19,7 +19,6 @@ module.exports = function(formioServer) {
 
     project._id = project._id.toString();
     const used = _.get(project, 'billing.calls', 0);
-    const curr = new Date();
     const limit = formioServer.formio.plans.limits[project.plan];
     return {
       used: used,
