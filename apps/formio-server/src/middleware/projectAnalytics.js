@@ -20,8 +20,13 @@ module.exports = function(formioServer) {
 
     project._id = project._id.toString();
     const curr = new Date();
-    return Q.nfcall(formioServer.analytics.getCalls, curr.getUTCFullYear(), curr.getUTCMonth(), null, project._id)
-    .then(function(used) {
+    return Q.nfcall(
+      formioServer.analytics.getCalls.bind(formioServer.analytics),
+      curr.getUTCFullYear(),
+      curr.getUTCMonth(),
+      null,
+      project._id
+    ).then(function(used) {
       const limit = formioServer.formio.plans.limits[project.plan];
       const info = {
         used: used,

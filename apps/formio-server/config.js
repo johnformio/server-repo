@@ -138,7 +138,12 @@ else {
   }
 }
 
-if (process.env.REDIS_ADDR || process.env.REDIS_PORT_6379_TCP_ADDR) {
+if (process.env.REDIS_SERVICE) {
+  config.redis = {
+    service: process.env.REDIS_SERVICE
+  };
+}
+else if (process.env.REDIS_ADDR || process.env.REDIS_PORT_6379_TCP_ADDR) {
   // This is compatible with docker legacy linking.
   var addr = process.env.REDIS_ADDR || process.env.REDIS_PORT_6379_TCP_ADDR;
   var redisPort = process.env.REDIS_PORT || process.env.REDIS_PORT_6379_TCP_PORT;
