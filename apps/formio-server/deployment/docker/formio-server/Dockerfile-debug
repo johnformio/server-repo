@@ -7,7 +7,7 @@ WORKDIR /src
 # Install git
 RUN apk update && \
     apk upgrade && \
-    apk add --no-cache --virtual .build-deps bash git make gcc g++ python
+    apk add --no-cache --virtual .build-deps bash git make gcc g++ python openssh
 
 # Add deployment keys
 RUN mkdir /root/.ssh/
