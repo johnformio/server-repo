@@ -122,7 +122,7 @@ module.exports = function(formioServer) {
         const year = curr.getUTCFullYear();
         const month = curr.getUTCMonth();
         formioServer.analytics.getCalls(year, month, null, project._id, function(err, calls) {
-          if (err) {
+          if (err || (calls === undefined)) {
             return;
           }
 
