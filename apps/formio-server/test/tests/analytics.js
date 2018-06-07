@@ -262,7 +262,7 @@ module.exports = function(app, template, hook) {
             });
 
             // Check the request count for the current day.
-            var key = app.formio.analytics.getAnalyticsKey(template.project._id, curr.getUTCFullYear(), curr.getUTCMonth(), curr.getUTCDate(), 's');
+            var key = app.formio.analytics.redis.getAnalyticsKey(template.project._id, curr.getUTCFullYear(), curr.getUTCMonth(), curr.getUTCDate(), 's');
             redis.llen(key, function(err, len) {
               if(err) {
                 return done(err);
@@ -328,7 +328,7 @@ module.exports = function(app, template, hook) {
               assert.equal(_.isString(_timestamp), true);
             });
 
-            var key = app.formio.analytics.getAnalyticsKey(template.project._id, curr.getUTCFullYear(), curr.getUTCMonth(), curr.getUTCDate(), 's');
+            var key = app.formio.analytics.redis.getAnalyticsKey(template.project._id, curr.getUTCFullYear(), curr.getUTCMonth(), curr.getUTCDate(), 's');
             redis.llen(key, function(err, length) {
               if(err) {
                 return done(err);
