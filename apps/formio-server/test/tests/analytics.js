@@ -1078,8 +1078,8 @@ module.exports = function(app, template, hook) {
 
     describe('Crash Redis', function() {
       it('The API server will run smoothly without analytics', function(done) {
-        var old = app.formio.analytics.redis;
-        app.formio.analytics.redis = null;
+        var old = app.formio.analytics.redis.db;
+        app.formio.analytics.redis.db = null;
 
         request(app)
           .get('/project/' + template.project._id)
@@ -1100,7 +1100,7 @@ module.exports = function(app, template, hook) {
             template.formio.owner.token = res.headers['x-jwt-token'];
 
             // Reset the redis ref.
-            app.formio.analytics.redis = old;
+            app.formio.analytics.redis.db = old;
 
             done();
           });
