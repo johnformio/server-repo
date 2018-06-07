@@ -10,7 +10,7 @@
     "customer": "TEST_SUITE=1 PROTOCOL=http DOMAIN=localhost PORT=3000 DROPBOX_CLIENTID=NOTREAL DROPBOX_CLIENTSECRET=clientsecret123 mocha -b -t 30000 test/customer.js",
     "clean": "rm -rf build",
     "compile": "node compile",
-    "build": "npm run lint; npm run clean; npm run compile",
+    "build": "npm run lint; npm run clean; npm run compile; rsync -av node_modules/ ./build/node_modules",
     "build:debug": "docker build -t formio-server-debug -f deployment/docker/formio-server/Dockerfile-debug .",
     "package:debug": "docker save -o formio-server-debug formio-server-debug",
     "builddocker": "docker build -f deployment/docker/formio-server/Dockerfile .",

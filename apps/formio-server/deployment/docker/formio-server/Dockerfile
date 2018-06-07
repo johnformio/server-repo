@@ -9,19 +9,10 @@ RUN apk update && \
     apk upgrade && \
     apk add --no-cache --virtual .build-deps bash git make gcc g++ python openssh
 
-# Add deployment keys
-RUN mkdir /root/.ssh/
-RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
-ADD deployment/keys/formio-services /root/.ssh/id_rsa
-RUN chmod 0600 /root/.ssh/id_rsa
-
-RUN npm install --production --build-from-source=bcrypt && \
+RUN npm rebuild && \
     npm cache clean && \
     npm uninstall -g npm && \
     apk del .build-deps
-
-# Remove deployment keys.
-RUN rm -f /root/.ssh/id_rsa && rm -rf deployment/keys
 
 EXPOSE      80
 ENTRYPOINT  ["node", "--max_old_space_size=4096", "main"]
