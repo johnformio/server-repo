@@ -20,8 +20,8 @@ module.exports = function(app) {
   // Attach the teams to formioServer.
   formioServer.formio.teams = require('../teams/index')(app, formioServer);
 
-  // Mount the analytics API.
-  formioServer.analytics.endpoints(app, formioServer);
+  // Mount the analytics API at both the root and project endpoints.
+  app.use(require('../analytics')(formioServer));
 
   // Handle Payeezy form signing requests and project upgrades
   app.formio.formio.payment = require('../payment/payment')(app, app.formio.formio);

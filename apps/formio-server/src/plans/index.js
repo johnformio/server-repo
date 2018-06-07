@@ -84,49 +84,63 @@ module.exports = function(formioServer) {
     });
   };
 
-  const checkRequest = function(req, res) {
+  const checkRequest = function(req) {
     return function(cb) {
       getPlan(req, function(err, plan, project) {
         // Ignore project plans, if not interacting with a project.
         if (!err && !project) {
-          debug.checkRequest('Skipping project plans, not interacting with a project..');
           return cb();
         }
 
         if (err) {
-          debug.checkRequest(err);
           return cb(err);
         }
 
         const curr = new Date();
         const _plan = limits[plan];
 
+        // Determine if this project has gone above its limits.
+        if (_.get(project, 'billing.calls', 0) > _plan) {
+          // Create a penalty to throw their request to the back of the request queue.
+          process.nextTick(function() {
+            debug.checkRequest('Monthly limit exceeded..');
+            return cb();
+          });
+        }
+        else {
+          /* eslint-disable callback-return */
+          cb();
+          /* eslint-enable callback-return */
+        }
+
         // Ignore limits for the formio project.
         if (project.hasOwnProperty('name') && project.name && project.name === 'formio') {
-          return cb();
+          return;
         }
 
         // Check the calls made this month.
         const year = curr.getUTCFullYear();
         const month = curr.getUTCMonth();
         formioServer.analytics.getCalls(year, month, null, project._id, function(err, calls) {
-          if (err) {
-            debug.checkRequest(err);
-            return cb(err);
+          if (err || (calls === undefined)) {
+            return;
           }
 
-          debug.checkRequest(
-            `API Calls for y/m/d: ${year}/${month}/* and project: ${
-             project._id  } -> ${calls}`
-          );
-          if (calls >= _plan) {
-            process.nextTick(function() {
-              debug.checkRequest('Monthly limit exceeded..');
-              return cb();
+          const exceeds = (calls >= _plan);
+          const lastChecked = _.get(project, 'billing.checked', 0);
+          const currentCalls = _.get(project, 'billing.calls', 0);
+          const now = Math.floor(Date.now() / 1000);
+
+          // If the project has no calls, then we can check every minute, otherwise update every hour.
+          if ((!currentCalls && ((now - lastChecked) > 60)) || ((now - lastChecked) > 3600)) {
+            _.set(project, 'billing.calls', calls);
+            _.set(project, 'billing.exceeds', exceeds);
+            _.set(project, 'billing.checked', now);
+            formioServer.formio.resources.project.model.update({
+              _id: formioServer.formio.mongoose.Types.ObjectId(project._id.toString())
+            }, {$set: {'billing': project.billing}}, (err, result) => {
+              debug.checkRequest('Updated project billing.');
             });
-          }
-          else {
-            return cb();
           }
         });
       });

@@ -262,7 +262,7 @@ module.exports = function(app, template, hook) {
             });
 
             // Check the request count for the current day.
-            var key = app.formio.analytics.getAnalyticsKey(template.project._id, curr.getUTCFullYear(), curr.getUTCMonth(), curr.getUTCDate(), 's');
+            var key = app.formio.analytics.redis.getAnalyticsKey(template.project._id, curr.getUTCFullYear(), curr.getUTCMonth(), curr.getUTCDate(), 's');
             redis.llen(key, function(err, len) {
               if(err) {
                 return done(err);
@@ -328,7 +328,7 @@ module.exports = function(app, template, hook) {
               assert.equal(_.isString(_timestamp), true);
             });
 
-            var key = app.formio.analytics.getAnalyticsKey(template.project._id, curr.getUTCFullYear(), curr.getUTCMonth(), curr.getUTCDate(), 's');
+            var key = app.formio.analytics.redis.getAnalyticsKey(template.project._id, curr.getUTCFullYear(), curr.getUTCMonth(), curr.getUTCDate(), 's');
             redis.llen(key, function(err, length) {
               if(err) {
                 return done(err);
@@ -1078,8 +1078,8 @@ module.exports = function(app, template, hook) {
 
     describe('Crash Redis', function() {
       it('The API server will run smoothly without analytics', function(done) {
-        var old = app.formio.analytics.redis;
-        app.formio.analytics.redis = null;
+        var old = app.formio.analytics.redis.db;
+        app.formio.analytics.redis.db = null;
 
         request(app)
           .get('/project/' + template.project._id)
@@ -1100,7 +1100,7 @@ module.exports = function(app, template, hook) {
             template.formio.owner.token = res.headers['x-jwt-token'];
 
             // Reset the redis ref.
-            app.formio.analytics.redis = old;
+            app.formio.analytics.redis.db = old;
 
             done();
           });

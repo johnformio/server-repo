@@ -7,9 +7,9 @@ WORKDIR /src
 # Install git
 RUN apk update && \
     apk upgrade && \
-    apk add --no-cache --virtual .build-deps bash git make gcc g++ python
+    apk add --no-cache --virtual .build-deps bash git make gcc g++ python openssh
 
-RUN npm install --production --build-from-source=bcrypt && \
+RUN npm rebuild && \
     npm cache clean && \
     npm uninstall -g npm && \
     apk del .build-deps
