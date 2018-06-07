@@ -13,6 +13,7 @@ RUN apk update && \
 RUN mkdir /root/.ssh/
 RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 ADD deployment/keys/formio-services /root/.ssh/id_rsa
+RUN chmod 0600 /root/.ssh/id_rsa
 
 RUN npm install --production --build-from-source=bcrypt && \
     npm cache clean && \
