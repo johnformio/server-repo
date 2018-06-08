@@ -202,12 +202,12 @@ module.exports = function(app) {
        * @param tempToken
        */
       tempToken(req, res, allow, expire, tokenResponse, cb) {
-        if (formioServer.redis.db) {
+        if (formioServer.redis) {
           const tempToken = chance.string({
             pool: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
             length: 30
           });
-          formioServer.redis.db.set(tempToken, tokenResponse.token, 'EX', expire, (err) => {
+          formioServer.redis.setExp(tempToken, tokenResponse.token, expire, (err) => {
             if (err) {
               return res.status(500).send(err.message);
             }
