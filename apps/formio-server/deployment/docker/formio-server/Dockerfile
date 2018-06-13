@@ -10,7 +10,7 @@ RUN apk update && \
     apk add --no-cache --virtual .build-deps bash git make gcc g++ python
 
 RUN npm install --production --build-from-source=bcrypt && \
-    npm cache clean && \
+    npm cache clean --force && \
     npm uninstall -g npm && \
     apk del .build-deps
 
