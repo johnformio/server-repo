@@ -50,6 +50,9 @@ module.exports = app => (mail, req, res, params, cb) => {
           return resolve();
         }
       }
+      else {
+        return resolve();
+      }
     }
     else {
       return resolve();
