@@ -46,6 +46,7 @@ module.exports = function(formio) {
               qs: req.query,
               headers: headers,
               json: true,
+              rejectUnauthorized: false,
               body: {
                 form: form,
                 submission: submission
