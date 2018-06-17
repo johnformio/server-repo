@@ -90,7 +90,7 @@ module.exports = function(app, template, hook) {
           // Don't check settings.
           delete response.settings;
 
-          assert.deepEqual(response, project);
+          assert.deepEqual(_.omit(response, 'billing'), project);
 
           // Store the JWT for future API calls.
           template.formio.owner.token = res.headers['x-jwt-token'];
@@ -134,7 +134,7 @@ module.exports = function(app, template, hook) {
           // Don't check settings.
           delete response.settings;
 
-          assert.deepEqual(response, project);
+          assert.deepEqual(_.omit(response, 'billing'), project);
 
           // Store the JWT for future API calls.
           template.formio.owner.token = res.headers['x-jwt-token'];
@@ -159,7 +159,7 @@ module.exports = function(app, template, hook) {
           // Don't check settings.
           delete response.settings;
 
-          assert.deepEqual(response, project);
+          assert.deepEqual(_.omit(response, 'billing'), project);
 
           // Store the JWT for future API calls.
           template.formio.owner.token = res.headers['x-jwt-token'];
@@ -184,7 +184,7 @@ module.exports = function(app, template, hook) {
           // Don't check settings.
           delete response.settings;
 
-          assert.deepEqual(response, project);
+          assert.deepEqual(_.omit(response, 'billing'), project);
 
           // Store the JWT for future API calls.
           template.formio.owner.token = res.headers['x-jwt-token'];
@@ -209,7 +209,7 @@ module.exports = function(app, template, hook) {
           // Don't check settings.
           delete response.settings;
 
-          assert.deepEqual(response, project);
+          assert.deepEqual(_.omit(response, 'billing'), project);
 
           // Store the JWT for future API calls.
           template.formio.owner.token = res.headers['x-jwt-token'];
@@ -300,7 +300,7 @@ module.exports = function(app, template, hook) {
           // Don't check settings.
           delete response.settings;
 
-          assert.deepEqual(response, project);
+          assert.deepEqual(_.omit(response, 'billing'), project);
 
           // Store the JWT for future API calls.
           template.formio.owner.token = res.headers['x-jwt-token'];
@@ -325,7 +325,7 @@ module.exports = function(app, template, hook) {
           // Don't check settings.
           delete response.settings;
 
-          assert.deepEqual(response, project);
+          assert.deepEqual(_.omit(response, 'billing'), project);
 
           // Store the JWT for future API calls.
           template.formio.owner.token = res.headers['x-jwt-token'];
@@ -350,7 +350,7 @@ module.exports = function(app, template, hook) {
           // Don't check settings.
           delete response.settings;
 
-          assert.deepEqual(response, project);
+          assert.deepEqual(_.omit(response, 'billing'), project);
 
           // Store the JWT for future API calls.
           template.formio.owner.token = res.headers['x-jwt-token'];
@@ -441,7 +441,7 @@ module.exports = function(app, template, hook) {
           // Don't check settings.
           delete response.settings;
 
-          assert.deepEqual(response, project);
+          assert.deepEqual(_.omit(response, 'billing'), project);
 
           // Store the JWT for future API calls.
           template.formio.owner.token = res.headers['x-jwt-token'];
@@ -466,7 +466,7 @@ module.exports = function(app, template, hook) {
           // Don't check settings.
           delete response.settings;
 
-          assert.deepEqual(response, project);
+          assert.deepEqual(_.omit(response, 'billing'), project);
 
           // Store the JWT for future API calls.
           template.formio.owner.token = res.headers['x-jwt-token'];
@@ -491,7 +491,7 @@ module.exports = function(app, template, hook) {
           // Don't check settings.
           delete response.settings;
 
-          assert.deepEqual(response, project);
+          assert.deepEqual(_.omit(response, 'billing'), project);
 
           // Store the JWT for future API calls.
           template.formio.owner.token = res.headers['x-jwt-token'];

@@ -20,8 +20,8 @@ module.exports = function(app) {
   // Attach the teams to formioServer.
   formioServer.formio.teams = require('../teams/index')(app, formioServer);
 
-  // Mount the analytics API.
-  formioServer.analytics.endpoints(app, formioServer);
+  // Mount the analytics API at both the root and project endpoints.
+  app.use(require('../analytics')(formioServer));
 
   // Handle Payeezy form signing requests and project upgrades
   app.formio.formio.payment = require('../payment/payment')(app, app.formio.formio);
@@ -218,12 +218,12 @@ module.exports = function(app) {
        * @param tempToken
        */
       tempToken(req, res, allow, expire, tokenResponse, cb) {
-        if (formioServer.redis.db) {
+        if (formioServer.redis) {
           const tempToken = chance.string({
             pool: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
             length: 30
           });
-          formioServer.redis.db.set(tempToken, tokenResponse.token, 'EX', expire, (err) => {
+          formioServer.redis.setExp(tempToken, tokenResponse.token, expire, (err) => {
             if (err) {
               return res.status(500).send(err.message);
             }

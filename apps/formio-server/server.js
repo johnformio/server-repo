@@ -28,11 +28,11 @@ module.exports = function(options) {
   }
 
   // Connect to redis.
-  const RedisInterface = require('./src/util/redis');
-  const redis = new RedisInterface(config);
+  const RedisInterface = require('formio-services/RedisInterface');
+  const redis = new RedisInterface(config.redis);
 
   // Load the analytics hooks.
-  const analytics = require('./src/analytics/index')(redis);
+  const analytics = require('./src/analytics/analytics')(redis);
 
   var Logger = require('./src/logger/index')(config);
 
@@ -57,7 +57,7 @@ module.exports = function(options) {
   });
 
   // Hook each request and add analytics support.
-  app.use(analytics.hook);
+  app.use(analytics.hook.bind(analytics));
 
   app.use(favicon('./favicon.ico'));
 

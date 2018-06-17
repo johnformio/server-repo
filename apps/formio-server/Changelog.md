@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Now able to use external hosted service for Nunjucks email templating.
  - Upgrade mongoose@5.1.3, aws-sdk@2.247.1, formio@1.30.0, resourcejs@1.24.0, webpack@4.10.1, sinon@5.0.10, prepack@0.2.36
 
+## 5.6.10
+### Fixed
+ - Issues with the PDF download where it would fail if the server was not hosted in https.
+
+## 5.6.6
+### Changed
+ - Allow the Nunjucks templating to happen within an external service.
+ - Upgraded mongoose@5.1.3, aws-sdk@2.247.1, formio@1.30.0, formio-workers@1.5.0, resourcejs@1.24.0, webpack@4.10.1
+
 ## 5.6.5
 ### Fixed
  - PDF permissions not checked properly.
