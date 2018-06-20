@@ -315,6 +315,6 @@ module.exports = function(router) {
   };
 
   return {
-    generateQueries: generateQueries
+    generateQueries
   };
 };

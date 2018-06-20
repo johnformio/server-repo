@@ -39,10 +39,8 @@ module.exports = function(formio) {
         return resolve();
       });
     })
-    .then(() => {
-      return next();
-    })
-    .catch(err => {
+    .then(next)
+    .catch((err) => {
       try {
         if (!err) {
           return res.sendStatus(401);
