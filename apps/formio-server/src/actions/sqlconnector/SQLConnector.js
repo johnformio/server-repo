@@ -1,14 +1,14 @@
 'use strict';
 
 const _ = require('lodash');
-const async = require('async');
 const debug = require('debug')('formio:action:sqlconnector');
 const Q = require('q');
 const request = require('request');
 
-module.exports = function(router) {
+module.exports = (router) => {
   const Action = router.formio.Action;
   const formio = router.formio;
+  const hook = formio.hook;
 
   /**
    * Add an externalId to the local resource with the remote id.
@@ -18,7 +18,7 @@ module.exports = function(router) {
    * @param {string} remoteId
    *   The external resource id.
    */
-  const addExternalId = function(localId, remoteId) {
+  function addExternalId(localId, remoteId) {
     const _find = {_id: localId};
     const _update = {
       $push: {
@@ -30,7 +30,7 @@ module.exports = function(router) {
     };
 
     return Q.ninvoke(formio.resources.submission.model, 'update', _find, _update);
-  };
+  }
 
   /**
    * Get the externalId for the current submission.
@@ -41,31 +41,27 @@ module.exports = function(router) {
    * @returns {string|undefined}
    *   The external id for the sqlconnector in the submission if defined.
    */
-  const getSubmissionId = function(req, res) {
+  function getSubmissionId(req, res) {
     let external;
 
     // If an item was included in the response
-    if (_.has(res, 'resource.item') && req.method !== 'DELETE') {
-      external = _.find(_.get(res, 'resource.item.externalIds'), function(item) {
-        return item.type === 'sqlconnector';
-      });
+    if (res.resource.item && req.method !== 'DELETE') {
+      external = res.resource.item.externalIds.find((item) => item.type === 'sqlconnector');
     }
     else if (req.method === 'DELETE') {
-      const deleted = _.get(req, `formioCache.submissions.${_.get(req, 'subId')}`);
+      const deleted = _.get(req, `formioCache.submissions.${req.subId}`);
       if (!deleted) {
         return undefined;
       }
-      external = _.find(_.get(deleted, 'externalIds'), function(item) {
-        return item.type === 'sqlconnector';
-      });
+      external = deleted.externalIds.find((item) => item.type === 'sqlconnector');
     }
 
     const id = external
-      ? _.get(external, 'id')
+      ? external.id
       : undefined;
 
     return id;
-  };
+  }
 
   /**
    * SQLConnector class.
@@ -77,21 +73,20 @@ module.exports = function(router) {
     }
 
     static info(req, res, next) {
-      next(null, {
+      next(null, hook.alter('actionInfo', {
         name: 'sqlconnector',
-        title: 'SQL Connector (Premium)',
-        premium: true,
+        title: 'SQL Connector',
         description: 'Allows you to execute a remote SQL Query via Resquel.',
         priority: 0,
         defaults: {
           handler: ['after'],
           method: ['create', 'update', 'delete']
         }
-      });
+      }));
     }
 
     static settingsForm(req, res, next) {
-      formio.hook.settings(req, function(err, settings) {
+      hook.settings(req, (err, settings) => {
         if (err) {
           debug(err);
           return next(null, {});
@@ -102,103 +97,86 @@ module.exports = function(router) {
           return res.status(400).send('No project settings were found for the SQL Connector.');
         }
 
-        const missingSetting = _.find(['host', 'type'], function(prop) {
-          return !settings.sqlconnector[prop];
-        });
+        const missingSetting = ['host', 'type'].find((prop) => !settings.sqlconnector[prop]);
         if (missingSetting) {
           return res.status(400).send('The SQL Connector is missing required settings.');
         }
 
-        const form = [];
-        async.waterfall([
-          function addBlockCheckbox(cb) {
-            form.push({
-              conditional: {
-                eq: '',
-                when: null,
-                show: ''
-              },
-              type: 'checkbox',
-              validate: {
-                required: false
-              },
-              persistent: true,
-              protected: false,
-              defaultValue: false,
-              key: 'block',
-              label: 'Block request for SQL Connector feedback',
-              hideLabel: true,
-              tableView: true,
-              inputType: 'checkbox',
-              input: true
-            });
-            return cb();
+        const form = [
+          {
+            conditional: {
+              eq: '',
+              when: null,
+              show: ''
+            },
+            type: 'checkbox',
+            validate: {
+              required: false
+            },
+            persistent: true,
+            protected: false,
+            defaultValue: false,
+            key: 'block',
+            label: 'Block request for SQL Connector feedback',
+            tableView: true,
+            inputType: 'checkbox',
+            input: true
           },
-          function addTableName(cb) {
-            form.push({
-              label: 'Table Name',
-              key: 'table',
-              inputType: 'text',
-              defaultValue: '',
-              input: true,
-              placeholder: 'Which table is this in?',
-              prefix: '',
-              suffix: '',
-              type: 'textfield',
-              multiple: false,
-              validate: {
-                required: true
-              }
-            });
-            return cb();
-          },
-          function addTablePrimaryKey(cb) {
-            form.push({
-              label: 'Primary Key',
-              key: 'primary',
-              inputType: 'text',
-              defaultValue: 'id',
-              input: true,
-              placeholder: 'What is the primary key for this table? (Must be self incrementing/updating)',
-              prefix: '',
-              suffix: '',
-              type: 'textfield',
-              multiple: false,
-              validate: {
-                required: true
-              }
-            });
-            return cb();
-          },
-          function getFormComponents(cb) {
-            try {
-              // Load the current form, to get all the components.
-              formio.cache.loadCurrentForm(req, function(err, form) {
-                if (err) {
-                  return cb(err);
-                }
-
-                // Filter non-input components.
-                const components = [];
-                formio.util.eachComponent(form.components, function(component) {
-                  if (
-                    !formio.util.isLayoutComponent(component) &&
-                    component.input === true &&
-                    component.type !== 'button' &&
-                    component.type !== 'email'
-                  ) {
-                    components.push(component);
-                  }
-                });
-
-                return cb(null, components);
-              });
-            }
-            catch (e) {
-              return cb('Could not load the settings form.');
+          {
+            label: 'Table Name',
+            key: 'table',
+            inputType: 'text',
+            defaultValue: '',
+            input: true,
+            placeholder: 'Which table is this in?',
+            prefix: '',
+            suffix: '',
+            type: 'textfield',
+            multiple: false,
+            validate: {
+              required: true
             }
           },
-          function addMappingDatagrid(components, cb) {
+          {
+            label: 'Primary Key',
+            key: 'primary',
+            inputType: 'text',
+            defaultValue: 'id',
+            input: true,
+            placeholder: 'What is the primary key for this table? (Must be self incrementing/updating)',
+            prefix: '',
+            suffix: '',
+            type: 'textfield',
+            multiple: false,
+            validate: {
+              required: true
+            }
+          }
+        ];
+        new Promise((resolve, reject) => {
+          // Load the current form, to get all the components.
+          formio.cache.loadCurrentForm(req, (err, form) => {
+            if (err) {
+              return reject(err);
+            }
+
+            // Filter non-input components.
+            const components = [];
+            formio.util.eachComponent(form.components, (component) => {
+              if (
+                !formio.util.isLayoutComponent(component) &&
+                component.input === true &&
+                component.type !== 'button' &&
+                component.type !== 'email'
+              ) {
+                components.push(component);
+              }
+            });
+
+            return resolve(components);
+          });
+        })
+          .then((components) => {
             form.push({
               conditional: {
                 eq: '',
@@ -279,15 +257,9 @@ module.exports = function(router) {
               tree: true,
               input: true
             });
-            return cb();
-          }
-        ], function(err) {
-          if (err) {
-            return next(err);
-          }
-
-          return next(null, form);
-        });
+            return next(null, form);
+          })
+          .catch(() => next('Could not load the settings form.'));
       });
     }
 
@@ -304,10 +276,10 @@ module.exports = function(router) {
      *   The callback function to execute upon completion.
      */
     resolve(handler, method, req, res, next) { // eslint-disable-line max-statements
-      const settings = this.settings;
+      const settings = this.settings || {};
 
       // Only block on the external request, if configured
-      if (!_.has(settings, 'block') || settings.block === false) {
+      if (!settings.block || settings.block === false) {
         next(); // eslint-disable-line callback-return
       }
 
@@ -353,12 +325,13 @@ module.exports = function(router) {
       try {
         method = req.method.toString().toLowerCase();
         const options = {
-          method: method
+          auth: {},
+          method,
         };
 
         const primary = this.settings.primary;
         let project = formio.cache.currentProject(req);
-        if (project === null || project === undefined) {
+        if (_.isNil(project)) {
           return handleErrors('No project found.');
         }
         else {
@@ -371,15 +344,15 @@ module.exports = function(router) {
         }
 
         // Add basic auth if available.
-        if (_.has(project, 'settings.sqlconnector.user')) {
-          _.set(options, 'auth.user', _.get(project, 'settings.sqlconnector.user'));
+        if (project.settings.sqlconnector.user) {
+          options.auth.user = project.settings.sqlconnector.user;
         }
-        if (_.has(project, 'settings.sqlconnector.password')) {
-          _.set(options, 'auth.password', _.get(project, 'settings.sqlconnector.password'));
+        if (project.settings.sqlconnector.password) {
+          options.auth.password = project.settings.sqlconnector.password;
         }
 
         // Build the base url.
-        options.url = `${_.get(project, 'settings.sqlconnector.host')}/${this.settings.table}`;
+        options.url = `${project.settings.sqlconnector.host}/${settings.table}`;
 
         // If this was not a post request, determine which existing resource we are modifying.
         if (method !== 'post') {

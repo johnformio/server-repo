@@ -90,7 +90,15 @@ module.exports = function(app) {
       actionInfo(action) {
         // Modify premium actions if present.
         const premium = [
-          'webhook', 'oauth', 'office365contact', 'office365calendar', 'hubspotContact', 'googlesheet', 'jira', 'ldap'
+          'webhook',
+          'oauth',
+          'office365contact',
+          'office365calendar',
+          'hubspotContact',
+          'googlesheet',
+          'jira',
+          'ldap',
+          'sqlconnector',
         ];
         if (action.title && action.name && !action.premium && premium.indexOf(action.name) !== -1) {
           action.title += ' (Premium)';
