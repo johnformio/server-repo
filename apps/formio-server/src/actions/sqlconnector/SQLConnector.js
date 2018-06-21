@@ -2,8 +2,7 @@
 
 const _ = require('lodash');
 const debug = require('debug')('formio:action:sqlconnector');
-const Q = require('q');
-const request = require('request');
+const request = require('request-promise-native');
 
 module.exports = (router) => {
   const Action = router.formio.Action;
@@ -19,17 +18,17 @@ module.exports = (router) => {
    *   The external resource id.
    */
   function addExternalId(localId, remoteId) {
-    const _find = {_id: localId};
-    const _update = {
+    const find = {_id: localId};
+    const update = {
       $push: {
         externalIds: {
           type: 'sqlconnector',
-          id: remoteId
-        }
-      }
+          id: remoteId,
+        },
+      },
     };
 
-    return Q.ninvoke(formio.resources.submission.model, 'update', _find, _update);
+    return formio.resources.submission.model.update(find, update);
   }
 
   /**
@@ -49,7 +48,7 @@ module.exports = (router) => {
       external = res.resource.item.externalIds.find((item) => item.type === 'sqlconnector');
     }
     else if (req.method === 'DELETE') {
-      const deleted = _.get(req, `formioCache.submissions.${req.subId}`);
+      const deleted = req.formioCache.submissions[req.subId];
       if (!deleted) {
         return undefined;
       }
@@ -286,36 +285,32 @@ module.exports = (router) => {
       const handleErrors = function(err) {
         debug(err);
         try {
-          return Q()
-          .then(function() {
-            // If this is not a creation, skip clean up of the failed item.
-            if (method !== 'post') {
-              return;
-            }
-
-            const localId = _.get(res, 'resource.item._id');
-            if (!localId) {
-              return;
-            }
-
-            const _find = {_id: localId};
-            const _update = {
-              $set: {
-                deleted: Date.now()
-              }
-            };
-            return Q.ninvoke(formio.resources.submission.model, 'update', _find, _update);
-          })
-          .then(function() {
-            // If blocking is on, return the error.
-            if (_.has(settings, 'block') && settings.block === true) {
-              return next(err.message || err);
-            }
+          // If this is not a creation, skip clean up of the failed item.
+          if (method !== 'post') {
             return;
-          })
-          .catch(function(err) {
-            debug(err);
-          });
+          }
+
+          const localId = res.resource.item._id;
+          if (!localId) {
+            return;
+          }
+
+          const find = {_id: localId};
+          const update = {
+            $set: {
+              deleted: Date.now(),
+            },
+          };
+
+          return formio.resources.submission.model.update(find, update).exec()
+            .then(() => {
+              // If blocking is on, return the error.
+              if (settings.block === true) {
+                return next(err.message || err);
+              }
+              return;
+            })
+            .catch(debug);
         }
         catch (e) {
           debug(e);
@@ -363,11 +358,11 @@ module.exports = (router) => {
         }
 
         // If this is a create/update, determine what to send in the request body.
-        if (['post', 'put'].indexOf(method) !== -1) {
+        if (['post', 'put'].includes(method)) {
           options.json = true;
-          const item = _.has(res, 'resource.item')
-            ? (_.get(res, 'resource.item')).toObject()
-            : _.get(req, 'body');
+          const item = res.resource.item
+            ? res.resource.item.toObject()
+            : req.body;
 
           // Remove protected fields from the external request.
           formio.util.removeProtectedFields(req.currentForm, method, item);
@@ -375,73 +370,62 @@ module.exports = (router) => {
         }
 
         options.timeout = 10000;
-        process.nextTick(function() {
-          request(options, function(err, response, body) {
-            if (err) {
-              return handleErrors(err);
-            }
-
+        process.nextTick(() => request(options)
+          .then((response) => {
             // If this is not a new resource, skip link phase for new resources.
             if (method !== 'post') {
               // if the request was blocking, return here.
-              if (_.has(settings, 'block') && settings.block === true) {
+              if (settings.block === true) {
                 return next();
               }
               return;
             }
 
-            // Attempt to modify linked resources.
-            return Q()
-              .then(function() {
-                if (!response) {
-                  throw new Error('Invalid response.');
-                }
+            if (!response) {
+              throw new Error('Invalid response.');
+            }
 
-                if (!(/^2\d\d$/i.test(response.statusCode))) {
-                  throw new Error((response.body || '').toString().replace(/<br>/, ''));
-                }
+            if (!(response.statusCode >= 200 && response.statusCode < 300)) {
+              throw new Error((response.body || '').toString().replace(/<br>/, ''));
+            }
 
-                const results = _.get(response, 'body.rows');
-                if (!(results instanceof Array)) {
-                  // No clue what to do here.
-                  throw new Error(
-                    `Expected array of results, got ${typeof results}(${JSON.stringify(results)})`
-                  );
-                }
-                if (results.length === 1) {
-                  return results[0];
-                }
+            const results = response.body.rows;
 
-                throw new Error(`More than one result: ${results.length}`);
-              })
-              .then(function(remoteItem) {
-                // Get the localId
-                const localId = _.get(res, 'resource.item._id');
-                if (!localId) {
-                  throw new Error(`Unknown local item id: ${localId}`);
-                }
-                // Get the remoteId
-                const remoteId = _.get(remoteItem, primary);
-                if (!remoteId && remoteId !== 0) {
-                  throw new Error(`Unknown remote item id (${remoteId}) for primary key.`);
-                }
+            if (!Array.isArray(results)) {
+              // No clue what to do here.
+              throw new Error(`Expected array of results, got ${typeof results}(${JSON.stringify(results)})`);
+            }
 
-                if (method === 'post') {
-                  return addExternalId(localId, remoteId);
-                }
-              })
-              .then(function() {
-                // if the request was blocking, return here.
-                if (_.has(settings, 'block') && settings.block === true) {
-                  return next();
-                }
-              })
-              .catch(function(err) {
-                // If blocking is on, return the error.
-                return handleErrors(err);
-              });
-          });
-        });
+            if (results.length > 1) {
+              throw new Error(`More than one result: ${results.length}`);
+            }
+
+            return results[0];
+          })
+          .then((remoteItem) => {
+            // Get the localId
+            const localId = res.resource.item._id;
+            if (!localId) {
+              throw new Error(`Unknown local item id: ${localId}`);
+            }
+            // Get the remoteId
+            const remoteId = remoteItem[primary];
+            if (_.isNil(remoteId)) {
+              throw new Error(`Unknown remote item id (${remoteId}) for primary key.`);
+            }
+
+            if (method === 'post') {
+              return addExternalId(localId, remoteId);
+            }
+          })
+          .then(() => {
+            // if the request was blocking, return here.
+            if (settings.block === true) {
+              return next();
+            }
+          })
+          // If blocking is on, return the error.
+          .catch((err) => handleErrors(err)));
       }
       catch (err) {
         return handleErrors(err);
