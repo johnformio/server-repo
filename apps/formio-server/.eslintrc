@@ -5,6 +5,9 @@
     "node": true,
     "es6": true
   },
+  "parserOptions": {
+    "ecmaVersion": 2018
+  },
   "rules": {
     "curly": [2, "all"],
     "no-unused-vars": [1, {"args": "none"}],
