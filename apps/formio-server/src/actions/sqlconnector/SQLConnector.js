@@ -44,22 +44,14 @@ module.exports = (router) => {
     let external;
 
     // If an item was included in the response
-    if (res.resource.item && req.method !== 'DELETE') {
-      external = res.resource.item.externalIds.find((item) => item.type === 'sqlconnector');
-    }
-    else if (req.method === 'DELETE') {
-      const deleted = req.formioCache.submissions[req.subId];
-      if (!deleted) {
-        return undefined;
-      }
-      external = deleted.externalIds.find((item) => item.type === 'sqlconnector');
+    if (res.resource.item) {
+      external = (res.resource.previousItem || res.resource.item)
+        .externalIds.find((item) => item.type === 'sqlconnector');
     }
 
-    const id = external
+    return external
       ? external.id
-      : undefined;
-
-    return id;
+      : null;
   }
 
   /**
@@ -152,6 +144,7 @@ module.exports = (router) => {
             }
           }
         ];
+
         new Promise((resolve, reject) => {
           // Load the current form, to get all the components.
           formio.cache.loadCurrentForm(req, (err, form) => {
@@ -282,11 +275,14 @@ module.exports = (router) => {
         next(); // eslint-disable-line callback-return
       }
 
-      const handleErrors = function(err) {
+      function handleErrors(err) {
         debug(err);
         try {
           // If this is not a creation, skip clean up of the failed item.
-          if (method !== 'post') {
+          if (method !== 'post' || !res.resource) {
+            if (settings.block === true) {
+              return next(err);
+            }
             return;
           }
 
@@ -315,16 +311,15 @@ module.exports = (router) => {
         catch (e) {
           debug(e);
         }
-      };
+      }
 
       try {
         method = req.method.toString().toLowerCase();
         const options = {
-          auth: {},
           method,
         };
 
-        const primary = this.settings.primary;
+        const primaryKey = this.settings.primary;
         let project = formio.cache.currentProject(req);
         if (_.isNil(project)) {
           return handleErrors('No project found.');
@@ -340,10 +335,16 @@ module.exports = (router) => {
 
         // Add basic auth if available.
         if (project.settings.sqlconnector.user) {
-          options.auth.user = project.settings.sqlconnector.user;
+          options.auth = {
+            ...options.auth,
+            user: project.settings.sqlconnector.user,
+          };
         }
         if (project.settings.sqlconnector.password) {
-          options.auth.password = project.settings.sqlconnector.password;
+          options.auth = {
+            ...options.auth,
+            password: project.settings.sqlconnector.password,
+          };
         }
 
         // Build the base url.
@@ -360,7 +361,7 @@ module.exports = (router) => {
         // If this is a create/update, determine what to send in the request body.
         if (['post', 'put'].includes(method)) {
           options.json = true;
-          const item = res.resource.item
+          const item = res.resource
             ? res.resource.item.toObject()
             : req.body;
 
@@ -385,11 +386,11 @@ module.exports = (router) => {
               throw new Error('Invalid response.');
             }
 
-            if (!(response.statusCode >= 200 && response.statusCode < 300)) {
+            if (!(response.status >= 200 && response.status < 300)) {
               throw new Error((response.body || '').toString().replace(/<br>/, ''));
             }
 
-            const results = response.body.rows;
+            const results = response.rows;
 
             if (!Array.isArray(results)) {
               // No clue what to do here.
@@ -400,32 +401,31 @@ module.exports = (router) => {
               throw new Error(`More than one result: ${results.length}`);
             }
 
-            return results[0];
-          })
-          .then((remoteItem) => {
-            // Get the localId
-            const localId = res.resource.item._id;
-            if (!localId) {
-              throw new Error(`Unknown local item id: ${localId}`);
-            }
-            // Get the remoteId
-            const remoteId = remoteItem[primary];
-            if (_.isNil(remoteId)) {
-              throw new Error(`Unknown remote item id (${remoteId}) for primary key.`);
-            }
+            // 'Save submission' action is set.
+            if (method === 'post' && res.resource) {
+              const remoteItem = results[0];
+              const localId = res.resource.item._id;
+              if (!localId) {
+                throw new Error(`Unknown local item id: ${localId}`);
+              }
+              // Get the remoteId
+              const remoteId = remoteItem[primaryKey];
+              if (_.isNil(remoteId)) {
+                throw new Error(`Unknown remote item id (${remoteId}) for primary key.`);
+              }
 
-            if (method === 'post') {
               return addExternalId(localId, remoteId);
             }
           })
+          // If blocking is on, return the error.
           .then(() => {
             // if the request was blocking, return here.
             if (settings.block === true) {
               return next();
             }
           })
-          // If blocking is on, return the error.
-          .catch((err) => handleErrors(err)));
+          .catch(handleErrors)
+        );
       }
       catch (err) {
         return handleErrors(err);
