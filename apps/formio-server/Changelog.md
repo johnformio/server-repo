@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [UNRELEASED]
+### Fixed
+ - SQL Connector action for forms without Save Submission action.
+
 ## 5.7.0
 ### Changed
  - Now able to use external hosted service for Nunjucks email templating.
