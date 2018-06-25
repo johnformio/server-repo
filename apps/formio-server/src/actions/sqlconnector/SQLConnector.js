@@ -335,16 +335,14 @@ module.exports = (router) => {
 
         // Add basic auth if available.
         if (project.settings.sqlconnector.user) {
-          options.auth = {
-            ...options.auth,
+          options.auth = Object.assign({}, options.auth, {
             user: project.settings.sqlconnector.user,
-          };
+          });
         }
         if (project.settings.sqlconnector.password) {
-          options.auth = {
-            ...options.auth,
+          options.auth = Object.assign({}, options.auth, {
             password: project.settings.sqlconnector.password,
-          };
+          });
         }
 
         // Build the base url.
