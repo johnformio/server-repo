@@ -96,18 +96,17 @@ module.exports = function(router, formioServer) {
   formio.middleware.customCrmAction = require('../middleware/customCrmAction')(formio);
 
   const hiddenFields = ['deleted', '__v', 'machineName', 'primary'];
-  const projectModel = formio.mongoose.model('project');
   const resource = Resource(
     router,
     '',
     'project',
-    projectModel
+    formio.mongoose.model('project')
   ).rest({
     beforeGet: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       (req, res, next) => {
         // Use project cache for performance reasons.
-        req.modelQuery = req.modelQuery || req.model || projectModel;
+        req.modelQuery = req.modelQuery || req.model || formio.mongoose.model('project');
         next();
       }
     ],

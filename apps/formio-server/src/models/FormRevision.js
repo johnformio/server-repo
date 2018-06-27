@@ -1,22 +1,21 @@
 'use strict';
-
-const mongoose = require('mongoose');
 const _ = require('lodash');
 
 module.exports = (router, models) => {
+  const formio = router.formio;
   const schema = models.form.schema.clone();
   schema.paths = _.cloneDeep(schema.paths);
 
   schema.add({
     _rid: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: formio.mongoose.Schema.Types.ObjectId,
       description: 'The corresponding Resource id of this version.',
       ref:  'forms',
       index: true,
       required: true
     },
     _vid: {
-      type: mongoose.Schema.Types.Mixed,
+      type: formio.mongoose.Schema.Types.Mixed,
       description: 'The version id of the Resource.',
       index: true,
       required: true,

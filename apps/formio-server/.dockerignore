@@ -8,5 +8,4 @@
 .gitattributes
 circle.yml
 dist
-node_modules
 bower_components

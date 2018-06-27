@@ -3,7 +3,6 @@
 var fs = require('fs');
 var path = require('path');
 var webpack = require('webpack');
-var UglifyJS = require('uglify-es');
 var outputDir = 'build';
 
 var nodeModules = {};
@@ -34,7 +33,7 @@ var copyFile = function(file) {
   'package.json'
 ].forEach(copyFile);
 
-var compiler = webpack({
+webpack({
   mode: 'production',
   entry: './main.js',
   target: 'node',
@@ -48,18 +47,4 @@ var compiler = webpack({
     filename: 'main.js'
   },
   externals: nodeModules
-});
-
-compiler.run(function(err, stats) {
-  var code = UglifyJS.minify(fs.readFileSync("build/main.js", "utf8"), {
-    mangle: {
-      reserved: [
-        '__filename',
-        '__dirname',
-        'module'
-      ]
-    }
-  }).code;
-
-  fs.writeFile('build/main.js', code);
-});
+}).run();
