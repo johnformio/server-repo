@@ -303,7 +303,7 @@ module.exports = router => {
      */
     /* eslint-disable max-statements */
     resolve(handler, method, req, res, next) {
-      const settings = this.settings;
+      const settings = this.settings || {};
 
       /**
        * Util function to handle success for a potentially blocking request.
@@ -313,7 +313,7 @@ module.exports = router => {
        * @returns {*}
        */
       const handleSuccess = (data, response) => {
-        if (_.has(settings, 'externalIdType') && _.has(settings, 'externalIdPath')) {
+        if (settings.externalIdType && settings.externalIdPath) {
           const submissionModel = req.submissionModel || router.formio.resources.submission.model;
           submissionModel.findOne(
             {_id: _.get(res, 'resource.item._id'), deleted: {$eq: null}}
@@ -321,14 +321,15 @@ module.exports = router => {
             if (err) {
               return router.formio.util.log(err);
             }
+
             submission.externalIds = submission.externalIds || [];
 
-            const type = _.get(settings, 'externalIdType');
-            const id = _.get(data, _.get(settings, 'externalIdPath'), '');
+            const type = settings.externalIdType;
+            const id = data[type] || '';
 
             // Either update the existing ID or create a new one.
             let found = false;
-            submission.externalIds.forEach(externalId => {
+            submission.externalIds.forEach((externalId) => {
               if (externalId.type === type) {
                 externalId.id = id;
                 found = true;
@@ -348,7 +349,7 @@ module.exports = router => {
           });
         }
 
-        if (!_.get(settings, 'block') || _.get(settings, 'block') === false) {
+        if (!settings.block || settings.block === false) {
           return;
         }
 
@@ -369,7 +370,7 @@ module.exports = router => {
        * @returns {*}
        */
       const handleError = (data, response) => {
-        if (!_.get(settings, 'block') || _.get(settings, 'block') === false) {
+        if (!settings.block || settings.block === false) {
           return;
         }
 
@@ -382,24 +383,24 @@ module.exports = router => {
         }
 
         // Continue if were not blocking
-        if (!_.get(settings, 'block') || _.get(settings, 'block') === false) {
+        if (!settings.block || settings.block === false) {
           next(); // eslint-disable-line callback-return
         }
 
-        const submission = _.get(res, 'resource.item');
-        const externalId = _.get(submission, _.get(settings, 'externalIdType', 'none'), '');
+        const submission = _.get(res, 'resource.previousItem') || _.get(res, 'resource.item') || {};
+        const externalId = submission[settings.externalIdType || 'none'] || '';
 
         const options = {};
 
         // Get the settings
-        if (_.has(settings, 'username')) {
-          options.username = _.get(settings, 'username');
+        if (settings.username) {
+          options.username = settings.username;
         }
-        if (_.has(settings, 'password')) {
-          options.password = _.get(settings, 'password');
+        if (settings.password) {
+          options.password = settings.password;
         }
 
-        if (_.get(settings, 'forwardHeaders', false)) {
+        if (settings.forwardHeaders) {
           options.headers = _.clone(req.headers);
         }
         else {
@@ -411,25 +412,19 @@ module.exports = router => {
         options.headers['user-agent'] = 'Form.io Webhook Action';
 
         // Add custom headers.
-        const headers = _.get(settings, 'headers', []);
-        headers.forEach(header => {
+        const headers = settings.headers || [];
+        headers.forEach((header) => {
           if (header && header.header) {
             options.headers[header.header] = header.value;
           }
         });
 
-        // Cant send a webhook if the url isn't set.
-        if (!_.has(settings, 'url')) {
+        // Can't send a webhook if the url isn't set.
+        if (!settings.url) {
           return handleError('No url given in the settings');
         }
 
-        let url = this.settings.url;
-        let payload = {
-          request: _.get(req, 'body'),
-          response: _.get(req, 'response'),
-          submission: (submission && submission.toObject) ? submission.toObject() : {},
-          params: _.get(req, 'params')
-        };
+        let url = settings.url;
 
         // Interpolate URL if possible
         if (res && res.resource && res.resource.item && res.resource.item.data) {
@@ -442,11 +437,18 @@ module.exports = router => {
 
         // Fall back if interpolation failed
         if (!url) {
-          url = this.settings.url;
+          url = settings.url;
         }
 
+        let payload = {
+          request: req.body,
+          response: req.response,
+          submission: (submission && submission.toObject) ? submission.toObject() : {},
+          params: req.params
+        };
+
         // Allow user scripts to transform the payload.
-        if (_.has(settings, 'transform')) {
+        if (settings.transform) {
           const script = new vm.Script(settings.transform);
           const sandbox = {
             externalId,
@@ -460,7 +462,7 @@ module.exports = router => {
         }
 
         // Use either the method specified in settings or the request method.
-        const reqMethod = _.get(settings, 'method', req.method);
+        const reqMethod = settings.method || req.method;
 
         // Make the request.
         switch (reqMethod.toLowerCase()) {
