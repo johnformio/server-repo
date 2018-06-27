@@ -294,6 +294,6 @@ module.exports = (router) => {
   }
 
   return {
-    generateQueries,
+    generateQueries
   };
 };
