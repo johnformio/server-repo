@@ -4,17 +4,17 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [UNRELEASED]
+## 5.7.0
 ### Fixed
  - SQL Connector action for forms without Save Submission action.
 
 ### Added
  - Submission object for webhook when submission is deleted.
 
-## 5.7.0
 ### Changed
  - Now able to use external hosted service for Nunjucks email templating.
- - Upgrade mongoose@5.1.3, aws-sdk@2.247.1, formio@1.30.0, resourcejs@1.24.0, webpack@4.10.1, sinon@5.0.10, prepack@0.2.36
+ - Upgraded moment@2.22.2, mongoose@5.1.7, primus@7.2.2, twilio@3.17.4, ws@5.2.1, mongodb@3.0.10, aws-sdk@2.264.1, jsonwebtoken@8.3.
+      0, webpack@4.12.1, dotenv@6.0.0, eslint@5.0.1, sinon@6.0.1, universal-analytics@0.4.17, prepack@0.2.40
 
 ## 5.6.10
 ### Fixed
