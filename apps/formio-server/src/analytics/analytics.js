@@ -83,7 +83,7 @@ class FormioAnalytics {
         return next(err);
       }
 
-      count = _.isNaN(count) ? 0 : parseInt(count);
+      count = (!count || _.isNaN(count)) ? 0 : parseInt(count);
       return next(null, count);
     });
   }
