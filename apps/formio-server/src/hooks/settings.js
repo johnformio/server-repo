@@ -90,9 +90,17 @@ module.exports = function(app) {
       actionInfo(action) {
         // Modify premium actions if present.
         const premium = [
-          'webhook', 'oauth', 'office365contact', 'office365calendar', 'hubspotContact', 'googlesheet', 'jira', 'ldap'
+          'webhook',
+          'oauth',
+          'office365contact',
+          'office365calendar',
+          'hubspotContact',
+          'googlesheet',
+          'jira',
+          'ldap',
+          'sqlconnector',
         ];
-        if (action.title && action.name && !action.premium && premium.indexOf(action.name) !== -1) {
+        if (action.title && action.name && !action.premium && premium.includes(action.name)) {
           action.title += ' (Premium)';
           action.premium = true;
         }
@@ -119,13 +127,10 @@ module.exports = function(app) {
         ];
 
         // If the action does not have a name, or is not flagged as being premium, ignore it.
-        if (!action.hasOwnProperty('name')) {
+        if (!action.hasOwnProperty('name') || !premium.includes(action.name)) {
           return true;
         }
-        if (premium.indexOf(action.name) === -1) {
-          return true;
-        }
-        if (['basic', 'independent'].indexOf(req.primaryProject.plan) !== -1) {
+        if (['basic', 'independent'].includes(req.primaryProject.plan)) {
           return false;
         }
 

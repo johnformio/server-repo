@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = app => actions => {
+module.exports = (app) => (actions) => {
   const formioServer = app.formio;
   actions.office365contact = require('../../actions/office365/Office365Contact')(formioServer);
   actions.office365calendar = require('../../actions/office365/Office365Calendar')(formioServer);

@@ -11,7 +11,7 @@ const debug = {
 };
 const squel = require('squel');
 
-module.exports = function(router) {
+module.exports = (router) => {
   const formio = router.formio;
   const required = formio.plans.limits.team;
   const util = formio.util;
@@ -28,10 +28,10 @@ module.exports = function(router) {
    * @param req
    * @returns {*}
    */
-  const verifyPlan = function(req) {
+  function verifyPlan(req) {
     // Get the plan
     return Q.nfcall(formio.plans.getPlan, req)
-      .then(function(plan) {
+      .then((plan) => {
         // Get the plan and ignore the project response.
         plan = plan[0];
         plan = _.get(formio.plans.limits, plan);
@@ -45,36 +45,40 @@ module.exports = function(router) {
         debug.verifyPlan('Project plan is good!');
         return Q();
       })
-      .catch(function(err) {
+      .catch((err) => {
         throw err;
       });
-  };
+  }
 
-  const getExpressRoute = function(method, path, primary, data, type) {
+  function getExpressRoute(method, path, primary, data, type) {
     debug.getExpressRoute('type:');
     debug.getExpressRoute(type);
-    const isMssql = function() { // eslint-disable-line no-unused-vars
-      return type === 'mssql';
-    };
-    const isMysql = function() { // eslint-disable-line no-unused-vars
+
+    function isMysql() {
       return type === 'mysql';
-    };
-    const isPostgresql = function() {
+    }
+    function isPostgresql() {
       return type === 'postgres';
-    };
+    }
 
     // Only let valid types through.
     const valid = ['mssql', 'mysql', 'postgres'];
-    if (valid.indexOf(type) === -1) {
+    if (!valid.includes(type)) {
       type = 'mysql';
     }
+
+    const defaultSettings = {
+      autoQuoteTableNames: true,
+      autoQuoteFieldNames: true,
+      nameQuoteCharacter: isMysql() ? '`' : '"',
+    };
 
     // Make an instanced type of squel.
     const _squel = squel.useFlavour(type);
 
     method = method.toString().toLowerCase();
     const route = {
-      endpoint: `/${path.toString()}`
+      endpoint: `/${path}`
     };
 
     /**
@@ -82,35 +86,26 @@ module.exports = function(router) {
      *
      * @returns {*}
      */
-    const getPrimaryComparison = function() {
-      let comparison;
-      if (isPostgresql()) {
-        comparison = ' = text(\'{{ params.id }}\')';
-      }
-      else {
-        comparison = ' = {{ params.id }}';
-      }
-
-      return comparison;
-    };
+    function getPrimaryComparison() {
+      return isPostgresql()
+        ? ' = text(\'{{ params.id }}\')'
+        : ' = {{ params.id }}';
+    }
 
     let _sql;
     switch (method) {
       case 'create':
         route.method = 'POST';
         _sql = _squel
-          .insert()
+          .insert(defaultSettings)
           .into(path.toString());
 
         debug.getExpressRoute('data:');
         debug.getExpressRoute(data);
-        _.each(data, function(value, column) {
-          if (isPostgresql()) {
-            column = `"${column}"`;
-          }
 
+        for (const [column, value] of Object.entries(data)) {
           _sql.set(column, `{{ data.${value} }}`);
-        });
+        }
 
         if (isPostgresql()) {
           _sql.returning('*');
@@ -121,20 +116,20 @@ module.exports = function(router) {
           route.query = _sql.toString();
 
           _sql = _squel
-            .select()
+            .select(defaultSettings)
             .from(path.toString())
-            .where(`${primary.toString()}=${_.get(idFn, type)}`)
+            .where(`${primary}=${idFn[type]}`)
             .toString();
 
           // Get the select string for the new record.
-          route.query += `; ${ _sql.toString()}`;
+          route.query += `; ${ _sql}`;
         }
 
         break;
       case 'index':
         route.method = 'GET';
         _sql = _squel
-          .select()
+          .select(defaultSettings)
           .from(path.toString());
 
         route.query = _sql.toString();
@@ -143,7 +138,7 @@ module.exports = function(router) {
         route.method = 'GET';
         route.endpoint += '/:id';
         _sql = _squel
-          .select()
+          .select(defaultSettings)
           .from(path.toString())
           .where(primary.toString() + (getPrimaryComparison()).toString());
 
@@ -153,18 +148,14 @@ module.exports = function(router) {
         route.method = 'PUT';
         route.endpoint += '/:id';
         _sql = _squel
-          .update()
+          .update(defaultSettings)
           .table(path.toString());
 
         debug.getExpressRoute('data:');
         debug.getExpressRoute(data);
-        _.each(data, function(value, column) {
-          if (isPostgresql()) {
-            column = `"${column}"`;
-          }
-
+        for (const [column, value] of Object.entries(data)) {
           _sql.set(column, `{{ data.${value} }}`);
-        });
+        }
 
         _sql.where(primary.toString() + (getPrimaryComparison()).toString());
 
@@ -177,7 +168,7 @@ module.exports = function(router) {
           route.query = _sql.toString();
 
           _sql = _squel
-            .select()
+            .select(defaultSettings)
             .from(path.toString())
             .where(primary.toString() + (getPrimaryComparison()).toString())
             .toString();
@@ -191,7 +182,7 @@ module.exports = function(router) {
         route.method = 'DELETE';
         route.endpoint += '/:id';
         _sql = _squel
-          .delete()
+          .delete(defaultSettings)
           .from(path.toString())
           .where(primary.toString() + (getPrimaryComparison()).toString());
 
@@ -200,17 +191,17 @@ module.exports = function(router) {
     }
 
     return route;
-  };
+  }
 
-  const actionsToRoutes = function(req, actions) {
+  function actionsToRoutes(req, actions) {
     return Q.ninvoke(formio.cache, 'loadCurrentProject', req)
-      .then(function(project) {
+      .then((project) => {
         debug.actionsToRoutes(project);
         const type = _.get(project, 'settings.sqlconnector.type');
 
         const routes = [];
         let path, primary, fields, data;
-        _.each(actions, function(action) {
+        for (const action of actions) {
           // Pluck out the core info from the action.
           path = _.get(action, 'settings.table');
           primary = _.get(action, 'settings.primary') || 'id';
@@ -218,22 +209,22 @@ module.exports = function(router) {
 
           // Iterate over each field to get the data mapping.
           fields = _.get(action, 'settings.fields');
-          _.each(fields, function(field) {
+          for (const field of fields) {
             data[field.column] = _.get(field, 'field.key');
-          });
+          }
 
-          _.each(['create', 'read', 'index', 'update', 'delete'], function(method) {
+          for (const method of ['create', 'read', 'index', 'update', 'delete']) {
             routes.push(getExpressRoute(method, path, primary, data, type));
-          });
-        });
+          }
+        }
 
         return routes;
       })
-      .catch(function(err) {
+      .catch((err) => {
         debug.actionsToRoutes(err);
         throw err;
       });
-  };
+  }
 
   /**
    * Util function to get all the actions in the project, associated with the SQL Connector.
@@ -241,20 +232,16 @@ module.exports = function(router) {
    * @param req
    * @returns {*}
    */
-  const getConnectorActions = function(req) {
+  function getConnectorActions(req) {
     return Q.ninvoke(formio.cache, 'loadCurrentProject', req)
-      .then(function(project) {
+      .then((project) => {
         const projectId = util.idToBson(project._id);
 
         // Get all the forms for the current project, which havent been deleted.
         return Q.ninvoke(router.formio.resources.form.model, 'find', {project: projectId, deleted: {$eq: null}});
       })
-      .then(function(forms) {
-        const formIds = _(forms)
-        .map(function(form) {
-          return util.idToBson(form._id);
-        })
-        .value();
+      .then((forms) => {
+        const formIds = forms.map((form) => util.idToBson(form._id));
 
         // Get all the actions for the current projects forms, which havent been deleted.
         return Q.ninvoke(
@@ -263,27 +250,25 @@ module.exports = function(router) {
           {form: {$in: formIds}, deleted: {$eq: null}, name: 'sqlconnector'}
         );
       })
-      .then(function(actions) {
+      .then((actions) => {
         // Get all the sql connector actions
-        const sqlActions = _(actions)
-        .map(function(action) {
+        const sqlActions = actions.map((action) => {
           try {
             return action.toObject();
           }
           catch (e) {
             return action;
           }
-        })
-        .value();
+        });
 
         debug.getConnectorActions(sqlActions);
         return sqlActions;
       })
-      .catch(function(err) {
+      .catch((err) => {
         debug.getConnectorActions(err);
         throw err;
       });
-  };
+  }
 
   /**
    * Middleware Route to generate the SQL queries for the SQL Connector application.
@@ -292,18 +277,12 @@ module.exports = function(router) {
    * @param res
    * @param next
    */
-  const generateQueries = function(req, res, next) {
+  function generateQueries(req, res, next) {
     return Q.fcall(verifyPlan, req)
-      .then(function() {
-        return Q.fcall(getConnectorActions, req);
-      })
-      .then(function(actions) {
-        return Q.fcall(actionsToRoutes, req, actions);
-      })
-      .then(function(routes) {
-        return res.status(200).json(routes);
-      })
-      .catch(function(err) {
+      .then(() => Q.fcall(getConnectorActions, req))
+      .then((actions) => Q.fcall(actionsToRoutes, req, actions))
+      .then((routes) => res.status(200).json(routes))
+      .catch((err) => {
         debug.generateQueries(err);
         if (err.message === 'The current project must be upgraded to access the SQL Connector') {
           return res.status(402).send('The current project must be upgraded to access the SQL Connector');
@@ -312,9 +291,9 @@ module.exports = function(router) {
         return res.sendStatus(400);
       })
       .done();
-  };
+  }
 
   return {
-    generateQueries: generateQueries
+    generateQueries
   };
 };
