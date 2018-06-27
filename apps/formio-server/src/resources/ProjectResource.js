@@ -113,8 +113,8 @@ module.exports = function(router, formioServer) {
     ],
     afterGet: [
       formio.middleware.filterResourcejsResponse(hiddenFields),
-      removeProjectSettings,
-      formio.middleware.projectAnalytics
+      formio.middleware.projectAnalytics,
+      removeProjectSettings
     ],
     beforePost: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
@@ -143,8 +143,8 @@ module.exports = function(router, formioServer) {
     afterPost: [
       require('../middleware/projectTemplate')(formio),
       formio.middleware.filterResourcejsResponse(hiddenFields),
-      removeProjectSettings,
       formio.middleware.projectAnalytics,
+      removeProjectSettings,
       formio.middleware.customHubspotAction,
       formio.middleware.customCrmAction('newproject')
     ],
@@ -154,8 +154,8 @@ module.exports = function(router, formioServer) {
     ],
     afterIndex: [
       formio.middleware.filterResourcejsResponse(hiddenFields),
-      removeProjectSettings,
-      formio.middleware.projectAnalytics
+      formio.middleware.projectAnalytics,
+      removeProjectSettings
     ],
     beforePut: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
@@ -215,8 +215,8 @@ module.exports = function(router, formioServer) {
     afterPut: [
       require('../middleware/projectTemplate')(formio),
       formio.middleware.filterResourcejsResponse(hiddenFields),
-      removeProjectSettings,
       formio.middleware.projectAnalytics,
+      removeProjectSettings,
       formio.middleware.customCrmAction('updateproject')
     ],
     beforeDelete: [

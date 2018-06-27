@@ -34,10 +34,9 @@ module.exports = (router) => {
       .then((plan) => {
         // Get the plan and ignore the project response.
         plan = plan[0];
-        plan = _.get(formio.plans.limits, plan);
 
         // Check that this plan is acceptable for the sql connector.
-        if (plan < required) {
+        if ((plan === 'trial') || _.get(formio.plans.limits, plan) < required) {
           debug.verifyPlan(`The given plan is not high enough for sql connector access.. ${plan} / ${required}`);
           throw new Error('The current project must be upgraded to access the SQL Connector');
         }

@@ -1,7 +1,6 @@
 'use strict';
 
 const _ = require('lodash');
-const Q = require('q');
 const moment = require('moment');
 
 module.exports = function(formioServer) {
@@ -12,29 +11,23 @@ module.exports = function(formioServer) {
    */
   const getCallInfo = function(project) {
     if (!project) {
-      return Q.reject('No project');
+      return null;
     }
     if (!project._id) {
-      return Q.reject('Project has no ID.');
+      return null;
     }
 
     project._id = project._id.toString();
-    const curr = new Date();
-    return Q.nfcall(formioServer.analytics.getCalls, curr.getUTCFullYear(), curr.getUTCMonth(), null, project._id)
-    .then(used => {
-      return Q.nfcall(formioServer.analytics.getEmails, curr.getUTCFullYear(), curr.getUTCMonth() + 1, project._id)
-        .then(emails => {
-          const limit = formioServer.formio.plans.limits[project.plan];
-          const info = {
-            used,
-            remaining: limit - used,
-            limit,
-            reset: moment().startOf('month').add(1, 'month').toISOString(),
-            emails
-          };
-          return info;
-        });
-    });
+    const used = _.get(project, 'billing.calls', 0);
+    const emails = _.get(project, 'billing.emails', 0);
+    const limit = formioServer.formio.plans.limits[project.plan];
+    return {
+      emails,
+      used: used,
+      remaining: limit - used,
+      limit: limit,
+      reset: moment().startOf('month').add(1, 'month').toISOString()
+    };
   };
 
   return function(req, res, next) {
@@ -47,12 +40,9 @@ module.exports = function(formioServer) {
       return next();
     }
 
-    Q.all(_.map([].concat(res.resource.item), function(project) {
-      return getCallInfo(project)
-      .then(function(info) {
-        project.apiCalls = info;
-      });
-    }))
-    .nodeify(next);
+    next(null, _.map([].concat(res.resource.item), function(project) {
+      project.apiCalls = getCallInfo(project);
+      return project;
+    }));
   };
 };

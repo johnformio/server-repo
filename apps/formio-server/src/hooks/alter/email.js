@@ -16,14 +16,14 @@ module.exports = app => (mail, req, res, params, cb) => {
     // Restrict basic and independent plans.
     if (req && req.primaryProject) {
       if (plans.includes(req.primaryProject.plan)) {
-        if (mail.transport !== 'default') {
+        if (mail.transport !== 'default' && mail.transport !== 'test') {
           return reject('Plan limited to default transport only.');
         }
-        if (formioServer.redis && formioServer.redis.db) {
+        if (formioServer.redis) {
           /* eslint-disable max-len */
           const redisKey = `email:${req.currentProject._id.toString()}:${(new Date()).getUTCFullYear().toString()}${((new Date()).getUTCMonth() + 1).toString()}`;
           /* eslint-enable max-len */
-          formioServer.redis.db.get(redisKey, (err, emailCount) => {
+          formioServer.redis.get(redisKey, (err, emailCount) => {
             if (err) {
               return reject(err);
             }
@@ -31,7 +31,7 @@ module.exports = app => (mail, req, res, params, cb) => {
             if (emailCount > limits[req.primaryProject.plan]) {
               return reject('Over email limit');
             }
-            formioServer.redis.db.set(redisKey, emailCount + 1);
+            formioServer.redis.set(redisKey, emailCount + 1);
             mail.html += `
 <table style="margin: 0px;padding: 20px;background-color:#002941;color:white;width:100%;">
   <tbody>

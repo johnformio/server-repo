@@ -244,7 +244,7 @@ module.exports = function(app, template, hook) {
         request(app)
           .get('/project/' + project._id + '/sqlconnector')
           .set('x-jwt-token', template.formio.owner.token)
-          .expect('Content-Type', /text/)
+          .expect('Content-Type', /json/)
           .expect(200)
           .end(function(err, res) {
             if (err) {
