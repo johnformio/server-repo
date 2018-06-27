@@ -1,7 +1,7 @@
 FROM node:8-alpine
 MAINTAINER Form.io <support@form.io>
 
-COPY ./build /src
+COPY . /src
 WORKDIR /src
 
 # Install git
@@ -10,9 +10,9 @@ RUN apk update && \
     apk add --no-cache --virtual .build-deps bash git make gcc g++ python
 
 RUN npm rebuild --build-from-source=bcrypt && \
-    npm cache clean && \
+    npm cache clean --force && \
     npm uninstall -g npm && \
     apk del .build-deps
 
 EXPOSE      80
-ENTRYPOINT  ["node", "--max_old_space_size=4096", "--debug=5858", "main"]
+ENTRYPOINT  ["node", "--max_old_space_size=4096", "--inspect", "main"]
