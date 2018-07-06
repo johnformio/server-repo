@@ -16,7 +16,8 @@ module.exports = app => (mail, req, res, params, cb) => {
     // Restrict basic and independent plans.
     if (req && req.primaryProject) {
       if (plans.includes(req.primaryProject.plan)) {
-        if (mail.transport !== 'default' && mail.transport !== 'test') {
+        const transport = mail.msgTransport || 'default';
+        if (transport !== 'default' && transport !== 'test') {
           return reject('Plan limited to default transport only.');
         }
         if (formioServer.redis) {

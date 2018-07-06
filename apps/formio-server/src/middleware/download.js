@@ -18,7 +18,7 @@ module.exports = function(formio) {
           }
 
           // Allow them to dynamically download from any server.
-          let filesServer = FORMIO_FILES_SERVER;
+          let filesServer = settings.pdfserver || FORMIO_FILES_SERVER;
           if (req.query.from) {
             filesServer = req.query.from;
             delete req.query.from;
