@@ -19,31 +19,5 @@ module.exports = (formioServer) => {
     analyticsRoutes.admin
   );
 
-  // Provide a way to upgrade projects.
-  router.put('/upgrade',
-    formioServer.formio.middleware.tokenHandler,
-    restrictToFormioEmployees,
-    (req, res, next) => {
-      const plans = ['basic', 'independent', 'team', 'commercial', 'trial'];
-      if (!req.body || !req.body.project || !req.body.plan) {
-        return res.status(400).send('Expected params `project` and `plan`.');
-      }
-      if (plans.indexOf(req.body.plan) === -1) {
-        return res.status(400).send(`Expexted \`plan\` of type: ${plans.join(',')}.`);
-      }
-
-      formioServer.formio.resources.project.model.update({
-        _id: formioServer.formio.util.idToBson(req.body.project),
-        deleted: {$eq: null}
-      }, {$set: {plan: req.body.plan}}, (err, results) => {
-        if (err) {
-          return res.status(400).send(err);
-        }
-
-        return res.sendStatus(200);
-      });
-    }
-  );
-
   return router;
 };
