@@ -2785,24 +2785,6 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      it('A Team member with team_admin, should not be able to delete the project', function(done) {
-        request(app)
-          .delete('/project/' + template.project._id)
-          .set('x-jwt-token', template.formio.user1.token)
-          .expect('Content-Type', /text/)
-          .expect(401)
-          .end(function(err, res) {
-            if (err) {
-              return done(err);
-            }
-
-            // Store the JWT for future API calls.
-            template.formio.user1.token = res.headers['x-jwt-token'];
-
-            done();
-          });
-      });
-
       it('A Team member with team_admin, should not be able to add a team to a project they dont own', function(done) {
         var teamAccess = {type: 'team_admin', roles: [template.team2._id]};
 
