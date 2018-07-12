@@ -3,6 +3,31 @@
 const _ = require('lodash');
 module.exports = (analytics) => {
   const router = require('express').Router();
+
+  // Provide a way to upgrade projects.
+  router.put('/upgrade',
+    (req, res, next) => {
+      const plans = ['basic', 'independent', 'team', 'commercial', 'trial'];
+      if (!req.body || !req.body.project || !req.body.plan) {
+        return res.status(400).send('Expected params `project` and `plan`.');
+      }
+      if (plans.indexOf(req.body.plan) === -1) {
+        return res.status(400).send(`Expexted \`plan\` of type: ${plans.join(',')}.`);
+      }
+
+      analytics.formio.resources.project.model.update({
+        _id: analytics.formio.util.idToBson(req.body.project),
+        deleted: {$eq: null}
+      }, {$set: {plan: req.body.plan}}, (err, results) => {
+        if (err) {
+          return res.status(400).send(err);
+        }
+
+        return res.sendStatus(200);
+      });
+    }
+  );
+
   router.get('/project/year/:year', (req, res, next) => {
     if (!req.params.year) {
       return res.status(400).send('Expected params `year`.');

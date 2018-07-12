@@ -2,7 +2,7 @@
 
 let _ = require('lodash');
 let assert = require('assert');
-let formioUtils = require('formiojs/utils');
+let formioUtils = require('formiojs/utils').default;
 
 module.exports = {
   alter: {

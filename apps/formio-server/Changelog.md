@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.7.1
+### Changed
+ - Upgraded multer@1.3.1, resourcejs@1.24.1, squel@5.12.2, twilio@3.17.5, ws@5.2.2, aws-sdk@2.272.1, eslint@5.1.0, mongodb@3.1.1, sinon@6.1.3, webpack@4.16.0, prepack@0.2.42
+ - Using the 3.x branch of formiojs.
+ 
+### Fixed
+ - Problems with renaming the stages and projects
+ - Issue where team admins could not delete projects.
+ - The admin project upgrade process.
+ - Problems with the email counts not showing in the project overview page.
+
 ## 5.7.0
 ### Fixed
  - SQL Connector action for forms without Save Submission action.

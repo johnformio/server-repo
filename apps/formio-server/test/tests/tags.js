@@ -1054,7 +1054,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('Tag Contains the project access', done => {
-        assert(tag.template.access.reduce((prev, access) => prev || (access.type === 'update_all' && access.roles.includes('testrole')), false), 'Update all must contain the role.');
+        assert(tag.template.access.reduce((prev, access) => prev || (access.type === 'update_all' && access.roles.includes('testRole')), false), 'Update all must contain the role.');
 
         done();
       });
@@ -1119,7 +1119,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('Environment 2 Contains the project access', done => {
-        assert(_export.access.reduce((prev, access) => prev || (access.type === 'update_all' && access.roles.includes('testrole')), false), 'Env 2 Update all must contain the role.');
+        assert(_export.access.reduce((prev, access) => prev || (access.type === 'update_all' && access.roles.includes('testRole')), false), 'Env 2 Update all must contain the role.');
 
         done();
       });

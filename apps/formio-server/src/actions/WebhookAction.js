@@ -2,7 +2,7 @@
 
 const rest = require('restler');
 const _ = require('lodash');
-const FormioUtils = require('formiojs/utils');
+const FormioUtils = require('formiojs/utils').default;
 const vm = require('vm');
 
 module.exports = router => {

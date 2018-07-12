@@ -5,35 +5,21 @@ const util = require('../../util/util');
 
 module.exports = app => (mail, req, res, params, cb) => {
   const formioServer = app.formio;
-
-  const limits = {
-    basic: 100,
-    independent: 1000
-  };
-  const plans = Object.keys(limits);
-
   const checkPlan = new Promise((resolve, reject) => {
     // Restrict basic and independent plans.
     if (req && req.primaryProject) {
-      if (plans.includes(req.primaryProject.plan)) {
+      if (formioServer.analytics.isLimitedEmailPlan(req.primaryProject)) {
         const transport = mail.msgTransport || 'default';
         if (transport !== 'default' && transport !== 'test') {
           return reject('Plan limited to default transport only.');
         }
-        if (formioServer.redis) {
-          /* eslint-disable max-len */
-          const redisKey = `email:${req.currentProject._id.toString()}:${(new Date()).getUTCFullYear().toString()}${((new Date()).getUTCMonth() + 1).toString()}`;
-          /* eslint-enable max-len */
-          formioServer.redis.get(redisKey, (err, emailCount) => {
-            if (err) {
-              return reject(err);
-            }
-            emailCount = parseInt(emailCount) || 0;
-            if (emailCount > limits[req.primaryProject.plan]) {
-              return reject('Over email limit');
-            }
-            formioServer.redis.set(redisKey, emailCount + 1);
-            mail.html += `
+
+        formioServer.analytics.incrementEmailCount(req.primaryProject, (err) => {
+          if (err) {
+            return reject(err);
+          }
+
+          mail.html += `
 <table style="margin: 0px;padding: 20px;background-color:#002941;color:white;width:100%;">
   <tbody>
   <tr>
@@ -44,12 +30,8 @@ module.exports = app => (mail, req, res, params, cb) => {
   </tr>
   </tbody>
 </table>`;
-            return resolve();
-          });
-        }
-        else {
           return resolve();
-        }
+        });
       }
       else {
         return resolve();

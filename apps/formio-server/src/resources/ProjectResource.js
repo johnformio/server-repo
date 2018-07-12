@@ -193,6 +193,12 @@ module.exports = function(router, formioServer) {
             });
           });
         }
+
+        // Reset the machine name so that it will regenerate.
+        if (req.body.name !== req.currentProject.name) {
+          req.body.machineName = '';
+        }
+
         next();
       },
       // Don't allow modifying a primary project id.
@@ -216,7 +222,50 @@ module.exports = function(router, formioServer) {
       formio.middleware.filterResourcejsResponse(hiddenFields),
       formio.middleware.projectAnalytics,
       removeProjectSettings,
-      formio.middleware.customCrmAction('updateproject')
+      formio.middleware.customCrmAction('updateproject'),
+      (req, res, next) => {
+        /* eslint-disable callback-return */
+        next();
+        /* eslint-enable callback-return */
+
+        // If the name changed, then re-save all forms, actions, and roles to set the new project name
+        if (res.resource && res.resource.item && res.resource.item.name !== req.currentProject.name) {
+          let parts = [];
+          formio.mongoose.model('form').find({
+            deleted: {$eq: null},
+            project: req.currentProject._id
+          }).then(forms => forms.forEach((form) => {
+            parts = form.machineName.split(':');
+            if (parts.length === 2) {
+              form.machineName = `${res.resource.item.name}:${parts[1]}`;
+              form.save();
+            }
+
+            formio.mongoose.model('action').find({
+              deleted: {$eq: null},
+              form: form._id
+            }).then(actions => actions.forEach(action => {
+              parts = action.machineName.split(':');
+              if (parts.length === 3) {
+                action.machineName = `${res.resource.item.name}:${parts[1]}:${parts[2]}`;
+                action.save();
+              }
+            }));
+          }));
+
+          // Update all roles.
+          formio.mongoose.model('role').find({
+            deleted: {$eq: null},
+            project: req.currentProject._id
+          }).then((roles) => roles.forEach(role => {
+            parts = role.machineName.split(':');
+            if (parts.length === 2) {
+              role.machineName = `${res.resource.item.name}:${parts[1]}`;
+              role.save();
+            }
+          }));
+        }
+      },
     ],
     beforeDelete: [
       require('../middleware/projectProtectAccess')(formio),

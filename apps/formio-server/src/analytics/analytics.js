@@ -13,6 +13,11 @@ const debug = {
   getFormioFormByName: require('debug')('formio:analytics:getFormioFormByName')
 };
 
+const limits = {
+  basic: 100,
+  independent: 1000
+};
+
 class FormioAnalytics {
   constructor(redis) {
     this.redis = redis;
@@ -72,9 +77,10 @@ class FormioAnalytics {
   }
 
   getEmailCountKey(project) {
+    const projectId = (typeof project === 'string') ? project : project._id;
     const year = (new Date()).getUTCFullYear().toString();
     const month = ((new Date()).getUTCMonth() + 1).toString();
-    return `email:${project}:${year}${month}`;
+    return `email:${projectId}:${year}${month}`;
   }
 
   getEmailCount(project, next) {
@@ -88,13 +94,17 @@ class FormioAnalytics {
     });
   }
 
-  incrementEmailCount(project, limit, next) {
+  isLimitedEmailPlan(project) {
+    return limits.hasOwnProperty(project.plan);
+  }
+
+  incrementEmailCount(project, next) {
     this.getEmailCount(project, (err, count) => {
       if (err) {
         return next(err);
       }
 
-      if (count > parseInt(limit, 10)) {
+      if (this.isLimitedEmailPlan(project) && count > limits[project.plan]) {
         return next('Over email limit');
       }
 
