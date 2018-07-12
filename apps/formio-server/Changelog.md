@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Problems with renaming the stages and projects
  - Issue where team admins could not delete projects.
  - The admin project upgrade process.
+ - Problems with the email counts not showing in the project overview page.
 
 ## 5.7.0
 ### Fixed
