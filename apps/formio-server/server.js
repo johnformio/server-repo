@@ -28,7 +28,7 @@ module.exports = function(options) {
   }
 
   // Connect to redis.
-  const RedisInterface = require('formio-services/RedisInterface');
+  const RedisInterface = require('formio-services/services/RedisInterface');
   const redis = new RedisInterface(config.redis);
 
   // Load the analytics hooks.

@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.7.2
+### Changed
+ - Added the ability to servicetize the Google Sheets actions.
+ - Upgraded formio@1.32.0
+ - Upgraded sinon@6.1.4, webpack@4.16.2, aws-sdk@2.279.1, twilio@3.18.0, eslint@5.2.0, method-override@3.0.0, ws@6.0.0, prepack@0.2.44
+
 ## 5.7.1
 ### Changed
  - Upgraded multer@1.3.1, resourcejs@1.24.1, squel@5.12.2, twilio@3.17.5, ws@5.2.2, aws-sdk@2.272.1, eslint@5.1.0, mongodb@3.1.1, sinon@6.1.3, webpack@4.16.0, prepack@0.2.42
