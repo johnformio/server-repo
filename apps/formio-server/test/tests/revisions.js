@@ -474,7 +474,7 @@ module.exports = (app, template, hook) => {
       helper.createSubmission('revisionForm', {
         data: {},
         _fvid: 1
-      }, (err, result) => {
+      }, helper.owner, [/application\/json/, 400], (err, result) => {
         assert.equal(result.name, 'ValidationError');
         assert.equal(result.details.length, 2);
         assert.equal(result.details[0].message, '"fname" is required');
@@ -489,7 +489,7 @@ module.exports = (app, template, hook) => {
       helper.createSubmission('revisionForm', {
         data: {},
         _fvid: 2
-      }, (err, result) => {
+      }, helper.owner, [/application\/json/, 400], (err, result) => {
         assert.equal(result.name, 'ValidationError');
         assert.equal(result.details.length, 3);
         assert.equal(result.details[0].message, '"fname" is required');
@@ -506,7 +506,7 @@ module.exports = (app, template, hook) => {
       helper.createSubmission('revisionForm', {
         data: {},
         _fvid: 3
-      }, (err, result) => {
+      }, helper.owner, [/application\/json/, 400], (err, result) => {
         assert.equal(result.name, 'ValidationError');
         assert.equal(result.details.length, 4);
         assert.equal(result.details[0].message, '"fname" is required');
