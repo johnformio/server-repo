@@ -177,6 +177,8 @@ module.exports = function(router) {
                 }
               }
             );
+          }).catch(err => {
+            return debug(err.message || err);
           });
         }
         else if (req.method === 'PUT') {
@@ -205,7 +207,9 @@ module.exports = function(router) {
             };
           });
 
-          spreadSheet.updateRow(ssConfig, rowId, rowData);
+          spreadSheet.updateRow(ssConfig, rowId, rowData).catch(err => {
+            return debug(err.message || err);
+          });
         }
         else if (req.method === 'DELETE') {
           // Only proceed with deleting a row, if applicable to this request.
@@ -231,7 +235,9 @@ module.exports = function(router) {
             };
           });
 
-          spreadSheet.updateRow(ssConfig, rowId, rowData);
+          spreadSheet.updateRow(ssConfig, rowId, rowData).catch(err => {
+            return debug(err.message || err);
+          });
         }
       });
     }
