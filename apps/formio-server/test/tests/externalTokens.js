@@ -6,6 +6,8 @@ let assert = require('assert');
 let jwt = require('jsonwebtoken');
 let config = require('../../config');
 let docker = process.env.DOCKER;
+const tempRole = '000000000000000000000001';
+const tempRole2 = '000000000000000000000002';
 
 module.exports = (app, template, hook) => {
   if (docker) {
@@ -35,9 +37,7 @@ module.exports = (app, template, hook) => {
       .then(payload => {
         // Add the external flag to the temp token.
         payload.external = true;
-        payload.user.roles = [
-          '000000000000000000000000'
-        ];
+        payload.user.roles = [tempRole];
 
         // Delete iat to forge generate a new token.
         delete payload.iat;
@@ -87,14 +87,14 @@ module.exports = (app, template, hook) => {
             .set(`x-jwt-token`, template.formio.owner.token)
             .send({
               access: [
-                {type: 'read_all', roles: ['000000000000000000000000', '000000000000000000000001']},
+                {type: 'read_all', roles: [tempRole, tempRole2]},
               ],
               submissionAccess: [
-                {type: 'read_all', roles: ['000000000000000000000000']},
-                {type: 'create_own', roles: ['000000000000000000000001']},
-                {type: 'update_own', roles: ['000000000000000000000001']},
-                {type: 'read_own', roles: ['000000000000000000000001']},
-                {type: 'delete_own', roles: ['000000000000000000000001']}
+                {type: 'read_all', roles: [tempRole]},
+                {type: 'create_own', roles: [tempRole2]},
+                {type: 'update_own', roles: [tempRole2]},
+                {type: 'read_own', roles: [tempRole2]},
+                {type: 'delete_own', roles: [tempRole2]}
               ]
             })
             .expect(200)
@@ -153,9 +153,9 @@ module.exports = (app, template, hook) => {
           assert(response.components);
           assert.equal(response.components.length, 1);
           assert.equal(response.access.length, 1);
-          assert.deepEqual(response.access[0], {type: 'read_all', roles: ['000000000000000000000000', '000000000000000000000001']});
+          assert.deepEqual(response.access[0], {type: 'read_all', roles: [tempRole, tempRole2]});
           assert.equal(response.submissionAccess.length, 5);
-          assert.deepEqual(response.submissionAccess[0], {type: 'read_all', roles: ['000000000000000000000000']});
+          assert.deepEqual(response.submissionAccess[0], {type: 'read_all', roles: [tempRole]});
           return done();
         });
     });
@@ -189,7 +189,7 @@ module.exports = (app, template, hook) => {
           return done();
         });
     });
-    
+
     describe('External Authentication', () => {
       let authToken;
       let payload;
@@ -204,7 +204,7 @@ module.exports = (app, template, hook) => {
               firstName: 'Foo',
               lastName: 'Bar'
             },
-            roles: ['000000000000000000000001']
+            roles: [tempRole2]
           },
           form: {
             _id: tempForm._id

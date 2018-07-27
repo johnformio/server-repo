@@ -68,7 +68,7 @@ module.exports = function(app, formio) {
 
     return getPaymentFormId(req.userProject._id)
     .then(function(formId) {
-      return Q(formio.resources.submission.model.count({
+      return Q(formio.resources.submission.model.countDocuments({
         form: formId,
         owner: req.user._id
       }));

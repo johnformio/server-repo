@@ -53,7 +53,7 @@ module.exports = function(db, config, tools, done) {
       // check for unique name
       submissionCollection
       .find({deleted: {$eq: null}, 'data.name': (submission.data.name + tries.toString()), form: tools.util.idToBson(form)})
-      .count(function(err, count) {
+      .countDocuments(function(err, count) {
         if (err) {
           return callback(err);
         }
@@ -200,7 +200,7 @@ module.exports = function(db, config, tools, done) {
 
         debug.uniquifyDupUsers(users.length);
         async.each(users, function(id, callback) {
-          projectCollection.find({owner: tools.util.idToBson(id)}).count(function(err, count) {
+          projectCollection.find({owner: tools.util.idToBson(id)}).countDocuments(function(err, count) {
             if (err) {
               return cb(err);
             }
