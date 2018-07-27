@@ -394,8 +394,8 @@ module.exports = router => {
             return formio.mongoose.Types.ObjectId(r);
           });
 
-          // Update the submissions owner, if set.
-          if (_.has(req, 'selfOwner') && req.selfOwner) {
+          // Update the submissions owner.
+          if (!submission.owner && temp.length) {
             submission.owner = submission._id;
           }
 
