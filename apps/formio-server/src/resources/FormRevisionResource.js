@@ -8,7 +8,7 @@ module.exports = function(router, formioServer) {
   const options = {
     before: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
-      formio.middleware.bootstrapEntityOwner(false),
+      formio.middleware.bootstrapEntityOwner,
       formio.middleware.formHandler,
       formio.middleware.formActionHandler('before'),
       (req, res, next) => {
