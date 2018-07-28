@@ -99,6 +99,14 @@ module.exports = function(router) {
               },
               multiple: false
             },
+            {
+              type: 'textfield',
+              label: 'Start Row',
+              tooltip: 'The first row of the data in your spreadsheet.',
+              key: 'spreadSheetStartRow',
+              defaultValue: '2',
+              input: true
+            },
             fieldPanel
           ]);
         });

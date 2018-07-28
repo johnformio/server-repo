@@ -33,7 +33,7 @@
     "express": "^4.16.3",
     "express-cache-controller": "^1.1.0",
     "formio": "^1.33.0",
-    "formio-services": "formio/formio-services#v1.5.0",
+    "formio-services": "formio/formio-services#v1.6.0",
     "formio-workers": "^1.6.0",
     "formiojs": "^3.0.0-rc.20",
     "ioredis": "^3.2.2",
