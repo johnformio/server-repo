@@ -134,7 +134,7 @@ module.exports = function(router, formioServer) {
         }
         next();
       },
-      formio.middleware.bootstrapEntityOwner(false),
+      formio.middleware.bootstrapEntityOwner,
       formio.middleware.projectTeamSync,
       formio.middleware.condensePermissionTypes,
       formio.middleware.projectPlanFilter

@@ -258,7 +258,7 @@ module.exports = function(app, template, hook) {
         it('Deletes the temp user', function(done) {
           request(app)
             .delete('/project/' + template.project._id + '/form/' + template.resources.user._id + '/submission/' + template.users.tempUser._id)
-            .set('x-jwt-token', template.users.tempUser.token)
+            .set('x-jwt-token', template.formio.owner.token)
             .expect(200)
             .end(function(err, res) {
               if (err) {
@@ -523,7 +523,7 @@ module.exports = function(app, template, hook) {
         it('Deletes the temp user', function(done) {
           request(app)
             .delete('/project/' + template.project._id + '/form/' + template.resources.user._id + '/submission/' + template.users.tempUser._id)
-            .set('x-jwt-token', template.users.tempUser.token)
+            .set('x-jwt-token', template.formio.owner.token)
             .expect(200)
             .end(function(err, res) {
               if (err) {
@@ -882,7 +882,7 @@ module.exports = function(app, template, hook) {
         it('Deletes the temp user', function(done) {
           request(app)
             .delete('/project/' + template.project._id + '/form/' + template.resources.user._id + '/submission/' + template.users.tempUser._id)
-            .set('x-jwt-token', template.users.tempUser.token)
+            .set('x-jwt-token', template.formio.owner.token)
             .expect(200)
             .end(function(err, res) {
               if (err) {
@@ -1243,7 +1243,7 @@ module.exports = function(app, template, hook) {
         it('Deletes the temp user', function(done) {
           request(app)
             .delete('/project/' + template.project._id + '/form/' + template.resources.user._id + '/submission/' + template.users.tempUser._id)
-            .set('x-jwt-token', template.users.tempUser.token)
+            .set('x-jwt-token', template.formio.owner.token)
             .expect(200)
             .end(function(err, res) {
               if (err) {

@@ -4,7 +4,6 @@ const _ = require('lodash');
 const util = require('./util');
 const formioUtil = require('formio/src/util/util');
 const debug = require('debug')('formio:action:googlesheet');
-const SpreadsheetColumn = (new (require('spreadsheet-column'))());
 const GoogleSheet = require('formio-services/services/GoogleSheet');
 
 module.exports = function(router) {
@@ -100,6 +99,14 @@ module.exports = function(router) {
               },
               multiple: false
             },
+            {
+              type: 'textfield',
+              label: 'Start Row',
+              tooltip: 'The first row of the data in your spreadsheet.',
+              key: 'spreadSheetStartRow',
+              defaultValue: '2',
+              input: true
+            },
             fieldPanel
           ]);
         });
@@ -115,47 +122,24 @@ module.exports = function(router) {
       // No feedback needed directly. Call next immediately.
       next(); // eslint-disable-line callback-return
 
-      const actionName = _.get(this, 'name');
-      const actionSettings = _.get(this, 'settings');
-      const sheetId = _.get(this, 'settings.sheetID');
-      const sheetName = _.get(this, 'settings.worksheetName');
-
       // Load the project settings.
-      formio.hook.settings(req, function(err, settings) {
-        const requestData = _.get(req, 'body.data');
+      formio.hook.settings(req, (err, settings) => {
+        const data = _.get(req, 'body.data');
         if (err) {
           debug(err);
           return;
         }
 
-        // Map each piece of submission data to a column using the custom mapping in the action settings.
-        function getColumnIds(data) {
-          const columnIds = {};
-          _.each(data, function(value, key) {
-            _.each(actionSettings, function(_value, _key) {
-              if (_key === key) {
-                columnIds[key] = SpreadsheetColumn.fromStr(_value);
-              }
-            });
-          });
-          return columnIds;
-        }
-
-        const ssConfig = {
-          debug: true,
-          oauth2: {
-            client_id: _.get(settings, 'google.clientId'), // eslint-disable-line camelcase
-            client_secret: _.get(settings, 'google.cskey'), // eslint-disable-line camelcase
-            refresh_token: _.get(settings, 'google.refreshtoken') // eslint-disable-line camelcase
-          },
-          spreadsheetId: sheetId,
-          worksheetName: sheetName
+        const config = {
+          client_id: _.get(settings, 'google.clientId'), // eslint-disable-line camelcase
+          client_secret: _.get(settings, 'google.cskey'), // eslint-disable-line camelcase
+          refresh_token: _.get(settings, 'google.refreshtoken') // eslint-disable-line camelcase
         };
         const spreadSheet = new GoogleSheet({
           service: process.env.GOOGLE_SHEETS_SERVICE || ''
         });
         if (req.method === 'POST') {
-          spreadSheet.addRow(ssConfig, getColumnIds(requestData), requestData).then((result) => {
+          spreadSheet.addRow(config, this.settings, data).then((result) => {
             if (!res.resource) {
               return debug('No resource given in the response.');
             }
@@ -166,7 +150,7 @@ module.exports = function(router) {
               {
                 $push: {
                   externalIds: {
-                    type: actionName,
+                    type: this.name,
                     id: result.rowId
                   }
                 }
@@ -177,6 +161,8 @@ module.exports = function(router) {
                 }
               }
             );
+          }).catch(err => {
+            return debug(err.message || err);
           });
         }
         else if (req.method === 'PUT') {
@@ -185,27 +171,16 @@ module.exports = function(router) {
           }
 
           // The row number to update.
-          let rowId = _.find(res.resource.item.externalIds, function(item) {
-            return item.type === actionName;
-          });
+          let rowId = _.find(res.resource.item.externalIds, (item) => (item.type === this.name));
           rowId = _.get(rowId, 'id');
           if (!rowId) {
             return;
           }
 
-          // Build our new row of the spreadsheet, by iterating each column label.
-          const rowData = {};
-          const submission = _.get(res, 'resource.item.data');
-
-          // Iterate the columns to get the column label and its position.
-          _.each(getColumnIds(requestData), function(value, key) {
-            rowData[value] = {
-              name: key,
-              val: _.get(submission, key)
-            };
+          // Update the row with data.
+          spreadSheet.updateRow(config, this.settings, rowId, res.resource.item.data).catch(err => {
+            return debug(err.message || err);
           });
-
-          spreadSheet.updateRow(ssConfig, rowId, rowData);
         }
         else if (req.method === 'DELETE') {
           // Only proceed with deleting a row, if applicable to this request.
@@ -215,23 +190,15 @@ module.exports = function(router) {
           }
 
           // The row number to delete.
-          let rowId = _.find(deleted.externalIds, function(item) {
-            return item.type === actionName;
-          });
+          let rowId = _.find(deleted.externalIds, (item) => (item.type === this.name));
           rowId = _.get(rowId, 'id');
           if (!rowId) {
             return;
           }
 
-          const rowData = {};
-          _.each(getColumnIds(deleted.data), function(value, key) {
-            rowData[value] = {
-              name: key,
-              val: ''
-            };
+          spreadSheet.deleteRow(config, this.settings, rowId).catch(err => {
+            return debug(err.message || err);
           });
-
-          spreadSheet.updateRow(ssConfig, rowId, rowData);
         }
       });
     }

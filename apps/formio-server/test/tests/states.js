@@ -115,7 +115,7 @@ module.exports = (app, template, hook) => {
 
     it('Throws an error when updating a submission from draft to submitted if validation fails', done => {
       submission.state = 'submitted';
-      helper.updateSubmission(submission, (err, result) => {
+      helper.updateSubmission(submission, helper.owner, [/application\/json/, 400], (err, result) => {
         assert(result.name === 'ValidationError', 'Returns an error');
         assert.equal(result.details[0].message, '"lname" is required');
         done();

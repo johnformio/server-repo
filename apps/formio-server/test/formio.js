@@ -37,7 +37,7 @@ var emptyDatabase = template.emptyDatabase = template.clearData = function(done)
         return next(err);
       }
 
-      model.count({}, function(err, count) {
+      model.countDocuments({}, function(err, count) {
         if (err) {
           return next(err);
         }
