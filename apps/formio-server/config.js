@@ -131,7 +131,7 @@ if (process.env.MONGO_PORT_27017_TCP_ADDR) {
 else {
   if (config.docker) {
     // New docker network linking. Assumes linked with 'mongo' alias.
-    config.formio.mongo = `mongodb://mongo/${mongoCollection}`;
+    config.formio.mongo = `mongodb://mongo:27017/${mongoCollection}`;
   }
   else {
     config.formio.mongo = `mongodb://localhost:27017/${mongoCollection}`;
