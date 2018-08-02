@@ -39,7 +39,7 @@ module.exports = function(formio) {
         return res.status(400).send('Environment project doesnt exist.');
       }
 
-      if (formio.util.idToString(req.user._id) === formio.util.idToString(project.owner)) {
+      if (formio.util.idToString(req.user._id) === formio.util.idToString(project.owner) || req.remotePermission === 'team_admin') {
         return deleteProject(req, res, next);
       }
       else if (req.user) {
