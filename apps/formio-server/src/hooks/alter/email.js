@@ -6,7 +6,6 @@ const async = require('async');
 
 module.exports = app => (mail, req, res, params, cb) => {
   const formioServer = app.formio;
-  const cache = formioServer.formio.cache.cache(req);
   const checkPlan = new Promise((resolve, reject) => {
     // Restrict basic and independent plans.
     if (req && req.primaryProject) {
