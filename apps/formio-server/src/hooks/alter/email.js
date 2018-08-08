@@ -61,13 +61,15 @@ module.exports = app => (mail, req, res, params, cb) => {
 
       const formObjs = {};
       async.eachSeries(ssoTokens, (ssoToken, nextToken) => {
-        // This is an inline token.
-        if ((!ssoToken.resources || !ssoToken.resources.length) && res.resource && res.resource.item) {
-          ssoToken.submission = res.resource.item;
-          return nextToken();
+        const inlineResource = ((!ssoToken.resources || !ssoToken.resources.length) &&
+          res.resource &&
+          res.resource.item);
+        if (inlineResource) {
+          query._id = res.resource.item.form;
         }
-
-        query.name = {'$in': ssoToken.resources};
+        else {
+          query.name = {'$in': ssoToken.resources};
+        }
         formioServer.formio.resources.form.model.find(query).exec((err, result) => {
           if (err || !result || !result.length) {
             ssoToken.submission = null;
@@ -79,6 +81,11 @@ module.exports = app => (mail, req, res, params, cb) => {
             formObjs[form._id.toString()] = form;
             forms.push(form._id);
           });
+
+          if (inlineResource) {
+            ssoToken.submission = res.resource.item;
+            return nextToken();
+          }
 
           const query = {
             form: {'$in': forms},
@@ -113,7 +120,7 @@ module.exports = app => (mail, req, res, params, cb) => {
             }, formObjs[ssoToken.submission.form.toString()]);
             delete ssoToken.token.exp;
             ssoToken.token = jwt.sign(ssoToken.token, formioServer.formio.config.jwt.secret, {
-              expiresIn: ssoTokens.expireTime * 60
+              expiresIn: ssoToken.expireTime * 60
             });
           }
         });
