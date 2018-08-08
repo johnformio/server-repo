@@ -2982,59 +2982,6 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      it('A Team member with team_admin, should not be able to add a team to a project they dont own', function(done) {
-        var teamAccess = {type: 'team_admin', roles: [template.team2._id]};
-
-        request(app)
-          .get('/project/' + template.project._id)
-          .set('x-jwt-token', template.formio.user1.token)
-          .expect('Content-Type', /json/)
-          .expect(200)
-          .end(function(err, res) {
-            if (err) {
-              return done(err);
-            }
-
-            // Update the users project access with the new team.
-            var oldResponse = res.body;
-
-            // Store the JWT for future API calls.
-            template.formio.user1.token = res.headers['x-jwt-token'];
-
-            request(app)
-              .put('/project/' + template.project._id)
-              .set('x-jwt-token', template.formio.user1.token)
-              .send({ access: oldResponse.access.concat(teamAccess) })
-              .expect('Content-Type', /json/)
-              .expect(200)
-              .end(function(err, res) {
-                if (err) {
-                  return done(err);
-                }
-
-                // Confirm that the team role was not added to the projects permissions.
-                var response = res.body;
-                var found = false;
-                response.access.forEach(function(permission) {
-                  if (permission.type === 'team_admin') {
-                    found = true;
-                    assert.equal(permission.roles.length, 1);
-                    assert.notEqual(permission.roles[0], template.team2._id);
-                  }
-                });
-                assert.equal(found, true);
-
-                // Update the project.
-                template.project = response;
-
-                // Store the JWT for future API calls.
-                template.formio.user1.token = res.headers['x-jwt-token'];
-
-                done();
-              });
-          });
-      });
-
       // Form tests
       var tempForm = null;
       it('A Team member with team_admin, should be able to create a form', function(done) {
