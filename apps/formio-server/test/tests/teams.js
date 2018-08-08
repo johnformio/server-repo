@@ -1126,7 +1126,7 @@ module.exports = function(app, template, hook) {
       it('Should allow user1 to be added to a team', (done) => {
         request(app)
           .put('/project/' + template.formio.project._id + '/form/' + template.formio.teamResource._id + '/submission/' + template.team1._id)
-          .set('x-jwt-token', template.users.owner.token)
+          .set('x-jwt-token', template.formio.owner.token)
           .send({
             data: {
               name: template.team1.data.name,
@@ -1146,7 +1146,7 @@ module.exports = function(app, template, hook) {
             }
 
             // Store the JWT for future API calls.
-            template.users.owner.token = res.headers['x-jwt-token'];
+            template.formio.owner.token = res.headers['x-jwt-token'];
 
             done();
           });
@@ -1209,7 +1209,7 @@ module.exports = function(app, template, hook) {
       it('Should allow user1 to be added as an admin for a team', (done) => {
         request(app)
           .put('/project/' + template.formio.project._id + '/form/' + template.formio.teamResource._id + '/submission/' + template.team1._id)
-          .set('x-jwt-token', template.users.owner.token)
+          .set('x-jwt-token', template.formio.owner.token)
           .send({
             data: {
               name: template.team1.data.name,
@@ -1229,7 +1229,7 @@ module.exports = function(app, template, hook) {
             }
 
             // Store the JWT for future API calls.
-            template.users.owner.token = res.headers['x-jwt-token'];
+            template.formio.owner.token = res.headers['x-jwt-token'];
 
             done();
           });
