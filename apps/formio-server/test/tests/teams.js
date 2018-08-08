@@ -1131,8 +1131,8 @@ module.exports = function(app, template, hook) {
             data: {
               name: template.team1.data.name,
               members: [
-                {_id: template.users.user1._id},
-                {_id: template.users.user3._id}
+                {_id: template.formio.user1._id},
+                {_id: template.formio.user3._id}
               ],
               admins: [
               ]
@@ -1214,10 +1214,10 @@ module.exports = function(app, template, hook) {
             data: {
               name: template.team1.data.name,
               members: [
-                {_id: template.users.user3._id}
+                {_id: template.formio.user3._id}
               ],
               admins: [
-                {_id: template.users.user1._id}
+                {_id: template.formio.user1._id}
               ]
             }
           })
