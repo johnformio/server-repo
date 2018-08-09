@@ -17,8 +17,12 @@ module.exports = function(formio) {
             return next(err);
           }
 
-          // Allow them to dynamically download from any server.
-          let filesServer = settings.pdfserver || FORMIO_FILES_SERVER;
+          // Set the files server.
+          let filesServer = FORMIO_FILES_SERVER;
+          if (filesServer === 'https://files.form.io' && settings.pdfserver) {
+            // Allow them to download from any server if it is set to the default.
+            filesServer = settings.pdfserver;
+          }
           if (req.query.from) {
             filesServer = req.query.from;
             delete req.query.from;
