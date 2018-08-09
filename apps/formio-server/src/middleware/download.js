@@ -19,7 +19,7 @@ module.exports = function(formio) {
 
           // Set the files server.
           let filesServer = FORMIO_FILES_SERVER;
-          if (filesServer === 'https://files.form.io' && settings.pdfserver) {
+          if (process.env.FORMIO_HOSTED && settings.pdfserver) {
             // Allow them to download from any server if it is set to the default.
             filesServer = settings.pdfserver;
           }
