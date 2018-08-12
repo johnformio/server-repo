@@ -2,6 +2,7 @@
 const aws = require('./s3/aws');
 const minio = require('./s3/minio');
 const CryptoJS = require('crypto-js');
+const _ = require('lodash');
 module.exports = function(router) {
   router.get('/project/:projectId/form/:formId/storage/s3',
     router.formio.formio.middleware.tokenHandler,
@@ -47,6 +48,13 @@ module.exports = function(router) {
   );
 
   const uploadResponse = function(project, file, url) {
+    const response = {
+      signed: url,
+      minio: project.settings.storage.s3.minio,
+      url: project.settings.storage.s3.bucketUrl || `https://${project.settings.storage.s3.bucket}.s3.amazonaws.com`,
+      bucket: project.settings.storage.s3.bucket
+    };
+
     const policy = new Buffer(JSON.stringify({
       expiration: file.expiration,
       conditions: [
@@ -60,24 +68,20 @@ module.exports = function(router) {
     })).toString('base64');
 
     /* eslint-disable new-cap */
-    return {
-      signed: url,
-      url: project.settings.storage.s3.bucketUrl || `https://${project.settings.storage.s3.bucket}.s3.amazonaws.com/`,
-      bucket: project.settings.storage.s3.bucket,
-      data: {
-        key: file.dir,
-        signature: CryptoJS.HmacSHA1(
-          policy,
-          project.settings.storage.s3.AWSSecretKey
-        ).toString(CryptoJS.enc.Base64),
-        AWSAccessKeyId: project.settings.storage.s3.AWSAccessKeyId,
-        acl: project.settings.storage.s3.acl || 'private',
-        policy: policy,
-        'Content-Type': file.type,
-        filename: file.name
-      }
+    response.data = {
+      key: file.dir,
+      signature: CryptoJS.HmacSHA1(
+        policy,
+        project.settings.storage.s3.AWSSecretKey
+      ).toString(CryptoJS.enc.Base64),
+      AWSAccessKeyId: project.settings.storage.s3.AWSAccessKeyId,
+      acl: project.settings.storage.s3.acl || 'private',
+      policy: policy,
+      'Content-Type': file.type,
+      filename: file.name
     };
     /* eslint-enable new-cap */
+    return response;
   };
 
   router.post('/project/:projectId/form/:formId/storage/s3',
@@ -107,6 +111,7 @@ module.exports = function(router) {
         file.dir = project.settings.storage.s3.startsWith || '';
         file.expiresin = parseInt(project.settings.storage.s3.expiration || (15 * 60), 10);
         file.expiration = (new Date(Date.now() + (file.expiresin * 1000))).toString();
+        file.path = _.trim(`${_.trim(file.dir, '/')}/${_.trim(file.name, '/')}`, '/');
         if (project.settings.storage.s3.minio) {
           minio.putUrl(project, file, (err, url) => {
             if (err) {

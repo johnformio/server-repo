@@ -23,7 +23,7 @@ module.exports = {
   putUrl(project, file, next) {
     getMinio(project).presignedPutObject(
       project.settings.storage.s3.bucket,
-      `${file.dir}/${file.name}`,
+      file.path,
       file.expiresin,
       next
     );
