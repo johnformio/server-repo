@@ -1,12 +1,19 @@
 'use strict';
 const AWS = require('aws-sdk');
 const getAWS = function(project) {
-  return new AWS.S3({
+  const config = {
     accessKeyId: project.settings.storage.s3.AWSAccessKeyId,
-    secretAccessKey: project.settings.storage.s3.AWSSecretKey,
-    region: project.settings.storage.s3.region || 'us-east-1',
-    signatureVersion: 'v4'
-  });
+    secretAccessKey: project.settings.storage.s3.AWSSecretKey
+  };
+  if (project.settings.storage.s3.region) {
+    config.region = project.settings.storage.s3.region;
+  }
+  if (project.settings.storage.s3.encryption) {
+    config.signatureVersion = 'v4';
+  }
+
+  // Return the AWS.S3 object.
+  return new AWS.S3(config);
 };
 module.exports = {
   getUrl(req, project, next) {
@@ -16,15 +23,11 @@ module.exports = {
     }, next);
   },
   putUrl(project, file, next) {
-    // If they use a bucket url, then perform manual signature.
+    // If they have encryption enabled, then require the v4 signed urls.
     if (
-      project.settings.storage.s3.bucketUrl &&
-      (project.settings.storage.s3.bucketUrl.indexOf('s3.amazonaws.com') === -1)
+      project.settings.storage.s3.encryption &&
+      project.settings.storage.s3.bucket
     ) {
-      return next();
-    }
-    // This is an AWS-S3 upload
-    else if (project.settings.storage.s3.bucket) {
       const putConfig = {
         Bucket: project.settings.storage.s3.bucket,
         Key: file.path,
@@ -46,10 +49,11 @@ module.exports = {
       ) {
         putConfig.SSEKMSKeyId = project.settings.storage.s3.kmsKey;
       }
-      getAWS(project).getSignedUrl('putObject', putConfig, next);
+      return getAWS(project).getSignedUrl('putObject', putConfig, next);
     }
     else {
-      return next('No configured bucket.');
+      // Use the legacy manually signed upload url.
+      return next();
     }
   }
 };

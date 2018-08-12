@@ -47,9 +47,9 @@ module.exports = function(router) {
     }
   );
 
-  const uploadResponse = function(project, file, url) {
+  const uploadResponse = function(project, file, signedUrl) {
     const response = {
-      signed: url,
+      signed: signedUrl,
       minio: project.settings.storage.s3.minio,
       url: project.settings.storage.s3.bucketUrl || `https://${project.settings.storage.s3.bucket}.s3.amazonaws.com`,
       bucket: project.settings.storage.s3.bucket
@@ -81,6 +81,8 @@ module.exports = function(router) {
       filename: file.name
     };
     /* eslint-enable new-cap */
+
+    // Return the response to the client.
     return response;
   };
 
@@ -113,19 +115,19 @@ module.exports = function(router) {
         file.expiration = (new Date(Date.now() + (file.expiresin * 1000))).toString();
         file.path = _.trim(`${_.trim(file.dir, '/')}/${_.trim(file.name, '/')}`, '/');
         if (project.settings.storage.s3.minio) {
-          minio.putUrl(project, file, (err, url) => {
+          minio.putUrl(project, file, (err, signedUrl) => {
             if (err) {
               return res.status(400).send(err);
             }
-            res.send(uploadResponse(project, file, url));
+            res.send(uploadResponse(project, file, signedUrl));
           });
         }
         else {
-          aws.putUrl(project, file, (err, url) => {
+          aws.putUrl(project, file, (err, signedUrl) => {
             if (err) {
               return res.status(400).send(err);
             }
-            res.send(uploadResponse(project, file, url));
+            res.send(uploadResponse(project, file, signedUrl));
           });
         }
       });
