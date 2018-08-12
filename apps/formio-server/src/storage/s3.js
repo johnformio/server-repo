@@ -112,7 +112,7 @@ module.exports = function(router) {
         const file = req.body || {};
         file.dir = project.settings.storage.s3.startsWith || '';
         file.expiresin = parseInt(project.settings.storage.s3.expiration || (15 * 60), 10);
-        file.expiration = (new Date(Date.now() + (file.expiresin * 1000))).toString();
+        file.expiration = (new Date(Date.now() + (file.expiresin * 1000))).toISOString();
         file.path = _.trim(`${_.trim(file.dir, '/')}/${_.trim(file.name, '/')}`, '/');
         if (project.settings.storage.s3.minio) {
           minio.putUrl(project, file, (err, signedUrl) => {

@@ -23,9 +23,9 @@ module.exports = {
     }, next);
   },
   putUrl(project, file, next) {
-    // If they have encryption enabled, then require the v4 signed urls.
+    // If they have encryption or the region provided, then this will create a signed url.
     if (
-      project.settings.storage.s3.encryption &&
+      (project.settings.storage.s3.encryption || project.settings.storage.s3.region) &&
       project.settings.storage.s3.bucket
     ) {
       const putConfig = {
