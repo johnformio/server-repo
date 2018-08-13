@@ -1221,8 +1221,8 @@ module.exports = function(app, template, hook) {
               ]
             }
           })
-          .expect('Content-Type', /text/)
-          .expect(401)
+          .expect('Content-Type', /json/)
+          .expect(200)
           .end(function(err, res) {
             if (err) {
               return done(err);
@@ -1235,7 +1235,7 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      it('Should now allow user1 to add a team he is a member of to a project they own.', (done) => {
+      it('Should not allow user1 to add a team he is a member of to a project they own.', (done) => {
         var teamAccess = {type: 'team_admin', roles: [template.team1._id]};
         request(app)
           .get('/project/' + template.project2._id)
