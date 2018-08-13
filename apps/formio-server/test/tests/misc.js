@@ -139,42 +139,42 @@ module.exports = function(app, template, hook) {
   describe('Utilities', function() {
     it('Should generate old style tokens', function() {
       var mail = '<a class="btn btn-primary" href="https://google.com/?token=[[token(data.email=user)]]">Click here to log in</a>';
-      var ssoToken = util.ssoToken(mail);
-      assert.equal(ssoToken.expireTime, 120);
-      assert.equal(ssoToken.field, 'data.email');
-      assert.deepEqual(ssoToken.resources, ['user']);
+      var ssoTokens = util.ssoTokens(mail);
+      assert.equal(ssoTokens[0].expireTime, 120);
+      assert.equal(ssoTokens[0].field, 'data.email');
+      assert.deepEqual(ssoTokens[0].resources, ['user']);
     });
 
     it('Should generate token with multiple resources.', function() {
       var mail = '<a class="btn btn-primary" href="https://google.com/?token=[[token(data.email=user, admin)]]">Click here to log in</a>';
-      var ssoToken = util.ssoToken(mail);
-      assert.equal(ssoToken.expireTime, 120);
-      assert.equal(ssoToken.field, 'data.email');
-      assert.deepEqual(ssoToken.resources, ['user', 'admin']);
+      var ssoTokens = util.ssoTokens(mail);
+      assert.equal(ssoTokens[0].expireTime, 120);
+      assert.equal(ssoTokens[0].field, 'data.email');
+      assert.deepEqual(ssoTokens[0].resources, ['user', 'admin']);
     });
 
     it('Should generate token with expire time.', function() {
       var mail = '<a class="btn btn-primary" href="https://google.com/?token=[[token(data.email=user), 300]]">Click here to log in</a>';
-      var ssoToken = util.ssoToken(mail);
-      assert.equal(ssoToken.expireTime, 300);
-      assert.equal(ssoToken.field, 'data.email');
-      assert.deepEqual(ssoToken.resources, ['user']);
+      var ssoTokens = util.ssoTokens(mail);
+      assert.equal(ssoTokens[0].expireTime, 300);
+      assert.equal(ssoTokens[0].field, 'data.email');
+      assert.deepEqual(ssoTokens[0].resources, ['user']);
     });
 
     it('Should generate token with expire time and multiple resources.', function() {
       var mail = '<a class="btn btn-primary" href="https://google.com/?token=[[token(data.email=user, admin), 300]]">Click here to log in</a>';
-      var ssoToken = util.ssoToken(mail);
-      assert.equal(ssoToken.expireTime, 300);
-      assert.equal(ssoToken.field, 'data.email');
-      assert.deepEqual(ssoToken.resources, ['user', 'admin']);
+      var ssoTokens = util.ssoTokens(mail);
+      assert.equal(ssoTokens[0].expireTime, 300);
+      assert.equal(ssoTokens[0].field, 'data.email');
+      assert.deepEqual(ssoTokens[0].resources, ['user', 'admin']);
     });
 
     it('Should generate token with spaces between.', function() {
       var mail = '<a class="btn btn-primary" href="https://google.com/?token=[[token( data.email = user, admin), 300]]">Click here to log in</a>';
-      var ssoToken = util.ssoToken(mail);
-      assert.equal(ssoToken.expireTime, 300);
-      assert.equal(ssoToken.field, 'data.email');
-      assert.deepEqual(ssoToken.resources, ['user', 'admin']);
+      var ssoTokens = util.ssoTokens(mail);
+      assert.equal(ssoTokens[0].expireTime, 300);
+      assert.equal(ssoTokens[0].field, 'data.email');
+      assert.deepEqual(ssoTokens[0].resources, ['user', 'admin']);
     });
   });
 
