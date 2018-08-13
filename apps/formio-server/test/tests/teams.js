@@ -1138,8 +1138,8 @@ module.exports = function(app, template, hook) {
               ]
             }
           })
-          .expect('Content-Type', /text/)
-          .expect(401)
+          .expect('Content-Type', /json/)
+          .expect(200)
           .end(function(err, res) {
             if (err) {
               return done(err);
