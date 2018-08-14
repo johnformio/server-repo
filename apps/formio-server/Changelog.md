@@ -7,8 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## 5.7.2
 ### Changed
  - Added the ability to servicetize the Google Sheets actions.
- - Upgraded formio@1.32.0
- - Upgraded sinon@6.1.4, webpack@4.16.2, aws-sdk@2.279.1, twilio@3.18.0, eslint@5.2.0, method-override@3.0.0, ws@6.0.0, prepack@0.2.44
+ - Upgraded JSONStream@1.3.4 formio@1.33.2 resourcejs@1.25.1 aws-sdk@2.292.0
+ - Upgraded sinon@6.1.4, webpack@4.16.2, twilio@3.18.0, eslint@5.2.0, method-override@3.0.0, ws@6.0.0, prepack@0.2.44
 
 ## 5.7.1
 ### Changed
