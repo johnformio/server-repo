@@ -3278,6 +3278,38 @@
               }
             ]
           },
+          "placeholder": "Select the admins on this team.",
+          "key": "admins",
+          "label": "Team Admins",
+          "tableView": true,
+          "input": true
+        },
+        {
+          "searchField": "name",
+          "type": "select",
+          "validate": {
+            "required": false
+          },
+          "persistent": true,
+          "unique": false,
+          "protected": false,
+          "refreshDelay": 0,
+          "refresh": false,
+          "multiple": true,
+          "template": "<span>{{ item.data.name }}</span>",
+          "defaultValue": [],
+          "valueProperty": "",
+          "dataSrc": "url",
+          "data": {
+            "url": "https://api.form.io/team/members",
+            "json": "",
+            "values": [
+              {
+                "label": "",
+                "value": ""
+              }
+            ]
+          },
           "placeholder": "Select the members on this team.",
           "key": "members",
           "label": "Members",

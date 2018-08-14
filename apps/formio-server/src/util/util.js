@@ -11,36 +11,34 @@ const defaultSaltLength = 40;
 
 module.exports = {
   /* eslint-disable no-useless-escape */
-  tokenRegex: new RegExp(/\[\[\s*token\(\s*([^\)]+\s*)\)\s*,?\s*([0-9]*)\s*\]\]/i),
+  tokenRegex: new RegExp(/\[\[\s*token\(\s*([^\)]+)\s*\)\s*,?\s*([0-9]*)\s*\]\]/gi),
   /* eslint-enable no-useless-escape */
   query: (query) => {
     return Object.keys(query).map((k) => {
       return `${encodeURIComponent(k)}=${encodeURIComponent(query[k])}`;
     }).join('&');
   },
-  ssoToken(text) {
-    const matches = text.match(this.tokenRegex);
-    if (matches && matches.length > 1) {
-      const parts = matches[1].split('=');
+  ssoTokens(text) {
+    const tokens = [];
+    text.replace(this.tokenRegex, (match, $1, $2) => {
+      const parts = $1.split('=');
       const field = _.trim(parts[0]);
       const resources = parts[1] ? _.map(parts[1].split(','), _.trim) : [];
-      let expireTime = parseInt(_.trim(matches[2]), 10);
-
+      let expireTime = parseInt(_.trim($2), 10);
       if (!expireTime || isNaN(expireTime)) {
         expireTime = 120;
       }
       if (!field) {
-        return null;
+        return match;
       }
-
-      // Return the sso token information.
-      return {
+      tokens.push({
         resources: resources,
         expireTime: expireTime,
         field: field
-      };
-    }
-    return null;
+      });
+      return match;
+    });
+    return tokens;
   },
   encrypt(secret, rawData) {
     if (!secret || !rawData) {

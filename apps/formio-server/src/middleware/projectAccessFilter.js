@@ -76,13 +76,21 @@ module.exports = function(formio) {
           return next();
         }
 
-        // Find all the Teams owned by the project owner.
-        formio.teams.getTeams(project.owner, false, true)
+        // Get the current teams
+        let currentTeams = [];
+        project.access.forEach(access => {
+          if (access.type.indexOf('team_') === 0) {
+            currentTeams = currentTeams.concat(access.roles.map(formio.util.idToString));
+          }
+        });
+
+        // Find all the Teams for the current user.
+        formio.teams.getTeams(req.user._id, false, true)
           .then(function(teams) {
             teams = teams || [];
             teams = _.map(_.map(teams, '_id'), formio.util.idToString);
 
-            accessIds = accessIds.concat(teams);
+            accessIds = accessIds.concat(currentTeams).concat(teams);
             accessIds = _.uniq(_.filter(accessIds));
 
             filterAccess();
