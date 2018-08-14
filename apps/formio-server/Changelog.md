@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.8.0
+### Added
+ - Added full Minio support
+ - Added Encrypted S3 support
+ - Allow more than one SSO token per email.
+
+### Fixed
+ - Fixed Team permissions to not remove permissions outside of project owner.
+
 ## 5.7.2
 ### Changed
  - Added the ability to servicetize the Google Sheets actions.
