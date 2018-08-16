@@ -3,8 +3,6 @@ jobs:
   build_js:
     docker:
       - image: circleci/node:8.11.3
-      - image: mongo:3.4.16
-      - image: redis:4.0.11
     steps:
       - checkout
       - restore_cache:
@@ -32,12 +30,21 @@ jobs:
             - main.js
             - package.json
   test_js:
+    environment:
+      MONGO: "mongodb://localhost:27017/formio"
     docker:
       - image: circleci/node:8.11.3
+      - image: mongo:3.4.16
+      - image: redis:4.0.11
     steps:
       - checkout
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
+      - run:
+          name: Setup hostnames
+          command: |
+            sudo bash -c "echo \"127.0.0.1 formio.localhost\" >> /etc/hosts"
+            sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
       - run:
           name: Test
           command: npm test

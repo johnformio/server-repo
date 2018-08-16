@@ -15,11 +15,11 @@ var formioProject = require('../project.json');
 let EventEmitter = require('events');
 
 process.on('uncaughtException', function(err) {
-  console.log(err.stack);
+  console.error(err);
 });
 
 process.on('unhandledRejection', (err) => {
-  console.log(err.stack);
+  console.error(err);
 });
 
 var emptyDatabase = template.emptyDatabase = template.clearData = function(done) {
