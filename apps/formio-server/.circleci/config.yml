@@ -1,0 +1,64 @@
+version: 2
+jobs:
+  build_js:
+    docker:
+      - image: circleci/node:8.11.3
+      - image: mongo:3.4.16
+      - image: redis:4.0.11
+    steps:
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+      - run:
+          name: Install npm
+          command: npm install
+      - save_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+          paths:
+            - node_modules
+      - run:
+          name: Test
+          command: npm test
+      - store_artifacts:
+          path: test-results.xml
+          prefix: tests
+  build_docker:
+    steps:
+      - run: echo 'build docker';
+  test_js:
+    steps:
+      - run: echo 'test_js';
+  test_docker:
+    steps:
+      - run: echo 'test_docker';
+  deploy_npm:
+    steps:
+      - run: echo 'deploy_npm';
+  deploy_docker:
+    steps:
+      - run: echo 'deploy_docker';
+
+workflows:
+  version: 2
+    build-npm:
+      jobs:
+        - build_js
+        - test_js:
+          requires:
+            - build_js
+        - deploy_npm:
+          requires:
+            - test_js
+    build-docker:
+      jobs:
+        - build_docker:
+          requires:
+            - build_js
+        - test_docker:
+          requires:
+            - build_docker
+        - deploy_docker:
+          requires:
+            test_docker
+
+
