@@ -22,7 +22,7 @@ jobs:
 #          command: npm test
 #      - store_artifacts:
 #          path: test-results.xml
-          prefix: tests
+#          prefix: tests
   build_docker:
     machine:
       enabled: true
