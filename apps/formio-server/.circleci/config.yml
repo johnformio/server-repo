@@ -26,9 +26,11 @@ jobs:
           name: Build
           command: npm run compile
       - persist_to_workspace:
-          root: ~
+          root: build
           paths:
-            - build
+            - favicon.ico
+            - main.js
+            - package.json
   test_js:
     docker:
       - image: circleci/node:8.11.3
