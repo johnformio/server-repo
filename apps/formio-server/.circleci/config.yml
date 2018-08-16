@@ -7,6 +7,9 @@ jobs:
       - image: redis:4.0.11
     steps:
       - checkout
+      - run:
+          name: Lint
+          command: npm run lint
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
       - run:
@@ -17,13 +20,11 @@ jobs:
           paths:
             - node_modules
       - run:
+          name: Clean
+          command: npm run clean
+      - run:
           name: Build
-          command: npm run build
-  build_docker:
-    machine:
-      enabled: true
-    steps:
-      - run: echo 'build docker';
+          command: npm run compile
   test_js:
     docker:
       - image: circleci/node:8.11.3
@@ -31,11 +32,11 @@ jobs:
       - run:
           name: Test
           command: npm test
-  test_docker:
-    docker:
-      - image: circleci/node:8.11.3
+  docker:
+    machine:
+      enabled: true
     steps:
-      - run: echo 'test_docker';
+      - run: echo 'build docker';
   deploy_npm:
     docker:
       - image: circleci/node:8.11.3
@@ -44,38 +45,26 @@ jobs:
 #https://circleci.com/docs/2.0/deployment-integrations/#npm
 #      - run: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
 #      - run: npm publish  deploy_docker:
-    docker:
-      - image: circleci/node:8.11.3
-    steps:
-      - run: echo 'deploy_docker';
 
 workflows:
   version: 2
-  build-npm:
+  do-build:
     jobs:
       - build_js
       - test_js:
           requires:
             - build_js
-      - deploy_npm:
+      - docker:
           requires:
-            - test_js
+            - build_js
           filters:
             tags:
               # Regex for semver. See https://github.com/semver/semver.org/issues/59
               only: /^(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:-(?<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
-  build-docker:
-    jobs:
-      - build_js
-      - build_docker:
+      - deploy_npm:
           requires:
-            - build_js
-      - test_docker:
-          requires:
-            - build_docker
-      - deploy_docker:
-          requires:
-            - test_docker
+            - test_js
+            - docker
           filters:
             tags:
               # Regex for semver. See https://github.com/semver/semver.org/issues/59
