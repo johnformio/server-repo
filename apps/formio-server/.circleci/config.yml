@@ -7,9 +7,6 @@ jobs:
       - image: redis:4.0.11
     steps:
       - checkout
-      - run:
-          name: Lint
-          command: npm run lint
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
       - run:
@@ -19,6 +16,9 @@ jobs:
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
             - node_modules
+      - run:
+          name: Lint
+          command: npm run lint
       - run:
           name: Clean
           command: npm run clean
