@@ -23,42 +23,50 @@ jobs:
           path: test-results.xml
           prefix: tests
   build_docker:
+    machine:
+      enabled: true
     steps:
       - run: echo 'build docker';
   test_js:
+    docker:
+      - image: circleci/node:8.11.3
     steps:
       - run: echo 'test_js';
   test_docker:
+    docker:
+      - image: circleci/node:8.11.3
     steps:
       - run: echo 'test_docker';
   deploy_npm:
+    docker:
+      - image: circleci/node:8.11.3
     steps:
       - run: echo 'deploy_npm';
   deploy_docker:
+    docker:
+      - image: circleci/node:8.11.3
     steps:
       - run: echo 'deploy_docker';
 
 workflows:
   version: 2
-    build-npm:
-      jobs:
-        - build_js
-        - test_js:
+  build-npm:
+    jobs:
+      - build_js
+      - test_js:
           requires:
             - build_js
-        - deploy_npm:
+      - deploy_npm:
           requires:
             - test_js
-    build-docker:
-      jobs:
-        - build_docker:
+  build-docker:
+    jobs:
+      - build_docker:
           requires:
             - build_js
-        - test_docker:
+      - test_docker:
           requires:
             - build_docker
-        - deploy_docker:
+      - deploy_docker:
           requires:
-            test_docker
-
-
+            - test_docker
