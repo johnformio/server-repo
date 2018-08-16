@@ -16,13 +16,9 @@ jobs:
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
             - node_modules
-      - run: echo 'build_js'
-#      - run:
-#          name: Test
-#          command: npm test
-#      - store_artifacts:
-#          path: test-results.xml
-#          prefix: tests
+      - run:
+          name: Build
+          command: npm run build
   build_docker:
     machine:
       enabled: true
@@ -32,7 +28,9 @@ jobs:
     docker:
       - image: circleci/node:8.11.3
     steps:
-      - run: echo 'test_js';
+      - run:
+          name: Test
+          command: npm test
   test_docker:
     docker:
       - image: circleci/node:8.11.3
@@ -43,7 +41,9 @@ jobs:
       - image: circleci/node:8.11.3
     steps:
       - run: echo 'deploy_npm';
-  deploy_docker:
+#https://circleci.com/docs/2.0/deployment-integrations/#npm
+#      - run: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+#      - run: npm publish  deploy_docker:
     docker:
       - image: circleci/node:8.11.3
     steps:
@@ -60,6 +60,10 @@ workflows:
       - deploy_npm:
           requires:
             - test_js
+          filters:
+            tags:
+              # Regex for semver. See https://github.com/semver/semver.org/issues/59
+              only: /^(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:-(?<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
   build-docker:
     jobs:
       - build_js
@@ -72,3 +76,7 @@ workflows:
       - deploy_docker:
           requires:
             - test_docker
+          filters:
+            tags:
+              # Regex for semver. See https://github.com/semver/semver.org/issues/59
+              only: /^(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:-(?<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
