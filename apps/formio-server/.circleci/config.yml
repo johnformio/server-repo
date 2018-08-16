@@ -62,6 +62,7 @@ workflows:
             - test_js
   build-docker:
     jobs:
+      - build_js
       - build_docker:
           requires:
             - build_js
