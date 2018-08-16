@@ -10,7 +10,7 @@ jobs:
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
       - run:
-          name: Install npm
+          name: Install npm modules
           command: npm install
       - save_cache:
           key: dependency-cache-{{ checksum "package.json" }}
@@ -25,10 +25,17 @@ jobs:
       - run:
           name: Build
           command: npm run compile
+      - persist_to_workspace:
+          root: build
+          paths:
+            - *
   test_js:
     docker:
       - image: circleci/node:8.11.3
     steps:
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
       - run:
           name: Test
           command: npm test
