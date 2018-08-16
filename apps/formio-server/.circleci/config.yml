@@ -26,9 +26,9 @@ jobs:
           name: Build
           command: npm run compile
       - persist_to_workspace:
-          root: build
+          root: /tmp/build
           paths:
-            - *
+            - build
   test_js:
     docker:
       - image: circleci/node:8.11.3
@@ -43,6 +43,12 @@ jobs:
     machine:
       enabled: true
     steps:
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+      - attach_workspace:
+          at:
+            build
       - run: echo 'build docker';
   deploy_npm:
     docker:
