@@ -26,7 +26,7 @@ jobs:
           name: Build
           command: npm run compile
       - persist_to_workspace:
-          root: /tmp/build
+          root: ~
           paths:
             - build
   test_js:
