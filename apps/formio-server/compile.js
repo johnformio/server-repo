@@ -30,7 +30,8 @@ var copyFile = function(file) {
 };
 [
   'favicon.ico',
-  'package.json'
+  'package.json',
+  'package-lock.json'
 ].forEach(copyFile);
 
 webpack({
