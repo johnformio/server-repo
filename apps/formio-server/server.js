@@ -32,7 +32,6 @@ module.exports = function(options) {
   /* eslint-disable no-console */
   console.log(JSON.stringify(config.redis));
   const redis = new RedisInterface(config.redis);
-  console.log(JSON.stringify(redis));
 
   // Load the analytics hooks.
   const analytics = require('./src/analytics/analytics')(redis);

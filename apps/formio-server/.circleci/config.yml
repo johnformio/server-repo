@@ -32,7 +32,8 @@ jobs:
   test_js:
     environment:
       MONGO: "mongodb://localhost:27017/formio"
-      REDIS: "redis://localhost:6379"
+      REDIS_ADDR: localhost
+      REDIS_PORT: 6379
     docker:
       - image: circleci/node:8.11.3
       - image: mongo:3.4.16
