@@ -32,6 +32,7 @@ jobs:
   test_js:
     environment:
       MONGO: "mongodb://localhost:27017/formio"
+      REDIS: "redis://localhost:6379"
     docker:
       - image: circleci/node:8.11.3
       - image: mongo:3.4.16
@@ -63,10 +64,13 @@ jobs:
     docker:
       - image: circleci/node:8.11.3
     steps:
+      - attach_workspace:
+          at:
+            build
       - run: echo 'deploy_npm';
 #https://circleci.com/docs/2.0/deployment-integrations/#npm
 #      - run: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-#      - run: npm publish  deploy_docker:
+#      - run: npm publish
 
 workflows:
   version: 2
