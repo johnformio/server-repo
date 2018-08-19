@@ -6,7 +6,7 @@ const getMinio = function(project) {
   return new Minio.Client({
     endPoint: parsed.hostname,
     port: parseInt(parsed.port, 10) || 9000,
-    secure: (parsed.protocol.indexOf('https') === 0),
+    useSSL: (parsed.protocol.indexOf('https') === 0),
     accessKey: project.settings.storage.s3.AWSAccessKeyId,
     secretKey: project.settings.storage.s3.AWSSecretKey
   });
