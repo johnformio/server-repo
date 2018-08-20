@@ -63,6 +63,7 @@ jobs:
       - attach_workspace:
           at:
             build
+      - run: cp -r node_modules build/
       - run: docker build --no-cache -t $IMAGE_PATH -f deployment/docker/formio-server/Dockerfile .
       - run: docker network create formio
       - run: docker network ls
