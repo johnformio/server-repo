@@ -52,6 +52,8 @@ jobs:
           name: Test
           command: npm test
   docker:
+    environment:
+      IMAGE_PATH: formio/formio-server
     machine:
       enabled: true
     steps:
