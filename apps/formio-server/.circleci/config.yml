@@ -63,6 +63,11 @@ jobs:
       - attach_workspace:
           at:
             build
+      - run:
+          name: Setup hostnames
+          command: |
+            sudo bash -c "echo \"127.0.0.1 formio.localhost\" >> /etc/hosts"
+            sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
       - run: cp -r node_modules build/
       - run: docker build --no-cache -t $IMAGE_PATH -f deployment/docker/formio-server/Dockerfile .
       - run: docker network create formio
