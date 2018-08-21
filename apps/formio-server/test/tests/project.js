@@ -1235,7 +1235,11 @@ module.exports = function(app, template, hook) {
   });
 
   describe('Project Plans', function() {
-    var tempProjects = [];
+    if (docker) {
+      return;
+    }
+
+      var tempProjects = [];
     describe('Basic Plan', function() {
       if (!docker)
       before(function(done) {
