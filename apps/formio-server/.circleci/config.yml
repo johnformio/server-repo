@@ -84,11 +84,13 @@ jobs:
           name: deploy
           command: |
             if [[ $CIRCLE_TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
-              echo "Releasing"
-              docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-              if [[ $CIRCLE_TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-                echo "prod release"
-              fi
+#              docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+#              docker tag $IMAGE_PATH $IMAGE_PATH:$CIRCLE_TAG
+#              docker push $IMAGE_PATH:$CIRCLE_TAG
+#              if [[ $CIRCLE_TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+#                docker push $IMAGE_PATH
+#              fi
+#              ./deployment/scripts/createVersion.sh $CIRCLE_TAG
             fi
 
   deploy_npm:
@@ -99,10 +101,13 @@ jobs:
       - attach_workspace:
           at:
             build
-      - run: echo 'deploy_npm';
-#https://circleci.com/docs/2.0/deployment-integrations/#npm
-#      - run: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-#      - run: npm publish
+      - run: git checkout --depth 1 git@github.com:formio/formio-enterprise.git
+      - run: cp build/* formio-enterprise/
+      - run: cd formio-enterprise
+      - run: git commit -a -m "$CIRCLE_TAG"
+      - run: git tag $CIRCLE_TAG
+      - run: git push
+      - run: git push --tags
 
 workflows:
   version: 2
