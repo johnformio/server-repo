@@ -123,7 +123,7 @@ workflows:
             - build_js
           filters:
             tags:
-              only: /^\d+\.\d+\.\d+/
+              only: /^\d+\.\d+\.\d+.*/
             branches:
               ignore: /.*/
       - deploy_npm:
@@ -132,6 +132,6 @@ workflows:
             - docker
           filters:
             tags:
-              only: /^\d+\.\d+\.\d+/
+              only: /^\d+\.\d+\.\d+.*/
             branches:
               ignore: /.*/
