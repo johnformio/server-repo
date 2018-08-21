@@ -95,7 +95,7 @@ jobs:
       - attach_workspace:
           at:
             build
-      - run: git checkout --depth 1 git@github.com:formio/formio-enterprise.git
+      - run: git clone --depth 1 git@github.com:formio/formio-enterprise.git
       - run: cp build/* formio-enterprise/
       - run: cd formio-enterprise
       - run: git commit -a -m "$CIRCLE_TAG"
