@@ -108,7 +108,7 @@ workflows:
   version: 2
   do-build:
     jobs:
-      - build_js
+      - build_js:
           filters:
             tags:
               only: /.*/
