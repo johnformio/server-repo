@@ -84,7 +84,13 @@ jobs:
           name: deploy
           command: |
             if [[ $CIRCLE_TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
-              echo test
+              docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+              docker tag $IMAGE_PATH $IMAGE_PATH:$CIRCLE_TAG
+              docker push $IMAGE_PATH:$CIRCLE_TAG
+              if [[ $CIRCLE_TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                docker push $IMAGE_PATH
+              fi
+              ./deployment/scripts/createVersion.sh $CIRCLE_TAG
             fi
 
   deploy_npm:
@@ -105,7 +111,9 @@ jobs:
             git config user.name "Formiobot"
             git commit -a -m "$CIRCLE_TAG"
             git tag $CIRCLE_TAG
-            git push
+            if [[ $CIRCLE_TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              git push
+            fi
             git push --tags
 
 workflows:
