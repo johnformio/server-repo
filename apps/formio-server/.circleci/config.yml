@@ -124,6 +124,8 @@ workflows:
           filters:
             tags:
               only: /^\d+\.\d+\.\d+/
+            branches:
+              ignore: /.*/
       - deploy_npm:
           requires:
             - test_js
@@ -131,3 +133,5 @@ workflows:
           filters:
             tags:
               only: /^\d+\.\d+\.\d+/
+            branches:
+              ignore: /.*/
