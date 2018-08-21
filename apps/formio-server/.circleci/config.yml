@@ -80,6 +80,17 @@ jobs:
       - run: ADMIN_KEY=dockertest node install
       - run: curl -f --retry 10 http://api.localhost:3000/health
       - run: npm run docker
+      - run:
+          name: deploy
+          command: |
+            if [[ $CIRCLE_TAG =~ ^\d+\.\d+\.\d+ ]]; then
+              echo "Releasing"
+              docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+              if [[ $CIRCLE_TAG =~ ^\d+\.\d+\.\d+$ ]]; then
+                echo "prod release"
+              fi
+            fi
+
   deploy_npm:
     docker:
       - image: circleci/node:8.11.3
