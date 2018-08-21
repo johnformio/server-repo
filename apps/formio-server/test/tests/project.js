@@ -1115,25 +1115,27 @@ module.exports = function(app, template, hook) {
       });
     });
 
-    it('A Form.io User should be able to Delete their Project without explicit permissions', function(done) {
-      request(app)
-        .delete('/project/' + template.project._id)
-        .set('x-jwt-token', template.formio.owner.token)
-        .expect(200)
-        .end(function(err, res) {
-          if (err) {
-            return done(err);
-          }
+    if (!docker) {
+      it('A Form.io User should be able to Delete their Project without explicit permissions', function (done) {
+        request(app)
+          .delete('/project/' + template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(200)
+          .end(function (err, res) {
+            if (err) {
+              return done(err);
+            }
 
-          var response = res.body;
-          assert.deepEqual(response, {});
+            var response = res.body;
+            assert.deepEqual(response, {});
 
-          // Store the JWT for future API calls.
-          template.formio.owner.token = res.headers['x-jwt-token'];
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
 
-          done();
-        });
-    });
+            done();
+          });
+      });
+    }
 
     if (!docker) {
       it('A Deleted Project should still remain in the Database', function (done) {
@@ -1233,7 +1235,11 @@ module.exports = function(app, template, hook) {
   });
 
   describe('Project Plans', function() {
-    var tempProjects = [];
+    if (docker) {
+      return;
+    }
+
+      var tempProjects = [];
     describe('Basic Plan', function() {
       if (!docker)
       before(function(done) {

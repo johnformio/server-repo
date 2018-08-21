@@ -1,0 +1,149 @@
+version: 2
+jobs:
+  build_js:
+    docker:
+      - image: circleci/node:8.11.3
+    steps:
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+      - run:
+          name: Install npm modules
+          command: npm install
+      - save_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+          paths:
+            - node_modules
+      - run:
+          name: Lint
+          command: npm run lint
+      - run:
+          name: Clean
+          command: npm run clean
+      - run:
+          name: Build
+          command: npm run compile
+      - persist_to_workspace:
+          root: build
+          paths:
+            - favicon.ico
+            - main.js
+            - package.json
+            - package-lock.json
+  test_js:
+    environment:
+      MONGO: "mongodb://localhost:27017/formio"
+      REDIS_ADDR: localhost
+      REDIS_PORT: 6379
+    docker:
+      - image: circleci/node:8.11.3
+      - image: mongo:3.4.16
+      - image: redis:4.0.11
+    steps:
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+      - run:
+          name: Setup hostnames
+          command: |
+            sudo bash -c "echo \"127.0.0.1 formio.localhost\" >> /etc/hosts"
+            sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
+      - run:
+          name: Test
+          command: npm test
+  docker:
+    environment:
+      IMAGE_PATH: formio/formio-server
+    machine:
+      enabled: true
+    steps:
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+      - attach_workspace:
+          at:
+            build
+      - run:
+          name: Setup hostnames
+          command: |
+            sudo bash -c "echo \"127.0.0.1 formio.localhost\" >> /etc/hosts"
+            sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
+      - run: cp -r node_modules build/
+      - run: docker build --no-cache -t $IMAGE_PATH -f deployment/docker/formio-server/Dockerfile .
+      - run: docker network create formio
+      - run: docker network ls
+      - run: docker run -itd --name formio-mongo --net formio -p 27017:27017 mongo
+      - run: docker run -itd --name formio-redis --net formio -p 6380 redis
+      - run: docker run -itd --name formio-server --net formio -e "DEBUG=formio:*" -e "PROJECT_PLAN=trial" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "JWT_SECRET=CHANGEME" -e "JWT_EXPIRE_TIME=240" -e "DB_SECRET=CHANGEME" -e "ADMIN_KEY=dockertest" --link formio-redis:redis --link formio-mongo:mongo -p 127.0.0.1:3000:3000 $IMAGE_PATH
+      - run: docker ps -a
+      - run: sleep 5
+      - run: ADMIN_KEY=dockertest node install
+      - run: curl -f --retry 10 http://api.localhost:3000/health
+      - run: npm run docker
+      - run:
+          name: deploy
+          command: |
+            if [[ $CIRCLE_TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+              docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+              docker tag $IMAGE_PATH $IMAGE_PATH:$CIRCLE_TAG
+              docker push $IMAGE_PATH:$CIRCLE_TAG
+              if [[ $CIRCLE_TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                docker push $IMAGE_PATH
+              fi
+              ./deployment/scripts/createVersion.sh $CIRCLE_TAG
+            fi
+
+  deploy_npm:
+    docker:
+      - image: circleci/node:8.11.3
+    steps:
+      - checkout
+      - attach_workspace:
+          at:
+            build
+      - run: git clone --depth 1 git@github.com:formio/formio-enterprise.git
+      - run: cp build/* formio-enterprise/
+      - run:
+          name: Commit
+          command: |
+            cd formio-enterprise
+            git config user.email "formiobot@example.com"
+            git config user.name "Formiobot"
+            git commit -a -m "$CIRCLE_TAG"
+            git tag $CIRCLE_TAG
+            if [[ $CIRCLE_TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              git push
+            fi
+            git push --tags
+
+workflows:
+  version: 2
+  do-build:
+    jobs:
+      - build_js:
+          filters:
+            tags:
+              only: /.*/
+      - test_js:
+          requires:
+            - build_js
+          filters:
+            tags:
+              only: /.*/
+      - docker:
+          requires:
+            - test_js
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+.*/
+            branches:
+              ignore: /.*/
+      - deploy_npm:
+          requires:
+            - test_js
+            - docker
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+.*/
+            branches:
+              ignore: /.*/

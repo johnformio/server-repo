@@ -20,7 +20,7 @@ try {
 }
 catch (e) {
   /* eslint-disable no-console */
-  console.error(e);
+  console.log('Destination build dir exists, skipping mkdir.');
   /* eslint-enable no-console */
 }
 
@@ -30,7 +30,8 @@ var copyFile = function(file) {
 };
 [
   'favicon.ico',
-  'package.json'
+  'package.json',
+  'package-lock.json'
 ].forEach(copyFile);
 
 webpack({
@@ -47,4 +48,11 @@ webpack({
     filename: 'main.js'
   },
   externals: nodeModules
-}).run();
+}).run((err, stats) => {
+  if (err) {
+    /* eslint-disable no-console */
+    console.err(err);
+    return;
+  }
+  console.log('Finished compiling main.js.');
+});

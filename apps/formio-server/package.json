@@ -14,7 +14,8 @@
     "build:debug": "docker build -t formio-server-debug -f deployment/docker/formio-server/Dockerfile-debug .",
     "package:debug": "docker save -o formio-server-debug formio-server-debug",
     "builddocker": "docker build -f deployment/docker/formio-server/Dockerfile .",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "validate": "circleci config validate -c .circleci/config.yml"
   },
   "main": "./server.js",
   "schema": "3.3.0",
