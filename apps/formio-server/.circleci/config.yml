@@ -98,6 +98,8 @@ jobs:
       - run: git clone --depth 1 git@github.com:formio/formio-enterprise.git
       - run: cp build/* formio-enterprise/
       - run: cd formio-enterprise
+      - run: git config user.email "formiobot@example.com"
+      - run: git config user.name "Formiobot"
       - run: git commit -a -m "$CIRCLE_TAG"
       - run: git tag $CIRCLE_TAG
       - run: git push
