@@ -74,7 +74,7 @@ jobs:
       - run: docker network ls
       - run: docker run -itd --name formio-mongo --net formio -p 27017:27017 mongo
       - run: docker run -itd --name formio-redis --net formio -p 6380 redis
-      - run: docker run -itd --name formio-server --net formio -e "DEBUG=formio:*" -e "PROJECT_PLAN=trial" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "JWT_SECRET=CHANGEME" -e "JWT_EXPIRE_TIME=240" -e "DB_SECRET=CHANGEME" -e "ADMIN_KEY=dockertest" --link formio-redis:redis --link formio-mongo:mongo -p 127.0.0.1:3000:3000 $IMAGE_PATH
+      - run: docker run -itd --name formio-server --net formio -e "DEBUG=formio:*" -e "PROJECT_PLAN=basic" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "JWT_SECRET=CHANGEME" -e "JWT_EXPIRE_TIME=240" -e "DB_SECRET=CHANGEME" -e "ADMIN_KEY=dockertest" --link formio-redis:redis --link formio-mongo:mongo -p 127.0.0.1:3000:3000 $IMAGE_PATH
       - run: docker ps -a
       - run: sleep 5
       - run: ADMIN_KEY=dockertest node install
