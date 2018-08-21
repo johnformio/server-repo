@@ -109,9 +109,15 @@ workflows:
   do-build:
     jobs:
       - build_js
+          filters:
+            tags:
+              only: /.*/
       - test_js:
           requires:
             - build_js
+          filters:
+            tags:
+              only: /.*/
       - docker:
           requires:
             - build_js
