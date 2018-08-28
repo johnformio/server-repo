@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
  - Fixed Team permissions to not remove permissions outside of project owner.
+ - Problems with not working with SSL Redis servers.
 
 ## 5.7.2
 ### Changed
