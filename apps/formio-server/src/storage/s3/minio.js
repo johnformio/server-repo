@@ -3,13 +3,19 @@ const Minio = require('minio');
 const url = require('url');
 const getMinio = function(project) {
   const parsed = url.parse(project.settings.storage.s3.bucketUrl);
-  return new Minio.Client({
+  const useSSL = (parsed.protocol.indexOf('https') === 0);
+  const client = new Minio.Client({
     endPoint: parsed.hostname,
     port: parseInt(parsed.port, 10) || 9000,
-    useSSL: (parsed.protocol.indexOf('https') === 0),
+    useSSL: useSSL,
     accessKey: project.settings.storage.s3.AWSAccessKeyId,
     secretKey: project.settings.storage.s3.AWSSecretKey
   });
+  if (useSSL) {
+    // Make sure we allow unauthorized certs.
+    client.reqOptions.rejectUnauthorized = false;
+  }
+  return client;
 };
 module.exports = {
   getUrl(req, project, next) {
