@@ -148,6 +148,8 @@ else if (process.env.REDIS_ADDR || process.env.REDIS_PORT_6379_TCP_ADDR) {
   var addr = process.env.REDIS_ADDR || process.env.REDIS_PORT_6379_TCP_ADDR;
   var redisPort = process.env.REDIS_PORT || process.env.REDIS_PORT_6379_TCP_PORT;
   config.redis = {
+    port: redisPort,
+    host: addr,
     url: `redis://${addr}:${redisPort}`
   };
 }
@@ -163,6 +165,10 @@ else {
       url: 'redis://localhost:6379'
     };
   }
+}
+
+if (process.env.REDIS_USE_SSL) {
+  config.redis.useSSL = true;
 }
 
 if (process.env.REDIS_PASS) {
