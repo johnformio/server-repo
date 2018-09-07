@@ -1,10 +1,11 @@
 'use strict';
 
 const _ = require('lodash');
-const util = require('./util');
 const formioUtil = require('formio/src/util/util');
 const debug = require('debug')('formio:action:googlesheet');
 const GoogleSheet = require('formio-services/services/GoogleSheet');
+
+const util = require('./util');
 
 module.exports = (router) => {
   const {
@@ -110,7 +111,33 @@ module.exports = (router) => {
                 defaultValue: '2',
                 input: true
               },
-              fieldPanel
+              fieldPanel,
+              {
+                key: 'well',
+                type: 'well',
+                input: false,
+                components: [
+                  {
+                    key: "content",
+                    input: false,
+                    html: '<p>When using several Google Sheets actions you should specify unique <strong>External Id Type</strong> for each to avoid undesirable result.</p>',
+                    type: "content",
+                    label: "content",
+                  },
+                  {
+                    input: true,
+                    inputType: "text",
+                    label: "External Id Type",
+                    key: "externalIdType",
+                    multiple: false,
+                    protected: false,
+                    unique: false,
+                    persistent: true,
+                    type: "textfield",
+                    description: "The name to store and reference the external Id for this action",
+                  }
+                ]
+              }
             ]);
           });
         }))
@@ -142,11 +169,13 @@ module.exports = (router) => {
         const spreadSheet = new GoogleSheet({
           service: process.env.GOOGLE_SHEETS_SERVICE || ''
         });
+        const type = this.settings.externalIdType || this.name;
+        let request = null;
         if (['POST', 'PUT'].includes(req.method)) {
           const item = _.get(res, 'resource.item');
-          const rowId = this.getRowId(item);
+          const rowId = this.getRowId(item, type);
 
-          return (rowId
+          request = (rowId
             ? spreadSheet.updateRow(config, this.settings, rowId, item.data)
             : spreadSheet.addRow(config, this.settings, data)
               .then((result) => {
@@ -160,14 +189,13 @@ module.exports = (router) => {
                   {
                     $push: {
                       externalIds: {
-                        type: this.name,
-                        id: result.rowId
+                        id: result.rowId,
+                        type,
                       }
                     }
                   }
                 ).exec();
-              }))
-            .catch((err) => debug(err.message || err));
+              }));
         }
         else if (req.method === 'DELETE') {
           // Only proceed with deleting a row, if applicable to this request.
@@ -177,18 +205,19 @@ module.exports = (router) => {
           }
 
           // The row number to delete.
-          const rowId = _.get(deleted.externalIds.find((item) => item.type === this.name), 'id');
+          const rowId = this.getRowId(deleted, type);
           if (!rowId) {
             return;
           }
 
-          spreadSheet.deleteRow(config, this.settings, rowId)
-            .catch(err => debug(err.message || err));
+          request = spreadSheet.deleteRow(config, this.settings, rowId);
         }
+
+        request.catch((err) => debug(err.message || err));
       });
     }
 
-    getRowId(item) {
+    getRowId(item, type) {
       const externalIds = _.get(item, 'externalIds');
 
       if (!externalIds) {
@@ -196,7 +225,7 @@ module.exports = (router) => {
       }
 
       // The row number to update.
-      const rowId = _.get(externalIds.find((item) => item.type === this.name), 'id');
+      const rowId = _.get(externalIds.find((item) => item.type === type), 'id');
       if (!rowId) {
         return null;
       }
