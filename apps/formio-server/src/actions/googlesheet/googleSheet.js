@@ -1,9 +1,9 @@
 'use strict';
 
 const _ = require('lodash');
-const formioUtil = require('formio/src/util/util');
 const debug = require('debug')('formio:action:googlesheet');
 const GoogleSheet = require('formio-services/services/GoogleSheet');
+const CSVExporter = require('formio/src/export').csv;
 
 const util = require('./util');
 
@@ -61,21 +61,15 @@ module.exports = (router) => {
               theme: 'info',
               title: 'Google Sheet Fields',
               input: false,
-              components: []
+              components: (new CSVExporter(form, req, res)).fields.map((field) => ({
+                type: 'textfield',
+                input: true,
+                label: field.title ? `${field.title} Column (${field.label})` : `${field.label} Column`,
+                key: field.label,
+                placeholder: 'Enter a Column Key. Example: C',
+                multiple: false,
+              })),
             };
-
-            formioUtil.eachComponent(form.components, (component) => {
-              if (component.action !== 'submit' && component.input) {
-                fieldPanel.components.push({
-                  type: 'textfield',
-                  input: true,
-                  label: `${component.label || component.key} Column`,
-                  key: component.key,
-                  placeholder: 'Enter a Column Key. Example: C',
-                  multiple: false
-                });
-              }
-            }, true);
 
             next(null, [
               {
@@ -155,7 +149,6 @@ module.exports = (router) => {
 
       // Load the project settings.
       hook.settings(req, (err, settings) => {
-        const data = _.get(req, 'body.data');
         if (err) {
           debug(err);
           return;
@@ -173,10 +166,13 @@ module.exports = (router) => {
         let request = null;
         if (['POST', 'PUT'].includes(req.method)) {
           const item = _.get(res, 'resource.item');
+          const data = new CSVExporter(req.currentForm, req, res)
+            .getSubmissionData(item)
+            .updatedSubmission;
           const rowId = this.getRowId(item, type);
 
           request = (rowId
-            ? spreadSheet.updateRow(config, this.settings, rowId, item.data)
+            ? spreadSheet.updateRow(config, this.settings, rowId, data)
             : spreadSheet.addRow(config, this.settings, data)
               .then((result) => {
                 if (!res.resource) {
