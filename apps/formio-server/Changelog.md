@@ -4,10 +4,6 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [UNRELEASED]
-### Fixed
- - Submission data filtering on PDF download.
-
 ## 5.8.2
 ### Changed
  - Upgraded lodash@4.17.11, mongodb@3.1.6, aws-sdk@2.318.0, formiojs@3.5.5, resourcejs@1.26.0, eslint@5.6.0, sinon@6.3.4, webpack@4.19.1, debug@4.0.1, and formio@1.34.0
