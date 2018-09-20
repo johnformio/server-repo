@@ -10,6 +10,7 @@
     "customer": "TEST_SUITE=1 PROTOCOL=http DOMAIN=localhost PORT=3000 DROPBOX_CLIENTID=NOTREAL DROPBOX_CLIENTSECRET=clientsecret123 mocha -b -t 30000 test/customer.js",
     "clean": "rm -rf build",
     "compile": "node compile",
+    "dist": "pkg . --out-path dist; cp node_modules/opn/xdg-open dist/; cp favicon.ico dist/; cp package.json dist/",
     "build": "npm run lint; npm run clean; npm run compile; rsync -av node_modules/ ./build/node_modules",
     "build:debug": "docker build -t formio-server-debug -f deployment/docker/formio-server/Dockerfile-debug .",
     "package:debug": "docker save -o formio-server-debug formio-server-debug",
@@ -34,7 +35,6 @@
     "express": "^4.16.3",
     "express-cache-controller": "^1.1.0",
     "formio": "^1.33.6",
-    "formio-services": "formio/formio-services#v1.8.0",
     "formio-workers": "^1.6.0",
     "formiojs": "^3.4.8",
     "ioredis": "^4.0.0",
@@ -75,6 +75,7 @@
   "devDependencies": {
     "eslint": "^5.5.0",
     "eslint-config-formio": "^1.1.2",
+    "formio-services": "formio/formio-services#v1.8.0",
     "mocha": "^5.1.0",
     "mongodb": "^3.1.4",
     "pre-commit": "^1.2.2",
@@ -86,5 +87,17 @@
   },
   "pre-commit": [
     "lint"
-  ]
+  ],
+  "bin": "main.js",
+  "name": "formioServer",
+  "pkg": {
+    "assets": [
+      "build/package.json",
+      "build/package-lock.json",
+      "build/favicon.ico"
+    ],
+    "targets": [
+      "node8-alpine-x64"
+    ]
+  }
 }

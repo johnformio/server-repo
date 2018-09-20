@@ -1,18 +1,7 @@
 FROM node:8-alpine
 MAINTAINER Form.io <support@form.io>
 
-COPY ./build /src
-WORKDIR /src
-
-# Install git
-RUN apk update && \
-    apk upgrade && \
-    apk add --no-cache --virtual .build-deps bash git make gcc g++ python
-
-RUN npm rebuild --build-from-source=bcrypt && \
-    npm cache clean --force && \
-    npm uninstall -g npm && \
-    apk del .build-deps
+COPY ./dist /
 
 EXPOSE      80
-ENTRYPOINT  ["node", "--max_old_space_size=4096", "main"]
+ENTRYPOINT  ["/formioServer", "--max_old_space_size=4096"]

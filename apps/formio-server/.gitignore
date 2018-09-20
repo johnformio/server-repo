@@ -8,3 +8,4 @@ test/screenshots/*.png
 *~
 npm-debug.log
 build
+dist

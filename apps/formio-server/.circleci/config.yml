@@ -68,7 +68,9 @@ jobs:
           command: |
             sudo bash -c "echo \"127.0.0.1 formio.localhost\" >> /etc/hosts"
             sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
-      - run: cp -r node_modules build/
+      - run: docker build --no-cache -t built -f deployment/docker/build/Dockerfile .
+      - run: docker create --name tempbuild built
+      - run: docker cp tempbuild:/src/dist .
       - run: docker build --no-cache -t $IMAGE_PATH -f deployment/docker/formio-server/Dockerfile .
       - run: docker network create formio
       - run: docker network ls
