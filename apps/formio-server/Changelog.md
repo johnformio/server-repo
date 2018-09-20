@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [UNRELEASED]
+### Fixed
+ - Submission data filtering on PDF download.
+
 ## 5.8.2
 ### Changed
  - Upgraded lodash@4.17.11, mongodb@3.1.6, aws-sdk@2.318.0, formiojs@3.5.5, resourcejs@1.26.0, eslint@5.6.0, sinon@6.3.4, webpack@4.19.1, debug@4.0.1, and formio@1.34.0
@@ -38,7 +42,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
  - Upgraded multer@1.3.1, resourcejs@1.24.1, squel@5.12.2, twilio@3.17.5, ws@5.2.2, aws-sdk@2.272.1, eslint@5.1.0, mongodb@3.1.1, sinon@6.1.3, webpack@4.16.0, prepack@0.2.42
  - Using the 3.x branch of formiojs.
- 
+
 ### Fixed
  - Problems with renaming the stages and projects
  - Issue where team admins could not delete projects.
@@ -143,7 +147,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## 5.1.7
 ### Added
  - A way to create inline email tokens for submissions.
- 
+
 ### Fixed
  - Case insensitive searching of team members.
 
