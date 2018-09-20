@@ -858,7 +858,7 @@ module.exports = function(app) {
 
       templateImportSteps: (steps, install, template) => {
         const _install = install({
-          createOnly: true,
+          createOnly: !template.primary,
           model: formioServer.formio.resources.project.model,
           valid: entity => {
             const project = entity[template.machineName || template.name || 'project'];
