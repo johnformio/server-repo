@@ -6,12 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## 5.8.2
 ### Changed
- - Upgraded lodash@4.17.11, mongodb@3.1.6, aws-sdk@2.318.0, formiojs@3.5.3, resourcejs@1.26.0, eslint@5.6.0, sinon@6.3.4, webpack@4.19.1, debug@4.0.1, and formio@1.34.0
+ - Upgraded lodash@4.17.11, mongodb@3.1.6, aws-sdk@2.318.0, formiojs@3.5.5, resourcejs@1.26.0, eslint@5.6.0, sinon@6.3.4, webpack@4.19.1, debug@4.0.1, and formio@1.34.0
 
 ### Fixed
  - Mark project template imports as create only to not change existing settings.
  - FOR-1603, FOR-1639: Google sheets improvements.
  - FOR-1429: Add editgrid support for email rendering.
+ - FOR-1584: Fixed PDF downloads to not expose encrypted passwords.
  - Expire all tokens when a password is reset.
  - Fixed the action condition checks to ensure it will not work for any empty field or conditions.
  - Fixed security issue where Actions were exposed with simple GET request.

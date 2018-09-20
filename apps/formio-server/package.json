@@ -36,7 +36,7 @@
     "formio": "^1.34.0",
     "formio-services": "formio/formio-services#v1.9.0",
     "formio-workers": "^1.7.0",
-    "formiojs": "^3.5.3",
+    "formiojs": "^3.5.5",
     "ioredis": "^4.0.0",
     "is-url": "^1.2.4",
     "jira-connector": "^2.7.0",
