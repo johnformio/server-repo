@@ -142,6 +142,9 @@ module.exports = function(options) {
   app.modules = require('./src/modules/modules')(app, config);
   var hooks = _.merge(require('./src/hooks/settings')(app), options.hooks);
 
+  // Check the license for validity.
+  require('./src/util/license')(app, config);
+
   // Start the api server.
   app.formio.init(hooks).then(function(formio) {
     app.formio.formio.cache = _.assign(app.formio.formio.cache, require('./src/cache/cache')(formio));
