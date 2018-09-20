@@ -25,4 +25,4 @@ echo "Uploading $AWSDIR/versions/$TAG_NAME.zip to s3://$EB_BUCKET/$TAG_NAME.zip"
 aws s3 cp $AWSDIR/versions/$TAG_NAME.zip s3://$EB_BUCKET/$TAG_NAME.zip
 
 echo "Creating application version $TAG_NAME."
-aws elasticbeanstalk create-application-version --application-name $APPLICATION_NAME --version-label $TAG_NAME --source-bundle S3Bucket=$EB_BUCKET,S3Key=$TAG_NAME.zip
+aws elasticbeanstalk create-application-version --region us-west-2 --application-name $APPLICATION_NAME --version-label $TAG_NAME --source-bundle S3Bucket=$EB_BUCKET,S3Key=$TAG_NAME.zip
