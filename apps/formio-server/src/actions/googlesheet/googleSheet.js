@@ -114,7 +114,9 @@ module.exports = (router) => {
                   {
                     key: "content",
                     input: false,
+                    /* eslint-disable max-len */
                     html: '<p>When using several Google Sheets actions you should specify unique <strong>External Id Type</strong> for each to avoid undesirable result.</p>',
+                    /* eslint-enable max-len */
                     type: "content",
                     label: "content",
                   },
