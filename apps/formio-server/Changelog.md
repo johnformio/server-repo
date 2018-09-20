@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
  - Mark project template imports as create only to not change existing settings.
  - FOR-1603, FOR-1639: Google sheets improvements.
+ - FOR-1429: Add editgrid support for email rendering.
+ - Expire all tokens when a password is reset.
+ - Fixed the action condition checks to ensure it will not work for any empty field or conditions.
+ - Fixed security issue where Actions were exposed with simple GET request.
+ - Project staging issue where project settings could be overridden when importing a template such as title and name.
 
 ## 5.8.0
 ### Added
