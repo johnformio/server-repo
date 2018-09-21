@@ -375,6 +375,13 @@ module.exports = (router) => {
 
         if (settings.forwardHeaders) {
           options.headers = _.clone(req.headers);
+
+          // Delete headers that shouldn't be forwarded.
+          delete options.headers['host'];
+          delete options.headers['content-length'];
+          delete options.headers['content-type'];
+          delete options.headers['connection'];
+          delete options.headers['cache-control'];
         }
         else {
           options.headers = {
