@@ -14,6 +14,7 @@ RUN npm ci --production && \
     npm run dist
 
 RUN npm cache clean --force && \
+    npm uninstall -g pkg && \
     npm uninstall -g npm && \
     apk del .build-deps && \
     rm /src/main.js
