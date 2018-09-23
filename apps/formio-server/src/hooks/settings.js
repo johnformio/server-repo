@@ -105,6 +105,27 @@ module.exports = function(app) {
           action.premium = true;
         }
 
+        if (action.name === 'email' && action.settingsForm) {
+          // Add the "Attach PDF" checkbox to the email action.
+          action.settingsForm.components.forEach(component => {
+            if (component.type === 'fieldset' && component.legend === 'Action Settings') {
+              component.components.forEach(subComp => {
+                if (subComp.key === 'settings') {
+                  subComp.components.push({
+                    type: 'checkbox',
+                    input: true,
+                    key: 'attachPDF',
+                    label: 'Attach Submission PDF',
+                    /* eslint-disable max-len */
+                    tooltip: 'Check this if you would like to attach a PDF of the submission to the email. This will count toward your PDF Submission count for every email sent.'
+                    /* eslint-enable max-len */
+                  });
+                }
+              });
+            }
+          });
+        }
+
         return action;
       },
 
