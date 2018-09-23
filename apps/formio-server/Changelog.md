@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.8.4
+### Fixed
+ - FOR-1710: Don't forward host headers (and other headers) in webhooks.
+
 ## 5.8.3
 ### Fixed
  - Problems related to mail template services and importing bad versions of formiojs.
