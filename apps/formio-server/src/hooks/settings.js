@@ -117,7 +117,7 @@ module.exports = function(app) {
                     key: 'attachPDF',
                     label: 'Attach Submission PDF',
                     /* eslint-disable max-len */
-                    tooltip: 'Check this if you would like to attach a PDF of the submission to the email. This will count toward your PDF Submission count for every eamil sent.'
+                    tooltip: 'Check this if you would like to attach a PDF of the submission to the email. This will count toward your PDF Submission count for every email sent.'
                     /* eslint-enable max-len */
                   });
                 }
