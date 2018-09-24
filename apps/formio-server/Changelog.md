@@ -4,10 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.8.6
+### Fixed
+ - Remove another field from LDAP login from Exchange that causes a crash.
+
 ## 5.8.5
 ### Changed
  - Upgrade formio@1.34.2, formiojs@3.5.7, aws-sdk@2.320.0, resourcejs@1.27.0, twilio@3.20.0
- 
+
 ### Added
  - Ability to attach submission PDF's to email's
 
