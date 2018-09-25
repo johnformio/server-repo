@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 const util = require('../../util/util');
 const async = require('async');
 const config = require('../../../config');
-const _ = require('lodash');
 const FormioUtils = require('formiojs/utils').default;
 
 module.exports = app => (mail, req, res, params, cb) => {
