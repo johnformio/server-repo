@@ -51,8 +51,8 @@ module.exports = app => (mail, req, res, params, cb) => {
   const attachPDF = () => new Promise((resolve) => {
     // If they wish to attach a PDF.
     if (
-      req.mailSettings &&
-      req.mailSettings.attachPDF &&
+      params.settings &&
+      params.settings.attachPDF &&
       res.resource &&
       res.resource.item &&
       res.resource.item._id
@@ -68,15 +68,15 @@ module.exports = app => (mail, req, res, params, cb) => {
         }
 
         // Get the file name settings.
-        let fileName = req.mailSettings.pdfName || 'submission-{{ submission._id }}';
+        let fileName = params.settings.pdfName || '{{ form.name }}-{{ submission._id }}';
 
         // Only allow certain characters and keep malicious code from executing.
         fileName = fileName
-          .replace('{{', '----ob----')
-          .replace('}}', '----cb----')
+          .replace(/{{/g, '----ob----')
+          .replace(/}}/g, '----cb----')
           .replace(/[^0-9A-Za-z._-]/g, '')
-          .replace('----ob----', '{{')
-          .replace('----cb----', '}}');
+          .replace(/----ob----/g, '{{')
+          .replace(/----cb----/g, '}}');
         try {
           fileName = FormioUtils.interpolate(fileName, {
             submission: res.resource.item,

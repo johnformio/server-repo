@@ -1,6 +1,7 @@
 'use strict';
 const request = require('request');
 const FORMIO_FILES_SERVER = process.env.FORMIO_FILES_SERVER || 'https://files.form.io';
+const _ = require('lodash');
 
 module.exports = (formio) => (req, res, next) => {
   formio.cache.loadPrimaryProject(req, (err, project) => {
@@ -39,10 +40,15 @@ module.exports = (formio) => (req, res, next) => {
 
         // Pass along the auth token to files server.
         if (req.token) {
-          headers['x-jwt-token'] = formio.auth.getToken({
-            form: req.token.form,
-            user: req.token.user
-          });
+          if (req.token.user && req.token.form) {
+            headers['x-jwt-token'] = formio.auth.getToken({
+              form: req.token.form,
+              user: req.token.user
+            });
+          }
+          else {
+            headers['x-jwt-token'] = formio.auth.getToken(_.omit(req.token, 'allow'));
+          }
         }
 
         const pdfProject = req.query.project ? req.query.project : project._id.toString();

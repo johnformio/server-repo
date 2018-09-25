@@ -126,7 +126,7 @@ module.exports = function(app) {
                     input: true,
                     key: 'pdfName',
                     label: 'PDF File Name',
-                    defaultValue: 'submission-{{ submission._id }}',
+                    defaultValue: '{{ form.name }}-{{ submission._id }}',
                     /* eslint-disable max-len */
                     tooltip: 'Determines how the submission PDF is named when it is attached.',
                     /* eslint-enable max-len */
