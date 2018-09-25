@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const util = require('../../util/util');
 const async = require('async');
 const config = require('../../../config');
+const FormioUtils = require('formiojs/utils').default;
 
 module.exports = app => (mail, req, res, params, cb) => {
   const formioServer = app.formio;
@@ -66,11 +67,31 @@ module.exports = app => (mail, req, res, params, cb) => {
           return resolve();
         }
 
+        // Get the file name settings.
+        let fileName = req.mailSettings.pdfName || 'submission-{{ submission._id }}';
+
+        // Only allow certain characters and keep malicious code from executing.
+        fileName = fileName
+          .replace('{{', '----ob----')
+          .replace('}}', '----cb----')
+          .replace(/[^0-9A-Za-z._-]/g, '')
+          .replace('----ob----', '{{')
+          .replace('----cb----', '}}');
+        try {
+          fileName = FormioUtils.interpolate(fileName, {
+            submission: res.resource.item,
+            form: req.currentForm
+          }).replace('.', '');
+        }
+        catch (err) {
+          fileName = `submission-${ res.resource.item._id }`;
+        }
+
         // Add the download token to the url.
         url += `?token=${token.key}`;
         mail.attachments = [
           {
-            filename: `submission-${res.resource.item._id}.pdf`,
+            filename: `${fileName}.pdf`,
             contentType: 'application/pdf',
             path: `${config.apiHost}${url}`
           }
