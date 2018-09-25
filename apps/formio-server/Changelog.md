@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.8.7
+### Added
+ - Debugging for LDAP Login action
+
 ## 5.8.6
 ### Fixed
  - Remove another field from LDAP login from Exchange that causes a crash.
