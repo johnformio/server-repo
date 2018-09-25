@@ -120,6 +120,18 @@ module.exports = function(app) {
                     tooltip: 'Check this if you would like to attach a PDF of the submission to the email. This will count toward your PDF Submission count for every email sent.'
                     /* eslint-enable max-len */
                   });
+
+                  subComp.components.push({
+                    type: 'textfield',
+                    input: true,
+                    key: 'pdfName',
+                    label: 'PDF File Name',
+                    defaultValue: 'submission-{{ submission._id }}',
+                    /* eslint-disable max-len */
+                    tooltip: 'Determines how the submission PDF is named when it is attached.',
+                    /* eslint-enable max-len */
+                    customConditional: 'show = !!data.settings.attachPDF;'
+                  });
                 }
               });
             }
