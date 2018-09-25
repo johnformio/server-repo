@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
  - The ability to change the submission PDF filename that gets attached to the emails.
 
+### Changed
+ - Upgrade formio to 1.34.3 to allow for current endpoints to accept temp tokens.
+
 ## 5.8.6
 ### Fixed
  - Remove another field from LDAP login from Exchange that causes a crash.
