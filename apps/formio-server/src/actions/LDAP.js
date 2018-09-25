@@ -3,6 +3,7 @@
 const util = require('formio/src/util/util');
 const _ = require('lodash');
 const LdapAuth = require('ldapauth-fork');
+const debug = require('debug')('formio:ldap');
 
 module.exports = router => {
   const formio = router.formio;
@@ -197,25 +198,31 @@ module.exports = router => {
      */
 
     resolve(handler, method, req, res, next) {
+      debug('Starting LDAP Login');
       if (!hook.alter('resolve', true, this, handler, method, req, res)) {
         return next();
       }
 
       if (!this.settings.usernameField) {
+        debug('Username field setting missing');
         return res.status(400).send('LDAP Action is missing Username Field setting.');
       }
 
       if (!this.settings.passwordField) {
+        debug('Password field setting missing');
         return res.status(400).send('LDAP Action is missing Password Field setting.');
       }
 
       hook.settings(req, (err, settings) => {
         if (!settings.ldap || !settings.ldap.url) {
+          debug('LDAP Project settings not configured');
           return res.status(400).send('LDAP Project settings not configured.');
         }
 
         const auth = new LdapAuth(settings.ldap);
+        debug('LDAP Auth instantiated');
 
+        debug('Authenticating');
         auth.authenticate(
           _.get(req.submission.data, this.settings.usernameField),
           _.get(req.submission.data, this.settings.passwordField),
@@ -225,11 +232,13 @@ module.exports = router => {
               err = err.hasOwnProperty('lde_message') ? err.lde_message : err.toString();
             }
             if (err && (['Invalid Credentials'].includes(err) || !this.settings.passthrough)) {
+              debug('Error occurred 1: ', err);
               return res.status(401).send(err);
             }
 
             // If something goes wrong, skip auth and pass through to other login handlers.
             if (err || !data) {
+              debug('No data returned');
               return next();
             }
 
@@ -253,6 +262,7 @@ module.exports = router => {
                 data[pieces[0]] = pieces[1];
               }
             });
+            debug('User data', data);
 
             // Assign roles based on settings.
             const roles = [];
@@ -264,7 +274,9 @@ module.exports = router => {
                 roles.push(map.role);
               }
             });
+            debug('Assigned Roles', roles);
 
+            debug('Deleting problem fields');
             // Some fields may cause issues so remove them.
             delete data.objectGUID;
             delete data.objectSid;
@@ -277,6 +289,7 @@ module.exports = router => {
               data,
               roles
             };
+            debug('Final user object', user);
 
             const token = {
               external: true,
@@ -288,19 +301,29 @@ module.exports = router => {
                 _id: req.currentProject._id.toString()
               }
             };
+            debug('Token payload', token);
 
-            req.user = user;
-            req.token = token;
-            res.token = formio.auth.getToken(token);
-            req['x-jwt-token'] = res.token;
+            try {
+              req.user = user;
+              req.token = token;
+              res.token = formio.auth.getToken(token);
+              req['x-jwt-token'] = res.token;
+              debug('Token Created');
 
-            // Set the headers if they haven't been sent yet.
-            if (!res.headersSent) {
-              res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
-              res.setHeader('x-jwt-token', res.token);
+              // Set the headers if they haven't been sent yet.
+              if (!res.headersSent) {
+                res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
+                res.setHeader('x-jwt-token', res.token);
+              }
+              debug('Headers Set');
+
+              debug('Sending response');
+              return res.send(user);
             }
-
-            return res.send(user);
+            catch (err) {
+              debug('Error occurred 2: ', err);
+              return res.status(401).send(err);
+            }
           }
         );
       });

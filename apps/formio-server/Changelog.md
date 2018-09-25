@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
  - Upgrade formio to 1.34.3 to allow for current endpoints to accept temp tokens.
+ - Debugging for LDAP Login action
 
 ## 5.8.6
 ### Fixed
