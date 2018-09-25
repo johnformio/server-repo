@@ -269,6 +269,7 @@ module.exports = router => {
             delete data.objectGUID;
             delete data.objectSid;
             delete data.msExchMailboxSecurityDescriptor;
+            delete data.msExchMailboxGuid;
             delete data.protocolSettings;
 
             const user = {
