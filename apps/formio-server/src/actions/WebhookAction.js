@@ -5,7 +5,9 @@ const _ = require('lodash');
 const FormioUtils = require('formiojs/utils').default;
 const vm = require('vm');
 
-module.exports = router => {
+const util = require('./util');
+
+module.exports = (router) => {
   const Action = router.formio.Action;
   const hook = router.formio.hook;
 
@@ -314,39 +316,10 @@ module.exports = router => {
        */
       const handleSuccess = (data, response) => {
         if (settings.externalIdType && settings.externalIdPath) {
-          const submissionModel = req.submissionModel || router.formio.resources.submission.model;
-          submissionModel.findOne(
-            {_id: _.get(res, 'resource.item._id'), deleted: {$eq: null}}
-          ).exec(function(err, submission) {
-            if (err) {
-              return router.formio.util.log(err);
-            }
+          const type = settings.externalIdType;
+          const id = data[settings.externalIdPath] || '';
 
-            submission.externalIds = submission.externalIds || [];
-
-            const type = settings.externalIdType;
-            const id = data[type] || '';
-
-            // Either update the existing ID or create a new one.
-            let found = false;
-            submission.externalIds.forEach((externalId) => {
-              if (externalId.type === type) {
-                externalId.id = id;
-                found = true;
-              }
-            });
-            if (!found) {
-              submission.externalIds.push({
-                type,
-                id
-              });
-            }
-            submission.save(function(err, submission) {
-              if (err) {
-                return router.formio.util.log(err);
-              }
-            });
-          });
+          util.setCustomExternalIdType(req, res, router, type, id);
         }
 
         if (!settings.block || settings.block === false) {
@@ -402,6 +375,13 @@ module.exports = router => {
 
         if (settings.forwardHeaders) {
           options.headers = _.clone(req.headers);
+
+          // Delete headers that shouldn't be forwarded.
+          delete options.headers['host'];
+          delete options.headers['content-length'];
+          delete options.headers['content-type'];
+          delete options.headers['connection'];
+          delete options.headers['cache-control'];
         }
         else {
           options.headers = {

@@ -4,6 +4,51 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.8.8, 5.8.9
+### Fixed
+ - The Email PDF attachment to work with anonymous user submissions.
+
+## 5.8.7
+### Added
+ - The ability to change the submission PDF filename that gets attached to the emails.
+
+### Changed
+ - Upgrade formio to 1.34.3 to allow for current endpoints to accept temp tokens.
+ - Debugging for LDAP Login action
+
+## 5.8.6
+### Fixed
+ - Remove another field from LDAP login from Exchange that causes a crash.
+
+## 5.8.5
+### Changed
+ - Upgrade formio@1.34.2, formiojs@3.5.7, aws-sdk@2.320.0, resourcejs@1.27.0, twilio@3.20.0
+
+### Added
+ - Ability to attach submission PDF's to email's
+
+## 5.8.4
+### Fixed
+ - FOR-1710: Don't forward host headers (and other headers) in webhooks.
+
+## 5.8.3
+### Fixed
+ - Problems related to mail template services and importing bad versions of formiojs.
+
+## 5.8.2
+### Changed
+ - Upgraded lodash@4.17.11, mongodb@3.1.6, aws-sdk@2.318.0, formiojs@3.5.5, resourcejs@1.26.0, eslint@5.6.0, sinon@6.3.4, webpack@4.19.1, debug@4.0.1, and formio@1.34.0
+
+### Fixed
+ - Mark project template imports as create only to not change existing settings.
+ - FOR-1603, FOR-1639: Google sheets improvements.
+ - FOR-1429: Add editgrid support for email rendering.
+ - FOR-1584: Fixed PDF downloads to not expose encrypted passwords.
+ - Expire all tokens when a password is reset.
+ - Fixed the action condition checks to ensure it will not work for any empty field or conditions.
+ - Fixed security issue where Actions were exposed with simple GET request.
+ - Project staging issue where project settings could be overridden when importing a template such as title and name.
+
 ## 5.8.0
 ### Added
  - Added full Minio support
@@ -24,7 +69,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
  - Upgraded multer@1.3.1, resourcejs@1.24.1, squel@5.12.2, twilio@3.17.5, ws@5.2.2, aws-sdk@2.272.1, eslint@5.1.0, mongodb@3.1.1, sinon@6.1.3, webpack@4.16.0, prepack@0.2.42
  - Using the 3.x branch of formiojs.
- 
+
 ### Fixed
  - Problems with renaming the stages and projects
  - Issue where team admins could not delete projects.
@@ -129,7 +174,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## 5.1.7
 ### Added
  - A way to create inline email tokens for submissions.
- 
+
 ### Fixed
  - Case insensitive searching of team members.
 

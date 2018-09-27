@@ -80,7 +80,7 @@ config.reservedSubdomains.concat(config.formio.reservedForms);
 var domain = process.env.DOMAIN || 'form.io';
 var port = process.env.PORT || 80;
 var host = `${protocol}://${domain}`;
-var apiHost = `${protocol}://api.${domain}`;
+var apiHost = process.env.BASE_URL || (`${protocol}://api.${domain}`);
 var formioHost = `${protocol}://${project}.${domain}`;
 
 // Setup Google Analytics.
