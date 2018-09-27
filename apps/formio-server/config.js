@@ -109,7 +109,7 @@ config.apiHost = apiHost;
 config.formio.apiHost = apiHost;
 config.formioHost = formioHost;
 config.formio.formioHost = formioHost;
-config.license = process.env.LICENSE;
+config.license = config.formio.license = process.env.LICENSE;
 
 // Payeezy fields
 config.payeezy = {

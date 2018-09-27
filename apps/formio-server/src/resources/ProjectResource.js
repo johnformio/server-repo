@@ -92,6 +92,8 @@ module.exports = function(router, formioServer) {
   // Load custom hubspot action.
   formio.middleware.customHubspotAction = require('../middleware/customHubspotAction')(formio);
 
+  formio.middleware.reportNewProject = require('../middleware/reportNewProject')(formio);
+
   // Load custom CRM action.
   formio.middleware.customCrmAction = require('../middleware/customCrmAction')(formio);
 
@@ -145,7 +147,8 @@ module.exports = function(router, formioServer) {
       formio.middleware.projectAnalytics,
       removeProjectSettings,
       formio.middleware.customHubspotAction,
-      formio.middleware.customCrmAction('newproject')
+      formio.middleware.customCrmAction('newproject'),
+      formio.middleware.reportNewProject,
     ],
     beforeIndex: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
