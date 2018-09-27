@@ -32,7 +32,7 @@ module.exports = formio => {
 
         request({
           method: 'POST',
-          url: 'https://formiodata.form.io/newProject',
+          url: 'https://formio.form.io/newProject',
           headers: {
             'content-type': 'application/json'
           },
