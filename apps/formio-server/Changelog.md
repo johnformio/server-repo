@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [UNRELEASED]
+### Fixed
+ - Webhook validation.
+
 ## 5.8.8, 5.8.9
 ### Fixed
  - The Email PDF attachment to work with anonymous user submissions.
