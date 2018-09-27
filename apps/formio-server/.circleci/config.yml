@@ -82,6 +82,7 @@ jobs:
       - run: docker run -itd --name formio-server --net formio -e "DEBUG=formio:*" -e "PROJECT_PLAN=trial" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "JWT_SECRET=CHANGEME" -e "JWT_EXPIRE_TIME=240" -e "DB_SECRET=CHANGEME" -e "ADMIN_KEY=dockertest" -e LICENSE --link formio-redis:redis --link formio-mongo:mongo -p 127.0.0.1:3000:3000 $IMAGE_PATH
       - run: docker ps -a
       - run: sleep 5
+      - run: docker logs formio-server
       - run: ADMIN_KEY=dockertest node install
       - run: curl -f --retry 10 http://api.localhost:3000/health
       - run: npm run docker
