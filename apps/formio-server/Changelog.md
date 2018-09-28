@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.8.10
+### Added
+ - More debugging for LDAP action.
+
 ## 5.8.8, 5.8.9
 ### Fixed
  - The Email PDF attachment to work with anonymous user submissions.
