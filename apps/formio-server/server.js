@@ -139,7 +139,6 @@ module.exports = function(options) {
     });
   }
 
-  app.modules = require('./src/modules/modules')(app, config);
   var hooks = _.merge(require('./src/hooks/settings')(app), options.hooks);
 
   // Start the api server.

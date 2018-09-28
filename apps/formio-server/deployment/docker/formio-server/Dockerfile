@@ -7,7 +7,14 @@ WORKDIR /src
 # Install git
 RUN apk update && \
     apk upgrade && \
-    apk add --no-cache --virtual .build-deps bash git make gcc g++ python
+    apk add --no-cache --virtual .build-deps bash git make gcc g++ python openssh-client
+
+# Add deployment key
+RUN mkdir /root/.ssh/ && ssh-keyscan github.com >> /root/.ssh/known_hosts
+
+ADD id_rsa /root/.ssh/id_rsa
+
+RUN chmod 600 /root/.ssh/id_rsa
 
 RUN npm ci --production && \
     npm install -g pkg && \
@@ -17,7 +24,8 @@ RUN npm cache clean --force && \
     npm uninstall -g pkg && \
     npm uninstall -g npm && \
     apk del .build-deps && \
-    rm /src/main.js
+    rm -f /root/.ssh/id_rsa && \
+    rm -f /src/main.js
 
 EXPOSE      80
 ENTRYPOINT  ["./formio", "--max_old_space_size=4096"]
