@@ -10,6 +10,7 @@ var packageJson = require('./package.json');
 var Q = require('q');
 var debug = require('debug')('formio:requestInfo');
 var cacheControl = require('express-cache-controller');
+var uuid = require('uuid/v4');
 
 module.exports = function(options) {
   options = options || {};
@@ -49,12 +50,6 @@ module.exports = function(options) {
   app.use(cacheControl({
     noCache: true
   }));
-
-  // Debug request info.
-  app.use(function(req, res, next) {
-    debug(`${req.method}: ${req.originalUrl}`);
-    next();
-  });
 
   // Hook each request and add analytics support.
   app.use(analytics.hook.bind(analytics));
@@ -103,6 +98,21 @@ module.exports = function(options) {
       return next();
     }
     corsRoute(req, res, next);
+  });
+
+  app.use((req, res, next) => {
+    req.uuid = uuid();
+
+    app.formio.formio.log('Start', req, req.method, req.path);
+
+    // Override send function to log event
+    const resend = res.send;
+    res.send = function() {
+      app.formio.formio.log('End', req, res.statusCode);
+      resend.apply(this, arguments);
+    };
+
+    next();
   });
 
   // Status response.
