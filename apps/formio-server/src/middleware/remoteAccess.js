@@ -11,7 +11,7 @@ module.exports = app => (req, res, next) => {
   };
 
   // Permission heirarchy.
-  const permissions = ['none', 'team_read', 'team_write', 'team_admin', 'owner'];
+  const permissions = ['none', 'team_access', 'team_read', 'team_write', 'team_admin', 'owner'];
 
   app.formio.cache.loadCurrentProject(req, function(err, project) {
     response.project = {
@@ -27,14 +27,15 @@ module.exports = app => (req, res, next) => {
     }
     else {
       project.access.forEach(access => {
-        if (_.startsWith(access.type, 'team_')) {
+        if (_.startsWith(access.type, 'team_') || _.startsWith(access.type, 'stage_')) {
           const roles = access.roles.map(role => role.toString());
+          const type = access.type.replace('stage_', 'team_');
           roles.forEach(role => {
             if (
               req.user.roles.indexOf(role) &&
-              permissions.indexOf(access.type) > permissions.indexOf(response.permission)
+              permissions.indexOf(type) > permissions.indexOf(response.permission)
             ) {
-              response.permission = access.type;
+              response.permission = type;
             }
           });
         }

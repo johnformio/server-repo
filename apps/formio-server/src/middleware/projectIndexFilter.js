@@ -22,13 +22,49 @@ module.exports = function(formioServer) {
       }));
       query = {
         $or: [
-          {owner: req.token.user._id},
+          // If owner.
           {
-            $and: [
-              {$or: [{'access.type': 'team_read'}, {'access.type': 'team_write'}, {'access.type': 'team_admin'}]},
-              {'access.roles': {$in: roles}}
-            ]
-          }
+            owner: req.token.user._id
+          },
+          // If has team permission.
+          {
+            access: {
+              $elemMatch: {
+                'type': {$in: ['team_read', 'team_write', 'team_admin']},
+                'roles': {$in: roles}
+              }
+            }
+          },
+          // If primary with team access.
+          {
+            access: {
+              $elemMatch: {
+                'type': {$in: ['team_access']},
+                'roles': {$in: roles}
+              }
+            },
+            project: {$exists: false}
+          },
+          // If is a stage and has stage permission.
+          {
+            project: {$exists: true},
+            access: {
+              $all: [
+                {
+                  $elemMatch: {
+                    'type': 'team_access',
+                    'roles': {$in: roles}
+                  }
+                },
+                {
+                  $elemMatch: {
+                    'type': {$in: ['stage_read', 'stage_write']},
+                    'roles': {$in: roles}
+                  }
+                }
+              ]
+            }
+          },
         ]
       };
     }
