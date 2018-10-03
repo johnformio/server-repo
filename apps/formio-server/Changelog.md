@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
  - Webhook validation.
 
+## 5.8.10
+### Added
+ - More debugging for LDAP action.
+
 ## 5.8.8, 5.8.9
 ### Fixed
  - The Email PDF attachment to work with anonymous user submissions.
