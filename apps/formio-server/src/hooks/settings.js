@@ -6,6 +6,7 @@ const semver = require('semver');
 const async = require('async');
 const chance = new (require('chance'))();
 const fs = require('fs');
+const log = require('debug')('formio:log');
 const util = require('../util/util');
 
 module.exports = function(app) {
@@ -66,6 +67,12 @@ module.exports = function(app) {
       validateSubmissionForm: require('./alter/validateSubmissionForm')(app),
       currentUser: require('./alter/currentUser')(app),
       actions: require('./alter/actions')(app),
+      log() {
+        const [event, req, ...args] = arguments;
+        log(event, req.projectId || 'NoProject', req.uuid, ...args);
+
+        return false;
+      },
 
       export(req, query, form, exporter, cb) {
         util.getSubmissionModel(formioServer.formio, req, form, true, (err, submissionModel) => {
