@@ -347,7 +347,7 @@ module.exports = (router) => {
           return;
         }
 
-        return next(data.message || data || response.statusMessage);
+        return res.status(response.statusCode || 400).send(data.message || data || response.statusMessage);
       };
 
       try {
