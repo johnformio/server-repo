@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.9.2
+### Fixed
+ - Upgraded dependencies which fixes issues with PDF mail attachments.
+
 ## 5.9.1
 ### Fixed
  - Issues with the build around formio/formio and server crashes.
