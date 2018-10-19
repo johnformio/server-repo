@@ -35,7 +35,7 @@ module.exports = function(formio) {
           }
         }
         // Team member of Formio.
-        formio.teams.getProjectTeams(req, project._id, (err, teams, permissions) => {
+        formio.teams.getProjectTeams(req, project._id, 'team_', (err, teams, permissions) => {
           if (err || !teams || !permissions) {
             return res.sendStatus(401);
           }

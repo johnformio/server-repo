@@ -11,6 +11,29 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Removed
  - Websocket integration (remote middleware)
 
+## 5.9.2
+### Fixed
+ - Upgraded dependencies which fixes issues with PDF mail attachments.
+
+## 5.9.1
+### Fixed
+ - Issues with the build around formio/formio and server crashes.
+
+### Changed
+ - Updated ioredis@4.0.1, primus@7.2.3, eslint@5.6.1, sinon@6.3.5, aws-sdk@2.329.0, formiojs@3.6.5, jira-connector@2.9.0, multer@1.4.0, twilio@3.22.0, ws@6.1.0, webpack@4.20.2
+
+## 5.9.0
+### Added
+ - Basic request logging with DEBUG=formio:log
+ - Stage team permissions
+
+### Fixed
+ - Webhook validation.
+
+## 5.8.10
+### Added
+ - More debugging for LDAP action.
+
 ## 5.8.8, 5.8.9
 ### Fixed
  - The Email PDF attachment to work with anonymous user submissions.

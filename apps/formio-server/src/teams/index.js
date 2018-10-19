@@ -81,6 +81,9 @@ module.exports = function(app, formioServer) {
       if (_.includes(permissions, 'team_read')) {
         return 'team_read';
       }
+      if (_.includes(permissions, 'team_access')) {
+        return 'team_access';
+      }
     }
 
     return type[0].type || '';
@@ -238,7 +241,7 @@ module.exports = function(app, formioServer) {
    * @param next {Function}
    *   The callback function to invoke after getting the project teams.
    */
-  const getProjectTeams = function(req, project, next) {
+  const getProjectTeams = function(req, project, type, next) {
     if (!project || project.hasOwnProperty('_id') && !project._id) {
       debug.getProjectTeams('No project given to find its teams.');
       return next('No project given.');
@@ -253,7 +256,7 @@ module.exports = function(app, formioServer) {
 
       // Get the teams and their access.
       let teams = _.filter(project.access, function(permission) {
-        if (_.startsWith(permission.type, 'team_')) {
+        if (_.startsWith(permission.type, type)) {
           return true;
         }
 
@@ -425,7 +428,12 @@ module.exports = function(app, formioServer) {
     const _team = req.params.teamId;
     const query = {
       $and: [
-        {$or: [{'access.type': 'team_read'}, {'access.type': 'team_write'}, {'access.type': 'team_admin'}]},
+        {$or: [
+          {'access.type': 'team_access'},
+          {'access.type': 'team_read'},
+          {'access.type': 'team_write'},
+          {'access.type': 'team_admin'}
+        ]},
         {'access.roles': {$in: [formioServer.formio.util.idToString(_team), formioServer.formio.util.idToBson(_team)]}},
         {project: null}
       ],
@@ -529,7 +537,57 @@ module.exports = function(app, formioServer) {
         return res.sendStatus(401);
       }
 
-      getProjectTeams(req, req.projectId, function(err, teams, permissions) {
+      getProjectTeams(req, req.projectId, 'team_', function(err, teams, permissions) {
+        if (err) {
+          return res.sendStatus(400);
+        }
+        if (!teams) {
+          return res.status(200).json([]);
+        }
+
+        getDisplayableTeams(teams)
+          .then(function(teams) {
+            return filterTeamsForDisplay(teams);
+          })
+          .then(function(teams) {
+            // Inject the original team permissions with each team.
+            teams = _.each(teams, function(team) {
+              if (team._id && permissions[team._id]) {
+                team.permission = permissions[team._id];
+              }
+
+              return team;
+            });
+
+            return res.status(200).json(teams);
+          })
+          .catch(function() {
+            return res.sendStatus(400);
+          });
+      });
+    }
+  );
+
+  /**
+   * Allow a user with permissions to get all the teams associated with the given project.
+   */
+  app.get(
+    '/team/stage/:projectId',
+    formioServer.formio.middleware.tokenHandler,
+    function(req, res, next) {
+      if (!req.projectId && req.params.projectId) {
+        req.projectId = req.params.projectId;
+      }
+
+      next();
+    },
+    formioServer.formio.middleware.permissionHandler,
+    function(req, res, next) {
+      if (!req.projectId) {
+        return res.sendStatus(401);
+      }
+
+      getProjectTeams(req, req.projectId, 'stage_', function(err, teams, permissions) {
         if (err) {
           return res.sendStatus(400);
         }

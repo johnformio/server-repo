@@ -280,9 +280,14 @@ module.exports = router => {
             // Some fields may cause issues so remove them.
             delete data.objectGUID;
             delete data.objectSid;
-            delete data.msExchMailboxSecurityDescriptor;
-            delete data.msExchMailboxGuid;
             delete data.protocolSettings;
+
+            // Remove all MS Exchange keys which can cause issues.
+            Object.keys(data).forEach(key => {
+              if (key.startsWith('msExch')) {
+                delete data[key];
+              }
+            });
 
             const user = {
               _id: data.uidNumber || data.uid || data.dn, // Try to use numbers but fall back to dn which is guaranteed.
@@ -317,7 +322,7 @@ module.exports = router => {
               }
               debug('Headers Set');
 
-              debug('Sending response');
+              debug('Sending response', user);
               return res.send(user);
             }
             catch (err) {

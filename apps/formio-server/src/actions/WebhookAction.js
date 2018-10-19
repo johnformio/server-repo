@@ -347,7 +347,7 @@ module.exports = (router) => {
           return;
         }
 
-        return next(data.message || data || response.statusMessage);
+        return res.status(response.statusCode || 400).send((data && data.message) || data || response.statusMessage);
       };
 
       try {
@@ -447,20 +447,40 @@ module.exports = (router) => {
         // Make the request.
         switch (reqMethod.toLowerCase()) {
           case 'get':
-            rest.get(url, options).on('success', handleSuccess).on('fail', handleError);
+            rest
+              .get(url, options)
+              .on('success', handleSuccess)
+              .on('fail', handleError)
+              .on('error', handleError);
             break;
           case 'post':
-            rest.postJson(url, payload, options).on('success', handleSuccess).on('fail', handleError);
+            rest
+              .postJson(url, payload, options)
+              .on('success', handleSuccess)
+              .on('fail', handleError)
+              .on('error', handleError);
             break;
           case 'put':
-            rest.putJson(url, payload, options).on('success', handleSuccess).on('fail', handleError);
+            rest
+              .putJson(url, payload, options)
+              .on('success', handleSuccess)
+              .on('fail', handleError)
+              .on('error', handleError);
             break;
           case 'patch':
-            rest.patchJson(url, payload, options).on('success', handleSuccess).on('fail', handleError);
+            rest
+              .patchJson(url, payload, options)
+              .on('success', handleSuccess)
+              .on('fail', handleError)
+              .on('error', handleError);
             break;
           case 'delete':
             options.query = req.params;
-            rest.del(url, options).on('success', handleSuccess).on('fail', handleError);
+            rest
+              .del(url, options)
+              .on('success', handleSuccess)
+              .on('fail', handleError)
+              .on('error', handleError);
             break;
           default:
             return handleError(`Could not match request method: ${req.method.toLowerCase()}`);

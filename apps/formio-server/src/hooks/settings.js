@@ -6,6 +6,7 @@ const semver = require('semver');
 const async = require('async');
 const chance = new (require('chance'))();
 const fs = require('fs');
+const log = require('debug')('formio:log');
 const util = require('../util/util');
 
 module.exports = function(app) {
@@ -66,6 +67,12 @@ module.exports = function(app) {
       validateSubmissionForm: require('./alter/validateSubmissionForm')(app),
       currentUser: require('./alter/currentUser')(app),
       actions: require('./alter/actions')(app),
+      log() {
+        const [event, req, ...args] = arguments;
+        log(event, req.projectId || 'NoProject', req.uuid, ...args);
+
+        return false;
+      },
 
       export(req, query, form, exporter, cb) {
         util.getSubmissionModel(formioServer.formio, req, form, true, (err, submissionModel) => {
@@ -283,7 +290,7 @@ module.exports = function(app) {
         }
 
         // Allow remote team admins to have admin access.
-        if (req.remotePermission && ['admin', 'owner', 'team_admin'].indexOf(req.remotePermission)) {
+        if (req.remotePermission && ['admin', 'owner', 'team_admin'].indexOf(req.remotePermission) !== -1) {
           return true;
         }
 
@@ -477,6 +484,8 @@ module.exports = function(app) {
                       access.submission.read_all.push(id.toString());
                       access.role.read_all.push(id.toString());
                       break;
+                   case 'team_access':
+                      access.project.read_all.push(id.toString());
                   }
                 });
               });
@@ -692,6 +701,11 @@ module.exports = function(app) {
                 permission = true;
               }
               break;
+            case 'team_access':
+              // Only give permission to read the project info.
+              if (entity.type === 'project' && req.method === 'GET') {
+                permission = true;
+              }
           }
           return permission;
         }
@@ -788,7 +802,7 @@ module.exports = function(app) {
        *   The updated permission types.
        */
       permissionSchema(available) {
-        available.push('team_read', 'team_write', 'team_admin');
+        available.push('team_access', 'team_read', 'team_write', 'team_admin', 'stage_read', 'stage_write');
         return available;
       },
 
