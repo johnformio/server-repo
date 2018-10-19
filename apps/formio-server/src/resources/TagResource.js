@@ -78,6 +78,19 @@ module.exports = function(router, formioServer) {
       formio.middleware.tagHandler
     ],
     afterIndex: [
+      (req, res, next) => {
+        // Remove tag contents to speed up index requests.
+        if (!req.query.full) {
+          res.resource.item = res.resource.item.map(item => {
+            if (item.constructor.name === 'model') {
+              item = item.toObject();
+            }
+            delete item.template;
+            return item;
+          });
+        }
+        next();
+      },
       formio.middleware.filterResourcejsResponse(hiddenFields)
     ]
   });
