@@ -53,7 +53,7 @@ jobs:
           command: npm test
   docker:
     environment:
-      IMAGE_PATH: formio/formio-server
+      IMAGE_PATH: formio/formio-enterprise
     machine:
       enabled: true
       image: circleci/classic:edge
