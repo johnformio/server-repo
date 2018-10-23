@@ -166,7 +166,7 @@ module.exports = function(router) {
         'default': Date.now,
         __readonly: true
       },
-      deployDate: {
+      lastDeploy: {
         type: Date,
         description: 'The time of the last deploy.',
         __readonly: true

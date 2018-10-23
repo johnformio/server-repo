@@ -148,6 +148,7 @@ module.exports = function(router, formioServer) {
 
                 project.tag = tag.tag;
                 project.markModified('tag');
+                project.set('lastDeploy', Date.now());
                 project.save((err) => {
                   if (err) {
                     return res.status(400).send(err.message || err);
@@ -184,6 +185,7 @@ module.exports = function(router, formioServer) {
 
               project.tag = template.tag;
               project.markModified('tag');
+              project.set('lastDeploy', Date.now());
               project.save((err) => {
                 if (err) {
                   return res.status(400).send(err.message || err);
