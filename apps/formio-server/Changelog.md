@@ -4,9 +4,20 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [UNRELEASED]
+## 5.10.0
+### Fixed
+ - FOR-1810: Fix webhooks errors from crashing the server.
+ - Fix issue where stage teams couldn't be saved on stages where plan had become basic.
+
 ### Added
- - File attachment for email with Base64 storage.
+ - FOR-1703: File attachment for email with Base64 storage.
+ - Bubble changes to update project modified date and add lastDeploy
+ - Add description field to tags and speed up tag index by excluding tag template.
+
+### Changed
+ - Switch LDAP fields to pre-defined whitelist to stop problem fields from crashing login.
+ - Upgraded JSONStream@1.3.5, express@4.16.4, formio@1.35.2, formiojs@3.6.12, multer@1.4.1, mongodb@3.1.8, aws-sdk@2.344.0, ioredis@4.2.0, resourcej
+   s@1.28.0, semver@5.6.0, twilio@3.23.1, eslint@5.8.0, webpack@4.23.1, sinon@7.1.0, universal-analytics@0.4.20
 
 ## 5.9.2
 ### Fixed
