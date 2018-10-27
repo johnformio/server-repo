@@ -1207,12 +1207,20 @@ module.exports = function(app) {
         routes.beforePost = routes.beforePost || [];
         routes.beforePut = routes.beforePut || [];
         routes.beforeDelete = routes.beforeDelete || [];
+        routes.afterPost = routes.afterPost || [];
+        routes.afterPut = routes.afterPut || [];
+        routes.afterDelete = routes.afterDelete || [];
 
         const Moxtra = require('../actions/moxtra/utils')(app.formio);
         const projectProtectAccess = require('../middleware/projectProtectAccess')(formioServer.formio);
+        const projectModified= require('../middleware/projectModified')(formioServer.formio);
 
         _.each(['beforePost', 'beforePut', 'beforeDelete'], handler => {
           routes[handler].unshift(projectProtectAccess);
+        });
+
+        _.each(['afterPost', 'afterPut', 'afterDelete'], handler => {
+          routes[handler].push(projectModified);
         });
 
         // On action creation, if the action is a moxtraMessage action, add the user _id to the request payload.
@@ -1265,6 +1273,7 @@ module.exports = function(app) {
       roleRoutes(routes) {
         routes.before.unshift(require('../middleware/bootstrapEntityProject'), require('../middleware/projectFilter'));
         routes.before.unshift(require('../middleware/projectProtectAccess')(formioServer.formio));
+        routes.after.push(require('../middleware/projectModified')(formioServer.formio));
         return routes;
       },
       submissionSchema(schema) {
