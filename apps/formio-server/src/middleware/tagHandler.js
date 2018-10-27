@@ -2,7 +2,7 @@
 const nodeUrl = require('url');
 
 /**
- * A handler for form based requests.
+ * A handler for tag based requests.
  *
  * @param router
  * @returns {Function}

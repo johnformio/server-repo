@@ -335,58 +335,6 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      it('A Project Owner should not be able to add a Team they own to their project, if its not on a team plan', function(done) {
-        var teamAccess = {type: 'team_read', roles: [template.team1._id]};
-
-        request(app)
-          .get('/project/' + template.project._id)
-          .set('x-jwt-token', template.formio.owner.token)
-          .expect('Content-Type', /json/)
-          .expect(200)
-          .end(function(err, res) {
-            if (err) {
-              return done(err);
-            }
-
-            // Update the users project access with the new team.
-            var oldResponse = res.body;
-
-            // Store the JWT for future API calls.
-            template.formio.owner.token = res.headers['x-jwt-token'];
-
-            request(app)
-              .put('/project/' + template.project._id)
-              .set('x-jwt-token', template.formio.owner.token)
-              .send({ access: oldResponse.access.concat(teamAccess) })
-              .expect('Content-Type', /json/)
-              .expect(200)
-              .end(function(err, res) {
-                if (err) {
-                  return done(err);
-                }
-
-                // Confirm that the team role was not added to the projects permissions.
-                var response = res.body;
-                var found = false;
-                response.access.forEach(function(permission) {
-                  if(permission.type === 'team_read') {
-                    found = true;
-                    assert.equal(permission.roles.length, 0);
-                  }
-                });
-                assert.equal(found, true);
-
-                // Update the project.
-                template.project = response;
-
-                // Store the JWT for future API calls.
-                template.formio.owner.token = res.headers['x-jwt-token'];
-
-                done();
-              });
-          });
-      });
-
       it('Upgrade the project to a team project plan', function(done) {
           app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
             if(err) {
