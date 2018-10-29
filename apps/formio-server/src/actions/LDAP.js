@@ -276,15 +276,55 @@ module.exports = router => {
             });
             debug('Assigned Roles', roles);
 
-            debug('Deleting problem fields');
-            // Some fields may cause issues so remove them.
-            delete data.objectGUID;
-            delete data.objectSid;
-            delete data.protocolSettings;
+            const whiteList = [
+              'dn',
+              'cn',
+              'givenName',
+              'initials',
+              'name',
+              'fullName',
+              'sn',
+              'displayName',
+              'description',
+              'physicalDeliveryOfficeName',
+              'telephoneNumber',
+              'otherTelephone',
+              'mail',
+              'wWWHomePage',
+              'url',
+              'streetAddress',
+              'postOfficeBox',
+              'l',
+              'st',
+              'postalCode',
+              'c', 'co', 'countryCode',
+              'userPrincipalName',
+              'sAMAccountName',
+              'logonHours',
+              'userWorkstations',
+              'pwdLastSet',
+              'accountExpires',
+              'homePhone',
+              'otherHomePhone',
+              'pager',
+              'otherPager',
+              'mobile',
+              'otherMobile',
+              'facsimileTelephoneNumber',
+              'otherFacsimileTelephoneNumber',
+              'ipPhone',
+              'otherIpPhone',
+              'info',
+              'title',
+              'department',
+              'company',
+              'manager'
+            ];
 
-            // Remove all MS Exchange keys which can cause issues.
+            debug('Deleting non-whitelisted fields');
+            // Remove all keys which aren't whitelisted.
             Object.keys(data).forEach(key => {
-              if (key.startsWith('msExch')) {
+              if (!whiteList.includes(key)) {
                 delete data[key];
               }
             });

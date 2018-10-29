@@ -183,6 +183,7 @@ module.exports = app => routes => {
   });
 
   routes.before.unshift(require('../../middleware/projectProtectAccess')(app.formio.formio));
+  routes.after.push(require('../../middleware/projectModified')(app.formio.formio));
 
   /**
    * Ensure primary project is loaded. May fail without Redis otherwise.

@@ -43,6 +43,11 @@ module.exports = function(router) {
           }
         ]
       },
+      description: {
+        type: String,
+        maxlength: 256,
+        description: 'A description of the tag'
+      },
       template: {
         type: router.formio.mongoose.Schema.Types.Mixed,
         description: 'The project template.'

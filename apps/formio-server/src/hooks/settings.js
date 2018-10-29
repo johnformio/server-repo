@@ -114,17 +114,25 @@ module.exports = function(app) {
 
         if (action.name === 'email' && action.settingsForm) {
           // Add the "Attach PDF" checkbox to the email action.
-          action.settingsForm.components.forEach(component => {
+          action.settingsForm.components.forEach((component) => {
             if (component.type === 'fieldset' && component.legend === 'Action Settings') {
-              component.components.forEach(subComp => {
+              component.components.forEach((subComp) => {
                 if (subComp.key === 'settings') {
+                  subComp.components.push({
+                    type: 'checkbox',
+                    input: true,
+                    key: 'attachFiles',
+                    label: 'Attach Submission Files',
+                    tooltip: 'Check this if you would like to attach submission files to the email.',
+                  });
+
                   subComp.components.push({
                     type: 'checkbox',
                     input: true,
                     key: 'attachPDF',
                     label: 'Attach Submission PDF',
                     /* eslint-disable max-len */
-                    tooltip: 'Check this if you would like to attach a PDF of the submission to the email. This will count toward your PDF Submission count for every email sent.'
+                    tooltip: 'Check this if you would like to attach a PDF of the submission to the email. This will count toward your PDF Submission count for every email sent.',
                     /* eslint-enable max-len */
                   });
 
@@ -134,10 +142,8 @@ module.exports = function(app) {
                     key: 'pdfName',
                     label: 'PDF File Name',
                     defaultValue: '{{ form.name }}-{{ submission._id }}',
-                    /* eslint-disable max-len */
                     tooltip: 'Determines how the submission PDF is named when it is attached.',
-                    /* eslint-enable max-len */
-                    customConditional: 'show = !!data.settings.attachPDF;'
+                    customConditional: 'show = !!data.settings.attachPDF;',
                   });
                 }
               });
@@ -1207,12 +1213,20 @@ module.exports = function(app) {
         routes.beforePost = routes.beforePost || [];
         routes.beforePut = routes.beforePut || [];
         routes.beforeDelete = routes.beforeDelete || [];
+        routes.afterPost = routes.afterPost || [];
+        routes.afterPut = routes.afterPut || [];
+        routes.afterDelete = routes.afterDelete || [];
 
         const Moxtra = require('../actions/moxtra/utils')(app.formio);
         const projectProtectAccess = require('../middleware/projectProtectAccess')(formioServer.formio);
+        const projectModified= require('../middleware/projectModified')(formioServer.formio);
 
         _.each(['beforePost', 'beforePut', 'beforeDelete'], handler => {
           routes[handler].unshift(projectProtectAccess);
+        });
+
+        _.each(['afterPost', 'afterPut', 'afterDelete'], handler => {
+          routes[handler].push(projectModified);
         });
 
         // On action creation, if the action is a moxtraMessage action, add the user _id to the request payload.
@@ -1265,6 +1279,7 @@ module.exports = function(app) {
       roleRoutes(routes) {
         routes.before.unshift(require('../middleware/bootstrapEntityProject'), require('../middleware/projectFilter'));
         routes.before.unshift(require('../middleware/projectProtectAccess')(formioServer.formio));
+        routes.after.push(require('../middleware/projectModified')(formioServer.formio));
         return routes;
       },
       submissionSchema(schema) {

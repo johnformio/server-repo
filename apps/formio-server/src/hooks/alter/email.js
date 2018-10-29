@@ -5,6 +5,7 @@ const util = require('../../util/util');
 const async = require('async');
 const config = require('../../../config');
 const FormioUtils = require('formiojs/utils').default;
+const _ = require('lodash');
 
 module.exports = app => (mail, req, res, params, cb) => {
   const formioServer = app.formio;
@@ -45,6 +46,26 @@ module.exports = app => (mail, req, res, params, cb) => {
     else {
       return resolve();
     }
+  });
+
+  const attachFiles = () => new Promise((resolve) => {
+    if (params.settings && params.settings.attachFiles) {
+      mail.attachments = (mail.attachments || []).concat(_(params.components)
+        .filter((component) => component.type === 'file')
+        .map((component) => params.data[component.key])
+        .flatten()
+        .compact()
+        .filter((file) => file.url.startsWith('data:application/pdf;base64,'))
+        .map((file) => ({
+          filename: file.originalName,
+          contentType: file.type,
+          path: file.url,
+        }))
+        .value()
+      );
+    }
+
+    resolve();
   });
 
   // Attach a PDF to the email.
@@ -198,6 +219,7 @@ module.exports = app => (mail, req, res, params, cb) => {
   });
 
   checkPlan()
+    .then(attachFiles)
     .then(attachPDF)
     .then(replaceSSOTokens)
     .then(mail => cb(null, mail))

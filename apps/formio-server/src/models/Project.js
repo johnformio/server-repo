@@ -165,6 +165,11 @@ module.exports = function(router) {
         description: 'The start date of the trial.',
         'default': Date.now,
         __readonly: true
+      },
+      lastDeploy: {
+        type: Date,
+        description: 'The time of the last deploy.',
+        __readonly: true
       }
     })
   });

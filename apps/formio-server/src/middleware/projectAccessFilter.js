@@ -69,17 +69,10 @@ module.exports = function(formio) {
           });
         };
 
-        // Only proceed with teams access check if the project plan supports teams.
-        project.plan = project.plan || '';
-        if (!(project.plan === 'team' || project.plan === 'commercial' || project.plan === 'trial')) {
-          filterAccess();
-          return next();
-        }
-
         // Get the current teams
         let currentTeams = [];
         project.access.forEach(access => {
-          if (access.type.indexOf('team_') === 0) {
+          if (access.type.indexOf('team_') === 0 || access.type.indexOf('stage_') === 0) {
             currentTeams = currentTeams.concat(access.roles.map(formio.util.idToString));
           }
         });
