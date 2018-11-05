@@ -36,7 +36,7 @@ module.exports = app => Resource => {
               req,
               res,
               item,
-              ResourceClass.setResponse(res, {status: 200, item: item}, next)
+              ResourceClass.setResponse.bind(ResourceClass, res, {status: 200, item: item}, next)
             );
           }
           // No draft was found. Return current form version instead.
@@ -61,12 +61,12 @@ module.exports = app => Resource => {
                 req,
                 res,
                 item,
-                ResourceClass.setResponse(res, {status: 200, item: item}, next)
+                ResourceClass.setResponse.bind(ResourceClass, res, {status: 200, item: item}, next)
               );
             })
           );
         });
-      }, ResourceClass.respond, options);
+      }, ResourceClass.respond.bind(ResourceClass), options);
       return this;
     };
 
@@ -109,7 +109,7 @@ module.exports = app => Resource => {
                 req,
                 res,
                 item,
-                ResourceClass.setResponse(res, {status: 200, item: item}, next)
+                ResourceClass.setResponse.bind(ResourceClass, res, {status: 200, item: item}, next)
               );
             });
           }
@@ -125,11 +125,11 @@ module.exports = app => Resource => {
               req,
               res,
               item,
-              ResourceClass.setResponse(res, {status: 200, item: item}, next)
+              ResourceClass.setResponse.bind(ResourceClass, res, {status: 200, item: item}, next)
             );
           });
         });
-      }, ResourceClass.respond, options);
+      }, ResourceClass.respond.bind(ResourceClass), options);
       return this;
     };
 
