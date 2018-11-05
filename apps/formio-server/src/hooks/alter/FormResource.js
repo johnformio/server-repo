@@ -12,7 +12,7 @@ module.exports = app => Resource => {
      * Register the GET version method for this resource.
      */
     FormResource.getDraft = function(options) {
-      options = Resource.getMethodOptions('get', options);
+      options = Resource.Resource.getMethodOptions('get', options);
       this.methods.push('get');
       this.register(app, 'get', `${this.route}/:${this.name}Id/draft`, function(req, res, next) {
         // Store the internal method for response manipulation.
@@ -73,7 +73,7 @@ module.exports = app => Resource => {
      * Post (Create) a new item
      */
     FormResource.putDraft = function(options) {
-      options = Resource.getMethodOptions('put', options);
+      options = Resource.Resource.getMethodOptions('put', options);
       this.methods.push('put');
       this.register(app, 'put', `${this.route}/:${this.name}Id/draft`, (req, res, next) => {
         // Store the internal method for response manipulation.
