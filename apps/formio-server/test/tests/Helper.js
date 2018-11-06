@@ -2,6 +2,7 @@
 
 var async = require('async');
 var request = require('supertest');
+var _ = require('lodash');
 var docker = process.env.DOCKER;
 var customer = process.env.CUSTOMER;
 
@@ -133,7 +134,7 @@ module.exports = function(app, Helper) {
     url += '/form/' + form._id + '/draft';
 
     request(app).put(url)
-      .send(form)
+      .send(_.omit(form, 'modified'))
       .set('x-jwt-token', this.owner.token)
       .expect('Content-Type', /json/)
       .expect(200)
