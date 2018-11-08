@@ -342,13 +342,13 @@ module.exports = (router) => {
        * @param response
        * @returns {*}
        */
-      const handleError = (data, response) => {
+      const handleError = (data, response = {}) => {
         if (!settings.block || settings.block === false) {
           return;
         }
 
-        const statusCode = response && response.statusCode ? response.statusCode : 400;
-        const message = data && data.message ? data.message : response.statusMessage;
+        const statusCode = response.statusCode || 400;
+        const message = data ? (data.message || data) : response.statusMessage;
 
         return res.status(statusCode).send(message);
       };
