@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.11.1
+### Fixed
+ - FOR-1436: Fixed Webhook action validation message again.
+ - FOR-1703: Fixed file attachments having hard coded filter.
+
 ## 5.10.0
 ### Fixed
  - FOR-1810: Fix webhooks errors from crashing the server.
@@ -26,7 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## 5.9.1
 ### Fixed
  - Issues with the build around formio/formio and server crashes.
- 
+
 ### Changed
  - Updated ioredis@4.0.1, primus@7.2.3, eslint@5.6.1, sinon@6.3.5, aws-sdk@2.329.0, formiojs@3.6.5, jira-connector@2.9.0, multer@1.4.0, twilio@3.22.0, ws@6.1.0, webpack@4.20.2
 
