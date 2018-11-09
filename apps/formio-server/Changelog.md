@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.0.2 (from 5.11.1 release)
+### Fixed
+ - FOR-1436: Fixed Webhook action validation message again.
+ - FOR-1703: Fixed file attachments having hard coded filter.
+
+## 6.0.1
+### Updated
+ - Pulled all changes from 5.10.0 release
+
 ## 6.0.0
 ### Added
  - Server licensing

@@ -55,7 +55,7 @@ module.exports = app => (mail, req, res, params, cb) => {
         .map((component) => params.data[component.key])
         .flatten()
         .compact()
-        .filter((file) => file.url.startsWith('data:application/pdf;base64,'))
+        .filter((file) => file.url.match(/data:(.*);base64,/))
         .map((file) => ({
           filename: file.originalName,
           contentType: file.type,
