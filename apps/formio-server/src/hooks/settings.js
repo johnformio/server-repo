@@ -276,7 +276,7 @@ module.exports = function(app) {
           });
           formioServer.redis.setExp(tempToken, tokenResponse.token, expire, (err) => {
             if (err) {
-              return res.status(500).send(err.message);
+              return res.status(400).send(err.message);
             }
 
             tokenResponse.key = tempToken;
