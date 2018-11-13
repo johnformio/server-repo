@@ -504,7 +504,7 @@ module.exports = (analytics) => {
 
   router.post('/translate/project', (req, res, next) => {
     if (!req.body || !(req.body instanceof Array)) {
-      return res.status(500).send('Expected array payload of project _id\'s.');
+      return res.status(400).send('Expected array payload of project _id\'s.');
     }
 
     const projects = _(req.body)
@@ -515,7 +515,7 @@ module.exports = (analytics) => {
 
     analytics.formio.resources.project.model.find({_id: {$in: projects}}, (err, projects) => {
       if (err) {
-        return res.status(500).send(err);
+        return res.status(400).send(err);
       }
 
       projects = _(projects)
@@ -537,7 +537,7 @@ module.exports = (analytics) => {
 
   router.post('/translate/owner', (req, res, next) => {
     if (!req.body || !(req.body instanceof Array)) {
-      return res.status(500).send('Expected array payload of owner _id\'s.');
+      return res.status(400).send('Expected array payload of owner _id\'s.');
     }
 
     const owners = _(req.body)
@@ -561,7 +561,7 @@ module.exports = (analytics) => {
       analytics.formio.resources.form.model.findOne({project: project._id, name: 'user'})
         .exec((err, form) => {
           if (err || !form) {
-            return res.status(500).send(err);
+            return res.status(400).send(err);
           }
 
           try {
@@ -574,7 +574,7 @@ module.exports = (analytics) => {
           analytics.formio.resources.submission.model.find({form: form._id, _id: {$in: owners}})
             .exec((err, owners) => {
               if (err) {
-                return res.status(500).send(err);
+                return res.status(400).send(err);
               }
 
               owners = _(owners)
