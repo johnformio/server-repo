@@ -102,13 +102,19 @@ module.exports = function(options) {
 
   app.use((req, res, next) => {
     req.uuid = uuid();
+    req.startTime = new Date();
 
-    app.formio.formio.log('Start', req, req.method, req.path);
+    app.formio.formio.log('Request', req, req.method, req.path, req.query);
 
     // Override send function to log event
     const resend = res.send;
     res.send = function() {
-      app.formio.formio.log('End', req, res.statusCode);
+      const duration = new Date() - req.startTime;
+      if (duration > 200) {
+        app.formio.formio.log('Long Request', req, `${duration}ms`);
+      }
+      app.formio.formio.log('Duration', req, `${duration}ms`);
+      app.formio.formio.log('Response Code', req, res.statusCode);
       resend.apply(this, arguments);
     };
 
