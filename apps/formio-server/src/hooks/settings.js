@@ -69,7 +69,7 @@ module.exports = function(app) {
       actions: require('./alter/actions')(app),
       log() {
         const [event, req, ...args] = arguments;
-        log(event, req.projectId || 'NoProject', req.uuid, ...args);
+        log(req.uuid, req.projectId || 'NoProject', event, ...args);
 
         return false;
       },
@@ -276,7 +276,7 @@ module.exports = function(app) {
           });
           formioServer.redis.setExp(tempToken, tokenResponse.token, expire, (err) => {
             if (err) {
-              return res.status(500).send(err.message);
+              return res.status(400).send(err.message);
             }
 
             tokenResponse.key = tempToken;
@@ -291,6 +291,7 @@ module.exports = function(app) {
       isAdmin(isAdmin, req) {
         // Allow admin key to act as admin.
         if (process.env.ADMIN_KEY && process.env.ADMIN_KEY === req.headers['x-admin-key']) {
+          app.formio.formio.log('Admin Key', req);
           req.adminKey = true;
           return true;
         }
