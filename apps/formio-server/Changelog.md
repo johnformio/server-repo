@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.12.0
+### Changed
+ - Errors result in 400 instead of 500 now.
+
 ## 5.11.1
 ### Fixed
  - FOR-1436: Fixed Webhook action validation message again.
