@@ -155,7 +155,7 @@ class FormioAnalytics {
   getFormioAnalytics(project, year, month, day, type, res) {
     this.redis.analytics(project, year, month, day, type, (err, analytics) => {
       if (err) {
-        return res.status(500).send(err);
+        return res.status(400).send(err);
       }
 
       return res.status(200).json(analytics);
@@ -208,7 +208,7 @@ class FormioAnalytics {
   getFormioProjectsCreated(query, res) {
     this.formio.resources.project.model.find(query, (err, projects) => {
       if (err) {
-        return res.status(500).send(err);
+        return res.status(400).send(err);
       }
 
       const final = _(projects)
@@ -240,7 +240,7 @@ class FormioAnalytics {
   getFormioUsersCreated(query, req, res) {
     this.getFormioFormByName('user', req, (err, form) => {
       if (err) {
-        return res.status(500).send(err);
+        return res.status(400).send(err);
       }
 
       // Attach the user form _id.
@@ -249,7 +249,7 @@ class FormioAnalytics {
       // Get the submissions.
       this.formio.resources.submission.model.find(query, (err, users) => {
         if (err) {
-          return res.status(500).send(err);
+          return res.status(400).send(err);
         }
 
         const final = _(users)
@@ -282,7 +282,7 @@ class FormioAnalytics {
   getProjectUpgrades(query, req, res) {
     this.getFormioFormByName('projectUpgradeHistory', req, (err, form) => {
       if (err) {
-        return res.status(500).send(err);
+        return res.status(400).send(err);
       }
 
       // Attach the form _id.
@@ -290,7 +290,7 @@ class FormioAnalytics {
 
       this.formio.resources.submission.model.find(query, (err, upgrades) => {
         if (err) {
-          return res.status(500).send(err);
+          return res.status(400).send(err);
         }
 
         const projects = upgrades.map((item) => {
@@ -329,7 +329,7 @@ class FormioAnalytics {
             }}
         ]).exec((err, results) => {
           if (err) {
-            return res.status(500).send(err);
+            return res.status(400).send(err);
           }
 
           const projMap = {};
@@ -390,7 +390,7 @@ class FormioAnalytics {
         }}
     ]).exec((err, results) => {
       if (err) {
-        return res.status(500).send(err);
+        return res.status(400).send(err);
       }
 
       return res.status(200).json(results);

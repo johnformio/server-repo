@@ -42,7 +42,7 @@ module.exports = function(formio) {
         return res.sendStatus(400);
       }
       if (!project.owner) {
-        return res.sendStatus(500);
+        return res.sendStatus(400);
       }
 
       // Search for all roles associated with a project.
