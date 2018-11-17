@@ -104,7 +104,7 @@ module.exports = function(options) {
     req.uuid = uuid();
     req.startTime = new Date();
 
-    app.formio.formio.log('Request', req, req.method, req.path, req.query);
+    app.formio.formio.log('Request', req, req.method, req.path, JSON.stringify(req.query));
 
     // Override send function to log event
     const resend = res.send;

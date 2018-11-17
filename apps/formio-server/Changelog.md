@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.12.1
+### Added
+ - Logging when version tag deployed
+
+### Changed
+ - Fix for potential crash when deploying a bad template.
+
 ## 5.12.0
 ### Changed
  - Errors result in 400 instead of 500 now.

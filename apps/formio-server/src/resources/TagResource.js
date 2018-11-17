@@ -135,6 +135,7 @@ module.exports = function(router, formioServer) {
             if (!('tag' in deploy)) {
               return res.status(400).send('Deploy tag command must contain a tag number.');
             }
+            router.formio.formio.log('Deploy Tag', req, deploy.tag);
             const search = {
               tag: deploy.tag,
               project: project.project || project._id,
@@ -182,7 +183,7 @@ module.exports = function(router, formioServer) {
           }
           case 'template': {
             if (!('template' in deploy) || typeof deploy.template !== 'object') {
-              res.status(400).send('Must send a template with a template deployment.');
+              return res.status(400).send('Must send a template with a template deployment.');
             }
 
             const template = deploy.template;
@@ -196,6 +197,7 @@ module.exports = function(router, formioServer) {
                 return res.status(400).send('An error occurred with the template import.');
               }
 
+              router.formio.formio.log('Deploy Template', req, template.tag);
               project.tag = template.tag;
               project.markModified('tag');
               project.set('lastDeploy', Date.now());
