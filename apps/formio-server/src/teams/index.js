@@ -100,7 +100,7 @@ module.exports = function(app, formioServer) {
       return next(_teamResource);
     }
 
-    formioServer.formio.resources.project.model.findOne({name: 'formio'}, function(err, formio) {
+    formioServer.formio.resources.project.model.findOne({name: 'formio'}).lean().exec((err, formio) => {
       if (err || !formio) {
         debug.loadTeams(err);
         return next(null);
@@ -108,16 +108,16 @@ module.exports = function(app, formioServer) {
 
       debug.loadTeams(`formio project: ${formio._id}`);
       formioServer.formio.resources.form.model.findOne({name: 'team', project: formio._id})
-      .exec(function(err, teamResource) {
-        if (err || !teamResource) {
-          debug.loadTeams(err);
-          return next(null);
-        }
+        .lean().exec(function(err, teamResource) {
+          if (err || !teamResource) {
+            debug.loadTeams(err);
+            return next(null);
+          }
 
-        debug.loadTeams(`team resource: ${teamResource._id}`);
-        _teamResource = teamResource._id;
-        return next(_teamResource);
-      });
+          debug.loadTeams(`team resource: ${teamResource._id}`);
+          _teamResource = teamResource._id;
+          return next(_teamResource);
+        });
     });
   };
 
@@ -132,7 +132,7 @@ module.exports = function(app, formioServer) {
       return next(_userResource);
     }
 
-    formioServer.formio.resources.project.model.findOne({name: 'formio'}, function(err, formio) {
+    formioServer.formio.resources.project.model.findOne({name: 'formio'}).lean().exec((err, formio) => {
       if (err || !formio) {
         debug.loadUsers(err);
         return next(null);
@@ -140,16 +140,16 @@ module.exports = function(app, formioServer) {
 
       debug.loadUsers(`formio project: ${formio._id}`);
       formioServer.formio.resources.form.model.findOne({name: 'user', project: formio._id})
-      .exec(function(err, userResource) {
-        if (err || !userResource) {
-          debug.loadUsers(err);
-          return next(null);
-        }
+        .lean().exec(function(err, userResource) {
+          if (err || !userResource) {
+            debug.loadUsers(err);
+            return next(null);
+          }
 
-        debug.loadUsers(`user resource: ${userResource._id}`);
-        _userResource = userResource._id;
-        return next(_userResource);
-      });
+          debug.loadUsers(`user resource: ${userResource._id}`);
+          _userResource = userResource._id;
+          return next(_userResource);
+        });
     });
   };
 
@@ -212,19 +212,13 @@ module.exports = function(app, formioServer) {
         return q.resolve([]);
       }
 
-      formioServer.formio.resources.submission.model.find(query, function(err, documents) {
+      formioServer.formio.resources.submission.model.find(query).lean().exec((err, documents) => {
         if (err) {
           debug.getTeams(err);
           return q.reject(err);
         }
 
-        // Coerce results into an array and return the teams as objects.
-        documents = documents || [];
-        documents = _.map(documents, function(team) {
-          return team.toObject();
-        });
-
-        return q.resolve(documents);
+        return q.resolve(documents || []);
       });
     });
 
@@ -334,7 +328,7 @@ module.exports = function(app, formioServer) {
         _id: {$in: teams}
       };
 
-      formioServer.formio.resources.submission.model.find(query, function(err, documents) {
+      formioServer.formio.resources.submission.model.find(query).lean().exec((err, documents) => {
         if (err) {
           debug.getDisplayableTeams(err);
           return q.reject(err);
@@ -441,7 +435,7 @@ module.exports = function(app, formioServer) {
     };
 
     debug.teamProjects(query);
-    formioServer.formio.resources.project.model.find(query, function(err, projects) {
+    formioServer.formio.resources.project.model.find(query).lean().exec((err, projects) => {
       if (err) {
         debug.teamProjects(err);
         return res.sendStatus(400);
@@ -449,8 +443,6 @@ module.exports = function(app, formioServer) {
 
       const response = [];
       _.each(projects, function(project) {
-        project = project.toObject();
-
         response.push({
           _id: project._id,
           title: project.title,
@@ -493,6 +485,7 @@ module.exports = function(app, formioServer) {
           .find({deleted: {$eq: null}, form: users, 'data.name': {$regex: query}})
           .sort({'data.name': 1})
           .limit(10)
+          .lean()
           .exec(function(err, users) {
             if (err) {
               debug.teamUsers(err);
@@ -686,7 +679,7 @@ module.exports = function(app, formioServer) {
         deleted: {$eq: null}
       };
 
-      formioServer.formio.resources.submission.model.findOne(query, function(err, document) {
+      formioServer.formio.resources.submission.model.findOne(query).exec((err, document) => {
         if (err || !document) {
           debug.leaveTeams(err);
           return res.sendStatus(400);

@@ -8,7 +8,6 @@ var methodOverride = require('method-override');
 var favicon = require('serve-favicon');
 var packageJson = require('./package.json');
 var Q = require('q');
-var debug = require('debug')('formio:requestInfo');
 var cacheControl = require('express-cache-controller');
 var uuid = require('uuid/v4');
 
@@ -104,7 +103,7 @@ module.exports = function(options) {
     req.uuid = uuid();
     req.startTime = new Date();
 
-    app.formio.formio.log('Request', req, req.method, req.path, req.query);
+    app.formio.formio.log('Request', req, req.method, req.path, JSON.stringify(req.query));
 
     // Override send function to log event
     const resend = res.send;

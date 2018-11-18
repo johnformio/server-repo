@@ -46,7 +46,9 @@ module.exports = (app, config) => {
       }
 
       payload.timestamp = timestamp;
-      const hash = crypto.createHash('md5').update(Buffer.from(JSON.stringify(payload)).toString('base64')).digest('hex');
+      const hash = crypto.createHash('md5').update(
+        Buffer.from(JSON.stringify(payload)).toString('base64')
+      ).digest('hex');
 
       request({
         method: 'POST',

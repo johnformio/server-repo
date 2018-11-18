@@ -21,7 +21,7 @@ module.exports = app => routes => {
     formRevision.findOne({
       _rid: body._rid,
       _vid: 'draft'
-    }, (err, result) => {
+    }).exec((err, result) => {
       if (err) {
         return done(err);
       }

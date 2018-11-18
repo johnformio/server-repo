@@ -26,7 +26,7 @@ module.exports = app => Resource => {
         app.formio.mongoose.models.formrevision.findOne({
           _rid: req.params.formId,
           _vid: 'draft'
-        }, (err, item) => {
+        }).lean().exec((err, item) => {
           if (err) {
             return ResourceClass.setResponse(res, {status: 400, error: err}, next);
           }
@@ -48,7 +48,7 @@ module.exports = app => Resource => {
             req,
             res,
             search,
-            query.findOne.bind(query, search, (err, item) => {
+            () => query.findOne(search).lean().exec((err, item) => {
               if (err) {
                 return ResourceClass.setResponse(res, {status: 400, error: err}, next);
               }
@@ -93,7 +93,7 @@ module.exports = app => Resource => {
         app.formio.mongoose.models.formrevision.findOne({
           _rid: req.params[`${this.name}Id`],
           _vid: 'draft'
-        }, (err, item) => {
+        }).exec((err, item) => {
           if (err) {
             return ResourceClass.setResponse(res, {status: 400, error: err}, next);
           }

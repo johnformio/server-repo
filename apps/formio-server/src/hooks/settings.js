@@ -417,91 +417,98 @@ module.exports = function(app) {
             return callback(null);
           }
 
-          // Load the project.
-          /* eslint-disable camelcase, max-statements, no-fallthrough */
-          formioServer.formio.cache.loadPrimaryProject(req, function(err, project) {
-            if (err) {
-              return callback(err);
-            }
-            if (!project) {
-              return callback(`No project found with projectId: ${req.projectId}`);
-            }
+          formioServer.formio.cache.loadCurrentProject(req, function(err, currentProject) {
+            // Load the primary project.
+            /* eslint-disable camelcase, max-statements, no-fallthrough */
+            formioServer.formio.cache.loadPrimaryProject(req, function(err, primaryProject) {
+              if (err) {
+                return callback(err);
+              }
+              if (!primaryProject) {
+                return callback(`No project found with projectId: ${req.projectId}`);
+              }
 
-            // Skip teams processing, if this projects plan does not support teams.
-            if (!project.plan || project.plan === 'basic' || project.plan === 'independent') {
-              return callback(null);
-            }
+              // Skip teams processing, if this projects plan does not support teams.
+              if (!primaryProject.plan || primaryProject.plan === 'basic' || primaryProject.plan === 'independent') {
+                return callback(null);
+              }
 
-            // Iterate the project access permissions, and search for teams functionality.
-            if (project.access) {
-              const teamAccess = _.filter(project.access, function(permission) {
-                return _.startsWith(permission.type, 'team_');
-              });
-              // Initialize the project access.
-              access.project = access.project || {};
-              access.project.create_all = access.project.create_all || [];
-              access.project.read_all = access.project.read_all || [];
-              access.project.update_all = access.project.update_all || [];
-              access.project.delete_all = access.project.delete_all || [];
+              // Iterate the project access permissions, and search for teams functionality.
+              if (primaryProject.access) {
+                const teamAccess = _.filter(primaryProject.access, function(permission) {
+                  return _.startsWith(permission.type, 'team_');
+                }).concat(_.filter(currentProject.access, function(permission) {
+                  return _.startsWith(permission.type, 'stage_');
+                }));
 
-              // Initialize the form access.
-              access.form = access.form || {};
-              access.form.create_all = access.form.create_all || [];
-              access.form.read_all = access.form.read_all || [];
-              access.form.update_all = access.form.update_all || [];
-              access.form.delete_all = access.form.delete_all || [];
+                // Initialize the project access.
+                access.project = access.project || {};
+                access.project.create_all = access.project.create_all || [];
+                access.project.read_all = access.project.read_all || [];
+                access.project.update_all = access.project.update_all || [];
+                access.project.delete_all = access.project.delete_all || [];
 
-              // Initialize the submission access.
-              access.submission = access.submission || {};
-              access.submission.create_all = access.submission.create_all || [];
-              access.submission.read_all = access.submission.read_all || [];
-              access.submission.update_all = access.submission.update_all || [];
-              access.submission.delete_all = access.submission.delete_all || [];
+                // Initialize the form access.
+                access.form = access.form || {};
+                access.form.create_all = access.form.create_all || [];
+                access.form.read_all = access.form.read_all || [];
+                access.form.update_all = access.form.update_all || [];
+                access.form.delete_all = access.form.delete_all || [];
 
-              // Initialize the role access.
-              access.role = access.role || {};
-              access.role.create_all = access.role.create_all || [];
-              access.role.read_all = access.role.read_all || [];
-              access.role.update_all = access.role.update_all || [];
-              access.role.delete_all = access.role.delete_all || [];
+                // Initialize the submission access.
+                access.submission = access.submission || {};
+                access.submission.create_all = access.submission.create_all || [];
+                access.submission.read_all = access.submission.read_all || [];
+                access.submission.update_all = access.submission.update_all || [];
+                access.submission.delete_all = access.submission.delete_all || [];
 
-              teamAccess.forEach(function(permission) {
-                permission.roles = permission.roles || [];
-                // Note: These roles are additive. team_admin gets all roles in team_write and team_read.
-                // Iterate each team in the team roles, and add their permissions.
-                permission.roles.forEach(function(id) {
-                   switch (permission.type) {
-                    case 'team_admin':
-                      access.project.update_all.push(id.toString());
-                      access.project.delete_all.push(id.toString());
-                    case 'team_write':
-                      access.project.create_all.push(id.toString()); // This controls form creation.
-                      access.form.create_all.push(id.toString());
-                      access.form.update_all.push(id.toString());
-                      access.form.delete_all.push(id.toString());
-                      access.submission.create_all.push(id.toString());
-                      access.submission.update_all.push(id.toString());
-                      access.submission.delete_all.push(id.toString());
-                      access.role.create_all.push(id.toString());
-                      access.role.update_all.push(id.toString());
-                      access.role.delete_all.push(id.toString());
-                    case 'team_read':
-                      access.project.read_all.push(id.toString());
-                      access.form.read_all.push(id.toString());
-                      access.submission.read_all.push(id.toString());
-                      access.role.read_all.push(id.toString());
-                      break;
-                   case 'team_access':
-                      access.project.read_all.push(id.toString());
-                  }
+                // Initialize the role access.
+                access.role = access.role || {};
+                access.role.create_all = access.role.create_all || [];
+                access.role.read_all = access.role.read_all || [];
+                access.role.update_all = access.role.update_all || [];
+                access.role.delete_all = access.role.delete_all || [];
+
+                teamAccess.forEach(function(permission) {
+                  permission.roles = permission.roles || [];
+                  // Note: These roles are additive. team_admin gets all roles in team_write and team_read.
+                  // Iterate each team in the team roles, and add their permissions.
+                  permission.roles.forEach(function(id) {
+                    switch (permission.type) {
+                      case 'team_admin':
+                        access.project.update_all.push(id.toString());
+                        access.project.delete_all.push(id.toString());
+                      case 'team_write':
+                      case 'stage_write':
+                        access.project.create_all.push(id.toString()); // This controls form creation.
+                        access.form.create_all.push(id.toString());
+                        access.form.update_all.push(id.toString());
+                        access.form.delete_all.push(id.toString());
+                        access.submission.create_all.push(id.toString());
+                        access.submission.update_all.push(id.toString());
+                        access.submission.delete_all.push(id.toString());
+                        access.role.create_all.push(id.toString());
+                        access.role.update_all.push(id.toString());
+                        access.role.delete_all.push(id.toString());
+                      case 'team_read':
+                      case 'stage_read':
+                        access.project.read_all.push(id.toString());
+                        access.form.read_all.push(id.toString());
+                        access.submission.read_all.push(id.toString());
+                        access.role.read_all.push(id.toString());
+                        break;
+                      case 'team_access':
+                        access.project.read_all.push(id.toString());
+                    }
+                  });
                 });
-              });
-            }
+              }
 
-            // Pass the access of this Team to the next function.
-            return callback(null);
+              // Pass the access of this Team to the next function.
+              return callback(null);
+            });
+            /* eslint-enable camelcase, max-statements, no-fallthrough */
           });
-          /* eslint-enable camelcase, max-statements, no-fallthrough */
         };
 
         // Get the permissions for an Project with the given ObjectId.
@@ -859,7 +866,7 @@ module.exports = function(app) {
               machineName: item.machineName,
               deleted: {$eq: null},
               project: formioServer.formio.util.idToBson(item.project)
-            }, (err, doc) => {
+            }).exec((err, doc) => {
               if (err) {
                 return done(err);
               }
@@ -938,7 +945,7 @@ module.exports = function(app) {
         steps.unshift(async.apply(_install, template, project));
 
         const _importAccess = (template, items, done) => {
-          formioServer.formio.resources.project.model.findOne({_id: template._id}, function(err, project) {
+          formioServer.formio.resources.project.model.findOne({_id: template._id}).exec((err, project) => {
             if (err) {
               return done(err);
             }
@@ -1304,7 +1311,7 @@ module.exports = function(app) {
         const updateProject = function(_role, done) {
           formioServer.formio.resources.project.model.findOne({
             _id: formioServer.formio.mongoose.Types.ObjectId(projectId)
-          }, function(err, project) {
+          }).exec((err, project) => {
             if (err) {
               return done(err);
             }
@@ -1370,20 +1377,20 @@ module.exports = function(app) {
           return done(null, machineName);
         }
         formioServer.formio.resources.project.model.findOne({_id: document.project, deleted: {$eq: null}})
-        .exec(function(err, project) {
-          if (err) {
-            return done(err);
-          }
-          if (!project) {
-            return done(null, machineName);
-          }
+          .lean().exec(function(err, project) {
+            if (err) {
+              return done(err);
+            }
+            if (!project) {
+              return done(null, machineName);
+            }
 
-          if (!project) {
-            return done(null, `${document.project}:${machineName}`);
-          }
+            if (!project) {
+              return done(null, `${document.project}:${machineName}`);
+            }
 
-          done(null, `${project.machineName}:${machineName}`);
-        });
+            done(null, `${project.machineName}:${machineName}`);
+          });
       },
       roleMachineName(machineName, document, done) {
         this.formMachineName(machineName, document, done);
@@ -1393,6 +1400,7 @@ module.exports = function(app) {
           return this.formMachineName(machineName, null, done);
         }
         formioServer.formio.resources.form.model.findOne({_id: document.form, deleted: {$eq: null}})
+          .lean()
           .exec((err, form) => {
             if (err) {
               return done(err);

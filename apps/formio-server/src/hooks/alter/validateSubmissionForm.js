@@ -10,13 +10,13 @@ module.exports = app => (form, submission, done) => {
   formRevision.findOne({
     _rid: form._id,
     _vid: submission._fvid
-  }, (err, result) => {
+  }).lean().exec((err, result) => {
     // If error or not found, return the original form.
     if (err || !result) {
       return done(form);
     }
 
-    form.components = result.components.toObject();
+    form.components = result.components;
     done(form);
   });
 };
