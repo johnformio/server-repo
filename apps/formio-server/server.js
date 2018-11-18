@@ -8,7 +8,6 @@ var methodOverride = require('method-override');
 var favicon = require('serve-favicon');
 var packageJson = require('./package.json');
 var Q = require('q');
-var debug = require('debug')('formio:requestInfo');
 var cacheControl = require('express-cache-controller');
 var uuid = require('uuid/v4');
 

@@ -1,10 +1,6 @@
 'use strict';
 
 const util = require('../util/util');
-const debug = {
-  plugin: require('debug')('formio:plugins:EncryptedProperty'),
-  error: require('debug')('formio:error')
-};
 
 /**
  * Mongoose encrypted property plugin. Encrypt a single field on the given schema.

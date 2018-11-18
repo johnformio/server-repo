@@ -223,6 +223,7 @@ module.exports = router => {
         debug('LDAP Auth instantiated');
 
         debug('Authenticating');
+        /* eslint-disable max-statements */
         auth.authenticate(
           _.get(req.submission.data, this.settings.usernameField),
           _.get(req.submission.data, this.settings.passwordField),
@@ -371,6 +372,7 @@ module.exports = router => {
             }
           }
         );
+        /* eslint-enable max-statements */
       });
     }
   }
