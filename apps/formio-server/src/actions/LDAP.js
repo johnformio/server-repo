@@ -58,6 +58,7 @@ module.exports = router => {
         });
         formio.resources.role.model.find(formio.hook.alter('roleQuery', {deleted: {$eq: null}}, req))
           .sort({title: 1})
+          .lean()
           .exec((err, roles) => {
             if (err || !roles) {
               return res.status(400).send('Could not load the Roles.');

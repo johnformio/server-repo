@@ -1,6 +1,5 @@
 'use strict';
 
-const Q = require('q');
 const _ = require('lodash');
 
 module.exports = function(formio) {
@@ -22,32 +21,50 @@ module.exports = function(formio) {
     getUserToken(req, res, providerName, userId, next) {
       const provider = this.providers[providerName];
       if (!provider) {
-        return Q.reject('Invalid provider name');
+        return Promise.reject('Invalid provider name');
       }
 
-      return Q(formio.resources.submission.model.findOne({_id: userId}))
-      .then(function(user) {
-        if (!user) {
-          throw 'Could not find user';
-        }
-        const accessToken = _.find(user.externalTokens, {type: provider.name});
-        if (!accessToken) {
-          throw `No access token available. Make sure you have authenticated with ${provider.title}.`;
-        }
-        if (new Date() < accessToken.exp) {
-          return accessToken.token;
-        }
+      return new Promise((resolve, reject) => {
+        formio.resources.submission.model.findOne({_id: userId}).exec((err, user) => {
+          if (err) {
+            reject(err);
+            return next(err);
+          }
 
-        return provider.refreshTokens(req, res, user)
-        .then(function(tokens) {
-          user.set('externalTokens',
-            _(tokens).concat(user.externalTokens).uniq('type').value()
-          );
+          if (!user) {
+            err = 'Could not find user';
+            reject(err);
+            return next(err);
+          }
+          const accessToken = _.find(user.externalTokens, {type: provider.name});
+          if (!accessToken) {
+            err = `No access token available. Make sure you have authenticated with ${provider.title}.`;
+            reject(err);
+            return next(err);
+          }
 
-          return Q(user.save()).thenResolve(_.find(tokens, {type: provider.name}).token);
+          if (new Date() < accessToken.exp) {
+            resolve(accessToken.token);
+            return next(null, accessToken.token);
+          }
+
+          return provider.refreshTokens(req, res, user).then(function(tokens) {
+            user.set('externalTokens',
+              _(tokens).concat(user.externalTokens).uniq('type').value()
+            );
+            user.save().then(() => {
+              const token = _.find(tokens, {type: provider.name});
+              if (!token) {
+                err = `No access token available. Make sure you have authenticated with ${provider.title}.`;
+                reject(err);
+                return next(err);
+              }
+              resolve(token.token);
+              return next(null, token.token);
+            });
+          });
         });
-      })
-      .nodeify(next);
+      });
     }
   };
 };

@@ -235,33 +235,15 @@ module.exports = (router) => {
     return Q.ninvoke(formio.cache, 'loadCurrentProject', req)
       .then((project) => {
         const projectId = util.idToBson(project._id);
-
-        // Get all the forms for the current project, which havent been deleted.
-        return Q.ninvoke(router.formio.resources.form.model, 'find', {project: projectId, deleted: {$eq: null}});
+        return router.formio.resources.form.model.find({project: projectId, deleted: {$eq: null}}).lean().exec();
       })
       .then((forms) => {
         const formIds = forms.map((form) => util.idToBson(form._id));
-
-        // Get all the actions for the current projects forms, which havent been deleted.
-        return Q.ninvoke(
-          router.formio.actions.model,
-          'find',
-          {form: {$in: formIds}, deleted: {$eq: null}, name: 'sqlconnector'}
-        );
-      })
-      .then((actions) => {
-        // Get all the sql connector actions
-        const sqlActions = actions.map((action) => {
-          try {
-            return action.toObject();
-          }
-          catch (e) {
-            return action;
-          }
-        });
-
-        debug.getConnectorActions(sqlActions);
-        return sqlActions;
+        return router.formio.actions.model.find({
+          form: {$in: formIds},
+          deleted: {$eq: null},
+          name: 'sqlconnector'
+        }).lean().exec();
       })
       .catch((err) => {
         debug.getConnectorActions(err);

@@ -50,7 +50,7 @@ module.exports = function(router) {
                 search._id = {$ne: this._id};
               }
 
-              formio.mongoose.model('project').findOne(search).exec(function(err, result) {
+              formio.mongoose.model('project').findOne(search).lean().exec(function(err, result) {
                 if (err || result) {
                   return done(false);
                 }
@@ -106,7 +106,7 @@ module.exports = function(router) {
                 search._id = {$ne: this._id};
               }
 
-              formio.mongoose.model('project').findOne(search).exec(function(err, result) {
+              formio.mongoose.model('project').findOne(search).lean().exec(function(err, result) {
                 if (err || result) {
                   return done(false);
                 }

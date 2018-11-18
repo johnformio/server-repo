@@ -866,7 +866,7 @@ module.exports = function(app) {
               machineName: item.machineName,
               deleted: {$eq: null},
               project: formioServer.formio.util.idToBson(item.project)
-            }, (err, doc) => {
+            }).exec((err, doc) => {
               if (err) {
                 return done(err);
               }
@@ -945,7 +945,7 @@ module.exports = function(app) {
         steps.unshift(async.apply(_install, template, project));
 
         const _importAccess = (template, items, done) => {
-          formioServer.formio.resources.project.model.findOne({_id: template._id}, function(err, project) {
+          formioServer.formio.resources.project.model.findOne({_id: template._id}).exec((err, project) => {
             if (err) {
               return done(err);
             }
@@ -1311,7 +1311,7 @@ module.exports = function(app) {
         const updateProject = function(_role, done) {
           formioServer.formio.resources.project.model.findOne({
             _id: formioServer.formio.mongoose.Types.ObjectId(projectId)
-          }, function(err, project) {
+          }).exec((err, project) => {
             if (err) {
               return done(err);
             }
@@ -1377,20 +1377,20 @@ module.exports = function(app) {
           return done(null, machineName);
         }
         formioServer.formio.resources.project.model.findOne({_id: document.project, deleted: {$eq: null}})
-        .exec(function(err, project) {
-          if (err) {
-            return done(err);
-          }
-          if (!project) {
-            return done(null, machineName);
-          }
+          .lean().exec(function(err, project) {
+            if (err) {
+              return done(err);
+            }
+            if (!project) {
+              return done(null, machineName);
+            }
 
-          if (!project) {
-            return done(null, `${document.project}:${machineName}`);
-          }
+            if (!project) {
+              return done(null, `${document.project}:${machineName}`);
+            }
 
-          done(null, `${project.machineName}:${machineName}`);
-        });
+            done(null, `${project.machineName}:${machineName}`);
+          });
       },
       roleMachineName(machineName, document, done) {
         this.formMachineName(machineName, document, done);
@@ -1400,6 +1400,7 @@ module.exports = function(app) {
           return this.formMachineName(machineName, null, done);
         }
         formioServer.formio.resources.form.model.findOne({_id: document.form, deleted: {$eq: null}})
+          .lean()
           .exec((err, form) => {
             if (err) {
               return done(err);
