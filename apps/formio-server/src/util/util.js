@@ -8,8 +8,7 @@ const debug = {
 };
 
 const defaultSaltLength = 40;
-
-module.exports = {
+const Utils = {
   /* eslint-disable no-useless-escape */
   tokenRegex: new RegExp(/\[\[\s*token\(\s*([^\)]+)\s*\)\s*,?\s*([0-9]*)\s*\]\]/gi),
   /* eslint-enable no-useless-escape */
@@ -20,7 +19,7 @@ module.exports = {
   },
   ssoTokens(text) {
     const tokens = [];
-    text.replace(this.tokenRegex, (match, $1, $2) => {
+    text.replace(Utils.tokenRegex, (match, $1, $2) => {
       const parts = $1.split('=');
       const field = _.trim(parts[0]);
       const resources = parts[1] ? _.map(parts[1].split(','), _.trim) : [];
@@ -40,12 +39,12 @@ module.exports = {
     });
     return tokens;
   },
-  encrypt(secret, rawData) {
+  encrypt(secret, rawData, nosalt) {
     if (!secret || !rawData) {
       return null;
     }
 
-    const salt = keygenerator._({
+    const salt = nosalt ? '' : keygenerator._({
       length: defaultSaltLength
     });
     const cipher = crypto.createCipher('aes-256-cbc', secret);
@@ -56,7 +55,7 @@ module.exports = {
       cipher.final()
     ]);
   },
-  decrypt(secret, cipherbuffer) {
+  decrypt(secret, cipherbuffer, nosalt) {
     if (!secret || !cipherbuffer) {
       return null;
     }
@@ -69,7 +68,7 @@ module.exports = {
         decipher.update(buffer), // Buffer contains encrypted utf8
         decipher.final()
       ]);
-      data = JSON.parse(decryptedJSON.slice(0, -defaultSaltLength));
+      data = JSON.parse(nosalt ? decryptedJSON : decryptedJSON.slice(0, -defaultSaltLength));
     }
     catch (e) {
       debug.decrypt(e);
@@ -77,6 +76,23 @@ module.exports = {
     }
 
     return data;
+  },
+  decryptProperty: (obj, encryptedName, plainName, secret) => {
+    if (!obj) {
+      return obj;
+    }
+    if (!obj[encryptedName]) {
+      if (!obj[plainName]) {
+        obj[plainName] = {};
+      }
+      return obj;
+    }
+    obj[plainName] = Utils.decrypt(secret, obj[encryptedName], true);
+    if (!obj[plainName]) {
+      obj[plainName] = {};
+    }
+    delete obj[encryptedName];
+    return obj;
   },
   getSubmissionModel: (formio, req, form, init, next) => {
     if (!form) {
@@ -140,3 +156,5 @@ module.exports = {
     });
   }
 };
+
+module.exports = Utils;
