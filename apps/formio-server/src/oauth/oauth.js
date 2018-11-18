@@ -51,8 +51,11 @@ module.exports = function(formio) {
         });
       }).then((token) => {
         if (next) {
-          return next(null, token);
+          /* eslint-disable callback-return */
+          next(null, token);
+          /* eslint-enable callback-return */
         }
+        return token;
       }).catch((err) => {
         if (next) {
           return next(err);
