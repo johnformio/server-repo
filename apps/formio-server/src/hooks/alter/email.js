@@ -152,7 +152,7 @@ module.exports = app => (mail, req, res, params, cb) => {
       else {
         query.name = {'$in': ssoToken.resources};
       }
-      formioServer.formio.resources.form.model.find(query).exec((err, result) => {
+      formioServer.formio.resources.form.model.find(query).lean().exec((err, result) => {
         if (err || !result || !result.length) {
           ssoToken.submission = null;
           return nextToken();
@@ -183,6 +183,7 @@ module.exports = app => (mail, req, res, params, cb) => {
         // Find the submission.
         formioServer.formio.resources.submission.model
           .findOne(query)
+          .lean()
           .select('_id, form')
           .exec(function(err, submission) {
             ssoToken.submission = (err || !submission) ? null : submission;

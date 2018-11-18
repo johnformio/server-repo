@@ -1,6 +1,5 @@
 'use strict';
 
-const Q = require('q');
 const _ = require('lodash');
 
 module.exports = function(formio) {
@@ -22,11 +21,10 @@ module.exports = function(formio) {
     getUserToken(req, res, providerName, userId, next) {
       const provider = this.providers[providerName];
       if (!provider) {
-        return Q.reject('Invalid provider name');
+        return Promise.reject('Invalid provider name');
       }
 
-      return Q(formio.resources.submission.model.findOne({_id: userId}))
-      .then(function(user) {
+      return formio.resources.submission.model.findOne({_id: userId}).then((user) => {
         if (!user) {
           throw 'Could not find user';
         }
@@ -34,20 +32,35 @@ module.exports = function(formio) {
         if (!accessToken) {
           throw `No access token available. Make sure you have authenticated with ${provider.title}.`;
         }
+
         if (new Date() < accessToken.exp) {
           return accessToken.token;
         }
 
-        return provider.refreshTokens(req, res, user)
-        .then(function(tokens) {
+        return provider.refreshTokens(req, res, user).then(function(tokens) {
           user.set('externalTokens',
             _(tokens).concat(user.externalTokens).uniq('type').value()
           );
-
-          return Q(user.save()).thenResolve(_.find(tokens, {type: provider.name}).token);
+          return user.save().then(() => {
+            const token = _.find(tokens, {type: provider.name});
+            if (!token) {
+              throw `No access token available. Make sure you have authenticated with ${provider.title}.`;
+            }
+            return token.token;
+          });
         });
-      })
-      .nodeify(next);
+      }).then((token) => {
+        if (next) {
+          /* eslint-disable callback-return */
+          next(null, token);
+          /* eslint-enable callback-return */
+        }
+        return token;
+      }).catch((err) => {
+        if (next) {
+          return next(err);
+        }
+      });
     }
   };
 };

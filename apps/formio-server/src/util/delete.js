@@ -32,7 +32,7 @@ module.exports = function(formio) {
       .value();
 
     const query = {form: {$in: forms}, deleted: {$eq: null}};
-    formio.resources.submission.model.find(query, function(err, submissions) {
+    formio.resources.submission.model.find(query).exec((err, submissions) => {
       if (err) {
         return next(err);
       }
@@ -83,7 +83,7 @@ module.exports = function(formio) {
       .value();
 
     const query = {form: {$in: forms}, deleted: {$eq: null}};
-    formio.actions.model.find(query, function(err, actions) {
+    formio.actions.model.find(query).exec((err, actions) => {
       if (err) {
         return next(err);
       }
@@ -127,7 +127,7 @@ module.exports = function(formio) {
 
     // Find all the forms that are associated with the given projectId and have not been deleted.
     let query = {project: util.idToBson(projectId), deleted: {$eq: null}};
-    formio.resources.form.model.find(query).select('_id').exec(function(err, formIds) {
+    formio.resources.form.model.find(query).lean().select('_id').exec(function(err, formIds) {
       if (err) {
         return next(err);
       }
@@ -200,7 +200,7 @@ module.exports = function(formio) {
     }
 
     const query = {project: util.idToBson(projectId), deleted: {$eq: null}};
-    formio.resources.role.model.find(query, function(err, roles) {
+    formio.resources.role.model.find(query).exec((err, roles) => {
       if (err) {
         return next(err);
       }
@@ -243,7 +243,7 @@ module.exports = function(formio) {
     }
 
     const query = {_id: util.idToBson(projectId), deleted: {$eq: null}};
-    formio.resources.project.model.findOne(query, function(err, project) {
+    formio.resources.project.model.findOne(query).exec((err, project) => {
       if (err) {
         return next(err.message || err);
       }

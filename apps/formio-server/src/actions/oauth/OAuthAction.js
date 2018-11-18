@@ -49,6 +49,7 @@ module.exports = router => {
       var resourceSrc = formio.hook.alter('path', `/form?type=resource`, req);
       formio.resources.role.model.find(formio.hook.alter('roleQuery', {deleted: {$eq: null}}, req))
         .sort({title: 1})
+        .lean()
         .exec(function(err, roles) {
           if (err || !roles) {
             return res.status(400).send('Could not load the Roles.');

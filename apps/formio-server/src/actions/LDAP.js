@@ -58,6 +58,7 @@ module.exports = router => {
         });
         formio.resources.role.model.find(formio.hook.alter('roleQuery', {deleted: {$eq: null}}, req))
           .sort({title: 1})
+          .lean()
           .exec((err, roles) => {
             if (err || !roles) {
               return res.status(400).send('Could not load the Roles.');
@@ -223,6 +224,7 @@ module.exports = router => {
         debug('LDAP Auth instantiated');
 
         debug('Authenticating');
+        /* eslint-disable max-statements */
         auth.authenticate(
           _.get(req.submission.data, this.settings.usernameField),
           _.get(req.submission.data, this.settings.passwordField),
@@ -371,6 +373,7 @@ module.exports = router => {
             }
           }
         );
+        /* eslint-enable max-statements */
       });
     }
   }
