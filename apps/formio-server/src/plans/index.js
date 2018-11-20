@@ -11,18 +11,43 @@ const debug = {
 
 module.exports = function(formioServer) {
   const limits = {
-    basic: 1000,
-    independent: 10000,
-    team: 250000,
-    trial: 10000,
-    commercial: 2000000
+    basic: {
+      forms: 10,
+      formRequests: 1000,
+      submissionRequests: 1000,
+      emails: 100,
+      failure: -1
+    },
+    independent: {
+      forms: 25,
+      formRequests: 10000,
+      submissionRequests: 10000,
+      emails: 1000,
+      failure: 5
+    },
+    team: {
+      forms: 50,
+      submissionRequests: 250000,
+      failure: 1
+    },
+    trial: {
+      forms: 10,
+      formRequests: 10000,
+      submissionRequests: 10000,
+      emails: 100,
+      failure: 2
+    },
+    commercial: {
+      submissionRequests: 2000000,
+      failure: 1
+    }
   };
 
   const basePlan = formioServer.config.plan || 'commercial';
   debug.plans(`Base Plan: ${basePlan}`);
 
   /**
-   * After loading, determine the plan from the projec
+   * After loading, determine the plan from the project
    * @param err
    * @param project
    * @returns {*|{done, value}}
@@ -96,59 +121,65 @@ module.exports = function(formioServer) {
           return cb(err);
         }
 
+        // Ignore limits for the formio project.
+        if (project.hasOwnProperty('name') && project.name && project.name === 'formio') {
+          return cb();
+        }
+
         const curr = new Date();
         const _plan = limits[plan];
 
-        // Determine if this project has gone above its limits.
-        if (_.get(project, 'billing.calls', 0) > _plan) {
-          // Create a penalty to throw their request to the back of the request queue.
-          process.nextTick(function() {
-            debug.checkRequest('Monthly limit exceeded..');
-            return cb();
-          });
-        }
-        else {
-          /* eslint-disable callback-return */
-          cb();
-          /* eslint-enable callback-return */
-        }
+        formioServer.formio.resources.form.model.count({
+          project: project._id,
+          deleted: {$eq: null}
+        }, (err, forms) => {
+          // Check the calls made this month.
+          const year = curr.getUTCFullYear();
+          const month = curr.getUTCMonth();
 
-        // Ignore limits for the formio project.
-        if (project.hasOwnProperty('name') && project.name && project.name === 'formio') {
-          return;
-        }
-
-        // Check the calls made this month.
-        const year = curr.getUTCFullYear();
-        const month = curr.getUTCMonth();
-
-        // First get the email count.
-        formioServer.analytics.getEmailCount(project, (err, emails) => {
-          // Now get the amount of calls.
           formioServer.analytics.getCalls(year, month, null, project._id, function(err, calls) {
             if (err || (calls === undefined)) {
-              return;
+              return cb();
             }
 
-            const exceeds = (calls >= _plan);
+            const exceeds = (calls >= _plan.submissionRequests);
             const lastChecked = _.get(project, 'billing.checked', 0);
             const currentCalls = _.get(project, 'billing.calls', 0);
             const now = Math.floor(Date.now() / 1000);
+            calls.forms = forms;
 
             // If the project has no calls, then we can check every minute, otherwise update every hour.
-            if ((!currentCalls && ((now - lastChecked) > 60)) || ((now - lastChecked) > 3600)) {
-              _.set(project, 'billing.emails', emails);
-              _.set(project, 'billing.calls', calls);
+            if ((!currentCalls && ((now - lastChecked) > 60)) || ((now - lastChecked) > 3600) || calls.forms !== project.billing.forms) {
+              _.set(project, 'billing.calls', calls.submissionRequests);
+              _.set(project, 'billing.usage', calls);
               _.set(project, 'billing.exceeds', exceeds);
               _.set(project, 'billing.checked', now);
               formioServer.formio.resources.project.model.update({
                 _id: formioServer.formio.mongoose.Types.ObjectId(project._id.toString())
               }, {$set: {'billing': project.billing}}, (err, result) => {
                 debug.checkRequest('Updated project billing.');
+                return cb();
               });
+            }
+            else {
+              return cb();
             }
           });
         });
+
+        // // Determine if this project has gone above its limits.
+        // if (_.get(project, 'billing.calls', 0) > _plan.submissionRequests) {
+        //   // Create a penalty to throw their request to the back of the request queue.
+        //   process.nextTick(function() {
+        //     debug.checkRequest('Monthly limit exceeded..');
+        //     return cb();
+        //   });
+        // }
+        // else {
+        //   /* eslint-disable callback-return */
+        //   cb();
+        //   /* eslint-enable callback-return */
+        // }
       });
     };
   };

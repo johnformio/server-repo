@@ -18,13 +18,11 @@ module.exports = function(formioServer) {
     }
 
     project._id = project._id.toString();
-    const used = _.get(project, 'billing.calls', 0);
-    const emails = _.get(project, 'billing.emails', 0);
-    const limit = formioServer.formio.plans.limits[project.plan];
+    const used = _.get(project, 'billing.usage', 0);
+    const limit = _.cloneDeep(formioServer.formio.plans.limits[project.plan]);
+    delete limit.failure;
     return {
-      emails,
       used: used,
-      remaining: limit - used,
       limit: limit,
       reset: moment().startOf('month').add(1, 'month').toISOString()
     };
@@ -42,6 +40,7 @@ module.exports = function(formioServer) {
 
     next(null, _.map([].concat(res.resource.item), function(project) {
       project.apiCalls = getCallInfo(project);
+      delete project.billing;
       return project;
     }));
   };
