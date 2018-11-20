@@ -1,6 +1,8 @@
 'use strict';
 
 const _ = require('lodash');
+const url = require('url');
+
 const debug = {
   plans: require('debug')('formio:plans'),
   checkRequest: require('debug')('formio:plans:checkRequest'),
@@ -28,7 +30,7 @@ module.exports = function(formioServer) {
     team: {
       forms: 50,
       submissionRequests: 250000,
-      failure: 1
+      failure: 2
     },
     trial: {
       forms: 10,
@@ -129,6 +131,7 @@ module.exports = function(formioServer) {
         const curr = new Date();
         const _plan = limits[plan];
 
+        // Get a count of the forms.
         formioServer.formio.resources.form.model.count({
           project: project._id,
           deleted: {$eq: null}
@@ -148,6 +151,48 @@ module.exports = function(formioServer) {
             const now = Math.floor(Date.now() / 1000);
             calls.forms = forms;
 
+            // Determine if we've exceeded our counts
+            const path = url.parse(req.url).pathname;
+            const form = /\/project\/[a-f0-9]{24}\/form$/;
+            const formRequests = /\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}$/;
+            const submissionRequests = /\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}\/submission(\/[a-f0-9]{24})?$/;
+            let type;
+            if (submissionRequests.test(path)) {
+              type = 'submissionRequests';
+            }
+            else if (formRequests.test(path) && req.method !== 'DELETE') {
+              type = 'formRequests';
+            }
+            // Don't allow modifying forms if over the form limit
+            else if (formRequests.test(path) && req.method === 'PUT') {
+              type = 'forms';
+            }
+            // Don't allow creating new forms if over limit.
+            else if (form.test(path) && req.method === 'POST') {
+              type = 'forms';
+            }
+
+            if (type && _plan[type] && calls[type] >= _plan[type]) {
+              // Form modifications should always fail.
+              if (type === 'forms') {
+                // eslint-disable-next-line callback-return
+                cb('Limit exceeded. Upgrade your plan.');
+              }
+              else if (_plan.failure > 0) {
+                // Delay the request if over the limit.
+                setTimeout(cb, _plan.failure * 1000);
+              }
+              else {
+                // If not a timed failure, fail straight out.
+                // eslint-disable-next-line callback-return
+                cb('Limit exceeded. Upgrade your plan.');
+              }
+            }
+            else {
+              // eslint-disable-next-line callback-return
+              cb();
+            }
+
             // If the project has no calls, then we can check every minute, otherwise update every hour.
             if ((!currentCalls && ((now - lastChecked) > 60)) || ((now - lastChecked) > 3600) || calls.forms !== project.billing.forms) {
               _.set(project, 'billing.calls', calls.submissionRequests);
@@ -158,28 +203,10 @@ module.exports = function(formioServer) {
                 _id: formioServer.formio.mongoose.Types.ObjectId(project._id.toString())
               }, {$set: {'billing': project.billing}}, (err, result) => {
                 debug.checkRequest('Updated project billing.');
-                return cb();
               });
-            }
-            else {
-              return cb();
             }
           });
         });
-
-        // // Determine if this project has gone above its limits.
-        // if (_.get(project, 'billing.calls', 0) > _plan.submissionRequests) {
-        //   // Create a penalty to throw their request to the back of the request queue.
-        //   process.nextTick(function() {
-        //     debug.checkRequest('Monthly limit exceeded..');
-        //     return cb();
-        //   });
-        // }
-        // else {
-        //   /* eslint-disable callback-return */
-        //   cb();
-        //   /* eslint-enable callback-return */
-        // }
       });
     };
   };
