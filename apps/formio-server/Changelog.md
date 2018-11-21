@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.0.4 (from 5.12.2 release)
+
+## 6.0.3 (from 5.12.0 release)
+
+## 6.0.2 (from 5.11.1 release)
+
+## 6.0.1
+### Updated
+ - Pulled all changes from 5.10.0 release
+
+## 6.0.0
+### Added
+ - Server licensing
+
+### Removed
+ - Websocket integration (remote middleware)
+
 ## 5.12.2
 ### Fixed
  - Many performance and memory issues with large indexes returned from Mongoose.
