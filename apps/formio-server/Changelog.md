@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.0.5 (from 5.12.3 release)
+
 ## 6.0.4 (from 5.12.2 release)
 
 ## 6.0.3 (from 5.12.0 release)
@@ -20,6 +22,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Removed
  - Websocket integration (remote middleware)
+
+## 5.12.3
+### Fixed
+ - A crash within the spreadsheet action.
+
+### Changed
+ - Update formio@1.37.3, aws-sdk@2.361.0, formiojs@3.9.0, webpack@4.26.0
 
 ## 5.12.2
 ### Fixed
