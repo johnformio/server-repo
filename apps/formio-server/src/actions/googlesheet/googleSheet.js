@@ -146,6 +146,10 @@ module.exports = (router) => {
         return next();
       }
 
+      if (!this.settings) {
+        return debug('No settings for google sheets action.');
+      }
+
       // No feedback needed directly. Call next immediately.
       next(); // eslint-disable-line callback-return
 
