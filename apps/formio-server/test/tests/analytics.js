@@ -51,7 +51,7 @@ module.exports = function(app, template, hook) {
             }
 
             var curr = new Date();
-            var key = curr.getUTCFullYear() + ':' + curr.getUTCMonth() + ':' + curr.getUTCDate() +  ':' + template.project._id + ':ns';
+            var key = curr.getUTCFullYear() + ':' + curr.getUTCMonth() + ':' + curr.getUTCDate() +  ':' + template.project._id + ':o';
             redis.llen(key, function(err, length) {
               if (err) {
                 return done(err);
@@ -77,7 +77,7 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
-          assert.equal(calls, 0);
+          assert.equal(calls.submissionRequests, 0);
           done();
         });
       });
@@ -99,7 +99,7 @@ module.exports = function(app, template, hook) {
                 return done(err);
               }
 
-              assert.equal(calls, 1);
+              assert.equal(calls.submissionRequests, 1);
               // Store the JWT for future API calls.
               template.formio.owner.token = res.headers['x-jwt-token'];
               done();

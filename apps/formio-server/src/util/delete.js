@@ -141,7 +141,7 @@ module.exports = function(formio) {
         .value();
 
       query = {_id: {$in: formIds}, deleted: {$eq: null}};
-      formio.resources.form.model.find(query).snapshot().exec(function(err, forms) {
+      formio.resources.form.model.find(query).exec(function(err, forms) {
         if (err) {
           return next(err);
         }

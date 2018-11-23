@@ -83,6 +83,7 @@ module.exports = function(router, formioServer) {
 
   // Load the restrictive middleware to use
   formio.middleware.restrictOwnerAccess = require('../middleware/restrictOwnerAccess')(formio);
+  formio.middleware.restrictToPlans = require('../middleware/restrictToPlans')(router);
 
   // Load the Environment create middleware.
   formio.middleware.projectEnvCreatePlan = require('../middleware/projectEnvCreatePlan')(formio);
@@ -319,6 +320,7 @@ module.exports = function(router, formioServer) {
     '/project/:projectId/sqlconnector',
     formio.middleware.tokenHandler,
     formio.middleware.restrictOwnerAccess,
+    formio.middleware.restrictToPlans(['commercial', 'team', 'trial']),
     sqlconnector.generateQueries
   );
 
