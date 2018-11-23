@@ -7,5 +7,4 @@
 .eslintrc
 .gitattributes
 circle.yml
-dist
 bower_components

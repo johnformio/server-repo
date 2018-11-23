@@ -32,7 +32,7 @@ module.exports = function(router) {
                 search._id = {$ne: this._id};
               }
 
-              formio.mongoose.model('tag').findOne(search).exec(function(err, result) {
+              formio.mongoose.model('tag').findOne(search).lean().exec(function(err, result) {
                 if (err || result) {
                   return done(false);
                 }

@@ -8,7 +8,6 @@ var methodOverride = require('method-override');
 var favicon = require('serve-favicon');
 var packageJson = require('./package.json');
 var Q = require('q');
-var debug = require('debug')('formio:requestInfo');
 var cacheControl = require('express-cache-controller');
 var uuid = require('uuid/v4');
 
@@ -155,11 +154,13 @@ module.exports = function(options) {
     });
   }
 
-  app.modules = require('./src/modules/modules')(app, config);
   var hooks = _.merge(require('./src/hooks/settings')(app), options.hooks);
 
   // Start the api server.
   app.formio.init(hooks).then(function(formio) {
+    // Check the license for validity.
+    require('./src/util/license')(app, config);
+
     app.formio.formio.cache = _.assign(app.formio.formio.cache, require('./src/cache/cache')(formio));
 
     // The formio app sanity endpoint.

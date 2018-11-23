@@ -13,7 +13,7 @@ module.exports = function(formio) {
       formio.resources.project.model.findOne({
         name: 'formio',
         primary: true
-      }).exec(function(err, project) {
+      }).lean().exec(function(err, project) {
         if (err) {
           return;
         }

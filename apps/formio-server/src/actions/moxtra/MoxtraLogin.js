@@ -177,7 +177,7 @@ module.exports = function(router) {
         const deferred = Q.defer();
 
         // We have to manually manage the externalId upsert, because $ doesnt work with upsert.
-        formio.resources.submission.model.find({_id: util.idToBson(user._id)}, function(err, user) {
+        formio.resources.submission.model.find({_id: util.idToBson(user._id)}).exec((err, user) => {
           if (err || !user || (user && user.length !== 1)) {
             return deferred.reject('Could not load the user.');
           }

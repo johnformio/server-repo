@@ -18,6 +18,7 @@ mkdir -p $AWSDIR/versions/$TAG_NAME
 sed "s/<TAG>/$TAG_NAME/" < $AWSDIR/Dockerrun.aws.json > $AWSDIR/versions/$TAG_NAME/Dockerrun.aws.json
 mkdir -p $AWSDIR/versions/$TAG_NAME/.ebextensions
 cp $AWSDIR/.ebextensions/app.config $AWSDIR/versions/$TAG_NAME/.ebextensions/app.config
+cp $AWSDIR/.ebextensions/kinesis.config $AWSDIR/versions/$TAG_NAME/.ebextensions/kinesis.config
 cd $AWSDIR/versions/$TAG_NAME
 zip -r ../$TAG_NAME.zip * .ebextensions/*
 cd ../../../..

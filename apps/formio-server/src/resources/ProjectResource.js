@@ -4,7 +4,7 @@ const Resource = require('resourcejs');
 const config = require('../../config');
 const _ = require('lodash');
 const debug = require('debug')('formio:resources:projects');
-
+const util = require('../util/util');
 module.exports = function(router, formioServer) {
   const formio = formioServer.formio;
   const getProjectAccess = function(settings, permissions) {
@@ -15,17 +15,33 @@ module.exports = function(router, formioServer) {
       .map(formio.util.idToString)
       .value();
   };
-  const removeProjectSettings = function(req, res, next) {
+
+  const decryptSettings = function(res) {
+    if (!res || !res.resource || !res.resource.item) {
+      return;
+    }
+    // Merge all results into an array, to handle the cases with multiple results.
+    const multi = Array.isArray(res.resource.item);
+    const list = [].concat(res.resource.item).map(item =>
+      util.decryptProperty(item, 'settings_encrypted', 'settings', formio.config.mongoSecret)
+    );
+    res.resource.item = multi ? list : list[0];
+  };
+
+  const projectSettings = function(req, res, next) {
     // Allow admin key
     if (req.adminKey) {
+      decryptSettings(res);
       return next();
     }
     // Allow project owners.
     if (req.token && req.projectOwner && (req.token.user._id === req.projectOwner)) {
+      decryptSettings(res);
       return next();
     }
     // Allow team admins on remote
     else if (req.remotePermission && (['admin', 'owner', 'team_admin'].indexOf(req.remotePermission) !== -1)) {
+      decryptSettings(res);
       return next();
     }
     else if (req.projectId && req.user) {
@@ -37,6 +53,7 @@ module.exports = function(router, formioServer) {
           const roles = _.map(req.user.roles, formio.util.idToString);
 
           if ( _.intersection(adminAccess, roles).length !== 0) {
+            decryptSettings(res);
             return next();
           }
           if ( _.intersection(writeAccess, roles).length !== 0) {
@@ -53,7 +70,11 @@ module.exports = function(router, formioServer) {
 
         const fileToken = role === 'write' && _.get(res, 'resource.item.settings.filetoken', null);
 
-        formio.middleware.filterResourcejsResponse(['settings', 'billing']).call(this, req, res, next);
+        formio.middleware.filterResourcejsResponse([
+          'settings',
+          'settings_encrypted',
+          'billing'
+        ]).call(this, req, res, next);
         if (fileToken) {
           _.set(res, 'resource.item.settings.filetoken', fileToken);
         }
@@ -64,7 +85,11 @@ module.exports = function(router, formioServer) {
         req.body = _.omit(req.body, 'settings');
       }
 
-      formio.middleware.filterResourcejsResponse(['settings', 'billing']).call(this, req, res, next);
+      formio.middleware.filterResourcejsResponse([
+        'settings',
+        'settings_encrypted',
+        'billing'
+      ]).call(this, req, res, next);
     }
   };
 
@@ -93,6 +118,8 @@ module.exports = function(router, formioServer) {
   // Load custom hubspot action.
   formio.middleware.customHubspotAction = require('../middleware/customHubspotAction')(formio);
 
+  formio.middleware.reportNewProject = require('../middleware/reportNewProject')(formio);
+
   // Load custom CRM action.
   formio.middleware.customCrmAction = require('../middleware/customCrmAction')(formio);
 
@@ -114,7 +141,7 @@ module.exports = function(router, formioServer) {
     afterGet: [
       formio.middleware.filterResourcejsResponse(hiddenFields),
       formio.middleware.projectAnalytics,
-      removeProjectSettings
+      projectSettings
     ],
     beforePost: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
@@ -144,9 +171,10 @@ module.exports = function(router, formioServer) {
       require('../middleware/projectTemplate')(formio),
       formio.middleware.filterResourcejsResponse(hiddenFields),
       formio.middleware.projectAnalytics,
-      removeProjectSettings,
+      projectSettings,
       formio.middleware.customHubspotAction,
-      formio.middleware.customCrmAction('newproject')
+      formio.middleware.customCrmAction('newproject'),
+      formio.middleware.reportNewProject,
     ],
     beforeIndex: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
@@ -155,7 +183,7 @@ module.exports = function(router, formioServer) {
     afterIndex: [
       formio.middleware.filterResourcejsResponse(hiddenFields),
       formio.middleware.projectAnalytics,
-      removeProjectSettings
+      projectSettings
     ],
     beforePut: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
@@ -216,13 +244,13 @@ module.exports = function(router, formioServer) {
       formio.middleware.projectTeamSync,
       formio.middleware.condensePermissionTypes,
       formio.middleware.projectPlanFilter,
-      removeProjectSettings
+      projectSettings
     ],
     afterPut: [
       require('../middleware/projectTemplate')(formio),
       formio.middleware.filterResourcejsResponse(hiddenFields),
       formio.middleware.projectAnalytics,
-      removeProjectSettings,
+      projectSettings,
       formio.middleware.customCrmAction('updateproject'),
       (req, res, next) => {
         /* eslint-disable callback-return */
@@ -276,7 +304,7 @@ module.exports = function(router, formioServer) {
     afterDelete: [
       formio.middleware.filterResourcejsResponse(hiddenFields),
       formio.middleware.customCrmAction('deleteproject'),
-      removeProjectSettings
+      projectSettings
     ]
   });
 
