@@ -37,7 +37,7 @@ module.exports = (app, config) => {
 
   getDbIdentifier()
     .then(dbIdentifier => {
-      const timestamp = Date.now();
+      const timestamp = Date.now() - 6000;
 
       const payload = jwt.decode(config.license);
       if (!payload) {

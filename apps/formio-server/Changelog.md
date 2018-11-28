@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.0.7
+### Changed
+ - Update formio to fix 500 errors
+ - Allow for a few seconds of server drift for licenses.
+
 ## 6.0.5 (from 5.12.3 release)
 
 ## 6.0.4 (from 5.12.2 release)
