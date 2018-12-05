@@ -1173,9 +1173,7 @@ module.exports = function(app) {
         }
         else {
           req.projectId = req.projectId || (req.params ? req.params.projectId : undefined) || req._id;
-          if (formioServer.formio.mongoose.Types.ObjectId.isValid(req.projectId)) {
-            query.project = formioServer.formio.mongoose.Types.ObjectId(req.projectId);
-          }
+          query.project = formioServer.formio.util.idToBson(req.projectId);
           return query;
         }
       },
