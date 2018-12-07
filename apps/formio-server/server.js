@@ -45,6 +45,10 @@ module.exports = function(options) {
     return app.server.listen.apply(app.server, arguments);
   };
 
+  if (config.licenseData && config.licenseData.portal) {
+    app.use(express.static('portal'));
+  }
+
   // Make sure no-cache headers are sent to prevent IE from caching Ajax requests.
   app.use(cacheControl({
     noCache: true
@@ -189,9 +193,12 @@ module.exports = function(options) {
 
     app.storage = require('./src/storage/index.js')(app);
 
-    return q.resolve({
-      app: app,
-      config: config
+    // Check to install primary project.
+    require('./src/util/install')(app, config, () => {
+      return q.resolve({
+        app: app,
+        config: config
+      });
     });
   });
 

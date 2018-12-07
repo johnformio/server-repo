@@ -9,6 +9,7 @@ var protocol = process.env.PROTOCOL || 'https';
 var project = process.env.PROJECT || 'formio';
 var plan = process.env.PROJECT_PLAN || 'commercial';
 var fs = require('fs');
+const jwt = require('jsonwebtoken');
 
 try {
   fs.statSync('/.dockerenv');
@@ -110,6 +111,7 @@ config.formio.apiHost = apiHost;
 config.formioHost = formioHost;
 config.formio.formioHost = formioHost;
 config.license = config.formio.license = process.env.LICENSE;
+config.licenseData = jwt.decode(config.license);
 
 // Payeezy fields
 config.payeezy = {
