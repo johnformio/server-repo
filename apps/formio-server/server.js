@@ -45,7 +45,7 @@ module.exports = function(options) {
     return app.server.listen.apply(app.server, arguments);
   };
 
-  if (config.licenseData && config.licenseData.portal) {
+  if (config.licenseData && config.licenseData.portal && process.env.PRIMARY) {
     app.use(express.static('portal'));
   }
 

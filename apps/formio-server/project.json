@@ -587,8 +587,7 @@
       "form": "userLoginForm",
       "settings": {
         "resources": [
-          "user",
-          "admin"
+          "user"
         ],
         "username": "email",
         "password": "password"
@@ -607,8 +606,7 @@
       "form": "userRegistrationForm",
       "settings": {
         "resources": [
-          "user",
-          "admin"
+          "user"
         ],
         "username": "email",
         "password": "password"
