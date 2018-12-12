@@ -51,6 +51,8 @@ module.exports = (app, config, next) => {
                 formio.resources.submission.model.create({
                   form: form._id,
                   data: {
+                    fullName: 'Admin',
+                    name: 'admin',
                     email,
                     password: hash
                   },

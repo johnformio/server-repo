@@ -10,6 +10,7 @@ var packageJson = require('./package.json');
 var Q = require('q');
 var cacheControl = require('express-cache-controller');
 var uuid = require('uuid/v4');
+var fs = require('fs');
 
 module.exports = function(options) {
   options = options || {};
@@ -46,6 +47,12 @@ module.exports = function(options) {
   };
 
   if (config.licenseData && config.licenseData.portal && process.env.PRIMARY) {
+    // Override config.js so we can set onPremise to true.
+    app.get('/config.js', (req, res) => {
+      fs.readFile('./portal/config.js', 'utf8', (err, contents) => {
+        res.send(contents.replace('onPremise: false,', 'onPremise: true,'));
+      });
+    });
     app.use(express.static('portal'));
   }
 
