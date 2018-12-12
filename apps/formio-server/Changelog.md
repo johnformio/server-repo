@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.0.9
+### Fixed
+ - Upgrade formio@1.37.6 which fixes the following.
+   - Fixed issues with Resource permissions where it would only work with a single resource added to a permission type.
+   - Changed the install script to say "setup" instead of "install".
+ 
+### Changed
+ - Upgraded chance@1.0.18, formio@1.37.6, formiojs@3.9.3, minio@7.0.2, aws-sdk@2.373.0, dotenv@6.2.0, ldapauth-fork@4.1.0, resourcejs@1.33.0, twilio@3.25.0, eslint@5.10.0, webpack@4.27.1
+
+## 6.0.8
+### Fixed
+ - Problems where some calls to the root domain https://api.form.io would load all forms and cause performance issues.
+
 ## 6.0.7
 ### Changed
  - Update formio to fix 500 errors

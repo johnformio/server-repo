@@ -760,7 +760,7 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
-          assert.equal(res.text, 'Project not found');
+          assert.equal(res.text, 'Invalid alias');
           done();
         });
     });
@@ -777,7 +777,7 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
-          assert.equal(res.text, 'Project not found');
+          assert.equal(res.text, 'Invalid alias');
           done();
         });
     });
