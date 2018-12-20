@@ -50,7 +50,7 @@ module.exports = function(options) {
     // Override config.js so we can set onPremise to true.
     app.get('/config.js', (req, res) => {
       fs.readFile('./portal/config.js', 'utf8', (err, contents) => {
-        res.send(contents.replace('onPremise: false,', 'onPremise: true,'));
+        res.send(contents.replace('var onPremise = false;', 'var onPremise = true;'));
       });
     });
     app.use(express.static('portal'));
