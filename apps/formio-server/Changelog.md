@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.0.12
+### Fixed
+ - Missing thread file after build process
+ - Crash after attempting to delete project.
+
 ## 6.0.11
 ### Changed
  - Update formio-workers to fix issue addressed in 6.0.10.
