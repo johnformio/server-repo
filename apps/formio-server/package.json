@@ -91,7 +91,8 @@
       "build/package.json",
       "build/package-lock.json",
       "build/favicon.ico",
-      "node_modules/formio/src/db/**/*"
+      "node_modules/formio/src/db/**/*",
+      "node_modules/threads/lib/worker.node/slave.js"
     ],
     "targets": [
       "node8-alpine-x64"
