@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.0.11
+### Changed
+ - Update formio-workers to fix issue addressed in 6.0.10.
+
 ## 6.0.10
 ### Fixed
  - Issues with the build and formio-workers where it was using dynamic includes which was making email transports fail.
