@@ -11,6 +11,9 @@ var Q = require('q');
 var cacheControl = require('express-cache-controller');
 var uuid = require('uuid/v4');
 
+// This is required so that the build system can find this file which is dynamically required in the threads module.
+require('threads/lib/worker.node/slave.js');
+
 module.exports = function(options) {
   options = options || {};
   var q = Q.defer();
