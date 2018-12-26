@@ -90,7 +90,7 @@ module.exports = (app, config) => {
           .then(() => clearInterval(finished))
           .catch(err => console.error('Temporary License error:', err.message));
       }, 60 * 1000);
-      
+
       // Call first time.
       makeRequest()
         .then(() => clearInterval(finished))
