@@ -48,7 +48,7 @@ jobs:
         name: Download Portal
         command: |
           aws s3 cp s3://formio-app-releases/$(cat package.json | python -c 'import sys, json; print json.load(sys.stdin)["portalVersion"]').tgz portal.tgz
-          mkdir build/portal
+          mkdir -p build/portal
           tar -zxvf portal.tgz -C build/portal
     - persist_to_workspace:
         root: build
