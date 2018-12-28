@@ -11,7 +11,7 @@ var chance = new (require('chance'))();
 var app = null;
 var hook = null;
 var template = _.cloneDeep(require('./tests/fixtures/template')());
-var formioProject = require('../project.json');
+var formioProject = require('../formio.json');
 let EventEmitter = require('events');
 
 process.on('uncaughtException', function(err) {
