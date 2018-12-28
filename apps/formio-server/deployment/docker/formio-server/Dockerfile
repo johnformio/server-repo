@@ -25,7 +25,7 @@ RUN npm cache clean --force && \
     npm uninstall -g npm && \
     apk del .build-deps && \
     rm -f /root/.ssh/id_rsa && \
-    rm -f /src/main.js
+    rm -f /src/main.js && \
     rm -rf /src/portal
 
 EXPOSE      80
