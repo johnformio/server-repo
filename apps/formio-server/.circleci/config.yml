@@ -133,7 +133,7 @@ jobs:
           at:
             build
       - run: git clone --depth 1 git@github.com:formio/formio-enterprise.git
-      - run: cp build/* formio-enterprise/
+      - run: cp -r build/* formio-enterprise/
       - run:
           name: Commit
           command: |
