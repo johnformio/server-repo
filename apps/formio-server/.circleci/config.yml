@@ -23,10 +23,17 @@ jobs:
       - run:
           name: Build
           command: npm run compile
+      - run:
+          name: Download Portal
+          command: |
+            aws s3 cp s3://formio-app-releases/$(node deployment/scripts/getPortalVersion.js).tgz portal.tgz
+            mkdir build/portal
+            tar -zxvf portal.tgz -C build/portal
       - persist_to_workspace:
           root: build
           paths:
             - favicon.ico
+            - portal
             - main.js
             - package.json
             - package-lock.json

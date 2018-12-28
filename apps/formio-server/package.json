@@ -20,7 +20,8 @@
   },
   "main": "./server.js",
   "schema": "3.3.0",
-  "version": "6.0.10",
+  "portalVersion": "6.0.0",
+  "version": "6.1.0",
   "dependencies": {
     "JSONStream": "^1.3.5",
     "adal-node": "^0.1.28",
@@ -91,6 +92,7 @@
       "build/package.json",
       "build/package-lock.json",
       "build/favicon.ico",
+      "build/portal/**/*",
       "node_modules/formio/src/db/**/*",
       "node_modules/threads/lib/worker.node/slave.js"
     ],
