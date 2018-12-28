@@ -160,13 +160,14 @@ workflows:
               only: /.*/
       - test:
           requires:
-            - build_js
+            - build
+            - portal
           filters:
             tags:
               only: /.*/
       - docker:
           requires:
-            - test_js
+            - test
           filters:
             tags:
               only: /^\d+\.\d+\.\d+.*/
@@ -174,7 +175,7 @@ workflows:
               ignore: /.*/
       - deploy_npm:
           requires:
-            - test_js
+            - test
             - docker
           filters:
             tags:
