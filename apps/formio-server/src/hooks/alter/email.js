@@ -20,7 +20,7 @@ module.exports = app => (mail, req, res, params, cb) => {
           return reject('Plan limited to default transport only.');
         }
 
-        formioServer.analytics.incrementEmailCount(req.primaryProject, (err) => {
+        formioServer.analytics.checkEmail(req, (err) => {
           if (err) {
             return reject(err);
           }
@@ -36,6 +36,8 @@ module.exports = app => (mail, req, res, params, cb) => {
   </tr>
   </tbody>
 </table>`;
+
+          formioServer.analytics.recordEmail(req);
           return resolve();
         });
       }

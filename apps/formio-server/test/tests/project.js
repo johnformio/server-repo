@@ -204,11 +204,9 @@ module.exports = function(app, template, hook) {
             var plan = process.env.PROJECT_PLAN;
             assert.equal(response.plan, plan, 'The plan should match the default new project plan.');
             assert.deepEqual(response.apiCalls, {
-              used: 0,
-              remaining: app.formio.formio.plans.limits[response.plan],
-              limit: app.formio.formio.plans.limits[response.plan],
-              reset: moment().startOf('month').add(1, 'month').toISOString(),
-              emails: 0
+              used: {},
+              limit: _.omit(app.formio.formio.plans.limits[response.plan], ['failure']),
+              reset: moment().startOf('month').add(1, 'month').toISOString()
             });
           }
 
@@ -257,11 +255,14 @@ module.exports = function(app, template, hook) {
             var plan = process.env.PROJECT_PLAN;
             assert.equal(response.plan, plan, 'The plan should match the default new project plan.');
             assert.deepEqual(response.apiCalls, {
-              used: 0,
-              remaining: app.formio.formio.plans.limits[response.plan],
-              limit: app.formio.formio.plans.limits[response.plan],
+              used: {
+                "emails": 0,
+                "formRequests": 0,
+                "forms": 8,
+                "submissionRequests": 0
+              },
+              limit: _.omit(app.formio.formio.plans.limits[response.plan], ['failure']),
               reset: moment().startOf('month').add(1, 'month').toISOString(),
-              emails: 0
             });
           }
 
@@ -456,11 +457,14 @@ module.exports = function(app, template, hook) {
             var plan = process.env.PROJECT_PLAN;
             assert.equal(responseProject.plan, plan, 'The plan should match the default new project plan.');
             assert.deepEqual(responseProject.apiCalls, {
-              used: 0,
-              remaining: app.formio.formio.plans.limits[responseProject.plan],
-              limit: app.formio.formio.plans.limits[responseProject.plan],
+              limit: _.omit(app.formio.formio.plans.limits[responseProject.plan], ['failure']),
               reset: moment().startOf('month').add(1, 'month').toISOString(),
-              emails: 0
+              used: {
+                "emails": 0,
+                "formRequests": 0,
+                "forms": 8,
+                "submissionRequests": 0
+              }
             });
           }
 
@@ -733,11 +737,14 @@ module.exports = function(app, template, hook) {
               var plan = process.env.PROJECT_PLAN;
               assert.equal(response.plan, plan, 'The plan should match the default new project plan.');
               assert.deepEqual(response.apiCalls, {
-                used: 0,
-                remaining: app.formio.formio.plans.limits[response.plan],
-                limit: app.formio.formio.plans.limits[response.plan],
+                used: {
+                  "emails": 0,
+                  "formRequests": 0,
+                  "forms": 9,
+                  "submissionRequests": 0
+                },
                 reset: moment().startOf('month').add(1, 'month').toISOString(),
-                emails: 0
+                limit: _.omit(app.formio.formio.plans.limits[response.plan], ['failure']),
               });
             }
 

@@ -13,11 +13,6 @@ const debug = {
   getFormioFormByName: require('debug')('formio:analytics:getFormioFormByName')
 };
 
-const limits = {
-  basic: 100,
-  independent: 1000
-};
-
 class FormioAnalytics {
   constructor(redis) {
     this.redis = redis;
@@ -51,7 +46,26 @@ class FormioAnalytics {
       const id = req.projectId;
       const path = url.parse(req.url).pathname;
       const start = req._start;
-      this.redis.record(id, path, req.method, start);
+
+      // Determine the request type
+      // s = submission
+      // f = form
+      // o = other
+      // e = email
+      const form = /\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}$/;
+      const submission = /\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}\/submission(\/[a-f0-9]{24})?$/;
+      let type;
+      if (submission.test(path)) {
+        type = 's';
+      }
+      else if (form.test(path)) {
+        type = 'f';
+      }
+      else {
+        type = 'o';
+      }
+
+      this.redis.record(id, path, req.method, type, start);
     });
   }
 
@@ -65,7 +79,26 @@ class FormioAnalytics {
    * @param next {function}
    */
   getCalls(year, month, day, project, next) {
-    this.redis.calls(year, month, day, project, next);
+    this.redis.calls(year, month, day, project, 's', (err, submissionRequests) => {
+      if (err) {
+        return next(err);
+      }
+      this.redis.calls(year, month, day, project, 'f', (err, formRequests) => {
+        if (err) {
+          return next(err);
+        }
+        this.redis.calls(year, month, day, project, 'e', (err, emails) => {
+          if (err) {
+            return next(err);
+          }
+          return next(null, {
+            submissionRequests,
+            formRequests,
+            emails
+          });
+        });
+      });
+    });
   }
 
   redisGet(key, next) {
@@ -76,42 +109,35 @@ class FormioAnalytics {
     this.redis.set(key, value, next);
   }
 
-  getEmailCountKey(project) {
-    const projectId = (typeof project === 'string') ? project : project._id;
-    const year = (new Date()).getUTCFullYear().toString();
-    const month = ((new Date()).getUTCMonth() + 1).toString();
-    return `email:${projectId}:${year}${month}`;
-  }
-
-  getEmailCount(project, next) {
-    this.redis.get(this.getEmailCountKey(project), (err, count) => {
-      if (err) {
-        return next(err);
-      }
-
-      count = (!count || _.isNaN(count)) ? 0 : parseInt(count);
-      return next(null, count);
-    });
-  }
-
   isLimitedEmailPlan(project) {
-    return limits.hasOwnProperty(project.plan);
+    const limits = this.formio.plans.limits;
+    return limits.hasOwnProperty(project.plan) && limits[project.plan].hasOwnProperty('email');
   }
 
-  incrementEmailCount(project, next) {
-    this.getEmailCount(project, (err, count) => {
+  checkEmail(req, next) {
+    const now = new Date();
+    this.redis.analytics(req.projectId, now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 'e', (err, value) => {
       if (err) {
         return next(err);
       }
 
-      if (this.isLimitedEmailPlan(project) && count > limits[project.plan]) {
+      if (this.isLimitedEmailPlan(req.primaryProject) && value >= this.formio.plans.limits[req.primaryProject.plan].email) {
         return next('Over email limit');
       }
-
-      count++;
-      this.redis.set(this.getEmailCountKey(project), count);
-      return next(null, count);
+      return next(null, value);
     });
+  }
+
+  recordEmail(req, next) {
+    if (!req.projectId) {
+      return;
+    }
+
+    const id = req.projectId;
+    const path = url.parse(req.url).pathname;
+    const start = req._start;
+
+    this.redis.record(id, path, req.method, 'e', start, next);
   }
 
   /**
