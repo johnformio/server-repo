@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  build_js:
+  build:
     docker:
       - image: circleci/node:8.11.3
     steps:
@@ -27,10 +27,35 @@ jobs:
           root: build
           paths:
             - favicon.ico
+            - portal
             - main.js
             - package.json
             - package-lock.json
-  test_js:
+  portal:
+    environment:
+      AWS_DEFAULT_REGION: "us-west-2"
+    docker:
+    - image: circleci/python:2.7-jessie
+    steps:
+    - checkout
+    - run:
+        name: Install awscli
+        command: sudo pip install awscli
+    - attach_workspace:
+        at:
+          .
+    - run:
+        name: Download Portal
+        command: |
+          aws s3 cp s3://formio-app-releases/$(cat package.json | python -c 'import sys, json; print json.load(sys.stdin)["portalVersion"]').tgz portal.tgz
+          mkdir -p build/portal
+          tar -zxvf portal.tgz -C build/portal
+    - persist_to_workspace:
+        root: build
+        paths:
+        - portal
+
+  test:
     environment:
       MONGO: "mongodb://localhost:27017/formio"
       REDIS_ADDR: localhost
@@ -108,7 +133,7 @@ jobs:
           at:
             build
       - run: git clone --depth 1 git@github.com:formio/formio-enterprise.git
-      - run: cp build/* formio-enterprise/
+      - run: cp -r build/* formio-enterprise/
       - run:
           name: Commit
           command: |
@@ -126,19 +151,24 @@ workflows:
   version: 2
   do-build:
     jobs:
-      - build_js:
+      - build:
           filters:
             tags:
               only: /.*/
-      - test_js:
+      - portal:
+          filters:
+            tags:
+              only: /.*/
+      - test:
           requires:
-            - build_js
+            - build
+            - portal
           filters:
             tags:
               only: /.*/
       - docker:
           requires:
-            - test_js
+            - test
           filters:
             tags:
               only: /^\d+\.\d+\.\d+.*/
@@ -146,7 +176,7 @@ workflows:
               ignore: /.*/
       - deploy_npm:
           requires:
-            - test_js
+            - test
             - docker
           filters:
             tags:

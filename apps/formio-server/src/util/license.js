@@ -81,7 +81,7 @@ module.exports = (app, config) => {
               console.error('License error: Invalid license');
               process.exit(1);
             }
-            console.log(' > License validated.');
+            console.log('License validated.');
           });
       };
 

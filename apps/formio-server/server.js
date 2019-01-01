@@ -10,6 +10,7 @@ var packageJson = require('./package.json');
 var Q = require('q');
 var cacheControl = require('express-cache-controller');
 var uuid = require('uuid/v4');
+var fs = require('fs');
 
 module.exports = function(options) {
   options = options || {};
@@ -44,6 +45,16 @@ module.exports = function(options) {
   app.listen = function() {
     return app.server.listen.apply(app.server, arguments);
   };
+
+  if (config.licenseData && config.licenseData.portal && process.env.PRIMARY) {
+    // Override config.js so we can set onPremise to true.
+    app.get(`${__dirname}/config.js`, (req, res) => {
+      fs.readFile(`${__dirname}/portal/config.js`, 'utf8', (err, contents) => {
+        res.send(contents.replace('var onPremise = false;', 'var onPremise = true;'));
+      });
+    });
+    app.use(express.static(`${__dirname}/portal`));
+  }
 
   // Make sure no-cache headers are sent to prevent IE from caching Ajax requests.
   app.use(cacheControl({
@@ -189,9 +200,12 @@ module.exports = function(options) {
 
     app.storage = require('./src/storage/index.js')(app);
 
-    return q.resolve({
-      app: app,
-      config: config
+    // Check to install primary project.
+    require('./src/util/install')(app, config, () => {
+      return q.resolve({
+        app: app,
+        config: config
+      });
     });
   });
 
