@@ -89,10 +89,10 @@
   "name": "formio",
   "pkg": {
     "assets": [
-      "build/package.json",
-      "build/package-lock.json",
-      "build/favicon.ico",
-      "build/portal/**/*",
+      "package.json",
+      "package-lock.json",
+      "favicon.ico",
+      "portal/**/*",
       "node_modules/formio/src/db/**/*",
       "node_modules/threads/lib/worker.node/slave.js"
     ],
