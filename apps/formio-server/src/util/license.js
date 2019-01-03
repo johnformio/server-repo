@@ -7,6 +7,10 @@ const jwt = require('jsonwebtoken');
 
 /* eslint-disable no-console */
 module.exports = (app, config) => {
+  if (process.env.NO_LICENSE === 'ImNotStealingFromFormioFamilies') {
+    return Promise.resolve();
+  }
+
   if (!config.license) {
     console.error('License error: No license detected. Please set in LICENSE environment variable.');
     process.exit(1);
@@ -50,31 +54,47 @@ module.exports = (app, config) => {
         Buffer.from(JSON.stringify(payload)).toString('base64')
       ).digest('hex');
 
-      request({
-        method: 'POST',
-        url: 'https://license.form.io/validate',
-        headers: {
-          'content-type': 'application/json'
-        },
-        json: {
-          timestamp,
-          token: config.license,
-          mongoHash: crypto.createHash('md5').update(config.formio.mongo).digest('hex'),
-          hostname: os.hostname(),
-          dbIdentifier,
-        }
-      })
-        .then(result => {
-          if (result !== hash) {
-            console.error('License error: Invalid license');
-            process.exit(1);
-          }
-          console.log(' > License validated.');
-        })
-        .catch(err => {
-          console.error('License error:', err);
+      let count = 0;
+      const makeRequest = () => {
+        if (count > 120) {
+          console.error('License error: Too many attempts');
           process.exit(1);
-        });
+        }
+        count++;
+        return request({
+          method: 'POST',
+          url: 'https://license.form.io/validate',
+          timeout: 30 * 1000,
+          headers: {
+            'content-type': 'application/json'
+          },
+          json: {
+            timestamp,
+            token: config.license,
+            mongoHash: crypto.createHash('md5').update(config.formio.mongo).digest('hex'),
+            hostname: os.hostname(),
+            dbIdentifier,
+          }
+        })
+          .then(result => {
+            if (result !== hash) {
+              console.error('License error: Invalid license');
+              process.exit(1);
+            }
+            console.log('License validated.');
+          });
+      };
+
+      const finished = setInterval(() => {
+        makeRequest()
+          .then(() => clearInterval(finished))
+          .catch(err => console.error('Temporary License error:', err.message));
+      }, 60 * 1000);
+
+      // Call first time.
+      makeRequest()
+        .then(() => clearInterval(finished))
+        .catch(err => console.error('Temporary License error:', err.message));
     })
     .catch(err => {
       console.error('License error:', err);

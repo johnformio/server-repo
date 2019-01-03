@@ -8,7 +8,7 @@ const email = process.env.ADMIN_EMAIL || 'admin@example.com';
 const password = process.env.ADMIN_PASSWORD || 'password';
 const adminKey = process.env.ADMIN_KEY;
 
-fs.readFile('./project.json', 'utf8', function(err, data) {
+fs.readFile('./formio.json', 'utf8', function(err, data) {
   const template = JSON.parse(data);
 
   request({

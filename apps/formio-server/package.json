@@ -20,6 +20,7 @@
   },
   "main": "./server.js",
   "schema": "3.3.0",
+  "portalVersion": "6.0.1",
   "version": "6.1.0",
   "dependencies": {
     "JSONStream": "^1.3.5",
@@ -35,7 +36,7 @@
     "express": "^4.16.4",
     "express-cache-controller": "^1.1.0",
     "formio": "^1.38.0",
-    "formio-services": "formio/formio-services#v1.9.0",
+    "formio-services": "formio/formio-services#v2.0.0",
     "formio-workers": "^1.9.0",
     "formiojs": "^3.10.2",
     "is-url": "^1.2.4",
@@ -88,10 +89,12 @@
   "name": "formio",
   "pkg": {
     "assets": [
-      "build/package.json",
-      "build/package-lock.json",
-      "build/favicon.ico",
-      "node_modules/formio/src/db/**/*"
+      "package.json",
+      "package-lock.json",
+      "favicon.ico",
+      "portal/**/*",
+      "node_modules/formio/src/db/**/*",
+      "node_modules/threads/lib/worker.node/slave.js"
     ],
     "targets": [
       "node8-alpine-x64"

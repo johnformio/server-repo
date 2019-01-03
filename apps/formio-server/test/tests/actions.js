@@ -194,7 +194,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.text;
-            assert.equal(response, 'The current project must be upgraded to access the SQL Connector');
+            assert.equal(response, 'Payment Required');
             done();
           });
       });
@@ -217,7 +217,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.text;
-            assert.equal(response, 'The current project must be upgraded to access the SQL Connector');
+            assert.equal(response, 'Payment Required');
             done();
           });
       });
