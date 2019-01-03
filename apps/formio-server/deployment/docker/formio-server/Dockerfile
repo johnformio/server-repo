@@ -25,8 +25,7 @@ RUN npm cache clean --force && \
     npm uninstall -g npm && \
     apk del .build-deps && \
     rm -f /root/.ssh/id_rsa && \
-    rm -f /src/main.js && \
-    rm -rf /src/portal
+    rm -f /src/main.js
 
 EXPOSE      80
 ENTRYPOINT  ["./formio", "--max_old_space_size=4096"]
