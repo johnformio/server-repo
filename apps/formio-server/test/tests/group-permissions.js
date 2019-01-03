@@ -13,7 +13,6 @@ var docker = process.env.DOCKER;
 var customer = process.env.CUSTOMER;
 
 module.exports = function(app, template, hook) {
-  let Helper = require('formio/test/helper')(app);
   var deleteForms = function(forms, next) {
     async.each(forms, function(item, cb) {
       request(app)
@@ -2225,8 +2224,9 @@ module.exports = function(app, template, hook) {
         });
       });
 
+      if (!docker && !customer)
       describe('sandboxed environment', () => {
-        let helper = new Helper(template.formio.owner);
+        let helper = new template.Helper(template.formio.owner);
         it('Should create all of the forms and resources needed', (done) => {
           helper
             .project()
