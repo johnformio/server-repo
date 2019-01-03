@@ -1374,15 +1374,14 @@ module.exports = function(app, template, hook) {
           request(app)
             .get('/project/' + template.project._id + '/form/' + form._id + '/submission')
             .set('x-jwt-token', template.users.user1.token)
-            .expect('Content-Type', /text/)
-            .expect(401)
+            .expect(200)
             .end(function(err, res) {
               if (err) {
                 return done(err);
               }
 
-              assert.deepEqual(res.body, {});
-              assert.equal(res.text, 'Unauthorized');
+              assert(Array.isArray(res.body), 'The result should be an array');
+              assert.equal(res.body.length, 0);
 
               // Store the JWT for future API calls.
               template.users.user1.token = res.headers['x-jwt-token'];
@@ -1678,15 +1677,14 @@ module.exports = function(app, template, hook) {
           request(app)
             .get('/project/' + template.project._id + '/form/' + form._id + '/submission')
             .set('x-jwt-token', template.users.user1.token)
-            .expect('Content-Type', /text/)
-            .expect(401)
+            .expect(200)
             .end(function(err, res) {
               if (err) {
                 return done(err);
               }
 
-              assert.deepEqual(res.body, {});
-              assert.equal(res.text, 'Unauthorized');
+              assert(Array.isArray(res.body), 'The result should be an array');
+              assert.equal(res.body.length, 0);
 
               // Store the JWT for future API calls.
               template.users.user1.token = res.headers['x-jwt-token'];
@@ -1982,15 +1980,14 @@ module.exports = function(app, template, hook) {
           request(app)
             .get('/project/' + template.project._id + '/form/' + form._id + '/submission')
             .set('x-jwt-token', template.users.user1.token)
-            .expect('Content-Type', /text/)
-            .expect(401)
+            .expect(200)
             .end(function(err, res) {
               if (err) {
                 return done(err);
               }
 
-              assert.deepEqual(res.body, {});
-              assert.equal(res.text, 'Unauthorized');
+              assert(Array.isArray(res.body), 'The result should be an array');
+              assert.equal(res.body.length, 0);
 
               // Store the JWT for future API calls.
               template.users.user1.token = res.headers['x-jwt-token'];
