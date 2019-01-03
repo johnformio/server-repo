@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.1.0
+### Fixed
+ - FOR-1977: Group permissions to allow for index queries into the group controlled records.
+
+### Changed
+ - Upgrade formio to latest v1.38.0 which fixes the following issues. https://github.com/formio/formio/blob/master/Changelog.md#1380
+ - Upgraded chance@1.0.18, debug@4.1.1, minio@7.0.2, aws-sdk@2.382.0, dotenv@6.2.0, formio-workers@1.9.0, formiojs@3.10.2, jira-connector@2.10.0, ldapauth-fork@4.1.0, moment@2.23.0, resourcejs@1.33.0, twilio@3.26.1, eslint@5.11.1, sinon@7.2.2, webpack@4.28.3
+
 ## 6.0.10
 ### Fixed
  - Issues with the build and formio-workers where it was using dynamic includes which was making email transports fail.
