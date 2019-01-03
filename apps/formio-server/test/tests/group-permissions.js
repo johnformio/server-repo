@@ -2413,8 +2413,8 @@ module.exports = function(app, template, hook) {
 
               var response = res.body;
               assert.equal(response.length, 2);
-              assert.equal(response[0].data.notes, 'This is only for the HR department!');
-              assert.equal(response[1].data.notes, 'This is only for the IT department!');
+              assert.equal(response[0].data.notes, 'This is only for the IT department!');
+              assert.equal(response[1].data.notes, 'This is only for the HR department!');
               helper.template.users.user1.token = res.headers['x-jwt-token'];
               done();
             });
