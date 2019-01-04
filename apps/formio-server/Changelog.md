@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## 6.1.0
+### Added
+ - Ability to limit plans per project for forms, form requests and emails.
+ - Portal app is now hosted from root of server.
+ 
 ### Fixed
  - FOR-1977: Group permissions to allow for index queries into the group controlled records.
 
