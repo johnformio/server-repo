@@ -120,7 +120,7 @@ module.exports = function(formio) {
         case 'independent':
           generateNameIfMissing(req);
           filterCorsChanges(req);
-          if (process.env.DISABLE_RESTRICTIONS) {
+          if (!process.env.ENABLE_RESTRICTIONS) {
             return next();
           }
           filterStorageSettings(req);
@@ -129,7 +129,7 @@ module.exports = function(formio) {
         default:
           filterNameChanges(req);
           filterCorsChanges(req);
-          if (process.env.DISABLE_RESTRICTIONS) {
+          if (!process.env.ENABLE_RESTRICTIONS) {
             return next();
           }
           filterOAuthSettings(req);

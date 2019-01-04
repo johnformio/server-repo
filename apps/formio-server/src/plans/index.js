@@ -236,7 +236,7 @@ module.exports = function(formioServer) {
 
     debug.allowForPlans(plans);
     return function(req, res, next) {
-      if (process.env.DISABLE_RESTRICTIONS) {
+      if (!process.env.ENABLE_RESTRICTIONS) {
         return next();
       }
       getPlan(req, function(err, plan) {

@@ -165,7 +165,7 @@ module.exports = function(app) {
        * @param next
        */
       resolve(defaultReturn, action, handler, method, req, res) {
-        if (process.env.DISABLE_RESTRICTIONS) {
+        if (!process.env.ENABLE_RESTRICTIONS) {
           return true;
         }
         const premium = [
