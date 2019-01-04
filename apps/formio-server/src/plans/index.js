@@ -175,7 +175,7 @@ module.exports = function(formioServer) {
               type = 'forms';
             }
 
-            if (type && _plan[type] && calls[type] >= _plan[type] && !process.env.TEST_SUITE) {
+            if (type && _plan[type] && calls[type] >= _plan[type] && process.env.ENABLE_RESTRICTIONS) {
               // Form modifications should always fail.
               if (type === 'forms') {
                 // eslint-disable-next-line callback-return
