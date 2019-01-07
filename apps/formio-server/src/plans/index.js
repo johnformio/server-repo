@@ -175,7 +175,7 @@ module.exports = function(formioServer) {
               type = 'forms';
             }
 
-            if (type && _plan[type] && calls[type] >= _plan[type] && process.env.ENABLE_RESTRICTIONS) {
+            if (type && _plan[type] && calls[type] >= _plan[type] && process.env.FORMIO_HOSTED) {
               // Form modifications should always fail.
               if (type === 'forms') {
                 // eslint-disable-next-line callback-return
@@ -236,7 +236,7 @@ module.exports = function(formioServer) {
 
     debug.allowForPlans(plans);
     return function(req, res, next) {
-      if (!process.env.ENABLE_RESTRICTIONS) {
+      if (!process.env.FORMIO_HOSTED) {
         return next();
       }
       getPlan(req, function(err, plan) {
