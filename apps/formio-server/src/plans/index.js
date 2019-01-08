@@ -196,8 +196,8 @@ module.exports = function(formioServer) {
               cb();
             }
 
-            // If the project has no calls, then we can check every minute, otherwise update every hour.
-            if ((!currentCalls && ((now - lastChecked) > 60)) || ((now - lastChecked) > 3600) || calls.forms !== project.billing.forms) {
+            // If the project has no calls, then we can check every minute, otherwise update every 5 minutes.
+            if ((!currentCalls && ((now - lastChecked) > 60)) || ((now - lastChecked) > 300) || calls.forms !== project.billing.forms) {
               _.set(currentProject, 'billing.calls', calls.submissionRequests);
               _.set(currentProject, 'billing.usage', calls);
               _.set(currentProject, 'billing.exceeds', exceeds);
