@@ -19,7 +19,7 @@ module.exports = function(formioServer) {
 
     project._id = project._id.toString();
     const used = _.get(project, 'billing.usage', {});
-    const limit = _.cloneDeep(formioServer.formio.plans.limits[project.plan]);
+    const limit = _.cloneDeep(formioServer.formio.plans.limits[project.plan || formioServer.config.plan]);
     delete limit.failure;
     return {
       used: used,
