@@ -19,6 +19,7 @@ module.exports = function(formioServer) {
 
     project._id = project._id.toString();
     const used = _.get(project, 'billing.usage', {});
+    used.forms = used.forms || 0;
     used.emails = used.emails || 0;
     used.formRequests = used.formRequests || 0;
     used.submissionRequests = used.submissionRequests || 0;
