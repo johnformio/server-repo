@@ -17,7 +17,7 @@ ADD id_rsa /root/.ssh/id_rsa
 RUN chmod 600 /root/.ssh/id_rsa
 
 RUN npm ci --production && \
-    npm install -g pkg && \
+    npm install -g git+https://git@github.com/randallknutson/pkg.git && \
     npm run dist
 
 RUN npm cache clean --force && \
