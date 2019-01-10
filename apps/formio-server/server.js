@@ -116,6 +116,20 @@ module.exports = function(options) {
 
     app.formio.formio.log('Request', req, req.method, req.path, JSON.stringify(req.query));
 
+    const form = /\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}$/;
+    const submission = /\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}\/submission(\/[a-f0-9]{24})?$/;
+    let type;
+    if (submission.test(req.path)) {
+      type = 'Submission';
+    }
+    else if (form.test(req.path)) {
+      type = 'Form';
+    }
+    else {
+      type = 'Other';
+    }
+    app.formio.formio.log('RequestType', req, req.method, type);
+
     // Override send function to log event
     const resend = res.send;
     res.send = function() {
