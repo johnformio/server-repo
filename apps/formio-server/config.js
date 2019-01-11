@@ -71,7 +71,8 @@ config.formio.reservedForms = [
   'sqlconnector',
   'token',
   'v',
-  'draft'
+  'draft',
+  'recaptcha'
 ];
 /* eslint-enable no-useless-escape */
 // If it isn't allowed as a form, it isn't allowed as a project either.
