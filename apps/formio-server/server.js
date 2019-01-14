@@ -153,6 +153,27 @@ module.exports = function(options) {
     });
   });
 
+  // Load current project and roles.
+  app.use((req, res, next) => {
+    app.formio.formio.cache.loadCurrentProject(req, function(err, currentProject) {
+      if (err || !currentProject) {
+        return next();
+      }
+      req.currentProject = currentProject.toObject();
+
+      app.formio.formio.resources.role.model.find(app.formio.formio.hook.alter('roleQuery', {deleted: {$eq: null}}, req))
+        .sort({title: 1})
+        .lean()
+        .exec((err, roles) => {
+          if (err || !roles) {
+            return next();
+          }
+          req.currentProject.roles = roles;
+          return next();
+        });
+    });
+  });
+
   // Handle our API Keys.
   app.use(require('./src/middleware/apiKey')(app.formio.formio));
 
