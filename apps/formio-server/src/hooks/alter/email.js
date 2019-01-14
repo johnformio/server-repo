@@ -42,10 +42,12 @@ module.exports = app => (mail, req, res, params, cb) => {
         });
       }
       else {
+        formioServer.analytics.recordEmail(req);
         return resolve();
       }
     }
     else {
+      formioServer.analytics.recordEmail(req);
       return resolve();
     }
   });
