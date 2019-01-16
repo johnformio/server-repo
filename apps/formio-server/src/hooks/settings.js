@@ -750,17 +750,38 @@ module.exports = function(app) {
       },
 
       importActionQuery(query, action, template) {
-        query.form = formioServer.formio.util.idToBson(action.form);
+        if (query.hasOwnProperty('$or')) {
+          query.$or.forEach(subQuery => {
+            subQuery.form = formioServer.formio.util.idToBson(action.form);
+          });
+        }
+        else {
+          query.form = formioServer.formio.util.idToBson(action.form);
+        }
         return query;
       },
 
       importFormQuery(query, form, template) {
-        query.project = formioServer.formio.util.idToBson(form.project);
+        if (query.hasOwnProperty('$or')) {
+          query.$or.forEach(subQuery => {
+            subQuery.project = formioServer.formio.util.idToBson(form.project);
+          });
+        }
+        else {
+          query.project = formioServer.formio.util.idToBson(form.project);
+        }
         return query;
       },
 
       importRoleQuery(query, role, template) {
-        query.project = formioServer.formio.util.idToBson(role.project);
+        if (query.hasOwnProperty('$or')) {
+          query.$or.forEach(subQuery => {
+            subQuery.project = formioServer.formio.util.idToBson(role.project);
+          });
+        }
+        else {
+          query.project = formioServer.formio.util.idToBson(role.project);
+        }
         return query;
       },
 
