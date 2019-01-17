@@ -9,7 +9,7 @@ module.exports = function(formioServer) {
    * @param project
    * @return [info, project]
    */
-  const getCallInfo = function(project) {
+  const getCallInfo = function(project, plan) {
     if (!project) {
       return null;
     }
@@ -23,7 +23,7 @@ module.exports = function(formioServer) {
     used.emails = used.emails || 0;
     used.formRequests = used.formRequests || 0;
     used.submissionRequests = used.submissionRequests || 0;
-    const limit = _.cloneDeep(formioServer.formio.plans.limits[project.plan || formioServer.config.plan]);
+    const limit = _.cloneDeep(formioServer.formio.plans.limits[plan || formioServer.config.plan]);
     delete limit.failure;
     return {
       used: used,
@@ -42,10 +42,28 @@ module.exports = function(formioServer) {
       return next();
     }
 
-    next(null, _.map([].concat(res.resource.item), function(project) {
-      project.apiCalls = getCallInfo(project);
-      delete project.billing;
-      return project;
-    }));
+    const promises = [];
+    [].concat(res.resource.item).forEach(project => {
+      if (!project.project) {
+        project.apiCalls = getCallInfo(project, project.plan);
+      }
+      else {
+        // Stages should load the primary project and base plan limits off of primary project plan.
+        promises.push(new Promise((resolve, reject) => {
+          const formio = formioServer;
+          formioServer.formio.cache.loadProject(req, project.project, (err, primaryProject) => {
+            if (!primaryProject || err) {
+              return reject(err || new Error('Primary project not found'));
+            }
+            project.apiCalls = getCallInfo(project, primaryProject.plan);
+            return resolve();
+          });
+        }));
+      }
+    });
+
+    Promise.all(promises)
+      .then(() => next(null))
+      .catch(next);
   };
 };
