@@ -35,7 +35,7 @@
     "dotenv": "^6.2.0",
     "express": "^4.16.4",
     "express-cache-controller": "^1.1.0",
-    "formio": "^1.39.1",
+    "formio": "^1.39.2",
     "formio-services": "formio/formio-services#v2.0.0",
     "formio-workers": "^1.9.0",
     "formiojs": "^3.12.2",
