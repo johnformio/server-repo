@@ -67,12 +67,12 @@ module.exports = (formio) => (req, res, next) => {
             }
           }, (err) => {
             if (err) {
-              res.status(500).send(err.message);
+              res.status(400).send(err.message);
             }
           }).pipe(res);
         }
         catch (err) {
-          res.status(500).send(err.message);
+          res.status(400).send(err.message);
         }
       });
     });

@@ -84,7 +84,7 @@ module.exports = function(formio) {
       })
       .spread(function(response, userInfo) {
         if (!userInfo) {
-          var status = response ? response.statusCode : 500;
+          var status = response ? response.statusCode : 400;
           throw {
             status: status,
             message: `${status  } response from OpenID Provider: ${  response.statusMessage}`
