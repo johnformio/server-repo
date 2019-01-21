@@ -347,10 +347,9 @@ module.exports = (router) => {
           return;
         }
 
-        const statusCode = response.statusCode || 400;
         const message = data ? (data.message || data) : response.statusMessage;
 
-        return res.status(statusCode).send(message);
+        return res.status(400).send(message);
       };
 
       try {

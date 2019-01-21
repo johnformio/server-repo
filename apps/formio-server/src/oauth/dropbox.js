@@ -104,7 +104,7 @@ module.exports = function(formio) {
       })
       .spread(function(response, userInfo) {
         if (!userInfo) {
-          const status = response ? response.statusCode : 400;
+          const status = 400;
           throw {
             status: status,
             message: `${status} response from Dropbox: ${response.statusMessage}`
