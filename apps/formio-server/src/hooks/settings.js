@@ -8,6 +8,7 @@ const chance = new (require('chance'))();
 const fs = require('fs');
 const log = require('debug')('formio:log');
 const util = require('../util/util');
+const vm = require('vm');
 
 module.exports = function(app) {
   const formioServer = app.formio;
@@ -1084,6 +1085,54 @@ module.exports = function(app) {
       external(decoded, req) {
         // Get the projectId from the remote token.
         const projectId = decoded.project ? decoded.project._id : decoded.form.project;
+
+        // Don't allow token parsing for hosted version.
+        if (!process.env.FORMIO_HOSTED && req.currentProject && req.currentProject.settings && req.currentProject.settings.tokenParse) {
+          try {
+            const script = new vm.Script(req.currentProject.settings.tokenParse);
+            const sandbox = {
+              token: decoded,
+              roles: req.currentProject.roles
+            };
+            script.runInContext(vm.createContext(sandbox), {
+              timeout: 500
+            });
+            if (!sandbox.data.hasOwnProperty('user')) {
+              throw new Error('User not defined on data.');
+            }
+            if (typeof sandbox.data.user !== 'object') {
+              throw new Error('User not an object.');
+            }
+            if (!sandbox.data.user.hasOwnProperty('_id')) {
+              throw new Error('_id not defined on user.');
+            }
+            if (typeof sandbox.data.user._id !== 'string') {
+              throw new Error('_id not a string.');
+            }
+            if (!sandbox.data.user.hasOwnProperty('roles')) {
+              throw new Error('roles not defined on user.');
+            }
+            if (!Array.isArray(sandbox.data.user.roles)) {
+              throw new Error('roles not an array.');
+            }
+
+            // Make sure assigned role ids are actually in the project.
+            const roleIds = req.currentProject.roles.map(role => role._id);
+            sandbox.data.user.roles.forEach(roleId => {
+              if (!roleIds.includes(roleId)) {
+                throw new Error('Invalid role id. Not in project.');
+              }
+            });
+
+            req.token = sandbox.data;
+            req.user = sandbox.user.data;
+            return false;
+          }
+          catch (err) {
+            // eslint-disable-next-line no-console
+            console.error('Error parsing JWT token:', err.message);
+          }
+        }
 
         // If external is provided in the signed token, use the decoded token as the request token.
         // Only allow external tokens for the projects they originated in.
