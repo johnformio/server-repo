@@ -31,7 +31,7 @@ module.exports = (config) => {
     return Promise.all(handlers)
     .then((results) => {
       if (res !== undefined) {
-        return res.sendStatus(500);
+        return res.sendStatus(400);
       }
     })
     .catch(fatal => {
@@ -39,7 +39,7 @@ module.exports = (config) => {
       console.error(`Fatal Logger Error: ${fatal}`);
       /* eslint-enable no-console */
       try {
-        return res.sendStatus(500);
+        return res.sendStatus(400);
       }
       catch (e) {
         // res is undefined, called from global uncaughtException handler.
