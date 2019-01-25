@@ -27,21 +27,26 @@ module.exports = function(router) {
           return res.status(400).send('Storage settings not set.');
         }
 
-        if (project.settings.storage.s3.minio) {
-          minio.getUrl(req, project, (err, url) => {
-            if (err) {
-              return res.status(400).send(err);
-            }
-            res.send({url});
-          });
+        try {
+          if (project.settings.storage.s3.minio) {
+            minio.getUrl(req, project, (err, url) => {
+              if (err) {
+                return res.status(400).send(err);
+              }
+              res.send({url});
+            });
+          }
+          else {
+            aws.getUrl(req, project, (err, url) => {
+              if (err) {
+                return res.status(400).send(err);
+              }
+              res.send({url});
+            });
+          }
         }
-        else {
-          aws.getUrl(req, project, (err, url) => {
-            if (err) {
-              return res.status(400).send(err);
-            }
-            res.send({url});
-          });
+        catch (err) {
+          return res.status(400).send(err.message);
         }
       });
     }
@@ -114,21 +119,26 @@ module.exports = function(router) {
         file.expiresin = parseInt(project.settings.storage.s3.expiration || (15 * 60), 10);
         file.expiration = (new Date(Date.now() + (file.expiresin * 1000))).toISOString();
         file.path = _.trim(`${_.trim(file.dir, '/')}/${_.trim(file.name, '/')}`, '/');
-        if (project.settings.storage.s3.minio) {
-          minio.putUrl(project, file, (err, signedUrl) => {
-            if (err) {
-              return res.status(400).send(err);
-            }
-            res.send(uploadResponse(project, file, signedUrl));
-          });
+        try {
+          if (project.settings.storage.s3.minio) {
+            minio.putUrl(project, file, (err, signedUrl) => {
+              if (err) {
+                return res.status(400).send(err);
+              }
+              res.send(uploadResponse(project, file, signedUrl));
+            });
+          }
+          else {
+            aws.putUrl(project, file, (err, signedUrl) => {
+              if (err) {
+                return res.status(400).send(err);
+              }
+              res.send(uploadResponse(project, file, signedUrl));
+            });
+          }
         }
-        else {
-          aws.putUrl(project, file, (err, signedUrl) => {
-            if (err) {
-              return res.status(400).send(err);
-            }
-            res.send(uploadResponse(project, file, signedUrl));
-          });
+        catch (err) {
+          return res.status(400).send(err.message);
         }
       });
     }
