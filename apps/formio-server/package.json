@@ -27,6 +27,7 @@
     "adal-node": "^0.1.28",
     "async": "^2.6.0",
     "aws-sdk": "^2.391.0",
+    "azure-storage": "^2.10.2",
     "body-parser": "^1.18.2",
     "chance": "^1.0.18",
     "cors": "^2.8.5",
