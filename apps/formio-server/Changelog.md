@@ -4,9 +4,19 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## 6.2.0
 ### Added
+ - Azure Blob Storage support
  - Possibility to access reCAPTCHA API Endpoint
+ - Support import queries being ors
+ - Add ability to parse tokens per project.
+ 
+### Fixed
+ - Removed some 500 error codes from being sent by the server
+
+### Changed
+ - Upgrade docker container to Node 10
+ - Upgraded minio@7.0.4, mongodb@3.1.13, sinon@7.2.3, supertest@3.4.2, aws-sdk@2.394.0, formiojs@3.13.0, moment@2.24.0, webpack@4.29.0
 
 ## 6.1.0
 ### Added
