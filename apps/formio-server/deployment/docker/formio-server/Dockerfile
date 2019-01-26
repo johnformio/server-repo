@@ -1,4 +1,4 @@
-FROM node:10-alpine
+FROM node:8-alpine
 MAINTAINER Form.io <support@form.io>
 
 COPY ./build /src
@@ -16,7 +16,7 @@ ADD id_rsa /root/.ssh/id_rsa
 
 RUN chmod 600 /root/.ssh/id_rsa
 
-RUN npm ci --production --build-from-source=bcrypt && \
+RUN npm ci --production && \
     npm install -g https://github.com/randallknutson/pkg.git#build && \
     npm run dist
 
