@@ -20,7 +20,7 @@
   },
   "main": "./server.js",
   "schema": "3.3.0",
-  "portalVersion": "6.1.1",
+  "portalVersion": "6.1.2",
   "version": "6.2.0",
   "dependencies": {
     "JSONStream": "^1.3.5",
