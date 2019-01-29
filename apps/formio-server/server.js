@@ -141,6 +141,15 @@ module.exports = function(options) {
 
   // Load current project and roles.
   app.use((req, res, next) => {
+    // If there is no projectId, don't error out, just skip loading the current project.
+    let projectId = req.projectId;
+    if (req.params.projectId) {
+      projectId = req.params.projectId;
+    }
+    if (!projectId) {
+      return next();
+    }
+
     app.formio.formio.cache.loadCurrentProject(req, function(err, currentProject) {
       if (err || !currentProject) {
         return next();
