@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  
 ### Fixed
  - Removed some 500 error codes from being sent by the server
+ - Problem with reporting in Kinesis where the form is unable to be determined.
 
 ### Changed
  - Upgrade docker container to Node 10
