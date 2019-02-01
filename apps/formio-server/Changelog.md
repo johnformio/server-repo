@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.2.2
+### Fixed
+ - The Azure Storage to work with aliased form endpoints.
+ 
+### Changed
+ - Upgraded formiojs@3.13.6, eslint@5.13.0
+
 ## 6.2.1
 ### Fixed
  - Don't limit requests for any plans when on premise.

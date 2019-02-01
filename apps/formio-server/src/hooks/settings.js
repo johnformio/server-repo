@@ -577,7 +577,7 @@ module.exports = function(app) {
         }
 
         const url = nodeUrl.parse(req.url).pathname.split('/');
-        if (url[5] === 'storage' && ['s3', 'dropbox'].indexOf(url[6]) !== -1) {
+        if (url[5] === 'storage' && ['s3', 'dropbox', 'azure'].indexOf(url[6]) !== -1) {
           entity = {
             type: 'submission',
             id: ''
@@ -708,7 +708,7 @@ module.exports = function(app) {
           const url = req.url.split('/');
 
           // Use submission permissions for access to file signing endpoints.
-          if (url[5] === 'storage' && ['s3', 'dropbox'].indexOf(url[6]) !== -1) {
+          if (url[5] === 'storage' && ['s3', 'dropbox', 'azure'].indexOf(url[6]) !== -1) {
             const _access = formioServer.formio.access.hasAccess(req, access, {
               type: 'submission',
               id: req.submissionId
