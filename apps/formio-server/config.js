@@ -39,7 +39,8 @@ config.reservedSubdomains = [
   'analytics',
   'team',
   'files',
-  'pdf'
+  'pdf',
+  'manager'
 ];
 /* eslint-disable no-useless-escape */
 config.formio.reservedForms = [
@@ -63,6 +64,7 @@ config.formio.reservedForms = [
   'classic',
   'storage\/s3',
   'storage\/dropbox',
+  'storage\/azure',
   'dropbox\/auth',
   'upgrade',
   'access',
