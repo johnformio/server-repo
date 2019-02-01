@@ -115,6 +115,11 @@ module.exports = function(formioServer) {
 
   const checkRequest = function(req) {
     return function(cb) {
+      // Don't limit for on premise.
+      if (!process.env.FORMIO_HOSTED) {
+        return cb();
+      }
+
       getPlan(req, function(err, plan, project, currentProject) {
         currentProject = currentProject || project;
         // Ignore project plans, if not interacting with a project.

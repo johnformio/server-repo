@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.2.1
+### Fixed
+ - Don't limit requests for any plans when on premise.
+
 ## 6.2.0
 ### Added
  - Azure Blob Storage support
