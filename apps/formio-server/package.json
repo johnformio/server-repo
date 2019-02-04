@@ -39,7 +39,7 @@
     "formio": "^1.40.1",
     "formio-services": "formio/formio-services#v2.0.0",
     "formio-workers": "^1.9.0",
-    "formiojs": "^3.13.6",
+    "formiojs": "^3.13.10",
     "is-url": "^1.2.4",
     "jira-connector": "^2.10.0",
     "jslogger": "^1.0.3",
@@ -81,7 +81,7 @@
     "sinon": "^7.2.3",
     "supertest": "^3.4.2",
     "uglify-es": "git+https://github.com/mishoo/UglifyJS2.git#harmony",
-    "webpack": "^4.29.0"
+    "webpack": "^4.29.1"
   },
   "pre-commit": [
     "lint"
