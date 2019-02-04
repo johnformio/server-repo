@@ -189,6 +189,14 @@ else if (process.env.MONGO1) {
   config.formio.mongo = process.env.MONGO1;
 }
 
+if (process.env.MONGO_SA) {
+  config.formio.mongoSA = process.env.MONGO_SA;
+}
+
+if (process.env.MONGO_CONFIG) {
+  config.formio.mongoConfig = process.env.MONGO_CONFIG;
+}
+
 // This secret is used to encrypt certain DB fields at rest in the mongo database
 config.formio.mongoSecret = process.env.DB_SECRET || 'abc123';
 config.formio.mongoSecretOld = process.env.DB_SECRET_OLD || false;
