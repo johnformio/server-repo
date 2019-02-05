@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.2.5
+### Fixed
+ - Problems with DocumentDB not working well with complex indexes with array values.
+ 
+### Changed
+ - Upgraded aws-sdk@2.396.0, twilio@3.28.0
+
 ## 6.2.4
 ### Changed
  - Upgrade the portal 6.1.4
