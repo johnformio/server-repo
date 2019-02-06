@@ -910,16 +910,26 @@ module.exports = function(app) {
               project.access = _.filter(project.access, access => permissions.indexOf(access.type) === -1);
 
               template.access.forEach(access => {
-                project.access.push({
-                  type: access.type,
-                  roles: _.filter(access.roles).map(name => {
-                    if (template.roles && template.roles.hasOwnProperty(name)) {
-                      return template.roles[name]._id;
-                    }
-                    return name;
-                  })
+                const projectAccess = _.find(project.access, {type: access.type});
+                const newRoles = _.filter(access.roles).map(name => {
+                  if (template.roles && template.roles.hasOwnProperty(name)) {
+                    return template.roles[name]._id;
+                  }
+                  return name;
                 });
+                if (projectAccess) {
+                  projectAccess.roles = _.uniq(projectAccess.roles.concat(newRoles));
+                }
+                else {
+                  project.access.push({
+                    type: access.type,
+                    roles: newRoles
+                  });
+                }
               });
+
+              // Ensure we have unique access.
+              project.access = _.uniqBy(project.access, 'type');
             }
             else if (
               'roles' in template &&

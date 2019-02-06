@@ -216,11 +216,20 @@ module.exports = function(router, formioServer) {
             }
           });
           Object.keys(accesses).forEach(key => {
-            req.body.access.push({
-              type: key,
-              roles: accesses[key].map(role => role.toString())
-            });
+            const access = _.find(req.body.access, {type: key});
+            const newAccess = accesses[key].map(role => role.toString());
+            if (!access) {
+              req.body.access.push({
+                type: key,
+                roles: newAccess
+              });
+            }
+            else {
+              access.roles = _.uniq(access.roles.concat(newAccess));
+            }
           });
+
+          req.body.access = _.uniqBy(req.body.access, 'type');
         }
 
         // Reset the machine name so that it will regenerate.
