@@ -19,7 +19,7 @@
     "validate": "circleci config validate -c .circleci/config.yml"
   },
   "main": "./server.js",
-  "schema": "3.3.0",
+  "schema": "3.3.1",
   "portalVersion": "6.1.4",
   "version": "6.2.5",
   "dependencies": {
