@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.2.6
+### Fixed
+ - Issues where the project access would duplicate anytime that a project deploy to a protected project would occur.
+ 
+### Changed
+ - Upgrade aws-sdk@2.397.0
+
 ## 6.2.5
 ### Fixed
  - Problems with DocumentDB not working well with complex indexes with array values.
