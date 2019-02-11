@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.2.7
+### Changed
+ - Upgrade formio to 1.40.2 (fixes jwt token expired issue)
+
 ## 6.2.6
 ### Fixed
  - Issues where the project access would duplicate anytime that a project deploy to a protected project would occur.
