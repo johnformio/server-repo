@@ -13,7 +13,7 @@ module.exports = function(app, template, hook) {
         .post('/project')
         .set('x-jwt-token', template.formio.owner.token)
         .set('Content-Type', 'application/json')
-        .send('{"title":"abc","name":"123","description":"respect","settings":{"cors":"*"}💩')
+        .send('{"title":"abc","name":"123","description":"respect","settings":{"cors":"*"}}}}}')
         .expect(400)
         .end(function(err, res) {
           if (err) {
@@ -47,7 +47,7 @@ module.exports = function(app, template, hook) {
 
     it('Cant access a Project without a valid Project ID', function(done) {
       request(app)
-        .get('/project/💩')
+        .get('/project/}}}}')
         .set('x-jwt-token', template.formio.owner.token)
         .expect(400)
         .end(function(err, res) {
@@ -201,7 +201,7 @@ module.exports = function(app, template, hook) {
 
     it('A Project Owner should not be able to Create a Form without a valid Project ID', function(done) {
       request(app)
-        .post('/project/💩/form') // Invalid project id
+        .post('/project/}}}}}/form') // Invalid project id
         .set('x-jwt-token', template.formio.owner.token)
         .send(tempForm)
         .expect(400)
