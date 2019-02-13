@@ -47,17 +47,13 @@ module.exports = function(app, template, hook) {
 
     it('Cant access a Project without a valid Project ID', function(done) {
       request(app)
-        .get('/project/}}}}')
+        .get(`/project/${encodeURI('💩')}`)
         .set('x-jwt-token', template.formio.owner.token)
         .expect(400)
         .end(function(err, res) {
           if(err) {
             return done(err);
           }
-
-          // Store the JWT for future API calls.
-          template.formio.owner.token = res.headers['x-jwt-token'];
-
           done();
         });
     });
@@ -201,7 +197,7 @@ module.exports = function(app, template, hook) {
 
     it('A Project Owner should not be able to Create a Form without a valid Project ID', function(done) {
       request(app)
-        .post('/project/}}}}}/form') // Invalid project id
+        .post(`/project/${encodeURI('💩')}/form`) // Invalid project id
         .set('x-jwt-token', template.formio.owner.token)
         .send(tempForm)
         .expect(400)
@@ -209,10 +205,6 @@ module.exports = function(app, template, hook) {
           if(err) {
             return done(err);
           }
-
-          // Store the JWT for future API calls.
-          template.formio.owner.token = res.headers['x-jwt-token'];
-
           done();
         });
     });
