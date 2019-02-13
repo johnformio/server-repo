@@ -11,10 +11,9 @@ RUN chmod 600 /root/.ssh/id_rsa
 RUN npm config set python /usr/bin/python
 RUN npm i -g npm
 RUN npm ci --production && \
+    npm install -g pkg && \
     npm rebuild bcrypt --build-from-source && \
-    npm install -g https://github.com/randallknutson/pkg.git#build && \
     npm run dist
-
 RUN npm cache clean --force && \
     npm uninstall -g pkg && \
     npm uninstall -g npm && \
