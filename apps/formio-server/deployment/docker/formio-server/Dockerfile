@@ -1,4 +1,4 @@
-FROM formio/docker-alpine-node-java-git
+FROM formio/docker-alpine-node-java-git:1.0.0
 MAINTAINER Form.io <support@form.io>
 
 COPY ./build /src
