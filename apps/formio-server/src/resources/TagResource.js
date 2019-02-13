@@ -26,6 +26,11 @@ module.exports = function(router, formioServer) {
     afterGet: [
       formio.middleware.filterResourcejsResponse(hiddenFields)
     ],
+    beforePatch: [
+      (req, res, next) => {
+        return res.sendStatus(405);
+      },
+    ],
     beforePost: [
       formio.middleware.restrictToPlans(['commercial', 'trial']),
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
