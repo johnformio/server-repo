@@ -143,6 +143,11 @@ module.exports = function(router, formioServer) {
       formio.middleware.projectAnalytics,
       projectSettings
     ],
+    beforePatch: [
+      (req, res, next) => {
+        return res.sendStatus(405);
+      },
+    ],
     beforePost: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       require('../middleware/fetchTemplate'),
