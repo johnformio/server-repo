@@ -74,6 +74,7 @@ config.formio.reservedForms = [
   'token',
   'v',
   'draft',
+  'saml',
   'recaptcha'
 ];
 /* eslint-enable no-useless-escape */

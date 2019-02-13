@@ -234,6 +234,9 @@ module.exports = function(options) {
     // Mount formio at /project/:projectId.
     app.use('/project/:projectId', app.formio);
 
+    // Mount the saml integration.
+    app.use('/project/:projectId/saml', require('./src/saml/saml')(app.formio.formio));
+
     // Mount the aggregation system.
     app.use('/project/:projectId/report', require('./src/middleware/report')(app.formio));
 

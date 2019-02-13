@@ -3031,7 +3031,7 @@ module.exports = function(app, template, hook) {
         request(app)
           .post('/project/' + template.project._id + '/upgrade')
           .set('x-jwt-token', template.formio.owner.token)
-          .send({plan: '💩'})
+          .send({plan: '}}}}'})
           .expect('Content-Type', /text\/html/)
           .expect(400)
           .end(function(err, res) {

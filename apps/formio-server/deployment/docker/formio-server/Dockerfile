@@ -1,21 +1,13 @@
-FROM node:8-alpine
+FROM formio/docker-alpine-node-java-git:1.0.0
 MAINTAINER Form.io <support@form.io>
 
 COPY ./build /src
 WORKDIR /src
 
-# Install git
-RUN apk update && \
-    apk upgrade && \
-    apk add --no-cache --virtual .build-deps bash git make gcc g++ python openssh-client
-
 # Add deployment key
 RUN mkdir /root/.ssh/ && ssh-keyscan github.com >> /root/.ssh/known_hosts
-
 ADD id_rsa /root/.ssh/id_rsa
-
 RUN chmod 600 /root/.ssh/id_rsa
-
 RUN npm ci --production && \
     npm install -g https://github.com/randallknutson/pkg.git#build && \
     npm run dist
