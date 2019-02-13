@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: formio/docker-alpine-node-java-git
+      - image: circleci/openjdk:8-jdk-node-browsers-legacy
     steps:
       - checkout
       - restore_cache:
