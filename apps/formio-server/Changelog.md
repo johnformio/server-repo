@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.3.0
+### Added
+ - SAML Single Sign On support
+ - PATCH method for Submissions
+
+### Fixed
+ - Fix issue where changing password caused a user to not be able to login.
+
 ## 6.2.7
 ### Changed
  - Upgrade formio to 1.40.2 (fixes jwt token expired issue)
