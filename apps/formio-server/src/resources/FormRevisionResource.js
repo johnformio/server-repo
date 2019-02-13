@@ -7,6 +7,13 @@ module.exports = function(router, formioServer) {
 
   const options = {
     before: [
+      (req, res, next) => {
+        // Disable Patch for forms for now.
+        if (req.method === 'PATCH') {
+          return res.sendStatus(405);
+        }
+        return next();
+      },
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       formio.middleware.bootstrapEntityOwner,
       formio.middleware.formHandler,
