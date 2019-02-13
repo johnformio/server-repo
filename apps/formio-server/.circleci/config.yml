@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: loyaltyone/docker-alpine-java-node
+      - image: formio/docker-alpine-node-java-git
     steps:
       - checkout
       - restore_cache:
