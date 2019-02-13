@@ -18,6 +18,7 @@
     "lint": "eslint .",
     "validate": "circleci config validate -c .circleci/config.yml"
   },
+  "cache": "1550085609",
   "main": "./server.js",
   "schema": "3.3.1",
   "portalVersion": "6.1.4",
