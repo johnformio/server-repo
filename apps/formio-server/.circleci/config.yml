@@ -61,7 +61,7 @@ jobs:
       REDIS_ADDR: localhost
       REDIS_PORT: 6379
     docker:
-      - image: circleci/node:8.11.3
+      - image: circleci/openjdk:8-jdk-node
       - image: mongo:3.4.16
       - image: redis:4.0.11
     steps:
@@ -126,7 +126,7 @@ jobs:
 
   deploy_npm:
     docker:
-      - image: circleci/node:8.11.3
+      - image: circleci/openjdk:8-jdk-node
     steps:
       - checkout
       - attach_workspace:
