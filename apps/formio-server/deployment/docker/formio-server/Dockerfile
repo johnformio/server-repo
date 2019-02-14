@@ -9,11 +9,8 @@ RUN mkdir /root/.ssh/ && ssh-keyscan github.com >> /root/.ssh/known_hosts
 ADD id_rsa /root/.ssh/id_rsa
 RUN chmod 600 /root/.ssh/id_rsa
 RUN npm config set python /usr/bin/python
-RUN npm i -g npm
-RUN npm ci --production && \
-    npm install -g pkg && \
-    npm rebuild bcrypt --build-from-source && \
-    npm run dist
+RUN npm i -g npm && npm ci --production && npm rebuild bcrypt --build-from-source
+RUN npm install -g pkg && npm run dist
 RUN npm cache clean --force && \
     npm uninstall -g pkg && \
     npm uninstall -g npm && \
@@ -22,4 +19,6 @@ RUN npm cache clean --force && \
     rm -f /src/main.js
 
 EXPOSE      80
+
 ENTRYPOINT  ["./formio", "--max_old_space_size=4096"]
+#ENTRYPOINT  ["node", "--max_old_space_size=4096", "main"]
