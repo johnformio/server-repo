@@ -97,7 +97,10 @@
       "favicon.ico",
       "portal/**/*",
       "node_modules/formio/src/db/**/*",
-      "node_modules/threads/lib/worker.node/slave.js"
+      "node_modules/threads/lib/worker.node/slave.js",
+      "node_modules/samlify/build/schemas/*",
+      "node_modules/@passify/xml-encryption/lib/templates/*",
+      "node_modules/@passify/xml-schema-validator/support/*"
     ],
     "targets": [
       "node10-alpine-x64"

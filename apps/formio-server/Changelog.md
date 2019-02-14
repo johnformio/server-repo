@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - SAML Single Sign On support
  - PATCH method for Submissions
 
+### Changed
+ - Upgrade to Node v10
+
 ### Fixed
  - Fix issue where changing password caused a user to not be able to login.
 

@@ -1,7 +1,6 @@
 'use strict';
-
-const router = require('express').Router();
 const debug = require('debug')('formio:saml');
+const router = require('express').Router();
 const _ = require('lodash');
 const saml = require('samlify');
 const ServiceProvider = saml.ServiceProvider;
