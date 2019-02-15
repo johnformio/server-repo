@@ -2,7 +2,7 @@
 const debug = require('debug')('formio:saml');
 const router = require('express').Router();
 const _ = require('lodash');
-const SAML = require('passport-saml').SAML;
+const SAML = require('passport-saml/lib/passport-saml/saml').SAML;
 const {MetadataReader, toPassportConfig} = require('passport-saml-metadata');
 module.exports = (formio) => {
   // Get the SAML providers for this project.

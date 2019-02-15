@@ -21,7 +21,7 @@
   "cache": "1550086650",
   "main": "./server.js",
   "schema": "3.3.1",
-  "portalVersion": "6.1.5",
+  "portalVersion": "6.1.6",
   "version": "6.3.0",
   "dependencies": {
     "JSONStream": "^1.3.5",
@@ -76,7 +76,7 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "eslint": "^5.13.0",
+    "eslint": "^5.14.0",
     "eslint-config-formio": "^1.1.2",
     "mocha": "^5.1.0",
     "pre-commit": "^1.2.2",
@@ -98,7 +98,8 @@
       "favicon.ico",
       "portal/**/*",
       "node_modules/formio/src/db/**/*",
-      "node_modules/threads/lib/worker.node/slave.js"
+      "node_modules/threads/lib/worker.node/slave.js",
+      "node_modules/xml-encryption/**/*"
     ],
     "targets": [
       "node10-alpine-x64"
