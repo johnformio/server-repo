@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
  - Upgrade to Node v10
+ - Upgrade request-promise-native@1.0.7, webpack@4.29.4, aws-sdk@2.403.0, formiojs@3.15.2
 
 ### Fixed
  - Fix issue where changing password caused a user to not be able to login.

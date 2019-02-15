@@ -1,8 +1,14 @@
-FROM formio/docker-alpine-node-java-git:1.0.0
+FROM node:10-alpine
 MAINTAINER Form.io <support@form.io>
 
 COPY ./build /src
 WORKDIR /src
+
+RUN apk update && \
+    apk upgrade && \
+    apk add --no-cache --virtual .build-deps bash git make gcc g++ python openssh-client && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm /var/cache/apk/*
 
 # Add deployment key
 RUN mkdir /root/.ssh/ && ssh-keyscan github.com >> /root/.ssh/known_hosts
@@ -19,6 +25,4 @@ RUN npm cache clean --force && \
     rm -f /src/main.js
 
 EXPOSE      80
-
 ENTRYPOINT  ["./formio", "--max_old_space_size=4096"]
-#ENTRYPOINT  ["node", "--max_old_space_size=4096", "main"]
