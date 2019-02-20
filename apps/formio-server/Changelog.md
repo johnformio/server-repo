@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.3.1
+### Changed
+ - Upgraded formio module to resolve issues with sub-form validation and errors.
+ - Upgraded formiojs@3.15.6, twilio@3.28.1, eslint@5.14.1, sinon@7.2.4, webpack@4.29.5, aws-sdk@2.407.0, jsonwebtoken@8.5.0, mocha@6.0.0
+
 ## 6.3.0
 ### Added
  - SAML Single Sign On support
