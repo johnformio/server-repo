@@ -140,6 +140,9 @@ module.exports = function(router) {
       steps: {
         type: [String]
       },
+      config: {
+        type: formio.mongoose.Schema.Types.Mixed
+      },
       framework: {
         type: String,
         enum: ['angular', 'angular2', 'react', 'vue', 'html5', 'simple', 'custom', 'aurelia', 'javascript'],

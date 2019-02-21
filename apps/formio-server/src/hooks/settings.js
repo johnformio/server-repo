@@ -220,6 +220,12 @@ module.exports = function(app) {
         if (req.url.indexOf(`/project/${req.projectId}/saml/`) === 0) {
           return true;
         }
+        if (req.url.indexOf(`/project/${req.projectId}/config.json`) === 0) {
+          return true;
+        }
+        if (req.url.indexOf(`/project/${req.projectId}/manage`) === 0) {
+          return true;
+        }
 
         if (req.method !== 'GET') {
           return false;

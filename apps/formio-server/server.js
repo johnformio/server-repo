@@ -234,6 +234,35 @@ module.exports = function(options) {
     // Mount formio at /project/:projectId.
     app.use('/project/:projectId', app.formio);
 
+    // Allow for the project public info to be sent without access to the project endpoint.
+    app.get('/project/:projectId/config.json', (req, res) => {
+      if (!req.currentProject.settings.allowConfig) {
+        return res.json({
+          _id: req.currentProject._id
+        });
+      }
+      const config = req.currentProject.config || {};
+      return res.json({
+        _id: req.currentProject._id,
+        name: req.currentProject.name,
+        config: config
+      });
+    });
+
+    // Add the form manager.
+    if (config.licenseData && config.licenseData.portal) {
+      app.get('/project/:projectId/manage', (req, res) => {
+        const script = `<script type="text/javascript">
+        window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/?$/, '');
+        document.write('<base href="' + location.pathname.replace(/\\/$/, '') + '/">');
+      </script>`;
+        fs.readFile(`./portal/manager/index.html`, 'utf8', (err, contents) => {
+          res.send(contents.replace('<base href="/">', `<head>${script}`));
+        });
+      });
+      app.use('/project/:projectId/manage', express.static(`./portal/manager`));
+    }
+
     // Mount the saml integration.
     app.use('/project/:projectId/saml', require('./src/saml/saml')(app.formio.formio));
 
