@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.4.0
+### Added
+ - Added the Form Manager to each project. Can be seen by going to https://yourproject.form.io/manage
+ - A way to add Public Configurations to projects. Seen within the Portal | Project | Settings | Public Configurations
+ - Allow a public config.json to be exposed for your project @ https://yourproject.form.io/config.json
+
+## 6.3.2
+### Fixed
+ - Fixed issues with subform validations and also update API's with subforms. Automated tests created
+ - Fixed problem with the MongoDB queries for DocumentDB which didn't support $elemMatch within the $all query.
+
 ## 6.3.1
 ### Changed
  - Upgraded formio module to resolve issues with sub-form validation and errors.
