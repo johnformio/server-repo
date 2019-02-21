@@ -283,6 +283,22 @@ module.exports = function(app, template, hook) {
         });
     });
 
+    it('An anonymous user should be able to read an empty object for the public configurations.', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/config.json')
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          var response = res.body;
+          assert.deepEqual(response, {});
+          done();
+        });
+    });
+
     it('A user without authentication should not be able to update a project.', function(done) {
       var newDescription = 'An updated Project Description.';
       request(app)
@@ -320,6 +336,7 @@ module.exports = function(app, template, hook) {
     it('A Form.io User should be able to update the settings of their Project', function(done) {
       var newSettings = {
         cors: '*',
+        allowConfig: true,
         keys: [
           {
             name: 'Test Key',
@@ -364,6 +381,149 @@ module.exports = function(app, template, hook) {
           // Store the JWT for future API calls.
           template.formio.owner.token = res.headers['x-jwt-token'];
 
+          done();
+        });
+    });
+
+    it('Should show the project public configuration', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/config.json')
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          assert.deepEqual(res.body, {
+            _id: template.project._id,
+            name: template.project.name,
+            config: {}
+          })
+          done();
+        });
+    });
+
+    it('Should allow you to provide some public configurations for this project', function(done) {
+      request(app)
+        .put('/project/' + template.project._id)
+        .set('x-jwt-token', template.formio.owner.token)
+        .send({config: {
+          one: 'one',
+          two: 'two',
+          three: {
+            four: 'four',
+            five: 'five'
+          }
+        }})
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          assert.deepEqual(res.body.config, {
+            one: 'one',
+            two: 'two',
+            three: {
+              four: 'four',
+              five: 'five'
+            }
+          })
+          done();
+        });
+    });
+
+    it('Should allow you to get the new project public configurations.', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/config.json')
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          assert.deepEqual(res.body, {
+            _id: template.project._id,
+            name: template.project.name,
+            config: {
+              one: 'one',
+              two: 'two',
+              three: {
+                four: 'four',
+                five: 'five'
+              }
+            }
+          })
+          done();
+        });
+    });
+
+    it('Should allow you to turn off the public configurations.', function(done) {
+      var newSettings = {
+        cors: '*',
+        allowConfig: false,
+        keys: [
+          {
+            name: 'Test Key',
+            key: '123testing123testing'
+          },
+          {
+            name: 'Bad Key',
+            key: '123testing'
+          }
+        ],
+        email: {
+          smtp: {
+            host: 'example.com',
+            auth: {
+              user: 'test',
+              pass: 'test123'
+            }
+          }
+        }
+      };
+
+      request(app)
+        .put('/project/' + template.project._id)
+        .set('x-jwt-token', template.formio.owner.token)
+        .send({settings: newSettings})
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          var response = res.body;
+          assert.equal(response.hasOwnProperty('settings'), true);
+          assert.deepEqual(response.settings, newSettings);
+
+          // Check that the response does not contain these properties.
+          not(response, ['__v', 'deleted', 'settings_encrypted']);
+
+          template.project = response;
+
+          // Store the JWT for future API calls.
+          template.formio.owner.token = res.headers['x-jwt-token'];
+
+          done();
+        });
+    });
+
+    it('Should allow you to show empty project configurations.', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/config.json')
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          assert.deepEqual(res.body, {})
           done();
         });
     });
