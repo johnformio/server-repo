@@ -294,7 +294,9 @@ module.exports = function(app, template, hook) {
           }
 
           var response = res.body;
-          assert.deepEqual(response, {});
+          assert.deepEqual(response, {
+            _id: template.project._id
+          });
           done();
         });
     });
@@ -523,7 +525,9 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
-          assert.deepEqual(res.body, {})
+          assert.deepEqual(res.body, {
+            _id: template.project._id
+          })
           done();
         });
     });

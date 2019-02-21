@@ -237,7 +237,9 @@ module.exports = function(options) {
     // Allow for the project public info to be sent without access to the project endpoint.
     app.get('/project/:projectId/config.json', (req, res) => {
       if (!req.currentProject.settings.allowConfig) {
-        return res.json({});
+        return res.json({
+          _id: req.currentProject._id
+        });
       }
       const config = req.currentProject.config || {};
       return res.json({
