@@ -47,23 +47,26 @@ module.exports = function(formioServer) {
           },
           // If is a stage and has stage permission.
           {
-            project: {$exists: true},
-            access: {
-              $all: [
-                {
+            $and: [
+              {
+                project: {$exists: true},
+                access: {
                   $elemMatch: {
                     'type': 'team_access',
                     'roles': {$in: roles}
                   }
-                },
-                {
+                }
+              },
+              {
+                project: {$exists: true},
+                access: {
                   $elemMatch: {
                     'type': {$in: ['stage_read', 'stage_write']},
                     'roles': {$in: roles}
                   }
                 }
-              ]
-            }
+              }
+            ]
           },
         ]
       };
