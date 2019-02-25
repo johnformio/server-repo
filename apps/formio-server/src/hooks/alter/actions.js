@@ -11,9 +11,6 @@ module.exports = (app) => (actions) => {
   actions.sqlconnector = require('../../actions/sqlconnector/SQLConnector')(formioServer);
   actions.jira = require('../../actions/atlassian/jira')(formioServer);
   actions.group = require('../../actions/GroupAction')(formioServer);
-  actions.moxtraLogin = require('../../actions/moxtra/MoxtraLogin')(formioServer);
-  actions.moxtraMessage = require('../../actions/moxtra/MoxtraMessage')(formioServer);
-  actions.moxtraTodo = require('../../actions/moxtra/MoxtraTodo')(formioServer);
   actions.webhook = require('../../actions/WebhookAction')(formioServer);
   actions.twilio = require('../../actions/twilio/twilio')(formioServer);
   return actions;
