@@ -21,7 +21,10 @@ module.exports = (formio) => {
         }
 
         const reader = new MetadataReader(settings.idp);
-        const saml = new SAML(toPassportConfig(reader));
+        const config = toPassportConfig(reader);
+        config.issuer = settings.issuer;
+        config.callbackUrl = settings.callbackUrl;
+        const saml = new SAML(config);
         return resolve({
           saml: saml,
           project: project,
