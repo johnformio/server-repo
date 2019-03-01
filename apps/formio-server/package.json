@@ -57,6 +57,7 @@
     "node-hubspot": "https://github.com/formio/node-hubspot.git",
     "node-paginate-anything": "^1.0.0",
     "on-finished": "^2.3.0",
+    "opn": "^5.4.0",
     "passport-saml": "^1.0.0",
     "passport-saml-metadata": "^1.6.0",
     "q": "^1.5.1",
