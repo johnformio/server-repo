@@ -50,6 +50,15 @@ module.exports = function(options) {
     // Override config.js so we can set onPremise to true.
     app.get('/config.js', (req, res) => {
       fs.readFile(`./portal/config.js`, 'utf8', (err, contents) => {
+        if (config.hostedPDFServer) {
+          /* eslint-disable prefer-template */
+          contents = contents.replace(
+            'var hostedPDFServer = \'\';',
+            'var hostedPDFServer = \'' + config.hostedPDFServer + '\';'
+          );
+          /* eslint-enable prefer-template */
+        }
+
         res.send(contents.replace('var onPremise = false;', 'var onPremise = true;'));
       });
     });
