@@ -59,32 +59,45 @@ module.exports = function(formio) {
 
           // Load the owner as the current user.
           formio.cache.loadSubmission(req, userResource._id, currentProject.owner, function(err, user) {
-            if (err || !user) {
+            if (err) {
               return next();
             }
 
-            // Set the user and user token.
-            req.user = user;
-            req.token = {
-              user: {
-                _id: user._id.toString()
-              },
-              form: {
-                _id: userResource._id.toString(),
-                project: formioProject._id.toString()
+            // A user was found.
+            if (user) {
+              // Set the user and user token.
+              req.user = user;
+              req.token = {
+                user: {
+                  _id: user._id.toString()
+                },
+                form: {
+                  _id: userResource._id.toString(),
+                  project: formioProject._id.toString()
+                }
+              };
+
+              // Refresh the token that is sent back to the user when appropriate.
+              res.token = formio.auth.getToken(req.token);
+
+              // Set the headers if they haven't been sent yet.
+              if (!res.headersSent) {
+                res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
+                res.setHeader('x-jwt-token', res.token);
               }
-            };
 
-            // Refresh the token that is sent back to the user when appropriate.
-            res.token = formio.auth.getToken(req.token);
-
-            // Set the headers if they haven't been sent yet.
-            if (!res.headersSent) {
-              res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
-              res.setHeader('x-jwt-token', res.token);
+              // Move onto the next middleware.
+              return next();
             }
 
-            // Move onto the next middleware.
+            // If we are hosted and no user is found, then just skip this middleware.
+            if (process.env.FORMIO_HOSTED) {
+              return next();
+            }
+
+            // We are not hosted so go ahead and allow request as admin.
+            req.permissionsChecked = true;
+            req.isAdmin = true;
             return next();
           });
         });

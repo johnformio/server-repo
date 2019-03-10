@@ -50,16 +50,18 @@ module.exports = function(options) {
     // Override config.js so we can set onPremise to true.
     app.get('/config.js', (req, res) => {
       fs.readFile(`./portal/config.js`, 'utf8', (err, contents) => {
-        if (config.hostedPDFServer) {
-          /* eslint-disable prefer-template */
-          contents = contents.replace(
-            'var hostedPDFServer = \'\';',
-            'var hostedPDFServer = \'' + config.hostedPDFServer + '\';'
-          );
-          /* eslint-enable prefer-template */
-        }
-
-        res.send(contents.replace('var onPremise = false;', 'var onPremise = true;'));
+        res.send(contents.replace(/var hostedPDFServer = '';|var sso = '';|var onPremise = false;/gi, (matched) => {
+          if (config.hostedPDFServer && matched.indexOf('var hostedPDFServer') !== -1) {
+            return `var hostedPDFServer = '${config.hostedPDFServer}';`;
+          }
+          else if (config.portalSSO && matched.indexOf('var sso') !== -1) {
+            return `var sso = '${config.portalSSO}';`;
+          }
+          else if (matched.indexOf('var onPremise') !== -1) {
+            return 'var onPremise = true;';
+          }
+          return matched;
+        }));
       });
     });
     app.use(express.static(`./portal`));
@@ -258,15 +260,42 @@ module.exports = function(options) {
       });
     });
 
+    /**
+     * Get the application variables for the form manager and viewer.
+     * @param project
+     * @return {string}
+     */
+    const appVariables = function(project) {
+      return `
+        window.APP_TITLE = '${_.get(project, 'config.title', '')}';
+        window.APP_JS = '${_.get(project, 'config.js', '')}';
+        window.APP_CSS = '${_.get(project, 'config.css', '')}';
+        window.APP_LOGO = '${_.get(project, 'config.logo', '')}';
+        window.APP_LOGOHEIGHT = '${_.get(project, 'config.logoHeight', '')}';
+        window.APP_NAVBAR = '${_.get(project, 'config.navbar', '')}';
+        window.APP_BRANDING = false;
+      `;
+    };
+
     // Add the form manager.
     if (config.licenseData && config.licenseData.portal) {
       app.get('/project/:projectId/manage', (req, res) => {
         const script = `<script type="text/javascript">
-        window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/?$/, '');
-        document.write('<base href="' + location.pathname.replace(/\\/$/, '') + '/">');
-      </script>`;
+          window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/?$/, '');
+          window.APP_SSO = '${_.get(req.currentProject, 'config.sso', '')}';
+          ${appVariables(req.currentProject)}
+        </script>`;
         fs.readFile(`./portal/manager/index.html`, 'utf8', (err, contents) => {
-          res.send(contents.replace('<base href="/">', `<head>${script}`));
+          res.send(contents.replace('<head>', `<head>${script}`));
+        });
+      });
+      app.get('/project/:projectId/manage/view', (req, res) => {
+        const script = `<script type="text/javascript">
+          window.ALLOW_SWITCH = false;
+          ${appVariables(req.currentProject)}
+        </script>`;
+        fs.readFile(`./portal/manager/view/index.html`, 'utf8', (err, contents) => {
+          res.send(contents.replace('<head>', `<head>${script}`));
         });
       });
       app.use('/project/:projectId/manage', express.static(`./portal/manager`));

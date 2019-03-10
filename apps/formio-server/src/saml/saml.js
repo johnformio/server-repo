@@ -35,6 +35,14 @@ module.exports = (formio) => {
     });
   };
 
+  const toMongoId = function(id) {
+    let str = '';
+    for (let i = 0; i < id.length; i++) {
+      str += id[i].charCodeAt(0).toString(16);
+    }
+    return _.padEnd(str.substr(0, 24), 24, '0');
+  };
+
   /**
    * Get a JWT token in exchange for a SAML request.
    *
@@ -44,7 +52,7 @@ module.exports = (formio) => {
    * @return {*}
    */
   const getToken = function(profile, settings, project, roleMap) {
-    let userRoles = profile.roles;
+    let userRoles = _.get(profile, (settings.rolesPath || 'roles'));
     if (typeof userRoles === 'string') {
       if (userRoles.indexOf(',') !== -1) {
         userRoles = userRoles.split(',');
@@ -66,7 +74,7 @@ module.exports = (formio) => {
     });
 
     const user = {
-      _id: userId,
+      _id: toMongoId(userId),
       data: profile,
       roles
     };
@@ -104,6 +112,9 @@ module.exports = (formio) => {
         if (err) {
           res.status(400).send(err.message || err);
         }
+        if (providers.settings.query) {
+          redirect = `${redirect}&${providers.settings.query}`;
+        }
         return res.redirect(redirect);
       });
     }).catch((err) => {
@@ -112,7 +123,9 @@ module.exports = (formio) => {
   });
 
   router.post('/acs', (req, res) => {
-    if (!req.body.RelayState) {
+    // Get the relay.
+    const relay = req.query.relay || req.body.RelayState;
+    if (!relay) {
       return res.status(400).send('No relay provided.');
     }
     getSAMLProviders(req).then((providers) => {
@@ -131,7 +144,7 @@ module.exports = (formio) => {
           return res.status(401).send('Unauthorized');
         }
 
-        return res.redirect(`${req.body.RelayState}?saml=${token.token}`);
+        return res.redirect(`${relay}?saml=${token.token}`);
       });
     }).catch((err) => {
       return res.status(400).send(err.message || err);
