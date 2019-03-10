@@ -22,7 +22,7 @@ module.exports = function(formioServer) {
         if (!bson) {
           return false;
         }
-        return [formioServer.formio.util.idToString(role), formioServer.formio.util.idToBson(role)];
+        return [formioServer.formio.util.idToString(role), bson];
       })));
       query = {
         $or: [
