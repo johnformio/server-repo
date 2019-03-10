@@ -1107,7 +1107,12 @@ module.exports = function(app) {
         const projectId = decoded.project ? decoded.project._id : decoded.form.project;
 
         // Don't allow token parsing for hosted version.
-        if (!process.env.FORMIO_HOSTED && req.currentProject && req.currentProject.settings && req.currentProject.settings.tokenParse) {
+        if (
+          !process.env.FORMIO_HOSTED &&
+          req.currentProject &&
+          req.currentProject.settings &&
+          req.currentProject.settings.tokenParse
+        ) {
           try {
             const script = new vm.Script(req.currentProject.settings.tokenParse);
             const sandbox = {
@@ -1156,7 +1161,10 @@ module.exports = function(app) {
 
         // If external is provided in the signed token, use the decoded token as the request token.
         // Only allow external tokens for the projects they originated in.
-        if (decoded.external === true && req.projectId && req.projectId === projectId) {
+        if (
+          decoded.external === true &&
+          (!process.env.FORMIO_HOSTED || (req.projectId && req.projectId === projectId))
+        ) {
           req.token = decoded;
           req.user = decoded.user;
           return false;

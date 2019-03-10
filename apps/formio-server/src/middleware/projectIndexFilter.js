@@ -17,9 +17,13 @@ module.exports = function(formioServer) {
       if (!req.user || !req.user._id || !req.user.roles) {
         return res.sendStatus(401);
       }
-      const roles = _.flattenDeep(_.map(req.user.roles, function(role) {
+      const roles = _.filter(_.flattenDeep(_.map(req.user.roles, function(role) {
+        const bson = formioServer.formio.util.idToBson(role);
+        if (!bson) {
+          return false;
+        }
         return [formioServer.formio.util.idToString(role), formioServer.formio.util.idToBson(role)];
-      }));
+      })));
       query = {
         $or: [
           // If owner.
