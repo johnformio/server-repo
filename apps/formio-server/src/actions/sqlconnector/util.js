@@ -11,6 +11,8 @@ const debug = {
 };
 const squel = require('squel');
 
+const primaryComparison = ' = {{ params.id }}';
+
 module.exports = (router) => {
   const formio = router.formio;
   const required = formio.plans.limits.team;
@@ -80,17 +82,6 @@ module.exports = (router) => {
       endpoint: `/${path}`
     };
 
-    /**
-     * Util function to generate the primary key comparison for different sql types.
-     *
-     * @returns {*}
-     */
-    function getPrimaryComparison() {
-      return isPostgresql()
-        ? ' = text(\'{{ params.id }}\')'
-        : ' = {{ params.id }}';
-    }
-
     let _sql;
     switch (method) {
       case 'create':
@@ -139,7 +130,7 @@ module.exports = (router) => {
         _sql = _squel
           .select(defaultSettings)
           .from(path.toString())
-          .where(primary.toString() + (getPrimaryComparison()).toString());
+          .where(primary.toString() + primaryComparison);
 
         route.query = _sql.toString();
         break;
@@ -156,7 +147,7 @@ module.exports = (router) => {
           _sql.set(column, `{{ data.${value} }}`);
         }
 
-        _sql.where(primary.toString() + (getPrimaryComparison()).toString());
+        _sql.where(primary.toString() + primaryComparison);
 
         if (isPostgresql()) {
           _sql.returning('*');
@@ -169,7 +160,7 @@ module.exports = (router) => {
           _sql = _squel
             .select(defaultSettings)
             .from(path.toString())
-            .where(primary.toString() + (getPrimaryComparison()).toString())
+            .where(primary.toString() + primaryComparison)
             .toString();
 
           // Get the select string for the updated record.
@@ -183,7 +174,7 @@ module.exports = (router) => {
         _sql = _squel
           .delete(defaultSettings)
           .from(path.toString())
-          .where(primary.toString() + (getPrimaryComparison()).toString());
+          .where(primary.toString() + primaryComparison);
 
         route.query = _sql.toString();
         break;
