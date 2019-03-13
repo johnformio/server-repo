@@ -291,6 +291,7 @@ module.exports = function(options) {
       });
       app.get('/project/:projectId/manage/view', (req, res) => {
         const script = `<script type="text/javascript">
+          window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/view\\/?$/, '');
           window.ALLOW_SWITCH = false;
           ${appVariables(req.currentProject)}
         </script>`;

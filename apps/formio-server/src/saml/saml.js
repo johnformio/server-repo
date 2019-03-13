@@ -36,6 +36,7 @@ module.exports = (formio) => {
   };
 
   const toMongoId = function(id) {
+    id = id || '';
     let str = '';
     for (let i = 0; i < id.length; i++) {
       str += id[i].charCodeAt(0).toString(16);
@@ -64,6 +65,9 @@ module.exports = (formio) => {
         userRoles = userRoles.split(' ');
       }
     }
+    if (!userRoles || userRoles.length) {
+      return 'No User Roles were found within your SAML profile.';
+    }
     const userId = _.get(profile, (settings.idPath || 'id'));
     const roles = [];
     roleMap.map(map => {
@@ -72,6 +76,11 @@ module.exports = (formio) => {
         roles.push(map.id);
       }
     });
+
+    // Make sure to throw an error if no user id was found within the saml profile.
+    if (!userId) {
+      return 'No User ID was found within your SAML profile.';
+    }
 
     const user = {
       _id: toMongoId(userId),
@@ -142,6 +151,9 @@ module.exports = (formio) => {
         );
         if (!token) {
           return res.status(401).send('Unauthorized');
+        }
+        if (typeof token === 'string') {
+          return res.status(401).send(token);
         }
 
         return res.redirect(`${relay}?saml=${token.token}`);
