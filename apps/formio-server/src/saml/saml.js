@@ -65,9 +65,6 @@ module.exports = (formio) => {
         userRoles = userRoles.split(' ');
       }
     }
-    if (!userRoles || userRoles.length) {
-      return 'No User Roles were found within your SAML profile.';
-    }
     const userId = _.get(profile, (settings.idPath || 'id'));
     const roles = [];
     roleMap.map(map => {
