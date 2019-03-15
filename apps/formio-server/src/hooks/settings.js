@@ -1026,7 +1026,6 @@ module.exports = function(app) {
         options._id = currentProject._id;
         options.name = currentProject.name;
         options.machineName = currentProject.machineName;
-
         return options;
       },
 
