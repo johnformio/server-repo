@@ -20,16 +20,36 @@ module.exports = (formio) => {
           return reject('Project is not configured for SAML');
         }
 
-        const reader = new MetadataReader(settings.idp);
-        const config = toPassportConfig(reader);
-        config.issuer = settings.issuer;
-        config.callbackUrl = settings.callbackUrl;
-        const saml = new SAML(config);
-        return resolve({
-          saml: saml,
-          project: project,
-          roles: settings.roles,
-          settings: settings
+        // Load the valid roles for this project.
+        formio.resources.role.model.find({
+          project: project._id,
+          deleted: {$eq: null}
+        }).exec((err, roles) => {
+          if (err) {
+            return reject('Unable to load project roles');
+          }
+
+          // Make sure to only allow valid role ids.
+          const validRoles = (roles && roles.length) ? roles.map((role) => role._id.toString()) : [];
+          const roleMap = _.filter(settings.roles.map((role) => {
+            if (validRoles.indexOf(role.id) !== -1) {
+              return role;
+            }
+            return false;
+          }));
+
+          const reader = new MetadataReader(settings.idp);
+          const config = toPassportConfig(reader);
+          config.issuer = settings.issuer;
+          config.callbackUrl = settings.callbackUrl;
+          const saml = new SAML(config);
+          return resolve({
+            saml: saml,
+            project: project,
+            projectRoles: roles,
+            roles: roleMap,
+            settings: settings
+          });
         });
       });
     });

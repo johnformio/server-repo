@@ -34,72 +34,89 @@ module.exports = app => (middleware) => {
         return next();
       }
 
-      currentProject = currentProject.toObject();
-
-      // Only continue if oauth settings are set.
-      const oauthSettings = _.get(currentProject, 'settings.oauth.openid', false);
-      if (!oauthSettings) {
-        return next();
-      }
-
-      request({
-        method: 'GET',
-        uri: oauthSettings.userInfoURI,
-        headers: {
-          Authorization: authorization
-        }
-      }, (err, response) => {
+      // Load the valid roles for this project.
+      app.formio.formio.resources.role.model.find({
+        project: currentProject._id,
+        deleted: {$eq: null}
+      }).exec((err, roles) => {
         if (err) {
-          res.status(400).send(err);
+          return next();
         }
 
-        try {
-          const data = JSON.parse(response.body);
+        // Get a list of valid roles for this project.
+        const validRoles = (roles && roles.length) ? roles.map((role) => role._id.toString()) : [];
+        currentProject = currentProject.toObject();
 
-          // Assign roles based on settings.
-          const roles = [];
-          oauthSettings.roles.map(map => {
-            if (!map.claim ||
-              _.get(data, map.claim) === map.value ||
-              _.includes(_.get(data, map.claim), map.value)
-            ) {
-              roles.push(map.role);
-            }
-          });
+        // Only continue if oauth settings are set.
+        const oauthSettings = _.get(currentProject, 'settings.oauth.openid', false);
+        if (!oauthSettings) {
+          return next();
+        }
 
-          const user = {
-            _id: data._id || data.sub,
-            data,
-            roles
-          };
-
-          const token = {
-            external: true,
-            user,
-            // form: {
-            //   _id: req.currentForm._id.toString()
-            // },
-            project: {
-              _id: currentProject._id.toString()
-            },
-            externalToken: authorization.replace(/^Bearer/, "")
-          };
-
-          req.user = user;
-          req.token = token;
-          res.token = app.formio.formio.auth.getToken(token);
-          req['x-jwt-token'] = res.token;
-
-          // Set the headers if they haven't been sent yet.
-          if (!res.headersSent) {
-            res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
-            res.setHeader('x-jwt-token', res.token);
+        request({
+          method: 'GET',
+          uri: oauthSettings.userInfoURI,
+          headers: {
+            Authorization: authorization
           }
-          return res.send(user);
-        }
-        catch (err) {
-          res.status(400).send(err);
-        }
+        }, (err, response) => {
+          if (err) {
+            res.status(400).send(err);
+          }
+
+          try {
+            const data = JSON.parse(response.body);
+
+            // Assign roles based on settings.
+            const roles = [];
+            oauthSettings.roles.map(map => {
+              if (
+                // Make sure this is a valid role to assign the user.
+                (validRoles.indexOf(map.role) !== -1) &&
+                (
+                  !map.claim ||
+                  _.get(data, map.claim) === map.value ||
+                  _.includes(_.get(data, map.claim), map.value)
+                )
+              ) {
+                roles.push(map.role);
+              }
+            });
+
+            const user = {
+              _id: data._id || data.sub,
+              data,
+              roles
+            };
+
+            const token = {
+              external: true,
+              user,
+              // form: {
+              //   _id: req.currentForm._id.toString()
+              // },
+              project: {
+                _id: currentProject._id.toString()
+              },
+              externalToken: authorization.replace(/^Bearer/, "")
+            };
+
+            req.user = user;
+            req.token = token;
+            res.token = app.formio.formio.auth.getToken(token);
+            req['x-jwt-token'] = res.token;
+
+            // Set the headers if they haven't been sent yet.
+            if (!res.headersSent) {
+              res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
+              res.setHeader('x-jwt-token', res.token);
+            }
+            return res.send(user);
+          }
+          catch (err) {
+            res.status(400).send(err);
+          }
+        });
       });
     });
   });
