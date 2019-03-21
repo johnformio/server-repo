@@ -39,6 +39,12 @@ module.exports = app => models => {
       required: true,
       default: 0
     },
+    project: {
+      type: app.formio.formio.mongoose.Schema.Types.ObjectId,
+      ref: 'project',
+      index: true,
+      required: true
+    },
     state: {
       type: String,
       description: 'The current state of the submission',

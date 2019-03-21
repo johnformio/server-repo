@@ -92,7 +92,10 @@ module.exports = function(formioServer) {
         }
       });
 
-      const query = {};
+      // Make sure to limit the query of submissions to within this project.
+      const query = {
+        project: formio.util.idToBson(req.projectId)
+      };
       let stages = [];
       let limitStage = null;
       let skipStage = null;
@@ -143,81 +146,88 @@ module.exports = function(formioServer) {
         return res.status(400).send('Disallowed stage used in aggregation.');
       }
 
-      const readAllForms = [];
-      const readOwnForms = [];
       const forms = [];
+      const preStage = [{'$match': query}];
       const protectedFields = {};
-      const formQuery = {
-        project: formio.util.idToBson(req.projectId),
-        deleted:  {'$eq': null}
-      };
+      let modelReady;
 
-      // If they are already filtering on the form, then include that in the form query.
-      if (query.form) {
-        formQuery._id = query.form;
-      }
+      // IF they are not admins, then we can set the form access.
+      const setFormAccess = function(next) {
+        const formQuery = {
+          project: formio.util.idToBson(req.projectId),
+          deleted:  {'$eq': null}
+        };
 
-      // Get all forms in a project.
-      formio.resources.form.model.find(formQuery).exec(function(err, result) {
-        if (err) {
-          return next(err);
+        // If they are already filtering on the form, then include that in the form query.
+        if (query.form) {
+          formQuery._id = query.form;
         }
 
-        // Find all forms that this user has "read_all" or "read_own" access
-        _.each(result, function(form) {
-          const access = form.submissionAccess.toObject();
-          if (req.isAdmin) {
-            readAllForms.push(form._id);
-          }
-          else {
-            access.map((item) => {
-              const roles = item.roles.map((role) => role.toString());
-              if (item.type === 'read_all' && req.user.roles.some((role) => roles.includes(role))) {
-                readAllForms.push(form._id);
+        if (req.isAdmin) {
+          if (query.form) {
+            // If a form is provided in the query, then still allow custom collections.
+            return formio.resources.form.model.findOne(formQuery).lean().exec(function(err, form) {
+              if (err) {
+                return next(err);
               }
-              else if (item.type === 'read_own' && req.user.roles.some((role) => roles.includes(role))) {
-                readOwnForms.push(form._id);
-              }
+
+              modelReady = new Promise((resolve) => {
+                util.getSubmissionModel(formio, req, form, true, (err, collectionModel) => {
+                  if (collectionModel) {
+                    resolve(collectionModel);
+                  }
+                  else {
+                    resolve(formio.resources.submission.model);
+                  }
+                });
+              });
+              next();
             });
           }
+          else {
+            modelReady = Promise.resolve(formio.resources.submission.model);
+            return next();
+          }
+        }
 
-          forms.push(form._id);
-          protectedFields[form._id.toString()] = [];
-          formioUtils.eachComponent(form.components, (component, path) => {
-            if (component.protected) {
-              protectedFields[form._id.toString()].push(path);
-            }
-          });
-        });
+        // Get all forms in a project.
+        formio.resources.form.model.find(formQuery).lean().exec(function(err, result) {
+          if (err) {
+            return next(err);
+          }
 
-        const modelReady = new Promise((resolve, reject) => {
-          util.getSubmissionModel(formio, req, result[0], true, (err, collectionModel) => {
-            if (collectionModel) {
-              resolve(collectionModel);
+          const readAllForms = [];
+          const readOwnForms = [];
+
+          // Find all forms that this user has "read_all" or "read_own" access
+          _.each(result, (form) => {
+            const access = form.submissionAccess.toObject();
+            if (req.isAdmin) {
+              readAllForms.push(form._id);
             }
             else {
-              resolve(formio.resources.submission.model);
+              access.map((item) => {
+                const roles = item.roles.map((role) => role.toString());
+                if (item.type === 'read_all' && req.user.roles.some((role) => roles.includes(role))) {
+                  readAllForms.push(form._id);
+                }
+                else if (item.type === 'read_own' && req.user.roles.some((role) => roles.includes(role))) {
+                  readOwnForms.push(form._id);
+                }
+              });
             }
+
+            forms.push(form._id);
+            protectedFields[form._id.toString()] = [];
+            formioUtils.eachComponent(form.components, (component, path) => {
+              if (component.protected) {
+                protectedFields[form._id.toString()].push(path);
+              }
+            });
           });
-        });
 
-        // Make sure to not include deleted submissions.
-        if (!req.query.deleted) {
-          query.deleted = {$eq: null};
-        }
-
-        // If they do not provide a form limit, it should at least be the forms.
-        if (!query.form) {
-          query.form = {$in: forms};
-        }
-
-        // Add the prestages to the beginning of the stages.
-        stages = [
-          // Perform the query.
-          {'$match': query},
-
-          // Ensure they have access to the records.
-          {
+          // Add this to the stages.
+          preStage.push({
             '$match': {'$or': [
                 {
                   form: {
@@ -231,8 +241,35 @@ module.exports = function(formioServer) {
                   owner: formio.util.idToBson(req.user._id)
                 }
               ]}
-          }
-        ].concat(stages);
+          });
+
+          modelReady = new Promise((resolve, reject) => {
+            util.getSubmissionModel(formio, req, result[0], true, (err, collectionModel) => {
+              if (collectionModel) {
+                resolve(collectionModel);
+              }
+              else {
+                resolve(formio.resources.submission.model);
+              }
+            });
+          });
+        });
+      };
+
+      // Set the form access.
+      setFormAccess(() => {
+        // Make sure to not include deleted submissions.
+        if (!req.query.deleted) {
+          query.deleted = {$eq: null};
+        }
+
+        // If they do not provide a form limit, it should at least be the forms.
+        if (!query.form) {
+          query.form = {$in: forms};
+        }
+
+        // Add the prestages to the beginning of the stages.
+        stages = preStage.concat(stages);
 
         // Add the skip stage first if applicable.
         if (skipStage) {
@@ -267,7 +304,7 @@ module.exports = function(formioServer) {
               .pipe(JSONStream.stringify())
               .pipe(res);
           })
-          .catch(() => res.send(400).send('Bad Request'));
+          .catch(() => res.status(400).send('Bad Request'));
 
         // If a limit is provided, then we need to include some pagination stuff.
         if (!limitStage) {

@@ -47,6 +47,9 @@ module.exports = app => routes => {
 
     routes[handler].push((req, res, next) => {
       if (typeof req.body === 'object') {
+        // Always set the project ID to the current project.
+        req.body.project = req.projectId || req.params.projectId;
+
         if (!req.body.hasOwnProperty('_fvid') || isNaN(parseInt(req.body._fvid))) {
           req.body._fvid = req.currentForm._vid || 0;
         }

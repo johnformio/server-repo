@@ -56,6 +56,7 @@ module.exports = function(formio) {
       })
       .then(function(formId) {
         return formio.resources.submission.model.create({
+          project: req.userProject._id,
           form: formId,
           owner: req.user._id,
           data: {
