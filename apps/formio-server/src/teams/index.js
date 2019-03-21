@@ -641,7 +641,10 @@ module.exports = function(app, formioServer) {
       return res.sendStatus(401);
     }
 
-    getTeams(req.token.user, true, true)
+    getTeams({
+      _id: req.token.user._id,
+      project: req.token.project._id
+    }, true, true)
       .then(function(teams) {
         teams = teams || [];
         teams = filterTeamsForDisplay(teams);
@@ -663,7 +666,10 @@ module.exports = function(app, formioServer) {
       return res.sendStatus(401);
     }
 
-    getTeams(req.token.user, false, true)
+    getTeams({
+      _id: req.token.user._id,
+      project: req.token.project._id
+    }, false, true)
       .then(function(teams) {
         teams = teams || [];
         teams = filterTeamsForDisplay(teams);
