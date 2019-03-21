@@ -188,34 +188,51 @@ module.exports = function(app, formioServer) {
         deleted: {$eq: null}
       };
 
-      // Modify the search query based on the given criteria, search for BSON and string versions of ids.
-      debug.getTeams(`User: ${util.idToString(user)}, Member: ${member}, Owner: ${owner}`);
-      if (member && owner) {
-        query['$or'] = [
-          {'data.members': {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}}},
-          {'data.admins': {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}}},
-          {owner: {$in: [util.idToBson(user), util.idToString(user)]}}
-        ];
-      }
-      else if (member && !owner) {
-        query['data.members'] = {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}};
-      }
-      else if (!member && owner) {
-        query['$or'] = [
-          {'owner': {$in: [util.idToBson(user), util.idToString(user)]}},
-          {'data.admins': {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}}}
-        ];
+      // If the portal is with SSO and the user has teams in their array, perform a one-to-one mapping between
+      // the users teams and the titles of the teams they are added to.
+      if (formioServer.config.portalSSO && user.teams) {
+        query.name = {$in: user.teams};
       }
       else {
-        // Fail safely for incorrect usage of getTeams.
-        debug.getTeams('Could not build team query because given parameters were incorrect.');
-        return q.resolve([]);
+        // Modify the search query based on the given criteria, search for BSON and string versions of ids.
+        debug.getTeams(`User: ${util.idToString(user)}, Member: ${member}, Owner: ${owner}`);
+        if (member && owner) {
+          query['$or'] = [
+            {'data.members': {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}}},
+            {'data.admins': {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}}},
+            {owner: {$in: [util.idToBson(user), util.idToString(user)]}}
+          ];
+        }
+        else if (member && !owner) {
+          query['data.members'] = {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}};
+        }
+        else if (!member && owner) {
+          query['$or'] = [
+            {'owner': {$in: [util.idToBson(user), util.idToString(user)]}},
+            {'data.admins': {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}}}
+          ];
+        }
+        else {
+          // Fail safely for incorrect usage of getTeams.
+          debug.getTeams('Could not build team query because given parameters were incorrect.');
+          return q.resolve([]);
+        }
       }
 
       formioServer.formio.resources.submission.model.find(query).lean().exec((err, documents) => {
         if (err) {
           debug.getTeams(err);
           return q.reject(err);
+        }
+
+        // Add the user as a member of the team if they have this from SSO.
+        if (formioServer.config.portalSSO && user.teams) {
+          documents.forEach((doc) => {
+            doc.data = {
+              members: [user._id.toString()],
+              admins: []
+            };
+          });
         }
 
         return q.resolve(documents || []);

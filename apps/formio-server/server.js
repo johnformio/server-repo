@@ -303,7 +303,7 @@ module.exports = function(options) {
     }
 
     // Mount the saml integration.
-    app.use('/project/:projectId/saml', require('./src/saml/saml')(app.formio.formio));
+    app.use('/project/:projectId/saml', require('./src/saml/saml')(app.formio));
 
     // Mount the aggregation system.
     app.use('/project/:projectId/report', require('./src/middleware/report')(app.formio));

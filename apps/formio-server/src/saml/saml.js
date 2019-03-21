@@ -4,7 +4,10 @@ const router = require('express').Router();
 const _ = require('lodash');
 const SAML = require('passport-saml/lib/passport-saml/saml').SAML;
 const {MetadataReader, toPassportConfig} = require('passport-saml-metadata');
-module.exports = (formio) => {
+module.exports = (formioServer) => {
+  const formio = formioServer.formio;
+  const config = formioServer.config;
+
   // Get the SAML providers for this project.
   const getSAMLProviders = function(req) {
     return new Promise((resolve, reject) => {
@@ -85,10 +88,17 @@ module.exports = (formio) => {
         userRoles = userRoles.split(' ');
       }
     }
+
+    // Trim all whitespace from the roles.
+    userRoles = userRoles.map(_.trim);
+
+    // Add an "Everyone" role.
+    userRoles.push('Everyone');
+
     const userId = _.get(profile, (settings.idPath || 'id'));
     const roles = [];
     roleMap.map(map => {
-      if (!map.role || _.includes(userRoles, map.role)
+      if (!map.role || _.includes(userRoles, _.trim(map.role))
       ) {
         roles.push(map.id);
       }
@@ -104,6 +114,13 @@ module.exports = (formio) => {
       data: profile,
       roles
     };
+
+    // If this is the primary project and they user using PORTAL_SSO, then we need to have a way to map the roles
+    // within the saml profile to Teams within the Form.io system. To do this, we will assign a "teams" property on
+    // the user object that will be read by the teams feature to determine which teams are allocated to this user.
+    if (project.primary && config.portalSSO) {
+      user.teams = userRoles;
+    }
 
     const token = {
       external: true,
