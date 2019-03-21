@@ -441,42 +441,62 @@ module.exports = function(app, formioServer) {
       return res.sendStatus(400);
     }
 
-    const _team = req.params.teamId;
-    const query = {
-      $and: [
-        {$or: [
-          {'access.type': 'team_access'},
-          {'access.type': 'team_read'},
-          {'access.type': 'team_write'},
-          {'access.type': 'team_admin'}
-        ]},
-        {'access.roles': {$in: [formioServer.formio.util.idToString(_team), formioServer.formio.util.idToBson(_team)]}},
-        {project: null}
-      ],
-      deleted: {$eq: null}
-    };
+    if (!req.token || !req.token.user._id) {
+      return res.sendStatus(401);
+    }
 
-    debug.teamProjects(query);
-    formioServer.formio.resources.project.model.find(query).lean().exec((err, projects) => {
-      if (err) {
-        debug.teamProjects(err);
-        return res.sendStatus(400);
-      }
+    getTeams({
+      _id: req.token.user._id,
+      project: req.token.project._id
+    }, true, true)
+      .then(function(teams) {
+        teams = teams || [];
 
-      const response = [];
-      _.each(projects, function(project) {
-        response.push({
-          _id: project._id,
-          title: project.title,
-          name: project.name,
-          owner: project.owner,
-          permission: getProjectPermission(project, _team)
+        // Make sure this user actually belongs to this team first.
+        if (_.map(teams, (team) => team._id.toString()).indexOf(req.params.teamId) === -1) {
+          return res.status(200).json([]);
+        }
+
+        const _team = req.params.teamId;
+        const query = {
+          $and: [
+            {$or: [
+                {'access.type': 'team_access'},
+                {'access.type': 'team_read'},
+                {'access.type': 'team_write'},
+                {'access.type': 'team_admin'}
+              ]},
+            {'access.roles': {$in: [formioServer.formio.util.idToString(_team), formioServer.formio.util.idToBson(_team)]}},
+            {project: null}
+          ],
+          deleted: {$eq: null}
+        };
+
+        debug.teamProjects(query);
+        formioServer.formio.resources.project.model.find(query).lean().exec((err, projects) => {
+          if (err) {
+            debug.teamProjects(err);
+            return res.sendStatus(400);
+          }
+
+          const response = [];
+          _.each(projects, function(project) {
+            response.push({
+              _id: project._id,
+              title: project.title,
+              name: project.name,
+              owner: project.owner,
+              permission: getProjectPermission(project, _team)
+            });
+          });
+
+          debug.teamProjects(response);
+          return res.status(200).json(response);
         });
+      })
+      .catch(function(err) {
+        return res.sendStatus(400);
       });
-
-      debug.teamProjects(response);
-      return res.status(200).json(response);
-    });
   });
 
   /**
