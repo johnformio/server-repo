@@ -528,6 +528,39 @@ module.exports = function(app) {
           getProjectAccess,
           getTeamAccess
         );
+        handlers.push((callback) => {
+          // The groups should be the difference between the user roles and access.roles.
+          const groups = (req.user && req.user.roles && access.roles) ? _.difference(req.user.roles, access.roles) : [];
+
+          // Add user teams to the access.
+          if (req.user && req.user.teams && req.user.teams.length) {
+            access.roles = access.roles.concat(req.user.teams);
+          }
+
+          // We have some groups that we need to validate.
+          if (groups.length) {
+            // Verify these are all submissions within this project.
+            formioServer.formio.resources.submission.model.find({
+              _id: {$in: groups.map(formioServer.formio.util.idToBson)},
+              project: formioServer.formio.util.idToBson(req.projectId),
+              deleted: {$eq: null}
+            }).lean().select({_id: 1}).exec((err, subs) => {
+              if (err || !subs || !subs.length) {
+                // Don't add any groups to the access roles.
+                return callback(null);
+              }
+
+              // Add the valid groups to the access roles.
+              access.roles = access.roles.concat(_(subs).map((sub) => {
+                return sub._id.toString();
+              }).filter().uniq().value());
+              return callback(null);
+            });
+          }
+          else {
+            return callback(null);
+          }
+        });
         return handlers;
       },
 
@@ -1064,6 +1097,7 @@ module.exports = function(app) {
 
         user = user || {};
         user.roles = user.roles || [];
+        user.teams = [];
 
         // Convert all the roles to strings
         user.roles = _(user.roles)
@@ -1079,15 +1113,12 @@ module.exports = function(app) {
             }
 
             // Filter the teams to only contain the team ids.
-            teams = _(teams)
+            user.teams = _(teams)
               .map('_id')
               .filter()
               .map(util.idToString)
               .uniq()
-              .forEach(function(team) {
-                // Add the users team ids, to their roles.
-                user.roles.push(team);
-              });
+              .value();
 
             return user;
           })

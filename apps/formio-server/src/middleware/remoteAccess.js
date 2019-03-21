@@ -32,7 +32,7 @@ module.exports = app => (req, res, next) => {
           const type = access.type.replace('stage_', 'team_');
           roles.forEach(role => {
             if (
-              req.user.roles.indexOf(role) &&
+              req.user.teams.indexOf(role) &&
               permissions.indexOf(type) > permissions.indexOf(response.permission)
             ) {
               response.permission = type;
