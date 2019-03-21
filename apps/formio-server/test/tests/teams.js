@@ -667,24 +667,14 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      it('An anonymous user should be able to access /team/:teamId/projects to see all the projects associated with this team', function(done) {
+      it('An anonymous user should NOT be able to access /team/:teamId/projects to see all the projects associated with this team', function(done) {
         request(app)
           .get('/team/' + template.team1._id + '/projects')
-          .expect('Content-Type', /json/)
-          .expect(200)
+          .expect(401)
           .end(function(err, res) {
             if (err) {
               return done(err);
             }
-
-            var response = res.body;
-            assert.equal(response.length, 1);
-            assert.equal(response[0]._id, template.project._id);
-            assert.equal(response[0].title, template.project.title);
-            assert.equal(response[0].name, template.project.name);
-            assert.equal(response[0].owner, template.project.owner);
-            assert.equal(response[0].permission, 'team_read');
-
             done();
           });
       });
