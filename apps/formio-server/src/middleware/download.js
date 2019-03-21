@@ -43,7 +43,8 @@ module.exports = (formio) => (req, res, next) => {
           if (req.token.user && req.token.form) {
             headers['x-jwt-token'] = formio.auth.getToken({
               form: req.token.form,
-              user: req.token.user
+              user: req.token.user,
+              project: req.token.project
             });
           }
           else {

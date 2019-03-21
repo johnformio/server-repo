@@ -80,7 +80,8 @@ module.exports = function(formio) {
             req.token = decoded;
             res.token = formio.auth.getToken({
               form: decoded.form,
-              user: decoded.user
+              user: decoded.user,
+              project: decoded.project
             });
 
             res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');

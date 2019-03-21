@@ -20,7 +20,7 @@ const debug = {
 
 module.exports = function(app, formioServer) {
   // The formio teams resource id.
-  let _teamResource = null;
+  let teamResource = null;
   // The formio user resource id.
   let _userResource = null;
 
@@ -28,7 +28,7 @@ module.exports = function(app, formioServer) {
    * Reset Cache for testing
    */
   const resetTeams = function() {
-    _teamResource = null;
+    teamResource = null;
     _userResource = null;
   };
 
@@ -96,8 +96,8 @@ module.exports = function(app, formioServer) {
    *   The callback to invoke once the teams resource is loaded.
    */
   const loadTeams = function(next) {
-    if (_teamResource) {
-      return next(_teamResource);
+    if (teamResource) {
+      return next(teamResource);
     }
 
     formioServer.formio.resources.project.model.findOne({name: 'formio'}).lean().exec((err, formio) => {
@@ -108,15 +108,15 @@ module.exports = function(app, formioServer) {
 
       debug.loadTeams(`formio project: ${formio._id}`);
       formioServer.formio.resources.form.model.findOne({name: 'team', project: formio._id})
-        .lean().exec(function(err, teamResource) {
-          if (err || !teamResource) {
+        .lean().exec(function(err, resource) {
+          if (err || !resource || !resource._id) {
             debug.loadTeams(err);
             return next(null);
           }
 
-          debug.loadTeams(`team resource: ${teamResource._id}`);
-          _teamResource = teamResource._id;
-          return next(_teamResource);
+          debug.loadTeams(`team resource: ${resource._id}`);
+          teamResource = resource;
+          return next(teamResource);
         });
     });
   };
@@ -169,9 +169,9 @@ module.exports = function(app, formioServer) {
     const util = formioServer.formio.util;
     const q = Q.defer();
 
-    loadTeams(function(teamResource) {
+    loadTeams(function(resource) {
       // Skip the teams functionality if no user or resource is found.
-      if (!teamResource) {
+      if (!resource) {
         return q.resolve([]);
       }
       if (!user || user.hasOwnProperty('_id') && !user._id) {
@@ -179,12 +179,17 @@ module.exports = function(app, formioServer) {
         return q.reject('No user given.');
       }
 
+      // Only allow users who belong to the same project as the team resource.
+      if (!user.project || (user.project.toString() !== resource.project.toString())) {
+        return q.resolve([]);
+      }
+
       // Force the user ref to be the _id.
       user = user._id || user;
 
       // Build the search query for teams.
       const query = {
-        form: util.idToBson(teamResource),
+        form: resource._id,
         deleted: {$eq: null}
       };
 
@@ -309,9 +314,9 @@ module.exports = function(app, formioServer) {
     const util = formioServer.formio.util;
     const q = Q.defer();
 
-    loadTeams(function(teamResource) {
+    loadTeams(function(resource) {
       // Skip the teams functionality if no user or resource is found.
-      if (!teamResource) {
+      if (!resource) {
         return q.reject('No team resource found.');
       }
       if (!teams || teams.hasOwnProperty('_id') && !teams._id) {
@@ -340,7 +345,7 @@ module.exports = function(app, formioServer) {
 
       // Build the search query for teams.
       const query = {
-        form: util.idToBson(teamResource),
+        form: resource._id,
         deleted: {$eq: null},
         _id: {$in: teams}
       };
@@ -682,14 +687,14 @@ module.exports = function(app, formioServer) {
       return res.sendStatus(401);
     }
 
-    loadTeams(function(team) {
-      if (!team) {
+    loadTeams(function(resource) {
+      if (!resource) {
         return res.sendStatus(400);
       }
 
       // Search for the given team, and check if the current user is a member, but not the owner.
       const query = {
-        form: team,
+        form: resource._id,
         'data.members': {
           $elemMatch: {_id: {$in: [util.idToBson(req.token.user._id), util.idToString(req.token.user._id)]}}
         },
