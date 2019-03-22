@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
  - Added "project" to submission to speed up performance and improve security.
  - Upgrade aws-sdk@2.426.0, mongodb@3.2.1
+ - Load all of the subforms when generating PDF to improve the speed of the pdf renders for subforms.
+
+### Removed
+ - Moxtra integration.
 
 ## 6.4.6
 ### Updated
