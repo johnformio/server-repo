@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.5.0
+### Fixed
+ - Removed any risk of erroneous roles getting assigned or used for user permissions.
+
+### Changed
+ - Added "project" to submission to speed up performance and improve security.
+ - Upgrade aws-sdk@2.426.0, mongodb@3.2.1
+
 ## 6.4.6
 ### Updated
  - formio to v1.42.1
