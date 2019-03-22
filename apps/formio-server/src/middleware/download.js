@@ -17,7 +17,7 @@ module.exports = (formio) => (req, res, next) => {
       }
 
       // Speed up performance by loading all subforms inline to the form.
-      formio.cache.loadSubForms(req, form, (err) => {
+      formio.cache.loadSubForms(form, req, () => {
         if (err) {
           return next(err);
         }
