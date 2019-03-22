@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
  - SQL Connector action.
 
+## 6.4.6
+### Updated
+ - formio to v1.42.1
+
+## 6.4.1-6.4.5
+???
+
 ## 6.4.0
 ### Added
  - Added the Form Manager to each project. Can be seen by going to https://yourproject.form.io/manage
