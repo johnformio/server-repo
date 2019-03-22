@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## 6.5.0
 ### Fixed
+ - SQL Connector action.
  - Removed any risk of erroneous roles getting assigned or used for user permissions.
 
 ### Changed

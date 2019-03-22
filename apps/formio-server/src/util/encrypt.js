@@ -79,9 +79,9 @@ module.exports = (formioServer) => {
       });
     },
 
-    getValue: (project, operation, data) => {
+    getValue: (project, operation, data, plan) => {
       const decrypt = (operation === 'decrypt');
-      if (decrypt && project.plan !== 'commercial') {
+      if (decrypt && plan !== 'commercial') {
         return 'Encryption requires Enterprise Plan';
       }
 
@@ -119,12 +119,12 @@ module.exports = (formioServer) => {
           // Handle array-based components.
           if (parent && Encryptor.arrayBasedComponent(parent)) {
             _.get(submission.data, pathParts.join('.')).forEach((row) => {
-              row[component.key] = Encryptor.getValue(project, operation, row[component.key]);
+              row[component.key] = Encryptor.getValue(project, operation, row[component.key], req.primaryProject.plan);
             });
           }
           else if (_.has(submission.data, path)) {
             // Handle other components including Container, which is object-based.
-            _.set(submission.data, path, Encryptor.getValue(project, operation, _.get(submission.data, path)));
+            _.set(submission.data, path, Encryptor.getValue(project, operation, _.get(submission.data, path), req.primaryProject.plan));
           }
         });
 

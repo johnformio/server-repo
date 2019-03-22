@@ -1280,7 +1280,6 @@ module.exports = function(app) {
         routes.afterPut = routes.afterPut || [];
         routes.afterDelete = routes.afterDelete || [];
 
-        const Moxtra = require('../actions/moxtra/utils')(app.formio);
         const projectProtectAccess = require('../middleware/projectProtectAccess')(formioServer.formio);
         const projectModified= require('../middleware/projectModified')(formioServer.formio);
 
@@ -1291,50 +1290,6 @@ module.exports = function(app) {
         _.each(['afterPost', 'afterPut', 'afterDelete'], handler => {
           routes[handler].push(projectModified);
         });
-
-        // On action creation, if the action is a moxtraMessage action, add the user _id to the request payload.
-        const addCurrentUserToAction = (req, res, next) => {
-          if (['POST', 'PUT'].indexOf(req.method) === -1 || !req.user) {
-            return next();
-          }
-          const userActions = ['moxtraMessage', 'moxtraTodo'];
-          if (userActions.indexOf(_.get(req.body, 'name')) === -1) {
-            return next();
-          }
-
-          let user;
-          try {
-            user = req.user.toObject();
-          }
-          catch (e) {
-            user = req.user;
-          }
-
-          _.set(req.body, 'settings.user', user._id);
-          return next();
-        };
-
-        const addFormioBotToMoxtraOrg = (req, res, next) => {
-          if (['POST', 'PUT'].indexOf(req.method) === -1 || !req.user) {
-            return next();
-          }
-          if (_.get(req.body, 'name') !== 'moxtraLogin') {
-            return next();
-          }
-
-          // Create a formio bot token, which will authenticate or create a user. Ignore the token, as we just need the
-          // user to exist.
-          return Moxtra.getFormioBotToken(req, req.projectId)
-          .then(token => {
-            return next();
-          })
-          .catch(error => {
-            return next();
-          });
-        };
-
-        routes.beforePost.push(addCurrentUserToAction, addFormioBotToMoxtraOrg);
-        routes.beforePut.push(addCurrentUserToAction, addFormioBotToMoxtraOrg);
 
         return routes;
       },
