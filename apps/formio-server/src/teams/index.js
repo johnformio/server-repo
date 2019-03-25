@@ -10,7 +10,7 @@ const debug = {
   teamOwn: require('debug')('formio:teams:teamOwn'),
   leaveTeams: require('debug')('formio:teams:leaveTeams'),
   loadUsers: require('debug')('formio:teams:loadUsers'),
-  loadTeams: require('debug')('formio:teams:loadTeams'),
+  getTeamResource: require('debug')('formio:teams:getTeamResource'),
   getTeams: require('debug')('formio:teams:getTeams'),
   getProjectTeams: require('debug')('formio:teams:getProjectTeams'),
   getProjectPermission: require('debug')('formio:teams:getProjectPermission'),
@@ -20,7 +20,7 @@ const debug = {
 
 module.exports = function(app, formioServer) {
   // The formio teams resource id.
-  let _teamResource = null;
+  let teamResource = null;
   // The formio user resource id.
   let _userResource = null;
 
@@ -28,7 +28,7 @@ module.exports = function(app, formioServer) {
    * Reset Cache for testing
    */
   const resetTeams = function() {
-    _teamResource = null;
+    teamResource = null;
     _userResource = null;
   };
 
@@ -95,28 +95,28 @@ module.exports = function(app, formioServer) {
    * @param next {Function}
    *   The callback to invoke once the teams resource is loaded.
    */
-  const loadTeams = function(next) {
-    if (_teamResource) {
-      return next(_teamResource);
+  const getTeamResource = function(next) {
+    if (teamResource) {
+      return next(teamResource);
     }
 
     formioServer.formio.resources.project.model.findOne({name: 'formio'}).lean().exec((err, formio) => {
       if (err || !formio) {
-        debug.loadTeams(err);
+        debug.getTeamResource(err);
         return next(null);
       }
 
-      debug.loadTeams(`formio project: ${formio._id}`);
+      debug.getTeamResource(`formio project: ${formio._id}`);
       formioServer.formio.resources.form.model.findOne({name: 'team', project: formio._id})
-        .lean().exec(function(err, teamResource) {
-          if (err || !teamResource) {
-            debug.loadTeams(err);
+        .lean().exec(function(err, resource) {
+          if (err || !resource || !resource._id) {
+            debug.getTeamResource(err);
             return next(null);
           }
 
-          debug.loadTeams(`team resource: ${teamResource._id}`);
-          _teamResource = teamResource._id;
-          return next(_teamResource);
+          debug.getTeamResource(`team resource: ${resource._id}`);
+          teamResource = resource;
+          return next(teamResource);
         });
     });
   };
@@ -169,9 +169,9 @@ module.exports = function(app, formioServer) {
     const util = formioServer.formio.util;
     const q = Q.defer();
 
-    loadTeams(function(teamResource) {
+    getTeamResource(function(resource) {
       // Skip the teams functionality if no user or resource is found.
-      if (!teamResource) {
+      if (!resource) {
         return q.resolve([]);
       }
       if (!user || user.hasOwnProperty('_id') && !user._id) {
@@ -179,43 +179,65 @@ module.exports = function(app, formioServer) {
         return q.reject('No user given.');
       }
 
-      // Force the user ref to be the _id.
-      user = user._id || user;
+      // Only allow users who belong to the same project as the team resource.
+      if (!user.project || (user.project.toString() !== resource.project.toString())) {
+        return q.resolve([]);
+      }
 
       // Build the search query for teams.
       const query = {
-        form: util.idToBson(teamResource),
+        form: resource._id,
         deleted: {$eq: null}
       };
 
-      // Modify the search query based on the given criteria, search for BSON and string versions of ids.
-      debug.getTeams(`User: ${util.idToString(user)}, Member: ${member}, Owner: ${owner}`);
-      if (member && owner) {
-        query['$or'] = [
-          {'data.members': {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}}},
-          {'data.admins': {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}}},
-          {owner: {$in: [util.idToBson(user), util.idToString(user)]}}
-        ];
-      }
-      else if (member && !owner) {
-        query['data.members'] = {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}};
-      }
-      else if (!member && owner) {
-        query['$or'] = [
-          {'owner': {$in: [util.idToBson(user), util.idToString(user)]}},
-          {'data.admins': {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}}}
-        ];
+      // If the portal is with SSO and the user has teams in their array, perform a one-to-one mapping between
+      // the users teams and the titles of the teams they are added to.
+      if (formioServer.config.portalSSO && user.teams) {
+        query['data.name'] = {$in: user.teams};
       }
       else {
-        // Fail safely for incorrect usage of getTeams.
-        debug.getTeams('Could not build team query because given parameters were incorrect.');
-        return q.resolve([]);
+        // Force the user ref to be the _id.
+        user = user._id || user;
+
+        // Modify the search query based on the given criteria, search for BSON and string versions of ids.
+        debug.getTeams(`User: ${util.idToString(user)}, Member: ${member}, Owner: ${owner}`);
+        if (member && owner) {
+          query['$or'] = [
+            {'data.members': {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}}},
+            {'data.admins': {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}}},
+            {owner: {$in: [util.idToBson(user), util.idToString(user)]}}
+          ];
+        }
+        else if (member && !owner) {
+          query['data.members'] = {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}};
+        }
+        else if (!member && owner) {
+          query['$or'] = [
+            {'owner': {$in: [util.idToBson(user), util.idToString(user)]}},
+            {'data.admins': {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}}}
+          ];
+        }
+        else {
+          // Fail safely for incorrect usage of getTeams.
+          debug.getTeams('Could not build team query because given parameters were incorrect.');
+          return q.resolve([]);
+        }
       }
 
       formioServer.formio.resources.submission.model.find(query).lean().exec((err, documents) => {
         if (err) {
           debug.getTeams(err);
           return q.reject(err);
+        }
+
+        // Add the user as a member of the team if they have this from SSO.
+        if (formioServer.config.portalSSO && user.teams) {
+          documents.forEach((doc) => {
+            doc.data = {
+              members: [user._id.toString()],
+              admins: []
+            };
+          });
         }
 
         return q.resolve(documents || []);
@@ -292,9 +314,9 @@ module.exports = function(app, formioServer) {
     const util = formioServer.formio.util;
     const q = Q.defer();
 
-    loadTeams(function(teamResource) {
+    getTeamResource(function(resource) {
       // Skip the teams functionality if no user or resource is found.
-      if (!teamResource) {
+      if (!resource) {
         return q.reject('No team resource found.');
       }
       if (!teams || teams.hasOwnProperty('_id') && !teams._id) {
@@ -323,7 +345,7 @@ module.exports = function(app, formioServer) {
 
       // Build the search query for teams.
       const query = {
-        form: util.idToBson(teamResource),
+        form: resource._id,
         deleted: {$eq: null},
         _id: {$in: teams}
       };
@@ -419,42 +441,62 @@ module.exports = function(app, formioServer) {
       return res.sendStatus(400);
     }
 
-    const _team = req.params.teamId;
-    const query = {
-      $and: [
-        {$or: [
-          {'access.type': 'team_access'},
-          {'access.type': 'team_read'},
-          {'access.type': 'team_write'},
-          {'access.type': 'team_admin'}
-        ]},
-        {'access.roles': {$in: [formioServer.formio.util.idToString(_team), formioServer.formio.util.idToBson(_team)]}},
-        {project: null}
-      ],
-      deleted: {$eq: null}
-    };
+    if (!req.token || !req.token.user._id) {
+      return res.sendStatus(401);
+    }
 
-    debug.teamProjects(query);
-    formioServer.formio.resources.project.model.find(query).lean().exec((err, projects) => {
-      if (err) {
-        debug.teamProjects(err);
-        return res.sendStatus(400);
-      }
+    getTeams({
+      _id: req.token.user._id,
+      project: req.token.project._id
+    }, true, true)
+      .then(function(teams) {
+        teams = teams || [];
 
-      const response = [];
-      _.each(projects, function(project) {
-        response.push({
-          _id: project._id,
-          title: project.title,
-          name: project.name,
-          owner: project.owner,
-          permission: getProjectPermission(project, _team)
+        // Make sure this user actually belongs to this team first.
+        if (_.map(teams, (team) => team._id.toString()).indexOf(req.params.teamId) === -1) {
+          return res.status(200).json([]);
+        }
+
+        const _team = req.params.teamId;
+        const query = {
+          $and: [
+            {$or: [
+                {'access.type': 'team_access'},
+                {'access.type': 'team_read'},
+                {'access.type': 'team_write'},
+                {'access.type': 'team_admin'}
+              ]},
+            {'access.roles': {$in: [formioServer.formio.util.idToString(_team), formioServer.formio.util.idToBson(_team)]}},
+            {project: null}
+          ],
+          deleted: {$eq: null}
+        };
+
+        debug.teamProjects(query);
+        formioServer.formio.resources.project.model.find(query).lean().exec((err, projects) => {
+          if (err) {
+            debug.teamProjects(err);
+            return res.sendStatus(400);
+          }
+
+          const response = [];
+          _.each(projects, function(project) {
+            response.push({
+              _id: project._id,
+              title: project.title,
+              name: project.name,
+              owner: project.owner,
+              permission: getProjectPermission(project, _team)
+            });
+          });
+
+          debug.teamProjects(response);
+          return res.status(200).json(response);
         });
+      })
+      .catch(function(err) {
+        return res.sendStatus(400);
       });
-
-      debug.teamProjects(response);
-      return res.status(200).json(response);
-    });
   });
 
   /**
@@ -619,7 +661,10 @@ module.exports = function(app, formioServer) {
       return res.sendStatus(401);
     }
 
-    getTeams(req.token.user, true, true)
+    getTeams({
+      _id: req.token.user._id,
+      project: req.token.project._id
+    }, true, true)
       .then(function(teams) {
         teams = teams || [];
         teams = filterTeamsForDisplay(teams);
@@ -641,7 +686,10 @@ module.exports = function(app, formioServer) {
       return res.sendStatus(401);
     }
 
-    getTeams(req.token.user, false, true)
+    getTeams({
+      _id: req.token.user._id,
+      project: req.token.project._id
+    }, false, true)
       .then(function(teams) {
         teams = teams || [];
         teams = filterTeamsForDisplay(teams);
@@ -665,14 +713,14 @@ module.exports = function(app, formioServer) {
       return res.sendStatus(401);
     }
 
-    loadTeams(function(team) {
-      if (!team) {
+    getTeamResource(function(resource) {
+      if (!resource) {
         return res.sendStatus(400);
       }
 
       // Search for the given team, and check if the current user is a member, but not the owner.
       const query = {
-        form: team,
+        form: resource._id,
         'data.members': {
           $elemMatch: {_id: {$in: [util.idToBson(req.token.user._id), util.idToString(req.token.user._id)]}}
         },
@@ -728,6 +776,7 @@ module.exports = function(app, formioServer) {
 
   return {
     getTeams: getTeams,
+    getTeamResource: getTeamResource,
     getProjectTeams: getProjectTeams,
     getDisplayableTeams: getDisplayableTeams,
     filterTeamsForDisplay: filterTeamsForDisplay,

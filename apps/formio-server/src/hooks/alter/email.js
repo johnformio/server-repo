@@ -174,6 +174,7 @@ module.exports = app => (mail, req, res, params, cb) => {
         }
 
         const query = {
+          project: formioServer.formio.util.idToBson(req.projectId),
           form: {'$in': forms},
           deleted: {$eq: null}
         };

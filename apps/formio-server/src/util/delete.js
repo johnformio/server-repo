@@ -17,7 +17,7 @@ module.exports = function(formio) {
    * @param {Function} next
    *   The callback function to return the results.
    */
-  const deleteSubmission = function(forms, next) {
+  const deleteSubmission = function(projectId, forms, next) {
     const util = formio.util;
     if (!forms) {
       return next();
@@ -31,8 +31,11 @@ module.exports = function(formio) {
       .map(util.idToBson)
       .value();
 
-    const query = {form: {$in: forms}, deleted: {$eq: null}};
-    formio.resources.submission.model.find(query).exec((err, submissions) => {
+    formio.resources.submission.model.find({
+      project: util.idToBson(projectId),
+      form: {$in: forms},
+      deleted: {$eq: null}
+    }).exec((err, submissions) => {
       if (err) {
         return next(err);
       }
@@ -126,7 +129,7 @@ module.exports = function(formio) {
     }
 
     // Find all the forms that are associated with the given projectId and have not been deleted.
-    let query = {project: util.idToBson(projectId), deleted: {$eq: null}};
+    const query = {project: util.idToBson(projectId), deleted: {$eq: null}};
     formio.resources.form.model.find(query).lean().select('_id').exec(function(err, formIds) {
       if (err) {
         return next(err);
@@ -140,7 +143,7 @@ module.exports = function(formio) {
         .map(util.idtoBson)
         .value();
 
-      query = {_id: {$in: formIds}, deleted: {$eq: null}};
+      query._id = {$in: formIds};
       formio.resources.form.model.find(query).exec(function(err, forms) {
         if (err) {
           return next(err);
@@ -172,7 +175,7 @@ module.exports = function(formio) {
             }
 
             // Update all submissions related to the newly deleted forms, as being deleted.
-            deleteSubmission(formIds, function(err) {
+            deleteSubmission(projectId, formIds, function(err) {
               if (err) {
                 return next(err);
               }

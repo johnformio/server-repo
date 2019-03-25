@@ -4,9 +4,18 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [UNRELEASED]
+## 6.5.0
 ### Fixed
  - SQL Connector action.
+ - Removed any risk of erroneous roles getting assigned or used for user permissions.
+
+### Changed
+ - Added "project" to submission to speed up performance and improve security.
+ - Upgrade aws-sdk@2.426.0, mongodb@3.2.1
+ - Load all of the subforms when generating PDF to improve the speed of the pdf renders for subforms.
+
+### Removed
+ - Moxtra integration.
 
 ## 6.4.6
 ### Updated

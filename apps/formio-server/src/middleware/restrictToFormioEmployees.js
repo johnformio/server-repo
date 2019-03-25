@@ -41,7 +41,7 @@ module.exports = function(formio) {
           }
 
           const member = _.some(teams, (team) => {
-            if (req.user.roles.indexOf(team) !== -1) {
+            if (req.user.teams.indexOf(team) !== -1) {
               return true;
             }
 

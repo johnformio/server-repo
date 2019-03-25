@@ -72,8 +72,10 @@ module.exports = function(formio) {
                   _id: user._id.toString()
                 },
                 form: {
-                  _id: userResource._id.toString(),
-                  project: formioProject._id.toString()
+                  _id: userResource._id.toString()
+                },
+                project: {
+                  _id: formioProject._id.toString()
                 }
               };
 

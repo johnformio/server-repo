@@ -11,7 +11,34 @@ var customer = process.env.CUSTOMER;
 
 module.exports = function(app, template, hook) {
   describe('Teams', function() {
+    let formioUser = {
+      data: {
+        name: chance.word(),
+        email: chance.email(),
+        password: chance.word()
+      }
+    };
     describe('Single Team Tests', function() {
+      it('Should register a new Form.io user', (done) => {
+        request(app)
+          .post('/project/' + template.formio.project._id + '/form/' + template.formio.formRegister._id + '/submission')
+          .send(formioUser)
+          .expect(200)
+          .expect('Content-Type', /json/)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            var tempPassword = formioUser.data.password;
+            formioUser = response;
+            formioUser.data.password = tempPassword;
+            formioUser.token = res.headers['x-jwt-token'];
+            done();
+          });
+      });
+
       it('An anonymous user should not be able to access /team/members without a search query', function(done) {
         request(app)
           .get('/team/members')
@@ -40,7 +67,7 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      it('A Formio user should not be able to access /team/members without a search query', function(done) {
+      it('An outside user should not be able to access /team/members without a search query', function(done) {
         request(app)
           .get('/team/members')
           .set('x-jwt-token', template.users.user1.token)
@@ -50,10 +77,20 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
+            done();
+          });
+      });
 
-            // Store the JWT for future API calls.
-            template.users.user1.token = res.headers['x-jwt-token'];
-
+      it('A Formio user should not be able to access /team/members without a search query', function(done) {
+        request(app)
+          .get('/team/members')
+          .set('x-jwt-token', formioUser.token)
+          .expect('Content-Type', /text/)
+          .expect(400)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
             done();
           });
       });
@@ -170,7 +207,7 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      it('The Team Owner should be able to add a Formio user to their Team', function(done) {
+      it('The Team Owner should be able to add a Formio user and an outside to their Team', function(done) {
         request(app)
           .put('/project/' + template.formio.project._id + '/form/' + template.formio.teamResource._id + '/submission/' + template.team1._id)
           .set('x-jwt-token', template.formio.owner.token)
@@ -178,7 +215,8 @@ module.exports = function(app, template, hook) {
             data: {
               name: template.team1.data.name,
               members: [
-                {_id: template.users.user1._id}
+                {_id: template.users.user1._id},
+                {_id: formioUser._id}
               ]
             }
           })
@@ -190,8 +228,9 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
-            assert.equal(response.data.members.length, 1);
+            assert.equal(response.data.members.length, 2);
             assert.equal(response.data.members[0]._id, template.users.user1._id);
+            assert.equal(response.data.members[1]._id, formioUser._id);
 
             // Store the JWT for future API calls.
             template.formio.owner.token = res.headers['x-jwt-token'];
@@ -203,7 +242,7 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      it('A Team member should not be able to update the Team', function(done) {
+      it('An outside Team member should not be able to update the Team', function(done) {
         request(app)
           .put('/project/' + template.formio.project._id + '/form/' + template.formio.teamResource._id + '/submission/' + template.team1._id)
           .set('x-jwt-token', template.users.user1.token)
@@ -222,15 +261,34 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
-
-            // Store the JWT for future API calls.
-            template.users.user1.token = res.headers['x-jwt-token'];
-
             done();
           });
       });
 
-      it('A Team member should not be able to delete the Team', function(done) {
+      it('A Form.io Team member should not be able to update the Team', function(done) {
+        request(app)
+          .put('/project/' + template.formio.project._id + '/form/' + template.formio.teamResource._id + '/submission/' + template.team1._id)
+          .set('x-jwt-token', formioUser.token)
+          .send({
+            data: {
+              name: template.team1.data.name,
+              members: [
+                {_id: template.users.user1._id},
+                {_id: template.users.user2._id}
+              ]
+            }
+          })
+          .expect('Content-Type', /text/)
+          .expect(401)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            done();
+          });
+      });
+
+      it('An outside Team member should not be able to delete the Team', function(done) {
         request(app)
           .delete('/project/' + template.formio.project._id + '/form/' + template.formio.teamResource._id + '/submission/' + template.team1._id)
           .set('x-jwt-token', template.users.user1.token)
@@ -240,18 +298,46 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
-
-            // Store the JWT for future API calls.
-            template.users.user1.token = res.headers['x-jwt-token'];
-
             done();
           });
       });
 
-      it('A Team member should see the Team when they request /team/all', function(done) {
+      it('A Form.io Team member should not be able to delete the Team', function(done) {
+        request(app)
+          .delete('/project/' + template.formio.project._id + '/form/' + template.formio.teamResource._id + '/submission/' + template.team1._id)
+          .set('x-jwt-token', formioUser.token)
+          .expect('Content-Type', /text/)
+          .expect(401)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            done();
+          });
+      });
+
+      it('An outside Team member should NOT see the Team when they request /team/all', function(done) {
         request(app)
           .get('/team/all')
           .set('x-jwt-token', template.users.user1.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.length, 0);
+            template.users.user1.token = res.headers['x-jwt-token'];
+            done();
+          });
+      });
+
+      it('A Form.io Team member should see the Team when they request /team/all', function(done) {
+        request(app)
+          .get('/team/all')
+          .set('x-jwt-token', formioUser.token)
           .expect('Content-Type', /json/)
           .expect(200)
           .end(function(err, res) {
@@ -264,7 +350,7 @@ module.exports = function(app, template, hook) {
             assert.equal(response[0]._id, template.team1._id);
 
             // Store the JWT for future API calls.
-            template.users.user1.token = res.headers['x-jwt-token'];
+            formioUser.token = res.headers['x-jwt-token'];
 
             done();
           });
@@ -286,6 +372,27 @@ module.exports = function(app, template, hook) {
 
             // Store the JWT for future API calls.
             template.users.user1.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Form.io Team member should not see the Team when they request /team/own', function(done) {
+        request(app)
+          .get('/team/own')
+          .set('x-jwt-token', formioUser.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.length, 0);
+
+            // Store the JWT for future API calls.
+            formioUser.token = res.headers['x-jwt-token'];
 
             done();
           });
@@ -473,10 +580,29 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      it('A Team member should be able to see projects related to the team when accessing /projects', function(done) {
+      it('An outside Team member should NOT be able to see projects related to the team when accessing /projects', function(done) {
         request(app)
           .get('/project')
           .set('x-jwt-token', template.users.user1.token)
+          .expect('Content-Type', /json/)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response instanceof Array, true);
+            assert.equal(response.length, 0);
+            template.users.user1.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Form.io Team member should be able to see projects related to the team when accessing /projects', function(done) {
+        request(app)
+          .get('/project')
+          .set('x-jwt-token', formioUser.token)
           .expect('Content-Type', /json/)
           .end(function(err, res) {
             if (err) {
@@ -490,16 +616,35 @@ module.exports = function(app, template, hook) {
             assert.equal(response[0]._id, template.project._id);
 
             // Store the JWT for future API calls.
+            formioUser.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('An outside Team member should be able to access /team/:teamId/projects to see all the projects associated with this team', function(done) {
+        request(app)
+          .get('/team/' + template.team1._id + '/projects')
+          .set('x-jwt-token', template.users.user1.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.length, 0);
             template.users.user1.token = res.headers['x-jwt-token'];
 
             done();
           });
       });
 
-      it('A Team member should be able to access /team/:teamId/projects to see all the projects associated with this team', function(done) {
+      it('A Form.io Team member should be able to access /team/:teamId/projects to see all the projects associated with this team', function(done) {
         request(app)
           .get('/team/' + template.team1._id + '/projects')
-          .set('x-jwt-token', template.users.user1.token)
+          .set('x-jwt-token', formioUser.token)
           .expect('Content-Type', /json/)
           .expect(200)
           .end(function(err, res) {
@@ -516,30 +661,20 @@ module.exports = function(app, template, hook) {
             assert.equal(response[0].permission, 'team_read');
 
             // Store the JWT for future API calls.
-            template.users.user1.token = res.headers['x-jwt-token'];
+            formioUser.token = res.headers['x-jwt-token'];
 
             done();
           });
       });
 
-      it('An anonymous user should be able to access /team/:teamId/projects to see all the projects associated with this team', function(done) {
+      it('An anonymous user should NOT be able to access /team/:teamId/projects to see all the projects associated with this team', function(done) {
         request(app)
           .get('/team/' + template.team1._id + '/projects')
-          .expect('Content-Type', /json/)
-          .expect(200)
+          .expect(401)
           .end(function(err, res) {
             if (err) {
               return done(err);
             }
-
-            var response = res.body;
-            assert.equal(response.length, 1);
-            assert.equal(response[0]._id, template.project._id);
-            assert.equal(response[0].title, template.project.title);
-            assert.equal(response[0].name, template.project.name);
-            assert.equal(response[0].owner, template.project.owner);
-            assert.equal(response[0].permission, 'team_read');
-
             done();
           });
       });
@@ -809,7 +944,7 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      it('A Team member should be able to remove themselves from the Team', function(done) {
+      it('An outside Team member should be able to remove themselves from the Team', function(done) {
         request(app)
           .post('/team/' + template.team1._id + '/leave')
           .set('x-jwt-token', template.users.user1.token)
@@ -822,6 +957,24 @@ module.exports = function(app, template, hook) {
 
             // Store the JWT for future API calls.
             template.users.user1.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('A Form.io Team member should be able to remove themselves from the Team', function(done) {
+        request(app)
+          .post('/team/' + template.team1._id + '/leave')
+          .set('x-jwt-token', formioUser.token)
+          .send()
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            // Store the JWT for future API calls.
+            formioUser.token = res.headers['x-jwt-token'];
 
             done();
           });

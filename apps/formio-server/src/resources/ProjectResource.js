@@ -50,7 +50,7 @@ module.exports = function(router, formioServer) {
         if (!err) {
           const adminAccess = getProjectAccess(project.access, 'team_admin');
           const writeAccess = getProjectAccess(project.access, 'team_write');
-          const roles = _.map(req.user.roles, formio.util.idToString);
+          const roles = _.map(req.user.teams, formio.util.idToString);
 
           if ( _.intersection(adminAccess, roles).length !== 0) {
             decryptSettings(res);

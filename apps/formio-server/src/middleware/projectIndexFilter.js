@@ -14,10 +14,10 @@ module.exports = function(formioServer) {
 
     // Allow access to all projects for admins, otherwise restrict to user.
     if (!req.isAdmin) {
-      if (!req.user || !req.user._id || !req.user.roles) {
+      if (!req.user || !req.user._id || !req.user.teams) {
         return res.sendStatus(401);
       }
-      const roles = _.filter(_.flattenDeep(_.map(req.user.roles, function(role) {
+      const roles = _.filter(_.flattenDeep(_.map(req.user.teams, function(role) {
         const bson = formioServer.formio.util.idToBson(role);
         if (!bson) {
           return false;

@@ -29,7 +29,7 @@ module.exports = function(formio) {
           .get('roles', [])
           .map(formio.util.idToString)
           .value();
-        const roles = _.map(req.user.roles, formio.util.idToString);
+        const roles = _.map(req.user.teams, formio.util.idToString);
 
         if ( _.intersection(access, roles).length !== 0) {
           return next();

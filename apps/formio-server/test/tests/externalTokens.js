@@ -4,10 +4,12 @@
 let request = require('supertest');
 let assert = require('assert');
 let jwt = require('jsonwebtoken');
+const _ = require('lodash');
 let config = require('../../config');
 let docker = process.env.DOCKER;
-const tempRole = '000000000000000000000001';
-const tempRole2 = '000000000000000000000002';
+let tempRole = '';
+let tempRole2 = '';
+let tempRole3 = '000000000000000000000001';
 
 module.exports = (app, template, hook) => {
   if (docker) {
@@ -21,33 +23,48 @@ module.exports = (app, template, hook) => {
     let tempForm;
     let tempSubmission;
     let customToken;
-    let helper = new Helper(template.formio.owner, template);
+    let badToken;
+    let helper = new Helper(template.formio.owner, _.cloneDeep(template));
 
     before(done => {
-      new Promise((resolve, reject) => {
-        // Get the old token payload
-        jwt.verify(template.users.user1.token, config.formio.jwt.secret, (err, decoded) => {
+      helper
+        .project({
+          title: 'External Tokens',
+          name: 'externaltokens'
+        })
+        .role({
+          title: 'external1'
+        })
+        .role({
+          title: 'external2'
+        })
+        .execute((err) => {
           if (err) {
-            return reject(err);
+            return done(err);
           }
 
-          resolve(decoded);
+          tempRole = helper.template.roles.external1._id.toString();
+          tempRole2 = helper.template.roles.external2._id.toString();
+          customToken = app.formio.formio.auth.getToken({
+            external: true,
+            project: {
+              _id: helper.template.project._id.toString()
+            },
+            user: {
+              roles: [tempRole]
+            }
+          });
+          badToken = app.formio.formio.auth.getToken({
+            external: true,
+            project: {
+              _id: helper.template.project._id.toString()
+            },
+            user: {
+              roles: [tempRole3]
+            }
+          });
+          return done();
         });
-      })
-      .then(payload => {
-        // Add the external flag to the temp token.
-        payload.external = true;
-        payload.user.roles = [tempRole];
-
-        // Delete iat to forge generate a new token.
-        delete payload.iat;
-        delete payload.exp;
-
-        // Generate the new custom token.
-        customToken = app.formio.formio.auth.getToken(payload);
-        return done();
-      })
-      .catch(done);
     });
 
     it('Create a temporary form for external token tests', done => {
@@ -79,15 +96,15 @@ module.exports = (app, template, hook) => {
             return done(err);
           }
 
-          tempProject = template.project;
+          tempProject = helper.template.project;
           tempForm = results.getForm('externalToken');
 
           request(app)
-            .put(hook.alter(`url`, `/form/${tempForm._id}`, template))
-            .set(`x-jwt-token`, template.formio.owner.token)
+            .put(hook.alter(`url`, `/form/${tempForm._id}`, helper.template))
+            .set(`x-jwt-token`, helper.template.formio.owner.token)
             .send({
               access: [
-                {type: 'read_all', roles: [tempRole, tempRole2]},
+                {type: 'read_all', roles: [tempRole, tempRole2, tempRole3]},
               ],
               submissionAccess: [
                 {type: 'read_all', roles: [tempRole]},
@@ -127,7 +144,21 @@ module.exports = (app, template, hook) => {
 
     it('An anonymous user cannot access the form without access', done => {
       request(app)
-        .get(hook.alter(`url`, `/form/${tempForm._id}`, template))
+        .get(hook.alter(`url`, `/form/${tempForm._id}`, helper.template))
+        .expect(401)
+        .end(err => {
+          if (err) {
+            return done(err);
+          }
+
+          return done();
+        });
+    });
+
+    it('A user with a token with a bad role cannot have access even if the role is added to the permission', done => {
+      request(app)
+        .get(hook.alter(`url`, `/form/${tempForm._id}`, helper.template))
+        .set(`x-jwt-token`, badToken)
         .expect(401)
         .end(err => {
           if (err) {
@@ -140,7 +171,7 @@ module.exports = (app, template, hook) => {
 
     it('A user with a custom token can access the form with access', done => {
       request(app)
-        .get(hook.alter(`url`, `/form/${tempForm._id}`, template))
+        .get(hook.alter(`url`, `/form/${tempForm._id}`, helper.template))
         .set(`x-jwt-token`, customToken)
         .expect(200)
         .end((err, res) => {
@@ -153,7 +184,7 @@ module.exports = (app, template, hook) => {
           assert(response.components);
           assert.equal(response.components.length, 1);
           assert.equal(response.access.length, 1);
-          assert.deepEqual(response.access[0], {type: 'read_all', roles: [tempRole, tempRole2]});
+          assert.deepEqual(response.access[0], {type: 'read_all', roles: [tempRole, tempRole2, tempRole3]});
           assert.equal(response.submissionAccess.length, 5);
           assert.deepEqual(response.submissionAccess[0], {type: 'read_all', roles: [tempRole]});
           return done();
@@ -162,7 +193,7 @@ module.exports = (app, template, hook) => {
 
     it('An anonymous user cannot access the submission without access', done => {
       request(app)
-        .get(hook.alter(`url`, `/form/${tempForm._id}/submission/${tempSubmission._id}`, template))
+        .get(hook.alter(`url`, `/form/${tempForm._id}/submission/${tempSubmission._id}`, helper.template))
         .expect(401)
         .end(err => {
           if (err) {
@@ -175,7 +206,7 @@ module.exports = (app, template, hook) => {
 
     it('A user with a custom token can access the submission with access', done => {
       request(app)
-        .get(hook.alter(`url`, `/form/${tempForm._id}/submission/${tempSubmission._id}`, template))
+        .get(hook.alter(`url`, `/form/${tempForm._id}/submission/${tempSubmission._id}`, helper.template))
         .set(`x-jwt-token`, customToken)
         .expect(200)
         .end((err, res) => {

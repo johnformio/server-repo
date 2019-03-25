@@ -49,6 +49,7 @@ module.exports = (app, config, next) => {
               const password = process.env.ADMIN_PASS || 'p@ssw0rd!';
               formio.encrypt(password, function(err, hash) {
                 formio.resources.submission.model.create({
+                  project: project._id,
                   form: form._id,
                   data: {
                     fullName: 'Admin',

@@ -283,6 +283,7 @@ module.exports = function(options) {
         const script = `<script type="text/javascript">
           window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/?$/, '');
           window.APP_SSO = '${_.get(req.currentProject, 'config.sso', '')}';
+          window.SSO_PROJECT = '${_.get(req.currentProject, 'config.ssoProject', '')}';
           ${appVariables(req.currentProject)}
         </script>`;
         fs.readFile(`./portal/manager/index.html`, 'utf8', (err, contents) => {
@@ -303,7 +304,7 @@ module.exports = function(options) {
     }
 
     // Mount the saml integration.
-    app.use('/project/:projectId/saml', require('./src/saml/saml')(app.formio.formio));
+    app.use('/project/:projectId/saml', require('./src/saml/saml')(app.formio));
 
     // Mount the aggregation system.
     app.use('/project/:projectId/report', require('./src/middleware/report')(app.formio));
