@@ -75,7 +75,7 @@ module.exports = (formioServer) => {
    * @param roleMap
    * @return {*}
    */
-  const getToken = function(profile, settings, project, roleMap) {
+  const getToken = function(profile, settings, project, roleMap, next) {
     let userRoles = _.get(profile, (settings.rolesPath || 'roles'));
     if (typeof userRoles === 'string') {
       if (userRoles.indexOf(',') !== -1) {
@@ -97,16 +97,18 @@ module.exports = (formioServer) => {
 
     const userId = _.get(profile, (settings.idPath || 'id'));
     const roles = [];
+    const roleNames = [];
     roleMap.map(map => {
-      if (!map.role || _.includes(userRoles, _.trim(map.role))
-      ) {
+      const roleName = _.trim(map.role);
+      if (_.includes(userRoles, roleName)) {
         roles.push(map.id);
+        roleNames.push(roleName);
       }
     });
 
     // Make sure to throw an error if no user id was found within the saml profile.
     if (!userId) {
-      return 'No User ID was found within your SAML profile.';
+      return next('No User ID was found within your SAML profile.');
     }
 
     const user = {
@@ -119,7 +121,7 @@ module.exports = (formioServer) => {
     // within the saml profile to Teams within the Form.io system. To do this, we will assign a "teams" property on
     // the user object that will be read by the teams feature to determine which teams are allocated to this user.
     if (project.primary && config.portalSSO) {
-      user.teams = userRoles;
+      user.teams = _.filter(userRoles, (userRole) => (roleNames.indexOf(userRole) === -1));
     }
 
     const token = {
@@ -130,11 +132,11 @@ module.exports = (formioServer) => {
       }
     };
 
-    return {
+    return next(null, {
       user: user,
       decoded: token,
       token: formio.auth.getToken(token)
-    };
+    });
   };
 
   // Release the metadata publicly
@@ -177,20 +179,26 @@ module.exports = (formioServer) => {
           return res.status(400).send(err.message || err);
         }
 
-        const token = getToken(
+        // Get the saml token.
+        getToken(
           profile,
           providers.settings,
           providers.project,
-          providers.roles
-        );
-        if (!token) {
-          return res.status(401).send('Unauthorized');
-        }
-        if (typeof token === 'string') {
-          return res.status(401).send(token);
-        }
+          providers.roles,
+          (err, token) => {
+            if (err) {
+              return res.status(400).send(err);
+            }
+            if (!token) {
+              return res.status(401).send('Unauthorized');
+            }
+            if (typeof token === 'string') {
+              return res.status(401).send(token);
+            }
 
-        return res.redirect(`${relay}?saml=${token.token}`);
+            return res.redirect(`${relay}?saml=${token.token}`);
+          }
+        );
       });
     }).catch((err) => {
       return res.status(400).send(err.message || err);

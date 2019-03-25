@@ -283,6 +283,7 @@ module.exports = function(options) {
         const script = `<script type="text/javascript">
           window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/?$/, '');
           window.APP_SSO = '${_.get(req.currentProject, 'config.sso', '')}';
+          window.SSO_PROJECT = '${_.get(req.currentProject, 'config.ssoProject', '')}';
           ${appVariables(req.currentProject)}
         </script>`;
         fs.readFile(`./portal/manager/index.html`, 'utf8', (err, contents) => {

@@ -10,7 +10,7 @@ const debug = {
   teamOwn: require('debug')('formio:teams:teamOwn'),
   leaveTeams: require('debug')('formio:teams:leaveTeams'),
   loadUsers: require('debug')('formio:teams:loadUsers'),
-  loadTeams: require('debug')('formio:teams:loadTeams'),
+  getTeamResource: require('debug')('formio:teams:getTeamResource'),
   getTeams: require('debug')('formio:teams:getTeams'),
   getProjectTeams: require('debug')('formio:teams:getProjectTeams'),
   getProjectPermission: require('debug')('formio:teams:getProjectPermission'),
@@ -95,26 +95,26 @@ module.exports = function(app, formioServer) {
    * @param next {Function}
    *   The callback to invoke once the teams resource is loaded.
    */
-  const loadTeams = function(next) {
+  const getTeamResource = function(next) {
     if (teamResource) {
       return next(teamResource);
     }
 
     formioServer.formio.resources.project.model.findOne({name: 'formio'}).lean().exec((err, formio) => {
       if (err || !formio) {
-        debug.loadTeams(err);
+        debug.getTeamResource(err);
         return next(null);
       }
 
-      debug.loadTeams(`formio project: ${formio._id}`);
+      debug.getTeamResource(`formio project: ${formio._id}`);
       formioServer.formio.resources.form.model.findOne({name: 'team', project: formio._id})
         .lean().exec(function(err, resource) {
           if (err || !resource || !resource._id) {
-            debug.loadTeams(err);
+            debug.getTeamResource(err);
             return next(null);
           }
 
-          debug.loadTeams(`team resource: ${resource._id}`);
+          debug.getTeamResource(`team resource: ${resource._id}`);
           teamResource = resource;
           return next(teamResource);
         });
@@ -169,7 +169,7 @@ module.exports = function(app, formioServer) {
     const util = formioServer.formio.util;
     const q = Q.defer();
 
-    loadTeams(function(resource) {
+    getTeamResource(function(resource) {
       // Skip the teams functionality if no user or resource is found.
       if (!resource) {
         return q.resolve([]);
@@ -184,9 +184,6 @@ module.exports = function(app, formioServer) {
         return q.resolve([]);
       }
 
-      // Force the user ref to be the _id.
-      user = user._id || user;
-
       // Build the search query for teams.
       const query = {
         form: resource._id,
@@ -196,9 +193,12 @@ module.exports = function(app, formioServer) {
       // If the portal is with SSO and the user has teams in their array, perform a one-to-one mapping between
       // the users teams and the titles of the teams they are added to.
       if (formioServer.config.portalSSO && user.teams) {
-        query.name = {$in: user.teams};
+        query['data.name'] = {$in: user.teams};
       }
       else {
+        // Force the user ref to be the _id.
+        user = user._id || user;
+
         // Modify the search query based on the given criteria, search for BSON and string versions of ids.
         debug.getTeams(`User: ${util.idToString(user)}, Member: ${member}, Owner: ${owner}`);
         if (member && owner) {
@@ -314,7 +314,7 @@ module.exports = function(app, formioServer) {
     const util = formioServer.formio.util;
     const q = Q.defer();
 
-    loadTeams(function(resource) {
+    getTeamResource(function(resource) {
       // Skip the teams functionality if no user or resource is found.
       if (!resource) {
         return q.reject('No team resource found.');
@@ -713,7 +713,7 @@ module.exports = function(app, formioServer) {
       return res.sendStatus(401);
     }
 
-    loadTeams(function(resource) {
+    getTeamResource(function(resource) {
       if (!resource) {
         return res.sendStatus(400);
       }
@@ -776,6 +776,7 @@ module.exports = function(app, formioServer) {
 
   return {
     getTeams: getTeams,
+    getTeamResource: getTeamResource,
     getProjectTeams: getProjectTeams,
     getDisplayableTeams: getDisplayableTeams,
     filterTeamsForDisplay: filterTeamsForDisplay,

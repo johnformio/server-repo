@@ -1097,7 +1097,7 @@ module.exports = function(app) {
 
         user = user || {};
         user.roles = user.roles || [];
-        user.teams = [];
+        user.teams = user.teams || [];
 
         // Convert all the roles to strings
         user.roles = _(user.roles)
