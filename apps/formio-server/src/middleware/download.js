@@ -28,61 +28,92 @@ module.exports = (formio) => (req, res, next) => {
             return next(err);
           }
 
-          formio.util.removeProtectedFields(form, 'download', submission);
+          // Manage the subform data that needs to be loaded.
+          const subFormData = [];
 
-          // Set the files server.
-          let filesServer = FORMIO_FILES_SERVER;
-          if (process.env.FORMIO_HOSTED && settings.pdfserver) {
-            // Allow them to download from any server if it is set to the default.
-            filesServer = settings.pdfserver;
-          }
-          if (req.query.from) {
-            filesServer = req.query.from;
-            delete req.query.from;
-          }
-
-          // Create the headers object.
-          const headers = {
-            'x-file-token': settings.filetoken
-          };
-
-          // Pass along the auth token to files server.
-          if (req.token) {
-            if (req.token.user && req.token.form) {
-              headers['x-jwt-token'] = formio.auth.getToken({
-                form: req.token.form,
-                user: req.token.user,
-                project: req.token.project
-              });
-            }
-            else {
-              headers['x-jwt-token'] = formio.auth.getToken(_.omit(req.token, 'allow'));
-            }
-          }
-
-          const pdfProject = req.query.project ? req.query.project : project._id.toString();
-          const fileId = req.params.fileId || 'pdf';
-          try {
-            request({
-              method: 'POST',
-              url: `${filesServer}/pdf/${pdfProject}/file/${fileId}/download`,
-              qs: req.query,
-              headers: headers,
-              json: true,
-              rejectUnauthorized: false,
-              body: {
-                form,
-                submission
+          // Iterate through all components and then load all of the subform data within them.
+          formio.util.eachComponent(form.components, function(component, path) {
+            if (component.type === 'form') {
+              const subData = _.get(submission.data, path);
+              if (
+                subData &&
+                subData._id &&
+                (!subData.data || !Object.keys(subData.data).length)
+              ) {
+                subFormData.push(new Promise((resolve, reject) => formio.cache.loadSubmission(
+                  req,
+                  component.form.toString(),
+                  subData._id.toString(),
+                  (err, sub) => {
+                    if (err) {
+                      return reject(err);
+                    }
+                    subData.data = sub.data;
+                    resolve();
+                  }
+                )));
               }
-            }, (err) => {
-              if (err) {
-                res.status(400).send(err.message);
+            }
+          }, true);
+
+          // After all subform data is loaded...
+          Promise.all(subFormData).then(() => {
+            formio.util.removeProtectedFields(form, 'download', submission);
+
+            // Set the files server.
+            let filesServer = FORMIO_FILES_SERVER;
+            if (process.env.FORMIO_HOSTED && settings.pdfserver) {
+              // Allow them to download from any server if it is set to the default.
+              filesServer = settings.pdfserver;
+            }
+            if (req.query.from) {
+              filesServer = req.query.from;
+              delete req.query.from;
+            }
+
+            // Create the headers object.
+            const headers = {
+              'x-file-token': settings.filetoken
+            };
+
+            // Pass along the auth token to files server.
+            if (req.token) {
+              if (req.token.user && req.token.form) {
+                headers['x-jwt-token'] = formio.auth.getToken({
+                  form: req.token.form,
+                  user: req.token.user,
+                  project: req.token.project
+                });
               }
-            }).pipe(res);
-          }
-          catch (err) {
-            res.status(400).send(err.message);
-          }
+              else {
+                headers['x-jwt-token'] = formio.auth.getToken(_.omit(req.token, 'allow'));
+              }
+            }
+
+            const pdfProject = req.query.project ? req.query.project : project._id.toString();
+            const fileId = req.params.fileId || 'pdf';
+            try {
+              request({
+                method: 'POST',
+                url: `${filesServer}/pdf/${pdfProject}/file/${fileId}/download`,
+                qs: req.query,
+                headers: headers,
+                json: true,
+                rejectUnauthorized: false,
+                body: {
+                  form,
+                  submission
+                }
+              }, (err) => {
+                if (err) {
+                  res.status(400).send(err.message);
+                }
+              }).pipe(res);
+            }
+            catch (err) {
+              res.status(400).send(err.message);
+            }
+          });
         });
       });
     });
