@@ -112,7 +112,7 @@ module.exports = function(formio) {
       formio.template.import.template(template, alters, function(err, template) {
         if (err) {
           debug(err);
-          return res.status(400).send('An error occurred with the template import.');
+          return res.status(400).send(err);
         }
 
         // Reload the project to reflect any changes made by the template.

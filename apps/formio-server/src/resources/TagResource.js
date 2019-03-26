@@ -162,7 +162,7 @@ module.exports = function(router, formioServer) {
               formio.template.import.template(template, alters, function(err, template) {
                 if (err) {
                   debug(err);
-                  return res.status(400).send('An error occurred with the template import.');
+                  return res.status(400).send(err);
                 }
 
                 project.tag = tag.tag;
@@ -199,7 +199,7 @@ module.exports = function(router, formioServer) {
             formio.template.import.template(template, alters, function(err, template) {
               if (err) {
                 debug(err);
-                return res.status(400).send('An error occurred with the template import.');
+                return res.status(400).send(err);
               }
 
               router.formio.formio.log('Deploy Template', req, template.tag);
