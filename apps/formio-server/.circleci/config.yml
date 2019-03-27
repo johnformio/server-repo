@@ -27,7 +27,6 @@ jobs:
           root: build
           paths:
             - favicon.ico
-            - portal
             - main.js
             - package.json
             - package-lock.json
@@ -140,7 +139,7 @@ jobs:
             cd formio-enterprise
             git config user.email "formiobot@example.com"
             git config user.name "Formiobot"
-            git commit -a -m "$CIRCLE_TAG"
+            git add --all && git commit -am "$CIRCLE_TAG"
             git tag $CIRCLE_TAG
             if [[ $CIRCLE_TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
               git push
