@@ -15,7 +15,7 @@ RUN mkdir /root/.ssh/ && ssh-keyscan github.com >> /root/.ssh/known_hosts
 ADD id_rsa /root/.ssh/id_rsa
 RUN chmod 600 /root/.ssh/id_rsa
 RUN npm config set python /usr/bin/python
-RUN npm i -g npm && npm ci --production && npm rebuild bcrypt --build-from-source
+RUN npm i -g npm && npm ci --production
 RUN npm install -g pkg && npm run dist
 RUN npm cache clean --force && \
     npm uninstall -g pkg && \
