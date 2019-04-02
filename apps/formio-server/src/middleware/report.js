@@ -92,9 +92,15 @@ module.exports = function(formioServer) {
         }
       });
 
-      const query = {
-        project: formio.util.idToBson(req.projectId)
-      };
+      const query = {};
+      const userRoles = [];
+      if (req.user && req.user._id) {
+        userRoles.push(formio.util.idToBson(req.user._id));
+        if (req.user.roles && req.user.roles.length) {
+          req.user.roles.forEach((role) => userRoles.push(formio.util.idToBson(role)));
+        }
+      }
+
       let stages = [];
       let preStage = [];
       let limitStage = null;
@@ -148,6 +154,9 @@ module.exports = function(formioServer) {
 
       let modelReady;
       const protectedFields = {};
+
+      // Ensure the project is always set to the project in context.
+      query.project = formio.util.idToBson(req.projectId);
 
       const getForms = function(formsNext) {
         // Make sure to not include deleted submissions.
@@ -228,7 +237,28 @@ module.exports = function(formioServer) {
           preStage = [
             {'$match': query},
             {
-              '$match': {'$or': [
+              '$addFields': {
+                'hasAccess': {
+                  $gt: [{
+                    $size: {
+                      $setIntersection: [
+                        userRoles,
+                        {
+                          $reduce: {
+                            input: '$access',
+                            initialValue: [],
+                            in: {$concatArrays: ["$$value", "$$this.resources"]}
+                          }
+                        }
+                      ]
+                    }
+                  }, 0]
+                }
+              }
+            },
+            {
+              '$match': {
+                '$or': [
                   {
                     form: {
                       '$in': readAllForms
@@ -239,8 +269,12 @@ module.exports = function(formioServer) {
                       '$in': readOwnForms
                     },
                     owner: formio.util.idToBson(req.user._id)
+                  },
+                  {
+                    hasAccess: true
                   }
-                ]}
+                ]
+              }
             }
           ];
 
@@ -256,62 +290,18 @@ module.exports = function(formioServer) {
 
         // Add the prestages to the beginning of the stages.
         stages = preStage.concat(stages);
-
-        // Add the skip stage first if applicable.
-        if (skipStage) {
-          stages = stages.concat([skipStage]);
-        }
-
-        // Next add the limit stage if applicable.
-        if (limitStage) {
-          stages = stages.concat([limitStage]);
-        }
-
-        // Start out the filter to only include those forms.
-        debug.report('final pipeline', stages);
-
         res.setHeader('Content-Type', 'application/json');
 
-        // Method to perform the aggregation.
-        const performAggregation = () => modelReady
-          .then((model) => {
-            model.aggregate(stages)
-              .cursor()
-              .exec()
-              .pipe(through(function(doc) {
-                if (doc && doc.form && doc.data) {
-                  var formId = doc.form.toString();
-                  if (protectedFields.hasOwnProperty(formId)) {
-                    _.each(protectedFields[formId], (path) => _.set(doc.data, path, '--- PROTECTED ---'));
-                  }
-                }
-                this.queue(doc);
-              }))
-              .pipe(JSONStream.stringify())
-              .pipe(res);
-          })
-          .catch(() => res.status(400).send('Bad Request'));
-
-        // If a limit is provided, then we need to include some pagination stuff.
-        if (!limitStage) {
-          return performAggregation();
-        }
-
-        // Replace the limit with a count to get the total items.
-        const countStages = stages.filter((stage) => !stage.hasOwnProperty('$limit') && !stage.hasOwnProperty('$skip'));
-
-        countStages.push({$count: 'total'});
-
         // Find the total count based on the query.
-        modelReady
-          .then((model) => model.aggregate(countStages).exec(function(err, result) {
+        modelReady.then((model) =>
+          model.aggregate(stages.concat([{$count: 'total'}])).exec(function(err, result) {
             if (err) {
               debug.error(err);
               return next(err);
             }
 
             const skip = skipStage ? skipStage['$skip'] : 0;
-            const limit = limitStage['$limit'];
+            const limit = limitStage ? limitStage['$limit'] : 100;
             if (!req.headers.range) {
               req.headers['range-unit'] = 'items';
               req.headers.range = `${skip}-${skip + (limit - 1)}`;
@@ -328,12 +318,34 @@ module.exports = function(formioServer) {
             if (skipStage) {
               skipStage['$skip'] = pageRange.skip;
             }
-            limitStage['$limit'] = pageRange.limit;
+            limitStage = {'$limit': pageRange.limit};
 
             // Perform the aggregation command.
-            performAggregation();
-          }))
-          .catch(() => res.send(400).send('Bad Request'));
+            if (skipStage) {
+              stages.push(skipStage);
+            }
+
+            // Next add the limit.
+            stages.push({'$limit': pageRange.limit});
+
+            // Perform the aggregation.
+            debug.report('final pipeline', stages);
+            model.aggregate(stages)
+              .cursor()
+              .exec()
+              .pipe(through(function(doc) {
+                if (doc && doc.form && doc.data) {
+                  const formId = doc.form.toString();
+                  if (protectedFields.hasOwnProperty(formId)) {
+                    _.each(protectedFields[formId], (path) => _.set(doc.data, path, '--- PROTECTED ---'));
+                  }
+                }
+                this.queue(doc);
+              }))
+              .pipe(JSONStream.stringify())
+              .pipe(res);
+          })
+        ).catch((err) => res.send(400).send(err.message));
       });
     });
   };
