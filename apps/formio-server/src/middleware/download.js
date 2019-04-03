@@ -29,7 +29,8 @@ module.exports = (formio) => (req, res, next) => {
           }
 
           // Manage the subform data that needs to be loaded.
-          const subFormData = [];
+          const subs = {};
+          let subFormData = null;
 
           // Iterate through all components and then load all of the subform data within them.
           formio.util.eachComponent(form.components, function(component, path) {
@@ -40,27 +41,32 @@ module.exports = (formio) => (req, res, next) => {
                 subData._id &&
                 (!subData.data || !Object.keys(subData.data).length)
               ) {
-                subFormData.push(new Promise((resolve, reject) => formio.cache.loadSubmission(
-                  req,
-                  component.form.toString(),
-                  subData._id.toString(),
-                  (err, sub) => {
-                    if (err) {
-                      return reject(err);
-                    }
-                    if (!sub) {
-                      return resolve();
-                    }
-                    subData.data = sub.data;
-                    resolve();
-                  }
-                )));
+                subs[subData._id.toString()] = subData;
               }
             }
           }, true);
 
-          // After all subform data is loaded...
-          Promise.all(subFormData).then(() => {
+          const subIds = Object.keys(subs);
+          if (!subIds.length) {
+            subFormData = Promise.resolve(true);
+          }
+          else {
+            subFormData = new Promise((resolve) => {
+              formio.cache.loadSubmissions(req, subIds, (err, submissions) => {
+                if (err || !submissions || !submissions.length) {
+                  return resolve();
+                }
+                submissions.forEach((sub) => {
+                  if (sub && sub._id && subs[sub._id.toString()]) {
+                    subs[sub._id.toString()].data = sub.data;
+                  }
+                });
+              });
+            });
+          }
+
+          // After the subform data is loaded...
+          subFormData.then(() => {
             formio.util.removeProtectedFields(form, 'download', submission);
 
             // Set the files server.

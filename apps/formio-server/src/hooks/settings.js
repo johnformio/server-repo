@@ -1234,6 +1234,20 @@ module.exports = function(app) {
           return query;
         }
       },
+
+      /**
+       * Hook for submission queries to add the project id into the query.
+       *
+       * @param query
+       * @param req
+       * @return {*}
+       */
+      submissionQuery(query, req) {
+        req.projectId = req.projectId || (req.params ? req.params.projectId : undefined) || req._id;
+        query.project = formioServer.formio.util.idToBson(req.projectId);
+        return query;
+      },
+
       formSearch(search, model, value) {
         search.project = model.project;
         return search;
