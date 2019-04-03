@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.5.2
+### Fixed
+ - Hotfix to resolve remote team access.
+
+## 6.5.1
+### Fixed
+ - Fixed problems with the SSO with portal and SAML.
+
+### Changed
+ - Upgraded form manager with sso fixes.
+ - Ugpraded portal with sso fixes.
+
 ## 6.5.0
 ### Fixed
  - SQL Connector action.
