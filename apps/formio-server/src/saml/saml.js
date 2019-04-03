@@ -117,13 +117,6 @@ module.exports = (formioServer) => {
       roles
     };
 
-    // If this is the primary project and they user using PORTAL_SSO, then we need to have a way to map the roles
-    // within the saml profile to Teams within the Form.io system. To do this, we will assign a "teams" property on
-    // the user object that will be read by the teams feature to determine which teams are allocated to this user.
-    if (project.primary && config.portalSSO) {
-      user.teams = _.filter(userRoles, (userRole) => (roleNames.indexOf(userRole) === -1));
-    }
-
     const token = {
       external: true,
       user,
@@ -132,11 +125,29 @@ module.exports = (formioServer) => {
       }
     };
 
-    return next(null, {
-      user: user,
-      decoded: token,
-      token: formio.auth.getToken(token)
-    });
+    // If this is the primary project and they user using PORTAL_SSO, then we need to have a way to map the roles
+    // within the saml profile to Teams within the Form.io system. To do this, we will assign a "teams" property on
+    // the user object that will be read by the teams feature to determine which teams are allocated to this user.
+    if (project.primary && config.portalSSO) {
+      // Load the teams by name.
+      const teamNames = _.filter(userRoles, (userRole) => (roleNames.indexOf(userRole) === -1));
+      formio.teams.getSSOTeams(teamNames).then(function(teams) {
+        teams = teams || [];
+        user.teams = _.map(_.map(teams, '_id'), formio.util.idToString);
+        return next(null, {
+          user: user,
+          decoded: token,
+          token: formio.auth.getToken(token)
+        });
+      });
+    }
+    else {
+      return next(null, {
+        user: user,
+        decoded: token,
+        token: formio.auth.getToken(token)
+      });
+    }
   };
 
   // Release the metadata publicly

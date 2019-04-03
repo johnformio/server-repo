@@ -154,6 +154,37 @@ module.exports = function(app, formioServer) {
   };
 
   /**
+   * Get the teams by name.
+   *
+   * @param names
+   * @return {*}
+   */
+  const getSSOTeams = function(names) {
+    const q = Q.defer();
+    getTeamResource(function(resource) {
+      // Skip the teams functionality if no user or resource is found.
+      if (!resource) {
+        return q.resolve([]);
+      }
+
+      formioServer.formio.resources.submission.model.find({
+        form: resource._id,
+        deleted: {$eq: null},
+        'data.name': {$in: names},
+        'metadata.ssoteam': true
+      }).lean().exec((err, teams) => {
+        if (err) {
+          debug.getTeams(err);
+          return q.reject(err);
+        }
+
+        return q.resolve(teams || []);
+      });
+    });
+    return q.promise;
+  };
+
+  /**
    * Get the teams that the given user is associated with.
    *
    * @param user {Object|String}
@@ -193,7 +224,15 @@ module.exports = function(app, formioServer) {
       // If the portal is with SSO and the user has teams in their array, perform a one-to-one mapping between
       // the users teams and the titles of the teams they are added to.
       if (formioServer.config.portalSSO && user.teams) {
-        query['data.name'] = {$in: user.teams};
+        if (owner) {
+          query['$or'] = [
+            {'_id': {$in: user.teams}},
+            {owner: {$in: [util.idToBson(user._id), util.idToString(user._id)]}}
+          ];
+        }
+        else {
+          query['_id'] = {$in: user.teams};
+        }
       }
       else {
         // Force the user ref to be the _id.
@@ -224,7 +263,7 @@ module.exports = function(app, formioServer) {
         }
       }
 
-      formioServer.formio.resources.submission.model.find(query).lean().exec((err, documents) => {
+      formioServer.formio.resources.submission.model.find(query).lean().exec((err, teams) => {
         if (err) {
           debug.getTeams(err);
           return q.reject(err);
@@ -232,15 +271,20 @@ module.exports = function(app, formioServer) {
 
         // Add the user as a member of the team if they have this from SSO.
         if (formioServer.config.portalSSO && user.teams) {
-          documents.forEach((doc) => {
-            doc.data = {
-              members: [user._id.toString()],
-              admins: []
-            };
+          teams.forEach((team) => {
+            if (!team.data) {
+              team.data = {members: [], admins: []};
+            }
+            if (!team.data.members) {
+              team.data.members = [];
+            }
+
+            // Add the current user to the members array.
+            team.data.members.push(user._id.toString());
           });
         }
 
-        return q.resolve(documents || []);
+        return q.resolve(teams || []);
       });
     });
 
@@ -445,10 +489,7 @@ module.exports = function(app, formioServer) {
       return res.sendStatus(401);
     }
 
-    getTeams({
-      _id: req.token.user._id,
-      project: req.token.project._id
-    }, true, true)
+    getTeams(req.user, true, true)
       .then(function(teams) {
         teams = teams || [];
 
@@ -591,6 +632,24 @@ module.exports = function(app, formioServer) {
                 team.permission = permissions[team._id];
               }
 
+              // Add the user as a member of the team if they have this from SSO.
+              if (
+                formioServer.config.portalSSO &&
+                req.user.teams &&
+                req.user.teams.length &&
+                (req.user.teams.indexOf(team._id.toString()) !== -1)
+              ) {
+                if (!team.data) {
+                  team.data = {members: [], admins: []};
+                }
+                if (!team.data.members) {
+                  team.data.members = [];
+                }
+
+                // Add the current user to the members array.
+                team.data.members.push(req.user._id.toString());
+              }
+
               return team;
             });
 
@@ -661,10 +720,7 @@ module.exports = function(app, formioServer) {
       return res.sendStatus(401);
     }
 
-    getTeams({
-      _id: req.token.user._id,
-      project: req.token.project._id
-    }, true, true)
+    getTeams(req.user, true, true)
       .then(function(teams) {
         teams = teams || [];
         teams = filterTeamsForDisplay(teams);
@@ -686,10 +742,7 @@ module.exports = function(app, formioServer) {
       return res.sendStatus(401);
     }
 
-    getTeams({
-      _id: req.token.user._id,
-      project: req.token.project._id
-    }, false, true)
+    getTeams(req.user, false, true)
       .then(function(teams) {
         teams = teams || [];
         teams = filterTeamsForDisplay(teams);
@@ -776,6 +829,7 @@ module.exports = function(app, formioServer) {
 
   return {
     getTeams: getTeams,
+    getSSOTeams: getSSOTeams,
     getTeamResource: getTeamResource,
     getProjectTeams: getProjectTeams,
     getDisplayableTeams: getDisplayableTeams,

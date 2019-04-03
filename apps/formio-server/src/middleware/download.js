@@ -48,6 +48,9 @@ module.exports = (formio) => (req, res, next) => {
                     if (err) {
                       return reject(err);
                     }
+                    if (!sub) {
+                      return resolve();
+                    }
                     subData.data = sub.data;
                     resolve();
                   }

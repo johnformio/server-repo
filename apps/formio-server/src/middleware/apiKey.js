@@ -54,12 +54,22 @@ module.exports = function(formio) {
         // Load the user form.
         formio.resources.form.model.findOne(query).exec(function(err, userResource) {
           if (err || !userResource) {
+            // If we are a deployed server, then go ahead and allow access when no user is found.
+            if (!process.env.FORMIO_HOSTED) {
+              req.permissionsChecked = true;
+              req.isAdmin = true;
+            }
             return next();
           }
 
           // Load the owner as the current user.
           formio.cache.loadSubmission(req, userResource._id, currentProject.owner, function(err, user) {
             if (err) {
+              // If we are a deployed server, then go ahead and allow access when no user is found.
+              if (!process.env.FORMIO_HOSTED) {
+                req.permissionsChecked = true;
+                req.isAdmin = true;
+              }
               return next();
             }
 
