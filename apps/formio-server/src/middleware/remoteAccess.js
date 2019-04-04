@@ -22,7 +22,11 @@ module.exports = app => (req, res, next) => {
     };
 
     // If user is owner, skip other checks.
-    if (app.formio.util.idToString(project.owner) === req.token.user._id) {
+    if (
+      req.token.user &&
+      req.token.user._id &&
+      (app.formio.util.idToString(project.owner) === req.token.user._id)
+    ) {
       response.permission = 'owner';
     }
     else {

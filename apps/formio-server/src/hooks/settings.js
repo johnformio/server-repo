@@ -1224,7 +1224,7 @@ module.exports = function(app) {
               return query;
             }
 
-            query.project = formioServer.formio.mongoose.Types.ObjectId(_id);
+            query.project = formioServer.formio.util.idToBson(_id);
             return query;
           });
         }
@@ -1243,9 +1243,26 @@ module.exports = function(app) {
        * @return {*}
        */
       submissionQuery(query, req) {
+        // Allow targetted submissions queries to go through.
+        if (query._id && !query._id.$in) {
+          return query;
+        }
+
         req.projectId = req.projectId || (req.params ? req.params.projectId : undefined) || req._id;
-        query.project = formioServer.formio.util.idToBson(req.projectId);
-        return query;
+        if (req.projectId) {
+          query.project = formioServer.formio.util.idToBson(req.projectId);
+          return query;
+        }
+
+        // If no project is provided, then assume it is the formio project.
+        return formioServer.formio.cache.loadProjectByName(req, 'formio', function(err, _id) {
+          if (err || !_id) {
+            return query;
+          }
+
+          query.project = formioServer.formio.util.idToBson(_id);
+          return query;
+        });
       },
 
       formSearch(search, model, value) {
@@ -1334,7 +1351,7 @@ module.exports = function(app) {
          */
         const updateProject = function(_role, done) {
           formioServer.formio.resources.project.model.findOne({
-            _id: formioServer.formio.mongoose.Types.ObjectId(projectId)
+            _id: formioServer.formio.util.idToBson(projectId)
           }).exec((err, project) => {
             if (err) {
               return done(err);
