@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.5.3
+### Fixed
+ - Improving PDF performance with nested forms.
+ - Fixing issues with the SAML SSO for teams, and also added debugging.
+ - Fixing api keys to always work with deployed servers.
+
+### Changed
+ - Remove bcrypt rebuild since we are no longer using it.
+ - Allowing the deletion of roles from a submission (but not adding)
+ - Moving the owner setting to submission handler so it works on all submissions.
+ - Replace bcrypt with bcryptjs.
+
 ## 6.5.2
 ### Fixed
  - Hotfix to resolve remote team access.
