@@ -1224,7 +1224,7 @@ module.exports = function(app) {
               return query;
             }
 
-            query.project = formioServer.formio.mongoose.Types.ObjectId(_id);
+            query.project = formioServer.formio.util.idToBson(_id);
             return query;
           });
         }
@@ -1234,6 +1234,27 @@ module.exports = function(app) {
           return query;
         }
       },
+
+      /**
+       * Hook for submission queries to add the project id into the query.
+       *
+       * @param query
+       * @param req
+       * @return {*}
+       */
+      submissionQuery(query, req) {
+        // Allow targetted submissions queries to go through.
+        if (query._id && !query._id.$in) {
+          return query;
+        }
+
+        req.projectId = req.projectId || (req.params ? req.params.projectId : undefined) || req._id;
+        if (req.projectId) {
+          query.project = formioServer.formio.util.idToBson(req.projectId);
+        }
+        return query;
+      },
+
       formSearch(search, model, value) {
         search.project = model.project;
         return search;
@@ -1320,7 +1341,7 @@ module.exports = function(app) {
          */
         const updateProject = function(_role, done) {
           formioServer.formio.resources.project.model.findOne({
-            _id: formioServer.formio.mongoose.Types.ObjectId(projectId)
+            _id: formioServer.formio.util.idToBson(projectId)
           }).exec((err, project) => {
             if (err) {
               return done(err);
