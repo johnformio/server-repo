@@ -1251,18 +1251,8 @@ module.exports = function(app) {
         req.projectId = req.projectId || (req.params ? req.params.projectId : undefined) || req._id;
         if (req.projectId) {
           query.project = formioServer.formio.util.idToBson(req.projectId);
-          return query;
         }
-
-        // If no project is provided, then assume it is the formio project.
-        return formioServer.formio.cache.loadProjectByName(req, 'formio', function(err, _id) {
-          if (err || !_id) {
-            return query;
-          }
-
-          query.project = formioServer.formio.util.idToBson(_id);
-          return query;
-        });
+        return query;
       },
 
       formSearch(search, model, value) {
