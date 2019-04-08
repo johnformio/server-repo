@@ -1,7 +1,10 @@
 'use strict';
 
 module.exports = app => (form, submission, done) => {
-  if (!submission.hasOwnProperty('_fvid')) {
+  if (
+    !submission.hasOwnProperty('_fvid') ||
+    (form.hasOwnProperty('revisions') && (form.revisions === 'current'))
+  ) {
     return done();
   }
 
