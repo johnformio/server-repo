@@ -86,10 +86,10 @@ module.exports = (app, template, hook) => {
     });
 
     it('Sets a form to use revisions', done => {
-      form.revisions = 'current';
+      form.revisions = 'original';
       form.components.push();
       helper.updateForm(form, (err, result) => {
-        assert.equal(result.revisions, 'current');
+        assert.equal(result.revisions, 'original');
         helper.getFormRevisions(result, (err, result) => {
           if (err) {
             return done(err);

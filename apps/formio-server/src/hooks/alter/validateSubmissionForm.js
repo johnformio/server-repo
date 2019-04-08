@@ -8,7 +8,7 @@ module.exports = app => (form, submission, done) => {
     return done();
   }
 
-  // If the submission refers to a specific form reivision, load it instead of the current form revision.
+  // If the submission refers to a specific form revision, load it instead of the current form revision.
   const formRevision = app.formio.formio.mongoose.models.formrevision;
   formRevision.findOne({
     _rid: form._id,
