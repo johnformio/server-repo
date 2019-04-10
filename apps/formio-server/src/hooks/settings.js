@@ -68,6 +68,7 @@ module.exports = function(app) {
       validateSubmissionForm: require('./alter/validateSubmissionForm')(app),
       currentUser: require('./alter/currentUser')(app),
       actions: require('./alter/actions')(app),
+      actionContext: require('./alter/actionContext')(app),
       log() {
         const [event, req, ...args] = arguments;
         log(req.uuid, req.projectId || 'NoProject', event, ...args);
