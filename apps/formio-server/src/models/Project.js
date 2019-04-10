@@ -150,9 +150,6 @@ module.exports = function(router) {
         default: 'angular',
         maxlength: 32
       },
-      config: {
-        type: formio.mongoose.Schema.Types.Mixed
-      },
       protect: {
         type: Boolean,
         default: false
