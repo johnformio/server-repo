@@ -1,5 +1,6 @@
 'use strict';
 const async = require('async');
+const util = require('../util/util');
 
 const debug = {
   loadProject: require('debug')('formio:cache:loadProject'),
@@ -7,7 +8,7 @@ const debug = {
 };
 
 module.exports = function(formio) {
-  const util = formio.util;
+  const formioUtil = formio.util;
   const ProjectCache = {
     loadProjectByName(req, name, cb) {
       const cache = formio.cache.cache(req);
@@ -216,7 +217,7 @@ module.exports = function(formio) {
       const formRevisions = [];
 
       // Find any sub forms that have revision locked.
-      util.eachComponent(form.components, function(component) {
+      formioUtil.eachComponent(form.components, function(component) {
         if ((component.type === 'form') && component.form && component.formRevision) {
           const formId = component.form.toString();
           if (!comps[formId]) {
