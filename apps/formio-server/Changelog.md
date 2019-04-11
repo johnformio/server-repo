@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.5.5
+### Fixed
+ - form ?full=true not loading form revisions correctly for sub forms.
+ 
+### Added
+ - context variable to email and webhook actions. 
+
 ## 6.5.4
 ### Fixed
  - Possible crash in the "loadForms" method affecting subforms for pdf downloads and "full=true" flag.
