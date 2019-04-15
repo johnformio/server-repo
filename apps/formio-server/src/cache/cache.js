@@ -244,7 +244,7 @@ module.exports = function(formio) {
           _vid: parseInt(rev._vid),
         };
         formio.resources.formrevision.model.findOne(query, function(err, result) {
-          if (err && !result) {
+          if (err || !result) {
             return done();
           }
           comps[rev.formId].forEach((comp) => (comp.components = result.components.toObject()));

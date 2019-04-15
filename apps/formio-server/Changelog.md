@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.5.7
+### Fixed
+ - Possible crash when generating submission pdfs.
+
 ## 6.5.6
 ### Changed 
  - update formio-services to 6.5.6 to enable redis debugging.
