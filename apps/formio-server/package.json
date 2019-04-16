@@ -38,7 +38,7 @@
     "express": "^4.16.4",
     "express-cache-controller": "^1.1.0",
     "formio": "^1.44.6",
-    "formio-services": "formio/formio-services#v2.0.1",
+    "formio-services": "formio/formio-services#v2.0.2",
     "formio-workers": "^1.11.0",
     "formiojs": "^3.18.4",
     "is-url": "^1.2.4",

@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.5.8
+### Changed
+ - Update formio-services to fix possible reconnect from redis if redis is unavailable for longer than 5 seconds.
+
 ## 6.5.7
 ### Fixed
  - Possible crash when generating submission pdfs.
