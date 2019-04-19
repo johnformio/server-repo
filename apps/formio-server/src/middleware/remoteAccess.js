@@ -22,7 +22,11 @@ module.exports = app => (req, res, next) => {
     };
 
     // If user is owner, skip other checks.
-    if (app.formio.util.idToString(project.owner) === req.token.user._id) {
+    if (
+      req.token.user &&
+      req.token.user._id &&
+      (app.formio.util.idToString(project.owner) === req.token.user._id)
+    ) {
       response.permission = 'owner';
     }
     else {
@@ -32,7 +36,7 @@ module.exports = app => (req, res, next) => {
           const type = access.type.replace('stage_', 'team_');
           roles.forEach(role => {
             if (
-              req.user.teams.indexOf(role) &&
+              (req.user.teams.indexOf(role) !== -1) &&
               permissions.indexOf(type) > permissions.indexOf(response.permission)
             ) {
               response.permission = type;

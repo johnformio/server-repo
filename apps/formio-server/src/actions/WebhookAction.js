@@ -411,12 +411,14 @@ module.exports = (router) => {
         // Interpolate URL if possible
         if (res && res.resource && res.resource.item && res.resource.item.data) {
           // Interpolation data was originally just the data object itself. We have to move it to "data" so merge it as the root item.
-          const data = _.clone(res.resource.item.data);
-          data.data = res.resource.item.data;
-          data.externalId = externalId;
-          url = FormioUtils.interpolate(url, data);
+          const params = {
+            ...res.resource.item.data, // Legacy support for interpolation.
+            config: req.currentProject && req.currentProject.hasOwnProperty('config') ? req.currentProject.config : {},
+            data: res.resource.item.data,
+            externalId
+          };
+          url = FormioUtils.interpolate(url, params);
         }
-
         // Fall back if interpolation failed
         if (!url) {
           url = settings.url;
@@ -435,7 +437,8 @@ module.exports = (router) => {
           const sandbox = {
             externalId,
             payload,
-            headers: options.headers
+            headers: options.headers,
+            config: req.currentProject && req.currentProject.hasOwnProperty('config') ? req.currentProject.config : {},
           };
           script.runInContext(vm.createContext(sandbox), {
             timeout: 500

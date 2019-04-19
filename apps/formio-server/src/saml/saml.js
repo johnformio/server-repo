@@ -96,6 +96,10 @@ module.exports = (formioServer) => {
     userRoles.push('Everyone');
 
     const userId = _.get(profile, (settings.idPath || 'id'));
+    if (!userId) {
+      return next('No User ID was found within your SAML profile.');
+    }
+
     const roles = [];
     const roleNames = [];
     roleMap.map(map => {
@@ -106,17 +110,15 @@ module.exports = (formioServer) => {
       }
     });
 
-    // Make sure to throw an error if no user id was found within the saml profile.
-    if (!userId) {
-      return next('No User ID was found within your SAML profile.');
-    }
-
     const user = {
       _id: toMongoId(userId),
       data: profile,
       roles
     };
 
+    debug(`Requested Roles: ${JSON.stringify(userRoles)}`);
+    debug(`User: ${JSON.stringify(user)}`);
+    debug(`Project: ${project._id.toString()}`);
     const token = {
       external: true,
       user,
@@ -130,10 +132,10 @@ module.exports = (formioServer) => {
     // the user object that will be read by the teams feature to determine which teams are allocated to this user.
     if (project.primary && config.portalSSO) {
       // Load the teams by name.
-      const teamNames = _.filter(userRoles, (userRole) => (roleNames.indexOf(userRole) === -1));
-      formio.teams.getSSOTeams(teamNames).then(function(teams) {
+      formio.teams.getSSOTeams(userRoles).then(function(teams) {
         teams = teams || [];
         user.teams = _.map(_.map(teams, '_id'), formio.util.idToString);
+        debug(`Teams: ${JSON.stringify(user.teams)}`);
         return next(null, {
           user: user,
           decoded: token,
@@ -171,6 +173,7 @@ module.exports = (formioServer) => {
         if (providers.settings.query) {
           redirect = `${redirect}&${providers.settings.query}`;
         }
+        debug(`Redirect: ${redirect}`);
         return res.redirect(redirect);
       });
     }).catch((err) => {

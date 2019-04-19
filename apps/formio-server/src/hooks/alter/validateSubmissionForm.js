@@ -1,11 +1,14 @@
 'use strict';
 
 module.exports = app => (form, submission, done) => {
-  if (!submission.hasOwnProperty('_fvid')) {
+  if (
+    !submission.hasOwnProperty('_fvid') ||
+    (form.hasOwnProperty('revisions') && (form.revisions === 'current'))
+  ) {
     return done();
   }
 
-  // If the submission refers to a specific form reivision, load it instead of the current form revision.
+  // If the submission refers to a specific form revision, load it instead of the current form revision.
   const formRevision = app.formio.formio.mongoose.models.formrevision;
   formRevision.findOne({
     _rid: form._id,

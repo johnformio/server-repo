@@ -4,6 +4,65 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.5.10
+### Changed
+ - Upgraded azure-storage@2.10.3, formiojs@3.19.9, minio@7.0.6, twilio@3.30.1, mocha@6.1.3, sinon@7.3.2, aws-sdk@2.439.0, webpack@4.30.0
+
+### Adding
+ - A docker-compose file.
+ - A way for groups to have self-access features.
+
+## 6.5.9
+### Changed
+ - version number change only.
+
+## 6.5.8
+### Changed
+ - Update formio-services to fix possible reconnect from redis if redis is unavailable for longer than 5 seconds.
+
+## 6.5.7
+### Fixed
+ - Possible crash when generating submission pdfs.
+
+## 6.5.6
+### Changed 
+ - update formio-services to 6.5.6 to enable redis debugging.
+
+## 6.5.5
+### Fixed
+ - form ?full=true not loading form revisions correctly for sub forms.
+ 
+### Added
+ - context variable to email and webhook actions. 
+
+## 6.5.4
+### Fixed
+ - Possible crash in the "loadForms" method affecting subforms for pdf downloads and "full=true" flag.
+
+## 6.5.3
+### Fixed
+ - Improving PDF performance with nested forms.
+ - Fixing issues with the SAML SSO for teams, and also added debugging.
+ - Fixing api keys to always work with deployed servers.
+
+### Changed
+ - Remove bcrypt rebuild since we are no longer using it.
+ - Allowing the deletion of roles from a submission (but not adding)
+ - Moving the owner setting to submission handler so it works on all submissions.
+ - Replace bcrypt with bcryptjs.
+
+## 6.5.2
+### Fixed
+ - Hotfix to resolve remote team access.
+
+## 6.5.1
+### Fixed
+ - Fixed problems with the SSO with portal and SAML.
+
+### Changed
+ - Upgraded form manager with sso fixes.
+ - Ugpraded portal with sso fixes.
+
 ## 6.5.0
 ### Fixed
  - SQL Connector action.
