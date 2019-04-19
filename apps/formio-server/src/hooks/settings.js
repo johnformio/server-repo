@@ -792,17 +792,35 @@ module.exports = function(app) {
       /* eslint-enable max-statements */
 
       /**
-       * Hook the available permission types in the PermissionSchema.
+       * Hook the PermissionSchema.
        *
-       * @param available {Array}
-       *   The available permission types.
+       * @param schema {Object}
+       *   The Permission schema.
        *
-       * @return {Array}
-       *   The updated permission types.
+       * @return {Object}
+       *   The updated permission schema.
        */
-      permissionSchema(available) {
-        available.push('team_access', 'team_read', 'team_write', 'team_admin', 'stage_read', 'stage_write');
-        return available;
+      permissionSchema(schema) {
+        // Allow for permission to be provided for group self access.
+        schema.permission = {
+          type: String,
+          enum: [
+            'admin',
+            'read',
+            'write'
+          ]
+        };
+
+        schema.type.enum.push(
+          'group',
+          'team_access',
+          'team_read',
+          'team_write',
+          'team_admin',
+          'stage_read',
+          'stage_write'
+        );
+        return schema;
       },
 
       importActionQuery(query, action, template) {
@@ -1274,6 +1292,38 @@ module.exports = function(app) {
       cacheInit(cache) {
         cache.projects = {};
         return cache;
+      },
+      postSubmissionUpdate(req, res, update) {
+        if (req.currentForm) {
+          // Check for group self access and add the id if available.
+          const groupPerms = _.find(req.currentForm.submissionAccess, {
+            type: 'group'
+          });
+          if (groupPerms) {
+            const existingAccess = _.find(res.resource.item.access, {
+              type: groupPerms.permission
+            });
+            if (existingAccess) {
+              if (!existingAccess.resouces) {
+                existingAccess.resouces = [];
+              }
+              existingAccess.resouces.push(res.resource.item._id.toString());
+            }
+            else {
+              if (!res.resource.item.access) {
+                res.resource.item.access = [];
+              }
+              res.resource.item.access.push({
+                type: groupPerms.permission,
+                resources: [res.resource.item._id.toString()]
+              });
+            }
+
+            // Set the update.
+            update.access = res.resource.item.access;
+          }
+        }
+        return update;
       },
       submission(req, res, next) {
         if (req.body.hasOwnProperty('_fvid') && typeof res.submission === 'object') {
