@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Adding
  - A docker-compose file.
+ - A way for groups to have self-access features.
 
 ## 6.5.9
 ### Changed
