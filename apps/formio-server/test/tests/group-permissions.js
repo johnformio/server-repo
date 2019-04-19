@@ -2223,9 +2223,9 @@ module.exports = function(app, template, hook) {
           deleteSubmissions(submissions, done);
         });
       });
+    });
 
-      if (!docker && !customer)
-      describe('sandboxed environment', () => {
+    describe('Join Resource Group Permissions', () => {
         let helper = new template.Helper(template.formio.owner);
         it('Should create all of the forms and resources needed', (done) => {
           helper
@@ -2243,13 +2243,29 @@ module.exports = function(app, template, hook) {
                 password: '123testing'
               }
             })
-            .resource('department', [
-              {
-                type: 'textfield',
-                label: 'Name',
-                key: 'name'
+            .user('user', 'user3', {
+              data: {
+                email: 'user3@example.com',
+                password: '123testing'
               }
-            ])
+            })
+            .form({
+              name: 'department',
+              type: 'resource',
+              components: [
+                {
+                  type: 'textfield',
+                  label: 'Name',
+                  key: 'name'
+                }
+              ],
+              submissionAccess: [
+                {
+                  type: 'group',
+                  permission: 'write'
+                }
+              ]
+            })
             .submission('department', {
               data: {
                 name: 'HR'
@@ -2258,6 +2274,11 @@ module.exports = function(app, template, hook) {
             .submission('department', {
               data: {
                 name: 'IT'
+              }
+            })
+            .submission('department', {
+              data: {
+                name: 'Sales'
               }
             })
             .resource('departmentuser', [
@@ -2302,6 +2323,25 @@ module.exports = function(app, template, hook) {
               }
             ])
             .execute(function() {
+              done();
+            });
+        });
+
+        it('Should have added the department id to the write permission access', (done) => {
+          request(app)
+            .get(`/project/${helper.template.project._id}/department/submission/${helper.template.submissions.department[0]._id.toString()}`)
+            .set('x-jwt-token', helper.owner.token)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              const writeAccess = _.find(res.body.access, {
+                type: 'write'
+              });
+
+              assert(!!writeAccess, 'Must find the write access on the department');
+              assert.equal(writeAccess.resources.length, 1);
+              assert.equal(writeAccess.resources[0], helper.template.submissions.department[0]._id.toString());
               done();
             });
         });
@@ -2353,6 +2393,549 @@ module.exports = function(app, template, hook) {
               }
               assert(res.body.roles.indexOf(helper.template.submissions.department[0]._id.toString()) !== -1, 'Must have the department id as a role.');
               assert(res.body.roles.indexOf(helper.template.submissions.department[1]._id.toString()) !== -1, 'Must have the department id as a role.');
+              done();
+            });
+        });
+
+        it('Should allow a user to read their own department record', (done) => {
+          request(app)
+            .get(`/project/${helper.template.project._id}/department/submission/${helper.template.submissions.department[0]._id.toString()}`)
+            .set('x-jwt-token', helper.template.users.user1.token)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              done();
+            });
+        });
+
+        it('Should not allow a user to read other department records', (done) => {
+          request(app)
+            .get(`/project/${helper.template.project._id}/department/submission/${helper.template.submissions.department[2]._id.toString()}`)
+            .set('x-jwt-token', helper.template.users.user1.token)
+            .expect(401)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              done();
+            });
+        });
+
+        it('Should allow a user to update their own department record', (done) => {
+          const dept2 = _.cloneDeep(helper.template.submissions.department[1]);
+          dept2.data.name = 'IT2';
+          request(app)
+            .put(`/project/${helper.template.project._id}/department/submission/${helper.template.submissions.department[1]._id.toString()}`)
+            .set('x-jwt-token', helper.template.users.user1.token)
+            .send(dept2)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              assert.equal(res.body.data.name, 'IT2');
+              done();
+            });
+        });
+
+        it('Should let another user update the department record back.', (done) => {
+          const dept2 = _.cloneDeep(helper.template.submissions.department[1]);
+          dept2.data.name = 'IT';
+          request(app)
+            .put(`/project/${helper.template.project._id}/department/submission/${helper.template.submissions.department[1]._id.toString()}`)
+            .set('x-jwt-token', helper.template.users.user2.token)
+            .send(dept2)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              assert.equal(res.body.data.name, 'IT');
+              done();
+            });
+        });
+
+        it('Should NOT let another user update a department they dont belong too.', (done) => {
+          const dept1 = _.cloneDeep(helper.template.submissions.department[0]);
+          dept1.data.name = 'HR2';
+          request(app)
+            .put(`/project/${helper.template.project._id}/department/submission/${helper.template.submissions.department[0]._id.toString()}`)
+            .set('x-jwt-token', helper.template.users.user2.token)
+            .send(dept1)
+            .expect(401)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              done();
+            });
+        });
+
+        it('Should NOT let any user delete a department they belong too.', (done) => {
+          request(app)
+            .delete(`/project/${helper.template.project._id}/department/submission/${helper.template.submissions.department[0]._id.toString()}`)
+            .set('x-jwt-token', helper.template.users.user1.token)
+            .expect(401)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              done();
+            });
+        });
+
+        it('Should NOT let any user delete a department they belong too.', (done) => {
+          request(app)
+            .delete(`/project/${helper.template.project._id}/department/submission/${helper.template.submissions.department[1]._id.toString()}`)
+            .set('x-jwt-token', helper.template.users.user2.token)
+            .expect(401)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              done();
+            });
+        });
+
+        it('Should NOT let any user delete a department they do not belong too.', (done) => {
+          request(app)
+            .delete(`/project/${helper.template.project._id}/department/submission/${helper.template.submissions.department[0]._id.toString()}`)
+            .set('x-jwt-token', helper.template.users.user2.token)
+            .expect(401)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              done();
+            });
+        });
+
+        it('Should NOT let a user elevate permissions', (done) => {
+          const dept1 = _.cloneDeep(helper.template.submissions.department[0]);
+          const groupPerm = _.find(dept1.access, {
+            type: 'write'
+          });
+          groupPerm.type = 'admin';
+          groupPerm.resources.push(helper.template.users.user2._id);
+          request(app)
+            .put(`/project/${helper.template.project._id}/department/submission/${helper.template.submissions.department[0]._id.toString()}`)
+            .set('x-jwt-token', helper.template.users.user1.token)
+            .send(dept1)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              const writeAccess = _.find(res.body.access, {
+                type: 'write'
+              });
+              assert(!!writeAccess, 'Should have found a write permission');
+              assert.deepEqual(writeAccess.resources, [helper.template.submissions.department[0]._id.toString()]);
+              assert(!_.find(res.body.access, {
+                type: 'admin'
+              }), 'Should NOT have found an admin permission');
+              assert.equal(res.body.data.name, 'HR');
+              done();
+            });
+        });
+
+        it('Should not let the user update the form.', (done) => {
+          const deptForm = _.cloneDeep(helper.template.forms.department);
+          deptForm.title = 'Testing';
+          request(app)
+            .put(`/project/${helper.template.project._id}/department`)
+            .set('x-jwt-token', helper.template.users.user1.token)
+            .send(deptForm)
+            .expect(401)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              done();
+            });
+        });
+
+        it('Should let an admin update the form to change permissions.', (done) => {
+          const deptForm = _.cloneDeep(helper.template.forms.department);
+          deptForm.submissionAccess = [
+            {
+              type: 'group',
+              permission: 'read'
+            }
+          ];
+          request(app)
+            .put(`/project/${helper.template.project._id}/department`)
+            .set('x-jwt-token', helper.owner.token)
+            .send(deptForm)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              helper.template.forms.department = res.body;
+              assert.equal(res.body.submissionAccess[0].type, 'group');
+              assert.equal(res.body.submissionAccess[0].permission, 'read');
+              done();
+            });
+        });
+
+        let marketingDept = null
+        it('Should let an admin create a new group', (done) => {
+          request(app)
+            .post(`/project/${helper.template.project._id}/department/submission`)
+            .set('x-jwt-token', helper.owner.token)
+            .send({
+              data: {
+                name: 'Marketing'
+              }
+            })
+            .expect(201)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              marketingDept = res.body;
+              const readAccess = _.find(res.body.access, {
+                type: 'read'
+              });
+              assert.deepEqual(readAccess, {
+                type: 'read',
+                resources: [res.body._id.toString()]
+              });
+              assert(!_.find(res.body.access, {
+                type: 'write'
+              }), 'Should not find write access');
+              assert(!_.find(res.body.access, {
+                type: 'admin'
+              }), 'Should not find admin access');
+              done();
+            });
+        });
+
+        it('Should assign some users to the departments.', (done) => {
+          request(app)
+            .post(`/project/${helper.template.project._id}/departmentuser/submission`)
+            .set('x-jwt-token', helper.owner.token)
+            .send({
+              data: {
+                department: marketingDept,
+                user: helper.template.users.user3
+              }
+            })
+            .expect(201)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              done();
+            });
+        });
+
+        it('Should have added the marketingDept id to the user3 roles.', (done) => {
+          request(app)
+            .get(`/project/${helper.template.project._id}/user/submission/${helper.template.users.user3._id.toString()}`)
+            .set('x-jwt-token', helper.owner.token)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              assert(res.body.roles.indexOf(marketingDept._id.toString()) !== -1, 'Should have the marketing dept role');
+              done();
+            });
+        });
+
+        it('Should allow user3 access to read the marketing department.', (done) => {
+          request(app)
+            .get(`/project/${helper.template.project._id}/department/submission/${marketingDept._id.toString()}`)
+            .set('x-jwt-token', helper.template.users.user3.token)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              done();
+            });
+        });
+
+        it('Should NOT allow user1 access to read the marketing department.', (done) => {
+          request(app)
+            .get(`/project/${helper.template.project._id}/department/submission/${marketingDept._id.toString()}`)
+            .set('x-jwt-token', helper.template.users.user1.token)
+            .expect(401)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              done();
+            });
+        });
+
+        it('Should NOT allow user2 access to read the marketing department.', (done) => {
+          request(app)
+            .get(`/project/${helper.template.project._id}/department/submission/${marketingDept._id.toString()}`)
+            .set('x-jwt-token', helper.template.users.user2.token)
+            .expect(401)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              done();
+            });
+        });
+
+        it('Should NOT allow user3 access to update the marketing department.', (done) => {
+          marketingDept.data.name = 'Marketing2';
+          request(app)
+            .put(`/project/${helper.template.project._id}/department/submission/${marketingDept._id.toString()}`)
+            .set('x-jwt-token', helper.template.users.user3.token)
+            .send(marketingDept)
+            .expect(401)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              marketingDept.data.name = 'Marketing';
+              done();
+            });
+        });
+
+        it('Should NOT allow user1 access to update the marketing department.', (done) => {
+          marketingDept.data.name = 'Marketing2';
+          request(app)
+            .put(`/project/${helper.template.project._id}/department/submission/${marketingDept._id.toString()}`)
+            .set('x-jwt-token', helper.template.users.user1.token)
+            .send(marketingDept)
+            .expect(401)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              marketingDept.data.name = 'Marketing';
+              done();
+            });
+        });
+
+        it('Should NOT allow user3 access to delete the marketing department.', (done) => {
+          request(app)
+            .delete(`/project/${helper.template.project._id}/department/submission/${marketingDept._id.toString()}`)
+            .set('x-jwt-token', helper.template.users.user3.token)
+            .expect(401)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              done();
+            });
+        });
+
+        it('Should NOT allow user1 access to delete the marketing department.', (done) => {
+          request(app)
+            .delete(`/project/${helper.template.project._id}/department/submission/${marketingDept._id.toString()}`)
+            .set('x-jwt-token', helper.template.users.user1.token)
+            .expect(401)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              done();
+            });
+        });
+
+        it('Should let an admin update the form to change permissions.', (done) => {
+          const deptForm = _.cloneDeep(helper.template.forms.department);
+          deptForm.submissionAccess = [
+            {
+              type: 'group',
+              permission: 'admin'
+            }
+          ];
+          request(app)
+            .put(`/project/${helper.template.project._id}/department`)
+            .set('x-jwt-token', helper.owner.token)
+            .send(deptForm)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              helper.template.forms.department = res.body;
+              assert.equal(res.body.submissionAccess[0].type, 'group');
+              assert.equal(res.body.submissionAccess[0].permission, 'admin');
+              done();
+            });
+        });
+
+        let qaDept = null
+        it('Should let an admin create a new group', (done) => {
+          request(app)
+            .post(`/project/${helper.template.project._id}/department/submission`)
+            .set('x-jwt-token', helper.owner.token)
+            .send({
+              data: {
+                name: 'QA'
+              }
+            })
+            .expect(201)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              qaDept = res.body;
+              const access = _.find(res.body.access, {
+                type: 'admin'
+              });
+              assert.deepEqual(access, {
+                type: 'admin',
+                resources: [res.body._id.toString()]
+              });
+              assert(!_.find(res.body.access, {
+                type: 'read'
+              }), 'Should not find read access');
+              assert(!_.find(res.body.access, {
+                type: 'write'
+              }), 'Should not find write access');
+              done();
+            });
+        });
+
+        it('Should assign some users to the departments.', (done) => {
+          request(app)
+            .post(`/project/${helper.template.project._id}/departmentuser/submission`)
+            .set('x-jwt-token', helper.owner.token)
+            .send({
+              data: {
+                department: qaDept,
+                user: helper.template.users.user3
+              }
+            })
+            .expect(201)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              done();
+            });
+        });
+
+        it('Should have added the qaDept id to the user3 roles.', (done) => {
+          request(app)
+            .get(`/project/${helper.template.project._id}/user/submission/${helper.template.users.user3._id.toString()}`)
+            .set('x-jwt-token', helper.owner.token)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              assert(res.body.roles.indexOf(marketingDept._id.toString()) !== -1, 'Should have the marketing dept role');
+              assert(res.body.roles.indexOf(qaDept._id.toString()) !== -1, 'Should also have the qa dept role');
+              done();
+            });
+        });
+
+        it('Should allow user3 access to read the QA department.', (done) => {
+          request(app)
+            .get(`/project/${helper.template.project._id}/department/submission/${qaDept._id.toString()}`)
+            .set('x-jwt-token', helper.template.users.user3.token)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              done();
+            });
+        });
+
+        it('Should NOT allow user1 access to read the QA department.', (done) => {
+          request(app)
+            .get(`/project/${helper.template.project._id}/department/submission/${qaDept._id.toString()}`)
+            .set('x-jwt-token', helper.template.users.user1.token)
+            .expect(401)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              done();
+            });
+        });
+
+        it('Should NOT allow user2 access to read the QA department.', (done) => {
+          request(app)
+            .get(`/project/${helper.template.project._id}/department/submission/${qaDept._id.toString()}`)
+            .set('x-jwt-token', helper.template.users.user2.token)
+            .expect(401)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              done();
+            });
+        });
+
+        it('Should allow user3 access to update the QA department.', (done) => {
+          qaDept.data.name = 'QA2';
+          request(app)
+            .put(`/project/${helper.template.project._id}/department/submission/${qaDept._id.toString()}`)
+            .set('x-jwt-token', helper.template.users.user3.token)
+            .send(qaDept)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              assert.equal(res.body.data.name, 'QA2');
+              done();
+            });
+        });
+
+        it('Should NOT allow user1 access to update the marketing department.', (done) => {
+          qaDept.data.name = 'QA';
+          request(app)
+            .put(`/project/${helper.template.project._id}/department/submission/${qaDept._id.toString()}`)
+            .set('x-jwt-token', helper.template.users.user1.token)
+            .send(qaDept)
+            .expect(401)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              qaDept.data.name = 'QA';
+              done();
+            });
+        });
+
+        it('Should NOT allow user1 access to delete the QA department.', (done) => {
+          request(app)
+            .delete(`/project/${helper.template.project._id}/department/submission/${qaDept._id.toString()}`)
+            .set('x-jwt-token', helper.template.users.user1.token)
+            .expect(401)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              done();
+            });
+        });
+
+        it('Should allow user3 access to delete the QA department.', (done) => {
+          request(app)
+            .delete(`/project/${helper.template.project._id}/department/submission/${qaDept._id.toString()}`)
+            .set('x-jwt-token', helper.template.users.user3.token)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
               done();
             });
         });
@@ -2414,8 +2997,8 @@ module.exports = function(app, template, hook) {
 
               var response = res.body;
               assert.equal(response.length, 2);
-              assert.equal(response[0].data.notes, 'This is only for the IT department!');
-              assert.equal(response[1].data.notes, 'This is only for the HR department!');
+              assert.equal(response[0].data.notes, 'This is only for the HR department!');
+              assert.equal(response[1].data.notes, 'This is only for the IT department!');
               helper.template.users.user1.token = res.headers['x-jwt-token'];
               done();
             });
@@ -2440,6 +3023,5 @@ module.exports = function(app, template, hook) {
             });
         });
       });
-    });
   });
 };
