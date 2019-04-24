@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.5.11
+### Added
+ - Nested forms on forms with revisions enabled will automatically update when a new version is published.
+
 ## 6.5.10
 ### Changed
  - Upgraded azure-storage@2.10.3, formiojs@3.19.9, minio@7.0.6, twilio@3.30.1, mocha@6.1.3, sinon@7.3.2, aws-sdk@2.439.0, webpack@4.30.0
