@@ -120,6 +120,7 @@ config.license = config.formio.license = process.env.LICENSE;
 config.licenseData = jwt.decode(config.license);
 config.hostedPDFServer = process.env.PDF_SERVER || '';
 config.portalSSO = process.env.PORTAL_SSO || '';
+config.portalSSOLogout = process.env.PORTAL_SSO_LOGOUT || '';
 
 // Payeezy fields
 config.payeezy = {

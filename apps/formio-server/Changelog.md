@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.5.12
+### Added
+ - Group self access support.
+ - Form Manager access section.
+ - Form Manager click-away protection.
+ - Form Manager merge form support.
+ - Portal SSO custom logout url.
+ - Force SSO authentication for portal and form manager on page refresh.
+ - Form View Pro offline mode support.
+
+### Changed
+ - Upgraded minio@7.0.7, twilio@3.30.2, aws-sdk@2.446.0, body-parser@1.19.0, formiojs@3.20.4
+
 ## 6.5.11
 ### Added
  - Nested forms on forms with revisions enabled will automatically update when a new version is published.

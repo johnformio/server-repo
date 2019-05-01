@@ -57,6 +57,9 @@ module.exports = function(options) {
           else if (config.portalSSO && matched.indexOf('var sso') !== -1) {
             return `var sso = '${config.portalSSO}';`;
           }
+          else if (config.portalSSOLogout && matched.indexOf('var ssoLogout') !== -1) {
+            return `var ssoLogout = '${config.portalSSOLogout}';`;
+          }
           else if (matched.indexOf('var onPremise') !== -1) {
             return 'var onPremise = true;';
           }
@@ -267,6 +270,8 @@ module.exports = function(options) {
      */
     const appVariables = function(project) {
       return `
+        window.APP_SSO = '${_.get(project, 'config.sso', '')}';
+        window.SSO_PROJECT = '${_.get(project, 'config.ssoProject', '')}';
         window.APP_TITLE = '${_.get(project, 'config.title', '')}';
         window.APP_JS = '${_.get(project, 'config.js', '')}';
         window.APP_CSS = '${_.get(project, 'config.css', '')}';
@@ -282,8 +287,6 @@ module.exports = function(options) {
       app.get('/project/:projectId/manage', (req, res) => {
         const script = `<script type="text/javascript">
           window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/?$/, '');
-          window.APP_SSO = '${_.get(req.currentProject, 'config.sso', '')}';
-          window.SSO_PROJECT = '${_.get(req.currentProject, 'config.ssoProject', '')}';
           ${appVariables(req.currentProject)}
         </script>`;
         fs.readFile(`./portal/manager/index.html`, 'utf8', (err, contents) => {
