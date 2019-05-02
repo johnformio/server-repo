@@ -50,14 +50,14 @@ module.exports = function(options) {
     // Override config.js so we can set onPremise to true.
     app.get('/config.js', (req, res) => {
       fs.readFile(`./portal/config.js`, 'utf8', (err, contents) => {
-        res.send(contents.replace(/var hostedPDFServer = '';|var sso = '';|var onPremise = false;/gi, (matched) => {
+        res.send(contents.replace(/var hostedPDFServer = '';|var ssoLogout = '';|var sso = '';|var onPremise = false;/gi, (matched) => {
           if (config.hostedPDFServer && matched.indexOf('var hostedPDFServer') !== -1) {
             return `var hostedPDFServer = '${config.hostedPDFServer}';`;
           }
-          else if (config.portalSSO && matched.indexOf('var sso') !== -1) {
+          else if (config.portalSSO && matched.indexOf('var sso =') !== -1) {
             return `var sso = '${config.portalSSO}';`;
           }
-          else if (config.portalSSOLogout && matched.indexOf('var ssoLogout') !== -1) {
+          else if (config.portalSSOLogout && matched.indexOf('var ssoLogout =') !== -1) {
             return `var ssoLogout = '${config.portalSSOLogout}';`;
           }
           else if (matched.indexOf('var onPremise') !== -1) {
@@ -272,6 +272,7 @@ module.exports = function(options) {
       return `
         window.APP_SSO = '${_.get(project, 'config.sso', '')}';
         window.SSO_PROJECT = '${_.get(project, 'config.ssoProject', '')}';
+        window.APP_LOGOUT = '${_.get(project, 'config.logout', '')}';
         window.APP_TITLE = '${_.get(project, 'config.title', '')}';
         window.APP_JS = '${_.get(project, 'config.js', '')}';
         window.APP_CSS = '${_.get(project, 'config.css', '')}';
