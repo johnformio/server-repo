@@ -311,9 +311,10 @@ module.exports = function(app) {
         // Allow remote team admins to have admin access.
         if (
           req.remotePermission &&
-          req.projectId &&
-          req.userProject &&
-          req.userProject._id.toString() === req.projectId.toString() &&
+          (
+            !req.projectId ||
+            (req.userProject && req.userProject._id.toString() === req.projectId.toString())
+          ) &&
           ['admin', 'owner', 'team_admin'].indexOf(req.remotePermission) !== -1
         ) {
           return true;
@@ -668,7 +669,7 @@ module.exports = function(app) {
          */
         if (req.remotePermission) {
           // Do not grant permissions accross projects... one remote token per project please.
-          if (!req.projectId || !req.userProject || (req.userProject._id.toString() !== req.projectId.toString())) {
+          if (req.projectId && (!req.userProject || (req.userProject._id.toString() !== req.projectId.toString()))) {
             return false;
           }
 
