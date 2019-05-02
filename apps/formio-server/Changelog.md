@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.5.15
+### Fixed
+ - Problem with connecting to remote environments giving 401 unauthorized issue.
+
+## 6.5.13, 6.5.14
+### Fixed
+ - Issues with the Form Manager application.
+
 ## 6.5.12
 ### Added
  - Group self access support.
