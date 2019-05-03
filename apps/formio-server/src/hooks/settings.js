@@ -958,7 +958,7 @@ module.exports = function(app) {
         steps.unshift(async.apply(_install, template, project));
 
         const _importAccess = (template, items, done) => {
-          formioServer.formio.resources.project.model.findOne({_id: template._id}).exec((err, project) => {
+          formioServer.formio.resources.project.model.findOne({_id: template._id}).lean().exec((err, project) => {
             if (err) {
               return done(err);
             }
@@ -967,31 +967,37 @@ module.exports = function(app) {
               return done();
             }
 
-            if ('access' in template) {
-              const permissions = ['create_all', 'read_all', 'update_all', 'delete_all'];
-              project.access = _.filter(project.access, access => permissions.indexOf(access.type) === -1);
+            // Set the project access if it doesn't exist or isn't already an array.
+            if (!project.access || !Array.isArray(project.access)) {
+              project.access = [];
+            }
 
+            if ('access' in template && Array.isArray(template.access)) {
               template.access.forEach(access => {
-                const projectAccess = _.find(project.access, {type: access.type});
-                const newRoles = _.filter(access.roles).map(name => {
-                  if (template.roles && template.roles.hasOwnProperty(name)) {
-                    return template.roles[name]._id;
+                if (access && Array.isArray(access.roles)) {
+                  const projectAccess = _.find(project.access, {type: access.type});
+                  const newRoles = _.filter(access.roles.map(name => {
+                    if (template.roles && template.roles.hasOwnProperty(name)) {
+                      return template.roles[name]._id;
+                    }
+                    return false;
+                  }));
+                  if (projectAccess && Array.isArray(projectAccess.roles)) {
+                    projectAccess.roles = _.uniq(newRoles);
                   }
-                  return name;
-                });
-                if (projectAccess) {
-                  projectAccess.roles = _.uniq(projectAccess.roles.concat(newRoles));
-                }
-                else {
-                  project.access.push({
-                    type: access.type,
-                    roles: newRoles
-                  });
+                  else {
+                    project.access.push({
+                      type: access.type,
+                      roles: newRoles
+                    });
+                  }
                 }
               });
 
               // Ensure we have unique access.
-              project.access = _.uniqBy(project.access, 'type');
+              if (project.access && Array.isArray(project.access)) {
+                project.access = _.uniqBy(project.access, 'type');
+              }
             }
             else if (
               'roles' in template &&
@@ -1029,7 +1035,13 @@ module.exports = function(app) {
                 }
               ];
             }
-            project.save(done);
+
+            // Update this project.
+            formioServer.formio.resources.project.model.update({
+              _id: project._id
+            }, {
+              $set: {access: project.access}
+            }, done);
           });
         };
 
