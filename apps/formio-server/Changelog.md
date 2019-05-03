@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.5.17
+### Fixed
+ - Problems with the project import with regard to project access controls.
+
 ## 6.5.16
 ### Fixed
  - Other issues around remote access not getting correct permissions to do operations within the projects.
