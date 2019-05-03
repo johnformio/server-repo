@@ -983,7 +983,7 @@ module.exports = function(app) {
                     return false;
                   }));
                   if (projectAccess && Array.isArray(projectAccess.roles)) {
-                    projectAccess.roles = _.uniq(projectAccess.roles.concat(newRoles));
+                    projectAccess.roles = _.uniq(newRoles);
                   }
                   else {
                     project.access.push({
