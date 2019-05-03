@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.5.16
+### Fixed
+ - Other issues around remote access not getting correct permissions to do operations within the projects.
+
 ## 6.5.15
 ### Fixed
  - Problem with connecting to remote environments giving 401 unauthorized issue.
