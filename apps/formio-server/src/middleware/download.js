@@ -10,8 +10,10 @@ module.exports = (formio) => (req, res, next) => {
     }
 
     const settings = project.settings;
-    // Load the current form.
-    formio.cache.loadCurrentForm(req, (err, form) => {
+    const formId = req.query.form || formio.cache.getCurrentFormId(req);
+
+    // Load the provided form.
+    formio.cache.loadForm(req, null, formId, (err, form) => {
       if (err) {
         return next(err);
       }
