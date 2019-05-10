@@ -284,28 +284,26 @@ module.exports = function(options) {
     };
 
     // Add the form manager.
-    if (config.licenseData && config.licenseData.portal) {
-      app.get('/project/:projectId/manage', (req, res) => {
-        const script = `<script type="text/javascript">
-          window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/?$/, '');
-          ${appVariables(req.currentProject)}
-        </script>`;
-        fs.readFile(`./portal/manager/index.html`, 'utf8', (err, contents) => {
-          res.send(contents.replace('<head>', `<head>${script}`));
-        });
+    app.get('/project/:projectId/manage', (req, res) => {
+      const script = `<script type="text/javascript">
+        window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/?$/, '');
+        ${appVariables(req.currentProject)}
+      </script>`;
+      fs.readFile(`./portal/manager/index.html`, 'utf8', (err, contents) => {
+        res.send(contents.replace('<head>', `<head>${script}`));
       });
-      app.get('/project/:projectId/manage/view', (req, res) => {
-        const script = `<script type="text/javascript">
-          window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/view\\/?$/, '');
-          window.ALLOW_SWITCH = false;
-          ${appVariables(req.currentProject)}
-        </script>`;
-        fs.readFile(`./portal/manager/view/index.html`, 'utf8', (err, contents) => {
-          res.send(contents.replace('<head>', `<head>${script}`));
-        });
+    });
+    app.get('/project/:projectId/manage/view', (req, res) => {
+      const script = `<script type="text/javascript">
+        window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/view\\/?$/, '');
+        window.ALLOW_SWITCH = false;
+        ${appVariables(req.currentProject)}
+      </script>`;
+      fs.readFile(`./portal/manager/view/index.html`, 'utf8', (err, contents) => {
+        res.send(contents.replace('<head>', `<head>${script}`));
       });
-      app.use('/project/:projectId/manage', express.static(`./portal/manager`));
-    }
+    });
+    app.use('/project/:projectId/manage', express.static(`./portal/manager`));
 
     // Mount the saml integration.
     app.use('/project/:projectId/saml', require('./src/saml/saml')(app.formio));
