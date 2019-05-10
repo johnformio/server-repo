@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.5.18
+### Added
+ - A way to download a PDF with any form by providing a "?form=" query parameter.
+
+### Changed
+ - Upgraded deployed portal to 6.4.4
+ - Always mount the form manager.
+
 ## 6.5.17
 ### Fixed
  - Problems with the project import with regard to project access controls.
