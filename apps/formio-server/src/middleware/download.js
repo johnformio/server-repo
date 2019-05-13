@@ -23,7 +23,7 @@ module.exports = (formio) => async(req, res, next) => {
 
     // Swap in form components from earlier revision, if applicable
     if (form.revisions === 'original' && submission._fvid !== form._vid) {
-      let result = await Promise.promisify(formio.resources.formrevision.model.findOne, {context: formio.resources.formrevision.model})({
+      const result = await Promise.promisify(formio.resources.formrevision.model.findOne, {context: formio.resources.formrevision.model})({
         _rid: formio.util.idToBson(form._id),
         _vid: parseInt(submission._fvid),
       });
