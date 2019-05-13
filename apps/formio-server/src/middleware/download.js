@@ -21,6 +21,18 @@ module.exports = (formio) => async(req, res, next) => {
     // Load the current submission
     const submission = await formio.cache.loadCurrentSubmissionAsync(req);
 
+    // Swap in form components from earlier revision, if applicable
+    if (form.revisions === 'original' && submission._fvid !== form._vid) {
+      let result = await Promise.promisify(formio.resources.formrevision.model.findOne, {context: formio.resources.formrevision.model})({
+        _rid: formio.util.idToBson(form._id),
+        _vid: parseInt(submission._fvid),
+      });
+
+      if (result) {
+        form.components = result.toObject().components;
+      }
+    }
+
     // Load all subform submissions
     await formio.cache.loadSubSubmissionsAsync(form, submission, req);
 
