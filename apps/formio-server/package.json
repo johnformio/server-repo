@@ -29,6 +29,7 @@
     "async": "^2.6.2",
     "aws-sdk": "^2.446.0",
     "azure-storage": "^2.10.3",
+    "bluebird": "^3.5.4",
     "body-parser": "^1.19.0",
     "chance": "^1.0.18",
     "cors": "^2.8.5",
