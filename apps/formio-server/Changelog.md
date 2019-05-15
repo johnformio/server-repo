@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.5.19
+### Changed
+ - Upgraded formiojs@3.20.14, minio@7.0.8, mongodb@3.2.4, twilio@3.30.3, aws-sdk@2.455.0, formio@1.46.0, passport-saml@1.1.0, webpack@4.31.0
+ 
+### Fixed
+ - Project template exports to include the "properties" on each form component.
+ - Problems with the PDF download which includes forms with nested form components assigned to specific form revisions.
+
 ## 6.5.18
 ### Added
  - A way to download a PDF with any form by providing a "?form=" query parameter.

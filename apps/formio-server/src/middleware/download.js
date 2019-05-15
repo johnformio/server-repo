@@ -15,15 +15,13 @@ module.exports = (formio) => async(req, res, next) => {
     const formId = req.query.form || formio.cache.getCurrentFormId(req);
     const form = await formio.cache.loadFormAsync(req, null, formId);
 
-    // Speed up performance by loading all subforms inline to the form
-    await formio.cache.loadSubFormsAsync(form, req);
-
     // Load the current submission
     const submission = await formio.cache.loadCurrentSubmissionAsync(req);
 
     // Swap in form components from earlier revision, if applicable
     if (form.revisions === 'original' && submission._fvid !== form._vid) {
       const result = await Promise.promisify(formio.resources.formrevision.model.findOne, {context: formio.resources.formrevision.model})({
+        project: project._id,
         _rid: formio.util.idToBson(form._id),
         _vid: parseInt(submission._fvid),
       });
@@ -32,6 +30,9 @@ module.exports = (formio) => async(req, res, next) => {
         form.components = result.toObject().components;
       }
     }
+
+    // Speed up performance by loading all subforms inline to the form
+    await formio.cache.loadSubFormsAsync(form, req);
 
     // Load all subform submissions
     await formio.cache.loadSubSubmissionsAsync(form, submission, req);
