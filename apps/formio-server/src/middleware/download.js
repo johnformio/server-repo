@@ -4,7 +4,9 @@ const FORMIO_FILES_SERVER = process.env.FORMIO_FILES_SERVER || 'https://files.fo
 const _ = require('lodash');
 const Promise = require('bluebird');
 
-module.exports = (formio) => async(req, res, next) => {
+module.exports = (formioServer) => async(req, res, next) => {
+  const encrypt = require('../util/encrypt')(formioServer);
+  const formio = formioServer.formio;
   Promise.promisifyAll(formio.cache, {context: formio.cache});
 
   try {
@@ -39,6 +41,15 @@ module.exports = (formio) => async(req, res, next) => {
 
     // Remove protected fields
     formio.util.removeProtectedFields(form, 'download', submission);
+
+    // Decrypt encrypted fields
+    req.flattenedComponents = formio.util.flattenComponents(form.components, true);
+
+    if (
+      encrypt.hasEncryptedComponents(req)
+    ) {
+      await new Promise((resolve) => encrypt.encryptDecrypt(req, submission, 'decrypt', resolve));
+    }
 
     // Set the files server
     let filesServer = FORMIO_FILES_SERVER;

@@ -192,7 +192,7 @@ module.exports = function(options) {
     app.formio.formio.middleware.tokenHandler,
     app.formio.formio.middleware.params,
     app.formio.formio.middleware.permissionHandler,
-    require('./src/middleware/download')(app.formio.formio)
+    require('./src/middleware/download')(app.formio)
   ];
 
   app.get('/project/:projectId/form/:formId/submission/:submissionId/download', downloadPDF);
