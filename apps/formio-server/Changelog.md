@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.5.21
+### Changed
+ - Upgraded portal, form manager, and formview pro.
+
 ## 6.5.20
 ### Fixed
  - Fix issue where fields were not getting decrypted for pdfs.
