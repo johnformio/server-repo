@@ -183,7 +183,7 @@ module.exports = (formioServer) => {
 
   router.post('/acs', (req, res) => {
     // Get the relay.
-    const relay = req.query.relay || req.body.RelayState;
+    let relay = req.query.relay || req.body.RelayState;
     if (!relay) {
       return res.status(400).send('No relay provided.');
     }
@@ -210,7 +210,9 @@ module.exports = (formioServer) => {
               return res.status(401).send(token);
             }
 
-            return res.redirect(`${relay}?saml=${token.token}`);
+            relay += (relay.indexOf('?') === -1) ? '?' : '&';
+            relay += `saml=${token.token}`;
+            return res.redirect(relay);
           }
         );
       });
