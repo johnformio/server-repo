@@ -18,7 +18,9 @@ module.exports = (formioServer) => {
         }
 
         const settings = _.get(project, 'settings.saml', null);
-        if (!settings || !settings.sp || !settings.idp) {
+        if (
+          !settings || (!settings.idp && !settings.passport)
+        ) {
           debug('Project is not configured for SAML');
           return reject('Project is not configured for SAML');
         }
@@ -41,8 +43,21 @@ module.exports = (formioServer) => {
             return false;
           }));
 
-          const reader = new MetadataReader(settings.idp);
-          const config = toPassportConfig(reader);
+          let config = null;
+          try {
+            if (settings.passport) {
+              config = (typeof settings.passport === 'string') ? JSON.parse(settings.passport) : settings.passport;
+            }
+            else if (settings.idp) {
+              config = toPassportConfig(new MetadataReader(settings.idp));
+            }
+          }
+          catch (err) {
+            // Do nothing.
+          }
+          if (!config) {
+            return reject('Invalid SAML Configuration');
+          }
           config.issuer = settings.issuer;
           config.callbackUrl = settings.callbackUrl;
           const saml = new SAML(config);
@@ -155,7 +170,12 @@ module.exports = (formioServer) => {
   // Release the metadata publicly
   router.get('/metadata', (req, res) => {
     getSAMLProviders(req).then((providers) => {
-      return res.header('Content-Type','text/xml').send(providers.saml.generateServiceProviderMetadata());
+      if (providers.settings.sp) {
+        return res.header('Content-Type','text/xml').send(providers.settings.sp);
+      }
+      else {
+        return res.header('Content-Type','text/xml').send(providers.saml.generateServiceProviderMetadata());
+      }
     }).catch((err) => {
       return res.status(400).send(err.message || err);
     });
