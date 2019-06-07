@@ -50,6 +50,8 @@ module.exports = (formioServer) => {
             }
             else if (settings.idp) {
               config = toPassportConfig(new MetadataReader(settings.idp));
+              config.issuer = settings.issuer;
+              config.callbackUrl = settings.callbackUrl;
             }
           }
           catch (err) {
@@ -58,8 +60,6 @@ module.exports = (formioServer) => {
           if (!config) {
             return reject('Invalid SAML Configuration');
           }
-          config.issuer = settings.issuer;
-          config.callbackUrl = settings.callbackUrl;
           const saml = new SAML(config);
           return resolve({
             saml: saml,

@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.5.23
+### Added
+ - Ability to configure SAML using passport settings.
+
 ## 6.5.22
 ### Fixed
  - Issue where the SAML relay was not adding the correct query separator.
