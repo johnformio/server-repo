@@ -188,7 +188,7 @@ module.exports = (formioServer) => {
         RelayState: req.query.relay
       }}, (err, redirect) => {
         if (err) {
-          res.status(400).send(err.message || err);
+          return res.status(400).send(err.message || err);
         }
         if (providers.settings.query) {
           redirect = `${redirect}&${providers.settings.query}`;
