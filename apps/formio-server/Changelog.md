@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.5.24
+### Fixed
+ - Problem where invalid SAML configurations could make the server crash.
+
+### Changed
+ - Upgraded mongodb@3.2.7, aws-sdk@2.471.0, jira-connector@2.13.0, webpack@4.33.0
+
 ## 6.5.23
 ### Added
  - Ability to configure SAML using passport settings.
