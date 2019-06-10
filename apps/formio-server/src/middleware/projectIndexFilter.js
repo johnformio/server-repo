@@ -28,7 +28,7 @@ module.exports = function(formioServer) {
         $or: [
           // If owner.
           {
-            owner: req.token.user._id
+            owner: formioServer.formio.util.ObjectId(req.token.user._id)
           },
           // If has team permission.
           {
