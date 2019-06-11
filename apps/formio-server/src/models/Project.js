@@ -73,10 +73,17 @@ module.exports = function(router) {
         default: '0.0.0'
       },
       owner: {
-        type: formio.mongoose.Schema.Types.ObjectId,
+        type: formio.mongoose.Schema.Types.Mixed,
         ref: 'submission',
         index: true,
-        default: null
+        default: null,
+        set: owner => {
+          // Attempt to convert to objectId.
+          return formio.util.ObjectId(owner);
+        },
+        get: owner => {
+          return owner ? owner.toString() : owner;
+        }
       },
       project: {
         type: formio.mongoose.Schema.Types.ObjectId,

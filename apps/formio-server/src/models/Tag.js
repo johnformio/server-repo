@@ -53,10 +53,17 @@ module.exports = function(router) {
         description: 'The project template.'
       },
       owner: {
-        type: router.formio.mongoose.Schema.Types.ObjectId,
+        type: formio.mongoose.Schema.Types.Mixed,
         ref: 'submission',
         index: true,
-        default: null
+        default: null,
+        set: owner => {
+          // Attempt to convert to objectId.
+          return formio.util.ObjectId(owner);
+        },
+        get: owner => {
+          return owner ? owner.toString() : owner;
+        }
       },
       deleted: {
         type: Number,
