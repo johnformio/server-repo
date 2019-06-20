@@ -21,8 +21,8 @@
   "cache": "1550086650",
   "main": "./server.js",
   "schema": "3.3.2",
-  "portalVersion": "6.4.9",
-  "version": "6.5.25",
+  "portalVersion": "6.4.10",
+  "version": "6.5.26",
   "dependencies": {
     "JSONStream": "^1.3.5",
     "adal-node": "^0.1.28",
