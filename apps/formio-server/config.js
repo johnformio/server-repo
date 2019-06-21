@@ -77,7 +77,10 @@ config.formio.reservedForms = [
   'saml',
   'recaptcha',
   'manage',
-  'config.json'
+  'config.json',
+  'action',
+  'actionItem',
+  'tag',
 ];
 /* eslint-enable no-useless-escape */
 // If it isn't allowed as a form, it isn't allowed as a project either.
