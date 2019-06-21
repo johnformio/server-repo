@@ -21,6 +21,16 @@ module.exports = function(router, formioServer) {
       beforeGet: [
         formio.middleware.restrictOwnerAccess,
         formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
+        (req, res, next) => {
+          if (req.method === 'GET') {
+            req.modelQuery = req.modelQuery || req.model || this.model;
+            req.modelQuery = req.modelQuery.find({project: req.currentProject._id});
+
+            req.countQuery = req.countQuery || req.model || this.model;
+            req.countQuery = req.countQuery.find({project: req.primaryProject._id});
+          }
+          return next();
+        }
       ],
       afterGet: [
         formio.middleware.filterResourcejsResponse(hiddenFields)
@@ -30,6 +40,16 @@ module.exports = function(router, formioServer) {
       beforeIndex: [
         formio.middleware.restrictOwnerAccess,
         formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
+        (req, res, next) => {
+          if (req.method === 'GET') {
+            req.modelQuery = req.modelQuery || req.model || this.model;
+            req.modelQuery = req.modelQuery.find({project: req.projectId});
+
+            req.countQuery = req.countQuery || req.model || this.model;
+            req.countQuery = req.countQuery.find({project: req.projectId});
+          }
+          return next();
+        }
       ],
       afterIndex: [
         formio.middleware.filterResourcejsResponse(hiddenFields),
