@@ -304,7 +304,7 @@ module.exports = (router) => {
      *   The callback function to execute upon completion.
      */
     /* eslint-disable max-statements */
-    resolve(handler, method, req, res, next) {
+    resolve(handler, method, req, res, next, setActionItemMessage) {
       const settings = this.settings || {};
 
       /**
@@ -315,6 +315,7 @@ module.exports = (router) => {
        * @returns {*}
        */
       const handleSuccess = (data, response) => {
+        setActionItemMessage('Webhook succeeded');
         if (settings.externalIdType && settings.externalIdPath) {
           const type = settings.externalIdType;
           const id = data[settings.externalIdPath] || '';
@@ -343,17 +344,19 @@ module.exports = (router) => {
        * @returns {*}
        */
       const handleError = (data, response = {}) => {
+        setActionItemMessage('Webhook failed', {data, response}, 'error');
         if (!settings.block || settings.block === false) {
           return;
         }
 
         const message = data ? (data.message || data) : response.statusMessage;
 
-        return res.status(400).send(message);
+        return res.status(response.status || 400).send(message);
       };
 
       try {
         if (!hook.alter('resolve', true, this, handler, method, req, res)) {
+          setActionItemMessage('Webhook skipped (resolved)');
           return next();
         }
 
@@ -432,6 +435,7 @@ module.exports = (router) => {
         };
 
         // Allow user scripts to transform the payload.
+        setActionItemMessage('Transforming payload');
         if (settings.transform) {
           const script = new vm.Script(settings.transform);
           const sandbox = {
@@ -445,10 +449,16 @@ module.exports = (router) => {
           });
           payload = sandbox.payload;
         }
+        setActionItemMessage('Transform payload done');
 
         // Use either the method specified in settings or the request method.
         const reqMethod = settings.method || req.method;
 
+        setActionItemMessage('Attempting webhook', {
+          method: reqMethod,
+          url,
+          options
+        });
         // Make the request.
         switch (reqMethod.toLowerCase()) {
           case 'get':
