@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.5.27
+### Fixed
+ - Issue where the Minio server was getting wrong configurations for local environments through proxies.
+
+### Changed
+ - Upgraded formiojs@3.22.9, jira-connector@2.14.1, aws-sdk@2.479.0, webpack@4.35.0
+
 ## 6.5.26
 ### Changed
  - Upgraded portal to 6.4.10 which fixes inline embed not containing project and base for deployed portals.
