@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.5.28
+### Added
+ - A way to set project types.
+
 ## 6.5.27
 ### Fixed
  - Issue where the Minio server was getting wrong configurations for local environments through proxies.
