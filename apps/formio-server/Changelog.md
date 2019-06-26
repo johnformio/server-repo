@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.5.29
+### Fixed
+ - Some minor issues with deployed portal relating to tenant manager application.
+
 ## 6.5.28
 ### Added
  - A way to set project types.
