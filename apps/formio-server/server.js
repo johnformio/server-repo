@@ -125,7 +125,11 @@ module.exports = function(options) {
   });
 
   app.use((req, res, next) => {
-    req.uuid = uuid();
+    // Allow audit uuid from external header.
+    req.uuid = req.header('X-Request-UUID');
+    if (!req.uuid) {
+      req.uuid = uuid();
+    }
     req.startTime = new Date();
 
     app.formio.formio.log('Request', req, req.method, req.path, JSON.stringify(req.query));
