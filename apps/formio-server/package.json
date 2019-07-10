@@ -32,6 +32,7 @@
     "bluebird": "^3.5.5",
     "body-parser": "^1.19.0",
     "chance": "^1.0.18",
+    "connect-multiparty": "^2.2.0",
     "cors": "^2.8.5",
     "crypto-js": "^3.1.5",
     "debug": "^4.1.1",
