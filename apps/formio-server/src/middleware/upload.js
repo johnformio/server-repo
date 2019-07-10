@@ -21,8 +21,7 @@ module.exports = (formioServer) => async(req, res, next) => {
     }
 
     // Create the headers object
-    // const headers = {'x-file-token': project.settings.filetoken};
-    const headers = {'x-file-token': 'zstcgHPGpjmCKs1cfeWPNTr8u1TIZK'};
+    const headers = {'x-file-token': project.settings.filetoken};
 
     // Pass along the auth token to files server
     if (req.token) {
@@ -37,11 +36,7 @@ module.exports = (formioServer) => async(req, res, next) => {
         headers['x-jwt-token'] = formio.auth.getToken(_.omit(req.token, 'allow'));
       }
     }
-    headers['x-jwt-token'] = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7Il9pZCI6IjU1NjczZGMwNGYwNDA1ZGQyODIwNWJiNyJ9LCJmb3JtIjp7Il9pZCI6IjU1M2RiOTRlNzJmNzAyZTcxNGRkOTc3OSIsInByb2plY3QiOiI1NTNkYjkyZjcyZjcwMmU3MTRkZDk3NzgifSwib3JpZ2luIjoiaHR0cHM6Ly9hcGkuZm9ybS5pbyIsInByb2plY3QiOnsiX2lkIjoiNTUzZGI5MmY3MmY3MDJlNzE0ZGQ5Nzc4In0sImlhdCI6MTU2Mjc3MjA0MiwiZXhwIjoxNTk5MDYwMDQyfQ.v0_y_Q2z-Vk7YGxeh4VAplqZ0hxJAqa3j1QyucyslR4';
-
-    // const pdfProject = project._id.toString();
-    filesServer = 'https://files.form.io';
-    const pdfProject = '5811179a7fd506006b4a8327';
+    const pdfProject = project._id.toString();
 
     if (!req.files.file) {
       return res.status(400).send('Missing file');
