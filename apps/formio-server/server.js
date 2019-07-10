@@ -205,7 +205,6 @@ module.exports = function(options) {
     app.formio.formio.middleware.tokenHandler,
     app.formio.formio.middleware.params,
     app.formio.formio.middleware.permissionHandler,
-    // upload.single('file'),
     multipart({
       autoFiles: true,
       uploadDir: os.tmpdir(),
