@@ -59,16 +59,19 @@ module.exports = (formioServer) => async(req, res, next) => {
           }
         }
       }, (err) => {
+        fs.unlink(req.files.file.path);
         if (err) {
           res.status(400).send(err.message);
         }
       }).pipe(res);
     }
     catch (err) {
+      fs.unlink(req.files.file.path);
       res.status(400).send(err.message);
     }
   }
   catch (err) {
+    fs.unlink(req.files.file.path);
     return next(err);
   }
 };
