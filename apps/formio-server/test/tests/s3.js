@@ -134,7 +134,7 @@ module.exports = function(app, template, hook) {
           var uploadForm = {
             title: 'Upload Form',
             name: 'uploadForm',
-            path: 'upload/form',
+            path: 'uploadfile',
             type: 'form',
             access: [],
             submissionAccess: [
@@ -399,7 +399,7 @@ module.exports = function(app, template, hook) {
           var uploadForm = {
             title: 'Upload Form',
             name: 'uploadForm',
-            path: 'upload/form',
+            path: 'uploadfile',
             type: 'form',
             access: [],
             submissionAccess: [
@@ -662,7 +662,7 @@ module.exports = function(app, template, hook) {
           var uploadForm = {
             title: 'Upload Form',
             name: 'uploadForm',
-            path: 'upload/form',
+            path: 'uploadFile',
             type: 'form',
             access: [],
             submissionAccess: [
@@ -1023,7 +1023,7 @@ module.exports = function(app, template, hook) {
           var uploadForm = {
             title: 'Upload Form',
             name: 'uploadForm',
-            path: 'upload/form',
+            path: 'uploadFile',
             type: 'form',
             access: [],
             submissionAccess: [

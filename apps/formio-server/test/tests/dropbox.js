@@ -85,7 +85,7 @@ module.exports = function(app, template, hook) {
       var uploadForm = {
         title: 'Upload Form',
         name: 'uploadForm',
-        path: 'upload/form',
+        path: 'uploadFile',
         type: 'form',
         access: [],
         submissionAccess: [
