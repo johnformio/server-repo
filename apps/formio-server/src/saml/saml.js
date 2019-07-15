@@ -92,6 +92,12 @@ module.exports = (formioServer) => {
    */
   const getToken = function(profile, settings, project, roleMap, next) {
     let userRoles = _.get(profile, (settings.rolesPath || 'roles'));
+
+    //Default role by Azure ADFS (Azure don't send default roles)
+    if (!userRoles) {
+      userRoles = 'User';
+    }
+
     if (typeof userRoles === 'string') {
       if (userRoles.indexOf(',') !== -1) {
         userRoles = userRoles.split(',');

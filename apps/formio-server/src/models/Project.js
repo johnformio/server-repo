@@ -61,6 +61,12 @@ module.exports = function(router) {
           }
         ]
       },
+      type: {
+        type: String,
+        enum: ['project', 'stage', 'tenant'],
+        default: 'project',
+        index: true
+      },
       description: {
         type: String,
         description: 'A description for the project.',
