@@ -11,6 +11,8 @@ var Q = require('q');
 var cacheControl = require('express-cache-controller');
 var uuid = require('uuid/v4');
 var fs = require('fs');
+const multipart = require('connect-multiparty');
+const os = require('os');
 
 module.exports = function(options) {
   options = options || {};
@@ -201,6 +203,19 @@ module.exports = function(options) {
 
   app.get('/project/:projectId/form/:formId/submission/:submissionId/download', downloadPDF);
   app.get('/project/:projectId/form/:formId/submission/:submissionId/download/:fileId', downloadPDF);
+
+  const uploadPDF = [
+    require('./src/middleware/aliasToken')(app),
+    app.formio.formio.middleware.tokenHandler,
+    app.formio.formio.middleware.params,
+    app.formio.formio.middleware.permissionHandler,
+    multipart({
+      autoFiles: true,
+      uploadDir: os.tmpdir(),
+    }),
+    require('./src/middleware/upload')(app.formio)
+  ];
+  app.post('/project/:projectId/upload', uploadPDF);
 
   // Adding google analytics to our api.
   if (config.gaTid) {

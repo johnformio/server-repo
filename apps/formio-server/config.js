@@ -77,6 +77,7 @@ config.formio.reservedForms = [
   'saml',
   'recaptcha',
   'manage',
+  'upload',
   'config.json'
 ];
 /* eslint-enable no-useless-escape */
