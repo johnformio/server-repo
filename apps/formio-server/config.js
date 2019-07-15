@@ -77,6 +77,9 @@ config.formio.reservedForms = [
   'saml',
   'recaptcha',
   'manage',
+  'action',
+  'actionItem',
+  'tag',
   'upload',
   'config.json'
 ];

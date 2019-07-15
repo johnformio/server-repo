@@ -1466,6 +1466,21 @@ module.exports = function(app) {
         });
         return schema;
       },
+      actionItemSchema(schema) {
+        schema.add({
+          project: {
+            type: formioServer.formio.mongoose.Schema.Types.ObjectId,
+            ref: 'project',
+            index: true,
+            required: true
+          }
+        });
+        return schema;
+      },
+      actionItem(actionItem, req) {
+        actionItem.project = req.projectId;
+        return actionItem;
+      },
       formMachineName(machineName, document, done) {
         if (!document) {
           return done(null, machineName);
