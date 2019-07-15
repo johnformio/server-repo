@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.6.0
+### Changed
+ - Update formio to 1.48.0
+ 
+## Added
+ - Upload proxy for pdfs.
+ - Setting Azure ADFS default role.
+
 ## 6.5.29
 ### Fixed
  - Some minor issues with deployed portal relating to tenant manager application.
