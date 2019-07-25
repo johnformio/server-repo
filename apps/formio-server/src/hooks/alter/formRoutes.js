@@ -171,6 +171,29 @@ module.exports = app => routes => {
   });
 
   routes.before.unshift((req, res, next) => {
+    // Remove config in case it is passed back with the form.
+    if (['PUT', 'PATCH', 'POST'].includes(req.method)) {
+      req.body = _.omit(req.body, ['config']);
+    }
+    next();
+  });
+
+  routes.after.push((req, res, next) => {
+    if (['GET', 'INDEX'].includes(req.method)) {
+      const config = _.get(req, 'currentProject.config', {});
+      if (res.resource.item) {
+        res.resource.item.config = config;
+      }
+      if (res.resource.items) {
+        res.resource.items.map(item => {
+          item.config = config;
+        });
+      }
+    }
+    next();
+  });
+
+  routes.before.unshift((req, res, next) => {
     // Don't allow editing drafts if not on enterprise plan.
     if (
       ['PUT'].includes(req.method) &&
