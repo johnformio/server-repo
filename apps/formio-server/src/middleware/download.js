@@ -81,11 +81,13 @@ module.exports = (formioServer) => async(req, res, next) => {
 
     const pdfProject = req.query.project ? req.query.project : project._id.toString();
     const fileId = req.params.fileId || 'pdf';
+    const pdfSrc = _.get(form, 'settings.pdf.src');
+    const url = pdfSrc ? `${pdfSrc}/download` : `${filesServer}/pdf/${pdfProject}/file/${fileId}/download`;
 
     try {
       request({
         method: 'POST',
-        url: `${filesServer}/pdf/${pdfProject}/file/${fileId}/download`,
+        url: url,
         qs: req.query,
         headers: headers,
         json: true,
