@@ -79,10 +79,20 @@ module.exports = (formioServer) => async(req, res, next) => {
       }
     }
 
-    const pdfProject = req.query.project ? req.query.project : project._id.toString();
-    const fileId = req.params.fileId || 'pdf';
     const pdfSrc = _.get(form, 'settings.pdf.src');
-    const url = pdfSrc ? `${pdfSrc}/download` : `${filesServer}/pdf/${pdfProject}/file/${fileId}/download`;
+    let url = null;
+
+    if (pdfSrc && !req.query.project && !req.params.fileId) {
+      // If settings.pdf.src is available, and no custom settings were supplied, use it
+      url = `${pdfSrc}/download`;
+    }
+    else {
+      // Otherwise, fall back to old behavior
+      const pdfProject = req.query.project || project._id.toString();
+      const fileId = req.params.fileId || 'pdf';
+
+      url = `${filesServer}/pdf/${pdfProject}/file/${fileId}/download`;
+    }
 
     try {
       request({
