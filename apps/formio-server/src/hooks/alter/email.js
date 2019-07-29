@@ -114,13 +114,13 @@ module.exports = app => (mail, req, res, params, cb) => {
 
         // Add the download token to the url.
         url += `?token=${token.key}`;
-        mail.attachments = [
+        mail.attachments = (mail.attachments || []).concat([
           {
             filename: `${fileName}.pdf`,
             contentType: 'application/pdf',
             path: `${config.apiHost}${url}`
           }
-        ];
+        ]);
         return resolve();
       });
     }
