@@ -165,29 +165,27 @@ module.exports = app => routes => {
       if (req.body.hasOwnProperty('_vid') && req.body._vid === 'draft') {
         req.isDraft = true;
       }
-      req.body = _.omit(req.body, ['_vid']);
-    }
-    next();
-  });
-
-  routes.before.unshift((req, res, next) => {
-    // Remove config in case it is passed back with the form.
-    if (['PUT', 'PATCH', 'POST'].includes(req.method)) {
-      req.body = _.omit(req.body, ['config']);
+      req.body = _.omit(req.body, ['_vid', 'config']);
     }
     next();
   });
 
   routes.after.push((req, res, next) => {
     if (['GET', 'INDEX'].includes(req.method)) {
-      const config = _.get(req, 'currentProject.config', {});
-      if (res.resource.item) {
-        res.resource.item.config = config;
-      }
-      if (res.resource.items) {
-        res.resource.items.map(item => {
-          item.config = config;
-        });
+      if (
+        req.currentProject &&
+        req.currentProject.settings &&
+        req.currentProject.settings.includeConfig
+      ) {
+        const config = req.currentProject.config || {};
+        if (res.resource.item) {
+          res.resource.item.config = config;
+        }
+        if (res.resource.items) {
+          res.resource.items.map(item => {
+            item.config = config;
+          });
+        }
       }
     }
     next();
