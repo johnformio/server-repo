@@ -173,9 +173,8 @@ module.exports = app => routes => {
   routes.after.push((req, res, next) => {
     if (['GET', 'INDEX'].includes(req.method)) {
       if (
-        res.resource.item &&
-        res.resource.item.settings &&
-        res.resource.item.settings.includeConfig
+        req.currentProject.settings &&
+        req.currentProject.settings.addConfigToForms
       ) {
         const config = req.currentProject.config || {};
         if (res.resource.item) {
