@@ -40,7 +40,10 @@ config.reservedSubdomains = [
   'team',
   'files',
   'pdf',
-  'manager'
+  'manager',
+  'cdn',
+  'alpha',
+  'gamma'
 ];
 /* eslint-disable no-useless-escape */
 config.formio.reservedForms = [
