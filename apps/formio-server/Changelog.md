@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
  - Updated formio to 1.49.0 https://github.com/formio/formio/blob/master/Changelog.md#1490
  - Updated dependencies.
+ - Upgrade formio-app to 6.6.2 which includes includeConfig form configuration.
+ - Adding "cdn", "alpha", and "gamma" to list of reserved project names.
 
 ## 6.6.0
 ### Changed
