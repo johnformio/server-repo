@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.6.4
+### Fixed
+ - Compile issues that would create an invalid utils object and was causing crashing.
+
 ## 6.6.3
 ### Changed
  - The configuration to add public configurations to form json schemas to be at the project level instead of per-form. This improves performance for projects without this feature.

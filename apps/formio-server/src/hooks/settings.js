@@ -1115,8 +1115,6 @@ module.exports = function(app) {
           return next();
         }
 
-        const util = formioServer.formio.util;
-
         // Force the user reference to be an object rather than a mongoose document.
         try {
           user = user.toObject();
@@ -1133,7 +1131,7 @@ module.exports = function(app) {
         // Convert all the roles to strings
         user.roles = _(user.roles)
           .filter()
-          .map(util.idToString)
+          .map(formioServer.formio.util.idToString)
           .uniq()
           .value();
 
@@ -1147,7 +1145,7 @@ module.exports = function(app) {
             user.teams = _(teams)
               .map('_id')
               .filter()
-              .map(util.idToString)
+              .map(formioServer.formio.util.idToString)
               .uniq()
               .value();
 
