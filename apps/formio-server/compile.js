@@ -35,7 +35,8 @@ var copyFile = function(file) {
 ].forEach(copyFile);
 
 webpack({
-  mode: 'production',
+  mode: 'development',
+  devtool: 'cheap-source-map',
   entry: './main.js',
   target: 'node',
   node: {
