@@ -30,7 +30,7 @@ module.exports = function(formio) {
         options.settings['customer_status_value'] = 'Created Project';
         const ActionClass = formio.actions.actions['hubspotContact'];
         const action = new ActionClass(options, modReq, res);
-        action.resolve('after', 'create', modReq, res, function() {});
+        action.resolve('after', 'create', modReq, res, () => {}, () => {});
       });
     }
   };
