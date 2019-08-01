@@ -8,7 +8,6 @@ const chance = new (require('chance'))();
 const fs = require('fs');
 const log = require('debug')('formio:log');
 const util = require('../util/util');
-const debug = require('debug')('formio:hooks:settings');
 const vm = require('vm');
 
 module.exports = function(app) {
@@ -1141,8 +1140,6 @@ module.exports = function(app) {
             if (!teams || !teams.length) {
               return user;
             }
-
-            debug(`teams: ${JSON.stringify(teams)}`);
 
             // Filter the teams to only contain the team ids.
             user.teams = _(teams)

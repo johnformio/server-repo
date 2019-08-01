@@ -89,9 +89,7 @@ module.exports = function(formio) {
           .then(function(teams) {
             teams = teams || [];
             teams = _.map(_.map(teams, '_id'), formio.util.idToString);
-            debug(`accessIds: ${JSON.stringify(accessIds)}`);
-            debug(`currentTeams: ${JSON.stringify(currentTeams)}`);
-            debug(`teams: ${JSON.stringify(teams)}`);
+
             accessIds = accessIds.concat(currentTeams).concat(teams);
             accessIds = _.uniq(_.filter(accessIds));
 
