@@ -291,20 +291,6 @@ module.exports = function(app) {
 
           tokenResponse.key = token.key;
 
-          // Save to Redis for backward compatibility
-          // TODO: remove this block once PDF server Redis support is dropped
-          if (formioServer.redis) {
-            formioServer.redis.setExp(token.key, token.value, expire, (err) => {
-              if (err) {
-                return res.status(400).send(err.message);
-              }
-
-              cb();
-            });
-
-            return;
-          }
-
           return cb();
         });
       },

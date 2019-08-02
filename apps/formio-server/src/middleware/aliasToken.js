@@ -9,7 +9,9 @@ module.exports = app => (req, res, next) => {
   delete req.query.token;
 
   // Get the jwt token for this user.
-  app.formio.redis.get(aliasToken, (err, token) => {
+  app.formio.formio.mongoose.models.token.findOne({
+    key: aliasToken
+  }, (err, token) => {
     if (err) {
       return next('Token not valid.');
     }
@@ -18,7 +20,7 @@ module.exports = app => (req, res, next) => {
       return next('Token expired.');
     }
 
-    req.headers['x-jwt-token'] = token;
+    req.headers['x-jwt-token'] = token.value;
     next();
   });
 };
