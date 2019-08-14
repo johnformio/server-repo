@@ -4,7 +4,6 @@ const _ = require('lodash');
 const nodeUrl = require('url');
 const semver = require('semver');
 const async = require('async');
-const chance = new (require('chance'))();
 const fs = require('fs');
 const log = require('debug')('formio:log');
 const util = require('../util/util');
@@ -275,29 +274,25 @@ module.exports = function(app) {
        *
        * @param req
        * @param res
-       * @param token
        * @param allow
        * @param expire
-       * @param tempToken
+       * @param tokenResponse
+       * @param cb
        */
       tempToken(req, res, allow, expire, tokenResponse, cb) {
-        if (formioServer.redis) {
-          const tempToken = chance.string({
-            pool: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-            length: 30
-          });
-          formioServer.redis.setExp(tempToken, tokenResponse.token, expire, (err) => {
-            if (err) {
-              return res.status(400).send(err.message);
-            }
+        // Save to mongo
+        formioServer.formio.mongoose.models.token.create({
+          value: tokenResponse.token,
+          expireAt: (expire || expire === 0) ? Date.now() + (expire * 1000) : null
+        }, (err, token) => {
+          if (err) {
+            return res.status(400).send(err.message);
+          }
 
-            tokenResponse.key = tempToken;
-            cb();
-          });
-        }
-        else {
+          tokenResponse.key = token.key;
+
           return cb();
-        }
+        });
       },
 
       isAdmin(isAdmin, req) {
