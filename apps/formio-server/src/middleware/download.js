@@ -85,6 +85,9 @@ module.exports = (formioServer) => async(req, res, next) => {
     if (pdfSrc && !req.query.project && !req.params.fileId) {
       // If settings.pdf.src is available, and no custom settings were supplied, use it
       url = `${pdfSrc}/download`;
+
+      // Use pdf as default format
+      req.query.format = req.query.format || 'pdf';
     }
     else {
       // Otherwise, fall back to old behavior
