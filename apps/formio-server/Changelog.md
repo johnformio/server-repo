@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.0
+### Changed
+ - Upgrade formio to 1.50.0 which adds token schema and other bug fixes
+ - Temp tokens now use mongo instead of redis.
+ - Default to pdf format in pdf download.
+
 ## 6.6.4
 ### Fixed
  - Compile issues that would create an invalid utils object and was causing crashing.
