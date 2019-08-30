@@ -10,10 +10,10 @@ module.exports = router => async(accessInfo, next) => {
 
   // If filtering is enabled, do project-level filtering here before passing it back to core server
   if (accessInfo.filterEnabled) {
-    const userAccess = accessInfo.req.userAccess;
+    const userAccess = _.get(accessInfo, 'req.userAccess');
 
     // Bail if the requester's roles don't have any overlap with general project-level read access
-    if (userAccess.project && !_.intersection(userAccess.project.read_all, userAccess.roles).length) {
+    if (_.get(userAccess, 'project') && !_.intersection(userAccess.project.read_all, userAccess.roles).length) {
       accessInfo.roles = {};
       accessInfo.forms = {};
     }
