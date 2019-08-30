@@ -3,7 +3,7 @@
 const config = require('../../../config');
 const _ = require('lodash');
 
-module.exports = router => async (accessInfo, next) => {
+module.exports = router => async(accessInfo, next) => {
   // Allow filtering to be disabled with environmental variable, with optional project settings override
   const projectSettings = _.get(accessInfo, 'req.currentProject.settings', {});
   accessInfo.filterEnabled = _.defaultTo(projectSettings.accessEndpointFiltering, config.accessEndpointFiltering);
