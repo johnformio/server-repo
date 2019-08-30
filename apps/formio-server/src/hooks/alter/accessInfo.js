@@ -12,7 +12,7 @@ module.exports = router => async(accessInfo, next) => {
   if (accessInfo.filterEnabled) {
     const userAccess = _.get(accessInfo, 'req.userAccess');
 
-    // Bail if the requester's roles don't have any overlap with general project-level read access
+    // Remove info if the requester's roles don't have any overlap with general project-level read access
     if (_.get(userAccess, 'project') && !_.intersection(userAccess.project.read_all, userAccess.roles).length) {
       accessInfo.roles = {};
       accessInfo.forms = {};
