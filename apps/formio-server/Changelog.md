@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.3
+### Fixed
+ - Issues with the query parameters for "null", "true", and "false" to allow the filtering of properties with these values.
+
 ## 6.7.0
 ### Changed
  - Upgrade formio to 1.50.0 which adds token schema and other bug fixes
