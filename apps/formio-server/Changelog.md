@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.4
+### Added
+ - Added configurable access endpoint configurations so that it can be turned off per-project or per-deployment.
+ 
+### Changed
+ - Upgraded aws-sdk@2.524.0, twilio@3.34.0
+
 ## 6.7.3
 ### Fixed
  - Issues with the query parameters for "null", "true", and "false" to allow the filtering of properties with these values.

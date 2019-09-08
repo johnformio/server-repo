@@ -232,6 +232,9 @@ config.formio.jwt.secret = process.env.JWT_SECRET || 'abc123';
 config.formio.jwt.expireTime = process.env.JWT_EXPIRE_TIME || 240;
 config.remoteSecret = process.env.PORTAL_SECRET || '';
 
+// Access endpoint configuration
+config.accessEndpointFiltering = !!_.defaultTo(process.env.ACCESS_ENDPOINT_FILTERING, true);
+
 // Adding configuration for external workers.
 config.templateService = process.env.TEMPLATE_SERVICE || '';
 
