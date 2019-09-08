@@ -66,6 +66,7 @@ module.exports = function(app) {
       email: require('./alter/email')(app),
       validateSubmissionForm: require('./alter/validateSubmissionForm')(app),
       currentUser: require('./alter/currentUser')(app),
+      accessInfo: require('./alter/accessInfo')(app),
       actions: require('./alter/actions')(app),
       actionContext: require('./alter/actionContext')(app),
       log() {
