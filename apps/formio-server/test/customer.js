@@ -163,6 +163,7 @@ describe('Initial Tests', function() {
 
     after(function() {
       describe('Project Tests', function() {
+        this.retries(4);
         require('./tests/project')(app, template, hook);
         require('./tests/groups')(app, template, hook);
         require('./tests/domain')(app, template, hook);
