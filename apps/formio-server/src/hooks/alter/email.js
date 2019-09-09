@@ -52,12 +52,12 @@ module.exports = app => (mail, req, res, params, cb) => {
     }
   });
 
-  const attachFiles = async () => {
+  const attachFiles = async() => {
     if (!_.get(params, 'settings.attachFiles')) {
       return;
     }
 
-    let files = _.chain(params.components)
+    const files = _.chain(params.components)
       .filter(component => component.type === 'file')
       .map(component => params.data[component.key])
       .flatten()
@@ -79,12 +79,12 @@ module.exports = app => (mail, req, res, params, cb) => {
           filename: file.originalName,
           contentType: file.type,
           path: file.url,
-        }
+        };
       })
-    )
+    );
 
     mail.attachments = (mail.attachments || []).concat(attachments);
-  }
+  };
 
   // Attach a PDF to the email.
   const attachPDF = () => new Promise((resolve) => {
