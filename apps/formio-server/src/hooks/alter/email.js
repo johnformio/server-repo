@@ -52,25 +52,39 @@ module.exports = app => (mail, req, res, params, cb) => {
     }
   });
 
-  const attachFiles = () => new Promise((resolve) => {
-    if (params.settings && params.settings.attachFiles) {
-      mail.attachments = (mail.attachments || []).concat(_(params.components)
-        .filter((component) => component.type === 'file')
-        .map((component) => params.data[component.key])
-        .flatten()
-        .compact()
-        .filter((file) => file.url.match(/data:(.*);base64,/))
-        .map((file) => ({
+  const attachFiles = async () => {
+    if (!_.get(params, 'settings.attachFiles')) {
+      return;
+    }
+
+    let files = _.chain(params.components)
+      .filter(component => component.type === 'file')
+      .map(component => params.data[component.key])
+      .flatten()
+      .compact()
+      .value();
+
+    const attachments = await Promise.all(
+      _.map(files, async file => {
+        if (['s3', 'azure', 'dropbox'].includes(file.storage)) {
+          try {
+            file.url = await require(`../../storage/${file.storage}`).getUrl({project: req.currentProject, file});
+          }
+          catch (err) {
+            // Don't let a failure on one file derail the whole email action
+          }
+        }
+
+        return {
           filename: file.originalName,
           contentType: file.type,
           path: file.url,
-        }))
-        .value()
-      );
-    }
+        }
+      })
+    )
 
-    resolve();
-  });
+    mail.attachments = (mail.attachments || []).concat(attachments);
+  }
 
   // Attach a PDF to the email.
   const attachPDF = () => new Promise((resolve) => {
