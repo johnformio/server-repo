@@ -2,7 +2,7 @@
 
 const _ = require('lodash');
 
-module.exports = (app) => (params, req, next) => {
+module.exports = (app) => async(params, req) => {
   const formioServer = app.formio;
 
   params.config = req.currentProject && req.currentProject.hasOwnProperty('config') ? req.currentProject.config : {};
@@ -11,8 +11,8 @@ module.exports = (app) => (params, req, next) => {
   const encrypt = require('../../util/encrypt')(formioServer);
 
   if (encrypt.hasEncryptedComponents(req)) {
-    return new Promise((resolve, reject) => {
-      return encrypt.encryptDecrypt(req, req.submission, 'decrypt', () => {
+    params = await new Promise((resolve, reject) => {
+      encrypt.encryptDecrypt(req, req.submission, 'decrypt', () => {
         params.data = _.cloneDeep(req.submission.data || {});
         resolve(params);
       });
@@ -37,7 +37,7 @@ module.exports = (app) => (params, req, next) => {
     })
     .value();
 
-  Promise.all(urlPromises)
-    .then(() => next(null, params))
-    .catch(err => next(err));
+  await Promise.all(urlPromises);
+
+  return params;
 };
