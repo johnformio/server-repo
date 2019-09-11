@@ -1,59 +1,64 @@
 'use strict';
 const AWS = require('aws-sdk');
-const getAWS = function(project) {
+
+const getAWS = function(settings = {}) {
   const config = {
-    accessKeyId: project.settings.storage.s3.AWSAccessKeyId,
-    secretAccessKey: project.settings.storage.s3.AWSSecretKey
+    accessKeyId: settings.AWSAccessKeyId,
+    secretAccessKey: settings.AWSSecretKey
   };
-  if (project.settings.storage.s3.region) {
-    config.region = project.settings.storage.s3.region;
+  if (settings.region) {
+    config.region = settings.region;
   }
-  if (project.settings.storage.s3.encryption) {
+  if (settings.encryption) {
     config.signatureVersion = 'v4';
   }
 
   // Return the AWS.S3 object.
   return new AWS.S3(config);
 };
-module.exports = {
-  getUrl(req, project, next) {
-    getAWS(project).getSignedUrl('getObject', {
-      Bucket: req.query.bucket,
-      Key: req.query.key
-    }, next);
-  },
-  putUrl(project, file, next) {
-    // If they have encryption or the region provided, then this will create a signed url.
-    if (
-      (project.settings.storage.s3.encryption || project.settings.storage.s3.region) &&
-      project.settings.storage.s3.bucket
-    ) {
-      const putConfig = {
-        Bucket: project.settings.storage.s3.bucket,
-        Key: file.path,
-        ContentType: file.type,
-        Expires: file.expiresin,
-        ACL: project.settings.storage.s3.acl || 'private'
-      };
-      switch (project.settings.storage.s3.encryption) {
-        case 'aes':
-          putConfig.ServerSideEncryption = 'AES256';
-          break;
-        case 'kms':
-          putConfig.ServerSideEncryption = 'aws:kms';
-          break;
+
+const getUrl = function(options = {}) {
+  return new Promise((resolve, reject) => {
+    const aws = getAWS(options.settings);
+
+    if (options.method === 'PUT') {
+      // If they have encryption or the region provided, then this will create a signed url.
+      if ((options.settings.encryption || options.settings.region) && options.settings.bucket) {
+        const putConfig = {
+          Bucket: options.settings.bucket,
+          Key: options.file.path,
+          ContentType: options.file.type,
+          Expires: options.file.expiresin,
+          ACL: options.settings.acl || 'private'
+        };
+
+        switch (options.settings.encryption) {
+          case 'aes':
+            putConfig.ServerSideEncryption = 'AES256';
+            break;
+          case 'kms':
+            putConfig.ServerSideEncryption = 'aws:kms';
+            break;
+        }
+
+        if ((options.settings.encryption === 'kms') && options.settings.kmsKey) {
+          putConfig.SSEKMSKeyId = options.settings.kmsKey;
+        }
+
+        aws.getSignedUrl('putObject', putConfig, (err, result) => err ? reject(err) : resolve(result));
       }
-      if (
-        (project.settings.storage.s3.encryption === 'kms') &&
-        project.settings.storage.s3.kmsKey
-      ) {
-        putConfig.SSEKMSKeyId = project.settings.storage.s3.kmsKey;
+      else {
+        // Use the legacy manually signed upload url.
+        return resolve();
       }
-      return getAWS(project).getSignedUrl('putObject', putConfig, next);
     }
     else {
-      // Use the legacy manually signed upload url.
-      return next();
+      aws.getSignedUrl('getObject', {
+        Bucket: options.bucket,
+        Key: options.key
+      }, (err, result) => err ? reject(err) : resolve(result));
     }
-  }
+  });
 };
+
+module.exports = getUrl;

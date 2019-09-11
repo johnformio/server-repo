@@ -5,9 +5,38 @@ const request = require('request');
 const multer  = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({storage: storage});
+const _ = require('lodash');
+
+async function getUrl(options = {}) {
+  // Allow options.project as an alternative to options.settings
+  if (options.project && !options.settings) {
+    options.settings = _.get(options.project, 'settings.storage.dropbox');
+  }
+
+  if (!options.settings) {
+    throw new Error('Storage settings not set.');
+  }
+
+  const path = _.get(options, 'file.path_lower', options.path_lower);
+
+  const post = require('util').promisify(request.post);
+  const response = await post('https://api.dropboxapi.com/2/files/get_temporary_link', {
+    headers: {
+      'Authorization': `Bearer ${options.settings.access_token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({path})
+  });
+
+  if (!response || response.statusCode !== 200) {
+    throw new Error('Invalid response.');
+  }
+
+  return JSON.parse(response.body).link;
+}
 
 /* eslint-disable camelcase */
-module.exports = function(router) {
+const middleware = router => {
   const restrictOwnerAccess = require('../middleware/restrictOwnerAccess')(router.formio.formio);
 
   // Return necessary settings for making the oauth request to dropbox.
@@ -240,4 +269,9 @@ module.exports = function(router) {
       });
     }
   );
+};
+
+module.exports = {
+  middleware,
+  getUrl
 };

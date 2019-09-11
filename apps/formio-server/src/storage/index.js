@@ -2,8 +2,8 @@
 
 module.exports = function(router) {
   return {
-    dropbox: require('./dropbox')(router),
-    s3: require('./s3')(router),
-    azure: require('./azure')(router)
+    dropbox: require('./dropbox').middleware(router),
+    s3: require('./s3').middleware(router),
+    azure: require('./azure').middleware(router)
   };
 };

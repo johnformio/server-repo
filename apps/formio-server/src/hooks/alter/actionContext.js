@@ -1,6 +1,8 @@
 'use strict';
 
-module.exports = (app) => (params, req) => {
+const _ = require('lodash');
+
+module.exports = (app) => (params, req, next) => {
   const formioServer = app.formio;
 
   params.config = req.currentProject && req.currentProject.hasOwnProperty('config') ? req.currentProject.config : {};
@@ -11,12 +13,31 @@ module.exports = (app) => (params, req) => {
   if (encrypt.hasEncryptedComponents(req)) {
     return new Promise((resolve, reject) => {
       return encrypt.encryptDecrypt(req, req.submission, 'decrypt', () => {
-        const _ = require('lodash');
         params.data = _.cloneDeep(req.submission.data || {});
         resolve(params);
       });
     });
   }
 
-  return params;
+  // Attach file URLs
+  const urlPromises = _.chain(params.components)
+    .filter(component => component.type === 'file')
+    .map(component => params.data[component.key])
+    .flatten()
+    .compact()
+    .map(async file => {
+      if (['s3', 'azure', 'dropbox'].includes(file.storage)) {
+        try {
+          file.url = await require(`../../storage/${file.storage}`).getUrl({project: req.currentProject, file});
+        }
+        catch (err) {
+          // Don't let a failure on one file derail the whole email action
+        }
+      }
+    })
+    .value();
+
+  Promise.all(urlPromises)
+    .then(() => next(null, params))
+    .catch(err => next(err));
 };
