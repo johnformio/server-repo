@@ -1,7 +1,61 @@
 'use strict';
 const storage = require('azure-storage');
 const _ = require('lodash');
-module.exports = (router) => {
+
+async function getUrl(options = {}) {
+  // Allow options.project as an alternative to options.settings
+  if (options.project && !options.settings) {
+    options.settings = _.get(options.project, 'settings.storage.azure');
+  }
+
+  if (!options.settings || !options.settings.connectionString) {
+    throw new Error('Storage settings not set.');
+  }
+
+  // Get the expiration.
+  let expiration = options.settings.expiration ? parseInt(options.settings.expiration, 10) : 900;
+  expiration = isNaN(expiration) ? 15 : (expiration / 60);
+
+  // Add start and expiry date.
+  const startDate = new Date();
+  const expiryDate = new Date(startDate);
+  expiryDate.setMinutes(startDate.getMinutes() + expiration);
+  startDate.setMinutes(startDate.getMinutes() - 100);
+
+  // Get token
+  const perms = storage.BlobUtilities.SharedAccessPermissions;
+  const service = storage.createBlobService(options.settings.connectionString);
+  const directory = options.settings.startsWith || '';
+  const fileName = _.get(options, 'file.name', options.fileName);
+
+  const token = service.generateSharedAccessSignature(
+    options.settings.container,
+    _.trim(`${_.trim(directory, '/')}/${_.trim(fileName, '/')}`, '/'),
+    {
+      AccessPolicy: {
+        Permissions: (options.method === 'POST') ? perms.CREATE : perms.READ,
+        Start: startDate,
+        Expiry: expiryDate
+      }
+    }
+  );
+
+  // Get URL
+  const url = service.getUrl(
+    options.settings.container,
+    _.trim(`${_.trim(directory, '/')}/${_.trim(fileName, '/')}`, '/'),
+    token,
+    true
+  );
+
+  if (!token || !url) {
+    throw new Error('Invalid request.');
+  }
+
+  return url;
+}
+
+const middleware = router => {
   const routes = [
     router.formio.formio.middleware.tokenHandler,
     function(req, res, next) {
@@ -16,60 +70,16 @@ module.exports = (router) => {
     router.formio.formio.middleware.permissionHandler,
     router.formio.formio.plans.disableForPlans(['basic', 'independent']),
     function(req, res) {
+      const fileName = req.body.name || req.query.name;
+
       router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
         if (err) {
           return res.status(400).send('Project not found.');
         }
 
-        const settings = _.get(project, 'settings.storage.azure');
-        if (!settings || !settings.connectionString) {
-          return res.status(400).send('Storage settings not set.');
-        }
-
-        const directory = settings.startsWith || '';
-        const fileName = req.body.name || req.query.name;
-
-        // Get the expiration.
-        let expiration = settings.expiration ? parseInt(settings.expiration, 10) : 900;
-        expiration = isNaN(expiration) ? 15 : (expiration / 60);
-
-        // Add start and expiry date.
-        const startDate = new Date();
-        const expiryDate = new Date(startDate);
-        expiryDate.setMinutes(startDate.getMinutes() + expiration);
-        startDate.setMinutes(startDate.getMinutes() - 100);
-
-        try {
-          const perms = storage.BlobUtilities.SharedAccessPermissions;
-          const service = storage.createBlobService(settings.connectionString);
-          const token = service.generateSharedAccessSignature(
-            settings.container,
-            _.trim(`${_.trim(directory, '/')}/${_.trim(fileName, '/')}`, '/'),
-            {
-              AccessPolicy: {
-                Permissions: (req.method === 'POST') ? perms.CREATE : perms.READ,
-                Start: startDate,
-                Expiry: expiryDate
-              }
-            }
-          );
-          const url = service.getUrl(
-            settings.container,
-            _.trim(`${_.trim(directory, '/')}/${_.trim(fileName, '/')}`, '/'),
-            token,
-            true
-          );
-
-          if (!token || !url) {
-            return res.status(400).send('Invalid request.');
-          }
-
-          // Send the response.
-          res.json({url});
-        }
-        catch (err) {
-          return res.status(400).send(err.message);
-        }
+        getUrl({project, fileName, method: req.method}).then(
+          url => res.send({url}),
+          err => res.status(400).send(err.message));
       });
     }
   ];
@@ -77,4 +87,9 @@ module.exports = (router) => {
   // Add azure storage endpoints.
   router.get('/project/:projectId/form/:formId/storage/azure', ...routes);
   router.post('/project/:projectId/form/:formId/storage/azure', ...routes);
+};
+
+module.exports = {
+  middleware,
+  getUrl
 };
