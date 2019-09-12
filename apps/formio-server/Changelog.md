@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## 6.7.5
 ### Fixed
  - Fix issue where field logic value settings were forced to a string
- - FOR-2493: Added configurable access endpoints.
+ - FOR-2489: Added configurable access endpoints.
  - FOR-2500: Added empty subsubmission data check before updating.
  - FOR-2493: Fix issue with files in submission index endpoint when URL is undefined
 
