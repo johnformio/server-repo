@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.6
+### Changed
+ - Upgraded portal, which includes new formview pro, form manager, and tenant manager for deployed servers.
+ - Upgraded formio/formio which includes batch email processing.
+ - Upgraded formio/formio-workers to 1.14.0 which solves some email templating issues.
+ 
+### Fixed
+ - Crash with the Google Sheets action when using PATCH method.
+ - Crash with the Login Action when no settings are provided to the action.
+
 ## 6.7.5
 ### Fixed
  - Fix issue where field logic value settings were forced to a string
