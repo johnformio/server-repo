@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.7
+### Changed
+ - Upgraded portal to 6.8.2 which upgrades form manager to 1.42.0
+
 ## 6.7.6
 ### Changed
  - Upgraded portal, which includes new formview pro, form manager, and tenant manager for deployed servers.
