@@ -70,6 +70,7 @@
     "restler": "^3.4.0",
     "semver": "^5.6.0",
     "serve-favicon": "^2.5.0",
+    "simple-oauth2": "^2.4.0",
     "squel": "^5.13.0",
     "through": "^2.3.8",
     "tldjs": "^2.3.1",
