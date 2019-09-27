@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.8
+### Added
+ - Added possibility to specify authorization method for OpenID.
+
+### Changed
+ - Upgraded Deployed portal to 6.8.3
+ - Upgraded Deployed Form Manager to 1.43.0
+ - Upgraded Deployed Form View Pro to 1.42.0
+ - Upgraded Deployed Tenant Manager to 1.3.0
+ - Upgraded formio@1.60.1 to fix Email action crashing
+ - Upgraded aws-sdk@2.537.0, webpack@4.41.0, adal-node@0.2.1
+
 ## 6.7.7
 ### Changed
  - Upgraded portal to 6.8.2 which upgrades form manager to 1.42.0
