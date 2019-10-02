@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.9
+### Changed
+ - Upgraded portal to version 6.8.4, which introduces stages per tenant.
+ - Upgraded simple-oauth2@2.5.1, mocha@6.2.1, aws-sdk@2.540.0, bluebird@3.7.0
+
 ## 6.7.8
 ### Added
  - Added possibility to specify authorization method for OpenID.
