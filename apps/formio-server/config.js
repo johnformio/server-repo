@@ -184,6 +184,8 @@ else {
       url: 'redis://localhost:6379'
     };
   }
+
+  debug.config(`Using default Redis connection string (${config.redis.url}) - to disable Redis, please set REDIS_SERVICE=false`);
 }
 
 if (process.env.REDIS_USE_SSL) {
