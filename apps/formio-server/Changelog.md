@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.10
+## Changed
+ - Upgraded portal to version 6.8.5, which fixes project limit size.
+
 ## 6.7.9
 ### Changed
  - Upgraded portal to version 6.8.4, which introduces stages per tenant.
