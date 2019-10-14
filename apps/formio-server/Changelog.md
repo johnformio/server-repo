@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.11
+### Changed
+ - Upgrade portal to version 6.8.6. Fixes stages per tenant.
+ - Upgrade Form Manager to v1.45.0 https://github.com/formio/formmanager/blob/master/CHANGELOG.md#1450
+
 ## 6.7.10
 ## Changed
  - Upgraded portal to version 6.8.5, which fixes project limit size.
