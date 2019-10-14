@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.8.0-beta.7
+ - Upgrade portal to version 7.0.0-rc.25. Fixes stages per tenant, upgrades formio.js@4.3.3
+ - Upgrade Form Manager to v1.45.0 https://github.com/formio/formmanager/blob/master/CHANGELOG.md#1450
+
+## 6.7.11
+### Changed
+ - Upgrade portal to version 6.8.6. Fixes stages per tenant.
+ - Upgrade Form Manager to v1.45.0 https://github.com/formio/formmanager/blob/master/CHANGELOG.md#1450
+
+## 6.7.10
+## Changed
+ - Upgraded portal to version 6.8.5, which fixes project limit size.
+
+## 6.7.9
+### Changed
+ - Upgraded portal to version 6.8.4, which introduces stages per tenant.
+ - Upgraded simple-oauth2@2.5.1, mocha@6.2.1, aws-sdk@2.540.0, bluebird@3.7.0
+
+## 6.7.8
+### Added
+ - Added possibility to specify authorization method for OpenID.
+
+### Changed
+ - Upgraded Deployed portal to 6.8.3
+ - Upgraded Deployed Form Manager to 1.43.0
+ - Upgraded Deployed Form View Pro to 1.42.0
+ - Upgraded Deployed Tenant Manager to 1.3.0
+ - Upgraded formio@1.60.1 to fix Email action crashing
+ - Upgraded aws-sdk@2.537.0, webpack@4.41.0, adal-node@0.2.1
+
 ## 6.7.7
 ### Changed
  - Upgraded portal to 6.8.2 which upgrades form manager to 1.42.0
