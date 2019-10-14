@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.12
+### Added
+ - Print instructions for disabling Redis if using default settings
+
 ## 6.7.11
 ### Changed
  - Upgrade portal to version 6.8.6. Fixes stages per tenant.
