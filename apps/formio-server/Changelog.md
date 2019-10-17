@@ -4,11 +4,23 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.8.0-beta.8
+### Changes
+ - Upgrade portal to 7.0.0-rc.26 with many fixes and updated core renderer.
+ - Upgrade bluebird@3.7.1, mongodb@3.3.3, webpack@4.41.2, aws-sdk@2.552.0, formiojs@4.4.1, twilio@3.36.0
+
 ## 6.8.0-beta.7
+### Fixes
  - Fixes stages per tenant.
+ 
+### Changes
  - Added console that helps people disable REDIS.
  - Upgrade portal to version 7.0.0-rc.25. Fixes stages per tenant, upgrades formio.js@4.3.3
  - Upgrade Form Manager to v1.45.0 https://github.com/formio/formmanager/blob/master/CHANGELOG.md#1450
+
+## 6.7.12
+### Added
+ - Print instructions for disabling Redis if using default settings
 
 ## 6.7.11
 ### Changed
