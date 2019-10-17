@@ -237,21 +237,78 @@ module.exports = router => {
               fieldMap.components = fieldMap.components.concat(
                 _(formio.oauth.providers)
                   .map(function(provider) {
-                    return _.map(provider.autofillFields, function(field) {
+                    if(provider.name === 'openid') {
                       return {
-                        type: 'select',
                         input: true,
-                        label: `Autofill ${field.title} Field`,
-                        key: `autofill-${provider.name}-${field.name}`,
-                        placeholder: `Select which field to autofill with ${provider.title} account ${field.title}`,
-                        template: '<span>{{ item.label || item.key }}</span>',
-                        dataSrc: 'url',
-                        data: {url: fieldsSrc},
-                        valueProperty: 'key',
-                        multiple: false,
-                        customConditional: `show = ['${provider.name}'].indexOf(data.settings.provider) !== -1;`
-                      };
-                    });
+                        tree: true,
+                        components: [
+                          {
+                            input: true,
+                            inputType: "text",
+                            label: "Claim",
+                            key: "claim",
+                            multiple: false,
+                            placeholder: "Leave empty for everyone",
+                            defaultValue: "",
+                            protected: false,
+                            unique: false,
+                            persistent: true,
+                            hidden: false,
+                            clearOnHide: true,
+                            type: "textfield"
+                          },
+                          {
+                            input: true,
+                            tableView: true,
+                            label: "Field",
+                            key: "field",
+                            placeholder: "",
+                            dataSrc: 'url',
+                            data: {url: fieldsSrc},
+                            valueProperty: 'key',
+                            defaultValue: "",
+                            refreshOn: "",
+                            filter: "",
+                            template: "<span>{{ item.label || item.key }}</span>",
+                            multiple: false,
+                            protected: false,
+                            unique: false,
+                            persistent: true,
+                            hidden: false,
+                            clearOnHide: true,
+                            validate: {
+                              required: true
+                            },
+                            type: "select"
+                          }
+                        ],
+                        tableView: true,
+                        label: "Map Claims",
+                        key: "openid-claims",
+                        protected: false,
+                        persistent: true,
+                        hidden: false,
+                        clearOnHide: true,
+                        type: "datagrid",
+                        customConditional: "show = ['openid'].indexOf(data.settings.provider) !== -1; && ['new'].indexOf(data.settings.association) !== -1;"
+                      }
+                    } else {
+                      return _.map(provider.autofillFields, function (field) {
+                        return {
+                          type: 'select',
+                          input: true,
+                          label: `Autofill ${field.title} Field`,
+                          key: `autofill-${provider.name}-${field.name}`,
+                          placeholder: `Select which field to autofill with ${provider.title} account ${field.title}`,
+                          template: '<span>{{ item.label || item.key }}</span>',
+                          dataSrc: 'url',
+                          data: {url: fieldsSrc},
+                          valueProperty: 'key',
+                          multiple: false,
+                          customConditional: `show = ['${provider.name}'].indexOf(data.settings.provider) !== -1;`
+                        };
+                      });
+                    }
                   })
                   .flatten()
                   .value()
@@ -567,7 +624,6 @@ module.exports = router => {
                           roles.push(map.role);
                         }
                       });
-
                       const user = {
                         _id: provider.getUserId(data),
                         data,
