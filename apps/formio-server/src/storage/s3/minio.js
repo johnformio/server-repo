@@ -1,43 +1,57 @@
 'use strict';
 const Minio = require('minio');
 const url = require('url');
-const getMinio = function(project) {
-  const parsed = url.parse(project.settings.storage.s3.bucketUrl);
+
+const getMinio = function(settings = {}) {
+  const parsed = url.parse(settings.bucketUrl);
   const useSSL = (parsed.protocol.indexOf('https') === 0);
+
   const config = {
     endPoint: parsed.hostname,
     useSSL: useSSL,
-    accessKey: project.settings.storage.s3.AWSAccessKeyId,
-    secretKey: project.settings.storage.s3.AWSSecretKey
+    accessKey: settings.AWSAccessKeyId,
+    secretKey: settings.AWSSecretKey
   };
+
   if (!useSSL) {
     config.port = parseInt(parsed.port, 10) || 9000;
   }
-  if (project.settings.storage.s3.region) {
-    config.region = project.settings.storage.s3.region;
+
+  if (settings.region) {
+    config.region = settings.region;
   }
+
   const client = new Minio.Client(config);
+
   if (useSSL) {
     // Make sure we allow unauthorized certs.
     client.reqOptions.rejectUnauthorized = false;
   }
+
   return client;
 };
-module.exports = {
-  getUrl(req, project, next) {
-    getMinio(project).presignedGetObject(
-      req.query.bucket,
-      req.query.key,
-      24*60*60,
-      next
-    );
-  },
-  putUrl(project, file, next) {
-    getMinio(project).presignedPutObject(
-      project.settings.storage.s3.bucket,
-      file.path,
-      file.expiresin,
-      next
-    );
-  }
+
+const getUrl = function(options = {}) {
+  return new Promise((resolve, reject) => {
+    const minio = getMinio(options.settings);
+
+    if (options.method === 'PUT') {
+      minio.presignedPutObject(
+        options.settings.bucket,
+        options.file.path,
+        options.file.expiresin,
+        (err, result) => err ? reject(err) : resolve(result)
+      );
+    }
+    else {
+      minio.presignedGetObject(
+        options.bucket,
+        options.key,
+        24*60*60,
+        (err, result) => err ? reject(err) : resolve(result)
+      );
+    }
+  });
 };
+
+module.exports = getUrl;

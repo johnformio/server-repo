@@ -4,6 +4,57 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.12
+### Added
+ - Print instructions for disabling Redis if using default settings
+
+## 6.7.11
+### Changed
+ - Upgrade portal to version 6.8.6. Fixes stages per tenant.
+ - Upgrade Form Manager to v1.45.0 https://github.com/formio/formmanager/blob/master/CHANGELOG.md#1450
+
+## 6.7.10
+## Changed
+ - Upgraded portal to version 6.8.5, which fixes project limit size.
+
+## 6.7.9
+### Changed
+ - Upgraded portal to version 6.8.4, which introduces stages per tenant.
+ - Upgraded simple-oauth2@2.5.1, mocha@6.2.1, aws-sdk@2.540.0, bluebird@3.7.0
+
+## 6.7.8
+### Added
+ - Added possibility to specify authorization method for OpenID.
+
+### Changed
+ - Upgraded Deployed portal to 6.8.3
+ - Upgraded Deployed Form Manager to 1.43.0
+ - Upgraded Deployed Form View Pro to 1.42.0
+ - Upgraded Deployed Tenant Manager to 1.3.0
+ - Upgraded formio@1.60.1 to fix Email action crashing
+ - Upgraded aws-sdk@2.537.0, webpack@4.41.0, adal-node@0.2.1
+
+## 6.7.7
+### Changed
+ - Upgraded portal to 6.8.2 which upgrades form manager to 1.42.0
+
+## 6.7.6
+### Changed
+ - Upgraded portal, which includes new formview pro, form manager, and tenant manager for deployed servers.
+ - Upgraded formio/formio which includes batch email processing.
+ - Upgraded formio/formio-workers to 1.14.0 which solves some email templating issues.
+ 
+### Fixed
+ - Crash with the Google Sheets action when using PATCH method.
+ - Crash with the Login Action when no settings are provided to the action.
+
+## 6.7.5
+### Fixed
+ - Fix issue where field logic value settings were forced to a string
+ - FOR-2489: Added configurable access endpoints.
+ - FOR-2500: Added empty subsubmission data check before updating.
+ - FOR-2493: Fix issue with files in submission index endpoint when URL is undefined
+
 ## 6.7.4
 ### Added
  - Added configurable access endpoint configurations so that it can be turned off per-project or per-deployment.

@@ -604,58 +604,58 @@ module.exports = router => {
             .catch(this.onError(req, res, next));
         case 'remote':
           return tokensPromise
-            .then(function(tokens) {
+            .then((tokens) => {
               const accessToken = _.find(tokens, {type: provider.name});
               return oauthUtil.settings(req, provider.name)
-                .then(settings => {
-                  return provider.getUser(tokens, settings)
-                    .then(data => {
-                      if (data.errorCode) {
-                        throw new Error(data.errorSummary);
+                .then((settings) => provider.getUser(tokens, settings)
+                  .then((data) => {
+                    if (data.errorCode) {
+                      throw new Error(data.errorSummary);
+                    }
+
+                    // Assign roles based on settings.
+                    const roles = [];
+                    this.settings.roles.map(map => {
+                      if (!map.claim ||
+                        _.get(data, map.claim) === map.value ||
+                        _.includes(_.get(data, map.claim), map.value)
+                      ) {
+                        roles.push(map.role);
                       }
-
-                      // Assign roles based on settings.
-                      const roles = [];
-                      self.settings.roles.map(map => {
-                        if (!map.claim ||
-                          _.get(data, map.claim) === map.value ||
-                          _.includes(_.get(data, map.claim), map.value)
-                        ) {
-                          roles.push(map.role);
-                        }
-                      });
-                      const user = {
-                        _id: provider.getUserId(data),
-                        data,
-                        roles
-                      };
-
-                      const token = {
-                        external: true,
-                        user,
-                        form: {
-                          _id: req.currentForm._id.toString()
-                        },
-                        project: {
-                          _id: req.currentProject._id.toString()
-                        },
-                        externalToken: accessToken
-                      };
-
-                      req.user = user;
-                      req.token = token;
-                      res.token = formio.auth.getToken(token);
-                      req['x-jwt-token'] = res.token;
-
-                      // Set the headers if they haven't been sent yet.
-                      if (!res.headersSent) {
-                        res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
-                        res.setHeader('x-jwt-token', res.token);
-                      }
-                      res.send(user);
-                      return user;
                     });
-                });
+
+                    const user = {
+                      _id: provider.getUserId(data),
+                      data,
+                      roles
+                    };
+
+                    const token = {
+                      external: true,
+                      user,
+                      form: {
+                        _id: req.currentForm._id.toString()
+                      },
+                      project: {
+                        _id: req.currentProject._id.toString()
+                      },
+                      externalToken: accessToken
+                    };
+
+                    req.user = user;
+                    req.token = token;
+                    res.token = formio.auth.getToken(token);
+                    req['x-jwt-token'] = res.token;
+
+                    // Set the headers if they haven't been sent yet.
+                    if (!res.headersSent) {
+                      res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
+                      res.setHeader('x-jwt-token', res.token);
+                    }
+                    res.send(user);
+                    return user;
+                  }),
+                );
             })
             .catch(this.onError(req, res, next));
       }

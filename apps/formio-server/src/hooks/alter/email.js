@@ -52,25 +52,25 @@ module.exports = app => (mail, req, res, params, cb) => {
     }
   });
 
-  const attachFiles = () => new Promise((resolve) => {
-    if (params.settings && params.settings.attachFiles) {
-      mail.attachments = (mail.attachments || []).concat(_(params.components)
-        .filter((component) => component.type === 'file')
-        .map((component) => params.data[component.key])
-        .flatten()
-        .compact()
-        .filter((file) => file.url.match(/data:(.*);base64,/))
-        .map((file) => ({
-          filename: file.originalName,
-          contentType: file.type,
-          path: file.url,
-        }))
-        .value()
-      );
+  const attachFiles = () => {
+    if (!_.get(params, 'settings.attachFiles')) {
+      return;
     }
 
-    resolve();
-  });
+    const attachments = _.chain(params.components)
+      .filter(component => component.type === 'file')
+      .map(component => params.data[component.key])
+      .flatten()
+      .compact()
+      .map(file => ({
+        filename: file.originalName,
+        contentType: file.type,
+        path: file.url,
+      }))
+      .value();
+
+    mail.attachments = (mail.attachments || []).concat(attachments);
+  };
 
   // Attach a PDF to the email.
   const attachPDF = () => new Promise((resolve) => {
