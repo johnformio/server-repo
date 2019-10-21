@@ -368,12 +368,20 @@ module.exports = router => {
 
             // Find and fill in all the autofill fields
             var regex = new RegExp(`autofill-${  provider.name  }-(.+)`);
-            _.each(self.settings, function(value, key) {
-              var match = key.match(regex);
-              if (match && value && userInfo[match[1]]) {
-                req.submission.data[value] = userInfo[match[1]];
-              }
-            });
+            if(provider.name === 'openid') {
+              _.each(self.settings['openid-claims'], function(row, key) {
+                if (row.field && userInfo[row.field]) {
+                  req.submission.data[row.field] = userInfo[row.field];
+                }
+              });
+            } else {
+              _.each(self.settings, function(value, key) {
+                var match = key.match(regex);
+                if (match && value && userInfo[match[1]]) {
+                  req.submission.data[value] = userInfo[match[1]];
+                }
+              });
+            }
 
             // Add info so the after handler knows to auth
             req.oauthDeferredAuth = {
