@@ -2,7 +2,7 @@
 
 require('dotenv').load({silent: true});
 var express = require('express');
-const helmet = require('helmet');
+const helmet = require('helmet')();
 var _ = require('lodash');
 var bodyParser = require('body-parser');
 var methodOverride = require('method-override');
@@ -58,7 +58,7 @@ module.exports = function(options) {
       req.url.endsWith('/manage') ||
       req.url.endsWith('/manage/view')
     ) {
-      return helmet()(req, res, next);
+      return helmet(req, res, next);
     }
     return next();
   });
