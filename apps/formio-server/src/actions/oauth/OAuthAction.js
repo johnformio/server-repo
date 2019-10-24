@@ -237,7 +237,7 @@ module.exports = router => {
               fieldMap.components = fieldMap.components.concat(
                 _(formio.oauth.providers)
                   .map(function(provider) {
-                    if(provider.name === 'openid') {
+                    if (provider.name === 'openid') {
                       return {
                         input: true,
                         tree: true,
@@ -291,9 +291,10 @@ module.exports = router => {
                         clearOnHide: true,
                         type: "datagrid",
                         customConditional: "show = ['openid'].indexOf(data.settings.provider) !== -1; && ['new'].indexOf(data.settings.association) !== -1;"
-                      }
-                    } else {
-                      return _.map(provider.autofillFields, function (field) {
+                      };
+                    }
+                    else {
+                      return _.map(provider.autofillFields, function(field) {
                         return {
                           type: 'select',
                           input: true,
@@ -368,13 +369,14 @@ module.exports = router => {
 
             // Find and fill in all the autofill fields
             var regex = new RegExp(`autofill-${  provider.name  }-(.+)`);
-            if(provider.name === 'openid') {
+            if (provider.name === 'openid') {
               _.each(self.settings['openid-claims'], function(row, key) {
                 if (row.field && userInfo[row.field]) {
                   req.submission.data[row.field] = userInfo[row.field];
                 }
               });
-            } else {
+            }
+            else {
               _.each(self.settings, function(value, key) {
                 var match = key.match(regex);
                 if (match && value && userInfo[match[1]]) {
