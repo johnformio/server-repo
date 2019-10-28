@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## 6.8.0-beta.12
 ### Changed
  - Upgrade formio.js to 4.6.0
- - Upgrade portal to 7.0.0-rc.29
+ - Upgrade portal to 7.0.0-rc.30
  - Add helmet.js for security header to hosted portal.
 
 ### Added
