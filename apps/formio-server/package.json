@@ -94,7 +94,6 @@
     "lint"
   ],
   "bin": "main.js",
-  "name": "formio",
   "pkg": {
     "assets": [
       "package.json",
