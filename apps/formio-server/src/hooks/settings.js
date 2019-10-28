@@ -69,6 +69,8 @@ module.exports = function(app) {
       accessInfo: require('./alter/accessInfo')(app),
       actions: require('./alter/actions')(app),
       actionContext: require('./alter/actionContext')(app),
+      fieldActions: require('./alter/fieldActions')(app),
+      propertyActions: require('./alter/propertyActions')(app),
       log() {
         const [event, req, ...args] = arguments;
         log(req.uuid, req.projectId || 'NoProject', event, ...args);
