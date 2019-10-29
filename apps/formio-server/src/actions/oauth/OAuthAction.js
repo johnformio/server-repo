@@ -46,6 +46,7 @@ module.exports = router => {
      */
     static settingsForm(req, res, next) {
       var fieldsSrc = formio.hook.alter('path', `/form/${req.params.formId}/components`, req);
+      var resourceFields = formio.hook.alter('path', '/form/{{data.settings.resource._id}}/components', req);
       var resourceSrc = formio.hook.alter('path', `/form?type=resource`, req);
       formio.resources.role.model.find(formio.hook.alter('roleQuery', {deleted: {$eq: null}}, req))
         .sort({title: 1})
@@ -120,7 +121,7 @@ module.exports = router => {
                   template: '<span>{{ item.title }}</span>',
                   dataSrc: 'url',
                   data: {url: resourceSrc},
-                  valueProperty: 'name',
+                  valueProperty: '',
                   multiple: false,
                   validate: {
                     required: true
@@ -264,14 +265,15 @@ module.exports = router => {
                             key: "field",
                             placeholder: "",
                             dataSrc: 'url',
-                            data: {url: fieldsSrc},
+                            data: {url: resourceFields},
                             valueProperty: 'key',
                             defaultValue: "",
-                            refreshOn: "",
+                            refreshOn: "resource",
                             filter: "",
                             template: "<span>{{ item.label || item.key }}</span>",
                             multiple: false,
                             protected: false,
+                            lazyLoad: false,
                             unique: false,
                             persistent: true,
                             hidden: false,
@@ -324,10 +326,10 @@ module.exports = router => {
     authenticate(req, res, provider, tokens) {
       var userInfo = null, userId = null, resource = null;
       var self = this;
-
       return Q.all([
-        provider.getUser(tokens),
-        Q.denodeify(formio.cache.loadFormByName.bind(formio.cache))(req, self.settings.resource)
+        oauthUtil.settings(req, provider.name)
+          .then((settings) => provider.getUser(tokens, settings)),
+        Q.denodeify(formio.cache.loadFormByName.bind(formio.cache))(req, self.settings.resource.name)
       ])
         .then(function(results) {
           userInfo = results[0];
@@ -371,8 +373,8 @@ module.exports = router => {
             var regex = new RegExp(`autofill-${  provider.name  }-(.+)`);
             if (provider.name === 'openid') {
               _.each(self.settings['openid-claims'], function(row, key) {
-                if (row.field && userInfo[row.field]) {
-                  req.submission.data[row.field] = userInfo[row.field];
+                if (row.field && _.has(userInfo, row.claim)) {
+                  _.set(req.submission.data, row.field, _.get(userInfo, row.claim));
                 }
               });
             }
@@ -423,7 +425,7 @@ module.exports = router => {
         // Load submission
         formio.resources.submission.model.findOne({_id: res.resource.item._id, deleted: {$eq: null}}),
         // Load resource
-        Q.denodeify(formio.cache.loadFormByName.bind(formio.cache))(req, self.settings.resource),
+        Q.denodeify(formio.cache.loadFormByName.bind(formio.cache))(req, self.settings.resource.name),
         // Load role
         formio.resources.role.model.findOne(roleQuery)
       ])
@@ -437,7 +439,7 @@ module.exports = router => {
           if (!resource) {
             throw {
               status: 404,
-              message: `No resource found with name: ${  self.settings.resource}`
+              message: `No resource found with name: ${  self.settings.resource.name}`
             };
           }
           if (!role) {
