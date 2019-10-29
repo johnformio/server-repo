@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.8.0-beta.13
+### Changed
+ - Upgrade formio@1.60.5 which adds submission query filters to export endpoints.
+
 ## 6.8.0-beta.12
 ### Changed
  - Upgrade formio.js to 4.6.0
