@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.8.0-beta.14
+### Changed
+ - Upgrade formio-app@7.0.0-rc.31
+ - Upgrade formiojs@4.6.2, aws-sdk@2.559.0, resourcejs@1.37.0, formio@1.60.6
+
 ## 6.8.0-beta.13
 ### Changed
  - Upgrade formio@1.60.5 which adds submission query filters to export endpoints.
