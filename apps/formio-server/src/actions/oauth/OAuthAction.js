@@ -46,7 +46,6 @@ module.exports = router => {
      */
     static settingsForm(req, res, next) {
       var fieldsSrc = formio.hook.alter('path', `/form/${req.params.formId}/components`, req);
-      var resourceFields = formio.hook.alter('path', '/form/{{data.settings.resource._id}}/components', req);
       var resourceSrc = formio.hook.alter('path', `/form?type=resource`, req);
       formio.resources.role.model.find(formio.hook.alter('roleQuery', {deleted: {$eq: null}}, req))
         .sort({title: 1})
@@ -121,7 +120,7 @@ module.exports = router => {
                   template: '<span>{{ item.title }}</span>',
                   dataSrc: 'url',
                   data: {url: resourceSrc},
-                  valueProperty: '',
+                  valueProperty: 'name',
                   multiple: false,
                   validate: {
                     required: true
@@ -257,61 +256,21 @@ module.exports = router => {
                       });
                     }
                     else {
-                      return {
-                        input: true,
-                        tree: true,
-                        components: [
-                          {
-                            input: true,
-                            inputType: "text",
-                            label: "Claim",
-                            key: "claim",
-                            multiple: false,
-                            placeholder: "Leave empty for everyone",
-                            defaultValue: "",
-                            protected: false,
-                            unique: false,
-                            persistent: true,
-                            hidden: false,
-                            clearOnHide: true,
-                            type: "textfield"
-                          },
-                          {
-                            input: true,
-                            tableView: true,
-                            label: "Field",
-                            key: "field",
-                            placeholder: "",
-                            dataSrc: 'url',
-                            data: {url: resourceFields},
-                            valueProperty: 'key',
-                            defaultValue: "",
-                            refreshOn: "resource",
-                            filter: "",
-                            template: "<span>{{ item.label || item.key }}</span>",
-                            multiple: false,
-                            protected: false,
-                            lazyLoad: false,
-                            unique: false,
-                            persistent: true,
-                            hidden: false,
-                            clearOnHide: true,
-                            validate: {
-                              required: true
-                            },
-                            type: "select"
-                          }
-                        ],
-                        tableView: true,
-                        label: "Map Claims",
-                        key: "openid-claims",
-                        protected: false,
-                        persistent: true,
-                        hidden: false,
-                        clearOnHide: true,
-                        type: "datagrid",
-                        customConditional: "show = ['openid'].indexOf(data.settings.provider) !== -1; && ['new'].indexOf(data.settings.association) !== -1;"
-                      };
+                      return _.map(provider.autofillFields, function(field) {
+                        return {
+                          type: 'select',
+                          input: true,
+                          label: `Autofill ${field.title} Field`,
+                          key: `autofill-${provider.name}-${field.name}`,
+                          placeholder: `Select which field to autofill with ${provider.title} account ${field.title}`,
+                          template: '<span>{{ item.label || item.key }}</span>',
+                          dataSrc: 'url',
+                          data: {url: fieldsSrc},
+                          valueProperty: 'key',
+                          multiple: false,
+                          customConditional: `show = ['${provider.name}'].indexOf(data.settings.provider) !== -1;`
+                        };
+                      });
                     }
                   })
                   .flatten()
@@ -327,10 +286,10 @@ module.exports = router => {
     authenticate(req, res, provider, tokens) {
       var userInfo = null, userId = null, resource = null;
       var self = this;
+
       return Q.all([
-        oauthUtil.settings(req, provider.name)
-          .then((settings) => provider.getUser(tokens, settings)),
-        Q.denodeify(formio.cache.loadFormByName.bind(formio.cache))(req, self.settings.resource.name)
+        provider.getUser(tokens),
+        Q.denodeify(formio.cache.loadFormByName.bind(formio.cache))(req, self.settings.resource)
       ])
         .then(function(results) {
           userInfo = results[0];
@@ -372,21 +331,12 @@ module.exports = router => {
 
             // Find and fill in all the autofill fields
             var regex = new RegExp(`autofill-${  provider.name  }-(.+)`);
-            if (provider.name === 'openid') {
-              _.each(self.settings['openid-claims'], function(row, key) {
-                if (row.field && _.has(userInfo, row.claim)) {
-                  _.set(req.submission.data, row.field, _.get(userInfo, row.claim));
-                }
-              });
-            }
-            else {
-              _.each(self.settings, function(value, key) {
-                var match = key.match(regex);
-                if (match && value && userInfo[match[1]]) {
-                  req.submission.data[value] = userInfo[match[1]];
-                }
-              });
-            }
+            _.each(self.settings, function(value, key) {
+              var match = key.match(regex);
+              if (match && value && userInfo[match[1]]) {
+                req.submission.data[value] = userInfo[match[1]];
+              }
+            });
 
             // Add info so the after handler knows to auth
             req.oauthDeferredAuth = {
@@ -426,7 +376,7 @@ module.exports = router => {
         // Load submission
         formio.resources.submission.model.findOne({_id: res.resource.item._id, deleted: {$eq: null}}),
         // Load resource
-        Q.denodeify(formio.cache.loadFormByName.bind(formio.cache))(req, self.settings.resource.name),
+        Q.denodeify(formio.cache.loadFormByName.bind(formio.cache))(req, self.settings.resource),
         // Load role
         formio.resources.role.model.findOne(roleQuery)
       ])
@@ -440,7 +390,7 @@ module.exports = router => {
           if (!resource) {
             throw {
               status: 404,
-              message: `No resource found with name: ${  self.settings.resource.name}`
+              message: `No resource found with name: ${  self.settings.resource}`
             };
           }
           if (!role) {
