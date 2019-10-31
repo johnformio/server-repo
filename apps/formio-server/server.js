@@ -2,6 +2,7 @@
 
 require('dotenv').load({silent: true});
 var express = require('express');
+const helmet = require('helmet')();
 var _ = require('lodash');
 var bodyParser = require('body-parser');
 var methodOverride = require('method-override');
@@ -48,7 +49,21 @@ module.exports = function(options) {
     return app.server.listen.apply(app.server, arguments);
   };
 
-  if (config.licenseData && config.licenseData.portal && process.env.PRIMARY) {
+  const portalEnabled = config.licenseData && config.licenseData.portal && process.env.PRIMARY;
+  // Secure html pages with the proper headers.
+  app.use((req, res, next) => {
+    if (
+      (req.url === '/' && portalEnabled) ||
+      req.url.endsWith('.html') ||
+      req.url.endsWith('/manage') ||
+      req.url.endsWith('/manage/view')
+    ) {
+      return helmet(req, res, next);
+    }
+    return next();
+  });
+
+  if (portalEnabled) {
     // Override config.js so we can set onPremise to true.
     app.get('/config.js', (req, res) => {
       fs.readFile(`./portal/config.js`, 'utf8', (err, contents) => {
