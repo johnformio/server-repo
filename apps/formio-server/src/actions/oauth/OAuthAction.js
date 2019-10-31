@@ -238,7 +238,7 @@ module.exports = router => {
               fieldMap.components = fieldMap.components.concat(
                 _(formio.oauth.providers)
                   .map(function(provider) {
-                    if (provider.name === 'openid') {
+                    if (provider.autofillFields.length === 0) {
                       return {
                         input: true,
                         tree: true,
