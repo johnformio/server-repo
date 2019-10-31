@@ -96,7 +96,7 @@ module.exports = (formio) => {
           'Authorization': `Bearer ${accessToken.token}`,
           'User-Agent': 'form.io/1.0',
         },
-        body: {},
+        body: null,
       })
       .spread((response, userInfo) => {
         if (!userInfo) {
