@@ -227,6 +227,7 @@ module.exports = router => {
                   customConditional: "show = ['remote'].indexOf(data.settings.association) !== -1;"
                 }
               ];
+
               const fieldMap = {
                 type: "fieldset",
                 components: [],
@@ -238,7 +239,24 @@ module.exports = router => {
               fieldMap.components = fieldMap.components.concat(
                 _(formio.oauth.providers)
                   .map(function(provider) {
-                    if (provider.autofillFields.length === 0) {
+                    if (provider.autofillFields.length > 0) {
+                      return _.map(provider.autofillFields, function(field) {
+                        return {
+                          type: 'select',
+                          input: true,
+                          label: `Autofill ${field.title} Field`,
+                          key: `autofill-${provider.name}-${field.name}`,
+                          placeholder: `Select which field to autofill with ${provider.title} account ${field.title}`,
+                          template: '<span>{{ item.label || item.key }}</span>',
+                          dataSrc: 'url',
+                          data: {url: fieldsSrc},
+                          valueProperty: 'key',
+                          multiple: false,
+                          customConditional: `show = ['${provider.name}'].indexOf(data.settings.provider) !== -1;`
+                        };
+                      });
+                    }
+                    else {
                       return {
                         input: true,
                         tree: true,
@@ -294,23 +312,6 @@ module.exports = router => {
                         type: "datagrid",
                         customConditional: "show = ['openid'].indexOf(data.settings.provider) !== -1; && ['new'].indexOf(data.settings.association) !== -1;"
                       };
-                    }
-                    else {
-                      return _.map(provider.autofillFields, function(field) {
-                        return {
-                          type: 'select',
-                          input: true,
-                          label: `Autofill ${field.title} Field`,
-                          key: `autofill-${provider.name}-${field.name}`,
-                          placeholder: `Select which field to autofill with ${provider.title} account ${field.title}`,
-                          template: '<span>{{ item.label || item.key }}</span>',
-                          dataSrc: 'url',
-                          data: {url: fieldsSrc},
-                          valueProperty: 'key',
-                          multiple: false,
-                          customConditional: `show = ['${provider.name}'].indexOf(data.settings.provider) !== -1;`
-                        };
-                      });
                     }
                   })
                   .flatten()
