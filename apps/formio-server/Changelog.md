@@ -44,6 +44,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Upgrade portal to version 7.0.0-rc.25. Fixes stages per tenant, upgrades formio.js@4.3.3
  - Upgrade Form Manager to v1.45.0 https://github.com/formio/formmanager/blob/master/CHANGELOG.md#1450
 
+## 6.7.13
+### Added
+ - Ability to use the submission filter queries when exporting submissions as CSV.
+ 
+### Changed
+ - Upgrade all minor dependencies.
+
 ## 6.7.12
 ### Added
  - Print instructions for disabling Redis if using default settings
