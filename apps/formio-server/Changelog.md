@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.14
+### Added
+ - Added filesServer to pdf upload response.
+
+### Fixed
+ - Fixed OpenID attribute mapping.
+
 ## 6.7.13
 ### Added
  - Ability to use the submission filter queries when exporting submissions as CSV.
