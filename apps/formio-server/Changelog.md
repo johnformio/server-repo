@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.8.0-beta.15
+### Added
+ - Added filesServer to pdf upload response.
+
+### Fixed
+ - Fix/openid mapping
+
+### Changed
+ - Upgrade formio-app@7.0.0-rc.32
+ - Upgrade formiojs@4.7.0
+ - Upgrade aws-sdk@2.562.0, twilio@3.37.0
+
 ## 6.8.0-beta.14
 ### Changed
  - Upgrade formio-app@7.0.0-rc.31
