@@ -1105,7 +1105,7 @@ module.exports = function(app, template, hook) {
         request(app)
           .post(hook.alter('url', '/form/' + template.forms.oauthRegisterForm._id + '/submission', template))
           .send(submission)
-          .expect(201)
+          .expect(200)
           .expect('Content-Type', /json/)
           .end(function(err, res) {
             if (err) {

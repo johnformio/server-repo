@@ -46,7 +46,7 @@ module.exports = router => {
      */
     static settingsForm(req, res, next) {
       var fieldsSrc = formio.hook.alter('path', `/form/${req.params.formId}/components`, req);
-      var resourceFields = formio.hook.alter('path', '/form/{{data.settings.resource._id}}/components', req);
+      var resourceFields = formio.hook.alter('path', '/{{data.settings.resource}}', req);
       var resourceSrc = formio.hook.alter('path', `/form?type=resource`, req);
       formio.resources.role.model.find(formio.hook.alter('roleQuery', {deleted: {$eq: null}}, req))
         .sort({title: 1})
@@ -121,7 +121,7 @@ module.exports = router => {
                   template: '<span>{{ item.title }}</span>',
                   dataSrc: 'url',
                   data: {url: resourceSrc},
-                  valueProperty: '',
+                  valueProperty: 'name',
                   multiple: false,
                   validate: {
                     required: true
@@ -293,6 +293,7 @@ module.exports = router => {
                             protected: false,
                             lazyLoad: false,
                             unique: false,
+                            selectValues: 'components',
                             persistent: true,
                             hidden: false,
                             clearOnHide: true,
@@ -331,7 +332,7 @@ module.exports = router => {
       return Q.all([
         oauthUtil.settings(req, provider.name)
           .then((settings) => provider.getUser(tokens, settings)),
-        Q.denodeify(formio.cache.loadFormByName.bind(formio.cache))(req, self.settings.resource.name)
+        Q.denodeify(formio.cache.loadFormByName.bind(formio.cache))(req, self.settings.resource)
       ])
         .then(function(results) {
           userInfo = results[0];
@@ -427,7 +428,7 @@ module.exports = router => {
         // Load submission
         formio.resources.submission.model.findOne({_id: res.resource.item._id, deleted: {$eq: null}}),
         // Load resource
-        Q.denodeify(formio.cache.loadFormByName.bind(formio.cache))(req, self.settings.resource.name),
+        Q.denodeify(formio.cache.loadFormByName.bind(formio.cache))(req, self.settings.resource),
         // Load role
         formio.resources.role.model.findOne(roleQuery)
       ])
@@ -441,7 +442,7 @@ module.exports = router => {
           if (!resource) {
             throw {
               status: 404,
-              message: `No resource found with name: ${  self.settings.resource.name}`
+              message: `No resource found with name: ${  self.settings.resource}`
             };
           }
           if (!role) {
