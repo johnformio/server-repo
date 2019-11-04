@@ -310,7 +310,7 @@ module.exports = router => {
                       hidden: false,
                       clearOnHide: true,
                       type: "datagrid",
-                      customConditional: "show = ['openid'].indexOf(data.settings.provider) !== -1; && ['new'].indexOf(data.settings.association) !== -1;"
+                      customConditional: `show = [${provider.name}].indexOf(data.settings.provider) !== -1; && ['new'].indexOf(data.settings.association) !== -1;`
                     };
                   })
                   .flatten()
