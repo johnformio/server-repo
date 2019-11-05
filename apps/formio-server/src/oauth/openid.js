@@ -23,6 +23,8 @@ module.exports = (formio) => {
 
     scope: '',
 
+    userInfoURI: '',
+
     // List of field data that can be autofilled from user info API request
     autofillFields: [],
 
@@ -36,11 +38,13 @@ module.exports = (formio) => {
           clientId,
           clientSecret,
           tokenURI,
+          userInfoURI
         }) => {
           /* eslint-disable camelcase */
           const uriPaths = tokenURI.split('/');
           const tokenHost = _.initial(uriPaths).join('/');
           const tokenPath = `/${_.last(uriPaths)}`;
+          this.userInfoURI = userInfoURI;
           const provider = oauth2.create({
             client: {
               id: clientId,
@@ -71,6 +75,7 @@ module.exports = (formio) => {
           return [
             {
               type: this.name,
+              userInfo: this.userInfoURI,
               token: token.access_token,
               exp: new Date(MAX_TIMESTAMP),
             }
@@ -88,7 +93,7 @@ module.exports = (formio) => {
       }
       return util.request({
         method: 'GET',
-        url: settings.userInfoURI,
+        url: accessToken.userInfo,
         json: true,
         headers: {
           'Accept': 'application/json',

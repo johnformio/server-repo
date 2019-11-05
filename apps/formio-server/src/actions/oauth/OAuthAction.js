@@ -239,7 +239,65 @@ module.exports = router => {
               fieldMap.components = fieldMap.components.concat(
                 _(formio.oauth.providers)
                   .map(function(provider) {
-                    if (provider.autofillFields.length > 0) {
+                    if (provider.name === 'openid') {
+                      return {
+                        input: true,
+                        tree: true,
+                        components: [
+                          {
+                            input: true,
+                            inputType: "text",
+                            label: "Claim",
+                            key: "claim",
+                            multiple: false,
+                            placeholder: "Leave empty for everyone",
+                            defaultValue: "",
+                            protected: false,
+                            unique: false,
+                            persistent: true,
+                            hidden: false,
+                            clearOnHide: true,
+                            type: "textfield"
+                          },
+                          {
+                            input: true,
+                            tableView: true,
+                            label: "Field",
+                            key: "field",
+                            placeholder: "",
+                            dataSrc: 'url',
+                            data: {url: resourceFields},
+                            valueProperty: 'key',
+                            defaultValue: "",
+                            refreshOn: "resource",
+                            filter: "",
+                            template: "<span>{{ item.label || item.key }}</span>",
+                            multiple: false,
+                            protected: false,
+                            lazyLoad: false,
+                            unique: false,
+                            selectValues: 'components',
+                            persistent: true,
+                            hidden: false,
+                            clearOnHide: true,
+                            validate: {
+                              required: true
+                            },
+                            type: "select"
+                          }
+                        ],
+                        tableView: true,
+                        label: "Map Claims",
+                        key: "openid-claims",
+                        protected: false,
+                        persistent: true,
+                        hidden: false,
+                        clearOnHide: true,
+                        type: "datagrid",
+                        customConditional: "show = ['openid'].indexOf(data.settings.provider) !== -1;"
+                      };
+                    }
+                    else {
                       return _.map(provider.autofillFields, function(field) {
                         return {
                           type: 'select',
@@ -256,62 +314,6 @@ module.exports = router => {
                         };
                       });
                     }
-                    return {
-                      input: true,
-                      tree: true,
-                      components: [
-                        {
-                          input: true,
-                          inputType: "text",
-                          label: "Claim",
-                          key: "claim",
-                          multiple: false,
-                          placeholder: "Leave empty for everyone",
-                          defaultValue: "",
-                          protected: false,
-                          unique: false,
-                          persistent: true,
-                          hidden: false,
-                          clearOnHide: true,
-                          type: "textfield"
-                        },
-                        {
-                          input: true,
-                          tableView: true,
-                          label: "Field",
-                          key: "field",
-                          placeholder: "",
-                          dataSrc: 'url',
-                          data: {url: resourceFields},
-                          valueProperty: 'key',
-                          defaultValue: "",
-                          refreshOn: "resource",
-                          filter: "",
-                          template: "<span>{{ item.label || item.key }}</span>",
-                          multiple: false,
-                          protected: false,
-                          lazyLoad: false,
-                          unique: false,
-                          selectValues: 'components',
-                          persistent: true,
-                          hidden: false,
-                          clearOnHide: true,
-                          validate: {
-                            required: true
-                          },
-                          type: "select"
-                        }
-                      ],
-                      tableView: true,
-                      label: "Map Claims",
-                      key: "openid-claims",
-                      protected: false,
-                      persistent: true,
-                      hidden: false,
-                      clearOnHide: true,
-                      type: "datagrid",
-                      customConditional: `show = [${provider.name}].indexOf(data.settings.provider) !== -1; && ['new'].indexOf(data.settings.association) !== -1;`
-                    };
                   })
                   .flatten()
                   .value()
@@ -328,8 +330,7 @@ module.exports = router => {
       var self = this;
 
       return Q.all([
-        oauthUtil.settings(req, provider.name)
-          .then((settings) => provider.getUser(tokens, settings)),
+        provider.getUser(tokens),
         Q.denodeify(formio.cache.loadFormByName.bind(formio.cache))(req, self.settings.resource)
       ])
         .then(function(results) {
