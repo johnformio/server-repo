@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.15
+### Fixed
+ - Issues with OpenID authentication.
+ 
+### Changed
+ - Upgrade formio@1.60.6
+ - Upgrade request-promise-native@1.0.8, aws-sdk@2.564.0, formiojs@4.7.2, twilio@3.37.0
+
 ## 6.7.14
 ### Added
  - Added filesServer to pdf upload response.
