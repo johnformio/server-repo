@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.8.0-beta.16
+### Changed
+ - Upgrade formio-app@7.0.0-rc.33
+
 ## 6.8.0-beta.15
 ### Added
  - Added filesServer to pdf upload response.
@@ -55,6 +59,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Added console that helps people disable REDIS.
  - Upgrade portal to version 7.0.0-rc.25. Fixes stages per tenant, upgrades formio.js@4.3.3
  - Upgrade Form Manager to v1.45.0 https://github.com/formio/formmanager/blob/master/CHANGELOG.md#1450
+
+## 6.7.15
+### Fixed
+ - Issues with OpenID authentication.
+ 
+### Changed
+ - Upgrade formio@1.60.6
+ - Upgrade request-promise-native@1.0.8, aws-sdk@2.564.0, formiojs@4.7.2, twilio@3.37.0
+
+## 6.7.14
+### Added
+ - Added filesServer to pdf upload response.
+
+### Fixed
+ - Fixed OpenID attribute mapping.
 
 ## 6.7.13
 ### Added
