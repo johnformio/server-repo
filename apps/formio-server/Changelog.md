@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.16
+### Fixed
+ - Fixed issue where empty DateTime fields are getting saved as January 1, 1970.
+
 ## 6.7.15
 ### Fixed
  - Issues with OpenID authentication.
