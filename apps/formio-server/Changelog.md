@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.17
+### Fixed
+ - Adding ignoreTLS for SMTP configurations so that certain SMTP servers can be configured.
+
 ## 6.7.16
 ### Fixed
  - Fixed issue where empty DateTime fields are getting saved as January 1, 1970.
