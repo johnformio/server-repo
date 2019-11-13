@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.8.0-beta.19
+### Changed
+ - Upgrade portal to 7.0.0-rc.37
+ - Upgrade formiojs@4.7.6, mongodb@3.3.4, aws-sdk@2.570.0
+
 ## 6.8.0-beta.18
 ### Fixed
  - DateTime problem where dates are getting saved as January 1, 1970
