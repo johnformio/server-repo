@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.8.0-beta.20
+### Changed
+ - Upgrade formiojs@4.7.7
+ - Upgrade portal to 7.0.0-rc.38
+ - Upgrade twilio@3.37.1, aws-sdk@2.571.0
+
 ## 6.8.0-beta.19
 ### Changed
  - Upgrade portal to 7.0.0-rc.37
