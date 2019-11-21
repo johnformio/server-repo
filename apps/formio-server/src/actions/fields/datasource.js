@@ -19,10 +19,26 @@ module.exports = (app) => {
       return next();
     }
 
-    const requestHeaders = {};
+    let requestHeaders = {};
     const token = app.formio.formio.util.getRequestValue(req, 'x-jwt-token');
     switch (component.dataSrc || 'url') {
       case 'url':
+        // Add the request headers if forward headers is enabled.
+        if (component.fetch && component.fetch.forwardHeaders) {
+          requestHeaders = _.clone(req.headers);
+
+          // Delete headers that shouldn't be forwarded.
+          delete requestHeaders['host'];
+          delete requestHeaders['content-length'];
+          delete requestHeaders['content-type'];
+          delete requestHeaders['connection'];
+          delete requestHeaders['cache-control'];
+        }
+
+        // Add additional information.
+        requestHeaders['Accept'] = '*/*';
+        requestHeaders['user-agent'] = 'Form.io DataSource Component';
+
         // Set custom headers.
         if (component.fetch && component.fetch.headers) {
           _.each(component.fetch.headers, (header) => {
