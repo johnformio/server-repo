@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.8.0-beta.21
+### Changed
+ - Upgrade formiojs@4.8.0-beta.9
+ - Upgrade portal to 7.0.0-rc.44
+ - Upgrade other dependencies.
+
 ## 6.8.0-beta.20
 ### Changed
  - Upgrade formiojs@4.7.7
@@ -83,6 +89,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Added console that helps people disable REDIS.
  - Upgrade portal to version 7.0.0-rc.25. Fixes stages per tenant, upgrades formio.js@4.3.3
  - Upgrade Form Manager to v1.45.0 https://github.com/formio/formmanager/blob/master/CHANGELOG.md#1450
+
+## 6.7.18
+### Added
+ - Support for Docker Secrets.
+ - Adding ability to forward headers with data source component.
+ - Upgrade formio/formio@1.61.0
 
 ## 6.7.17
 ### Fixed
