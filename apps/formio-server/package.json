@@ -1,6 +1,6 @@
 {
   "name": "formio",
-  "version": "6.7.15",
+  "version": "6.7.17",
   "schema": "3.3.3",
   "portalVersion": "6.8.6",
   "engines": {
@@ -40,7 +40,7 @@
     "dotenv": "^6.2.0",
     "express": "^4.17.1",
     "express-cache-controller": "^1.1.0",
-    "formio": "^1.60.6",
+    "formio": "^1.60.8",
     "formio-services": "formio/formio-services#v2.0.2",
     "formio-workers": "^1.14.0",
     "formiojs": "^4.7.2",
