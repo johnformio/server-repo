@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.18
+### Added
+ - Support for Docker Secrets.
+ - Adding ability to forward headers with data source component.
+ - Upgrade formio/formio@1.61.0
+
 ## 6.7.17
 ### Fixed
  - Adding ignoreTLS for SMTP configurations so that certain SMTP servers can be configured.
