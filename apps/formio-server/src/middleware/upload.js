@@ -5,7 +5,7 @@ const _ = require('lodash');
 const Promise = require('bluebird');
 const fs = require('fs');
 
-module.exports = (formioServer) => async(req, res, next) => {
+module.exports = (formioServer) => async (req, res, next) => {
   const formio = formioServer.formio;
   Promise.promisifyAll(formio.cache, {context: formio.cache});
 
