@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.8.0-beta.22
+### Changed
+ - Upgrade formio.js@4.8.0-rc.1
+ - Upgrade formio/formio@1.62.0
+ 
+### Fixed
+ - Fix datasource field action to work with new system.
+ - Issue with Docker Secrets where it would fault on certain VM's due to accessing a directory outside the bounds of the container.
+
 ## 6.8.0-beta.21
 ### Changed
  - Upgrade formiojs@4.8.0-beta.9
