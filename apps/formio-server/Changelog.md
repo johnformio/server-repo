@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
  - Fix datasource field action to work with new system.
+ - Issue with Docker Secrets where it would fault on certain VM's due to accessing a directory outside the bounds of the container.
 
 ## 6.7.18
 ### Added
