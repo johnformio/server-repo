@@ -4,12 +4,22 @@ var _ = require('lodash');
 var debug = {
   config: require('debug')('formio:config')
 };
-const {secrets} = require('docker-secret');
+
+let secrets = null;
+if (process.env.DOCKER_SECRET) {
+  try {
+    secrets = require('docker-secret').secrets;
+  }
+  catch (err) {
+    debug.config('Cannot load Docker Secrets', err);
+    secrets = null;
+  }
+}
 
 // Find the config in either an environment variable or docker secret.
 const getConfig = (key, defaultValue) => {
   // If secrets are enabled and it is set.
-  if (process.env.DOCKER_SECRET && secrets.hasOwnProperty(key)) {
+  if (secrets && secrets.hasOwnProperty(key)) {
     return secrets[key];
   }
   // If an environment variable is set.
