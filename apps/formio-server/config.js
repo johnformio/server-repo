@@ -1,15 +1,43 @@
 'use strict';
 
+var fs = require('fs');
+var path = require('path');
 var _ = require('lodash');
 var debug = {
   config: require('debug')('formio:config')
 };
-const {secrets} = require('docker-secret');
+
+const secrets = {};
+if (process.env.DOCKER_SECRETS || process.env.DOCKER_SECRET) {
+  try {
+    debug.config('Loading Docker Secrets');
+    const secretDir = process.env.DOCKER_SECRETS_PATH || '/run/secrets';
+    if (fs.existsSync(secretDir)) {
+      const files = fs.readdirSync(secretDir);
+      if (files && files.length) {
+        files.forEach(file => {
+          const fullPath = path.join(secretDir, file);
+          const key = file;
+          const data = fs
+            .readFileSync(fullPath, "utf8")
+            .toString()
+            .trim();
+
+          secrets[key] = data;
+        });
+        debug.config('Docker Secrets Loaded');
+      }
+    }
+  }
+  catch (err) {
+    debug.config('Cannot load Docker Secrets', err);
+  }
+}
 
 // Find the config in either an environment variable or docker secret.
 const getConfig = (key, defaultValue) => {
-  // If secrets are enabled and it is set.
-  if (process.env.DOCKER_SECRET && secrets.hasOwnProperty(key)) {
+  // If there is a secret configuration for this key, return its value here.
+  if (secrets.hasOwnProperty(key)) {
     return secrets[key];
   }
   // If an environment variable is set.
@@ -23,7 +51,6 @@ var config = {formio: {}};
 var protocol = getConfig('PROTOCOL', 'https');
 var project = getConfig('PROJECT', 'formio');
 var plan = getConfig('PROJECT_PLAN', 'commercial');
-var fs = require('fs');
 const jwt = require('jsonwebtoken');
 
 try {
