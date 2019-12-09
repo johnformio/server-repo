@@ -2,7 +2,7 @@
 
 const _ = require('lodash');
 
-module.exports = (app) => async(params, req) => {
+module.exports = (app) => async (params, req) => {
   const formioServer = app.formio;
 
   params.config = req.currentProject && req.currentProject.hasOwnProperty('config') ? req.currentProject.config : {};

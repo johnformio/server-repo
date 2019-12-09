@@ -15,6 +15,11 @@
     "max-statements": [1, 30, {"ignoreTopLevelFunctions": true}],
     "quotes": [0],
     "prefer-const": "error",
-    "prefer-template": "error"
+    "prefer-template": "error",
+    "space-before-function-paren": ["error", {
+      "anonymous": "never",
+      "named": "never",
+      "asyncArrow": "always"
+    }]
   }
 }
