@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.19
+### Changed
+ - Upgrade formio.js@4.8.0-rc.1
+ - Upgrade formio/formio@1.62.0
+
+### Fixed
+ - Fix datasource field action to work with new system.
+
 ## 6.7.18
 ### Added
  - Support for Docker Secrets.
