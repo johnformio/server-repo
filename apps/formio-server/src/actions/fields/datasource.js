@@ -4,7 +4,7 @@ const request = require('request-promise-native');
 const FormioUtils = require('formiojs/utils').default;
 
 module.exports = (app) => {
-  const before = function(component, path, validation, req, res, next) {
+  const before = function(component, data, path, validation, req, res, next) {
     // Only perform before validation has occurred.
     if (!validation) {
       return next();
@@ -61,7 +61,7 @@ module.exports = (app) => {
         })
           .then((value) => {
             if (value) {
-              _.set(req.body, `data.${path}`, value);
+              _.set(data, component.key, value);
             }
             return next();
           });
@@ -74,8 +74,18 @@ module.exports = (app) => {
     }
   };
 
-  return {
-    beforePut: before,
-    beforePost: before
+  return async (component, data, handler, action, {validation, path, req, res}) => {
+    switch (handler) {
+      case 'beforePut':
+      case 'beforePost':
+        return new Promise((resolve, reject) => {
+          before(component, data, path, validation, req, res, (err) => {
+            if (err) {
+              return reject(err);
+            }
+            return resolve();
+          });
+        });
+    }
   };
 };
