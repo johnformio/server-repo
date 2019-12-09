@@ -6,7 +6,7 @@ var debug = {
 };
 
 let secrets = null;
-if (process.env.DOCKER_SECRET) {
+if (process.env.DOCKER_SECRETS || process.env.DOCKER_SECRET) {
   try {
     secrets = require('docker-secret').secrets;
   }
