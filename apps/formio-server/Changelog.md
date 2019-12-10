@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.20
+### Fixed
+ - Upgraded formio@1.63.0 which resolves CSV export issue with wizards.
+ - Build issues where pkg@4.4.1 broke our server.
+
 ## 6.7.19
 ### Changed
  - Upgrade formio.js@4.8.0-rc.1
