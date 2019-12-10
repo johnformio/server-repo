@@ -20,6 +20,7 @@ module.exports = app => (form, submission, done) => {
     }
 
     form.components = result.components;
+    form.settings = result.settings;
     done(form);
   });
 };
