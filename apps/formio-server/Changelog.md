@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.8.0-beta.23
+### Changed
+ - Revert back to node10-alpine to determine if it resolves connection issues with MongoDB.
+
 ## 6.8.0-beta.22
 ### Changed
  - Upgrade base image to node:12-alpine
