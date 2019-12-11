@@ -107,7 +107,7 @@
       "node_modules/xml-encryption/**/*"
     ],
     "targets": [
-      "node12-alpine-x64"
+      "node10-alpine-x64"
     ]
   }
 }
