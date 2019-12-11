@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.22
+### Changed
+ - Reverted the sort by modified within CSV exports.
+
 ## 6.7.21
 ### Changed
  - Upgrade formio@1.63.2 to resolve CSV export issue with wizards.
