@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.24
+### Fixed
+ - Swagger IO interfaces from not returning any elements.
+
 ## 6.7.23
 ### Changed
  - Upgrade formio@1.63.4.
