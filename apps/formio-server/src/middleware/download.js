@@ -34,6 +34,7 @@ module.exports = (formioServer) => async (req, res, next) => {
 
       if (result) {
         form.components = result.toObject().components;
+        form.settings = result.toObject().settings;
       }
     }
 
