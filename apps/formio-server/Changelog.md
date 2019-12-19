@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Allow form settings to be loaded as part of revisions.
  
 ### Changed
+ - Upgrade Portal to 6.8.7
  - Upgrade mongodb@3.4.1, webpack@4.41.4, aws-sdk@2.594.0, twilio@3.39.1
 
 ## 6.7.24
