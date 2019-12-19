@@ -45,7 +45,7 @@
     "formiojs": "^4.8.0-rc.1",
     "helmet": "^3.21.2",
     "is-url": "^1.2.4",
-    "jira-connector": "^2.16.1",
+    "jira-connector": "^3.0.2",
     "jslogger": "^1.0.3",
     "jsonwebtoken": "^8.5.1",
     "keygenerator": "^1.0.4",
