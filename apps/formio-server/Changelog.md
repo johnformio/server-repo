@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.24
+### Fixed
+ - Swagger IO interfaces from not returning any elements.
+
+## 6.7.23
+### Changed
+ - Upgrade formio@1.63.4.
+ - Resolved issues with server crashing due to Swagger io calls.
+
+## 6.7.22
+### Changed
+ - Reverted the sort by modified within CSV exports.
+
+## 6.7.21
+### Changed
+ - Upgrade formio@1.63.2 to resolve CSV export issue with wizards.
+
+## 6.7.20
+### Fixed
+ - Upgraded formio@1.63.0 which resolves CSV export issue with wizards.
+ - Build issues where pkg@4.4.1 broke our server.
+
 ## 6.7.19
 ### Changed
  - Upgrade formio.js@4.8.0-rc.1
