@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.25
+### Fixed
+ - FOR-2576: Jira connector basic auth change 
+ - FOR-2573: Added correct handling of tenant project plan.
+ - Allow form settings to be loaded as part of revisions.
+ 
+### Changed
+ - Upgrade mongodb@3.4.1, webpack@4.41.4, aws-sdk@2.594.0, twilio@3.39.1
+
 ## 6.7.24
 ### Fixed
  - Swagger IO interfaces from not returning any elements.
