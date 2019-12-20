@@ -15,7 +15,7 @@
     "build": "npm run lint; npm run clean; npm run compile",
     "build:debug": "docker build -t formio-server-debug -f deployment/docker/formio-server/Dockerfile-debug .",
     "package:debug": "docker save -o formio-server-debug formio-server-debug",
-    "builddocker": "docker build --squash -f deployment/docker/formio-server/Dockerfile -t formio/formio-enterprise:latest .",
+    "builddocker": "docker build --squash --no-cache -t formio/formio-enterprise:latest -f deployment/docker/formio-server/Dockerfile .",
     "lint": "eslint .",
     "validate": "circleci config validate -c .circleci/config.yml"
   },
