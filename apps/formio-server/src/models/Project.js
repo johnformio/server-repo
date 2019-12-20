@@ -204,5 +204,18 @@ module.exports = function(router) {
     done(null, document.name);
   };
 
+  model.schema.post('findOne', function(result, next) {
+    if (!result || result.type !== 'tenant') {
+      return next();
+    }
+
+    this.findOne({_id: result.project}).then((project) => {
+      if (project) {
+        result.plan = project.plan;
+      }
+      next();
+    });
+  });
+
   return model;
 };

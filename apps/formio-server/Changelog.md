@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.8.0-beta.24
+### Changed
+ - Upgrade app to use formiojs@4.8.0-rc.3
+ 
+### Fixed
+ - FOR-2576: Jira connector basic auth change 
+ - FOR-2573: Added correct handling of tenant project plan.
+ - Allow form settings to be loaded as part of revisions.
+
 ## 6.8.0-beta.23
 ### Changed
  - Revert back to node10-alpine to determine if it resolves connection issues with MongoDB.
@@ -105,6 +114,33 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Added console that helps people disable REDIS.
  - Upgrade portal to version 7.0.0-rc.25. Fixes stages per tenant, upgrades formio.js@4.3.3
  - Upgrade Form Manager to v1.45.0 https://github.com/formio/formmanager/blob/master/CHANGELOG.md#1450
+
+## 6.7.25
+### Fixed
+ - FOR-2576: Jira connector basic auth change 
+ - FOR-2573: Added correct handling of tenant project plan.
+ - Allow form settings to be loaded as part of revisions.
+ 
+### Changed
+ - Upgrade Portal to 6.8.7
+ - Upgrade mongodb@3.4.1, webpack@4.41.4, aws-sdk@2.594.0, twilio@3.39.1
+
+## 6.7.24
+### Fixed
+ - Swagger IO interfaces from not returning any elements.
+
+## 6.7.23
+### Changed
+ - Upgrade formio@1.63.4.
+ - Resolved issues with server crashing due to Swagger io calls.
+
+## 6.7.22
+### Changed
+ - Reverted the sort by modified within CSV exports.
+
+## 6.7.21
+### Changed
+ - Upgrade formio@1.63.2 to resolve CSV export issue with wizards.
 
 ## 6.7.20
 ### Fixed

@@ -37,12 +37,12 @@ module.exports = function(router) {
       debug.checkSettings('No Atlassian URL is configured.');
       return false;
     }
-    if (!_.has(settings, 'atlassian.username')) {
-      debug.checkSettings('No Atlassian Username is configured.');
+    if (!_.has(settings, 'atlassian.email')) {
+      debug.checkSettings('No Atlassian Email is configured.');
       return false;
     }
-    if (!_.has(settings, 'atlassian.password')) {
-      debug.checkSettings('No Atlassian Password is configured.');
+    if (!_.has(settings, 'atlassian.apiToken')) {
+      debug.checkSettings('No Atlassian API Token is configured.');
       return false;
     }
 
@@ -268,8 +268,8 @@ module.exports = function(router) {
       }
       else if (checkSettings(settings)) {
         opts.basic_auth = {
-          username: _.get(settings, 'atlassian.username'),
-          password: _.get(settings, 'atlassian.password')
+          email: _.get(settings, 'atlassian.email'),
+          api_token: _.get(settings, 'atlassian.apiToken'),
         };
       }
       /* eslint-enable camelcase */
