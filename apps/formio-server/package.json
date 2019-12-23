@@ -1,7 +1,7 @@
 {
   "name": "formio",
-  "version": "6.7.25",
-  "schema": "3.3.3",
+  "version": "6.7.26",
+  "schema": "3.3.4",
   "portalVersion": "6.8.7",
   "engines": {
     "node": ">=6.0.0"
