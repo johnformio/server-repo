@@ -3,9 +3,9 @@ const _ = require('lodash');
 const async = require('async');
 
 /**
- * Update 3.3.3
+ * Update 3.3.4
  *
- * Update all projects with "project" set to be of type "stage"
+ * Update all tenant projects to have the same project plan as their parent project.
  *
  * @param db
  * @param config
