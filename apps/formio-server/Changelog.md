@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.8.0-beta.25
+### Changed
+ - Upgrade Formio App to 7.0.0-rc.50
+ - Upgrade formiojs@4.8.0-rc.9
+
 ## 6.8.0-beta.24
 ### Changed
  - Upgrade app to use formiojs@4.8.0-rc.3
