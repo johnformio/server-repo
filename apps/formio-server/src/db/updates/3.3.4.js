@@ -32,6 +32,10 @@ module.exports = function(db, config, tools, done) {
           return next(err);
         }
 
+        if (!project) {
+          return next();
+        }
+
         projects.update({
           _id: tenant._id
         }, {
