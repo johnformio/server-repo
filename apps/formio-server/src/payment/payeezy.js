@@ -90,6 +90,10 @@ module.exports = function(config, formio) {
           requestCount: 0
         });
 
+        // Set the last request and increment the request count.
+        txn.metadata.lastRequest = new Date();
+        txn.metadata.requestCount++;
+
         // Add protection against multiple requests. Do not allow more than 5 per hour / user.
         if (txn.metadata.lastRequest && (txn.metadata.requestCount > 4)) {
           if (((txn.metadata.lastRequest - txn.metadata.firstRequest) / 36e5) > 1) {
@@ -101,9 +105,6 @@ module.exports = function(config, formio) {
           }
         }
 
-        // Set the last request and increment the request count.
-        txn.metadata.lastRequest = new Date();
-        txn.metadata.requestCount++;
         sendAuthTxn((body) => {
           if (!body.transaction_approved) {
             res.status(400);

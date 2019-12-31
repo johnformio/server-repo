@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.29
+### Fixed
+ - Issue where the cc checks would not reset after an hour.
+
 ## 6.7.28
 ### Fixed
  - Update to not crash if no project is found.
