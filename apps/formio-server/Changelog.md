@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.27
+### Fixed
+ - Hosted platform to not allow many cc auth checks.
+
 ## 6.7.25
 ### Fixed
  - FOR-2576: Jira connector basic auth change 
