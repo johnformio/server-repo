@@ -44,10 +44,10 @@ module.exports = function(config, formio) {
         user_name: userId,
         client_email: req.user.data.email,
       };
-      const getAuthorizationHeader = function (apiKey, apiSecret, payload, token, nonce, timestamp) {
+      const getAuthorizationHeader = function(apiKey, apiSecret, payload, token, nonce, timestamp) {
         var data = apiKey + nonce + timestamp + token + payload;
         var digest = crypto.createHmac('sha256', apiSecret).update(data).digest('hex');
-        var header = new Buffer.from(digest.toString()).toString('base64');
+        var header = new Buffer(digest.toString()).toString('base64');
         return header;
       };
       const nonce = Math.floor(Math.random() * 100000000000) + 1;
