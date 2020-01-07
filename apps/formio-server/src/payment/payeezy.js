@@ -27,27 +27,32 @@ module.exports = function(config, formio) {
     // Send an authorize transaction.
     const sendAuthTxn = function(next) {
       const transactionRequest = {
-        gateway_id: config.payeezy.gatewayId,
-        password: config.payeezy.gatewayPassword,
-        transaction_type: '01', // Pre-Authorization
+        transaction_type: 'authorize', // Pre-Authorization
+        currency_code: 'USD',
+        method: "credit_card",
         amount: 0,
-        cardholder_name: req.body.data.cardholderName,
-        cc_number: `${req.body.data.ccNumber}`,
-        cc_expiry: req.body.data.ccExpiryMonth + req.body.data.ccExpiryYear,
-        cc_verification_str2: req.body.data.securityCode,
+        credit_card: {
+          type: req.body.data.ccType, // TODO: Add ccType (Credit Card Type Field) field in the Payment Form.
+          cardholder_name: req.body.data.cardholderName,
+          card_number: `${req.body.data.ccNumber}`,
+          exp_date: req.body.data.ccExpiryMonth + req.body.data.ccExpiryYear,
+          cvv: req.body.data.securityCode,
+        },
         // Wont fit 20 char limit unless converted to base64
         customer_ref: new Buffer(userId, 'hex').toString('base64'),
         reference_3: userId, // Handy to keep a non base64 version, but this field isn't searchable
         user_name: userId,
         client_email: req.user.data.email,
-        currency_code: 'USD'
       };
+      const getAuthorizationHeader = function (apiKey, apiSecret, payload, token, nonce, timestamp) {
+        var data = apiKey + nonce + timestamp + token + payload;
+        var digest = crypto.createHmac('sha256', apiSecret).update(data).digest('hex');
+        var header = new Buffer.from(digest.toString()).toString('base64');
+        return header;
+      };
+      const nonce = Math.floor(Math.random() * 100000000000) + 1;
       const transactionBody = JSON.stringify(transactionRequest);
       const timestamp = (new Date()).toISOString();
-      const content_digest = crypto.createHash('sha1').update(transactionBody, 'utf8').digest('hex');
-      const hmac = crypto.createHmac('sha1', config.payeezy.hmacKey || '')
-        .update(`POST\napplication/json\n${content_digest}\n${timestamp}\n${config.payeezy.endpoint}`, 'utf8')
-        .digest('base64');
 
       return util.request({
         method: 'POST',
@@ -57,9 +62,11 @@ module.exports = function(config, formio) {
         headers: {
           'accept': 'application/json',
           'Content-Type': 'application/json',
-          'x-gge4-content-sha1': content_digest,
-          'x-gge4-date': timestamp,
-          'Authorization': `GGE4_API ${config.payeezy.keyId}:${hmac}`
+          'apikey': config.payeezy.keyId,
+          'token': config.payeezy.merchToken,
+          'timestamp': timestamp,
+          'nonce': nonce,
+          'Authorization': getAuthorizationHeader(config.payeezy.keyId, config.payeezy.hmacKey, transactionBody, config.payeezy.merchToken)
         }
       }).spread((response, body) => next(body));
     };
@@ -124,14 +131,18 @@ module.exports = function(config, formio) {
           }
 
           txn.data = {
-            cardholderName: body.cardholder_name,
+            cardholderName: body.card.cardholder_name,
             // Replace all but last 4 digits with *'s
-            ccNumber: body.transarmor_token.replace(/\d(?=.*\d{4}$)/g, '*'),
-            ccExpiryMonth: body.cc_expiry.substr(0, 2),
-            ccExpiryYear: body.cc_expiry.substr(2, 2),
-            transarmorToken: body.transarmor_token,
-            cardType: body.credit_card_type,
-            transactionTag: body.transaction_tag
+            ccNumber: body.token.token_data.value.replace(/\d(?=.*\d{4}$)/g, '*'),
+            ccExpiryMonth: body.card.exp_date.substr(0, 2),
+            ccExpiryYear: body.card.exp_date.substr(2, 2),
+            token: body.token, // TODO: Add Token as hidden field in the Transactions Record Resource, contains token type and value.
+            cardType: body.card.type,
+            transactionTag: body.transaction_tag, // TODO: Add Text field in the Transactions Record Resource
+            transactionId: body.transaction_id, // TODO: Add Text field in the Transactions Record Resource
+            transactionStatus: body.transaction_status, // TODO: Add Text field in the Transactions Record Resource
+            validationStatus: body.validation_status, // TODO: Add Text field in the Transactions Record Resource
+            correlationId: body.correlation_id, // TODO: Add Text field in the Transactions Record Resource
           };
 
           // Update the transaction record.
