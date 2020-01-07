@@ -3225,13 +3225,13 @@ module.exports = function(app, template, hook) {
       if (!docker)
       it('Saving a payment method', function(done) {
         app.formio.config.payeezy = {
-          keyId: 'lFGgmH7ibDkNdCV6LiSbFdmSFXtIVncD', // Test Key
+          keyId: '1234567890', // Test Key
           host: 'api-cert.payeezy.com',
           endpoint: '/v1/transactions',
           gatewayId: 'AJ1234-01',
           gatewayPassword: '12345678901234567890123456789012',
-          hmacKey: '0efeeaf6f21fdd71e5076dea683b3a11614972d7d8e798d42624b8f999597355', // Test Secret
-          merchToken: 'fdoa-9b1a70e39b4f6b4fb0cef1c25de68010625408dc0b1025ae' // Test Token
+          hmacKey: '1234567891011121314151617181920', // Test Secret
+          merchToken: 'fdoa-123456789009876543211234567890' // Test Token
         };
 
         var paymentData = {
@@ -3266,12 +3266,19 @@ module.exports = function(app, template, hook) {
         }))
         .returns(Q([{},
           {
-            transaction_approved: 1,
-            cardholder_name: paymentData.cardholderName,
-            transarmor_token: '1234567899991111',
-            cc_expiry: '1250',
-            credit_card_type: 'visa',
-            transaction_tag: '123456'
+            transaction_status: 'approved',
+            transaction_type: 'authorize',
+            method: 'credit_card',
+            amount: 0,
+            credit_card: {
+              type: 'visa',
+              cardholder_name: paymentData.cardholderName,
+              exp_date: '1250'
+            },
+            token: {
+              token_type: 'FDToken',
+              token_data: { value: '1234567899991111' }
+              }
           }
         ]));
 

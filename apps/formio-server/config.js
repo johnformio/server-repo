@@ -179,7 +179,7 @@ config.payeezy = {
   gatewayId: getConfig('PAYEEZY_GATEWAY_ID'),
   gatewayPassword: getConfig('PAYEEZY_GATEWAY_PASSWORD'),
   hmacKey: getConfig('PAYEEZY_HMAC_KEY'),
-  merchToken: getConfig('MERCHANT_TOKEN'),
+  merchToken: getConfig('PAYEEZY_TOKEN'),
 };
 
 // Using docker, support legacy linking and network links.
