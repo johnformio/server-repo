@@ -3,6 +3,7 @@
 /* eslint camelcase: 0 */
 const crypto = require('crypto');
 const _ = require('lodash');
+const request = require('request');
 const util = require('formio/src/util/util');
 
 module.exports = function(config, formio) {
@@ -52,13 +53,10 @@ module.exports = function(config, formio) {
       };
       const nonce = Math.floor(Math.random() * 100000000000) + 1;
       const transactionBody = JSON.stringify(transactionRequest);
-      const timestamp = (new Date()).toISOString();
-
-      return util.request({
-        method: 'POST',
+      const timestamp = (new Date()).getTime();
+      return request.post({
         url: `https://${config.payeezy.host}${config.payeezy.endpoint}`,
-        body: transactionRequest,
-        json: true,
+        body: transactionBody,
         headers: {
           'accept': 'application/json',
           'Content-Type': 'application/json',
@@ -66,9 +64,14 @@ module.exports = function(config, formio) {
           'token': config.payeezy.merchToken,
           'timestamp': timestamp,
           'nonce': nonce,
-          'Authorization': getAuthorizationHeader(config.payeezy.keyId, config.payeezy.hmacKey, transactionBody, config.payeezy.merchToken)
+          'Authorization': getAuthorizationHeader(config.payeezy.keyId, config.payeezy.hmacKey, transactionBody, config.payeezy.merchToken, nonce, timestamp)
         }
-      }).spread((response, body) => next(body));
+      }, (err, response, body) => {
+        if (err && err.message) {
+          return res.send(err.message);
+        }
+        next(body)
+      });
     };
 
     formio.payment.getPaymentFormId(req.userProject._id)
@@ -113,36 +116,34 @@ module.exports = function(config, formio) {
         }
 
         sendAuthTxn((body) => {
-          if (!body.transaction_approved) {
+          const transaction = JSON.parse(body);
+          if (!transaction.transaction_status) {
             res.status(400);
-            if (body.error_description) {
+            if (transaction.error_description) {
               return res.send(body.error_description);
             }
-            if (body.exact_resp_code && body.exact_resp_code !== '00') {
-              return res.send(body.exact_message);
-            }
-            if (body.bank_message) {
-              return res.send(body.bank_message);
+            if (transaction.gateway_resp_code && transaction.gateway_resp_code !== '00') {
+              return res.send(transaction.exact_message);
             }
             if (typeof body === 'string') {
-              return res.send(body);
+               return res.send(transaction);
             }
             return res.send('Transaction Failed.');
           }
 
           txn.data = {
-            cardholderName: body.card.cardholder_name,
+            cardholderName: transaction.card.cardholder_name,
             // Replace all but last 4 digits with *'s
-            ccNumber: body.token.token_data.value.replace(/\d(?=.*\d{4}$)/g, '*'),
-            ccExpiryMonth: body.card.exp_date.substr(0, 2),
-            ccExpiryYear: body.card.exp_date.substr(2, 2),
-            token: body.token, // TODO: Add Token as hidden field in the Transactions Record Resource, contains token type and value.
-            cardType: body.card.type,
-            transactionTag: body.transaction_tag, // TODO: Add Text field in the Transactions Record Resource
-            transactionId: body.transaction_id, // TODO: Add Text field in the Transactions Record Resource
-            transactionStatus: body.transaction_status, // TODO: Add Text field in the Transactions Record Resource
-            validationStatus: body.validation_status, // TODO: Add Text field in the Transactions Record Resource
-            correlationId: body.correlation_id, // TODO: Add Text field in the Transactions Record Resource
+            ccNumber: transaction.token.token_data.value.replace(/\d(?=.*\d{4}$)/g, '*'),
+            ccExpiryMonth: transaction.card.exp_date.substr(0, 2),
+            ccExpiryYear: transaction.card.exp_date.substr(2, 2),
+            token: transaction.token, // TODO: Add Token as hidden field in the Transactions Record Resource, contains token type and value.
+            cardType: transaction.card.type,
+            transactionTag: transaction.transaction_tag, // TODO: Add Text field in the Transactions Record Resource
+            transactionId: transaction.transaction_id, // TODO: Add Text field in the Transactions Record Resource
+            transactionStatus: transaction.transaction_status, // TODO: Add Text field in the Transactions Record Resource
+            validationStatus: transaction.validation_status, // TODO: Add Text field in the Transactions Record Resource
+            correlationId: transaction.correlation_id, // TODO: Add Text field in the Transactions Record Resource
           };
 
           // Update the transaction record.
