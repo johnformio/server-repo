@@ -70,7 +70,7 @@ module.exports = function(config, formio) {
         if (err && err.message) {
           return res.send(err.message);
         }
-        next(body)
+        next(body);
       });
     };
 
