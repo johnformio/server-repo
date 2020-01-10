@@ -67,8 +67,8 @@ module.exports = function(config, formio) {
           'Authorization': getAuthorizationHeader(config.payeezy.keyId, config.payeezy.hmacKey, transactionBody, config.payeezy.merchToken, nonce, timestamp)
         }
       }, (err, response, body) => {
-        if (err && err.message) {
-          return res.send(err.message);
+        if (err) {
+          next(err);
         }
         next(body);
       });
@@ -119,11 +119,11 @@ module.exports = function(config, formio) {
           const transaction = JSON.parse(body);
           if (!transaction.transaction_status) {
             res.status(400);
-            if (transaction.error_description) {
-              return res.send(body.error_description);
+            if (transaction.Error.length >= 0) {
+              return res.send(transaction.Error[0].code + ' '+ transaction.Error[0].description);
             }
-            if (transaction.gateway_resp_code && transaction.gateway_resp_code !== '00') {
-              return res.send(transaction.exact_message);
+            if (transaction.Error[0].code) {
+              return res.send(transaction.Error[0].description);
             }
             if (typeof body === 'string') {
                return res.send(transaction);
