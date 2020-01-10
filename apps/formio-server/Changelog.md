@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.8.0-beta.26
+### Changed
+ - Upgrade Formio App to 7.0.0-rc.53
+ - Upgrade formio.js to 4.8.0-rc.13
+
 ## 6.8.0-beta.25
 ### Changed
  - Upgrade Formio App to 7.0.0-rc.50
@@ -119,6 +124,26 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Added console that helps people disable REDIS.
  - Upgrade portal to version 7.0.0-rc.25. Fixes stages per tenant, upgrades formio.js@4.3.3
  - Upgrade Form Manager to v1.45.0 https://github.com/formio/formmanager/blob/master/CHANGELOG.md#1450
+
+## 6.7.31
+### Added
+ - Form controller property.
+
+## 6.7.30
+### Fixed
+ - Payeezy integration updated to latest API.
+
+## 6.7.29
+### Fixed
+ - Issue where the cc checks would not reset after an hour.
+
+## 6.7.28
+### Fixed
+ - Update to not crash if no project is found.
+  
+## 6.7.27
+### Fixed
+ - Hosted platform to not allow many cc auth checks.
 
 ## 6.7.25
 ### Fixed

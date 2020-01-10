@@ -174,11 +174,12 @@ config.portalSSOLogout = getConfig('PORTAL_SSO_LOGOUT', '');
 // Payeezy fields
 config.payeezy = {
   keyId: getConfig('PAYEEZY_KEY_ID'),
-  host: getConfig('PAYEEZY_HOST', 'api.globalgatewaye4.firstdata.com'),
-  endpoint: getConfig('PAYEEZY_ENDPOINT', '/transaction/v19'),
+  host: getConfig('PAYEEZY_HOST', 'api.payeezy.com'),
+  endpoint: getConfig('PAYEEZY_ENDPOINT', '/v1/transactions'),
   gatewayId: getConfig('PAYEEZY_GATEWAY_ID'),
   gatewayPassword: getConfig('PAYEEZY_GATEWAY_PASSWORD'),
   hmacKey: getConfig('PAYEEZY_HMAC_KEY'),
+  merchToken: getConfig('PAYEEZY_TOKEN'),
 };
 
 // Using docker, support legacy linking and network links.
