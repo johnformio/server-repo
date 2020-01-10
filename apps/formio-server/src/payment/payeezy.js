@@ -68,7 +68,7 @@ module.exports = function(config, formio) {
         }
       }, (err, response, body) => {
         if (err) {
-          next(err);
+         return next(err);
         }
         next(body);
       });
@@ -120,7 +120,7 @@ module.exports = function(config, formio) {
           if (!transaction.transaction_status) {
             res.status(400);
             if (transaction.Error.length >= 0) {
-              return res.send(transaction.Error[0].code + ' '+ transaction.Error[0].description);
+              return res.send(`${transaction.Error[0].code} ${transaction.Error[0].description}`);
             }
             if (transaction.Error[0].code) {
               return res.send(transaction.Error[0].description);
