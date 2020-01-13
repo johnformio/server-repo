@@ -122,8 +122,12 @@ module.exports = function(config, formio) {
             if (transaction.Error && transaction.Error.messages.length >= 0) {
               return res.send(`${transaction.transaction_status}: code: ${transaction.Error.messages[0].code} - ${transaction.Error.messages[0].description}`);
             }
+            return res.send(`Transaction Failed: ${transaction.transaction_status}`);
+          }
 
-            return res.send('Transaction Failed.');
+          if (!transaction.card) {
+            res.status(400);
+            return res.send('Card Information Missing in the transaction');
           }
 
           txn.data = {
