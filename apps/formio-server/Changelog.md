@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.33
+### Fixed
+ - More fixes to error messages for payeezy gateway
+
 ## 6.7.32
 ### Fixed
  - Error messages from payeezy gateway
