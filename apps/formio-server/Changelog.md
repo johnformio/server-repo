@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.34
+### Fixed
+ - Fix crash if a card is not returned from payeezy.
+
 ## 6.7.33
 ### Fixed
  - More fixes to error messages for payeezy gateway
