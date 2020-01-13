@@ -117,17 +117,12 @@ module.exports = function(config, formio) {
 
         sendAuthTxn((body) => {
           const transaction = JSON.parse(body);
-          if (!transaction.transaction_status) {
+          if (transaction.transaction_status !== 'approved') {
             res.status(400);
-            if (transaction.Error.length >= 0) {
-              return res.send(`${transaction.Error[0].code} ${transaction.Error[0].description}`);
+            if (transaction.Error && transaction.Error.messages.length >= 0) {
+              return res.send(`${transaction.transaction_status}: code: ${transaction.Error.messages[0].code} - ${transaction.Error.messages[0].description}`);
             }
-            if (transaction.Error[0].code) {
-              return res.send(transaction.Error[0].description);
-            }
-            if (typeof body === 'string') {
-               return res.send(transaction);
-            }
+
             return res.send('Transaction Failed.');
           }
 
