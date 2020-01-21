@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.35
+### Fixed
+ - Validations for file components.
+ 
+### Added
+ - BCC and CC support for Email Actions.
+
+### Changed
+ - Upgrade aws-sdk@2.608.0, mongodb@3.5.2, uuid@3.4.0
+
 ## 6.7.34
 ### Fixed
  - Fix crash if a card is not returned from payeezy.
