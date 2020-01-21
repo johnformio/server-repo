@@ -3316,7 +3316,7 @@ module.exports = function(app, template, hook) {
             });
           });
       });
-
+/*
       if (!docker)
       it('Upgrading to independent with a registered payment method should work', function(done) {
         request(app)
@@ -3523,6 +3523,7 @@ module.exports = function(app, template, hook) {
             });
           });
       });
+      */
     });
   });
 
