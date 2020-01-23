@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.36
+### Fixed
+ - Issues with the email BCC and CC actions.
+
 ## 6.7.35
 ### Fixed
  - Validations for file components.
