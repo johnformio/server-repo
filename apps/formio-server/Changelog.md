@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.8.0-rc.1
+### Changed
+ - Upgrade portal to 7.0.0-rc.54
+ - Upgrade formio.js to 4.8.0
+ - Upgrade form view pro to 1.57.0
+ - Upgrade form manager to 1.56.0
+ - Upgrade tenant manager to 1.6.0
+
 ## 6.8.0-beta.26
 ### Changed
  - Upgrade Formio App to 7.0.0-rc.53
@@ -124,6 +132,33 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Added console that helps people disable REDIS.
  - Upgrade portal to version 7.0.0-rc.25. Fixes stages per tenant, upgrades formio.js@4.3.3
  - Upgrade Form Manager to v1.45.0 https://github.com/formio/formmanager/blob/master/CHANGELOG.md#1450
+
+## 6.7.36
+### Fixed
+ - Issues with the email BCC and CC actions.
+
+## 6.7.35
+### Fixed
+ - Validations for file components.
+ 
+### Added
+ - BCC and CC support for Email Actions.
+
+### Changed
+ - Upgrade aws-sdk@2.608.0, mongodb@3.5.2, uuid@3.4.0
+
+## 6.7.34
+### Fixed
+ - Fix crash if a card is not returned from payeezy.
+
+## 6.7.33
+### Fixed
+ - More fixes to error messages for payeezy gateway
+
+## 6.7.32
+### Fixed
+ - Error messages from payeezy gateway
+>>>>>>> f3b06243888e205aa1dc846f62ffab05c5f6696d
 
 ## 6.7.31
 ### Added

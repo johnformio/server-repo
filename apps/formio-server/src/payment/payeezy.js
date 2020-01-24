@@ -67,8 +67,8 @@ module.exports = function(config, formio) {
           'Authorization': getAuthorizationHeader(config.payeezy.keyId, config.payeezy.hmacKey, transactionBody, config.payeezy.merchToken, nonce, timestamp)
         }
       }, (err, response, body) => {
-        if (err && err.message) {
-          return res.send(err.message);
+        if (err) {
+         return next(err);
         }
         next(body);
       });
@@ -117,18 +117,17 @@ module.exports = function(config, formio) {
 
         sendAuthTxn((body) => {
           const transaction = JSON.parse(body);
-          if (!transaction.transaction_status) {
+          if (transaction.transaction_status !== 'approved') {
             res.status(400);
-            if (transaction.error_description) {
-              return res.send(body.error_description);
+            if (transaction.Error && transaction.Error.messages.length >= 0) {
+              return res.send(`${transaction.transaction_status}: code: ${transaction.Error.messages[0].code} - ${transaction.Error.messages[0].description}`);
             }
-            if (transaction.gateway_resp_code && transaction.gateway_resp_code !== '00') {
-              return res.send(transaction.exact_message);
-            }
-            if (typeof body === 'string') {
-               return res.send(transaction);
-            }
-            return res.send('Transaction Failed.');
+            return res.send(`Transaction Failed: ${transaction.transaction_status}`);
+          }
+
+          if (!transaction.card) {
+            res.status(400);
+            return res.send('Card Information Missing in the transaction');
           }
 
           txn.data = {
