@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.7.37
+### Fixed
+ - Problem where un-linking files that do not exist could make server crash.
+ 
+### Changed
+ - Upgrade formio@1.63.10
+ - Upgrade formiojs@4.8.1, twilio@3.39.3, aws-sdk@2.611.0
+
 ## 6.7.36
 ### Fixed
  - Issues with the email BCC and CC actions.
