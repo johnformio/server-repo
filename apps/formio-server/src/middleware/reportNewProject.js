@@ -8,7 +8,7 @@ module.exports = formio => {
 
   return (req, res, next) => {
     // Allow license to specify no logging.
-    if (payload.noLog) {
+    if (!payload || payload.noLog) {
       return next();
     }
 
