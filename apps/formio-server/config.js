@@ -169,6 +169,7 @@ config.license = config.formio.license = getConfig('LICENSE');
 config.licenseData = jwt.decode(config.license);
 config.hostedPDFServer = getConfig('PDF_SERVER', '');
 config.portalSSO = getConfig('PORTAL_SSO', '');
+config.portalSSOTeamsEnabled = Boolean(getConfig('SSO_TEAMS', false) || config.portalSSO);
 config.portalSSOLogout = getConfig('PORTAL_SSO_LOGOUT', '');
 
 // Payeezy fields
@@ -216,19 +217,9 @@ else if (getConfig('REDIS_ADDR', getConfig('REDIS_PORT_6379_TCP_ADDR'))) {
   };
 }
 else {
-  if (config.docker) {
-    // New docker network linking. Assumes linked with 'redis' alias.
-    config.redis = {
-      url: 'redis://redis'
-    };
-  }
-  else {
-    config.redis = {
-      url: 'redis://localhost:6379'
-    };
-  }
-
-  debug.config(`Using default Redis connection string (${config.redis.url}) - to disable Redis, please set REDIS_SERVICE=false`);
+  config.redis = {
+    service: false
+  };
 }
 
 if (getConfig('REDIS_USE_SSL')) {

@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.8.0-rc.2
+### Changed
+ - Separated the SSO Teams function to be controlled by its own independent variables.
+ - Upgraded twilio@3.39.4, aws-sdk@2.613.0, passport-saml@1.3.0
+ - Now default REDIS_SERVICE to false unless they specify otherwise.
+ 
 ## 6.8.0-rc.1
 ### Changed
  - Upgrade portal to 7.0.0-rc.54
@@ -132,6 +138,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Added console that helps people disable REDIS.
  - Upgrade portal to version 7.0.0-rc.25. Fixes stages per tenant, upgrades formio.js@4.3.3
  - Upgrade Form Manager to v1.45.0 https://github.com/formio/formmanager/blob/master/CHANGELOG.md#1450
+
+## 6.7.38
+### Fixed
+ - Crash when trying to log projects.
+ 
+### Changed
+ - Upgrade formio@1.63.11
+
+## 6.7.37
+### Fixed
+ - Problem where un-linking files that do not exist could make server crash.
+ 
+### Changed
+ - Upgrade formio@1.63.10
+ - Upgrade formiojs@4.8.1, twilio@3.39.3, aws-sdk@2.611.0
 
 ## 6.7.36
 ### Fixed

@@ -223,7 +223,7 @@ module.exports = function(app, formioServer) {
 
       // If the portal is with SSO and the user has teams in their array, perform a one-to-one mapping between
       // the users teams and the titles of the teams they are added to.
-      if (formioServer.config.portalSSO && user.teams) {
+      if (formioServer.config.portalSSOTeamsEnabled && user.teams) {
         if (owner) {
           query['$or'] = [
             {'_id': {$in: user.teams}},
@@ -270,7 +270,7 @@ module.exports = function(app, formioServer) {
         }
 
         // Add the user as a member of the team if they have this from SSO.
-        if (formioServer.config.portalSSO && user.teams) {
+        if (formioServer.config.portalSSOTeamsEnabled && user.teams) {
           teams.forEach((team) => {
             if (!team.data) {
               team.data = {members: [], admins: []};
@@ -634,7 +634,7 @@ module.exports = function(app, formioServer) {
 
               // Add the user as a member of the team if they have this from SSO.
               if (
-                formioServer.config.portalSSO &&
+                formioServer.config.portalSSOTeamsEnabled &&
                 req.user.teams &&
                 req.user.teams.length &&
                 (req.user.teams.indexOf(team._id.toString()) !== -1)
