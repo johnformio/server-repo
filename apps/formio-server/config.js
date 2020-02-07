@@ -169,6 +169,7 @@ config.license = config.formio.license = getConfig('LICENSE');
 config.licenseData = jwt.decode(config.license);
 config.hostedPDFServer = getConfig('PDF_SERVER', '');
 config.portalSSO = getConfig('PORTAL_SSO', '');
+config.portalSSOTeamsEnabled = Boolean(getConfig('PORTAL_SSO_TEAMS_ENABLED', false) || config.portalSSO);
 config.portalSSOLogout = getConfig('PORTAL_SSO_LOGOUT', '');
 
 // Payeezy fields

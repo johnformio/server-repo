@@ -67,17 +67,20 @@ module.exports = function(options) {
     // Override config.js so we can set onPremise to true.
     app.get('/config.js', (req, res) => {
       fs.readFile(`./portal/config.js`, 'utf8', (err, contents) => {
-        res.send(contents.replace(/var hostedPDFServer = '';|var ssoLogout = '';|var sso = '';|var onPremise = false;/gi, (matched) => {
-          if (config.hostedPDFServer && matched.indexOf('var hostedPDFServer') !== -1) {
+        res.send(contents.replace(/var hostedPDFServer = '';|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;/gi, (matched) => {
+          if (config.hostedPDFServer && matched.includes('var hostedPDFServer')) {
             return `var hostedPDFServer = '${config.hostedPDFServer}';`;
           }
-          else if (config.portalSSO && matched.indexOf('var sso =') !== -1) {
+          else if (config.portalSSO && matched.includes('var sso =')) {
             return `var sso = '${config.portalSSO}';`;
           }
-          else if (config.portalSSOLogout && matched.indexOf('var ssoLogout =') !== -1) {
+          else if (config.portalSSOTeamsEnabled && matched.includes('var ssoTeamsEnabled =')) {
+            return `var ssoTeamsEnabled = ${config.portalSSOTeamsEnabled};`;
+          }
+          else if (config.portalSSOLogout && matched.includes('var ssoLogout =')) {
             return `var ssoLogout = '${config.portalSSOLogout}';`;
           }
-          else if (matched.indexOf('var onPremise') !== -1) {
+          else if (matched.includes('var onPremise')) {
             return 'var onPremise = true;';
           }
           return matched;

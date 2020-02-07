@@ -151,7 +151,7 @@ module.exports = (formioServer) => {
     // If this is the primary project and they user using PORTAL_SSO, then we need to have a way to map the roles
     // within the saml profile to Teams within the Form.io system. To do this, we will assign a "teams" property on
     // the user object that will be read by the teams feature to determine which teams are allocated to this user.
-    if (project.primary && config.portalSSO) {
+    if (project.primary && config.portalSSOTeamsEnabled) {
       // Load the teams by name.
       formio.teams.getSSOTeams(userRoles).then(function(teams) {
         teams = teams || [];
