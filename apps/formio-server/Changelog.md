@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.8.0-rc.3
+### Changed
+ - Upgraded portal to 7.0.0-rc.55
+ - Upgrade formio.js to 4.9.0-beta.3
+ 
+### Fixed
+ - Adding options to have SSO teams without enabling Portal SSO.
+
 ## 6.8.0-rc.2
 ### Changed
  - Separated the SSO Teams function to be controlled by its own independent variables.
