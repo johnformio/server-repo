@@ -78,7 +78,7 @@ module.exports = function(config, formio) {
     .then(function(formId) {
       const txnObject = {
         project: req.userProject._id,
-        form: formId,
+        form: util.ObjectId(formId),
         owner: util.ObjectId(userId)
       };
       const txnQuery = _.clone(txnObject);
@@ -92,21 +92,19 @@ module.exports = function(config, formio) {
 
         if (!txn) {
           txn = txnObject;
+          txn.data = {};
         }
 
         txn.metadata = txn.metadata || {};
         _.defaults(txn.metadata, {
           firstRequest: new Date(),
-          requestCount: 0
+          requestCount: 0,
+          failures: 0,
         });
 
-        // Set the last request and increment the request count.
-        txn.metadata.lastRequest = new Date();
-        txn.metadata.requestCount++;
-
-        // Add protection against multiple requests. Do not allow more than 5 per hour / user.
-        if (txn.metadata.lastRequest && (txn.metadata.requestCount > 4)) {
-          if (((txn.metadata.lastRequest - txn.metadata.firstRequest) / 36e5) > 1) {
+        // Add protection against multiple requests. Do not allow more than 5 per day / user.
+        if (txn.metadata.lastRequest && (txn.metadata.requestCount >= 5)) {
+          if (((txn.metadata.lastRequest - txn.metadata.firstRequest) / 86400) > 1) {
             txn.metadata.firstRequest = new Date();
             txn.metadata.requestCount = 0;
           }
@@ -115,9 +113,23 @@ module.exports = function(config, formio) {
           }
         }
 
+        if (txn.metadata.failures >= 5) {
+          return res.status(400).send('Account disabled. Please contact support to enable.');
+        }
+
+        // Set the last request and increment the request count.
+        txn.metadata.lastRequest = new Date();
+        txn.metadata.requestCount++;
+
         sendAuthTxn((body) => {
           const transaction = JSON.parse(body);
           if (transaction.transaction_status !== 'approved') {
+            // Update the transaction record.
+            txn.metadata.failures++;
+            formio.resources.submission.model.findOneAndUpdate(txnQuery, txn, {
+              new: true,
+              upsert: true
+            });
             res.status(400);
             if (transaction.Error && transaction.Error.messages.length >= 0) {
               return res.send(`${transaction.transaction_status}: code: ${transaction.Error.messages[0].code} - ${transaction.Error.messages[0].description}`);
