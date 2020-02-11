@@ -70,7 +70,8 @@ module.exports = function(app, formio) {
     .then(function(formId) {
       return Q(formio.resources.submission.model.countDocuments({
         form: formId,
-        owner: formio.util.ObjectId(req.user._id)
+        owner: formio.util.ObjectId(req.user._id),
+        'data.transactionStatus': 'approved',
       }));
     })
     .then(function(count) {

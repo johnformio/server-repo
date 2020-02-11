@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.8.0-rc.4
+### Changed
+ - Upgraded portal to 7.0.0-rc.56
+ - Upgrade formio.js to 4.9.0-beta.4
+ - Upgrade form view pro to 1.56.0
+ - Upgrade form manager to 1.57.0
+
 ## 6.8.0-rc.3
 ### Changed
  - Upgraded portal to 7.0.0-rc.55
@@ -146,6 +153,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Added console that helps people disable REDIS.
  - Upgrade portal to version 7.0.0-rc.25. Fixes stages per tenant, upgrades formio.js@4.3.3
  - Upgrade Form Manager to v1.45.0 https://github.com/formio/formmanager/blob/master/CHANGELOG.md#1450
+
+## 6.7.39
+### Fixed
+ - Stricter limits on payeezy integration.
 
 ## 6.7.38
 ### Fixed
