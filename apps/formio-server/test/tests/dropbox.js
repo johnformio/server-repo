@@ -310,7 +310,7 @@ module.exports = function(app, template, hook) {
     });
 
     it('Allows access to upload a dropbox file for authenticated', function(done) {
-      const file = new Buffer([0x62,0x75,0x66,0x66,0x65,0x72]);
+      const file = new Buffer.from([0x62,0x75,0x66,0x66,0x65,0x72]);
       request(app)
         .post('/project/' + template.project._id + '/form/' + template.forms.uploadForm._id + '/storage/dropbox')
         .set('x-jwt-token', template.users.tempUser.token)

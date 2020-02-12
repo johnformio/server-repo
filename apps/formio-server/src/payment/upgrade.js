@@ -40,7 +40,7 @@ module.exports = function(formio) {
 
         billing.servers = _merge(billing.servers, req.body.servers);
 
-        return formio.resources.project.model.update({
+        return formio.resources.project.model.updateOne({
           _id: formio.util.idToBson(req.projectId)
         }, {
           plan: req.body.plan,

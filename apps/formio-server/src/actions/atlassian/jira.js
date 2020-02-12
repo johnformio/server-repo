@@ -274,7 +274,7 @@ module.exports = function(router) {
             _issue = issue;
 
             // Update the submission with an externalId ref to the issue.
-            formio.resources.submission.model.update(
+            formio.resources.submission.model.updateOne(
               {_id: res.resource.item._id},
               {
                 $push: {

@@ -411,7 +411,7 @@ module.exports = function(app, template, hook) {
 
     it('Should update the form to enable encryption on those fields', (done) => {
       tempForm.components = getForm(true);
-      app.formio.formio.mongoose.model('form').update({
+      app.formio.formio.mongoose.model('form').updateOne({
         _id: ObjectID(tempForm._id)
       }, {
         '$set': {
@@ -463,7 +463,7 @@ module.exports = function(app, template, hook) {
 
 
     it('Should upgrade the project to "commercial"', (done) => {
-      app.formio.formio.mongoose.model('project').update({
+      app.formio.formio.mongoose.model('project').updateOne({
         _id: ObjectID(template.project._id)
       }, {
         '$set': {
@@ -656,7 +656,7 @@ module.exports = function(app, template, hook) {
     });
 
     it('Should downgrade the project to "trial"', (done) => {
-      app.formio.formio.mongoose.model('project').update({
+      app.formio.formio.mongoose.model('project').updateOne({
         _id: ObjectID(template.project._id)
       }, {
         '$set': {
