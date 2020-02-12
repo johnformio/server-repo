@@ -920,6 +920,16 @@ module.exports = function(app) {
               return done(err);
             }
 
+            const parts = machineName.split(':');
+            const formName = parts.length === 1 ? parts[0] : parts[1];
+
+            const formExists = (template.forms && template.forms[formName])
+              || (template.resources && template.resources[formName]);
+
+            if (!formExists) {
+              return done(null, null);
+            }
+
             item.machineName = machineName;
             done(null, item);
           });
