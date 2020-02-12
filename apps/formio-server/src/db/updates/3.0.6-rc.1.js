@@ -47,8 +47,8 @@ module.exports = function(db, config, tools, done) {
     let tries = 2;
     let found = false;
 
-    async.whilst(function() {
-      return (tries < 12) && (found === false);
+    async.whilst(function(next) {
+      return next(null, (tries < 12) && (found === false));
     }, function(callback) {
       // check for unique name
       submissionCollection
@@ -76,7 +76,7 @@ module.exports = function(db, config, tools, done) {
 
       debug.uniquifyName(submission.data.name + ' -> ' + (submission.data.name + tries.toString()));
       submissionCollection
-      .update({_id: tools.util.idToBson(submission._id)}, {$set: {'data.name': (submission.data.name + tries.toString())}}, function(err, result) {
+      .updateOne({_id: tools.util.idToBson(submission._id)}, {$set: {'data.name': (submission.data.name + tries.toString())}}, function(err, result) {
         if (err) {
           return next(err);
         }
@@ -230,7 +230,7 @@ module.exports = function(db, config, tools, done) {
             }
           });
 
-          submissionCollection.update({
+          submissionCollection.updateOne({
             _id: {$in: flagAsDeleted},
             deleted: {$eq: null},
             form: tools.util.idToBson(form)

@@ -15,7 +15,7 @@ module.exports = (analytics) => {
         return res.status(400).send(`Expexted \`plan\` of type: ${plans.join(',')}.`);
       }
 
-      analytics.formio.resources.project.model.update({
+      analytics.formio.resources.project.model.updateOne({
         _id: analytics.formio.util.idToBson(req.body.project),
         deleted: {$eq: null}
       }, {$set: {plan: req.body.plan}}, (err, results) => {

@@ -221,7 +221,7 @@ module.exports = function(router) {
             debug.canAssignGroup(newRoles);
             newRoles.map(router.formio.util.idToBson);
 
-            router.formio.resources.submission.model.update(
+            router.formio.resources.submission.model.updateOne(
               {
                 _id: router.formio.util.idToBson(user._id),
                 deleted: {$eq: null}

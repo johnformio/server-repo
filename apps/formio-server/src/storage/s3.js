@@ -60,7 +60,8 @@ const middleware = function(router) {
       bucket: project.settings.storage.s3.bucket
     };
 
-    const policy = new Buffer(JSON.stringify({
+    /* eslint-disable new-cap */
+    const policy = new Buffer.from(JSON.stringify({
       expiration: file.expiration,
       conditions: [
         {'bucket': project.settings.storage.s3.bucket},
@@ -71,6 +72,7 @@ const middleware = function(router) {
         ['content-length-range', 0, project.settings.storage.s3.maxSize || (100 * 1024 * 1024)]
       ]
     })).toString('base64');
+    /* eslint-enable new-cap */
 
     /* eslint-disable new-cap */
     response.data = {

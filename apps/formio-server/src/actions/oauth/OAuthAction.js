@@ -592,7 +592,7 @@ module.exports = router => {
               });
             })
             .then(function(user) {
-              return formio.resources.submission.model.update({
+              return formio.resources.submission.model.updateOne({
                 _id: user._id
               }, {
                 $push: {

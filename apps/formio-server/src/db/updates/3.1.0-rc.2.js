@@ -47,7 +47,7 @@ module.exports = function(db, config, tools, done) {
               result._id.machineName = 'entity';
             }
 
-            db.collection(collection).update({
+            db.collection(collection).updateOne({
               _id: mongodb.ObjectID(id)
             }, {
               '$set': {
