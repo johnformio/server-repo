@@ -1035,7 +1035,7 @@ module.exports = function(app) {
             }
 
             // Update this project.
-            formioServer.formio.resources.project.model.update({
+            formioServer.formio.resources.project.model.updateOne({
               _id: project._id
             }, {
               $set: {access: project.access}

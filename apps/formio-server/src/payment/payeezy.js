@@ -26,6 +26,7 @@ module.exports = function(config, formio) {
     const userId = req.user._id.toString();
 
     // Send an authorize transaction.
+    /* eslint-disable new-cap */
     const sendAuthTxn = function(next) {
       const transactionRequest = {
         transaction_type: 'authorize', // Pre-Authorization
@@ -40,7 +41,7 @@ module.exports = function(config, formio) {
           cvv: req.body.data.securityCode,
         },
         // Wont fit 20 char limit unless converted to base64
-        customer_ref: new Buffer(userId, 'hex').toString('base64'),
+        customer_ref: new Buffer.from(userId, 'hex').toString('base64'),
         reference_3: userId, // Handy to keep a non base64 version, but this field isn't searchable
         user_name: userId,
         client_email: req.user.data.email,
@@ -48,7 +49,7 @@ module.exports = function(config, formio) {
       const getAuthorizationHeader = function(apiKey, apiSecret, payload, token, nonce, timestamp) {
         var data = apiKey + nonce + timestamp + token + payload;
         var digest = crypto.createHmac('sha256', apiSecret).update(data).digest('hex');
-        var header = new Buffer(digest.toString()).toString('base64');
+        var header = new Buffer.from(digest.toString()).toString('base64');
         return header;
       };
       const nonce = Math.floor(Math.random() * 100000000000) + 1;
@@ -73,6 +74,7 @@ module.exports = function(config, formio) {
         next(body);
       });
     };
+    /* eslint-enable new-cap */
 
     formio.payment.getPaymentFormId(req.userProject._id)
     .then(function(formId) {
