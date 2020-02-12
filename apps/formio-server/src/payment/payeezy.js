@@ -93,7 +93,8 @@ module.exports = function(config, formio) {
         }
 
         if (!txn) {
-          txn = txnObject;
+          // eslint-disable-next-line new-cap
+          txn = new formio.resources.submission.model(txnObject);
           txn.data = {};
         }
 
@@ -128,10 +129,8 @@ module.exports = function(config, formio) {
           if (transaction.transaction_status !== 'approved') {
             // Update the transaction record.
             txn.metadata.failures++;
-            formio.resources.submission.model.findOneAndUpdate(txnQuery, txn, {
-              new: true,
-              upsert: true
-            });
+            txn.markModified('metadata');
+            txn.save();
             res.status(400);
             if (transaction.Error && transaction.Error.messages.length >= 0) {
               return res.send(`${transaction.transaction_status}: code: ${transaction.Error.messages[0].code} - ${transaction.Error.messages[0].description}`);
@@ -160,12 +159,10 @@ module.exports = function(config, formio) {
           };
 
           // Update the transaction record.
-          formio.resources.submission.model.findOneAndUpdate(txnQuery, txn, {
-            new: true,
-            upsert: true
-          }).then(function() {
-            return res.sendStatus(200);
-          });
+          txn.markModified('metadata');
+          txn.markModified('data');
+          txn.save();
+          return res.sendStatus(200);
         });
       });
     })
