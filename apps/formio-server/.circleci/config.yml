@@ -78,9 +78,8 @@ jobs:
   docker:
     environment:
       IMAGE_PATH: formio/formio-enterprise
-    machine:
-      enabled: true
-      image: circleci/classic:edge
+    docker:
+      - image: circleci/node:12
     steps:
       - run:
           name: Enable docker experimental features.
