@@ -3167,29 +3167,23 @@
       "submissionAccess": [
         {
           "type": "create_own",
-          "roles": [
-            "anonymous",
-            "authenticated"
-          ]
+          "roles": []
         },
         {
           "type": "read_own",
           "roles": [
-            "anonymous",
             "authenticated"
           ]
         },
         {
           "type": "update_own",
           "roles": [
-            "anonymous",
             "authenticated"
           ]
         },
         {
           "type": "delete_own",
           "roles": [
-            "anonymous",
             "authenticated"
           ]
         },
@@ -3216,6 +3210,10 @@
           "roles": [
             "administrator"
           ]
+        },
+        {
+          "type": "self",
+          "roles": []
         }
       ]
     },
@@ -3363,9 +3361,7 @@
         {
           "type": "read_all",
           "roles": [
-            "administrator",
-            "anonymous",
-            "authenticated"
+            "administrator"
           ]
         },
         {
@@ -3383,28 +3379,24 @@
         {
           "type": "create_own",
           "roles": [
-            "anonymous",
             "authenticated"
           ]
         },
         {
           "type": "read_own",
           "roles": [
-            "anonymous",
             "authenticated"
           ]
         },
         {
           "type": "update_own",
           "roles": [
-            "anonymous",
             "authenticated"
           ]
         },
         {
           "type": "delete_own",
           "roles": [
-            "anonymous",
             "authenticated"
           ]
         }
