@@ -4,6 +4,166 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.0-beta.1
+### Added
+ - Team invite support.
+
+### Changed
+ - Upgrade portal to 7.0.0-rc.57
+ - Upgrade major dependencies.
+ - Fixed many deprecation warnings.
+ - Upgrade formio/formio@1.64.0
+
+## 6.8.0-rc.4
+### Changed
+ - Upgraded portal to 7.0.0-rc.56
+ - Upgrade formio.js to 4.9.0-beta.4
+ - Upgrade form view pro to 1.56.0
+ - Upgrade form manager to 1.57.0
+
+## 6.8.0-rc.3
+### Changed
+ - Upgraded portal to 7.0.0-rc.55
+ - Upgrade formio.js to 4.9.0-beta.3
+ 
+### Fixed
+ - Adding options to have SSO teams without enabling Portal SSO.
+
+## 6.8.0-rc.2
+### Changed
+ - Separated the SSO Teams function to be controlled by its own independent variables.
+ - Upgraded twilio@3.39.4, aws-sdk@2.613.0, passport-saml@1.3.0
+ - Now default REDIS_SERVICE to false unless they specify otherwise.
+ 
+## 6.8.0-rc.1
+### Changed
+ - Upgrade portal to 7.0.0-rc.54
+ - Upgrade formio.js to 4.8.0
+ - Upgrade form view pro to 1.57.0
+ - Upgrade form manager to 1.56.0
+ - Upgrade tenant manager to 1.6.0
+
+## 6.8.0-beta.26
+### Changed
+ - Upgrade Formio App to 7.0.0-rc.53
+ - Upgrade formio.js to 4.8.0-rc.13
+
+## 6.8.0-beta.25
+### Changed
+ - Upgrade Formio App to 7.0.0-rc.50
+ - Upgrade formiojs@4.8.0-rc.9
+
+## 6.8.0-beta.24
+### Changed
+ - Upgrade app to use formiojs@4.8.0-rc.3
+ 
+### Fixed
+ - FOR-2576: Jira connector basic auth change 
+ - FOR-2573: Added correct handling of tenant project plan.
+ - Allow form settings to be loaded as part of revisions.
+
+## 6.8.0-beta.23
+### Changed
+ - Revert back to node10-alpine to determine if it resolves connection issues with MongoDB.
+
+## 6.8.0-beta.22
+### Changed
+ - Upgrade base image to node:12-alpine
+ - Upgrade formio.js@4.8.0-rc.1
+ - Upgrade formio/formio@1.63.0
+ 
+### Fixed
+ - Upgraded formio@1.63.0 which resolves CSV export issue with wizards.
+ - Build issues where pkg@4.4.1 broke our server.
+ - Fix datasource field action to work with new system.
+ - Issue with Docker Secrets where it would fault on certain VM's due to accessing a directory outside the bounds of the container.
+
+## 6.8.0-beta.21
+### Changed
+ - Upgrade formiojs@4.8.0-beta.9
+ - Upgrade portal to 7.0.0-rc.44
+ - Upgrade other dependencies.
+
+## 6.8.0-beta.20
+### Changed
+ - Upgrade formiojs@4.7.7
+ - Upgrade portal to 7.0.0-rc.38
+ - Upgrade twilio@3.37.1, aws-sdk@2.571.0
+
+## 6.8.0-beta.19
+### Changed
+ - Upgrade portal to 7.0.0-rc.37
+ - Upgrade formiojs@4.7.6, mongodb@3.3.4, aws-sdk@2.570.0
+
+## 6.8.0-beta.18
+### Fixed
+ - DateTime problem where dates are getting saved as January 1, 1970
+ - Next portal IE issues.
+
+### Added
+ - Premium components
+
+## 6.8.0-beta.17
+### Changed
+ - Upgrade formio-app@7.0.0-rc.34
+ - Upgrade formio.js@4.7.3
+
+## 6.8.0-beta.16
+### Changed
+ - Upgrade formio-app@7.0.0-rc.33
+
+## 6.8.0-beta.15
+### Added
+ - Added filesServer to pdf upload response.
+
+### Fixed
+ - Fix/openid mapping
+
+### Changed
+ - Upgrade formio-app@7.0.0-rc.32
+ - Upgrade formiojs@4.7.0
+ - Upgrade aws-sdk@2.562.0, twilio@3.37.0
+
+## 6.8.0-beta.14
+### Changed
+ - Upgrade formio-app@7.0.0-rc.31
+ - Upgrade formiojs@4.6.2, aws-sdk@2.559.0, resourcejs@1.37.0, formio@1.60.6
+
+## 6.8.0-beta.13
+### Changed
+ - Upgrade formio@1.60.5 which adds submission query filters to export endpoints.
+
+## 6.8.0-beta.12
+### Changed
+ - Upgrade formio.js to 4.6.0
+ - Upgrade portal to 7.0.0-rc.30
+ - Add helmet.js for security header to hosted portal.
+
+### Added
+ - Add datasource request fetching.
+
+## 6.8.0-beta.10
+### Changed
+ - Upgrade portal to 7.0.0-rc.28
+
+## 6.8.0-beta.9
+### Changed
+ - Upgrade portal to 7.0.0-rc.27
+
+## 6.8.0-beta.8
+### Changes
+ - Upgrade portal to 7.0.0-rc.26 with many fixes and updated core renderer.
+ - Upgrade bluebird@3.7.1, mongodb@3.3.3, webpack@4.41.2, aws-sdk@2.552.0, formiojs@4.4.1, twilio@3.36.0
+
+## 6.8.0-beta.7
+### Fixes
+ - Fixes stages per tenant.
+ 
+### Changes
+ - Added console that helps people disable REDIS.
+ - Upgrade portal to version 7.0.0-rc.25. Fixes stages per tenant, upgrades formio.js@4.3.3
+ - Upgrade Form Manager to v1.45.0 https://github.com/formio/formmanager/blob/master/CHANGELOG.md#1450
+
 ## 6.7.40
 ### Fixed
  - Fix saving payeezy requests to db.
@@ -52,6 +212,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## 6.7.32
 ### Fixed
  - Error messages from payeezy gateway
+>>>>>>> f3b06243888e205aa1dc846f62ffab05c5f6696d
 
 ## 6.7.31
 ### Added
