@@ -113,11 +113,11 @@ jobs:
       - run:
           name: deploy
           command: |
-            if [[ $CIRCLE_TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+            if [[ $CIRCLE_TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
               docker login -u $DOCKER_USER -p $DOCKER_PASS
               docker tag $IMAGE_PATH $IMAGE_PATH:$CIRCLE_TAG
               docker push $IMAGE_PATH:$CIRCLE_TAG
-              if [[ $CIRCLE_TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              if [[ $CIRCLE_TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
                 docker push $IMAGE_PATH
               fi
               ./deployment/scripts/createVersion.sh $CIRCLE_TAG
@@ -141,7 +141,7 @@ jobs:
             git config user.name "Formiobot"
             git add --all && git commit -am "$CIRCLE_TAG"
             git tag $CIRCLE_TAG
-            if [[ $CIRCLE_TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            if [[ $CIRCLE_TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
               git push
             fi
             git push --tags
@@ -170,7 +170,7 @@ workflows:
             - test
           filters:
             tags:
-              only: /^v\d+\.\d+\.\d+.*/
+              only: /^\d+\.\d+\.\d+.*/
             branches:
               ignore: /.*/
       - deploy_npm:
@@ -179,6 +179,6 @@ workflows:
             - docker
           filters:
             tags:
-              only: /^v\d+\.\d+\.\d+.*/
+              only: /^\d+\.\d+\.\d+.*/
             branches:
               ignore: /.*/
