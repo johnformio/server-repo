@@ -15,7 +15,7 @@ module.exports = function(app, formio) {
   app.post('/project/:projectId/upgrade',
     formio.middleware.tokenHandler,
     require('../middleware/userProject')(formio),
-    require('../middleware/restrictOwnerAccess')(formio),
+    require('../middleware/restrictProjectAccess')(formio)({level: 'owner'}),
     require('./upgrade')(formio),
     formio.middleware.customCrmAction('upgradeproject')
   );

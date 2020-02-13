@@ -1134,18 +1134,16 @@ module.exports = function(app) {
           .value();
 
         formioServer.formio.teams.getTeams(user, true, true)
-          .then(function(teams) {
-            if (!teams || !teams.length) {
-              return user;
+          .then((teams) => {
+            if (teams && teams.length) {
+              // Filter the teams to only contain the team ids.
+              user.teams = _.chain(teams)
+                .map('_id')
+                .filter()
+                .map(formioServer.formio.util.idToString)
+                .uniq()
+                .value();
             }
-
-            // Filter the teams to only contain the team ids.
-            user.teams = _(teams)
-              .map('_id')
-              .filter()
-              .map(formioServer.formio.util.idToString)
-              .uniq()
-              .value();
 
             return user;
           })
