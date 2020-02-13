@@ -1,8 +1,8 @@
 {
   "name": "formio",
-  "version": "6.7.40",
+  "version": "6.9.0-beta.1",
   "schema": "3.3.4",
-  "portalVersion": "6.8.9",
+  "portalVersion": "7.0.0-rc.57",
   "engines": {
     "node": ">=6.0.0"
   },
@@ -42,7 +42,7 @@
     "formio": "^1.64.0",
     "formio-services": "formio/formio-services#v2.0.2",
     "formio-workers": "^1.14.0",
-    "formiojs": "^4.8.1",
+    "formiojs": "^4.9.0-beta.4",
     "helmet": "^3.21.2",
     "is-url": "^1.2.4",
     "jira-connector": "^3.0.2",
@@ -106,7 +106,7 @@
       "node_modules/xml-encryption/**/*"
     ],
     "targets": [
-      "node10-alpine-x64"
+      "node12-alpine-x64"
     ]
   }
 }

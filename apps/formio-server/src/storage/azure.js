@@ -1,6 +1,9 @@
 'use strict';
 const storage = require('azure-storage');
 const _ = require('lodash');
+const debug = {
+  startup: require('debug')('formio:startup')
+};
 
 async function getUrl(options = {}) {
   // Allow options.project as an alternative to options.settings
@@ -85,7 +88,9 @@ const middleware = router => {
   ];
 
   // Add azure storage endpoints.
+  debug.startup('Attaching middleware: Azure Storage GET');
   router.get('/project/:projectId/form/:formId/storage/azure', ...routes);
+  debug.startup('Attaching middleware: Azure Storage POST');
   router.post('/project/:projectId/form/:formId/storage/azure', ...routes);
 };
 
