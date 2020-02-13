@@ -93,7 +93,7 @@ module.exports = function(db, config, tools, done) {
       });
 
       function processItem(err, team) {
-        if (team === null) {
+        if (err || (team === null)) {
           return; // All done!
         }
 
