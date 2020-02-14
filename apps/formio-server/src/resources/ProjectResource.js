@@ -346,14 +346,14 @@ module.exports = (router, formioServer) => {
   router.post(
     '/project/:projectId/atlassian/oauth/authorize',
     formio.middleware.tokenHandler,
-    formio.middleware.restrictProjectAccess({level: 'owner'}),
+    formio.middleware.restrictProjectAccess({level: 'admin'}),
     atlassian.authorizeOAuth,
   );
 
   router.post(
     '/project/:projectId/atlassian/oauth/finalize',
     formio.middleware.tokenHandler,
-    formio.middleware.restrictProjectAccess({level: 'owner'}),
+    formio.middleware.restrictProjectAccess({level: 'admin'}),
     atlassian.storeOAuthReply,
   );
 
@@ -362,7 +362,7 @@ module.exports = (router, formioServer) => {
   router.get(
     '/project/:projectId/sqlconnector',
     formio.middleware.tokenHandler,
-    formio.middleware.restrictProjectAccess({level: 'owner'}),
+    formio.middleware.restrictProjectAccess({level: 'admin'}),
     formio.middleware.restrictToPlans(['commercial', 'team', 'trial']),
     sqlconnector.generateQueries,
   );

@@ -51,7 +51,7 @@ const middleware = router => {
       }
       next();
     },
-    restrictProjectAccess({level: 'owner'}),
+    restrictProjectAccess({level: 'admin'}),
     function(req, res) {
       if (!process.env.DROPBOX_CLIENTID) {
         return res.status(400).send('Dropbox Auth not configured');
@@ -76,7 +76,7 @@ const middleware = router => {
       }
       next();
     },
-    restrictProjectAccess({level: 'owner'}),
+    restrictProjectAccess({level: 'admin'}),
     function(req, res) {
       if (req.body.code) {
         // Send code to dropbox for token.
