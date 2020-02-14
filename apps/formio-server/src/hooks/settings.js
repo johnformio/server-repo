@@ -1144,7 +1144,7 @@ module.exports = function(app) {
           .value();
 
         // Synchronize the user teams with teams they were added to.
-        var syncUserTeams = function(user, teams) {
+        const syncUserTeams = (user, teams) => {
           // Do not perform if they have ssoTeams enabled.
           if (formioServer.formio.config.ssoTeams) {
             return;
@@ -1167,7 +1167,7 @@ module.exports = function(app) {
         };
 
         formioServer.formio.teams.getTeams(user, true, true, true)
-          .then(function(teams) {
+          .then((teams) => {
             if (!teams || !teams.length) {
               syncUserTeams(user, []);
               return user;
