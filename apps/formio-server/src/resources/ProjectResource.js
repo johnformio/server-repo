@@ -220,13 +220,13 @@ module.exports = function(router, formioServer) {
           req.body.access = req.body.access || [];
           req.body.access.forEach(access => {
             if (['read_all', 'create_all', 'update_all', 'delete_all'].indexOf(access.type) !== -1) {
-              access.roles = accesses[access.type].map(role => role.toString());
+              access.roles = _.map(accesses[access.type], role => role.toString());
               delete accesses[access.type];
             }
           });
           Object.keys(accesses).forEach(key => {
             const access = _.find(req.body.access, {type: key});
-            const newAccess = accesses[key].map(role => role.toString());
+            const newAccess = _.map(accesses[key], role => role.toString());
             if (!access) {
               req.body.access.push({
                 type: key,

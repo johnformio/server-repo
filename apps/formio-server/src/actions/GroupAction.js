@@ -214,12 +214,12 @@ module.exports = function(router) {
 
             // Add the new role and make sure its unique.
             let newRoles = user.roles || [];
-            newRoles.map(router.formio.util.idToString);
+            _.map(newRoles, router.formio.util.idToString);
             newRoles.push(router.formio.util.idToString(group));
             newRoles = _.uniq(newRoles);
             debug.canAssignGroup('newRoles:');
             debug.canAssignGroup(newRoles);
-            newRoles.map(router.formio.util.idToBson);
+            _.map(newRoles, router.formio.util.idToBson);
 
             router.formio.resources.submission.model.updateOne(
               {

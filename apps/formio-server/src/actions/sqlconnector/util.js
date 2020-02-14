@@ -229,7 +229,7 @@ module.exports = (router) => {
         return router.formio.resources.form.model.find({project: projectId, deleted: {$eq: null}}).lean().exec();
       })
       .then((forms) => {
-        const formIds = forms.map((form) => util.idToBson(form._id));
+        const formIds = _.map(forms, (form) => util.idToBson(form._id));
         return router.formio.actions.model.find({
           form: {$in: formIds},
           deleted: {$eq: null},

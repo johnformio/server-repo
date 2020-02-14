@@ -540,7 +540,7 @@ module.exports = function(app) {
           if (groups.length) {
             // Verify these are all submissions within this project.
             formioServer.formio.resources.submission.model.find({
-              _id: {$in: groups.map(formioServer.formio.util.idToBson)},
+              _id: {$in: _.map(groups, formioServer.formio.util.idToBson)},
               project: formioServer.formio.util.idToBson(req.projectId),
               deleted: {$eq: null}
             }).lean().select({_id: 1}).exec((err, subs) => {
@@ -974,7 +974,7 @@ module.exports = function(app) {
               template.access.forEach(access => {
                 if (access && Array.isArray(access.roles)) {
                   const projectAccess = _.find(project.access, {type: access.type});
-                  const newRoles = _.filter(access.roles.map(name => {
+                  const newRoles = _.filter(_.map(access.roles, name => {
                     if (template.roles && template.roles.hasOwnProperty(name)) {
                       return template.roles[name]._id;
                     }
@@ -1054,7 +1054,7 @@ module.exports = function(app) {
           _export.access = [];
           _.each(accesses, function(access) {
             if (access.type.indexOf('team_') === -1) {
-              const roleNames = access.roles.map(roleId => _map.roles[roleId.toString()]);
+              const roleNames = _.map(access.roles, roleId => _map.roles[roleId.toString()]);
               _export.access.push({
                 type: access.type,
                 roles: roleNames
@@ -1224,7 +1224,7 @@ module.exports = function(app) {
             }
 
             // Make sure assigned role ids are actually in the project.
-            const roleIds = req.currentProject.roles.map(role => role._id);
+            const roleIds = _.map(req.currentProject.roles, role => role._id);
             sandbox.data.user.roles.forEach(roleId => {
               if (!roleIds.includes(roleId)) {
                 throw new Error('Invalid role id. Not in project.');

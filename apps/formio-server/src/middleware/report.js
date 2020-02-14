@@ -188,8 +188,8 @@ module.exports = function(formioServer) {
               readAllForms.push(form._id);
             }
             else {
-              access.map((item) => {
-                const roles = item.roles.map((role) => role.toString());
+              _.map(access, (item) => {
+                const roles = _.map(item.roles, (role) => role.toString());
                 if (item.type === 'read_all' && req.user.roles.some((role) => roles.includes(role))) {
                   readAllForms.push(form._id);
                 }

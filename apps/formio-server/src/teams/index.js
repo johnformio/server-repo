@@ -357,8 +357,8 @@ module.exports = function(app, formioServer) {
     formioServer.formio.resources.submission.model.find({
       _id: {
         $in: [
-          ...team.data.members.map((member) => formioServer.formio.util.idToBson(member._id)),
-          ...team.data.admins.map((admin) => formioServer.formio.util.idToBson(admin._id))
+          ..._.map(team.data.members, (member) => formioServer.formio.util.idToBson(member._id)),
+          ..._.map(team.data.admins, (admin) => formioServer.formio.util.idToBson(admin._id))
         ]
       },
       deleted: {$eq: null}

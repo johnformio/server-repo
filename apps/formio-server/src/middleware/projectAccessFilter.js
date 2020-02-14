@@ -80,7 +80,7 @@ module.exports = function(formio) {
         let currentTeams = [];
         project.access.forEach(access => {
           if (access.type.indexOf('team_') === 0 || access.type.indexOf('stage_') === 0) {
-            currentTeams = currentTeams.concat(access.roles.map(formio.util.idToString));
+            currentTeams = currentTeams.concat(_.map(access.roles, formio.util.idToString));
           }
         });
 

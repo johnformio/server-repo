@@ -35,8 +35,8 @@ module.exports = (formioServer) => {
           }
 
           // Make sure to only allow valid role ids.
-          const validRoles = (roles && roles.length) ? roles.map((role) => role._id.toString()) : [];
-          const roleMap = _.filter(settings.roles.map((role) => {
+          const validRoles = (roles && roles.length) ? _.map(roles, (role) => role._id.toString()) : [];
+          const roleMap = _.filter(_.map(settings.roles, (role) => {
             if (validRoles.indexOf(role.id) !== -1) {
               return role;
             }
@@ -111,7 +111,7 @@ module.exports = (formioServer) => {
     }
 
     // Trim all whitespace from the roles.
-    userRoles = userRoles.map(_.trim);
+    userRoles = _.map(userRoles, _.trim);
 
     // Add an "Everyone" role.
     userRoles.push('Everyone');
@@ -123,7 +123,7 @@ module.exports = (formioServer) => {
 
     const roles = [];
     const roleNames = [];
-    roleMap.map(map => {
+    _.map(roleMap, map => {
       const roleName = _.trim(map.role);
       if (_.includes(userRoles, roleName)) {
         roles.push(map.id);

@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.0-beta.3
+### Changed
+ - Upgrade portal to 7.0.0-rc.58
+ - Upgrade formio@1.65.0
+ 
+### Added
+ - Added new endpont for the latest form revision
+ - Action Logs access for team admins.
+ - Added support for x-actions headers.
+
+### Fixed
+ - Skip action import if there is no corresponding form or resource.
+ - Replaced all calls to Array.map with lodash to perform null checks.
+
 ## 6.9.0-beta.2
 ### Fixed
  - Team join updates

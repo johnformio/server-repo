@@ -2,6 +2,7 @@
 
 const jwt = require('jsonwebtoken');
 const request = require('request-promise-native');
+const _ = require('lodash');
 
 module.exports = formio => {
   const payload = jwt.decode(formio.config.license);
@@ -20,7 +21,7 @@ module.exports = formio => {
       key: 'dbIdentifier'
     }, (err, dbIdentifier) => {
       formio.mongoose.models.project.find().exec((err, items) => {
-        const projects = items.map(item => ({
+        const projects = _.map(items, item => ({
           _id: item._id.toString(),
           title: item.title,
           name: item.name,

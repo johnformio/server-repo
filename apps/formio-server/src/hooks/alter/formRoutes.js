@@ -181,7 +181,7 @@ module.exports = app => routes => {
           res.resource.item.config = config;
         }
         if (res.resource.items) {
-          res.resource.items.map(item => {
+          _.map(res.resource.items, item => {
             item.config = config;
           });
         }
