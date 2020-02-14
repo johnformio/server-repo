@@ -23,7 +23,7 @@ module.exports = function(db, config, tools, done) {
 
   // fix broken projects
   projectCollection
-  .update(
+  .updateMany(
     {
       deleted: {$eq: null},
       plan: {$nin: valid}
@@ -34,8 +34,7 @@ module.exports = function(db, config, tools, done) {
       }
     },
     {
-      upsert: false,
-      multi: true
+      upsert: false
     },
     function(err, results) {
       if (err) {

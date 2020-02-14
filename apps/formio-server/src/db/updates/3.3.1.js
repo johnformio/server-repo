@@ -24,7 +24,7 @@ module.exports = function(db, config, tools, done) {
       project.access = _.uniqBy(project.access, 'type');
       if (project.access.length !== count) {
         console.log('Removing ' + (count - project.access.length) + ' access duplicates for ' + project._id);
-        projectsCollection.update({_id: project._id}, {$set: {"access": project.access}}, (err) => {
+        projectsCollection.updateOne({_id: project._id}, {$set: {"access": project.access}}, (err) => {
           if (err) {
             return next(err);
           }

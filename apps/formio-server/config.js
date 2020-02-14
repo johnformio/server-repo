@@ -169,7 +169,7 @@ config.license = config.formio.license = getConfig('LICENSE');
 config.licenseData = jwt.decode(config.license);
 config.hostedPDFServer = getConfig('PDF_SERVER', '');
 config.portalSSO = getConfig('PORTAL_SSO', '');
-config.portalSSOTeamsEnabled = Boolean(getConfig('SSO_TEAMS', false) || config.portalSSO);
+config.ssoTeams = Boolean(getConfig('SSO_TEAMS', false) || config.portalSSO);
 config.portalSSOLogout = getConfig('PORTAL_SSO_LOGOUT', '');
 
 // Payeezy fields
@@ -202,14 +202,28 @@ else {
 }
 
 if (getConfig('REDIS_SERVICE')) {
-  config.redis = {
-    service: getConfig('REDIS_SERVICE')
-  };
+  if (getConfig('REDIS_SERVICE').toLowerCase() === 'local') {
+    if (config.docker) {
+      config.redis = {
+        url: 'redis://redis'
+      };
+    }
+    else {
+      config.redis = {
+        url: 'redis://localhost:6379'
+      };
+    }
+  }
+  else {
+    config.redis = {
+      service: getConfig('REDIS_SERVICE')
+    };
+  }
 }
 else if (getConfig('REDIS_ADDR', getConfig('REDIS_PORT_6379_TCP_ADDR'))) {
   // This is compatible with docker legacy linking.
-  var addr = getConfig('REDIS_ADDR', getConfig('REDIS_PORT_6379_TCP_ADDR'));
-  var redisPort = getConfig('REDIS_PORT', getConfig('REDIS_PORT_6379_TCP_PORT'));
+  var addr = getConfig('REDIS_ADDR', getConfig('REDIS_PORT_6379_TCP_ADDR', 'localhost'));
+  var redisPort = getConfig('REDIS_PORT', getConfig('REDIS_PORT_6379_TCP_PORT', 6379));
   config.redis = {
     port: redisPort,
     host: addr,
@@ -217,19 +231,9 @@ else if (getConfig('REDIS_ADDR', getConfig('REDIS_PORT_6379_TCP_ADDR'))) {
   };
 }
 else {
-  if (config.docker) {
-    // New docker network linking. Assumes linked with 'redis' alias.
-    config.redis = {
-      url: 'redis://redis'
-    };
-  }
-  else {
-    config.redis = {
-      url: 'redis://localhost:6379'
-    };
-  }
-
-  debug.config(`Using default Redis connection string (${config.redis.url}) - to disable Redis, please set REDIS_SERVICE=false`);
+  config.redis = {
+    service: 'false'
+  };
 }
 
 if (getConfig('REDIS_USE_SSL')) {

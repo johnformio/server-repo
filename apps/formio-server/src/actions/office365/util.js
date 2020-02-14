@@ -88,7 +88,7 @@ module.exports = function(router) {
           // Only add an externalId if none is provided.
           if ((req.method === 'POST') && !externalId && body.Id) {
             // Update the resource with the external Id.
-            return router.formio.resources.submission.model.update({
+            return router.formio.resources.submission.model.updateOne({
               _id: currentResource.item._id
             }, {
               $push: {

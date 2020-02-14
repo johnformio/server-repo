@@ -36,7 +36,7 @@ module.exports = function(db, config, tools, done) {
           return next();
         }
 
-        projects.update({
+        projects.updateOne({
           _id: tenant._id
         }, {
           $set: {'plan': project.plan}

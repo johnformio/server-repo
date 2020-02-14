@@ -32,7 +32,7 @@ var emptyDatabase = template.emptyDatabase = template.clearData = function(done)
    *   The callback to execute.
    */
   var dropDocuments = function(model, next) {
-    model.remove({}, function(err) {
+    model.deleteMany({}, function(err) {
       if (err) {
         return next(err);
       }

@@ -28,7 +28,7 @@ module.exports = (router) => {
       },
     };
 
-    return formio.resources.submission.model.update(find, update);
+    return formio.resources.submission.model.updateOne(find, update);
   }
 
   /**
@@ -298,7 +298,7 @@ module.exports = (router) => {
             },
           };
 
-          return formio.resources.submission.model.update(find, update).exec()
+          return formio.resources.submission.model.updateOne(find, update).exec()
             .then(() => {
               // If blocking is on, return the error.
               if (settings.block === true) {

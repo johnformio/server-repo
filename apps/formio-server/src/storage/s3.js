@@ -3,6 +3,9 @@ const aws = require('./s3/aws');
 const minio = require('./s3/minio');
 const CryptoJS = require('crypto-js');
 const _ = require('lodash');
+const debug = {
+  startup: require('debug')('formio:startup')
+};
 
 async function getUrl(options = {}) {
   // Allow options.project as an alternative to options.settings
@@ -24,6 +27,7 @@ async function getUrl(options = {}) {
 }
 
 const middleware = function(router) {
+  debug.startup('Attaching middleware: S3 storage GET');
   router.get('/project/:projectId/form/:formId/storage/s3',
     router.formio.formio.middleware.tokenHandler,
     function(req, res, next) {
@@ -60,7 +64,8 @@ const middleware = function(router) {
       bucket: project.settings.storage.s3.bucket
     };
 
-    const policy = new Buffer(JSON.stringify({
+    /* eslint-disable new-cap */
+    const policy = new Buffer.from(JSON.stringify({
       expiration: file.expiration,
       conditions: [
         {'bucket': project.settings.storage.s3.bucket},
@@ -71,6 +76,7 @@ const middleware = function(router) {
         ['content-length-range', 0, project.settings.storage.s3.maxSize || (100 * 1024 * 1024)]
       ]
     })).toString('base64');
+    /* eslint-enable new-cap */
 
     /* eslint-disable new-cap */
     response.data = {
@@ -91,6 +97,7 @@ const middleware = function(router) {
     return response;
   };
 
+  debug.startup('Attaching middleware: S3 storage POST');
   router.post('/project/:projectId/form/:formId/storage/s3',
     router.formio.formio.middleware.tokenHandler,
     function(req, res, next) {

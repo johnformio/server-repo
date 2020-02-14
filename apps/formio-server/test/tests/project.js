@@ -3259,7 +3259,7 @@ module.exports = function(app, template, hook) {
               exp_date: paymentData.ccExpiryMonth + paymentData.ccExpiryYear,
               cvv: paymentData.securityCode,
             },
-            customer_ref: new Buffer(template.formio.owner._id.toString(), 'hex').toString('base64'),
+            customer_ref: new Buffer.from(template.formio.owner._id.toString(), 'hex').toString('base64'),
             reference_3: template.formio.owner._id.toString(),
             user_name: template.formio.owner._id.toString(),
             client_email: template.formio.owner.data.email

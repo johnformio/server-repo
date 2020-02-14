@@ -140,7 +140,7 @@ module.exports = function(formioServer) {
         const _plan = limits[plan];
 
         // Get a count of the forms.
-        formioServer.formio.resources.form.model.count({
+        formioServer.formio.resources.form.model.countDocuments({
           project: req.projectId,
           deleted: {$eq: null}
         }, (err, forms) => {
@@ -207,7 +207,7 @@ module.exports = function(formioServer) {
               _.set(currentProject, 'billing.usage', calls);
               _.set(currentProject, 'billing.exceeds', exceeds);
               _.set(currentProject, 'billing.checked', now);
-              formioServer.formio.resources.project.model.update({
+              formioServer.formio.resources.project.model.updateOne({
                 _id: formioServer.formio.mongoose.Types.ObjectId(currentProject._id.toString())
               }, {$set: {'billing': currentProject.billing}}, (err, result) => {
                 debug.checkRequest('Updated project billing.');
