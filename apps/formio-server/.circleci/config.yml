@@ -85,9 +85,13 @@ jobs:
       - run:
           name: Install node@12
           command: |
+            set +e
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.2/install.sh | bash
+            export NVM_DIR="/opt/circleci/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm install 12
-            nvm alias default 12
             nvm use 12
+            rm -rf ~./node-gyp
             node -v
       - run:
           name: Enable docker experimental features.
