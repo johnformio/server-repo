@@ -85,14 +85,9 @@ jobs:
       - run:
           name: Install node@12
           command: |
-            set +e
-            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.2/install.sh | bash
-            export NVM_DIR="/opt/circleci/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            ./load-nvm.sh
             nvm install 12
-            nvm use 12
-            rm -rf ~./node-gyp
-            node -v
+            nvm alias default 12
       - run:
           name: Enable docker experimental features.
           command: |
@@ -118,9 +113,9 @@ jobs:
       - run: docker ps -a
       - run: sleep 5
       - run: docker logs formio-server
-      - run: nvm use 12 && node -v && npm -v && ADMIN_KEY=dockertest node install
+      - run: ./load-nvm.sh && node -v && npm -v && ADMIN_KEY=dockertest node install
       - run: curl -f --retry 10 http://api.localhost:3000/health
-      - run: nvm use 12 && node -v && npm -v && npm run docker
+      - run: ./load-nvm.sh && node -v && npm -v && npm run docker
       - run:
           name: deploy
           command: |
