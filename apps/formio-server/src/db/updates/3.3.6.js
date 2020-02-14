@@ -69,7 +69,7 @@ module.exports = function(db, config, tools, done) {
           process.stdout.write('.');
           submissions.updateOne({
             _id: member._id
-          }, {$set: {'metadata.teams': member.metadata.teams}}, next);
+          }, {$set: {'metadata': member.metadata}}, next);
         });
       };
 
@@ -78,7 +78,7 @@ module.exports = function(db, config, tools, done) {
         async.eachSeries(team.data.members,
           (member, nextMember) => acceptTeam(team, member, nextMember),
           () => {
-            async.eachSeries(team.data.owners,
+            async.eachSeries(team.data.admins,
               (member, nextMember) => acceptTeam(team, member, nextMember),
               next
             );
@@ -92,7 +92,10 @@ module.exports = function(db, config, tools, done) {
         form: teamResource._id
       });
 
-      function processItem(err, team) {
+      function processItem(err, team, count = 0) {
+        if (err && (count < 100)) {
+          return cursor.next(processItem, ++count);
+        }
         if (err || (team === null)) {
           return; // All done!
         }

@@ -13,8 +13,6 @@ const async = require('async');
  * @param done
  */
 module.exports = function(db, config, tools, done) {
-  // Perform in background.
-  done();
   const projects = db.collection('projects');
   projects.findOne({
     primary: true
@@ -113,47 +111,49 @@ module.exports = function(db, config, tools, done) {
             forms.updateOne({
               _id: teamResource._id
             }, {$set: {'submissionAccess': [
-                  {
-                    type: 'create_own',
-                    roles: authRole ? [authRole._id.toString()] : []
-                  },
-                  {
-                    type: 'read_own',
-                    roles: []
-                  },
-                  {
-                    type: 'update_own',
-                    roles: []
-                  },
-                  {
-                    type: 'delete_own',
-                    roles: authRole ? [authRole._id.toString()] : []
-                  },
-                  {
-                    type: 'create_all',
-                    roles: adminRole ? [adminRole._id.toString()] : []
-                  },
-                  {
-                    type: 'read_all',
-                    roles: adminRole ? [adminRole._id.toString()] : []
-                  },
-                  {
-                    type: 'update_all',
-                    roles: adminRole ? [adminRole._id.toString()] : []
-                  },
-                  {
-                    type: 'delete_all',
-                    roles: adminRole ? [adminRole._id.toString()] : []
-                  },
-                  {
-                    type: 'self',
-                    roles: []
-                  }
-                ]}}, function(err) {
+              {
+                type: 'create_own',
+                roles: authRole ? [authRole._id.toString()] : []
+              },
+              {
+                type: 'read_own',
+                roles: []
+              },
+              {
+                type: 'update_own',
+                roles: []
+              },
+              {
+                type: 'delete_own',
+                roles: authRole ? [authRole._id.toString()] : []
+              },
+              {
+                type: 'create_all',
+                roles: adminRole ? [adminRole._id.toString()] : []
+              },
+              {
+                type: 'read_all',
+                roles: adminRole ? [adminRole._id.toString()] : []
+              },
+              {
+                type: 'update_all',
+                roles: adminRole ? [adminRole._id.toString()] : []
+              },
+              {
+                type: 'delete_all',
+                roles: adminRole ? [adminRole._id.toString()] : []
+              },
+              {
+                type: 'self',
+                roles: []
+              }
+            ]}}, function(err) {
               if (err) {
                 console.log(err.message);
                 return;
               }
+
+              done();
             });
           });
         });

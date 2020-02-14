@@ -330,6 +330,18 @@ module.exports = function(app, formioServer) {
           return next(404);
         }
 
+        if (!team.data) {
+          team.data = {};
+        }
+
+        if (!team.data.members) {
+          team.data.members = [];
+        }
+
+        if (!team.data.admins) {
+          team.data.admins = [];
+        }
+
         // Return the team.
         return next(null, team);
       });
