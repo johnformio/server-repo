@@ -1,8 +1,6 @@
 {
   "name": "formio",
-  "version": "6.7.40",
-  "schema": "3.3.4",
-  "portalVersion": "6.8.9",
+  "private": true,
   "engines": {
     "node": ">=6.0.0"
   },
@@ -17,24 +15,27 @@
     "build": "npm run lint; npm run clean; npm run compile",
     "build:debug": "docker build -t formio-server-debug -f deployment/docker/formio-server/Dockerfile-debug .",
     "package:debug": "docker save -o formio-server-debug formio-server-debug",
-    "builddocker": "docker build --squash -f deployment/docker/formio-server/Dockerfile -t formio/formio-enterprise:latest .",
+    "builddocker": "docker build --squash --no-cache -t formio/formio-enterprise:latest -f deployment/docker/formio-server/Dockerfile .",
     "lint": "eslint .",
     "validate": "circleci config validate -c .circleci/config.yml"
   },
   "cache": "1550086650",
   "main": "./server.js",
+  "version": "6.9.0-beta.1",
+  "schema": "3.3.6",
+  "portalVersion": "7.0.0-rc.57",
   "dependencies": {
     "JSONStream": "^1.3.5",
     "adal-node": "^0.2.1",
     "async": "^3.1.1",
-    "aws-sdk": "^2.616.0",
+    "aws-sdk": "^2.617.0",
     "azure-storage": "^2.10.3",
     "bluebird": "^3.7.2",
     "body-parser": "^1.19.0",
     "chance": "^1.1.4",
     "connect-multiparty": "^2.2.0",
     "cors": "^2.8.5",
-    "crypto-js": "^3.1.5",
+    "crypto-js": "^3.2.0",
     "debug": "^4.1.1",
     "dotenv": "^6.2.0",
     "express": "^4.17.1",
@@ -42,7 +43,7 @@
     "formio": "^1.64.0",
     "formio-services": "formio/formio-services#v2.0.2",
     "formio-workers": "^1.14.0",
-    "formiojs": "^4.8.1",
+    "formiojs": "^4.9.0-beta.4",
     "helmet": "^3.21.2",
     "is-url": "^1.2.4",
     "jira-connector": "^3.0.2",
@@ -50,7 +51,7 @@
     "jsonwebtoken": "^8.5.1",
     "keygenerator": "^1.0.4",
     "kickbox": "^2.0.4",
-    "ldapauth-fork": "^4.3.0",
+    "ldapauth-fork": "^4.3.1",
     "lodash": "^4.17.15",
     "method-override": "^3.0.0",
     "minio": "^7.0.13",
@@ -61,7 +62,7 @@
     "node-paginate-anything": "^1.0.0",
     "on-finished": "^2.3.0",
     "opn": "^5.5.0",
-    "passport-saml": "^1.2.0",
+    "passport-saml": "^1.3.2",
     "passport-saml-metadata": "^1.6.0",
     "q": "^1.5.1",
     "redis": "^3.0.2",
@@ -76,7 +77,7 @@
     "through": "^2.3.8",
     "tldjs": "^2.3.1",
     "traverse": "^0.6.6",
-    "twilio": "^3.39.3",
+    "twilio": "^3.39.4",
     "universal-analytics": "^0.4.20",
     "uuid": "^3.4.0"
   },
@@ -89,7 +90,7 @@
     "sinon": "^8.1.1",
     "supertest": "^4.0.2",
     "uglify-es": "git+https://github.com/mishoo/UglifyJS2.git#harmony",
-    "webpack": "^4.41.5"
+    "webpack": "^4.41.6"
   },
   "pre-commit": [
     "lint"
@@ -106,7 +107,7 @@
       "node_modules/xml-encryption/**/*"
     ],
     "targets": [
-      "node10-alpine-x64"
+      "node12-alpine-x64"
     ]
   }
 }

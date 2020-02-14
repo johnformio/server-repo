@@ -3,6 +3,9 @@ const aws = require('./s3/aws');
 const minio = require('./s3/minio');
 const CryptoJS = require('crypto-js');
 const _ = require('lodash');
+const debug = {
+  startup: require('debug')('formio:startup')
+};
 
 async function getUrl(options = {}) {
   // Allow options.project as an alternative to options.settings
@@ -24,6 +27,7 @@ async function getUrl(options = {}) {
 }
 
 const middleware = function(router) {
+  debug.startup('Attaching middleware: S3 storage GET');
   router.get('/project/:projectId/form/:formId/storage/s3',
     router.formio.formio.middleware.tokenHandler,
     function(req, res, next) {
@@ -93,6 +97,7 @@ const middleware = function(router) {
     return response;
   };
 
+  debug.startup('Attaching middleware: S3 storage POST');
   router.post('/project/:projectId/form/:formId/storage/s3',
     router.formio.formio.middleware.tokenHandler,
     function(req, res, next) {

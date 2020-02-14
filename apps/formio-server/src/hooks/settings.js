@@ -1133,18 +1133,45 @@ module.exports = function(app) {
           .uniq()
           .value();
 
-        formioServer.formio.teams.getTeams(user, true, true)
+        // Synchronize the user teams with teams they were added to.
+        const syncUserTeams = (user, teams) => {
+          // Do not perform if they have ssoTeams enabled.
+          if (formioServer.formio.config.ssoTeams) {
+            return;
+          }
+          // If the teams length changes, then this means that maybe they were removed from some teams. We need
+          // to perform a quick cleanup of their accepted teams array to ensure we don't have lingering teams sticking
+          // around.
+          if (
+            user.metadata &&
+            user.metadata.teams &&
+            (teams.length !== user.metadata.teams.length)
+          ) {
+            user.metadata.teams = teams;
+            formioServer.formio.resources.submission.model.update(
+              {_id: user._id},
+              {$set: {'metadata.teams': user.metadata.teams}},
+              _.noop
+            );
+          }
+        };
+
+        formioServer.formio.teams.getTeams(user, true, true, true)
           .then((teams) => {
-            if (teams && teams.length) {
-              // Filter the teams to only contain the team ids.
-              user.teams = _.chain(teams)
-                .map('_id')
-                .filter()
-                .map(formioServer.formio.util.idToString)
-                .uniq()
-                .value();
+            if (!teams || !teams.length) {
+              syncUserTeams(user, []);
+              return user;
             }
 
+            // Filter the teams to only contain the team ids.
+            user.teams = _(teams)
+              .map('_id')
+              .filter()
+              .map(formioServer.formio.util.idToString)
+              .uniq()
+              .value();
+
+            syncUserTeams(user, user.teams);
             return user;
           })
           .nodeify(next);

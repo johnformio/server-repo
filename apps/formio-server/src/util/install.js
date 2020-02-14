@@ -1,9 +1,16 @@
 'use strict';
 const template = require('../../project.json');
+const debug = {
+  install: require('debug')('formio:install')
+};
 
 module.exports = (app, config, next) => {
   const formio = app.formio.formio;
-  const log = formio.util.log;
+  const log = (...args) => {
+    debug.install(...args);
+    formio.util.log(...args);
+  };
+
   log('\nChecking environment status. ');
   if (!config.licenseData || !config.licenseData.portal) {
     log(' > No on-premise portal license. Use https://portal.form.io to connect this environment.\n');

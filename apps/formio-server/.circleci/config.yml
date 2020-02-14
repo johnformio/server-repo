@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/openjdk:8-jdk-node
+      - image: circleci/openjdk:jdk-node
     steps:
       - checkout
       - restore_cache:
@@ -60,7 +60,7 @@ jobs:
       REDIS_ADDR: localhost
       REDIS_PORT: 6379
     docker:
-      - image: circleci/openjdk:8-jdk-node
+      - image: circleci/openjdk:jdk-node
       - image: mongo:3.4.16
       - image: redis:4.0.11
     steps:
@@ -82,6 +82,13 @@ jobs:
       enabled: true
       image: circleci/classic:edge
     steps:
+      - run:
+          name: Install node@12
+          command: |
+            export NVM_DIR="/opt/circleci/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm install 12
+            nvm alias default 12
       - run:
           name: Enable docker experimental features.
           command: |
@@ -107,9 +114,23 @@ jobs:
       - run: docker ps -a
       - run: sleep 5
       - run: docker logs formio-server
-      - run: ADMIN_KEY=dockertest node install
+      - run:
+          name: node install
+          command: |
+            export NVM_DIR="/opt/circleci/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            node -v
+            npm -v
+            ADMIN_KEY=dockertest node install
       - run: curl -f --retry 10 http://api.localhost:3000/health
-      - run: npm run docker
+      - run:
+          name: npm run docker
+          command: |
+            export NVM_DIR="/opt/circleci/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            node -v
+            npm -v
+            npm run docker
       - run:
           name: deploy
           command: |
@@ -125,7 +146,7 @@ jobs:
 
   deploy_npm:
     docker:
-      - image: circleci/openjdk:8-jdk-node
+      - image: circleci/openjdk:jdk-node
     steps:
       - checkout
       - attach_workspace:
