@@ -83,6 +83,17 @@ jobs:
       image: circleci/classic:edge
     steps:
       - run:
+          name: Install node@12
+          command: |
+            set +e
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.2/install.sh | bash
+            export NVM_DIR="/opt/circleci/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm install 12
+            nvm alias default 12
+            rm -rf ~./node-gyp
+            node -v
+      - run:
           name: Enable docker experimental features.
           command: |
             sudo sh -c 'echo '\''DOCKER_OPTS="--experimental=true"'\'' >> /etc/default/docker'
@@ -107,20 +118,9 @@ jobs:
       - run: docker ps -a
       - run: sleep 5
       - run: docker logs formio-server
-      - run: ADMIN_KEY=dockertest node install
+      - run: node -v && npm -v && ADMIN_KEY=dockertest node install
       - run: curl -f --retry 10 http://api.localhost:3000/health
-      - run:
-          name: npm run docker
-          command: |
-            set +e
-            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.2/install.sh | bash
-            export NVM_DIR="/opt/circleci/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            nvm install 12
-            nvm alias default 12
-            rm -rf ~./node-gyp
-            node -v
-            npm run docker
+      - run: node -v && npm -v && npm run docker
       - run:
           name: deploy
           command: |
