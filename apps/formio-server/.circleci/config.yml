@@ -85,7 +85,8 @@ jobs:
       - run:
           name: Install node@12
           command: |
-            ./load-nvm.sh
+            export NVM_DIR="/opt/circleci/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm install 12
             nvm alias default 12
       - run:
@@ -113,9 +114,23 @@ jobs:
       - run: docker ps -a
       - run: sleep 5
       - run: docker logs formio-server
-      - run: ./load-nvm.sh && node -v && npm -v && ADMIN_KEY=dockertest node install
+      - run:
+          name: node install
+          command: |
+            export NVM_DIR="/opt/circleci/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            node -v
+            npm -v
+            ADMIN_KEY=dockertest node install
       - run: curl -f --retry 10 http://api.localhost:3000/health
-      - run: ./load-nvm.sh && node -v && npm -v && npm run docker
+      - run:
+          name: npm run docker
+          command: |
+            export NVM_DIR="/opt/circleci/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            node -v
+            npm -v
+            npm run docker
       - run:
           name: deploy
           command: |
