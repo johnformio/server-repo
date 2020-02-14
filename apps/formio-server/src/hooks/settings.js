@@ -1317,6 +1317,73 @@ module.exports = function(app) {
         return query;
       },
 
+      actionsQuery(query, req) {
+        // Allow only for server to server communication.
+        if (!req.isAdmin) {
+          return query;
+        }
+
+        // Included actions take privilege over excluded.
+        const includedActions = formioServer.formio.util.getHeader(req, 'x-actions-include');
+        const excludedActions = formioServer.formio.util.getHeader(req, 'x-actions-exclude');
+
+        const actionsToProcess = includedActions || excludedActions;
+        if (actionsToProcess) {
+          const {
+            ids,
+            names,
+          } = actionsToProcess.split(',').reduce(
+            ({
+              ids,
+              names,
+            }, action) => {
+              const id = formioServer.formio.util.idToBson(action);
+              return id
+                ? ({
+                  ids: [...ids, id],
+                  names,
+                })
+                : ({
+                  ids,
+                  names: [...names, action],
+                });
+            },
+            {
+              ids: [],
+              names: [],
+            },
+          );
+
+          if (ids.length !== 0 || names.length !== 0) {
+            const expressions = [];
+            const logicalOperator = includedActions ? '$or' : '$and';
+            const comparisonOperator = includedActions ? '$in' : '$nin';
+
+            if (ids.length !== 0) {
+              expressions.push({
+                _id: {
+                  [comparisonOperator]: ids,
+                },
+              });
+            }
+
+            if (names.length !== 0) {
+              expressions.push({
+                name: {
+                  [comparisonOperator]: names,
+                },
+              });
+            }
+
+            if (expressions.length) {
+              query[logicalOperator] = expressions;
+            }
+          }
+        }
+
+        return query;
+      },
+
       formSearch(search, model, value) {
         search.project = model.project;
         return search;
