@@ -937,57 +937,69 @@ module.exports = function(app, formioServer) {
         return res.sendStatus(400);
       }
 
-      // Search for the given team, and check if the current user is a member, but not the owner.
-      const query = {
-        form: resource._id,
-        'data.members': {
-          $elemMatch: {_id: {$in: [formioServer.formio.util.idToBson(req.token.user._id), formioServer.formio.util.idToString(req.token.user._id)]}}
-        },
-        deleted: {$eq: null}
-      };
-
-      formioServer.formio.resources.submission.model.findOne(query).exec((err, document) => {
-        if (err || !document) {
+      _.remove(_.get(req.user, 'metadata.teams', []), resource._id.toString());
+      formioServer.formio.resources.submission.model.updateOne({
+        _id: formioServer.formio.util.idToBson(req.user._id)
+      }, {
+        $set: {'metadata.teams': _.get(req.user, 'metadata.teams', [])}
+      }, (err) => {
+        if (err) {
           debug.leaveTeams(err);
           return res.sendStatus(400);
         }
 
-        // Omit the given user from the members list.
-        debug.leaveTeams(document);
-        document.data = document.data || {};
-        document.data.members = document.data.members || [];
+        // Search for the given team, and check if the current user is a member, but not the owner.
+        const query = {
+          form: resource._id,
+          'data.members': {
+            $elemMatch: {_id: {$in: [formioServer.formio.util.idToBson(req.token.user._id), formioServer.formio.util.idToString(req.token.user._id)]}}
+          },
+          deleted: {$eq: null}
+        };
 
-        // Convert each _id to strings for comparison.
-        document.data.members = _.map(document.data.members, function(element) {
-          if (element._id) {
-            element._id = formioServer.formio.util.idToString(element._id);
-          }
-
-          return element;
-        });
-
-        // Filter the _ids.
-        document.data.members = _.uniq(_.reject(document.data.members, {_id: formioServer.formio.util.idToString(req.token.user._id)}));
-
-        // Convert each _id to strings for comparison.
-        document.data.members = _.map(document.data.members, function(element) {
-          if (element._id) {
-            element._id = formioServer.formio.util.idToBson(element._id);
-          }
-
-          return element;
-        });
-
-        // Save the updated team.
-        document.markModified('data.members');
-        document.save(function(err, update) {
-          if (err) {
+        formioServer.formio.resources.submission.model.findOne(query).exec((err, document) => {
+          if (err || !document) {
             debug.leaveTeams(err);
             return res.sendStatus(400);
           }
 
-          debug.leaveTeams(update);
-          return res.sendStatus(200);
+          // Omit the given user from the members list.
+          debug.leaveTeams(document);
+          document.data = document.data || {};
+          document.data.members = document.data.members || [];
+
+          // Convert each _id to strings for comparison.
+          document.data.members = _.map(document.data.members, function(element) {
+            if (element._id) {
+              element._id = formioServer.formio.util.idToString(element._id);
+            }
+
+            return element;
+          });
+
+          // Filter the _ids.
+          document.data.members = _.uniq(_.reject(document.data.members, {_id: formioServer.formio.util.idToString(req.token.user._id)}));
+
+          // Convert each _id to strings for comparison.
+          document.data.members = _.map(document.data.members, function(element) {
+            if (element._id) {
+              element._id = formioServer.formio.util.idToBson(element._id);
+            }
+
+            return element;
+          });
+
+          // Save the updated team.
+          document.markModified('data.members');
+          document.save(function(err, update) {
+            if (err) {
+              debug.leaveTeams(err);
+              return res.sendStatus(400);
+            }
+
+            debug.leaveTeams(update);
+            return res.sendStatus(200);
+          });
         });
       });
     });

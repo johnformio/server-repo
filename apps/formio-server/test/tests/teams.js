@@ -1045,6 +1045,22 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      it('Should have the team id in the users metadata', (done) => {
+        request(app)
+          .get('/project/' + template.formio.project._id + '/form/' + template.formio.userResource._id + '/submission/' + formioUser._id)
+          .set('x-jwt-token', formioUser.token)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            var response = res.body;
+            assert(_.get(response, 'metadata.teams', []).indexOf(template.team1._id.toString()) !== -1, 'Should have the team in metadata.');
+            formioUser.token = res.headers['x-jwt-token'];
+            done();
+          });
+      });
+
       it('A Form.io Team member should be able to remove themselves from the Team', function(done) {
         request(app)
           .post('/team/' + template.team1._id + '/leave')
@@ -1059,6 +1075,22 @@ module.exports = function(app, template, hook) {
             // Store the JWT for future API calls.
             formioUser.token = res.headers['x-jwt-token'];
 
+            done();
+          });
+      });
+
+      it('Should have removed the team from the users metadata', (done) => {
+        request(app)
+          .get('/project/' + template.formio.project._id + '/form/' + template.formio.userResource._id + '/submission/' + formioUser._id)
+          .set('x-jwt-token', formioUser.token)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            var response = res.body;
+            assert(_.get(response, 'metadata.teams', []).indexOf(template.team1._id.toString()) === -1, 'Should have removed the team.');
+            formioUser.token = res.headers['x-jwt-token'];
             done();
           });
       });
