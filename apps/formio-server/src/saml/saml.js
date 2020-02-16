@@ -153,22 +153,22 @@ module.exports = (formioServer) => {
     // the user object that will be read by the teams feature to determine which teams are allocated to this user.
     if (project.primary && config.ssoTeams) {
       // Load the teams by name.
-      formio.teams.getSSOTeams(userRoles).then(function(teams) {
+      formio.teams.getSSOTeams(userRoles).then((teams) => {
         teams = teams || [];
         user.teams = _.map(_.map(teams, '_id'), formio.util.idToString);
         debug(`Teams: ${JSON.stringify(user.teams)}`);
         return next(null, {
-          user: user,
+          user,
           decoded: token,
-          token: formio.auth.getToken(token)
+          token: formio.auth.getToken(token),
         });
       });
     }
     else {
       return next(null, {
-        user: user,
+        user,
         decoded: token,
-        token: formio.auth.getToken(token)
+        token: formio.auth.getToken(token),
       });
     }
   };

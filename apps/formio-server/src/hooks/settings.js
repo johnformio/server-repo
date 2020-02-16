@@ -920,6 +920,16 @@ module.exports = function(app) {
               return done(err);
             }
 
+            const parts = machineName.split(':');
+            const formName = parts.length === 1 ? parts[0] : parts[1];
+
+            const formExists = (template.forms && template.forms[formName])
+              || (template.resources && template.resources[formName]);
+
+            if (!formExists) {
+              return done(null, null);
+            }
+
             item.machineName = machineName;
             done(null, item);
           });
@@ -1134,7 +1144,7 @@ module.exports = function(app) {
           .value();
 
         // Synchronize the user teams with teams they were added to.
-        var syncUserTeams = function(user, teams) {
+        const syncUserTeams = (user, teams) => {
           // Do not perform if they have ssoTeams enabled.
           if (formioServer.formio.config.ssoTeams) {
             return;
@@ -1157,7 +1167,7 @@ module.exports = function(app) {
         };
 
         formioServer.formio.teams.getTeams(user, true, true, true)
-          .then(function(teams) {
+          .then((teams) => {
             if (!teams || !teams.length) {
               syncUserTeams(user, []);
               return user;
@@ -1304,6 +1314,73 @@ module.exports = function(app) {
         if (req.projectId) {
           query.project = formioServer.formio.util.idToBson(req.projectId);
         }
+        return query;
+      },
+
+      actionsQuery(query, req) {
+        // Allow only for server to server communication.
+        if (!req.isAdmin) {
+          return query;
+        }
+
+        // Included actions take privilege over excluded.
+        const includedActions = formioServer.formio.util.getHeader(req, 'x-actions-include');
+        const excludedActions = formioServer.formio.util.getHeader(req, 'x-actions-exclude');
+
+        const actionsToProcess = includedActions || excludedActions;
+        if (actionsToProcess) {
+          const {
+            ids,
+            names,
+          } = actionsToProcess.split(',').reduce(
+            ({
+              ids,
+              names,
+            }, action) => {
+              const id = formioServer.formio.util.idToBson(action);
+              return id
+                ? ({
+                  ids: [...ids, id],
+                  names,
+                })
+                : ({
+                  ids,
+                  names: [...names, action],
+                });
+            },
+            {
+              ids: [],
+              names: [],
+            },
+          );
+
+          if (ids.length !== 0 || names.length !== 0) {
+            const expressions = [];
+            const logicalOperator = includedActions ? '$or' : '$and';
+            const comparisonOperator = includedActions ? '$in' : '$nin';
+
+            if (ids.length !== 0) {
+              expressions.push({
+                _id: {
+                  [comparisonOperator]: ids,
+                },
+              });
+            }
+
+            if (names.length !== 0) {
+              expressions.push({
+                name: {
+                  [comparisonOperator]: names,
+                },
+              });
+            }
+
+            if (expressions.length) {
+              query[logicalOperator] = expressions;
+            }
+          }
+        }
+
         return query;
       },
 
