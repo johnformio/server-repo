@@ -17,10 +17,6 @@ module.exports = (formioServer) => async (req, res, next) => {
     const formId = req.query.form || formio.cache.getCurrentFormId(req);
     const form = await formio.cache.loadFormAsync(req, null, formId);
 
-    if (project.settings && project.settings.addConfigToForms) {
-      form.config = project.config;
-    }
-
     // Load the current submission
     const submission = await formio.cache.loadCurrentSubmissionAsync(req);
 
