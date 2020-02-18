@@ -1846,7 +1846,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
-            assert.deepEqual(_.omit(template.project, 'settings', 'billing', 'modified'), _.omit(response, 'modified'));
+            assert.deepEqual(_.omit(template.project, 'settings', 'billing', 'modified', 'public'), _.omit(response, 'modified', 'public'));
 
             // Store the JWT for future API calls.
             template.formio.user1.token = res.headers['x-jwt-token'];
@@ -2447,7 +2447,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
-            assert.deepEqual(_.omit(template.project, 'settings', 'modified'), _.omit(response, 'modified'));
+            assert.deepEqual(_.omit(template.project, 'settings', 'modified', 'public'), _.omit(response, 'modified', 'public'));
 
             // Store the JWT for future API calls.
             template.formio.user1.token = res.headers['x-jwt-token'];
