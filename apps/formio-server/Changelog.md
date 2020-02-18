@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.0-beta.4
+### Changed
+ - Upgrade portal to 7.0.0-rc.59
+
+### Added
+ - A way to provide global modules within projects.
+ - A way to exclude access within template exports.
+
 ## 6.9.0-beta.3
 ### Changed
  - Upgrade portal to 7.0.0-rc.58
