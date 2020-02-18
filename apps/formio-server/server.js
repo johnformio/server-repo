@@ -14,8 +14,32 @@ var uuid = require('uuid/v4');
 var fs = require('fs');
 const multipart = require('connect-multiparty');
 const os = require('os');
+const vm = require('vm');
 const debug = {
   startup: require('debug')('formio:startup')
+};
+
+// Ensure all evaluations run with the evaluator
+const FormioJS = require('formiojs/utils').default;
+const CoreFormioJS = require('formio/node_modules/formiojs/utils').default;
+FormioJS.Evaluator.evaluator = CoreFormioJS.Evaluator.evaluator = function(func, args) {
+  return function() {
+    const params = _.keys(args);
+    const sandbox = vm.createContext({
+      result: null,
+      args
+    });
+    /* eslint-disable no-empty */
+    try {
+      const script = new vm.Script(`result = (function({${params.join(',')}}) {${func}})(args);`);
+      script.runInContext(sandbox, {
+        timeout: 250
+      });
+    }
+    catch (err) {}
+    /* eslint-enable no-empty */
+    return sandbox.result;
+  };
 };
 
 module.exports = function(options) {

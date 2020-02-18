@@ -14,22 +14,29 @@ module.exports = (router, formioServer) => {
     .map(formio.util.idToString)
     .value();
 
-  const decryptSettings = (res) => {
+  const setPublicSettings = (project) => {
+    // Migrate "public" settings into an accessible "virtual" property.
+    project.public = {
+      formModule: _.get(project, 'settings.formModule', ''),
+      custom: _.get(project, 'settings.custom', {})
+    };
+  };
+
+  const decryptSettings = (res, noAdmin) => {
     if (!res || !res.resource || !res.resource.item) {
       return;
     }
     // Merge all results into an array, to handle the cases with multiple results.
     const multi = Array.isArray(res.resource.item);
-    const list = [].concat(res.resource.item).map(item =>
-      util.decryptProperty(item, 'settings_encrypted', 'settings', formio.config.mongoSecret)
-    );
+    const list = [].concat(res.resource.item).map(item => {
+      util.decryptProperty(item, 'settings_encrypted', 'settings', formio.config.mongoSecret);
+      setPublicSettings(item);
+      if (noAdmin) {
+        delete item.settings;
+      }
+      return item;
+    });
     res.resource.item = multi ? list : list[0];
-
-    // Migrate "public" settings into an accessible "virtual" property.
-    res.resource.item.public = {
-      formModule: _.get(res.resource.item, 'settings.formModule', ''),
-      custom: _.get(res.resource.item, 'settings.custom', {})
-    };
   };
 
   const projectSettings = (req, res, next) => {
@@ -55,9 +62,9 @@ module.exports = (router, formioServer) => {
           const adminAccess = getProjectAccess(project.access, 'team_admin');
           const writeAccess = getProjectAccess(project.access, 'team_write');
           const roles = _.map(req.user.teams, formio.util.idToString);
-
-          if (_.intersection(adminAccess, roles).length !== 0) {
-            decryptSettings(res);
+          const isAdmin = _.intersection(adminAccess, roles).length !== 0;
+          decryptSettings(res, !isAdmin);
+          if (isAdmin) {
             return next();
           }
           if (_.intersection(writeAccess, roles).length !== 0) {

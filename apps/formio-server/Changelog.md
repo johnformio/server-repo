@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.0-beta.5
+### Fixed
+ - Ensure all renderer evaluations occur within a vm.
+ - Removed the Login and Register with Github buttons on base installations.
+ - Always include project public configs in the project variable.
+
 ## 6.9.0-beta.4
 ### Changed
  - Upgrade portal to 7.0.0-rc.59

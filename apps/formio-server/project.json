@@ -75,20 +75,6 @@
           "action": "submit",
           "disableOnInvalid": true,
           "theme": "primary"
-        },
-        {
-          "input": true,
-          "label": "LOGIN WITH GITHUB",
-          "tableView": false,
-          "key": "loginwithgithub",
-          "size": "md",
-          "leftIcon": "fa fa-github",
-          "rightIcon": "",
-          "block": true,
-          "action": "oauth",
-          "disableOnInvalid": false,
-          "theme": "info",
-          "type": "button"
         }
       ],
       "access": [
@@ -302,38 +288,6 @@
           "input": true,
           "type": "button",
           "tableView": false
-        },
-        {
-          "type": "button",
-          "theme": "info",
-          "disableOnInvalid": false,
-          "action": "oauth",
-          "block": true,
-          "rightIcon": "",
-          "leftIcon": "fa fa-github",
-          "size": "md",
-          "key": "registerwithgithub",
-          "tableView": false,
-          "label": "REGISTER WITH GITHUB",
-          "input": true
-        },
-        {
-          "isNew": true,
-          "type": "content",
-          "html": "<p><em>By clicking &quot;Register&quot;, you agree to our <strong><a href=\"http://blog.form.io/form-terms-of-use\">Terms of Service</a></strong>&nbsp;and <strong><a href=\"http://blog.form.io/form.io-privacy-policy\">Privacy Policy</a></strong>.</em></p>\n",
-          "input": false
-        },
-        {
-          "isNew": false,
-          "input": true,
-          "tableView": true,
-          "key": "fullName",
-          "label": "Name",
-          "protected": false,
-          "unique": false,
-          "persistent": true,
-          "type": "hidden",
-          "lockKey": true
         }
       ],
       "access": [
