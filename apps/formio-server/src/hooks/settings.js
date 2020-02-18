@@ -1010,6 +1010,7 @@ module.exports = function(app) {
               }
             }
             else if (
+              (!('excludeAccess' in template) || !template.excludeAccess) &&
               'roles' in template &&
               Object.keys(template.roles).length > 0 &&
               'administrator' in template.roles
