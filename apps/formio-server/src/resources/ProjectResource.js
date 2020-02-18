@@ -24,6 +24,12 @@ module.exports = (router, formioServer) => {
       util.decryptProperty(item, 'settings_encrypted', 'settings', formio.config.mongoSecret)
     );
     res.resource.item = multi ? list : list[0];
+
+    // Migrate "public" settings into an accessible "virtual" property.
+    res.resource.item.public = {
+      formModule: _.get(res.resource.item, 'settings.formModule', ''),
+      custom: _.get(res.resource.item, 'settings.custom', {})
+    };
   };
 
   const projectSettings = (req, res, next) => {

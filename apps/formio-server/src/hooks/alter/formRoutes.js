@@ -4,6 +4,7 @@ const _ = require('lodash');
 const util = require('../../util/util');
 
 module.exports = app => routes => {
+  const loadFormAlter = require('../../hooks/alter/loadForm')(app).alter;
   const incrementVersion = function(item) {
     item.set('_vid', item.get('_vid') + 1);
   };
@@ -172,19 +173,11 @@ module.exports = app => routes => {
 
   routes.after.push((req, res, next) => {
     if (['GET', 'INDEX'].includes(req.method)) {
-      if (
-        req.currentProject.settings &&
-        req.currentProject.settings.addConfigToForms
-      ) {
-        const config = req.currentProject.config || {};
-        if (res.resource.item) {
-          res.resource.item.config = config;
-        }
-        if (res.resource.items) {
-          _.map(res.resource.items, item => {
-            item.config = config;
-          });
-        }
+      if (res.resource.item) {
+        loadFormAlter(req.currentProject, res.resource.item);
+      }
+      if (res.resource.items) {
+        _.map(res.resource.items, item => loadFormAlter(req.currentProject, item));
       }
     }
     next();

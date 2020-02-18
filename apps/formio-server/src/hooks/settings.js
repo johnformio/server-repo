@@ -67,6 +67,8 @@ module.exports = function(app) {
       validateSubmissionForm: require('./alter/validateSubmissionForm')(app),
       currentUser: require('./alter/currentUser')(app),
       accessInfo: require('./alter/accessInfo')(app),
+      loadForm: require('./alter/loadForm')(app).hook,
+      evalContext: require('./alter/evalContext')(app),
       actions: require('./alter/actions')(app),
       actionContext: require('./alter/actionContext')(app),
       fieldActions: require('./alter/fieldActions')(app),

@@ -7,6 +7,64 @@ var async = require('async');
 var chance = new (require('chance'))();
 var util = require('../../src/util/util');
 module.exports = function(app, template, hook) {
+  let Helper = require('formio/test/helper')(app);
+  describe('Project Form Modules', () => {
+    var helper = null;
+    it('Should create a new project with a module associated with it.', (done) => {
+      helper = new Helper(template.formio.owner);
+      helper
+        .project({
+          formModule: '{' +
+            'options: {' +
+              'form: {' +
+                'evalContext: {' +
+                  'validateBob: function(input) {' +
+                    'return input.match(/^Bob$/);' +
+                  '}' +
+                '}' +
+              '}' +
+            '}' +
+          '}'
+        })
+        .form('test', [
+          {
+            label: "Text Field",
+            tableView: true,
+            validate: {
+              custom: "valid = validateBob(input) ? true : 'This is not Bob';"
+            },
+            key: "textField",
+            type: "textfield",
+            input: true
+          }
+        ]
+      ).execute(done);
+    });
+
+    it('Should not allow a non-Bob', (done) => {
+      helper.submission('test', {textField: 'Joe'}).expect(400).execute(() => {
+        assert.equal(helper.lastResponse.statusCode, 400);
+        assert.equal(helper.lastResponse.body.name, 'ValidationError');
+        assert.equal(helper.lastResponse.body.details.length, 1);
+        assert.equal(helper.lastResponse.body.details[0].message, '"textField" This is not Bob');
+        assert.deepEqual(helper.lastResponse.body.details[0].path, ['textField']);
+        done();
+      });
+    });
+
+    it('Should allow a Bob', (done) => {
+      helper.submission('test', {textField: 'Bob'}).execute((err, response) => {
+        if (err) {
+          return done(err);
+        }
+
+        const submission = response.getLastSubmission();
+        assert.deepEqual({textField: 'Bob'}, submission.data);
+        done();
+      });
+    });
+  });
+
   describe('Malformed JSON', function() {
     it('should return a 400 error', function(done) {
       request(app)
