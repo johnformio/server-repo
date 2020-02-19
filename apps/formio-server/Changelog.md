@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## 6.9.0-beta.5
+### Changed
+ - Upgrade portal to 7.0.0-rc.60
+ - Upgrade formio.js@4.9.0-beta.8
+
 ### Fixed
  - Ensure all renderer evaluations occur within a vm.
  - Removed the Login and Register with Github buttons on base installations.
