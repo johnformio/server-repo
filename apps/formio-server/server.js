@@ -20,9 +20,7 @@ const debug = {
 };
 
 // Ensure all evaluations run with the evaluator
-const FormioJS = require('formiojs/utils').default;
-const CoreFormioJS = require('formio/node_modules/formiojs/utils').default;
-FormioJS.Evaluator.evaluator = CoreFormioJS.Evaluator.evaluator = function(func, args) {
+const evaluator = function(func, args) {
   return function() {
     const params = _.keys(args);
     const sandbox = vm.createContext({
@@ -41,6 +39,16 @@ FormioJS.Evaluator.evaluator = CoreFormioJS.Evaluator.evaluator = function(func,
     return sandbox.result;
   };
 };
+
+if (fs.existsSync('./node_modules/formiojs/utils')) {
+  const FormioJS = require('formiojs/utils').default;
+  FormioJS.Evaluator.evaluator = evaluator;
+}
+
+if (fs.existsSync('./node_modules/formio/node_modules/formiojs/utils')) {
+  const CoreFormioJS = require('formio/node_modules/formiojs/utils').default;
+  CoreFormioJS.Evaluator.evaluator = evaluator;
+}
 
 module.exports = function(options) {
   options = options || {};

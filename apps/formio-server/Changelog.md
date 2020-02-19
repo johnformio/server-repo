@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
  - Upgrade portal to 7.0.0-rc.60
  - Upgrade formio.js@4.9.0-beta.8
+ - Upgrade formio@1.67.0
 
 ### Fixed
  - Ensure all renderer evaluations occur within a vm.
