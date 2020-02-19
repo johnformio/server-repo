@@ -40,14 +40,20 @@ const evaluator = function(func, args) {
   };
 };
 
-if (fs.existsSync('./node_modules/formiojs/utils')) {
+try {
   const FormioJS = require('formiojs/utils').default;
   FormioJS.Evaluator.evaluator = evaluator;
 }
+catch (err) {
+  // Do nothing.
+}
 
-if (fs.existsSync('./node_modules/formio/node_modules/formiojs/utils')) {
+try {
   const CoreFormioJS = require('formio/node_modules/formiojs/utils').default;
   CoreFormioJS.Evaluator.evaluator = evaluator;
+}
+catch (err) {
+  // Do nothing.
 }
 
 module.exports = function(options) {
