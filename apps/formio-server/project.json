@@ -1010,11 +1010,15 @@
         },
         {
           "type": "read_own",
-          "roles": []
+          "roles": [
+            "authenticated"
+          ]
         },
         {
           "type": "update_own",
-          "roles": []
+          "roles": [
+            "authenticated"
+          ]
         },
         {
           "type": "delete_own",

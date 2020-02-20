@@ -117,11 +117,11 @@ module.exports = function(db, config, tools, done) {
               },
               {
                 type: 'read_own',
-                roles: []
+                roles: authRole ? [authRole._id.toString()] : []
               },
               {
                 type: 'update_own',
-                roles: []
+                roles: authRole ? [authRole._id.toString()] : []
               },
               {
                 type: 'delete_own',
