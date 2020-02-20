@@ -10,6 +10,9 @@ module.exports = {
     )
       .exec()
       .then((submission) => {
+        if (!submission) {
+          return;
+        }
         submission.externalIds = submission.externalIds || [];
 
         // Either update the existing ID or create a new one.

@@ -42,6 +42,7 @@ const evaluator = function(func, args) {
 
 try {
   const FormioJS = require('formiojs/utils').default;
+  FormioJS.Evaluator.noeval = true;
   FormioJS.Evaluator.evaluator = evaluator;
 }
 catch (err) {
@@ -50,6 +51,7 @@ catch (err) {
 
 try {
   const CoreFormioJS = require('formio/node_modules/formiojs/utils').default;
+  CoreFormioJS.Evaluator.noeval = true;
   CoreFormioJS.Evaluator.evaluator = evaluator;
 }
 catch (err) {
