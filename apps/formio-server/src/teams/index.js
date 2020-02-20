@@ -937,11 +937,14 @@ module.exports = function(app, formioServer) {
         return res.sendStatus(400);
       }
 
-      _.remove(_.get(req.user, 'metadata.teams', []), resource._id.toString());
+      const userTeams = _.get(req.user, 'metadata.teams', []);
+      if (userTeams.length) {
+        _.remove(userTeams, (teamId) => (teamId.toString() === req.params.teamId.toString()));
+      }
       formioServer.formio.resources.submission.model.updateOne({
         _id: formioServer.formio.util.idToBson(req.user._id)
       }, {
-        $set: {'metadata.teams': _.get(req.user, 'metadata.teams', [])}
+        $set: {'metadata.teams': userTeams}
       }, (err) => {
         if (err) {
           debug.leaveTeams(err);
@@ -949,15 +952,10 @@ module.exports = function(app, formioServer) {
         }
 
         // Search for the given team, and check if the current user is a member, but not the owner.
-        const query = {
-          form: resource._id,
-          'data.members': {
-            $elemMatch: {_id: {$in: [formioServer.formio.util.idToBson(req.token.user._id), formioServer.formio.util.idToString(req.token.user._id)]}}
-          },
+        formioServer.formio.resources.submission.model.findOne({
+          _id: formioServer.formio.util.idToBson(req.params.teamId),
           deleted: {$eq: null}
-        };
-
-        formioServer.formio.resources.submission.model.findOne(query).exec((err, document) => {
+        }).exec((err, document) => {
           if (err || !document) {
             debug.leaveTeams(err);
             return res.sendStatus(400);
