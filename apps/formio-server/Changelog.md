@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.0-rc.1
+### Fixed
+ - Issues with leaving teams.
+ 
+### Changed
+ - Upgrade twilio@3.39.5, aws-sdk@2.623.0
+ - Upgrade portal to 7.0.0-rc.61
+ - Upgrade formiojs@4.9.0-rc.1
+
 ## 6.9.0-beta.7
 ### Fixed
  - Potential server crash issue.
