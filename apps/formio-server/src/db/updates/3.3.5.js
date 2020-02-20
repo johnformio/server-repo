@@ -19,7 +19,7 @@ module.exports = function(db, config, tools, done) {
   }, function(err, project) {
     if (err) {
       console.log(err.message);
-      return;
+      return done(err);
     }
 
     const roles = db.collection('roles');
@@ -28,7 +28,7 @@ module.exports = function(db, config, tools, done) {
     }).toArray((err, roles) => {
       if (err) {
         console.log(err.message);
-        return;
+        return done(err);
       }
 
       let authRole = null;
@@ -49,7 +49,7 @@ module.exports = function(db, config, tools, done) {
       }, function(err, userResource) {
         if (err) {
           console.log(err.message);
-          return;
+          return done(err);
         }
 
         console.log('Updating user resource.');
@@ -95,7 +95,7 @@ module.exports = function(db, config, tools, done) {
         ]}}, function(err) {
           if (err) {
             console.log(err.message);
-            return;
+            return done(err);
           }
 
           forms.findOne({
@@ -104,7 +104,7 @@ module.exports = function(db, config, tools, done) {
           }, function(err, teamResource) {
             if (err) {
               console.log(err.message);
-              return;
+              return done(err);
             }
 
             console.log('Updating team resource.');
@@ -150,7 +150,7 @@ module.exports = function(db, config, tools, done) {
             ]}}, function(err) {
               if (err) {
                 console.log(err.message);
-                return;
+                return done(err);
               }
 
               done();
