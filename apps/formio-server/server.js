@@ -19,45 +19,6 @@ const debug = {
   startup: require('debug')('formio:startup')
 };
 
-// Ensure all evaluations run with the evaluator
-const evaluator = function(func, args) {
-  return function() {
-    const params = _.keys(args);
-    const sandbox = vm.createContext({
-      result: null,
-      args
-    });
-    /* eslint-disable no-empty */
-    try {
-      const script = new vm.Script(`result = (function({${params.join(',')}}) {${func}})(args);`);
-      script.runInContext(sandbox, {
-        timeout: 250
-      });
-    }
-    catch (err) {}
-    /* eslint-enable no-empty */
-    return sandbox.result;
-  };
-};
-
-try {
-  const FormioJS = require('formiojs/utils').default;
-  FormioJS.Evaluator.noeval = true;
-  FormioJS.Evaluator.evaluator = evaluator;
-}
-catch (err) {
-  // Do nothing.
-}
-
-try {
-  const CoreFormioJS = require('formio/node_modules/formiojs/utils').default;
-  CoreFormioJS.Evaluator.noeval = true;
-  CoreFormioJS.Evaluator.evaluator = evaluator;
-}
-catch (err) {
-  // Do nothing.
-}
-
 module.exports = function(options) {
   options = options || {};
   var q = Q.defer();
