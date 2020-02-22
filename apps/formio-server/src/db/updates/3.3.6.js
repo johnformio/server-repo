@@ -24,6 +24,10 @@ module.exports = function(db, config, tools, done) {
       return;
     }
 
+    if (!project) {
+      return;
+    }
+
     // Get the team resource.
     const forms = db.collection('forms');
     forms.findOne({
@@ -32,6 +36,10 @@ module.exports = function(db, config, tools, done) {
     }, function(err, teamResource) {
       if (err) {
         console.log(err.message);
+        return;
+      }
+
+      if (!teamResource) {
         return;
       }
 
@@ -45,7 +53,7 @@ module.exports = function(db, config, tools, done) {
         }, function (err, member) {
           if (err) {
             console.log(err.message);
-            return;
+            return next();
           }
 
           if (!member) {
