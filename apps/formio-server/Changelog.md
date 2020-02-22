@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.0
+### Fixed
+ - Update hook to work with deployments where there isn't a primary project.
+
 ## 6.9.0-rc.2
 ### Fixed
  - Permissions issues with team resources.
