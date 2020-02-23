@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.2
+### Added
+ - Ability to use tokens in the evaluation context.
+
+## 6.9.1
+### Fixed
+ - Update hooks to work when no primary project is found.
+
 ## 6.9.0
 ### Fixed
  - Update hook to work with deployments where there isn't a primary project.
