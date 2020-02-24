@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.3
+### Changed
+ - Upgrade portal to fix form manager loading issues.
+
 ## 6.9.2
 ### Added
  - Ability to use tokens in the evaluation context.
