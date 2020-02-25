@@ -384,6 +384,7 @@ describe('Initial Tests', function() {
         require('formio/test/actions')(app, template, hook);
         require('formio/test/submission')(app, template, hook);
         require('formio/test/submission-access')(app, template, hook);
+        require('./tests/validate')(app, template, hook);
         require('./tests/analytics')(app, template, hook);
         require('./tests/teams')(app, template, hook);
         require('./tests/env')(app, template, hook);
