@@ -35,8 +35,8 @@ module.exports = (formioServer) => {
           }
 
           // Make sure to only allow valid role ids.
-          const validRoles = (roles && roles.length) ? roles.map((role) => role._id.toString()) : [];
-          const roleMap = _.filter(settings.roles.map((role) => {
+          const validRoles = (roles && roles.length) ? _.map(roles, (role) => role._id.toString()) : [];
+          const roleMap = _.filter(_.map(settings.roles, (role) => {
             if (validRoles.indexOf(role.id) !== -1) {
               return role;
             }
@@ -111,7 +111,7 @@ module.exports = (formioServer) => {
     }
 
     // Trim all whitespace from the roles.
-    userRoles = userRoles.map(_.trim);
+    userRoles = _.map(userRoles, _.trim);
 
     // Add an "Everyone" role.
     userRoles.push('Everyone');
@@ -123,7 +123,7 @@ module.exports = (formioServer) => {
 
     const roles = [];
     const roleNames = [];
-    roleMap.map(map => {
+    _.map(roleMap, map => {
       const roleName = _.trim(map.role);
       if (_.includes(userRoles, roleName)) {
         roles.push(map.id);
@@ -151,24 +151,24 @@ module.exports = (formioServer) => {
     // If this is the primary project and they user using PORTAL_SSO, then we need to have a way to map the roles
     // within the saml profile to Teams within the Form.io system. To do this, we will assign a "teams" property on
     // the user object that will be read by the teams feature to determine which teams are allocated to this user.
-    if (project.primary && config.portalSSO) {
+    if (project.primary && config.ssoTeams) {
       // Load the teams by name.
-      formio.teams.getSSOTeams(userRoles).then(function(teams) {
+      formio.teams.getSSOTeams(userRoles).then((teams) => {
         teams = teams || [];
         user.teams = _.map(_.map(teams, '_id'), formio.util.idToString);
         debug(`Teams: ${JSON.stringify(user.teams)}`);
         return next(null, {
-          user: user,
+          user,
           decoded: token,
-          token: formio.auth.getToken(token)
+          token: formio.auth.getToken(token),
         });
       });
     }
     else {
       return next(null, {
-        user: user,
+        user,
         decoded: token,
-        token: formio.auth.getToken(token)
+        token: formio.auth.getToken(token),
       });
     }
   };

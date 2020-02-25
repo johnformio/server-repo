@@ -37,7 +37,7 @@ async function getUrl(options = {}) {
 
 /* eslint-disable camelcase */
 const middleware = router => {
-  const restrictOwnerAccess = require('../middleware/restrictOwnerAccess')(router.formio.formio);
+  const restrictProjectAccess = require('../middleware/restrictProjectAccess')(router.formio.formio);
 
   // Return necessary settings for making the oauth request to dropbox.
   router.get('/project/:projectId/dropbox/auth',
@@ -51,7 +51,7 @@ const middleware = router => {
       }
       next();
     },
-    restrictOwnerAccess,
+    restrictProjectAccess({level: 'admin'}),
     function(req, res) {
       if (!process.env.DROPBOX_CLIENTID) {
         return res.status(400).send('Dropbox Auth not configured');
@@ -76,7 +76,7 @@ const middleware = router => {
       }
       next();
     },
-    restrictOwnerAccess,
+    restrictProjectAccess({level: 'admin'}),
     function(req, res) {
       if (req.body.code) {
         // Send code to dropbox for token.

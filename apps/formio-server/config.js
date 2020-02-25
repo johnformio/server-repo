@@ -1,15 +1,43 @@
 'use strict';
 
+var fs = require('fs');
+var path = require('path');
 var _ = require('lodash');
 var debug = {
   config: require('debug')('formio:config')
 };
-const {secrets} = require('docker-secret');
+
+const secrets = {};
+if (process.env.DOCKER_SECRETS || process.env.DOCKER_SECRET) {
+  try {
+    debug.config('Loading Docker Secrets');
+    const secretDir = process.env.DOCKER_SECRETS_PATH || '/run/secrets';
+    if (fs.existsSync(secretDir)) {
+      const files = fs.readdirSync(secretDir);
+      if (files && files.length) {
+        files.forEach(file => {
+          const fullPath = path.join(secretDir, file);
+          const key = file;
+          const data = fs
+            .readFileSync(fullPath, "utf8")
+            .toString()
+            .trim();
+
+          secrets[key] = data;
+        });
+        debug.config('Docker Secrets Loaded');
+      }
+    }
+  }
+  catch (err) {
+    debug.config('Cannot load Docker Secrets', err);
+  }
+}
 
 // Find the config in either an environment variable or docker secret.
 const getConfig = (key, defaultValue) => {
-  // If secrets are enabled and it is set.
-  if (process.env.DOCKER_SECRET && secrets.hasOwnProperty(key)) {
+  // If there is a secret configuration for this key, return its value here.
+  if (secrets.hasOwnProperty(key)) {
     return secrets[key];
   }
   // If an environment variable is set.
@@ -23,7 +51,6 @@ var config = {formio: {}};
 var protocol = getConfig('PROTOCOL', 'https');
 var project = getConfig('PROJECT', 'formio');
 var plan = getConfig('PROJECT_PLAN', 'commercial');
-var fs = require('fs');
 const jwt = require('jsonwebtoken');
 
 try {
@@ -142,16 +169,18 @@ config.license = config.formio.license = getConfig('LICENSE');
 config.licenseData = jwt.decode(config.license);
 config.hostedPDFServer = getConfig('PDF_SERVER', '');
 config.portalSSO = getConfig('PORTAL_SSO', '');
+config.ssoTeams = Boolean(getConfig('SSO_TEAMS', false) || config.portalSSO);
 config.portalSSOLogout = getConfig('PORTAL_SSO_LOGOUT', '');
 
 // Payeezy fields
 config.payeezy = {
   keyId: getConfig('PAYEEZY_KEY_ID'),
-  host: getConfig('PAYEEZY_HOST', 'api.globalgatewaye4.firstdata.com'),
-  endpoint: getConfig('PAYEEZY_ENDPOINT', '/transaction/v19'),
+  host: getConfig('PAYEEZY_HOST', 'api.payeezy.com'),
+  endpoint: getConfig('PAYEEZY_ENDPOINT', '/v1/transactions'),
   gatewayId: getConfig('PAYEEZY_GATEWAY_ID'),
   gatewayPassword: getConfig('PAYEEZY_GATEWAY_PASSWORD'),
   hmacKey: getConfig('PAYEEZY_HMAC_KEY'),
+  merchToken: getConfig('PAYEEZY_TOKEN'),
 };
 
 // Using docker, support legacy linking and network links.
@@ -173,14 +202,28 @@ else {
 }
 
 if (getConfig('REDIS_SERVICE')) {
-  config.redis = {
-    service: getConfig('REDIS_SERVICE')
-  };
+  if (getConfig('REDIS_SERVICE').toLowerCase() === 'local') {
+    if (config.docker) {
+      config.redis = {
+        url: 'redis://redis'
+      };
+    }
+    else {
+      config.redis = {
+        url: 'redis://localhost:6379'
+      };
+    }
+  }
+  else {
+    config.redis = {
+      service: getConfig('REDIS_SERVICE')
+    };
+  }
 }
 else if (getConfig('REDIS_ADDR', getConfig('REDIS_PORT_6379_TCP_ADDR'))) {
   // This is compatible with docker legacy linking.
-  var addr = getConfig('REDIS_ADDR', getConfig('REDIS_PORT_6379_TCP_ADDR'));
-  var redisPort = getConfig('REDIS_PORT', getConfig('REDIS_PORT_6379_TCP_PORT'));
+  var addr = getConfig('REDIS_ADDR', getConfig('REDIS_PORT_6379_TCP_ADDR', 'localhost'));
+  var redisPort = getConfig('REDIS_PORT', getConfig('REDIS_PORT_6379_TCP_PORT', 6379));
   config.redis = {
     port: redisPort,
     host: addr,
@@ -188,19 +231,9 @@ else if (getConfig('REDIS_ADDR', getConfig('REDIS_PORT_6379_TCP_ADDR'))) {
   };
 }
 else {
-  if (config.docker) {
-    // New docker network linking. Assumes linked with 'redis' alias.
-    config.redis = {
-      url: 'redis://redis'
-    };
-  }
-  else {
-    config.redis = {
-      url: 'redis://localhost:6379'
-    };
-  }
-
-  debug.config(`Using default Redis connection string (${config.redis.url}) - to disable Redis, please set REDIS_SERVICE=false`);
+  config.redis = {
+    service: 'false'
+  };
 }
 
 if (getConfig('REDIS_USE_SSL')) {

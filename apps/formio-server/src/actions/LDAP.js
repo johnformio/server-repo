@@ -268,7 +268,7 @@ module.exports = router => {
 
             // Assign roles based on settings.
             const roles = [];
-            this.settings.roles.map(map => {
+            _.map(this.settings.roles, map => {
               if (!map.property ||
                 _.get(data, map.property) === map.value ||
                 _.includes(_.get(data, map.property), map.value)

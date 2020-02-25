@@ -61,7 +61,7 @@ module.exports = (router) => {
               theme: 'info',
               title: 'Google Sheet Fields',
               input: false,
-              components: (new CSVExporter(form, req, res)).fields.map((field) => ({
+              components: _.map((new CSVExporter(form, req, res)).fields, (field) => ({
                 type: 'textfield',
                 input: true,
                 label: field.title ? `${field.title} Column (${field.label})` : `${field.label} Column`,

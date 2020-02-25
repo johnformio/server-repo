@@ -98,7 +98,7 @@ module.exports = function(router) {
       var client = new Twilio(accountSid, authToken);
       client.incomingPhoneNumbers.list()
         .then(function(phoneNumbers) {
-          form[0].data.values = phoneNumbers.map(function(phoneNumber) {
+          form[0].data.values = _.map(phoneNumbers, function(phoneNumber) {
             return {
               value: phoneNumber.phoneNumber,
               label: phoneNumber.friendlyName

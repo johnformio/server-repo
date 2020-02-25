@@ -32,7 +32,7 @@ module.exports = function(db, config, tools, done) {
       else {
 
         // Update the action.
-        actionCollection.update({_id: action._id}, {'$set': {machineName: uniqueName}}, function(err) {
+        actionCollection.updateOne({_id: action._id}, {'$set': {machineName: uniqueName}}, function(err) {
           done(err);
         });
       }
@@ -60,7 +60,7 @@ module.exports = function(db, config, tools, done) {
 
         if (!form || !form.project) {
           // This is an orphaned action... clean it up.
-          actionCollection.remove({_id: action._id});
+          actionCollection.deleteOne({_id: action._id});
         }
 
         // Load the project

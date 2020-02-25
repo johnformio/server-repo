@@ -2,7 +2,6 @@
 
 const rest = require('restler');
 const _ = require('lodash');
-const FormioUtils = require('formiojs/utils').default;
 const vm = require('vm');
 
 const util = require('./util');
@@ -420,7 +419,7 @@ module.exports = (router) => {
             data: res.resource.item.data,
             externalId
           };
-          url = FormioUtils.interpolate(url, params);
+          url = router.formio.util.FormioUtils.interpolate(url, params);
         }
         // Fall back if interpolation failed
         if (!url) {

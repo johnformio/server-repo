@@ -214,7 +214,7 @@ module.exports = function(router) {
 
             if (user) {
               // Save off the vid to the user's account.
-              router.formio.resources.submission.model.update({
+              router.formio.resources.submission.model.updateOne({
                 _id: user._id
               }, {
                 $push: {

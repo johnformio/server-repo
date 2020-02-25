@@ -3225,48 +3225,61 @@ module.exports = function(app, template, hook) {
       if (!docker)
       it('Saving a payment method', function(done) {
         app.formio.config.payeezy = {
-          keyId: '123456',
-          host: 'api.demo.globalgatewaye4.firstdata.com',
-          endpoint: '/transaction/v19',
+          keyId: 'lFGgmH7ibDkNdCV6LiSbFdmSFXtIVncD', // Test Key
+          host: 'api-cert.payeezy.com',
+          endpoint: '/v1/transactions',
           gatewayId: 'AJ1234-01',
           gatewayPassword: '12345678901234567890123456789012',
-          hmacKey: '12345678901234567890123456789012'
+          hmacKey: '0efeeaf6f21fdd71e5076dea683b3a11614972d7d8e798d42624b8f999597355', // Test Secret
+          merchToken: 'fdoa-9b1a70e39b4f6b4fb0cef1c25de68010625408dc0b1025ae' // Test Token
         };
 
         var paymentData = {
-          ccNumber: '4111111111111111',
+          ccNumber: '4012000033330026',
+          ccType: 'visa',
           ccExpiryMonth: '12',
-          ccExpiryYear: '50',
-          cardholderName: 'Elon Musk',
+          ccExpiryYear: '30',
+          cardholderName: 'FORMIO Test Account',
           securityCode: '123'
         };
 
-        sinon.stub(util, 'request')
+        sinon.stub()
         .withArgs(sinon.match({
           method: 'POST',
-          url: 'https://api.demo.globalgatewaye4.firstdata.com/transaction/v19',
+          url: 'https://api-cert.payeezy.com/v1/transactions',
           body: sinon.match({
-            transaction_type: '01', // Pre-Authorization
+            transaction_type: 'authorize', // Pre-Authorization
+            currency_code: 'USD',
+            method: 'credit_card',
             amount: 0,
-            cardholder_name: paymentData.cardholderName,
-            cc_number: '' + paymentData.ccNumber,
-            cc_expiry: paymentData.ccExpiryMonth + paymentData.ccExpiryYear,
-            cc_verification_str2: paymentData.securityCode,
-            customer_ref: new Buffer(template.formio.owner._id.toString(), 'hex').toString('base64'),
+            credit_card: {
+              type: paymentData.type,
+              cardholder_name: paymentData.cardholderName,
+              card_number: '' + paymentData.ccNumber,
+              exp_date: paymentData.ccExpiryMonth + paymentData.ccExpiryYear,
+              cvv: paymentData.securityCode,
+            },
+            customer_ref: new Buffer.from(template.formio.owner._id.toString(), 'hex').toString('base64'),
             reference_3: template.formio.owner._id.toString(),
             user_name: template.formio.owner._id.toString(),
-            client_email: template.formio.owner.data.email,
-            currency_code: 'USD'
+            client_email: template.formio.owner.data.email
           })
         }))
         .returns(Q([{},
           {
-            transaction_approved: 1,
-            cardholder_name: paymentData.cardholderName,
-            transarmor_token: '1234567899991111',
-            cc_expiry: '1250',
-            credit_card_type: 'visa',
-            transaction_tag: '123456'
+            transaction_status: 'approved',
+            transaction_type: 'authorize',
+            method: 'credit_card',
+            amount: 0,
+            credit_card: {
+              type: 'visa',
+              cardholder_name: paymentData.cardholderName,
+              exp_date: '1250'
+            },
+            token: {
+              token_type: 'FDToken',
+              token_data: { value: '1234567899991111' }
+              }
           }
         ]));
 
@@ -3276,7 +3289,7 @@ module.exports = function(app, template, hook) {
           .send({
             data: paymentData
           })
-          .expect('Content-Type', /text\/plain/)
+          .expect('Content-Type', /text\/plain; charset=utf-8/)
           .expect(200)
           .end(function(err, res) {
             if (err) {
@@ -3287,15 +3300,15 @@ module.exports = function(app, template, hook) {
               return app.formio.formio.resources.submission.model.findOne({form: form._id, owner: util.ObjectId(template.formio.owner._id)});
             })
             .then(function(submission) {
-              assert.equal(submission.data.ccNumber, '************1111', 'Only the last 4 digits of the cc number should be stored.');
+              assert.equal(submission.data.ccNumber, '************0026', 'Only the last 4 digits of the cc number should be stored.');
               assert.equal(submission.data.ccExpiryMonth, '12', 'The expiration month should be stored.');
-              assert.equal(submission.data.ccExpiryYear, '50', 'The expiration year should be stored.');
-              assert.equal(submission.data.cardholderName, 'Elon Musk', 'The cardholder name should be stored.');
-              assert(submission.data.transarmorToken.substr(-4) === '1111', 'The transarmor token should have the same last 4 digits as CC number.');
+              assert.equal(submission.data.ccExpiryYear, '30', 'The expiration year should be stored.');
+              assert.equal(submission.data.cardholderName, 'FORMIO Test Account', 'The cardholder name should be stored.');
+              assert(submission.data.token.token_data.value.substr(-4) === '0026', 'The transarmor token should have the same last 4 digits as CC number.');
               assert(submission.data.hasOwnProperty('transactionTag'), 'The submission should store the transactionTag');
               assert.equal(submission.data.securityCode, undefined, 'The security card should not be stored.');
 
-              util.request.restore();
+              sinon.restore();
               done();
             })
             .catch(function(err) {
@@ -3303,7 +3316,7 @@ module.exports = function(app, template, hook) {
             });
           });
       });
-
+/*
       if (!docker)
       it('Upgrading to independent with a registered payment method should work', function(done) {
         request(app)
@@ -3510,6 +3523,7 @@ module.exports = function(app, template, hook) {
             });
           });
       });
+      */
     });
   });
 

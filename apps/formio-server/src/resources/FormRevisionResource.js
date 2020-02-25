@@ -38,6 +38,10 @@ module.exports = function(router, formioServer) {
           if (req.params['vId']) {
             delete search['_id'];
             search['_vid'] = !isNaN(req.params['vId']) ? parseInt(req.params['vId']) : req.params['vId'];
+            if (req.params['vId'] === 'latest') {
+              delete search['_vid'];
+              req.modelQuery.sort('-_vid').limit(1);
+            }
           }
           next();
         }

@@ -8,7 +8,7 @@ module.exports = function(formio) {
     if ('toObject' in access.roles) {
       access.roles = access.roles.toObject();
     }
-    access.roles = access.roles.map(id => id.toString());
+    access.roles = _.map(access.roles, id => id.toString());
 
     const found = false;
     project.access.forEach(projectAccess => {

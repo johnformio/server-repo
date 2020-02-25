@@ -44,7 +44,7 @@ module.exports = (app) => (middleware) => {
         }
 
         // Get a list of valid roles for this project.
-        const validRoles = (roles && roles.length) ? roles.map((role) => role._id.toString()) : [];
+        const validRoles = (roles && roles.length) ? _.map(roles, (role) => role._id.toString()) : [];
         currentProject = currentProject.toObject();
 
         // Only continue if oauth settings are set.
@@ -69,7 +69,7 @@ module.exports = (app) => (middleware) => {
 
             // Assign roles based on settings.
             const roles = [];
-            oauthSettings.roles.map(map => {
+            _.map(oauthSettings.roles, map => {
               if (
                 // Make sure this is a valid role to assign the user.
                 (validRoles.indexOf(map.role) !== -1) &&

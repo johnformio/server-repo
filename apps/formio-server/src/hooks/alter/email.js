@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 const util = require('../../util/util');
 const async = require('async');
 const config = require('../../../config');
-const FormioUtils = require('formiojs/utils').default;
 const _ = require('lodash');
 
 module.exports = app => (mail, req, res, params, cb) => {
@@ -103,7 +102,7 @@ module.exports = app => (mail, req, res, params, cb) => {
           .replace(/----ob----/g, '{{')
           .replace(/----cb----/g, '}}');
         try {
-          fileName = FormioUtils.interpolate(fileName, {
+          fileName = formioServer.formio.util.FormioUtils.interpolate(fileName, {
             submission: res.resource.item,
             form: req.currentForm
           }).replace('.', '');

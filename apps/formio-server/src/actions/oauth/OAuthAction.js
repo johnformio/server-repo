@@ -592,7 +592,7 @@ module.exports = router => {
               });
             })
             .then(function(user) {
-              return formio.resources.submission.model.update({
+              return formio.resources.submission.model.updateOne({
                 _id: user._id
               }, {
                 $push: {
@@ -629,7 +629,7 @@ module.exports = router => {
 
                     // Assign roles based on settings.
                     const roles = [];
-                    this.settings.roles.map(map => {
+                    _.map(this.settings.roles, map => {
                       if (!map.claim ||
                         _.get(data, map.claim) === map.value ||
                         _.includes(_.get(data, map.claim), map.value)

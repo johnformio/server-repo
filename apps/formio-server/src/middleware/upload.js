@@ -1,9 +1,21 @@
 'use strict';
 const request = require('request');
+const {promisify} = require('util');
 const FORMIO_FILES_SERVER = process.env.FORMIO_FILES_SERVER || 'https://files.form.io';
 const _ = require('lodash');
 const Promise = require('bluebird');
 const fs = require('fs');
+
+const unlinkAsync = promisify(fs.unlink);
+
+const tryUnlinkAsync = async filepath => {
+  try {
+    return await unlinkAsync(filepath);
+  }
+  catch (err) {
+    return err;
+  }
+};
 
 module.exports = (formioServer) => async (req, res, next) => {
   const formio = formioServer.formio;
@@ -58,8 +70,8 @@ module.exports = (formioServer) => async (req, res, next) => {
             }
           }
         }
-      }, (err, response) => {
-        fs.unlink(req.files.file.path);
+      }, async (err, response) => {
+        await tryUnlinkAsync(req.files.file.path);
         if (err) {
           return res.status(400).send(err.message);
         }
@@ -70,12 +82,12 @@ module.exports = (formioServer) => async (req, res, next) => {
       });
     }
     catch (err) {
-      fs.unlink(req.files.file.path);
+      await tryUnlinkAsync(req.files.file.path);
       res.status(400).send(err.message);
     }
   }
   catch (err) {
-    fs.unlink(req.files.file.path);
+    await tryUnlinkAsync(req.files.file.path);
     return next(err);
   }
 };

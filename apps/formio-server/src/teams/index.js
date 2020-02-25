@@ -193,11 +193,12 @@ module.exports = function(app, formioServer) {
    *   Determines if the query should include teams the given user is a member of.
    * @param owner {Boolean}
    *   Determines if the query should include teams owned buy the given user.
+   * @param accepted {Boolean}
+   *   Only return teams that the user has accepted.
    *
    * @returns {Promise}
    */
-  const getTeams = function(user, member, owner) {
-    const util = formioServer.formio.util;
+  const getTeams = function(user, member, owner, accepted) {
     const q = Q.defer();
 
     getTeamResource(function(resource) {
@@ -223,11 +224,11 @@ module.exports = function(app, formioServer) {
 
       // If the portal is with SSO and the user has teams in their array, perform a one-to-one mapping between
       // the users teams and the titles of the teams they are added to.
-      if (formioServer.config.portalSSO && user.teams) {
+      if (formioServer.config.ssoTeams && user.teams) {
         if (owner) {
           query['$or'] = [
             {'_id': {$in: user.teams}},
-            {owner: {$in: [util.idToBson(user._id), util.idToString(user._id)]}}
+            {owner: {$in: [formioServer.formio.util.idToBson(user._id), formioServer.formio.util.idToString(user._id)]}}
           ];
         }
         else {
@@ -236,24 +237,24 @@ module.exports = function(app, formioServer) {
       }
       else {
         // Force the user ref to be the _id.
-        user = user._id || user;
+        const userId = user._id || user;
 
         // Modify the search query based on the given criteria, search for BSON and string versions of ids.
-        debug.getTeams(`User: ${util.idToString(user)}, Member: ${member}, Owner: ${owner}`);
+        debug.getTeams(`User: ${formioServer.formio.util.idToString(userId)}, Member: ${member}, Owner: ${owner}`);
         if (member && owner) {
           query['$or'] = [
-            {'data.members': {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}}},
-            {'data.admins': {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}}},
-            {owner: {$in: [util.idToBson(user), util.idToString(user)]}}
+            {'data.members': {$elemMatch: {_id: {$in: [formioServer.formio.util.idToBson(userId), formioServer.formio.util.idToString(userId)]}}}},
+            {'data.admins': {$elemMatch: {_id: {$in: [formioServer.formio.util.idToBson(userId), formioServer.formio.util.idToString(userId)]}}}},
+            {owner: {$in: [formioServer.formio.util.idToBson(userId), formioServer.formio.util.idToString(userId)]}}
           ];
         }
         else if (member && !owner) {
-          query['data.members'] = {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}};
+          query['data.members'] = {$elemMatch: {_id: {$in: [formioServer.formio.util.idToBson(userId), formioServer.formio.util.idToString(userId)]}}};
         }
         else if (!member && owner) {
           query['$or'] = [
-            {'owner': {$in: [util.idToBson(user), util.idToString(user)]}},
-            {'data.admins': {$elemMatch: {_id: {$in: [util.idToBson(user), util.idToString(user)]}}}}
+            {'owner': {$in: [formioServer.formio.util.idToBson(userId), formioServer.formio.util.idToString(userId)]}},
+            {'data.admins': {$elemMatch: {_id: {$in: [formioServer.formio.util.idToBson(userId), formioServer.formio.util.idToString(userId)]}}}}
           ];
         }
         else {
@@ -270,17 +271,32 @@ module.exports = function(app, formioServer) {
         }
 
         // Add the user as a member of the team if they have this from SSO.
-        if (formioServer.config.portalSSO && user.teams) {
-          teams.forEach((team) => {
-            if (!team.data) {
-              team.data = {members: [], admins: []};
-            }
-            if (!team.data.members) {
-              team.data.members = [];
-            }
+        if (formioServer.config.ssoTeams) {
+          if (user.teams) {
+            teams.forEach((team) => {
+              if (!team.data) {
+                team.data = {members: [], admins: []};
+              }
+              if (!team.data.members) {
+                team.data.members = [];
+              }
 
-            // Add the current user to the members array.
-            team.data.members.push(user._id.toString());
+              // Add the current user to the members array.
+              team.data.members.push(user._id.toString());
+            });
+          }
+        }
+        // Filter out any non-accepted teams.
+        else if (accepted) {
+          _.remove(teams, (team) => {
+            // Team owners will always be part of the team.
+            if (team.owner.toString() === user._id.toString()) {
+              return false;
+            }
+            return !user ||
+              !user.metadata ||
+              !user.metadata.teams ||
+              (user.metadata.teams.indexOf(team._id.toString()) === -1);
           });
         }
 
@@ -289,6 +305,84 @@ module.exports = function(app, formioServer) {
     });
 
     return q.promise;
+  };
+
+  /**
+   * Returns a specific team.
+   */
+  const getTeam = function(user, teamId, next) {
+    if (!user || !user._id || !teamId) {
+      return next(401);
+    }
+
+    getTeamResource(function(resource) {
+      if (!resource) {
+        return next(400);
+      }
+
+      // Search for the given team
+      formioServer.formio.resources.submission.model.findOne({
+        _id: formioServer.formio.util.idToBson(teamId),
+        form: resource._id,
+        deleted: {$eq: null}
+      }).lean().exec((err, team) => {
+        if (err || !team) {
+          return next(404);
+        }
+
+        if (!team.data) {
+          team.data = {};
+        }
+
+        if (!team.data.members) {
+          team.data.members = [];
+        }
+
+        if (!team.data.admins) {
+          team.data.admins = [];
+        }
+
+        // Return the team.
+        return next(null, team);
+      });
+    });
+  };
+
+  /**
+   * Returns a list of members (user objects) within a team.
+   * @param team
+   */
+  const getMembers = function(team, next) {
+    // Determine if each member accepted or not.
+    formioServer.formio.resources.submission.model.find({
+      _id: {
+        $in: [
+          ..._.map(team.data.members, (member) => formioServer.formio.util.idToBson(member._id)),
+          ..._.map(team.data.admins, (admin) => formioServer.formio.util.idToBson(admin._id))
+        ]
+      },
+      deleted: {$eq: null}
+    }).lean().exec((err, members) => {
+      if (err) {
+        return next(400);
+      }
+
+      // Return a member map of all members.
+      next(null, (members || []).reduce((map, member) => {
+        map[member._id.toString()] = member;
+        return map;
+      }, {}));
+    });
+  };
+
+  const hasAccess = function(user, team, admin) {
+    const userId = formioServer.formio.util.idToString(user._id);
+    // First check if they are a team owner.
+    return (formioServer.formio.util.idToString(team.owner) === userId) ||
+      // Next see if they are an admin.
+      (team.data.admins && team.data.admins.reduce((found, admin) => (found || formioServer.formio.util.idToString(admin._id) === userId), false)) ||
+      // Next see if they are a member if applicable.
+      (!admin && team.data.members && team.data.members.reduce((found, member) => (found || formioServer.formio.util.idToString(member._id) === userId), false));
   };
 
   /**
@@ -355,7 +449,6 @@ module.exports = function(app, formioServer) {
    * @returns {Promise}
    */
   const getDisplayableTeams = function(teams) {
-    const util = formioServer.formio.util;
     const q = Q.defer();
 
     getTeamResource(function(resource) {
@@ -373,7 +466,7 @@ module.exports = function(app, formioServer) {
       if (teams instanceof Array) {
         teams = _.map(teams, function(team) {
           const _id = team._id || team;
-          return util.idToString(_id);
+          return formioServer.formio.util.idToString(_id);
         });
       }
       else {
@@ -383,7 +476,7 @@ module.exports = function(app, formioServer) {
       // Flatten the list of teams, and build the query to include string and BSON ids.
       teams = _.filter(teams);
       teams = _.flattenDeep(_.map(teams, function(team) {
-        return [util.idToString(team), util.idToBson(team)];
+        return [formioServer.formio.util.idToString(team), formioServer.formio.util.idToBson(team)];
       }));
       debug.getDisplayableTeams(teams);
 
@@ -634,7 +727,7 @@ module.exports = function(app, formioServer) {
 
               // Add the user as a member of the team if they have this from SSO.
               if (
-                formioServer.config.portalSSO &&
+                formioServer.config.ssoTeams &&
                 req.user.teams &&
                 req.user.teams.length &&
                 (req.user.teams.indexOf(team._id.toString()) !== -1)
@@ -742,7 +835,7 @@ module.exports = function(app, formioServer) {
       return res.sendStatus(401);
     }
 
-    getTeams(req.user, false, true)
+    getTeams(req.user, false, true, true)
       .then(function(teams) {
         teams = teams || [];
         teams = filterTeamsForDisplay(teams);
@@ -757,11 +850,84 @@ module.exports = function(app, formioServer) {
   });
 
   /**
+   * Get a team.
+   */
+  app.get('/team/:teamId', formioServer.formio.middleware.tokenHandler, (req, res, next) => {
+    if (!req.token || !req.token.user._id || !req.params.teamId) {
+      return res.sendStatus(401);
+    }
+
+    // Get the team.
+    getTeam(req.token.user, req.params.teamId, (errCode, team) => {
+      if (errCode) {
+        return res.sendStatus(errCode);
+      }
+
+      if (!hasAccess(req.token.user, team)) {
+        return res.sendStatus(401);
+      }
+
+      // Get a list of members.
+      getMembers(team, (err, members) => {
+        if (err) {
+          return res.sendStatus(err);
+        }
+
+        // Set the status for this team member.
+        var setStatus = function(teamMember) {
+          const member = members[teamMember._id.toString()];
+          if (
+            member &&
+            member.metadata &&
+            member.metadata.teams &&
+            (member.metadata.teams.indexOf(team._id.toString()) !== -1)
+          ) {
+            teamMember.status = 'accepted';
+          }
+          else {
+            teamMember.status = 'pending';
+          }
+        };
+
+        team.data.members.forEach((teamMember) => setStatus(teamMember));
+        team.data.admins.forEach((teamMember) => setStatus(teamMember));
+        return res.status(200).json(team);
+      });
+    });
+  });
+
+  // Update a team.
+  app.put('/team/:teamId', formioServer.formio.middleware.tokenHandler, function(req, res) {
+    if (!req.token || !req.token.user._id || !req.params.teamId) {
+      return res.sendStatus(401);
+    }
+
+    getTeam(req.token.user, req.params.teamId, (errCode, team) => {
+      if (errCode) {
+        return res.sendStatus(errCode);
+      }
+
+      // Only team admins can update the team.
+      if (!hasAccess(req.token.user, team, true)) {
+        return res.sendStatus(401);
+      }
+
+      formioServer.formio.resources.submission.model.updateOne({
+        _id: team._id
+      }, req.body).exec((err, updated) => {
+        if (err) {
+          return res.status(400).send(err.message);
+        }
+
+        return res.status(200).send(req.body);
+      });
+    });
+  });
+
+  /**
    * Expose the functionality to allow a user leave a team.
    */
-  app.post('/team/:teamId/leave', formioServer.formio.middleware.tokenHandler, function(req, res, next) {
-    const util = formioServer.formio.util;
-
+  app.post('/team/:teamId/leave', formioServer.formio.middleware.tokenHandler, function(req, res) {
     if (!req.token || !req.token.user._id || !req.params.teamId) {
       return res.sendStatus(401);
     }
@@ -771,57 +937,67 @@ module.exports = function(app, formioServer) {
         return res.sendStatus(400);
       }
 
-      // Search for the given team, and check if the current user is a member, but not the owner.
-      const query = {
-        form: resource._id,
-        'data.members': {
-          $elemMatch: {_id: {$in: [util.idToBson(req.token.user._id), util.idToString(req.token.user._id)]}}
-        },
-        deleted: {$eq: null}
-      };
-
-      formioServer.formio.resources.submission.model.findOne(query).exec((err, document) => {
-        if (err || !document) {
+      const userTeams = _.get(req.user, 'metadata.teams', []);
+      if (userTeams.length) {
+        _.remove(userTeams, (teamId) => (teamId.toString() === req.params.teamId.toString()));
+      }
+      formioServer.formio.resources.submission.model.updateOne({
+        _id: formioServer.formio.util.idToBson(req.user._id)
+      }, {
+        $set: {'metadata.teams': userTeams}
+      }, (err) => {
+        if (err) {
           debug.leaveTeams(err);
           return res.sendStatus(400);
         }
 
-        // Omit the given user from the members list.
-        debug.leaveTeams(document);
-        document.data = document.data || {};
-        document.data.members = document.data.members || [];
-
-        // Convert each _id to strings for comparison.
-        document.data.members = _.map(document.data.members, function(element) {
-          if (element._id) {
-            element._id = util.idToString(element._id);
-          }
-
-          return element;
-        });
-
-        // Filter the _ids.
-        document.data.members = _.uniq(_.reject(document.data.members, {_id: util.idToString(req.token.user._id)}));
-
-        // Convert each _id to strings for comparison.
-        document.data.members = _.map(document.data.members, function(element) {
-          if (element._id) {
-            element._id = util.idToBson(element._id);
-          }
-
-          return element;
-        });
-
-        // Save the updated team.
-        document.markModified('data.members');
-        document.save(function(err, update) {
-          if (err) {
+        // Search for the given team, and check if the current user is a member, but not the owner.
+        formioServer.formio.resources.submission.model.findOne({
+          _id: formioServer.formio.util.idToBson(req.params.teamId),
+          deleted: {$eq: null}
+        }).exec((err, document) => {
+          if (err || !document) {
             debug.leaveTeams(err);
             return res.sendStatus(400);
           }
 
-          debug.leaveTeams(update);
-          return res.sendStatus(200);
+          // Omit the given user from the members list.
+          debug.leaveTeams(document);
+          document.data = document.data || {};
+          document.data.members = document.data.members || [];
+
+          // Convert each _id to strings for comparison.
+          document.data.members = _.map(document.data.members, function(element) {
+            if (element._id) {
+              element._id = formioServer.formio.util.idToString(element._id);
+            }
+
+            return element;
+          });
+
+          // Filter the _ids.
+          document.data.members = _.uniq(_.reject(document.data.members, {_id: formioServer.formio.util.idToString(req.token.user._id)}));
+
+          // Convert each _id to strings for comparison.
+          document.data.members = _.map(document.data.members, function(element) {
+            if (element._id) {
+              element._id = formioServer.formio.util.idToBson(element._id);
+            }
+
+            return element;
+          });
+
+          // Save the updated team.
+          document.markModified('data.members');
+          document.save(function(err, update) {
+            if (err) {
+              debug.leaveTeams(err);
+              return res.sendStatus(400);
+            }
+
+            debug.leaveTeams(update);
+            return res.sendStatus(200);
+          });
         });
       });
     });
@@ -829,6 +1005,9 @@ module.exports = function(app, formioServer) {
 
   return {
     getTeams: getTeams,
+    getTeam: getTeam,
+    getMembers: getMembers,
+    hasAccess: hasAccess,
     getSSOTeams: getSSOTeams,
     getTeamResource: getTeamResource,
     getProjectTeams: getProjectTeams,

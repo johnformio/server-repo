@@ -154,7 +154,7 @@ const Utils = {
       // Establish a model using the schema.
       return next(null, formio.mongoose.model(collectionName, formio.schemas.submission, collectionName, init));
     });
-  }
+  },
 };
 
 module.exports = Utils;

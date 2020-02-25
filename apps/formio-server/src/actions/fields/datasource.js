@@ -1,7 +1,6 @@
 'use strict';
 const _ = require('lodash');
 const request = require('request-promise-native');
-const FormioUtils = require('formiojs/utils').default;
 
 module.exports = (app) => {
   const before = function(component, data, path, validation, req, res, next) {
@@ -54,7 +53,7 @@ module.exports = (app) => {
         }
 
         request({
-          uri: FormioUtils.interpolate(_.get(component, 'fetch.url'), {data: req.body.data}),
+          uri: app.formio.formio.util.FormioUtils.interpolate(_.get(component, 'fetch.url'), {data: req.body.data}),
           method: _.get(component, 'fetch.method', 'get').toUpperCase(),
           headers: requestHeaders,
           json: true,

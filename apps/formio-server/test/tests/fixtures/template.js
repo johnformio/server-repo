@@ -7,10 +7,10 @@ module.exports = () => {
   let template = _.cloneDeep(require('formio/test/fixtures/template')());
 
   // Change the login timeouts for testing
-  template.actions['adminLogin:login'].settings.lockWait = 2;
-  template.actions['adminLogin:login'].settings.attemptWindow = 2;
-  template.actions['userLogin:login'].settings.lockWait = 2;
-  template.actions['userLogin:login'].settings.attemptWindow = 2;
+  template.actions['adminLogin:login'].settings.lockWait = 4;
+  template.actions['adminLogin:login'].settings.attemptWindow = 4;
+  template.actions['userLogin:login'].settings.lockWait = 4;
+  template.actions['userLogin:login'].settings.attemptWindow = 4;
 
   //// Add a new role and access to the template.
   //template.roles.client = {

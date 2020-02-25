@@ -67,6 +67,8 @@ module.exports = function(app) {
       validateSubmissionForm: require('./alter/validateSubmissionForm')(app),
       currentUser: require('./alter/currentUser')(app),
       accessInfo: require('./alter/accessInfo')(app),
+      loadForm: require('./alter/loadForm')(app).hook,
+      evalContext: require('./alter/evalContext')(app),
       actions: require('./alter/actions')(app),
       actionContext: require('./alter/actionContext')(app),
       fieldActions: require('./alter/fieldActions')(app),
@@ -540,7 +542,7 @@ module.exports = function(app) {
           if (groups.length) {
             // Verify these are all submissions within this project.
             formioServer.formio.resources.submission.model.find({
-              _id: {$in: groups.map(formioServer.formio.util.idToBson)},
+              _id: {$in: _.map(groups, formioServer.formio.util.idToBson)},
               project: formioServer.formio.util.idToBson(req.projectId),
               deleted: {$eq: null}
             }).lean().select({_id: 1}).exec((err, subs) => {
@@ -920,6 +922,16 @@ module.exports = function(app) {
               return done(err);
             }
 
+            const parts = machineName.split(':');
+            const formName = parts.length === 1 ? parts[0] : parts[1];
+
+            const formExists = (template.forms && template.forms[formName])
+              || (template.resources && template.resources[formName]);
+
+            if (!formExists) {
+              return done(null, null);
+            }
+
             item.machineName = machineName;
             done(null, item);
           });
@@ -974,7 +986,7 @@ module.exports = function(app) {
               template.access.forEach(access => {
                 if (access && Array.isArray(access.roles)) {
                   const projectAccess = _.find(project.access, {type: access.type});
-                  const newRoles = _.filter(access.roles.map(name => {
+                  const newRoles = _.filter(_.map(access.roles, name => {
                     if (template.roles && template.roles.hasOwnProperty(name)) {
                       return template.roles[name]._id;
                     }
@@ -998,6 +1010,7 @@ module.exports = function(app) {
               }
             }
             else if (
+              (!('excludeAccess' in template) || !template.excludeAccess) &&
               'roles' in template &&
               Object.keys(template.roles).length > 0 &&
               'administrator' in template.roles
@@ -1035,7 +1048,7 @@ module.exports = function(app) {
             }
 
             // Update this project.
-            formioServer.formio.resources.project.model.update({
+            formioServer.formio.resources.project.model.updateOne({
               _id: project._id
             }, {
               $set: {access: project.access}
@@ -1054,7 +1067,7 @@ module.exports = function(app) {
           _export.access = [];
           _.each(accesses, function(access) {
             if (access.type.indexOf('team_') === -1) {
-              const roleNames = access.roles.map(roleId => _map.roles[roleId.toString()]);
+              const roleNames = _.map(access.roles, roleId => _map.roles[roleId.toString()]);
               _export.access.push({
                 type: access.type,
                 roles: roleNames
@@ -1133,9 +1146,33 @@ module.exports = function(app) {
           .uniq()
           .value();
 
-        formioServer.formio.teams.getTeams(user, true, true)
-          .then(function(teams) {
+        // Synchronize the user teams with teams they were added to.
+        const syncUserTeams = (user, teams) => {
+          // Do not perform if they have ssoTeams enabled.
+          if (formioServer.formio.config.ssoTeams) {
+            return;
+          }
+          // If the teams length changes, then this means that maybe they were removed from some teams. We need
+          // to perform a quick cleanup of their accepted teams array to ensure we don't have lingering teams sticking
+          // around.
+          if (
+            user.metadata &&
+            user.metadata.teams &&
+            (teams.length !== user.metadata.teams.length)
+          ) {
+            user.metadata.teams = teams;
+            formioServer.formio.resources.submission.model.update(
+              {_id: user._id},
+              {$set: {'metadata.teams': user.metadata.teams}},
+              _.noop
+            );
+          }
+        };
+
+        formioServer.formio.teams.getTeams(user, true, true, true)
+          .then((teams) => {
             if (!teams || !teams.length) {
+              syncUserTeams(user, []);
               return user;
             }
 
@@ -1147,6 +1184,7 @@ module.exports = function(app) {
               .uniq()
               .value();
 
+            syncUserTeams(user, user.teams);
             return user;
           })
           .nodeify(next);
@@ -1199,7 +1237,7 @@ module.exports = function(app) {
             }
 
             // Make sure assigned role ids are actually in the project.
-            const roleIds = req.currentProject.roles.map(role => role._id);
+            const roleIds = _.map(req.currentProject.roles, role => role._id);
             sandbox.data.user.roles.forEach(roleId => {
               if (!roleIds.includes(roleId)) {
                 throw new Error('Invalid role id. Not in project.');
@@ -1279,6 +1317,73 @@ module.exports = function(app) {
         if (req.projectId) {
           query.project = formioServer.formio.util.idToBson(req.projectId);
         }
+        return query;
+      },
+
+      actionsQuery(query, req) {
+        // Allow only for server to server communication.
+        if (!req.isAdmin) {
+          return query;
+        }
+
+        // Included actions take privilege over excluded.
+        const includedActions = formioServer.formio.util.getHeader(req, 'x-actions-include');
+        const excludedActions = formioServer.formio.util.getHeader(req, 'x-actions-exclude');
+
+        const actionsToProcess = includedActions || excludedActions;
+        if (actionsToProcess) {
+          const {
+            ids,
+            names,
+          } = actionsToProcess.split(',').reduce(
+            ({
+              ids,
+              names,
+            }, action) => {
+              const id = formioServer.formio.util.idToBson(action);
+              return id
+                ? ({
+                  ids: [...ids, id],
+                  names,
+                })
+                : ({
+                  ids,
+                  names: [...names, action],
+                });
+            },
+            {
+              ids: [],
+              names: [],
+            },
+          );
+
+          if (ids.length !== 0 || names.length !== 0) {
+            const expressions = [];
+            const logicalOperator = includedActions ? '$or' : '$and';
+            const comparisonOperator = includedActions ? '$in' : '$nin';
+
+            if (ids.length !== 0) {
+              expressions.push({
+                _id: {
+                  [comparisonOperator]: ids,
+                },
+              });
+            }
+
+            if (names.length !== 0) {
+              expressions.push({
+                name: {
+                  [comparisonOperator]: names,
+                },
+              });
+            }
+
+            if (expressions.length) {
+              query[logicalOperator] = expressions;
+            }
+          }
+        }
+
         return query;
       },
 
