@@ -13,9 +13,8 @@
     "compile": "node compile",
     "dist": "pkg .; cp node_modules/opn/xdg-open .",
     "build": "npm run lint; npm run clean; npm run compile",
-    "build:debug": "docker build -t formio-server-debug -f deployment/docker/formio-server/Dockerfile-debug .",
-    "package:debug": "docker save -o formio-server-debug formio-server-debug",
-    "builddocker": "docker build --squash --no-cache -t formio/formio-enterprise:latest -f deployment/docker/formio-server/Dockerfile .",
+    "builddocker": "docker build --no-cache -t tmpimage -f deployment/docker/Builder .",
+    "distdocker": "docker build --no-cache -t formio/formio-enterprise:latest -f deployment/docker/Dockerfile .",
     "lint": "eslint .",
     "validate": "circleci config validate -c .circleci/config.yml"
   },
@@ -90,24 +89,10 @@
     "sinon": "^8.1.1",
     "supertest": "^4.0.2",
     "uglify-es": "git+https://github.com/mishoo/UglifyJS2.git#harmony",
-    "webpack": "^4.41.6"
+    "webpack": "^4.41.6",
+    "webpack-obfuscator": "^0.25.2"
   },
   "pre-commit": [
     "lint"
-  ],
-  "bin": "main.js",
-  "pkg": {
-    "assets": [
-      "package.json",
-      "package-lock.json",
-      "favicon.ico",
-      "portal/**/*",
-      "node_modules/formio/src/db/**/*",
-      "node_modules/threads/lib/worker.node/slave.js",
-      "node_modules/xml-encryption/**/*"
-    ],
-    "targets": [
-      "node12-alpine-x64"
-    ]
-  }
+  ]
 }

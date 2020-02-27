@@ -3,6 +3,7 @@
 var fs = require('fs');
 var path = require('path');
 var webpack = require('webpack');
+var JavaScriptObfuscator = require('webpack-obfuscator');
 var outputDir = 'build';
 
 var nodeModules = {};
@@ -45,14 +46,36 @@ webpack({
   },
   output: {
     path: path.resolve(__dirname, 'build'),
-    filename: 'main.js'
+    filename: 'formio.js'
   },
-  externals: nodeModules
+  externals: nodeModules,
+  plugins: [
+    // Low obfuscation, High performance options.
+    new JavaScriptObfuscator({
+      compact: true,
+      controlFlowFlattening: false,
+      deadCodeInjection: false,
+      debugProtection: false,
+      debugProtectionInterval: false,
+      disableConsoleOutput: false,
+      identifierNamesGenerator: 'hexadecimal',
+      log: false,
+      renameGlobals: false,
+      rotateStringArray: true,
+      selfDefending: true,
+      shuffleStringArray: true,
+      splitStrings: false,
+      stringArray: true,
+      stringArrayEncoding: false,
+      stringArrayThreshold: 0.75,
+      unicodeEscapeSequence: false
+    })
+  ]
 }).run((err, stats) => {
   if (err) {
     /* eslint-disable no-console */
     console.err(err);
     return;
   }
-  console.log('Finished compiling main.js.');
+  console.log('Finished compiling formio.js.');
 });
