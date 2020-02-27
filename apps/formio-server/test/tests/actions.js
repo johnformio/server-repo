@@ -164,6 +164,7 @@ module.exports = (app, template, hook) => {
     });
   });
 
+  if (!docker)
   describe('x- headers for actions', () => {
     const helper = new template.Helper(template.formio.owner);
     let submissionUrl;
