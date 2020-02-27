@@ -27,7 +27,7 @@ jobs:
           root: build
           paths:
             - favicon.ico
-            - main.js
+            - formio.js
             - package.json
             - package-lock.json
   portal:
@@ -89,11 +89,6 @@ jobs:
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm install 12
             nvm alias default 12
-      - run:
-          name: Enable docker experimental features.
-          command: |
-            sudo sh -c 'echo '\''DOCKER_OPTS="--experimental=true"'\'' >> /etc/default/docker'
-            sudo service docker restart
       - checkout
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
@@ -105,7 +100,11 @@ jobs:
           command: |
             sudo bash -c "echo \"127.0.0.1 formio.localhost\" >> /etc/hosts"
             sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
-      - run: docker build --squash --no-cache -t $IMAGE_PATH -f deployment/docker/formio-server/Dockerfile .
+      - run: docker build --no-cache -t tmpimage -f deployment/docker/Builder .
+      - run: docker create -ti --name tmpcontainer tmpimage sh
+      - run: docker cp tmpcontainer:/src/node_modules build/
+      - run: docker rm -f tmpcontainer
+      - run: docker build --no-cache -t $IMAGE_PATH -f deployment/docker/Dockerfile .
       - run: docker network create formio
       - run: docker network ls
       - run: docker run -itd --name formio-mongo --net formio -p 27017:27017 mongo
