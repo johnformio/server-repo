@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.5
+### Added
+ - Validate endpoint for forms to allow them to perform a validation only against a form.
+
 ## 6.9.4
 ### Changed
  - Fixed deployed portal to work better in situations where "access" is granted to primary and "read" is granted to stage.
