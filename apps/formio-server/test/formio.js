@@ -13,6 +13,63 @@ var hook = null;
 var template = _.cloneDeep(require('./tests/fixtures/template')());
 var formioProject = require('../formio.json');
 let EventEmitter = require('events');
+const rpn = require('request-promise-native');
+const mockery = require('mockery');
+const sinon = require('sinon');
+let formio;
+
+function md5(str) {
+  return require('crypto').createHash('md5').update(str).digest('hex');
+}
+
+function base64(data) {
+  return Buffer.from(JSON.stringify(data)).toString('base64');
+}
+
+// Set up request mocking for license server.
+const requestMock = sinon.stub()
+  .withArgs(sinon.match({
+    url: 'string',
+    method: 'string',
+    headers: 'object',
+    qs: 'string',
+    body: 'object',
+    json: 'boolean',
+    timeout: 'number',
+  }))
+  .callsFake(async (args) => {
+    switch(args.url) {
+      case 'https://license.form.io/utilization':
+      case 'https://license.form.io/utilization/disable':
+        let license;
+        if (args.body.licenseKey) {
+          license = await formio.resources.submission.model.findOne({
+            'data.licenseKeys.key': args.body.licenseKey,
+          });
+        }
+        return Promise.resolve({
+          ...args.body,
+          hash: md5(base64(args.body)),
+          used: {
+            emails: 0,
+            forms: 0,
+            formRequests: 0,
+            pdfs: 0,
+            pdfDownloads: 0,
+            submissionRequests: 0,
+          },
+          terms: license ? license.data : {
+            plan: 'trial',
+          },
+          licenseId: 'abc123',
+        });
+        break;
+      default:
+        // Fallback to request-promise-native.
+        return rpn(args);
+    }
+  });
+mockery.registerMock('request-promise-native', requestMock);
 
 process.on('uncaughtException', function(err) {
   console.error(err);
@@ -104,12 +161,17 @@ var emptyDatabase = template.emptyDatabase = template.clearData = function(done)
 
 describe('Initial Tests', function() {
   before(function(done) {
+    mockery.enable({
+      warnOnReplace: false,
+      warnOnUnregistered: false
+    });
     var hooks = _.merge(require('formio/test/hooks'), require('./tests/hooks')); // Merge all the test hooks.
     require('../server')({
       hooks: hooks
     })
       .then(function(state) {
         app = state.app;
+        formio = app.formio.formio;
         hook = require('formio/src/util/hook')(app.formio.formio);
         state.app.listen(state.config.port);
 
@@ -402,4 +464,9 @@ describe('Initial Tests', function() {
       });
     });
   });
+
+  after((done) => {
+    mockery.disable();
+    done();
+  })
 });

@@ -600,7 +600,11 @@ module.exports = function(app, formioServer) {
                 {'access.type': 'team_write'},
                 {'access.type': 'team_admin'}
               ]},
-            {'access.roles': {$in: [formioServer.formio.util.idToString(_team), formioServer.formio.util.idToBson(_team)]}},
+            {
+              'access.roles': {
+                $in: [formioServer.formio.util.idToString(_team), formioServer.formio.util.idToBson(_team)]
+              }
+            },
             {project: null}
           ],
           deleted: {$eq: null}

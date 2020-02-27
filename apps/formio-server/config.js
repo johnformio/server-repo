@@ -51,7 +51,6 @@ var config = {formio: {}};
 var protocol = getConfig('PROTOCOL', 'https');
 var project = getConfig('PROJECT', 'formio');
 var plan = getConfig('PROJECT_PLAN', 'commercial');
-const jwt = require('jsonwebtoken');
 
 try {
   fs.statSync('/.dockerenv');
@@ -165,9 +164,8 @@ config.apiHost = apiHost;
 config.formio.apiHost = apiHost;
 config.formioHost = formioHost;
 config.formio.formioHost = formioHost;
-config.license = config.formio.license = getConfig('LICENSE');
-config.licenseData = jwt.decode(config.license);
-config.hostedPDFServer = getConfig('PDF_SERVER', '');
+config.licenseKey =getConfig('LICENSE_KEY');
+config.hostedPDFServer = getConfig('PDF_SERVER', getConfig('FORMIO_FILES_SERVER', ''));
 config.portalSSO = getConfig('PORTAL_SSO', '');
 config.ssoTeams = Boolean(getConfig('SSO_TEAMS', false) || config.portalSSO);
 config.portalSSOLogout = getConfig('PORTAL_SSO_LOGOUT', '');
@@ -199,49 +197,6 @@ else {
   else {
     config.formio.mongo = `mongodb://localhost:27017/${mongoCollection}`;
   }
-}
-
-if (getConfig('REDIS_SERVICE')) {
-  if (getConfig('REDIS_SERVICE').toLowerCase() === 'local') {
-    if (config.docker) {
-      config.redis = {
-        url: 'redis://redis'
-      };
-    }
-    else {
-      config.redis = {
-        url: 'redis://localhost:6379'
-      };
-    }
-  }
-  else {
-    config.redis = {
-      service: getConfig('REDIS_SERVICE')
-    };
-  }
-}
-else if (getConfig('REDIS_ADDR', getConfig('REDIS_PORT_6379_TCP_ADDR'))) {
-  // This is compatible with docker legacy linking.
-  var addr = getConfig('REDIS_ADDR', getConfig('REDIS_PORT_6379_TCP_ADDR', 'localhost'));
-  var redisPort = getConfig('REDIS_PORT', getConfig('REDIS_PORT_6379_TCP_PORT', 6379));
-  config.redis = {
-    port: redisPort,
-    host: addr,
-    url: `redis://${addr}:${redisPort}`
-  };
-}
-else {
-  config.redis = {
-    service: 'false'
-  };
-}
-
-if (getConfig('REDIS_USE_SSL')) {
-  config.redis.useSSL = true;
-}
-
-if (getConfig('REDIS_PASS')) {
-  config.redis.password = getConfig('REDIS_PASS');
 }
 
 if (getConfig('MONGO')) {
@@ -301,7 +256,7 @@ config.logging = {
 // Allow the config to be displayed when debugged.
 var sanitized = _.clone(config, true);
 sanitized = _.pick(sanitized, [
-  'https', 'domain', 'port', 'host', 'project', 'plan', 'formioHost', 'apiHost', 'debug', 'redis', 'docker'
+  'https', 'domain', 'port', 'host', 'project', 'plan', 'formioHost', 'apiHost', 'debug', 'docker'
 ]);
 sanitized.formio = _.pick(_.clone(config.formio), ['domain', 'schema', 'mongo']);
 

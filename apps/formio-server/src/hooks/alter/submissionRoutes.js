@@ -3,6 +3,8 @@
 const _ = require('lodash');
 
 module.exports = app => routes => {
+  const licenseUtilizationMiddleware = require('../../middleware/licenseUtilization').middleware(app.formio.formio);
+
   const filterExternalTokens = app.formio.formio.middleware.filterResourcejsResponse(['externalTokens']);
   const conditionalFilter = function(req, res, next) {
     if (req.token && res.resource && res.resource.item && res.resource.item._id) {
@@ -65,6 +67,11 @@ module.exports = app => routes => {
       }
       next();
     });
+  });
+
+  // Add license utilization middleware
+  _.each(['beforePost', 'beforePut', 'beforeIndex', 'beforeGet'], handler => {
+    routes[handler].unshift(licenseUtilizationMiddleware);
   });
 
   return routes;

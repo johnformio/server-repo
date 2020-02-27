@@ -112,9 +112,6 @@ module.exports = (router, formioServer) => {
   formio.middleware.projectPlanFilter = require('../middleware/projectPlanFilter')(formio);
   formio.middleware.projectDefaultPlan = require('../middleware/projectDefaultPlan')(formioServer);
 
-  // Load the project analytics middleware.
-  formio.middleware.projectAnalytics = require('../middleware/projectAnalytics')(formioServer);
-
   // Load the project index filter middleware.
   formio.middleware.projectIndexFilter = require('../middleware/projectIndexFilter')(formioServer);
 
@@ -130,13 +127,12 @@ module.exports = (router, formioServer) => {
   formio.middleware.projectEnvCreateAccess = require('../middleware/projectEnvCreateAccess')(formio);
   formio.middleware.projectTeamSync = require('../middleware/projectTeamSync')(formio);
 
-  // Load custom hubspot action.
-  formio.middleware.customHubspotAction = require('../middleware/customHubspotAction')(formio);
-
-  formio.middleware.reportNewProject = require('../middleware/reportNewProject')(formio);
-
   // Load custom CRM action.
   formio.middleware.customCrmAction = require('../middleware/customCrmAction')(formio);
+
+  // Fix project plan (pull from actual license instead of stored DB value)
+  formio.middleware.licenseUtilization = require('../middleware/licenseUtilization').middleware(formio);
+  formio.middleware.licenseRemote = require('../middleware/licenseRemote').middleware(formio);
 
   const hiddenFields = ['deleted', '__v', 'machineName', 'primary'];
   const resource = Resource(
@@ -155,7 +151,7 @@ module.exports = (router, formioServer) => {
     ],
     afterGet: [
       formio.middleware.filterResourcejsResponse(hiddenFields),
-      formio.middleware.projectAnalytics,
+      formio.middleware.licenseUtilization,
       projectSettings,
     ],
     beforePatch: [
@@ -168,6 +164,7 @@ module.exports = (router, formioServer) => {
       formio.middleware.projectDefaultPlan,
       formio.middleware.projectEnvCreatePlan,
       formio.middleware.projectEnvCreateAccess,
+      formio.middleware.licenseUtilization,
       (req, res, next) => {
         // Don't allow setting billing.
         if (req.body) {
@@ -189,11 +186,8 @@ module.exports = (router, formioServer) => {
     afterPost: [
       require('../middleware/projectTemplate')(formio),
       formio.middleware.filterResourcejsResponse(hiddenFields),
-      formio.middleware.projectAnalytics,
       projectSettings,
-      formio.middleware.customHubspotAction,
       formio.middleware.customCrmAction('newproject'),
-      formio.middleware.reportNewProject,
     ],
     beforeIndex: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
@@ -201,11 +195,19 @@ module.exports = (router, formioServer) => {
     ],
     afterIndex: [
       formio.middleware.filterResourcejsResponse(hiddenFields),
-      formio.middleware.projectAnalytics,
       projectSettings,
     ],
     beforePut: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
+      formio.middleware.licenseRemote,
+      formio.middleware.licenseUtilization,
+      function(req, res, next) {
+        // Always keep the licenseKey even if they don't send it.
+        if (req.body.settings && !_.get(req.body, 'settings.licenseKey') && _.get(req.currentProject, 'settings.licenseKey', false)) {
+          _.set(req.body, 'settings.licenseKey', _.get(req.currentProject, 'settings.licenseKey'));
+        }
+        return next();
+      },
       (req, res, next) => {
         // Don't allow setting billing.
         if (req.body) {
@@ -277,7 +279,6 @@ module.exports = (router, formioServer) => {
     afterPut: [
       require('../middleware/projectTemplate')(formio),
       formio.middleware.filterResourcejsResponse(hiddenFields),
-      formio.middleware.projectAnalytics,
       projectSettings,
       formio.middleware.customCrmAction('updateproject'),
       (req, res, next) => {
@@ -327,6 +328,7 @@ module.exports = (router, formioServer) => {
     beforeDelete: [
       require('../middleware/projectProtectAccess')(formio),
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
+      formio.middleware.licenseUtilization,
       require('../middleware/deleteProjectHandler')(formio),
     ],
     afterDelete: [

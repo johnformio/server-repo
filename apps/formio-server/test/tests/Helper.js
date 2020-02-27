@@ -16,20 +16,12 @@ module.exports = function(app, Helper) {
       return done('No project');
     }
 
-    app.formio.formio.resources.project.model.findOne({_id: this.template.project._id, deleted: {$eq: null}}, function(err, project) {
-      if (err) {
-        return done(err);
-      }
-
-      project.plan = plan;
-      project.save(function(err) {
-        if (err) {
-          return done(err);
-        }
-
-        done();
-      });
-    });
+    request(app)
+      .post('/project/' + this.template.project._id + '/upgrade')
+      .set('x-jwt-token', this.owner.token)
+      .send({plan})
+      .expect(200)
+      .end(done);
   };
 
   if (!docker && !customer)

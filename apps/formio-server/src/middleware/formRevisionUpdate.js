@@ -13,8 +13,6 @@ const _ = require('lodash');
  */
 module.exports = function(formio) {
   return function(req, res, next) {
-    const cache = formio.cache;
-
     if (req.method !== 'PUT' || !req.formId || !_.has(req, 'body.revisions') || !_.has(req, 'body.components')) {
       return next();
     }

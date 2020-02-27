@@ -24,7 +24,7 @@ module.exports = {
       }
 
       var helper = new template.Helper();
-      helper.setProjectPlan.call({template: template}, 'team', function() {
+      helper.setProjectPlan.call({template: template, owner: template.users.admin}, 'team', function() {
         return next(null, server);
       });
     },

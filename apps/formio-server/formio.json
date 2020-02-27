@@ -2601,6 +2601,19 @@
         "before"
       ]
     },
+    "license2:save": {
+      "title": "Save Submission",
+      "name": "save",
+      "form": "license2",
+      "priority": 10,
+      "method": [
+        "create",
+        "update"
+      ],
+      "handler": [
+        "before"
+      ]
+    },
     "feedback:email": {
       "title": "Email",
       "name": "email",
@@ -3463,6 +3476,1585 @@
         }
       ],
       "submissionAccess": []
+    },
+    "license2": {
+      "title": "New License",
+      "type": "resource",
+      "name": "license2",
+      "path": "license2",
+      "display": "form",
+      "tags": [],
+      "settings": {},
+      "components": [
+        {
+          "title": "Overview",
+          "theme": "primary",
+          "collapsible": false,
+          "alwaysEnabled": false,
+          "tableView": false,
+          "key": "licenseIdToken",
+          "type": "panel",
+          "label": "License ID + Token",
+          "input": false,
+          "validate": {
+            "unique": false,
+            "multiple": false
+          },
+          "components": [
+            {
+              "label": "License Name",
+              "placeholder": "Enter a descriptive title for this license",
+              "spellcheck": true,
+              "alwaysEnabled": false,
+              "tableView": true,
+              "validate": {
+                "unique": false,
+                "multiple": false
+              },
+              "key": "licenseName",
+              "type": "textfield",
+              "input": true,
+              "autofocus": false,
+              "inputType": "text",
+              "inputMask": "",
+              "prefix": "",
+              "suffix": "",
+              "multiple": false,
+              "defaultValue": "",
+              "protected": false,
+              "unique": false,
+              "persistent": true,
+              "hidden": false,
+              "clearOnHide": true,
+              "conditional": {
+                "show": null,
+                "when": null,
+                "eq": ""
+              }
+            },
+            {
+              "label": "Customer Columns",
+              "columns": [
+                {
+                  "components": [
+                    {
+                      "label": "License Users",
+                      "widget": "choicesjs",
+                      "description": "This controls who can view the license in their portal license management page.",
+                      "tableView": true,
+                      "multiple": true,
+                      "dataSrc": "resource",
+                      "data": {
+                        "values": [
+                          {
+                            "value": "",
+                            "label": ""
+                          }
+                        ],
+                        "resource": "user",
+                        "project": "project"
+                      },
+                      "template": "<span>{{ item.data.name }} &lt;{{ item.data.email }}&gt; {{ item.data.fullName }}</span>",
+                      "selectThreshold": 0.3,
+                      "validate": {
+                        "select": false,
+                        "unique": true,
+                        "multiple": true
+                      },
+                      "unique": true,
+                      "key": "user",
+                      "type": "select",
+                      "searchField": "data.email__regex",
+                      "alwaysEnabled": false,
+                      "input": true,
+                      "lockKey": true,
+                      "hideOnChildrenHidden": false,
+                      "addResource": false,
+                      "reference": false,
+                      "autofocus": false,
+                      "placeholder": "",
+                      "valueProperty": "",
+                      "defaultValue": "",
+                      "refreshOn": "",
+                      "filter": "",
+                      "authenticate": false,
+                      "protected": false,
+                      "persistent": true,
+                      "hidden": false,
+                      "clearOnHide": true
+                    }
+                  ],
+                  "width": 6,
+                  "offset": 0,
+                  "push": 0,
+                  "pull": 0
+                },
+                {
+                  "components": [
+                    {
+                      "label": "Company",
+                      "alwaysEnabled": false,
+                      "tableView": true,
+                      "validate": {
+                        "unique": false,
+                        "multiple": false
+                      },
+                      "key": "company",
+                      "type": "textfield",
+                      "input": true,
+                      "spellcheck": true,
+                      "lockKey": true,
+                      "dataGridLabel": false,
+                      "labelWidth": 30,
+                      "labelMargin": 3,
+                      "clearOnRefresh": false,
+                      "hideOnChildrenHidden": false,
+                      "autofocus": false,
+                      "inputType": "text",
+                      "inputMask": "",
+                      "placeholder": "",
+                      "prefix": "",
+                      "suffix": "",
+                      "multiple": false,
+                      "defaultValue": "",
+                      "protected": false,
+                      "unique": false,
+                      "persistent": true,
+                      "hidden": false,
+                      "clearOnHide": true,
+                      "conditional": {
+                        "show": null,
+                        "when": null,
+                        "eq": ""
+                      }
+                    }
+                  ],
+                  "width": 6,
+                  "offset": 0,
+                  "push": 0,
+                  "pull": 0
+                }
+              ],
+              "alwaysEnabled": false,
+              "tableView": false,
+              "key": "customerColumns",
+              "type": "columns",
+              "input": false,
+              "validate": {
+                "unique": false,
+                "multiple": false
+              },
+              "path": "customerColumns",
+              "clearOnHide": false,
+              "hideLabel": true
+            },
+            {
+              "label": "Description / Comments",
+              "autoExpand": false,
+              "alwaysEnabled": false,
+              "tableView": true,
+              "validate": {
+                "unique": false,
+                "multiple": false
+              },
+              "key": "comments",
+              "type": "textarea",
+              "input": true,
+              "hideOnChildrenHidden": false,
+              "autofocus": false,
+              "placeholder": "",
+              "prefix": "",
+              "suffix": "",
+              "rows": 3,
+              "multiple": false,
+              "defaultValue": "",
+              "protected": false,
+              "persistent": true,
+              "hidden": false,
+              "wysiwyg": false,
+              "clearOnHide": true,
+              "spellcheck": true
+            },
+            {
+              "label": "Location",
+              "widget": "html5",
+              "tableView": true,
+              "defaultValue": "onPremise",
+              "data": {
+                "values": [
+                  {
+                    "label": "Hosted",
+                    "value": "hosted"
+                  },
+                  {
+                    "label": "On Premise",
+                    "value": "onPremise"
+                  }
+                ]
+              },
+              "selectThreshold": 0.3,
+              "validate": {
+                "unique": false,
+                "multiple": false
+              },
+              "key": "location",
+              "type": "select",
+              "input": true,
+              "autofocus": false,
+              "placeholder": "",
+              "dataSrc": "values",
+              "valueProperty": "",
+              "refreshOn": "",
+              "filter": "",
+              "authenticate": false,
+              "template": "<span>{{ item.label }}</span>",
+              "multiple": false,
+              "protected": false,
+              "unique": false,
+              "persistent": true,
+              "hidden": false,
+              "clearOnHide": true
+            },
+            {
+              "label": "HTML",
+              "content": "<p style=\"font-size:2em; position:relative; top:-0.2em;\">\n  Status: <span style=\"color:green;font-weight:bold\">ACTIVE</span>\n</p>",
+              "refreshOnChange": false,
+              "tableView": false,
+              "key": "statusIndicatorActive",
+              "customConditional": "show = !data.endDate || (data.endDate.valueOf() >= moment().valueOf())",
+              "type": "htmlelement",
+              "input": false,
+              "validate": {
+                "unique": false,
+                "multiple": false
+              },
+              "alwaysEnabled": false,
+              "hideOnChildrenHidden": false,
+              "hideLabel": true,
+              "tag": "p",
+              "attrs": [],
+              "className": ""
+            },
+            {
+              "label": "HTML",
+              "content": "<p style=\"font-size:2em; position:relative; top:-0.2em;\">\n  Status: <span style=\"color:red;font-weight:bold\">EXPIRED</span>\n</p>",
+              "refreshOnChange": false,
+              "tableView": false,
+              "key": "statusIndicatorInactive",
+              "customConditional": "show = data.endDate && (data.endDate.valueOf() < moment().valueOf())",
+              "type": "htmlelement",
+              "input": false,
+              "alwaysEnabled": false,
+              "hideOnChildrenHidden": false,
+              "hideLabel": true,
+              "tag": "p",
+              "attrs": [],
+              "className": ""
+            },
+            {
+              "label": "Time Until Expiration",
+              "disabled": true,
+              "alwaysEnabled": false,
+              "tableView": false,
+              "defaultValue": "n/a",
+              "persistent": false,
+              "calculateValue": "if (!data.endDate) {\n  return 'n/a'\n}\n\nvar remaining = moment(data.endDate).diff(moment(), 'days', true)\n\nif (remaining < 0) {\n  return 'EXPIRED'\n}\n\nvar str =\n  Math.floor(remaining) + 'd ' +\n  moment().startOf('day')\n    .add(remaining % 1 * 24, 'hours')\n    .format('H[h] m[m]')\n\nvalue = str",
+              "key": "timeUntilExpiration",
+              "customConditional": "show = data.endDate && moment(data.endDate).diff(moment.startDate, 'seconds') > 0",
+              "type": "textfield",
+              "input": true,
+              "autofocus": false,
+              "inputType": "text",
+              "inputMask": "",
+              "placeholder": "",
+              "prefix": "",
+              "suffix": "",
+              "multiple": false,
+              "protected": false,
+              "unique": false,
+              "hidden": false,
+              "clearOnHide": true,
+              "spellcheck": true,
+              "validate": {
+                "required": false,
+                "minLength": "",
+                "maxLength": "",
+                "pattern": "",
+                "custom": "",
+                "customPrivate": false
+              },
+              "conditional": {
+                "show": null,
+                "when": null,
+                "eq": ""
+              }
+            }
+          ],
+          "path": "licenseIdToken",
+          "clearOnHide": false,
+          "hideLabel": false
+        },
+        {
+          "title": "License Terms",
+          "theme": "primary",
+          "collapsible": false,
+          "tableView": false,
+          "key": "licenseTermsPanel",
+          "type": "panel",
+          "label": "License Terms",
+          "alwaysEnabled": false,
+          "input": false,
+          "components": [
+            {
+              "legend": "Presets",
+              "alwaysEnabled": false,
+              "tableView": false,
+              "key": "presetsFieldset",
+              "type": "fieldset",
+              "label": "Presets",
+              "input": false,
+              "validate": {
+                "unique": false,
+                "multiple": false
+              },
+              "components": [
+                {
+                  "label": "License Presets",
+                  "columns": [
+                    {
+                      "components": [
+                        {
+                          "label": "On Premise",
+                          "action": "custom",
+                          "showValidations": false,
+                          "theme": "info",
+                          "size": "xs",
+                          "block": true,
+                          "tableView": false,
+                          "key": "onPremise",
+                          "type": "button",
+                          "input": true,
+                          "validate": {
+                            "unique": false,
+                            "multiple": false
+                          },
+                          "hideOnChildrenHidden": false,
+                          "custom": "var preset = {\n  plan: 'enterprise',\n  projects: null,\n  tenants: 0,\n  stages: 10,\n  emails: null,\n  forms: null,\n  formRequests: null,\n  formManagers: 0,\n  submissionRequests: null,\n  pdfs: null,\n  pdfDownloads: null,\n  pdfServers: 3,\n  apiServers: 3,\n}\n\ntry {\n  var instances = form.flattenComponents()\n\n  _.each(preset, function(value, key) {\n    if (!instances[key]) {\n      throw new Error('Invalid key: ' + key)\n    }\n\n    if (value === null) {\n      instances[key].dataValue = null\n      instances[key].setValueAt(0, null)\n      instances[key].resetValue()\n    }\n\n    instances[key].setValue(value)\n  })\n  \n  instances.scope.setValue([\n      'apiServer',\n      'pdfServer',\n      'project',\n      'tenant',\n      'stage',\n      'form',\n      'formRequest',\n      'formManager',\n      'email',\n      'pdf',\n      'pdfDownload',\n      'submissionRequest',\n    ])\n}\ncatch (e) {\n  debugger\n  alert('Error applying preset: ' + e.toString())\n}",
+                          "autofocus": false,
+                          "leftIcon": "",
+                          "rightIcon": "",
+                          "disableOnInvalid": false
+                        }
+                      ],
+                      "width": 2,
+                      "offset": 0,
+                      "push": 0,
+                      "pull": 0
+                    },
+                    {
+                      "components": [
+                        {
+                          "label": "Basic",
+                          "action": "custom",
+                          "showValidations": false,
+                          "theme": "info",
+                          "size": "xs",
+                          "block": true,
+                          "tableView": false,
+                          "key": "presetsBasic",
+                          "type": "button",
+                          "alwaysEnabled": false,
+                          "input": true,
+                          "validate": {
+                            "unique": false,
+                            "multiple": false
+                          },
+                          "hideOnChildrenHidden": false,
+                          "custom": "var preset = {\n  plan: 'basic',\n  projects: 1,\n  tenants: 0,\n  stages: 0,\n  emails: 100,\n  forms: 10,\n  formRequests: 1000,\n  formManagers: 0,\n  submissionRequests: 1000,\n  pdfs: 1,\n  pdfDownloads: 10,\n  pdfServers: 0,\n  apiServers: 0,\n}\n\ntry {\n  var instances = form.flattenComponents()\n\n  _.each(preset, function(value, key) {\n    if (!instances[key]) {\n      throw new Error('Invalid key: ' + key)\n    }\n\n    if (value === null) {\n      instances[key].dataValue = null\n      instances[key].setValueAt(0, null)\n      instances[key].resetValue()\n    }\n\n    instances[key].setValue(value)\n  })\n  \n  instances.scope.setValue([\n    'project',\n    'form',\n    'formRequest',\n    'email',\n    'pdf',\n    'pdfDownload',\n    'submissionRequest',\n  ])\n}\ncatch (e) {\n  debugger\n  alert('Error applying preset: ' + e.toString())\n}",
+                          "autofocus": false,
+                          "leftIcon": "",
+                          "rightIcon": "",
+                          "disableOnInvalid": false
+                        }
+                      ],
+                      "width": 2,
+                      "offset": 0,
+                      "push": 0,
+                      "pull": 0
+                    },
+                    {
+                      "components": [
+                        {
+                          "label": "Independent",
+                          "action": "custom",
+                          "showValidations": false,
+                          "theme": "info",
+                          "size": "xs",
+                          "block": true,
+                          "tableView": false,
+                          "key": "presetsIndependent",
+                          "type": "button",
+                          "alwaysEnabled": false,
+                          "input": true,
+                          "validate": {
+                            "unique": false,
+                            "multiple": false
+                          },
+                          "custom": "var preset = {\n  plan: 'independent',\n  projects: 1,\n  tenants: 0,\n  stages: 0,\n  emails: 100,\n  forms: 25,\n  formRequests: 10000,\n  formManagers: 0,\n  submissionRequests: 10000,\n  pdfs: 1,\n  pdfDownloads: 10,\n  pdfServers: 0,\n  apiServers: 0,\n}\n\ntry {\n  var instances = form.flattenComponents()\n\n  _.each(preset, function(value, key) {\n    if (!instances[key]) {\n      throw new Error('Invalid key: ' + key)\n    }\n\n    if (value === null) {\n      instances[key].dataValue = null\n      instances[key].setValueAt(0, null)\n      instances[key].resetValue()\n    }\n\n    instances[key].setValue(value)\n  })\n  \n  instances.scope.setValue([\n    'project',\n    'form',\n    'formRequest',\n    'email',\n    'pdf',\n    'pdfDownload',\n    'submissionRequest',\n  ])\n}\ncatch (e) {\n  debugger\n  alert('Error applying preset: ' + e.toString())\n}",
+                          "hideOnChildrenHidden": false,
+                          "autofocus": false,
+                          "leftIcon": "",
+                          "rightIcon": "",
+                          "disableOnInvalid": false
+                        }
+                      ],
+                      "width": 2,
+                      "offset": 0,
+                      "push": 0,
+                      "pull": 0
+                    },
+                    {
+                      "components": [
+                        {
+                          "label": "Team Pro",
+                          "action": "custom",
+                          "showValidations": false,
+                          "theme": "info",
+                          "size": "xs",
+                          "block": true,
+                          "tableView": false,
+                          "key": "presetsTeamPro",
+                          "type": "button",
+                          "alwaysEnabled": false,
+                          "input": true,
+                          "hideOnChildrenHidden": false,
+                          "validate": {
+                            "unique": false,
+                            "multiple": false
+                          },
+                          "custom": "var preset = {\n  plan: 'team',\n  projects: 1,\n  tenants: 0,\n  stages: 0,\n  emails: 100,\n  forms: 50,\n  formRequests: 250000,\n  formManagers: 0,\n  submissionRequests: 250000,\n  pdfs: 1,\n  pdfDownloads: 10,\n  pdfServers: 0,\n  apiServers: 0,\n}\n\ntry {\n  var instances = form.flattenComponents()\n\n  _.each(preset, function(value, key) {\n    if (!instances[key]) {\n      throw new Error('Invalid key: ' + key)\n    }\n\n    if (value === null) {\n      instances[key].dataValue = null\n      instances[key].setValueAt(0, null)\n      instances[key].resetValue()\n    }\n\n    instances[key].setValue(value)\n  })\n  \n  instances.scope.setValue([\n    'project',\n    'form',\n    'formRequest',\n    'email',\n    'pdf',\n    'pdfDownload',\n    'submissionRequest',\n  ])\n}\ncatch (e) {\n  debugger\n  alert('Error applying preset: ' + e.toString())\n}",
+                          "autofocus": false,
+                          "leftIcon": "",
+                          "rightIcon": "",
+                          "disableOnInvalid": false
+                        }
+                      ],
+                      "width": 2,
+                      "offset": 0,
+                      "push": 0,
+                      "pull": 0
+                    },
+                    {
+                      "components": [
+                        {
+                          "label": "Enterprise",
+                          "action": "custom",
+                          "showValidations": false,
+                          "theme": "info",
+                          "size": "xs",
+                          "block": true,
+                          "tableView": false,
+                          "key": "presetsEnterprise",
+                          "type": "button",
+                          "alwaysEnabled": false,
+                          "input": true,
+                          "hideOnChildrenHidden": false,
+                          "validate": {
+                            "unique": false,
+                            "multiple": false
+                          },
+                          "custom": "var preset = {\n  plan: 'commercial',\n  projects: 1,\n  tenants: 0,\n  stages: 10,\n  emails: 10000,\n  forms: null,\n  formRequests: null,\n  formManagers: 0,\n  submissionRequests: 2000000,\n  pdfs: 25,\n  pdfDownloads: 1000,\n  pdfServers: 0,\n  apiServers: 0,\n}\n\ntry {\n  var instances = form.flattenComponents()\n\n  _.each(preset, function(value, key) {\n    if (!instances[key]) {\n      throw new Error('Invalid key: ' + key)\n    }\n\n    if (value === null) {\n      instances[key].dataValue = null\n      instances[key].setValueAt(0, null)\n      instances[key].resetValue()\n    }\n\n    instances[key].setValue(value)\n  })\n  \n  instances.scope.setValue([\n    'project',\n    'form',\n    'stage',\n    'formRequest',\n    'email',\n    'pdf',\n    'pdfDownload',\n    'submissionRequest',\n  ])\n}\ncatch (e) {\n  debugger\n  alert('Error applying preset: ' + e.toString())\n}",
+                          "autofocus": false,
+                          "leftIcon": "",
+                          "rightIcon": "",
+                          "disableOnInvalid": false
+                        }
+                      ],
+                      "width": 2,
+                      "offset": 0,
+                      "push": 0,
+                      "pull": 0
+                    },
+                    {
+                      "components": [
+                        {
+                          "label": "Trial",
+                          "action": "custom",
+                          "showValidations": false,
+                          "theme": "info",
+                          "size": "xs",
+                          "block": true,
+                          "tableView": false,
+                          "key": "presetsTrial",
+                          "type": "button",
+                          "alwaysEnabled": false,
+                          "input": true,
+                          "hideOnChildrenHidden": false,
+                          "custom": "var preset = {\n  plan: 'trial',\n  projects: 1,\n  tenants: 0,\n  stages: 10,\n  emails: 100,\n  forms: 10,\n  formRequests: 10000,\n  formManagers: 0,\n  submissionRequests: 10000,\n  pdfs: 10,\n  pdfDownloads: 1000,\n  pdfServers: 0,\n  apiServers: 0,\n}\n\ntry {\n  var instances = form.flattenComponents()\n\n  _.each(preset, function(value, key) {\n    if (!instances[key]) {\n      throw new Error('Invalid key: ' + key)\n    }\n\n    if (value === null) {\n      instances[key].dataValue = null\n      instances[key].setValueAt(0, null)\n      instances[key].resetValue()\n    }\n\n    instances[key].setValue(value)\n  })\n  \n  instances.scope.setValue([\n    'project',\n    'stage',\n    'form',\n    'formRequest',\n    'email',\n    'pdf',\n    'pdfDownload',\n    'submissionRequest',\n  ])\n}\ncatch (e) {\n  debugger\n  alert('Error applying preset: ' + e.toString())\n}",
+                          "validate": {
+                            "unique": false,
+                            "multiple": false
+                          },
+                          "autofocus": false,
+                          "leftIcon": "",
+                          "rightIcon": "",
+                          "disableOnInvalid": false
+                        }
+                      ],
+                      "width": 2,
+                      "offset": 0,
+                      "push": 0,
+                      "pull": 0
+                    }
+                  ],
+                  "customClass": "foobar",
+                  "tableView": false,
+                  "key": "presetsColumns",
+                  "type": "columns",
+                  "alwaysEnabled": false,
+                  "input": false,
+                  "validate": {
+                    "unique": false,
+                    "multiple": false
+                  },
+                  "path": "presetsColumns",
+                  "clearOnHide": false,
+                  "hideLabel": true
+                }
+              ],
+              "path": "fieldset",
+              "clearOnHide": false,
+              "hideLabel": true
+            },
+            {
+              "legend": "Plan",
+              "alwaysEnabled": false,
+              "tableView": false,
+              "key": "planFieldset",
+              "type": "fieldset",
+              "label": "Plan",
+              "input": false,
+              "validate": {
+                "unique": false,
+                "multiple": false
+              },
+              "components": [
+                {
+                  "label": "Plan Columns",
+                  "columns": [
+                    {
+                      "components": [
+                        {
+                          "label": "Nominal Plan Type",
+                          "widget": "html5",
+                          "alwaysEnabled": false,
+                          "tableView": true,
+                          "defaultValue": "basic",
+                          "data": {
+                            "values": [
+                              {
+                                "label": "Basic",
+                                "value": "basic"
+                              },
+                              {
+                                "label": "Independent",
+                                "value": "independent"
+                              },
+                              {
+                                "label": "Team Pro",
+                                "value": "team"
+                              },
+                              {
+                                "label": "Enterprise",
+                                "value": "commercial"
+                              },
+                              {
+                                "label": "Trial",
+                                "value": "trial"
+                              }
+                            ]
+                          },
+                          "searchEnabled": false,
+                          "selectThreshold": 0.3,
+                          "validate": {
+                            "required": true,
+                            "unique": false,
+                            "multiple": false
+                          },
+                          "key": "plan",
+                          "type": "select",
+                          "input": true,
+                          "hideOnChildrenHidden": false,
+                          "autofocus": false,
+                          "placeholder": "",
+                          "dataSrc": "values",
+                          "valueProperty": "",
+                          "refreshOn": "",
+                          "filter": "",
+                          "authenticate": false,
+                          "template": "<span>{{ item.label }}</span>",
+                          "multiple": false,
+                          "protected": false,
+                          "unique": false,
+                          "persistent": true,
+                          "hidden": false,
+                          "clearOnHide": true
+                        }
+                      ],
+                      "width": 4,
+                      "offset": 0,
+                      "push": 0,
+                      "pull": 0
+                    },
+                    {
+                      "components": [
+                        {
+                          "label": "Start Date",
+                          "displayInTimezone": "utc",
+                          "alwaysEnabled": false,
+                          "tableView": true,
+                          "datePicker": {
+                            "datepickerMode": "day",
+                            "minDate": null,
+                            "maxDate": null
+                          },
+                          "customDefaultValue": "value = moment().startOf('day').toDate()",
+                          "validate": {
+                            "unique": false,
+                            "multiple": false
+                          },
+                          "key": "startDate",
+                          "type": "datetime",
+                          "widget": {
+                            "type": "calendar",
+                            "displayInTimezone": "utc",
+                            "language": "en",
+                            "useLocaleSettings": false,
+                            "allowInput": true,
+                            "mode": "single",
+                            "enableTime": true,
+                            "noCalendar": false,
+                            "format": "yyyy-MM-dd hh:mm a",
+                            "hourIncrement": 1,
+                            "minuteIncrement": 1,
+                            "time_24hr": false,
+                            "minDate": null,
+                            "maxDate": null
+                          },
+                          "input": true,
+                          "hideOnChildrenHidden": false,
+                          "suffix": "<i ref=\"icon\" class=\"fa fa-calendar\" style=\"\"></i>",
+                          "autofocus": false,
+                          "placeholder": "",
+                          "format": "yyyy-MM-dd HH:mm a",
+                          "enableDate": true,
+                          "enableTime": true,
+                          "defaultDate": "",
+                          "datepickerMode": "day",
+                          "timePicker": {
+                            "hourStep": 1,
+                            "minuteStep": 1,
+                            "showMeridian": true,
+                            "readonlyInput": false,
+                            "mousewheel": true,
+                            "arrowkeys": true
+                          },
+                          "protected": false,
+                          "persistent": true,
+                          "hidden": false,
+                          "clearOnHide": true
+                        }
+                      ],
+                      "width": 4,
+                      "offset": 0,
+                      "push": 0,
+                      "pull": 0
+                    },
+                    {
+                      "components": [
+                        {
+                          "label": "End Date",
+                          "alwaysEnabled": false,
+                          "tableView": true,
+                          "datePicker": {
+                            "datepickerMode": "day",
+                            "minDate": null,
+                            "maxDate": null
+                          },
+                          "validate": {
+                            "unique": false,
+                            "multiple": false
+                          },
+                          "key": "endDate",
+                          "type": "datetime",
+                          "widget": {
+                            "type": "calendar",
+                            "displayInTimezone": "viewer",
+                            "language": "en",
+                            "useLocaleSettings": false,
+                            "allowInput": true,
+                            "mode": "single",
+                            "enableTime": true,
+                            "noCalendar": false,
+                            "format": "yyyy-MM-dd hh:mm a",
+                            "hourIncrement": 1,
+                            "minuteIncrement": 1,
+                            "time_24hr": false,
+                            "minDate": null,
+                            "maxDate": null
+                          },
+                          "input": true,
+                          "hideOnChildrenHidden": false,
+                          "suffix": "<i ref=\"icon\" class=\"fa fa-calendar\" style=\"\"></i>",
+                          "autofocus": false,
+                          "placeholder": "",
+                          "format": "yyyy-MM-dd HH:mm a",
+                          "enableDate": true,
+                          "enableTime": true,
+                          "defaultDate": "",
+                          "datepickerMode": "day",
+                          "timePicker": {
+                            "hourStep": 1,
+                            "minuteStep": 1,
+                            "showMeridian": true,
+                            "readonlyInput": false,
+                            "mousewheel": true,
+                            "arrowkeys": true
+                          },
+                          "protected": false,
+                          "persistent": true,
+                          "hidden": false,
+                          "clearOnHide": true
+                        },
+                        {
+                          "label": "Columns",
+                          "columns": [
+                            {
+                              "components": [
+                                {
+                                  "label": "Do Not Expire",
+                                  "action": "custom",
+                                  "showValidations": false,
+                                  "theme": "success",
+                                  "size": "xs",
+                                  "block": true,
+                                  "alwaysEnabled": false,
+                                  "tableView": false,
+                                  "key": "expireNeverButton",
+                                  "type": "button",
+                                  "input": true,
+                                  "custom": "form.flattenComponents().endDate.setValue(null);",
+                                  "hideOnChildrenHidden": false,
+                                  "validate": {
+                                    "unique": false,
+                                    "multiple": false
+                                  },
+                                  "autofocus": false,
+                                  "leftIcon": "",
+                                  "rightIcon": "",
+                                  "disableOnInvalid": false
+                                }
+                              ],
+                              "width": 4,
+                              "offset": 0,
+                              "push": 0,
+                              "pull": 0
+                            },
+                            {
+                              "components": [
+                                {
+                                  "label": "Expire In 30 Days",
+                                  "action": "custom",
+                                  "showValidations": false,
+                                  "theme": "warning",
+                                  "size": "xs",
+                                  "block": true,
+                                  "alwaysEnabled": false,
+                                  "tableView": false,
+                                  "key": "expire30Button",
+                                  "type": "button",
+                                  "input": true,
+                                  "validate": {
+                                    "unique": false,
+                                    "multiple": false
+                                  },
+                                  "custom": "form.flattenComponents().endDate.setValue(moment(data.startDate).add(30, 'days').endOf('day').toDate());",
+                                  "hideOnChildrenHidden": false,
+                                  "autofocus": false,
+                                  "leftIcon": "",
+                                  "rightIcon": "",
+                                  "disableOnInvalid": false
+                                }
+                              ],
+                              "width": 4,
+                              "offset": 0,
+                              "push": 0,
+                              "pull": 0
+                            },
+                            {
+                              "components": [
+                                {
+                                  "label": "Expire Now",
+                                  "action": "custom",
+                                  "showValidations": false,
+                                  "theme": "danger",
+                                  "size": "xs",
+                                  "block": true,
+                                  "alwaysEnabled": false,
+                                  "tableView": false,
+                                  "key": "expireImmediatelyButton",
+                                  "type": "button",
+                                  "input": true,
+                                  "custom": "form.flattenComponents().endDate.setValue(moment().startOf('day').toDate());",
+                                  "validate": {
+                                    "unique": false,
+                                    "multiple": false
+                                  },
+                                  "hideOnChildrenHidden": false,
+                                  "autofocus": false,
+                                  "leftIcon": "",
+                                  "rightIcon": "",
+                                  "disableOnInvalid": false
+                                }
+                              ],
+                              "width": 4,
+                              "offset": 0,
+                              "push": 0,
+                              "pull": 0
+                            }
+                          ],
+                          "alwaysEnabled": false,
+                          "tableView": false,
+                          "key": "columns",
+                          "type": "columns",
+                          "input": false,
+                          "validate": {
+                            "unique": false,
+                            "multiple": false
+                          },
+                          "path": "columns",
+                          "clearOnHide": false,
+                          "hideLabel": true
+                        }
+                      ],
+                      "width": 4,
+                      "offset": 0,
+                      "push": 0,
+                      "pull": 0
+                    }
+                  ],
+                  "alwaysEnabled": false,
+                  "tableView": false,
+                  "key": "planColumns",
+                  "type": "columns",
+                  "input": false,
+                  "validate": {
+                    "unique": false,
+                    "multiple": false
+                  },
+                  "path": "planColumns",
+                  "clearOnHide": false,
+                  "hideLabel": true
+                }
+              ],
+              "path": "planFieldset",
+              "clearOnHide": false,
+              "hideLabel": true
+            },
+            {
+              "legend": "Usage Limits",
+              "alwaysEnabled": false,
+              "tableView": false,
+              "key": "usageLimitsFieldset",
+              "type": "fieldset",
+              "label": "Usage Limits",
+              "input": false,
+              "validate": {
+                "unique": false,
+                "multiple": false
+              },
+              "components": [
+                {
+                  "label": "Usage Limit Columns",
+                  "columns": [
+                    {
+                      "components": [
+                        {
+                          "label": "Projects",
+                          "description": "Per License, Tracked as Total",
+                          "mask": false,
+                          "spellcheck": true,
+                          "tableView": false,
+                          "delimiter": false,
+                          "requireDecimal": false,
+                          "inputFormat": "plain",
+                          "validate": {
+                            "unique": false,
+                            "multiple": false
+                          },
+                          "key": "projects",
+                          "type": "number",
+                          "alwaysEnabled": false,
+                          "input": true,
+                          "hideOnChildrenHidden": false,
+                          "autofocus": false,
+                          "inputType": "number",
+                          "placeholder": "",
+                          "prefix": "",
+                          "suffix": "",
+                          "defaultValue": "",
+                          "protected": false,
+                          "persistent": true,
+                          "hidden": false,
+                          "clearOnHide": true
+                        },
+                        {
+                          "label": "Tenants",
+                          "description": "Per License, Tracked as Total",
+                          "mask": false,
+                          "spellcheck": true,
+                          "tableView": true,
+                          "delimiter": false,
+                          "requireDecimal": false,
+                          "inputFormat": "plain",
+                          "validate": {
+                            "multiple": false,
+                            "unique": false
+                          },
+                          "key": "tenants",
+                          "type": "number",
+                          "alwaysEnabled": false,
+                          "input": true,
+                          "inputType": "number",
+                          "lockKey": true,
+                          "hideOnChildrenHidden": false,
+                          "autofocus": false,
+                          "placeholder": "",
+                          "prefix": "",
+                          "suffix": "",
+                          "defaultValue": "",
+                          "protected": false,
+                          "persistent": true,
+                          "hidden": false,
+                          "clearOnHide": true
+                        },
+                        {
+                          "label": "Stages",
+                          "description": "Per Project, Tracked as Total",
+                          "mask": false,
+                          "spellcheck": true,
+                          "tableView": false,
+                          "delimiter": false,
+                          "requireDecimal": false,
+                          "inputFormat": "plain",
+                          "validate": {
+                            "unique": false,
+                            "multiple": false
+                          },
+                          "key": "stages",
+                          "type": "number",
+                          "alwaysEnabled": false,
+                          "input": true,
+                          "hideOnChildrenHidden": false,
+                          "autofocus": false,
+                          "inputType": "number",
+                          "placeholder": "",
+                          "prefix": "",
+                          "suffix": "",
+                          "defaultValue": "",
+                          "protected": false,
+                          "persistent": true,
+                          "hidden": false,
+                          "clearOnHide": true
+                        },
+                        {
+                          "label": "Form Manager Projects",
+                          "description": "Per License, Tracked as Total",
+                          "mask": false,
+                          "spellcheck": true,
+                          "tableView": false,
+                          "delimiter": false,
+                          "requireDecimal": false,
+                          "inputFormat": "plain",
+                          "validate": {
+                            "unique": false,
+                            "multiple": false
+                          },
+                          "key": "formManagers",
+                          "type": "number",
+                          "input": true,
+                          "hideOnChildrenHidden": false,
+                          "autofocus": false,
+                          "inputType": "number",
+                          "placeholder": "",
+                          "prefix": "",
+                          "suffix": "",
+                          "defaultValue": "",
+                          "protected": false,
+                          "persistent": true,
+                          "hidden": false,
+                          "clearOnHide": true
+                        }
+                      ],
+                      "width": 4,
+                      "offset": 0,
+                      "push": 0,
+                      "pull": 0
+                    },
+                    {
+                      "components": [
+                        {
+                          "label": "Forms",
+                          "description": "Per Project, Tracked as Total (hosted only)",
+                          "mask": false,
+                          "spellcheck": true,
+                          "tableView": false,
+                          "delimiter": false,
+                          "requireDecimal": false,
+                          "inputFormat": "plain",
+                          "validate": {
+                            "unique": false,
+                            "multiple": false
+                          },
+                          "key": "forms",
+                          "type": "number",
+                          "alwaysEnabled": false,
+                          "input": true,
+                          "hideOnChildrenHidden": false,
+                          "autofocus": false,
+                          "inputType": "number",
+                          "placeholder": "",
+                          "prefix": "",
+                          "suffix": "",
+                          "defaultValue": "",
+                          "protected": false,
+                          "persistent": true,
+                          "hidden": false,
+                          "clearOnHide": true
+                        },
+                        {
+                          "label": "Form Loads",
+                          "description": "Per Project, Tracked Monthly (hosted only)",
+                          "mask": false,
+                          "spellcheck": true,
+                          "tableView": false,
+                          "delimiter": false,
+                          "requireDecimal": false,
+                          "inputFormat": "plain",
+                          "validate": {
+                            "unique": false,
+                            "multiple": false
+                          },
+                          "key": "formRequests",
+                          "type": "number",
+                          "alwaysEnabled": false,
+                          "input": true,
+                          "hideOnChildrenHidden": false,
+                          "autofocus": false,
+                          "inputType": "number",
+                          "placeholder": "",
+                          "prefix": "",
+                          "suffix": "",
+                          "defaultValue": "",
+                          "protected": false,
+                          "persistent": true,
+                          "hidden": false,
+                          "clearOnHide": true
+                        },
+                        {
+                          "label": "Submission Requests",
+                          "description": "Per Project, Tracked Monthly (hosted only)",
+                          "mask": false,
+                          "spellcheck": true,
+                          "tableView": false,
+                          "delimiter": false,
+                          "requireDecimal": false,
+                          "inputFormat": "plain",
+                          "validate": {
+                            "unique": false,
+                            "multiple": false
+                          },
+                          "key": "submissionRequests",
+                          "type": "number",
+                          "alwaysEnabled": false,
+                          "input": true,
+                          "hideOnChildrenHidden": false,
+                          "autofocus": false,
+                          "inputType": "number",
+                          "placeholder": "",
+                          "prefix": "",
+                          "suffix": "",
+                          "defaultValue": "",
+                          "protected": false,
+                          "persistent": true,
+                          "hidden": false,
+                          "clearOnHide": true
+                        }
+                      ],
+                      "width": 4,
+                      "offset": 0,
+                      "push": 0,
+                      "pull": 0
+                    },
+                    {
+                      "components": [
+                        {
+                          "label": "Emails",
+                          "description": "Per Project, Tracked Monthly (hosted only)",
+                          "mask": false,
+                          "spellcheck": true,
+                          "tableView": false,
+                          "delimiter": false,
+                          "requireDecimal": false,
+                          "inputFormat": "plain",
+                          "validate": {
+                            "unique": false,
+                            "multiple": false
+                          },
+                          "key": "emails",
+                          "type": "number",
+                          "alwaysEnabled": false,
+                          "input": true,
+                          "hideOnChildrenHidden": false,
+                          "autofocus": false,
+                          "inputType": "number",
+                          "placeholder": "",
+                          "prefix": "",
+                          "suffix": "",
+                          "defaultValue": "",
+                          "protected": false,
+                          "persistent": true,
+                          "hidden": false,
+                          "clearOnHide": true
+                        },
+                        {
+                          "label": "PDF Generations",
+                          "description": "Per Project, Tracked Monthly (hosted only)",
+                          "mask": false,
+                          "spellcheck": true,
+                          "tableView": false,
+                          "delimiter": false,
+                          "requireDecimal": false,
+                          "inputFormat": "plain",
+                          "validate": {
+                            "unique": false,
+                            "multiple": false
+                          },
+                          "key": "pdfDownloads",
+                          "type": "number",
+                          "alwaysEnabled": false,
+                          "input": true,
+                          "hideOnChildrenHidden": false,
+                          "autofocus": false,
+                          "inputType": "number",
+                          "placeholder": "",
+                          "prefix": "",
+                          "suffix": "",
+                          "defaultValue": "",
+                          "protected": false,
+                          "persistent": true,
+                          "hidden": false,
+                          "clearOnHide": true
+                        },
+                        {
+                          "label": "Hosted PDF Documents",
+                          "description": "Per Project, Tracked as Total (hosted only)",
+                          "mask": false,
+                          "spellcheck": true,
+                          "tableView": false,
+                          "delimiter": false,
+                          "requireDecimal": false,
+                          "inputFormat": "plain",
+                          "validate": {
+                            "unique": false,
+                            "multiple": false
+                          },
+                          "key": "pdfs",
+                          "type": "number",
+                          "alwaysEnabled": false,
+                          "input": true,
+                          "hideOnChildrenHidden": false,
+                          "autofocus": false,
+                          "inputType": "number",
+                          "placeholder": "",
+                          "prefix": "",
+                          "suffix": "",
+                          "defaultValue": "",
+                          "protected": false,
+                          "persistent": true,
+                          "hidden": false,
+                          "clearOnHide": true
+                        }
+                      ],
+                      "width": 4,
+                      "offset": 0,
+                      "push": 0,
+                      "pull": 0
+                    }
+                  ],
+                  "alwaysEnabled": false,
+                  "tableView": false,
+                  "key": "usageLimitColumns",
+                  "type": "columns",
+                  "input": false,
+                  "validate": {
+                    "unique": false,
+                    "multiple": false
+                  },
+                  "path": "usageLimitColumns",
+                  "clearOnHide": false,
+                  "hideLabel": true
+                }
+              ],
+              "path": "usageLimitsFieldset",
+              "clearOnHide": false,
+              "hideLabel": true
+            },
+            {
+              "legend": "On-Premise Servers",
+              "alwaysEnabled": false,
+              "tableView": false,
+              "key": "serversFieldset",
+              "type": "fieldset",
+              "label": "Servers",
+              "input": false,
+              "validate": {
+                "unique": false,
+                "multiple": false
+              },
+              "components": [
+                {
+                  "label": "On-Premise Columns",
+                  "columns": [
+                    {
+                      "components": [
+                        {
+                          "label": "API Environments",
+                          "mask": false,
+                          "spellcheck": true,
+                          "alwaysEnabled": false,
+                          "tableView": false,
+                          "defaultValue": "0",
+                          "delimiter": false,
+                          "requireDecimal": false,
+                          "inputFormat": "plain",
+                          "validate": {
+                            "unique": false,
+                            "multiple": false
+                          },
+                          "key": "apiServers",
+                          "type": "number",
+                          "input": true,
+                          "hideOnChildrenHidden": false,
+                          "autofocus": false,
+                          "inputType": "number",
+                          "placeholder": "",
+                          "prefix": "",
+                          "suffix": "",
+                          "protected": false,
+                          "persistent": true,
+                          "hidden": false,
+                          "clearOnHide": true
+                        }
+                      ],
+                      "width": 4,
+                      "offset": 0,
+                      "push": 0,
+                      "pull": 0
+                    },
+                    {
+                      "components": [
+                        {
+                          "label": "PDF Environments",
+                          "mask": false,
+                          "spellcheck": true,
+                          "alwaysEnabled": false,
+                          "tableView": false,
+                          "defaultValue": "0",
+                          "delimiter": false,
+                          "requireDecimal": false,
+                          "inputFormat": "plain",
+                          "validate": {
+                            "unique": false,
+                            "multiple": false
+                          },
+                          "key": "pdfServers",
+                          "type": "number",
+                          "input": true,
+                          "hideOnChildrenHidden": false,
+                          "autofocus": false,
+                          "inputType": "number",
+                          "placeholder": "",
+                          "prefix": "",
+                          "suffix": "",
+                          "protected": false,
+                          "persistent": true,
+                          "hidden": false,
+                          "clearOnHide": true
+                        }
+                      ],
+                      "width": 4,
+                      "offset": 0,
+                      "push": 0,
+                      "pull": 0
+                    },
+                    {
+                      "components": [],
+                      "width": 4,
+                      "offset": 0,
+                      "push": 0,
+                      "pull": 0
+                    }
+                  ],
+                  "alwaysEnabled": false,
+                  "tableView": false,
+                  "key": "onPremiseColumns",
+                  "type": "columns",
+                  "input": false,
+                  "validate": {
+                    "unique": false,
+                    "multiple": false
+                  },
+                  "path": "columns3",
+                  "clearOnHide": false,
+                  "hideLabel": true
+                }
+              ],
+              "path": "serversFieldset",
+              "clearOnHide": false,
+              "hideLabel": true
+            }
+          ],
+          "dataGridLabel": false,
+          "labelWidth": 30,
+          "labelMargin": 3,
+          "clearOnRefresh": false,
+          "validate": {
+            "unique": false,
+            "multiple": false
+          },
+          "path": "licenseTermsPanel",
+          "clearOnHide": false,
+          "hideLabel": false
+        },
+        {
+          "title": "License Keys",
+          "theme": "primary",
+          "collapsible": false,
+          "alwaysEnabled": false,
+          "tableView": false,
+          "key": "licenseKeysPanel",
+          "type": "panel",
+          "label": "License Keys",
+          "input": false,
+          "validate": {
+            "unique": false,
+            "multiple": false
+          },
+          "components": [
+            {
+              "label": "License Keys",
+              "disableAddingRemovingRows": false,
+              "reorder": false,
+              "addAnotherPosition": "bottom",
+              "defaultOpen": false,
+              "layoutFixed": false,
+              "enableRowGroups": false,
+              "hideLabel": true,
+              "tableView": false,
+              "customDefaultValue": "value = [\n  {\n    name: 'Environment',\n    scope: [\n      'apiServer',\n      'pdfServer',\n      'project',\n      'tenant',\n      'stage',\n      'form',\n      'formRequest',\n      'formManager',\n      'email',\n      'pdf',\n      'pdfDownload',\n      'submissionRequest',\n    ]\n  }\n]",
+              "validate": {
+                "unique": false,
+                "multiple": false
+              },
+              "key": "licenseKeys",
+              "type": "datagrid",
+              "alwaysEnabled": false,
+              "input": true,
+              "components": [
+                {
+                  "label": "Name",
+                  "alwaysEnabled": false,
+                  "tableView": false,
+                  "validate": {
+                    "unique": false,
+                    "multiple": false
+                  },
+                  "key": "name",
+                  "type": "textfield",
+                  "input": true,
+                  "inDataGrid": true,
+                  "autofocus": false,
+                  "inputType": "text",
+                  "inputMask": "",
+                  "placeholder": "",
+                  "prefix": "",
+                  "suffix": "",
+                  "multiple": false,
+                  "defaultValue": "",
+                  "protected": false,
+                  "unique": false,
+                  "persistent": true,
+                  "hidden": false,
+                  "clearOnHide": true,
+                  "spellcheck": true,
+                  "conditional": {
+                    "show": null,
+                    "when": null,
+                    "eq": ""
+                  }
+                },
+                {
+                  "label": "License Key",
+                  "alwaysEnabled": false,
+                  "tableView": false,
+                  "customDefaultValue": "var pool = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';\nvalue = _.times(30, () => pool[_.random(0, pool.length)]).join('');",
+                  "validate": {
+                    "unique": false,
+                    "multiple": false
+                  },
+                  "key": "key",
+                  "type": "textfield",
+                  "input": true,
+                  "inDataGrid": true,
+                  "autofocus": false,
+                  "inputType": "text",
+                  "inputMask": "",
+                  "placeholder": "",
+                  "prefix": "",
+                  "suffix": "",
+                  "multiple": false,
+                  "defaultValue": "",
+                  "protected": false,
+                  "unique": false,
+                  "persistent": true,
+                  "hidden": false,
+                  "clearOnHide": true,
+                  "spellcheck": true,
+                  "conditional": {
+                    "show": null,
+                    "when": null,
+                    "eq": ""
+                  }
+                },
+                {
+                  "label": "Scope",
+                  "widget": "choicesjs",
+                  "customClass": "test-css",
+                  "tableView": false,
+                  "multiple": true,
+                  "dataSrc": "custom",
+                  "defaultValue": [
+                    {}
+                  ],
+                  "data": {
+                    "values": [
+                      {}
+                    ],
+                    "custom": "values = [\n  'apiServer',\n  'pdfServer',\n  'project',\n  'tenant',\n  'stage',\n  'form',\n  'submissionRequest',\n  'formRequest',\n  'pdf',\n  'pdfDownload',\n  'formManager',\n]"
+                  },
+                  "template": "<span>{{ item }}</span>",
+                  "selectThreshold": 0.3,
+                  "validate": {
+                    "unique": false,
+                    "multiple": true
+                  },
+                  "key": "scope",
+                  "type": "select",
+                  "alwaysEnabled": false,
+                  "input": true,
+                  "inDataGrid": true,
+                  "autofocus": false,
+                  "placeholder": "",
+                  "valueProperty": "",
+                  "refreshOn": "",
+                  "filter": "",
+                  "authenticate": false,
+                  "protected": false,
+                  "unique": false,
+                  "persistent": true,
+                  "hidden": false,
+                  "clearOnHide": true
+                }
+              ],
+              "path": "licenseKeys",
+              "autofocus": false,
+              "tree": true,
+              "protected": false,
+              "persistent": true,
+              "hidden": false,
+              "clearOnHide": true
+            },
+            {
+              "label": "Summary",
+              "autoExpand": false,
+              "spellcheck": true,
+              "tableView": false,
+              "defaultValue": "You have undefined",
+              "persistent": false,
+              "calculateValue": "if (!data.licenseKeys) {return}\n\nvalue = `You currently have ${data.licenseKeys.length} key${data.licenseKeys.length === 1 ? '' : 's'} associated with your Form.io license:\n\n${_.map(data.licenseKeys, row => `${row.name ? '\\tName:\\t' + row.name + '\\n' : ''}\\tKey:\\t\\t${row.key}\\n\\tScope:\\t${row.scope.join(', ')}`).join('\\n\\n')}`",
+              "validate": {
+                "unique": false,
+                "multiple": false
+              },
+              "key": "licenseKeySummary",
+              "type": "textarea",
+              "rows": 13,
+              "alwaysEnabled": false,
+              "input": true,
+              "autofocus": false,
+              "placeholder": "",
+              "prefix": "",
+              "suffix": "",
+              "multiple": false,
+              "protected": false,
+              "hidden": false,
+              "wysiwyg": false,
+              "clearOnHide": true
+            }
+          ],
+          "path": "licenseKeysPanel",
+          "clearOnHide": false,
+          "hideLabel": false
+        },
+        {
+          "input": true,
+          "label": "Submit",
+          "tableView": false,
+          "key": "submit",
+          "type": "button",
+          "labelWidth": 30,
+          "labelMargin": 3,
+          "widget": null,
+          "clearOnRefresh": false,
+          "validate": {
+            "unique": false,
+            "multiple": false
+          },
+          "alwaysEnabled": false,
+          "autofocus": false,
+          "size": "md",
+          "leftIcon": "",
+          "rightIcon": "",
+          "block": false,
+          "action": "submit",
+          "disableOnInvalid": false,
+          "theme": "primary"
+        }
+      ],
+      "access": [
+        {
+          "roles": [
+            "administrator2",
+            "authenticated",
+            "anonymous",
+            "administrator"
+          ],
+          "type": "read_all"
+        }
+      ],
+      "submissionAccess": [],
+      "properties": {}
     }
   },
   "access": [
