@@ -167,8 +167,11 @@ module.exports = (app, template, hook) => {
   describe('x- headers for actions', () => {
     const helper = new template.Helper(template.formio.owner);
     let submissionUrl;
-    let email1Id;
-    let email2Id;
+    let administratorRoleActionId;
+    let authenticatedRoleActionId;
+    let administratorRoleId;
+    let authenticatedRoleId;
+    let groupId;
     const incorrectId = '000000000000000000000000';
     const token = '123123123123123123123';
 
@@ -184,7 +187,24 @@ module.exports = (app, template, hook) => {
             },
           ],
         })
-        .form('test', [
+        .resource('group', [
+          {
+            input: true,
+            label: 'Name',
+            key: 'name',
+            type: 'textfield',
+          },
+        ])
+        .submission({
+          name: 'Test Group',
+        })
+        .resource('test', [
+          {
+            input: true,
+            label: 'Group',
+            key: 'group',
+            type: 'textfield',
+          },
           {
             input: true,
             label: 'First Name',
@@ -199,132 +219,103 @@ module.exports = (app, template, hook) => {
           },
         ])
         .action({
-          name: 'email',
-          title: 'Email 1',
-          priority: 0,
+          name: 'role',
+          title: 'Authenticated',
+          priority: 1,
           method: ['create'],
           handler: ['after'],
           settings: {
-            transport: 'test',
-            from: 'no-reply@form.io',
-            emails: 'user1@form.io',
-            subject: 'Email 1 Action',
-            message: 'Email 1',
+            association: 'new',
+            type: 'add',
+            role: 'authenticated',
           },
         })
         .action({
-          name: 'email',
-          title: 'Email 2',
-          priority: 0,
+          name: 'role',
+          title: 'Administrator',
+          priority: 1,
           method: ['create'],
           handler: ['after'],
           settings: {
-            transport: 'test',
-            from: 'no-reply@form.io',
-            emails: 'user2@form.io',
-            subject: 'Email 2 Action',
-            message: 'Email 2',
+            association: 'new',
+            type: 'add',
+            role: 'administrator',
+          },
+        })
+        .action({
+          name: 'group',
+          title: 'Group Assignment',
+          priority: 5,
+          handler: ['after'],
+          method: ['create'],
+          settings: {
+            group: 'group',
           },
         })
         .execute(() => {
           submissionUrl = `/project/${helper.template.project._id}/form/${helper.template.forms.test._id}/submission`;
-          email1Id = helper.template.actions.test[0]._id;
-          email2Id = helper.template.actions.test[1]._id;
+          administratorRoleActionId = helper.template.actions.test[1]._id;
+          authenticatedRoleActionId = helper.template.actions.test[0]._id;
+          administratorRoleId = helper.template.roles.administrator._id;
+          authenticatedRoleId = helper.template.roles.authenticated._id;
+          groupId = helper.template.submissions.group[0]._id;
 
           done();
         });
     });
 
-    const timeout = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
-
     const checkActions = ({
       headers,
       expected: {
-        email1,
-        email2,
-        save,
+        administratorRole,
+        authenticatedRole,
+        group,
       },
     }, done) => {
-      const event = template.hooks.getEmitter();
-      const promises = [];
-      let submissionPromise;
-
-      promises.push(Promise.race([
-        new Promise((resolve, reject) => {
-          event.on('newMail', (email) => {
-            try {
-              assert.equal(email.from, 'no-reply@form.io');
-              assert.equal(email.to, 'user1@form.io');
-              assert.equal(email.subject, 'Email 1 Action');
-              assert.equal(email.html, 'Email 1');
-              email1 ? resolve() : reject(new Error('Email 1 should not be received.'));
-            }
-            catch (e) {}
-          });
-        }),
-        timeout(3000)
-          .then(() => {
-            if (email1) {
-              throw new Error('Email 1 should be received.');
-            }
-          }),
-      ]));
-
-      promises.push(Promise.race([
-        new Promise((resolve, reject) => {
-          event.on('newMail', (email) => {
-            try {
-              assert.equal(email.from, 'no-reply@form.io');
-              assert.equal(email.to, 'user2@form.io');
-              assert.equal(email.subject, 'Email 2 Action');
-              assert.equal(email.html, 'Email 2');
-              email2 ? resolve() : reject(new Error('Email 2 should not be received.'));
-            }
-            catch (e) {}
-          });
-        }),
-        timeout(3000)
-          .then(() => {
-            if (email2) {
-              throw new Error('Email 2 should be received.');
-            }
-          }),
-      ]));
-
-      promises.push(new Promise((resolve) => {
-        submissionPromise = resolve;
-      }));
-
-      Promise.all(promises)
-        .then(() => {
-          event.removeAllListeners('newMail');
-          return done()
-        })
-        .catch(done);
-
       request(app)
         .post(submissionUrl)
         .set('x-token', token)
         .set(headers)
         .send({
           data: {
+            group: groupId,
             firstName: 'Joe',
             lastName: 'Smith',
           },
         })
         .expect('Content-Type', /json/)
-        .expect(save ? 201 : 200)
+        .expect(201)
         .end((err, res) => {
           if (err) {
             return done(err);
           }
 
           const response = res.body;
-          assert.equal(Boolean(response._id), save);
           assert.equal(response.data.firstName, 'Joe');
           assert.equal(response.data.lastName, 'Smith');
+          assert.equal(
+            response.roles.includes(administratorRoleId),
+            administratorRole,
+            administratorRole
+              ? 'Should have administrator role assigned'
+              : 'Should not have administrator role assigned'
+          );
+          assert.equal(
+            response.roles.includes(authenticatedRoleId),
+            authenticatedRole,
+            authenticatedRole
+              ? 'Should have authenticated role assigned'
+              : 'Should not have authenticated role assigned'
+          );
+          assert.equal(
+            response.roles.includes(groupId),
+            group,
+            group
+              ? 'Should have group role assigned'
+              : 'Should not have group role assigned'
+          );
 
-          submissionPromise();
+          done();
         });
     };
 
@@ -335,9 +326,9 @@ module.exports = (app, template, hook) => {
             'x-actions-include': '',
           },
           expected: {
-            email1: true,
-            email2: true,
-            save: true,
+            administratorRole: true,
+            authenticatedRole: true,
+            group: true,
           },
         }, done);
       });
@@ -345,12 +336,12 @@ module.exports = (app, template, hook) => {
       it('Single action might be executed by action name', (done) => {
         checkActions({
           headers: {
-            'x-actions-include': 'save',
+            'x-actions-include': 'save,group',
           },
           expected: {
-            email1: false,
-            email2: false,
-            save: true,
+            administratorRole: false,
+            authenticatedRole: false,
+            group: true,
           },
         }, done);
       });
@@ -358,12 +349,12 @@ module.exports = (app, template, hook) => {
       it('Multiple actions might be executed by action name', (done) => {
         checkActions({
           headers: {
-            'x-actions-include': 'email',
+            'x-actions-include': 'save,role',
           },
           expected: {
-            email1: true,
-            email2: true,
-            save: false,
+            administratorRole: true,
+            authenticatedRole: true,
+            group: false,
           },
         }, done);
       });
@@ -371,12 +362,12 @@ module.exports = (app, template, hook) => {
       it('Multiple actions might be executed by action names', (done) => {
         checkActions({
           headers: {
-            'x-actions-include': 'email,save',
+            'x-actions-include': 'save,role,group',
           },
           expected: {
-            email1: true,
-            email2: true,
-            save: true,
+            administratorRole: true,
+            authenticatedRole: true,
+            group: true,
           },
         }, done);
       });
@@ -384,12 +375,12 @@ module.exports = (app, template, hook) => {
       it('Incorrect action names ignored', (done) => {
         checkActions({
           headers: {
-            'x-actions-include': 'notexisting',
+            'x-actions-include': 'save,notexisting',
           },
           expected: {
-            email1: false,
-            email2: false,
-            save: false,
+            administratorRole: false,
+            authenticatedRole: false,
+            group: false,
           },
         }, done);
       });
@@ -397,12 +388,12 @@ module.exports = (app, template, hook) => {
       it('Incorrect action names not blocking other actions', (done) => {
         checkActions({
           headers: {
-            'x-actions-include': 'notexisting,save',
+            'x-actions-include': 'save,notexisting,group',
           },
           expected: {
-            email1: false,
-            email2: false,
-            save: true,
+            administratorRole: false,
+            authenticatedRole: false,
+            group: true,
           },
         }, done);
       });
@@ -410,12 +401,12 @@ module.exports = (app, template, hook) => {
       it('Single action might be executed by action Id', (done) => {
         checkActions({
           headers: {
-            'x-actions-include': email1Id,
+            'x-actions-include': `save,${authenticatedRoleActionId}`,
           },
           expected: {
-            email1: true,
-            email2: false,
-            save: false,
+            administratorRole: false,
+            authenticatedRole: true,
+            group: false,
           },
         }, done);
       });
@@ -423,12 +414,12 @@ module.exports = (app, template, hook) => {
       it('Multiple action might be executed by action Ids', (done) => {
         checkActions({
           headers: {
-            'x-actions-include': `${email1Id},${email2Id}`,
+            'x-actions-include': `save,${authenticatedRoleActionId},${administratorRoleActionId}`,
           },
           expected: {
-            email1: true,
-            email2: true,
-            save: false,
+            administratorRole: true,
+            authenticatedRole: true,
+            group: false,
           },
         }, done);
       });
@@ -436,12 +427,12 @@ module.exports = (app, template, hook) => {
       it('Incorrect action Ids ignored', (done) => {
         checkActions({
           headers: {
-            'x-actions-include': incorrectId,
+            'x-actions-include': `save,${incorrectId}`,
           },
           expected: {
-            email1: false,
-            email2: false,
-            save: false,
+            administratorRole: false,
+            authenticatedRole: false,
+            group: false,
           },
         }, done);
       });
@@ -449,12 +440,12 @@ module.exports = (app, template, hook) => {
       it('Incorrect action Ids not blocking other actions', (done) => {
         checkActions({
           headers: {
-            'x-actions-include': `${email1Id},${incorrectId}`,
+            'x-actions-include': `save,${authenticatedRoleActionId},${incorrectId}`,
           },
           expected: {
-            email1: true,
-            email2: false,
-            save: false,
+            administratorRole: false,
+            authenticatedRole: true,
+            group: false,
           },
         }, done);
       });
@@ -462,12 +453,12 @@ module.exports = (app, template, hook) => {
       it('Combination of action names and Ids might be used', (done) => {
         checkActions({
           headers: {
-            'x-actions-include': `save,${email1Id}`,
+            'x-actions-include': `save,group,${authenticatedRoleActionId}`,
           },
           expected: {
-            email1: true,
-            email2: false,
-            save: true,
+            administratorRole: false,
+            authenticatedRole: true,
+            group: true,
           },
         }, done);
       });
@@ -480,9 +471,9 @@ module.exports = (app, template, hook) => {
             'x-actions-exclude': '',
           },
           expected: {
-            email1: true,
-            email2: true,
-            save: true,
+            administratorRole: true,
+            authenticatedRole: true,
+            group: true,
           },
         }, done);
       });
@@ -490,12 +481,12 @@ module.exports = (app, template, hook) => {
       it('Single action might be excluded by action name', (done) => {
         checkActions({
           headers: {
-            'x-actions-exclude': 'save',
+            'x-actions-exclude': 'group',
           },
           expected: {
-            email1: true,
-            email2: true,
-            save: false,
+            administratorRole: true,
+            authenticatedRole: true,
+            group: false,
           },
         }, done);
       });
@@ -503,12 +494,12 @@ module.exports = (app, template, hook) => {
       it('Multiple actions might be excluded by action name', (done) => {
         checkActions({
           headers: {
-            'x-actions-exclude': 'email',
+            'x-actions-exclude': 'role',
           },
           expected: {
-            email1: false,
-            email2: false,
-            save: true,
+            administratorRole: false,
+            authenticatedRole: false,
+            group: true,
           },
         }, done);
       });
@@ -516,12 +507,12 @@ module.exports = (app, template, hook) => {
       it('Multiple actions might be excluded by action names', (done) => {
         checkActions({
           headers: {
-            'x-actions-exclude': 'email,save',
+            'x-actions-exclude': 'role,group',
           },
           expected: {
-            email1: false,
-            email2: false,
-            save: false,
+            administratorRole: false,
+            authenticatedRole: false,
+            group: false,
           },
         }, done);
       });
@@ -532,9 +523,9 @@ module.exports = (app, template, hook) => {
             'x-actions-exclude': 'notexisting',
           },
           expected: {
-            email1: true,
-            email2: true,
-            save: true,
+            administratorRole: true,
+            authenticatedRole: true,
+            group: true,
           },
         }, done);
       });
@@ -542,12 +533,12 @@ module.exports = (app, template, hook) => {
       it('Incorrect action names not blocking other actions', (done) => {
         checkActions({
           headers: {
-            'x-actions-exclude': 'notexisting,save',
+            'x-actions-exclude': 'notexisting,group',
           },
           expected: {
-            email1: true,
-            email2: true,
-            save: false,
+            administratorRole: true,
+            authenticatedRole: true,
+            group: false,
           },
         }, done);
       });
@@ -555,12 +546,12 @@ module.exports = (app, template, hook) => {
       it('Single action might be excluded by action Id', (done) => {
         checkActions({
           headers: {
-            'x-actions-exclude': email1Id,
+            'x-actions-exclude': authenticatedRoleActionId,
           },
           expected: {
-            email1: false,
-            email2: true,
-            save: true,
+            administratorRole: true,
+            authenticatedRole: false,
+            group: true,
           },
         }, done);
       });
@@ -568,12 +559,12 @@ module.exports = (app, template, hook) => {
       it('Multiple action might be excluded by action Ids', (done) => {
         checkActions({
           headers: {
-            'x-actions-exclude': `${email1Id},${email2Id}`,
+            'x-actions-exclude': `${authenticatedRoleActionId},${administratorRoleActionId}`,
           },
           expected: {
-            email1: false,
-            email2: false,
-            save: true,
+            administratorRole: false,
+            authenticatedRole: false,
+            group: true,
           },
         }, done);
       });
@@ -584,9 +575,9 @@ module.exports = (app, template, hook) => {
             'x-actions-exclude': incorrectId,
           },
           expected: {
-            email1: true,
-            email2: true,
-            save: true,
+            administratorRole: true,
+            authenticatedRole: true,
+            group: true,
           },
         }, done);
       });
@@ -594,12 +585,12 @@ module.exports = (app, template, hook) => {
       it('Incorrect action Ids not blocking other actions', (done) => {
         checkActions({
           headers: {
-            'x-actions-exclude': `${email1Id},${incorrectId}`,
+            'x-actions-exclude': `${authenticatedRoleActionId},${incorrectId}`,
           },
           expected: {
-            email1: false,
-            email2: true,
-            save: true,
+            administratorRole: true,
+            authenticatedRole: false,
+            group: true,
           },
         }, done);
       });
@@ -607,12 +598,12 @@ module.exports = (app, template, hook) => {
       it('Combination of action names and Ids might be used', (done) => {
         checkActions({
           headers: {
-            'x-actions-exclude': `save,${email1Id}`,
+            'x-actions-exclude': `group,${authenticatedRoleActionId}`,
           },
           expected: {
-            email1: false,
-            email2: true,
-            save: false,
+            administratorRole: true,
+            authenticatedRole: false,
+            group: false,
           },
         }, done);
       });
@@ -621,13 +612,13 @@ module.exports = (app, template, hook) => {
     it('x-actions-exclude header should be prioritized over x-actions-exclude header', (done) => {
       checkActions({
         headers: {
-          'x-actions-include': 'email',
-          'x-actions-exclude': 'email',
+          'x-actions-include': 'save,role',
+          'x-actions-exclude': 'role',
         },
         expected: {
-          email1: true,
-          email2: true,
-          save: false,
+          administratorRole: true,
+          authenticatedRole: true,
+          group: false,
         },
       }, done);
     });
