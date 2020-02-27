@@ -398,6 +398,10 @@ module.exports = function(options) {
     debug.startup('Attaching middleware: Remote Token Management');
     app.use('/project/:projectId/access/remote', require('./src/middleware/remoteAccess')(app.formio));
 
+    // Mount validate submission data endpoint.
+    debug.startup('Attaching middleware: Validate Submission Data');
+    app.use('/project/:projectId/form/:formId/validate', require('./src/middleware/validateSubmission')(app.formio));
+
     // Mount the error logging middleware.
     debug.startup('Attaching middleware: Logger');
     app.use(Logger.middleware);
