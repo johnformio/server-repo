@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.7
+### Changed
+ - Fixed deployed portal to resolve Exising Resources
+ - Fixed issue with deployed portal erasing spaces in TextAreas.
+
 ## 6.9.6
 ### Changed
  - Build process to change from pkg to alpine-node.
