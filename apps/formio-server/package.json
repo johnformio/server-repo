@@ -78,7 +78,9 @@
     "traverse": "^0.6.6",
     "twilio": "^3.39.5",
     "universal-analytics": "^0.4.20",
-    "uuid": "^3.4.0"
+    "uuid": "^3.4.0",
+    "webpack": "^4.41.6",
+    "webpack-obfuscator": "^0.25.2"
   },
   "devDependencies": {
     "eslint": "^6.8.0",
@@ -88,9 +90,7 @@
     "prepack": "^0.2.54",
     "sinon": "^8.1.1",
     "supertest": "^4.0.2",
-    "uglify-es": "git+https://github.com/mishoo/UglifyJS2.git#harmony",
-    "webpack": "^4.41.6",
-    "webpack-obfuscator": "^0.25.2"
+    "uglify-es": "git+https://github.com/mishoo/UglifyJS2.git#harmony"
   },
   "pre-commit": [
     "lint"
