@@ -20,14 +20,14 @@
   },
   "cache": "1550086650",
   "main": "./server.js",
-  "version": "6.9.8",
+  "version": "6.9.9",
   "schema": "3.3.6",
-  "portalVersion": "7.0.0-rc.66",
+  "portalVersion": "7.0.0-rc.67",
   "dependencies": {
     "JSONStream": "^1.3.5",
     "adal-node": "^0.2.1",
     "async": "^3.2.0",
-    "aws-sdk": "^2.633.0",
+    "aws-sdk": "^2.634.0",
     "azure-storage": "^2.10.3",
     "bluebird": "^3.7.2",
     "body-parser": "^1.19.0",
@@ -90,7 +90,7 @@
     "supertest": "^4.0.2",
     "uglify-es": "git+https://github.com/mishoo/UglifyJS2.git#harmony",
     "webpack": "^4.42.0",
-    "webpack-obfuscator": "^0.25.2"
+    "webpack-obfuscator": "^0.25.3"
   },
   "pre-commit": [
     "lint"
