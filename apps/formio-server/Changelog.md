@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.10
+### Changed
+ - Upgrade portal to 7.0.0-rc.68
+
 ## 6.9.7
 ### Changed
  - Fixed deployed portal to resolve Exising Resources
