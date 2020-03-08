@@ -10,6 +10,10 @@ module.exports = app => models => {
       index: true,
       required: true
     },
+    controller: {
+      type: String,
+      default: ''
+    },
     revisions: {
       type: String,
       enum: ['', 'current', 'original'],

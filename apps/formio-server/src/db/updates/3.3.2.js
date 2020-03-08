@@ -39,11 +39,11 @@ module.exports = function(db, config, tools, done) {
         return next();
       }
 
-      submissionsCollection.update({
+      submissionsCollection.updateMany({
         form: form._id
       }, {
         $set: {project: form.project}
-      }, {multi:true}, (err) => {
+      }, (err) => {
         if (err) {
           return next(err);
         }
@@ -56,8 +56,8 @@ module.exports = function(db, config, tools, done) {
         return next();
       });
     });
-  }, () => {
-    return hasNext;
+  }, (next) => {
+    return next(null, hasNext);
   }, (err) => {
     if (err) {
       return console.log(err);

@@ -4,6 +4,596 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.6
+### Changed
+ - Build process to change from pkg to alpine-node.
+
+## 6.9.5
+### Added
+ - Validate endpoint for forms to allow them to perform a validation only against a form.
+
+## 6.9.4
+### Changed
+ - Fixed deployed portal to work better in situations where "access" is granted to primary and "read" is granted to stage.
+ - Upgrade formio@4.9.0-rc.2
+ - Upgrade portal@7.0.0-rc.64
+
+## 6.9.3
+### Changed
+ - Upgrade portal to fix form manager loading issues.
+
+## 6.9.2
+### Added
+ - Ability to use tokens in the evaluation context.
+
+## 6.9.1
+### Fixed
+ - Update hooks to work when no primary project is found.
+
+## 6.9.0
+### Fixed
+ - Update hook to work with deployments where there isn't a primary project.
+
+## 6.9.0-rc.2
+### Fixed
+ - Permissions issues with team resources.
+
+### Changed
+ - Upgrade portal to 7.0.0-rc.62
+
+## 6.9.0-rc.1
+### Fixed
+ - Issues with leaving teams.
+ 
+### Changed
+ - Upgrade twilio@3.39.5, aws-sdk@2.623.0
+ - Upgrade portal to 7.0.0-rc.61
+ - Upgrade formiojs@4.9.0-rc.1
+
+## 6.9.0-beta.7
+### Fixed
+ - Potential server crash issue.
+
+## 6.9.0-beta.6
+### Fixed
+ - Deployment issue.
+
+## 6.9.0-beta.5
+### Changed
+ - Upgrade portal to 7.0.0-rc.60
+ - Upgrade formio.js@4.9.0-beta.8
+ - Upgrade formio@1.67.0
+
+### Fixed
+ - Ensure all renderer evaluations occur within a vm.
+ - Removed the Login and Register with Github buttons on base installations.
+ - Always include project public configs in the project variable.
+
+## 6.9.0-beta.4
+### Changed
+ - Upgrade portal to 7.0.0-rc.59
+
+### Added
+ - A way to provide global modules within projects.
+ - A way to exclude access within template exports.
+
+## 6.9.0-beta.3
+### Changed
+ - Upgrade portal to 7.0.0-rc.58
+ - Upgrade formio@1.65.0
+ 
+### Added
+ - Added new endpont for the latest form revision
+ - Action Logs access for team admins.
+ - Added support for x-actions headers.
+
+### Fixed
+ - Skip action import if there is no corresponding form or resource.
+ - Replaced all calls to Array.map with lodash to perform null checks.
+
+## 6.9.0-beta.2
+### Fixed
+ - Team join updates
+ - Crashes against the team resource.
+
+## 6.9.0-beta.1
+### Added
+ - Team invite support.
+
+### Changed
+ - Upgrade portal to 7.0.0-rc.57
+ - Upgrade major dependencies.
+ - Fixed many deprecation warnings.
+ - Upgrade formio/formio@1.64.0
+
+## 6.8.0-rc.4
+### Changed
+ - Upgraded portal to 7.0.0-rc.56
+ - Upgrade formio.js to 4.9.0-beta.4
+ - Upgrade form view pro to 1.56.0
+ - Upgrade form manager to 1.57.0
+
+## 6.8.0-rc.3
+### Changed
+ - Upgraded portal to 7.0.0-rc.55
+ - Upgrade formio.js to 4.9.0-beta.3
+ 
+### Fixed
+ - Adding options to have SSO teams without enabling Portal SSO.
+
+## 6.8.0-rc.2
+### Changed
+ - Separated the SSO Teams function to be controlled by its own independent variables.
+ - Upgraded twilio@3.39.4, aws-sdk@2.613.0, passport-saml@1.3.0
+ - Now default REDIS_SERVICE to false unless they specify otherwise.
+ 
+## 6.8.0-rc.1
+### Changed
+ - Upgrade portal to 7.0.0-rc.54
+ - Upgrade formio.js to 4.8.0
+ - Upgrade form view pro to 1.57.0
+ - Upgrade form manager to 1.56.0
+ - Upgrade tenant manager to 1.6.0
+
+## 6.8.0-beta.26
+### Changed
+ - Upgrade Formio App to 7.0.0-rc.53
+ - Upgrade formio.js to 4.8.0-rc.13
+
+## 6.8.0-beta.25
+### Changed
+ - Upgrade Formio App to 7.0.0-rc.50
+ - Upgrade formiojs@4.8.0-rc.9
+
+## 6.8.0-beta.24
+### Changed
+ - Upgrade app to use formiojs@4.8.0-rc.3
+ 
+### Fixed
+ - FOR-2576: Jira connector basic auth change 
+ - FOR-2573: Added correct handling of tenant project plan.
+ - Allow form settings to be loaded as part of revisions.
+
+## 6.8.0-beta.23
+### Changed
+ - Revert back to node10-alpine to determine if it resolves connection issues with MongoDB.
+
+## 6.8.0-beta.22
+### Changed
+ - Upgrade base image to node:12-alpine
+ - Upgrade formio.js@4.8.0-rc.1
+ - Upgrade formio/formio@1.63.0
+ 
+### Fixed
+ - Upgraded formio@1.63.0 which resolves CSV export issue with wizards.
+ - Build issues where pkg@4.4.1 broke our server.
+ - Fix datasource field action to work with new system.
+ - Issue with Docker Secrets where it would fault on certain VM's due to accessing a directory outside the bounds of the container.
+
+## 6.8.0-beta.21
+### Changed
+ - Upgrade formiojs@4.8.0-beta.9
+ - Upgrade portal to 7.0.0-rc.44
+ - Upgrade other dependencies.
+
+## 6.8.0-beta.20
+### Changed
+ - Upgrade formiojs@4.7.7
+ - Upgrade portal to 7.0.0-rc.38
+ - Upgrade twilio@3.37.1, aws-sdk@2.571.0
+
+## 6.8.0-beta.19
+### Changed
+ - Upgrade portal to 7.0.0-rc.37
+ - Upgrade formiojs@4.7.6, mongodb@3.3.4, aws-sdk@2.570.0
+
+## 6.8.0-beta.18
+### Fixed
+ - DateTime problem where dates are getting saved as January 1, 1970
+ - Next portal IE issues.
+
+### Added
+ - Premium components
+
+## 6.8.0-beta.17
+### Changed
+ - Upgrade formio-app@7.0.0-rc.34
+ - Upgrade formio.js@4.7.3
+
+## 6.8.0-beta.16
+### Changed
+ - Upgrade formio-app@7.0.0-rc.33
+
+## 6.8.0-beta.15
+### Added
+ - Added filesServer to pdf upload response.
+
+### Fixed
+ - Fix/openid mapping
+
+### Changed
+ - Upgrade formio-app@7.0.0-rc.32
+ - Upgrade formiojs@4.7.0
+ - Upgrade aws-sdk@2.562.0, twilio@3.37.0
+
+## 6.8.0-beta.14
+### Changed
+ - Upgrade formio-app@7.0.0-rc.31
+ - Upgrade formiojs@4.6.2, aws-sdk@2.559.0, resourcejs@1.37.0, formio@1.60.6
+
+## 6.8.0-beta.13
+### Changed
+ - Upgrade formio@1.60.5 which adds submission query filters to export endpoints.
+
+## 6.8.0-beta.12
+### Changed
+ - Upgrade formio.js to 4.6.0
+ - Upgrade portal to 7.0.0-rc.30
+ - Add helmet.js for security header to hosted portal.
+
+### Added
+ - Add datasource request fetching.
+
+## 6.8.0-beta.10
+### Changed
+ - Upgrade portal to 7.0.0-rc.28
+
+## 6.8.0-beta.9
+### Changed
+ - Upgrade portal to 7.0.0-rc.27
+
+## 6.8.0-beta.8
+### Changes
+ - Upgrade portal to 7.0.0-rc.26 with many fixes and updated core renderer.
+ - Upgrade bluebird@3.7.1, mongodb@3.3.3, webpack@4.41.2, aws-sdk@2.552.0, formiojs@4.4.1, twilio@3.36.0
+
+## 6.8.0-beta.7
+### Fixes
+ - Fixes stages per tenant.
+ 
+### Changes
+ - Added console that helps people disable REDIS.
+ - Upgrade portal to version 7.0.0-rc.25. Fixes stages per tenant, upgrades formio.js@4.3.3
+ - Upgrade Form Manager to v1.45.0 https://github.com/formio/formmanager/blob/master/CHANGELOG.md#1450
+
+## 6.7.40
+### Fixed
+ - Fix saving payeezy requests to db.
+
+## 6.7.39
+### Fixed
+ - Stricter limits on payeezy integration.
+
+## 6.7.38
+### Fixed
+ - Crash when trying to log projects.
+ 
+### Changed
+ - Upgrade formio@1.63.11
+
+## 6.7.37
+### Fixed
+ - Problem where un-linking files that do not exist could make server crash.
+ 
+### Changed
+ - Upgrade formio@1.63.10
+ - Upgrade formiojs@4.8.1, twilio@3.39.3, aws-sdk@2.611.0
+
+## 6.7.36
+### Fixed
+ - Issues with the email BCC and CC actions.
+
+## 6.7.35
+### Fixed
+ - Validations for file components.
+ 
+### Added
+ - BCC and CC support for Email Actions.
+
+### Changed
+ - Upgrade aws-sdk@2.608.0, mongodb@3.5.2, uuid@3.4.0
+
+## 6.7.34
+### Fixed
+ - Fix crash if a card is not returned from payeezy.
+
+## 6.7.33
+### Fixed
+ - More fixes to error messages for payeezy gateway
+
+## 6.7.32
+### Fixed
+ - Error messages from payeezy gateway
+>>>>>>> f3b06243888e205aa1dc846f62ffab05c5f6696d
+
+## 6.7.31
+### Added
+ - Form controller property.
+
+## 6.7.30
+### Fixed
+ - Payeezy integration updated to latest API.
+
+## 6.7.29
+### Fixed
+ - Issue where the cc checks would not reset after an hour.
+
+## 6.7.28
+### Fixed
+ - Update to not crash if no project is found.
+  
+## 6.7.27
+### Fixed
+ - Hosted platform to not allow many cc auth checks.
+
+## 6.7.25
+### Fixed
+ - FOR-2576: Jira connector basic auth change 
+ - FOR-2573: Added correct handling of tenant project plan.
+ - Allow form settings to be loaded as part of revisions.
+ 
+### Changed
+ - Upgrade Portal to 6.8.7
+ - Upgrade mongodb@3.4.1, webpack@4.41.4, aws-sdk@2.594.0, twilio@3.39.1
+
+## 6.7.24
+### Fixed
+ - Swagger IO interfaces from not returning any elements.
+
+## 6.7.23
+### Changed
+ - Upgrade formio@1.63.4.
+ - Resolved issues with server crashing due to Swagger io calls.
+
+## 6.7.22
+### Changed
+ - Reverted the sort by modified within CSV exports.
+
+## 6.7.21
+### Changed
+ - Upgrade formio@1.63.2 to resolve CSV export issue with wizards.
+
+## 6.7.20
+### Fixed
+ - Upgraded formio@1.63.0 which resolves CSV export issue with wizards.
+ - Build issues where pkg@4.4.1 broke our server.
+
+## 6.7.19
+### Changed
+ - Upgrade formio.js@4.8.0-rc.1
+ - Upgrade formio/formio@1.62.0
+
+### Fixed
+ - Fix datasource field action to work with new system.
+ - Issue with Docker Secrets where it would fault on certain VM's due to accessing a directory outside the bounds of the container.
+
+## 6.7.18
+### Added
+ - Support for Docker Secrets.
+ - Adding ability to forward headers with data source component.
+ - Upgrade formio/formio@1.61.0
+
+## 6.7.17
+### Fixed
+ - Adding ignoreTLS for SMTP configurations so that certain SMTP servers can be configured.
+
+## 6.7.16
+### Fixed
+ - Fixed issue where empty DateTime fields are getting saved as January 1, 1970.
+
+## 6.7.15
+### Fixed
+ - Issues with OpenID authentication.
+ 
+### Changed
+ - Upgrade formio@1.60.6
+ - Upgrade request-promise-native@1.0.8, aws-sdk@2.564.0, formiojs@4.7.2, twilio@3.37.0
+
+## 6.7.14
+### Added
+ - Added filesServer to pdf upload response.
+
+### Fixed
+ - Fixed OpenID attribute mapping.
+
+## 6.7.13
+### Added
+ - Ability to use the submission filter queries when exporting submissions as CSV.
+ 
+### Changed
+ - Upgrade all minor dependencies.
+
+## 6.7.12
+### Added
+ - Print instructions for disabling Redis if using default settings
+
+## 6.7.11
+### Changed
+ - Upgrade portal to version 6.8.6. Fixes stages per tenant.
+ - Upgrade Form Manager to v1.45.0 https://github.com/formio/formmanager/blob/master/CHANGELOG.md#1450
+
+## 6.7.10
+## Changed
+ - Upgraded portal to version 6.8.5, which fixes project limit size.
+
+## 6.7.9
+### Changed
+ - Upgraded portal to version 6.8.4, which introduces stages per tenant.
+ - Upgraded simple-oauth2@2.5.1, mocha@6.2.1, aws-sdk@2.540.0, bluebird@3.7.0
+
+## 6.7.8
+### Added
+ - Added possibility to specify authorization method for OpenID.
+
+### Changed
+ - Upgraded Deployed portal to 6.8.3
+ - Upgraded Deployed Form Manager to 1.43.0
+ - Upgraded Deployed Form View Pro to 1.42.0
+ - Upgraded Deployed Tenant Manager to 1.3.0
+ - Upgraded formio@1.60.1 to fix Email action crashing
+ - Upgraded aws-sdk@2.537.0, webpack@4.41.0, adal-node@0.2.1
+
+## 6.7.7
+### Changed
+ - Upgraded portal to 6.8.2 which upgrades form manager to 1.42.0
+
+## 6.7.6
+### Changed
+ - Upgraded portal, which includes new formview pro, form manager, and tenant manager for deployed servers.
+ - Upgraded formio/formio which includes batch email processing.
+ - Upgraded formio/formio-workers to 1.14.0 which solves some email templating issues.
+ 
+### Fixed
+ - Crash with the Google Sheets action when using PATCH method.
+ - Crash with the Login Action when no settings are provided to the action.
+
+## 6.7.5
+### Fixed
+ - Fix issue where field logic value settings were forced to a string
+ - FOR-2489: Added configurable access endpoints.
+ - FOR-2500: Added empty subsubmission data check before updating.
+ - FOR-2493: Fix issue with files in submission index endpoint when URL is undefined
+
+## 6.7.4
+### Added
+ - Added configurable access endpoint configurations so that it can be turned off per-project or per-deployment.
+ 
+### Changed
+ - Upgraded aws-sdk@2.524.0, twilio@3.34.0
+
+## 6.7.3
+### Fixed
+ - Issues with the query parameters for "null", "true", and "false" to allow the filtering of properties with these values.
+
+## 6.7.0
+### Changed
+ - Upgrade formio to 1.50.0 which adds token schema and other bug fixes
+ - Temp tokens now use mongo instead of redis.
+ - Default to pdf format in pdf download.
+
+## 6.6.4
+### Fixed
+ - Compile issues that would create an invalid utils object and was causing crashing.
+
+## 6.6.3
+### Changed
+ - The configuration to add public configurations to form json schemas to be at the project level instead of per-form. This improves performance for projects without this feature.
+
+## 6.6.2
+### Changed
+ - Updated formio to 1.49.0 https://github.com/formio/formio/blob/master/Changelog.md#1490
+ - Updated dependencies.
+ - Upgrade formio-app to 6.6.2 which includes includeConfig form configuration.
+ - Adding "cdn", "alpha", and "gamma" to list of reserved project names.
+
+## 6.6.0
+### Changed
+ - Update formio to 1.48.0
+ 
+## Added
+ - Upload proxy for pdfs.
+ - Setting Azure ADFS default role.
+
+## 6.5.29
+### Fixed
+ - Some minor issues with deployed portal relating to tenant manager application.
+
+## 6.5.28
+### Added
+ - A way to set project types.
+
+## 6.5.27
+### Fixed
+ - Issue where the Minio server was getting wrong configurations for local environments through proxies.
+
+### Changed
+ - Upgraded formiojs@3.22.9, jira-connector@2.14.1, aws-sdk@2.479.0, webpack@4.35.0
+
+## 6.5.26
+### Changed
+ - Upgraded portal to 6.4.10 which fixes inline embed not containing project and base for deployed portals.
+
+## 6.5.25
+### Changed
+ - Upgraded minio@7.0.10, aws-sdk@2.478.0, formiojs@3.22.8, jira-connector@2.14.0, squel@5.13.0, twilio@3.32.0, webpack@4.34.0
+ - Upgraded deployed portal to 6.4.9
+
+## 6.5.24
+### Fixed
+ - Problem where invalid SAML configurations could make the server crash.
+
+### Changed
+ - Upgraded mongodb@3.2.7, aws-sdk@2.471.0, jira-connector@2.13.0, webpack@4.33.0
+
+## 6.5.23
+### Added
+ - Ability to configure SAML using passport settings.
+
+## 6.5.22
+### Fixed
+ - Issue where the SAML relay was not adding the correct query separator.
+
+## 6.5.21
+### Changed
+ - Upgraded portal, form manager, and formview pro.
+
+## 6.5.20
+### Fixed
+ - Fix issue where fields were not getting decrypted for pdfs.
+
+### Changed
+ - Upgraded all dependencies.
+ - Upgraded deployed portal to 6.4.6
+
+## 6.5.19
+### Changed
+ - Upgraded formiojs@3.20.14, minio@7.0.8, mongodb@3.2.4, twilio@3.30.3, aws-sdk@2.455.0, formio@1.46.0, passport-saml@1.1.0, webpack@4.31.0
+ 
+### Fixed
+ - Project template exports to include the "properties" on each form component.
+ - Problems with the PDF download which includes forms with nested form components assigned to specific form revisions.
+
+## 6.5.18
+### Added
+ - A way to download a PDF with any form by providing a "?form=" query parameter.
+
+### Changed
+ - Upgraded deployed portal to 6.4.4
+ - Always mount the form manager.
+
+## 6.5.17
+### Fixed
+ - Problems with the project import with regard to project access controls.
+
+## 6.5.16
+### Fixed
+ - Other issues around remote access not getting correct permissions to do operations within the projects.
+
+## 6.5.15
+### Fixed
+ - Problem with connecting to remote environments giving 401 unauthorized issue.
+
+## 6.5.13, 6.5.14
+### Fixed
+ - Issues with the Form Manager application.
+
+## 6.5.12
+### Added
+ - Group self access support.
+ - Form Manager access section.
+ - Form Manager click-away protection.
+ - Form Manager merge form support.
+ - Portal SSO custom logout url.
+ - Force SSO authentication for portal and form manager on page refresh.
+ - Form View Pro offline mode support.
+
+### Changed
+ - Upgraded minio@7.0.7, twilio@3.30.2, aws-sdk@2.446.0, body-parser@1.19.0, formiojs@3.20.4
+
+## 6.5.11
+### Added
+ - Nested forms on forms with revisions enabled will automatically update when a new version is published.
+
 ## 6.5.10
 ### Changed
  - Upgraded azure-storage@2.10.3, formiojs@3.19.9, minio@7.0.6, twilio@3.30.1, mocha@6.1.3, sinon@7.3.2, aws-sdk@2.439.0, webpack@4.30.0

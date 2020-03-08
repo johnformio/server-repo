@@ -3,7 +3,7 @@
 const _ = require('lodash');
 const request = require('request');
 
-module.exports = app => (middleware) => {
+module.exports = (app) => (middleware) => {
   middleware.unshift((req, res, next) => {
     // If this is an external token, return the user object directly.
     if (req.token && req.token.external) {
@@ -29,7 +29,7 @@ module.exports = app => (middleware) => {
       return next();
     }
 
-    app.formio.formio.cache.loadCurrentProject(req, function(err, currentProject) {
+    app.formio.formio.cache.loadCurrentProject(req, (err, currentProject) => {
       if (err || !currentProject) {
         return next();
       }
@@ -37,14 +37,14 @@ module.exports = app => (middleware) => {
       // Load the valid roles for this project.
       app.formio.formio.resources.role.model.find({
         project: currentProject._id,
-        deleted: {$eq: null}
+        deleted: {$eq: null},
       }).exec((err, roles) => {
         if (err) {
           return next();
         }
 
         // Get a list of valid roles for this project.
-        const validRoles = (roles && roles.length) ? roles.map((role) => role._id.toString()) : [];
+        const validRoles = (roles && roles.length) ? _.map(roles, (role) => role._id.toString()) : [];
         currentProject = currentProject.toObject();
 
         // Only continue if oauth settings are set.
@@ -57,8 +57,8 @@ module.exports = app => (middleware) => {
           method: 'GET',
           uri: oauthSettings.userInfoURI,
           headers: {
-            Authorization: authorization
-          }
+            Authorization: authorization,
+          },
         }, (err, response) => {
           if (err) {
             res.status(400).send(err);
@@ -69,7 +69,7 @@ module.exports = app => (middleware) => {
 
             // Assign roles based on settings.
             const roles = [];
-            oauthSettings.roles.map(map => {
+            _.map(oauthSettings.roles, map => {
               if (
                 // Make sure this is a valid role to assign the user.
                 (validRoles.indexOf(map.role) !== -1) &&
@@ -86,7 +86,7 @@ module.exports = app => (middleware) => {
             const user = {
               _id: data._id || data.sub,
               data,
-              roles
+              roles,
             };
 
             const token = {
@@ -96,9 +96,9 @@ module.exports = app => (middleware) => {
               //   _id: req.currentForm._id.toString()
               // },
               project: {
-                _id: currentProject._id.toString()
+                _id: currentProject._id.toString(),
               },
-              externalToken: authorization.replace(/^Bearer/, "")
+              externalToken: authorization.replace(/^Bearer/, ''),
             };
 
             req.user = user;

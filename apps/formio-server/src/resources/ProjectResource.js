@@ -5,30 +5,41 @@ const config = require('../../config');
 const _ = require('lodash');
 const debug = require('debug')('formio:resources:projects');
 const util = require('../util/util');
-module.exports = function(router, formioServer) {
-  const formio = formioServer.formio;
-  const getProjectAccess = function(settings, permissions) {
-    return _.chain(settings)
-      .filter({type: permissions})
-      .head()
-      .get('roles', [])
-      .map(formio.util.idToString)
-      .value();
+
+module.exports = (router, formioServer) => {
+  const {formio} = formioServer;
+  const getProjectAccess = (settings, permissions) => _.chain(settings)
+    .find({type: permissions})
+    .get('roles', [])
+    .map(formio.util.idToString)
+    .value();
+
+  const setPublicSettings = (project) => {
+    // Migrate "public" settings into an accessible "virtual" property.
+    project.public = {
+      formModule: _.get(project, 'settings.formModule', ''),
+      custom: _.get(project, 'settings.custom', {})
+    };
   };
 
-  const decryptSettings = function(res) {
+  const decryptSettings = (res, noAdmin) => {
     if (!res || !res.resource || !res.resource.item) {
       return;
     }
     // Merge all results into an array, to handle the cases with multiple results.
     const multi = Array.isArray(res.resource.item);
-    const list = [].concat(res.resource.item).map(item =>
-      util.decryptProperty(item, 'settings_encrypted', 'settings', formio.config.mongoSecret)
-    );
+    const list = [].concat(res.resource.item).map(item => {
+      util.decryptProperty(item, 'settings_encrypted', 'settings', formio.config.mongoSecret);
+      setPublicSettings(item);
+      if (noAdmin) {
+        delete item.settings;
+      }
+      return item;
+    });
     res.resource.item = multi ? list : list[0];
   };
 
-  const projectSettings = function(req, res, next) {
+  const projectSettings = (req, res, next) => {
     // Allow admin key
     if (req.adminKey) {
       decryptSettings(res);
@@ -40,23 +51,23 @@ module.exports = function(router, formioServer) {
       return next();
     }
     // Allow team admins on remote
-    else if (req.remotePermission && (['admin', 'owner', 'team_admin'].indexOf(req.remotePermission) !== -1)) {
+    else if (req.remotePermission && ['admin', 'owner', 'team_admin'].includes(req.remotePermission)) {
       decryptSettings(res);
       return next();
     }
     else if (req.projectId && req.user) {
-      formio.cache.loadPrimaryProject(req, function(err, project) {
+      formio.cache.loadPrimaryProject(req, (err, project) => {
         let role = 'read';
         if (!err) {
           const adminAccess = getProjectAccess(project.access, 'team_admin');
           const writeAccess = getProjectAccess(project.access, 'team_write');
           const roles = _.map(req.user.teams, formio.util.idToString);
-
-          if ( _.intersection(adminAccess, roles).length !== 0) {
-            decryptSettings(res);
+          const isAdmin = _.intersection(adminAccess, roles).length !== 0;
+          decryptSettings(res, !isAdmin);
+          if (isAdmin) {
             return next();
           }
-          if ( _.intersection(writeAccess, roles).length !== 0) {
+          if (_.intersection(writeAccess, roles).length !== 0) {
             role = 'write';
           }
         }
@@ -73,8 +84,9 @@ module.exports = function(router, formioServer) {
         formio.middleware.filterResourcejsResponse([
           'settings',
           'settings_encrypted',
-          'billing'
-        ]).call(this, req, res, next);
+          'billing',
+        ])(req, res, next);
+
         if (fileToken) {
           _.set(res, 'resource.item.settings.filetoken', fileToken);
         }
@@ -88,10 +100,13 @@ module.exports = function(router, formioServer) {
       formio.middleware.filterResourcejsResponse([
         'settings',
         'settings_encrypted',
-        'billing'
-      ]).call(this, req, res, next);
+        'billing',
+      ])(req, res, next);
     }
   };
+
+  // Check tenant's parent project plan
+  formio.middleware.checkTenantProjectPlan = require('../middleware/checkTenantProjectPlan')(formio);
 
   // Load the project plan filter for use.
   formio.middleware.projectPlanFilter = require('../middleware/projectPlanFilter')(formio);
@@ -107,7 +122,7 @@ module.exports = function(router, formioServer) {
   formio.middleware.projectAccessFilter = require('../middleware/projectAccessFilter')(formio);
 
   // Load the restrictive middleware to use
-  formio.middleware.restrictOwnerAccess = require('../middleware/restrictOwnerAccess')(formio);
+  formio.middleware.restrictProjectAccess = require('../middleware/restrictProjectAccess')(formio);
   formio.middleware.restrictToPlans = require('../middleware/restrictToPlans')(router);
 
   // Load the Environment create middleware.
@@ -128,7 +143,7 @@ module.exports = function(router, formioServer) {
     router,
     '',
     'project',
-    formio.mongoose.model('project')
+    formio.mongoose.model('project'),
   ).rest({
     beforeGet: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
@@ -136,25 +151,24 @@ module.exports = function(router, formioServer) {
         // Use project cache for performance reasons.
         req.modelQuery = req.modelQuery || req.model || formio.mongoose.model('project');
         next();
-      }
+      },
     ],
     afterGet: [
       formio.middleware.filterResourcejsResponse(hiddenFields),
       formio.middleware.projectAnalytics,
-      projectSettings
+      projectSettings,
     ],
     beforePatch: [
-      (req, res, next) => {
-        return res.sendStatus(405);
-      },
+      (req, res, next) => res.sendStatus(405),
     ],
     beforePost: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       require('../middleware/fetchTemplate'),
+      formio.middleware.checkTenantProjectPlan,
       formio.middleware.projectDefaultPlan,
       formio.middleware.projectEnvCreatePlan,
       formio.middleware.projectEnvCreateAccess,
-      function(req, res, next) {
+      (req, res, next) => {
         // Don't allow setting billing.
         if (req.body) {
           delete req.body.billing;
@@ -170,7 +184,7 @@ module.exports = function(router, formioServer) {
       formio.middleware.bootstrapEntityOwner,
       formio.middleware.projectTeamSync,
       formio.middleware.condensePermissionTypes,
-      formio.middleware.projectPlanFilter
+      formio.middleware.projectPlanFilter,
     ],
     afterPost: [
       require('../middleware/projectTemplate')(formio),
@@ -183,16 +197,16 @@ module.exports = function(router, formioServer) {
     ],
     beforeIndex: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
-      formio.middleware.projectIndexFilter
+      formio.middleware.projectIndexFilter,
     ],
     afterIndex: [
       formio.middleware.filterResourcejsResponse(hiddenFields),
       formio.middleware.projectAnalytics,
-      projectSettings
+      projectSettings,
     ],
     beforePut: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
-      function(req, res, next) {
+      (req, res, next) => {
         // Don't allow setting billing.
         if (req.body) {
           delete req.body.billing;
@@ -205,7 +219,7 @@ module.exports = function(router, formioServer) {
         next();
       },
       // Protected Project Access.
-      function(req, res, next) {
+      (req, res, next) => {
         // Don't allow some changes if project is protected.
         if ('protect' in req.currentProject && req.currentProject.protect === true && req.body.protect !== false) {
           const accesses = {};
@@ -215,18 +229,18 @@ module.exports = function(router, formioServer) {
           req.body.name = req.currentProject.name;
           req.body.access = req.body.access || [];
           req.body.access.forEach(access => {
-            if (['read_all', 'create_all', 'update_all', 'delete_all'].indexOf(access.type) !== -1) {
-              access.roles = accesses[access.type].map(role => role.toString());
+            if (['read_all', 'create_all', 'update_all', 'delete_all'].includes(access.type)) {
+              access.roles = _.map(accesses[access.type], role => role.toString());
               delete accesses[access.type];
             }
           });
-          Object.keys(accesses).forEach(key => {
+          Object.keys(accesses).forEach((key) => {
             const access = _.find(req.body.access, {type: key});
-            const newAccess = accesses[key].map(role => role.toString());
+            const newAccess = _.map(accesses[key], role => role.toString());
             if (!access) {
               req.body.access.push({
                 type: key,
-                roles: newAccess
+                roles: newAccess,
               });
             }
             else {
@@ -245,7 +259,7 @@ module.exports = function(router, formioServer) {
         next();
       },
       // Don't allow modifying a primary project id.
-      function(req, res, next) {
+      (req, res, next) => {
         if (!req.currentProject.hasOwnProperty('project')) {
           delete req.body.project;
         }
@@ -258,7 +272,7 @@ module.exports = function(router, formioServer) {
       formio.middleware.projectTeamSync,
       formio.middleware.condensePermissionTypes,
       formio.middleware.projectPlanFilter,
-      projectSettings
+      projectSettings,
     ],
     afterPut: [
       require('../middleware/projectTemplate')(formio),
@@ -276,8 +290,8 @@ module.exports = function(router, formioServer) {
           let parts = [];
           formio.mongoose.model('form').find({
             deleted: {$eq: null},
-            project: req.currentProject._id
-          }).then(forms => forms.forEach((form) => {
+            project: req.currentProject._id,
+          }).then((forms) => forms.forEach((form) => {
             parts = form.machineName.split(':');
             if (parts.length === 2) {
               form.machineName = `${res.resource.item.name}:${parts[1]}`;
@@ -286,8 +300,8 @@ module.exports = function(router, formioServer) {
 
             formio.mongoose.model('action').find({
               deleted: {$eq: null},
-              form: form._id
-            }).then(actions => actions.forEach(action => {
+              form: form._id,
+            }).then((actions) => actions.forEach((action) => {
               parts = action.machineName.split(':');
               if (parts.length === 3) {
                 action.machineName = `${res.resource.item.name}:${parts[1]}:${parts[2]}`;
@@ -299,8 +313,8 @@ module.exports = function(router, formioServer) {
           // Update all roles.
           formio.mongoose.model('role').find({
             deleted: {$eq: null},
-            project: req.currentProject._id
-          }).then((roles) => roles.forEach(role => {
+            project: req.currentProject._id,
+          }).then((roles) => roles.forEach((role) => {
             parts = role.machineName.split(':');
             if (parts.length === 2) {
               role.machineName = `${res.resource.item.name}:${parts[1]}`;
@@ -313,16 +327,16 @@ module.exports = function(router, formioServer) {
     beforeDelete: [
       require('../middleware/projectProtectAccess')(formio),
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
-      require('../middleware/deleteProjectHandler')(formio)
+      require('../middleware/deleteProjectHandler')(formio),
     ],
     afterDelete: [
       formio.middleware.filterResourcejsResponse(hiddenFields),
       formio.middleware.customCrmAction('deleteproject'),
-      projectSettings
-    ]
+      projectSettings,
+    ],
   });
 
-  router.post('/project/available', function(req, res, next) {
+  router.post('/project/available', (req, res, next) => {
     if (!req.body || !req.body.name) {
       return res.status(400).send('"name" parameter is required');
     }
@@ -330,7 +344,7 @@ module.exports = function(router, formioServer) {
       return res.status(200).send({available: false});
     }
 
-    resource.model.findOne({name: req.body.name, deleted: {$eq: null}}, function(err, project) {
+    resource.model.findOne({name: req.body.name, deleted: {$eq: null}}, (err, project) => {
       if (err) {
         debug(err);
         return next(err);
@@ -345,15 +359,15 @@ module.exports = function(router, formioServer) {
   router.post(
     '/project/:projectId/atlassian/oauth/authorize',
     formio.middleware.tokenHandler,
-    formio.middleware.restrictOwnerAccess,
-    atlassian.authorizeOAuth
+    formio.middleware.restrictProjectAccess({level: 'admin'}),
+    atlassian.authorizeOAuth,
   );
 
   router.post(
     '/project/:projectId/atlassian/oauth/finalize',
     formio.middleware.tokenHandler,
-    formio.middleware.restrictOwnerAccess,
-    atlassian.storeOAuthReply
+    formio.middleware.restrictProjectAccess({level: 'admin'}),
+    atlassian.storeOAuthReply,
   );
 
   // Expose the sql connector endpoint
@@ -361,9 +375,9 @@ module.exports = function(router, formioServer) {
   router.get(
     '/project/:projectId/sqlconnector',
     formio.middleware.tokenHandler,
-    formio.middleware.restrictOwnerAccess,
+    formio.middleware.restrictProjectAccess({level: 'admin'}),
     formio.middleware.restrictToPlans(['commercial', 'team', 'trial']),
-    sqlconnector.generateQueries
+    sqlconnector.generateQueries,
   );
 
   return resource;

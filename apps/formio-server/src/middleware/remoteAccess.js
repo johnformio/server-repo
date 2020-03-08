@@ -32,7 +32,7 @@ module.exports = app => (req, res, next) => {
     else {
       project.access.forEach(access => {
         if (_.startsWith(access.type, 'team_') || _.startsWith(access.type, 'stage_')) {
-          const roles = access.roles.map(role => role.toString());
+          const roles = _.map(access.roles, role => role.toString());
           const type = access.type.replace('stage_', 'team_');
           roles.forEach(role => {
             if (

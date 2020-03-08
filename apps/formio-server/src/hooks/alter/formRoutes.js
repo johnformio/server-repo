@@ -4,6 +4,7 @@ const _ = require('lodash');
 const util = require('../../util/util');
 
 module.exports = app => routes => {
+  const loadFormAlter = require('../../hooks/alter/loadForm')(app).alter;
   const incrementVersion = function(item) {
     item.set('_vid', item.get('_vid') + 1);
   };
@@ -165,7 +166,19 @@ module.exports = app => routes => {
       if (req.body.hasOwnProperty('_vid') && req.body._vid === 'draft') {
         req.isDraft = true;
       }
-      req.body = _.omit(req.body, ['_vid']);
+      req.body = _.omit(req.body, ['_vid', 'config']);
+    }
+    next();
+  });
+
+  routes.after.push((req, res, next) => {
+    if (['GET', 'INDEX'].includes(req.method)) {
+      if (res.resource.item) {
+        loadFormAlter(req.currentProject, res.resource.item);
+      }
+      if (res.resource.items) {
+        _.map(res.resource.items, item => loadFormAlter(req.currentProject, item));
+      }
     }
     next();
   });
@@ -183,6 +196,7 @@ module.exports = app => routes => {
   });
 
   routes.before.unshift(require('../../middleware/projectProtectAccess')(app.formio.formio));
+  routes.before.unshift(require('../../middleware/formRevisionUpdate')(app.formio.formio));
   routes.before.unshift(require('../../middleware/formConflictHandler')(app.formio.formio));
   routes.after.push(require('../../middleware/projectModified')(app.formio.formio));
 

@@ -4,7 +4,6 @@ const _ = require('lodash');
 const nodeUrl = require('url');
 const semver = require('semver');
 const async = require('async');
-const chance = new (require('chance'))();
 const fs = require('fs');
 const log = require('debug')('formio:log');
 const util = require('../util/util');
@@ -67,8 +66,13 @@ module.exports = function(app) {
       email: require('./alter/email')(app),
       validateSubmissionForm: require('./alter/validateSubmissionForm')(app),
       currentUser: require('./alter/currentUser')(app),
+      accessInfo: require('./alter/accessInfo')(app),
+      loadForm: require('./alter/loadForm')(app).hook,
+      evalContext: require('./alter/evalContext')(app),
       actions: require('./alter/actions')(app),
       actionContext: require('./alter/actionContext')(app),
+      fieldActions: require('./alter/fieldActions')(app),
+      propertyActions: require('./alter/propertyActions')(app),
       log() {
         const [event, req, ...args] = arguments;
         log(req.uuid, req.projectId || 'NoProject', event, ...args);
@@ -275,29 +279,25 @@ module.exports = function(app) {
        *
        * @param req
        * @param res
-       * @param token
        * @param allow
        * @param expire
-       * @param tempToken
+       * @param tokenResponse
+       * @param cb
        */
       tempToken(req, res, allow, expire, tokenResponse, cb) {
-        if (formioServer.redis) {
-          const tempToken = chance.string({
-            pool: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-            length: 30
-          });
-          formioServer.redis.setExp(tempToken, tokenResponse.token, expire, (err) => {
-            if (err) {
-              return res.status(400).send(err.message);
-            }
+        // Save to mongo
+        formioServer.formio.mongoose.models.token.create({
+          value: tokenResponse.token,
+          expireAt: (expire || expire === 0) ? Date.now() + (expire * 1000) : null
+        }, (err, token) => {
+          if (err) {
+            return res.status(400).send(err.message);
+          }
 
-            tokenResponse.key = tempToken;
-            cb();
-          });
-        }
-        else {
+          tokenResponse.key = token.key;
+
           return cb();
-        }
+        });
       },
 
       isAdmin(isAdmin, req) {
@@ -309,13 +309,7 @@ module.exports = function(app) {
         }
 
         // Allow remote team admins to have admin access.
-        if (
-          req.remotePermission &&
-          req.projectId &&
-          req.userProject &&
-          req.userProject._id.toString() === req.projectId.toString() &&
-          ['admin', 'owner', 'team_admin'].indexOf(req.remotePermission) !== -1
-        ) {
+        if (req.remotePermission && ['admin', 'owner', 'team_admin'].indexOf(req.remotePermission) !== -1) {
           return true;
         }
 
@@ -548,7 +542,7 @@ module.exports = function(app) {
           if (groups.length) {
             // Verify these are all submissions within this project.
             formioServer.formio.resources.submission.model.find({
-              _id: {$in: groups.map(formioServer.formio.util.idToBson)},
+              _id: {$in: _.map(groups, formioServer.formio.util.idToBson)},
               project: formioServer.formio.util.idToBson(req.projectId),
               deleted: {$eq: null}
             }).lean().select({_id: 1}).exec((err, subs) => {
@@ -667,11 +661,6 @@ module.exports = function(app) {
          * Check access if the auth token is meant for a remote server.
          */
         if (req.remotePermission) {
-          // Do not grant permissions accross projects... one remote token per project please.
-          if (!req.projectId || !req.userProject || (req.userProject._id.toString() !== req.projectId.toString())) {
-            return false;
-          }
-
           let permission = false;
           switch (req.remotePermission) {
             case 'owner':
@@ -933,6 +922,16 @@ module.exports = function(app) {
               return done(err);
             }
 
+            const parts = machineName.split(':');
+            const formName = parts.length === 1 ? parts[0] : parts[1];
+
+            const formExists = (template.forms && template.forms[formName])
+              || (template.resources && template.resources[formName]);
+
+            if (!formExists) {
+              return done(null, null);
+            }
+
             item.machineName = machineName;
             done(null, item);
           });
@@ -969,7 +968,7 @@ module.exports = function(app) {
         steps.unshift(async.apply(_install, template, project));
 
         const _importAccess = (template, items, done) => {
-          formioServer.formio.resources.project.model.findOne({_id: template._id}).exec((err, project) => {
+          formioServer.formio.resources.project.model.findOne({_id: template._id}).lean().exec((err, project) => {
             if (err) {
               return done(err);
             }
@@ -978,33 +977,40 @@ module.exports = function(app) {
               return done();
             }
 
-            if ('access' in template) {
-              const permissions = ['create_all', 'read_all', 'update_all', 'delete_all'];
-              project.access = _.filter(project.access, access => permissions.indexOf(access.type) === -1);
+            // Set the project access if it doesn't exist or isn't already an array.
+            if (!project.access || !Array.isArray(project.access)) {
+              project.access = [];
+            }
 
+            if ('access' in template && Array.isArray(template.access)) {
               template.access.forEach(access => {
-                const projectAccess = _.find(project.access, {type: access.type});
-                const newRoles = _.filter(access.roles).map(name => {
-                  if (template.roles && template.roles.hasOwnProperty(name)) {
-                    return template.roles[name]._id;
+                if (access && Array.isArray(access.roles)) {
+                  const projectAccess = _.find(project.access, {type: access.type});
+                  const newRoles = _.filter(_.map(access.roles, name => {
+                    if (template.roles && template.roles.hasOwnProperty(name)) {
+                      return template.roles[name]._id;
+                    }
+                    return false;
+                  }));
+                  if (projectAccess && Array.isArray(projectAccess.roles)) {
+                    projectAccess.roles = _.uniq(newRoles);
                   }
-                  return name;
-                });
-                if (projectAccess) {
-                  projectAccess.roles = _.uniq(projectAccess.roles.concat(newRoles));
-                }
-                else {
-                  project.access.push({
-                    type: access.type,
-                    roles: newRoles
-                  });
+                  else {
+                    project.access.push({
+                      type: access.type,
+                      roles: newRoles
+                    });
+                  }
                 }
               });
 
               // Ensure we have unique access.
-              project.access = _.uniqBy(project.access, 'type');
+              if (project.access && Array.isArray(project.access)) {
+                project.access = _.uniqBy(project.access, 'type');
+              }
             }
             else if (
+              (!('excludeAccess' in template) || !template.excludeAccess) &&
               'roles' in template &&
               Object.keys(template.roles).length > 0 &&
               'administrator' in template.roles
@@ -1040,7 +1046,13 @@ module.exports = function(app) {
                 }
               ];
             }
-            project.save(done);
+
+            // Update this project.
+            formioServer.formio.resources.project.model.updateOne({
+              _id: project._id
+            }, {
+              $set: {access: project.access}
+            }, done);
           });
         };
 
@@ -1055,7 +1067,7 @@ module.exports = function(app) {
           _export.access = [];
           _.each(accesses, function(access) {
             if (access.type.indexOf('team_') === -1) {
-              const roleNames = access.roles.map(roleId => _map.roles[roleId.toString()]);
+              const roleNames = _.map(access.roles, roleId => _map.roles[roleId.toString()]);
               _export.access.push({
                 type: access.type,
                 roles: roleNames
@@ -1114,8 +1126,6 @@ module.exports = function(app) {
           return next();
         }
 
-        const util = formioServer.formio.util;
-
         // Force the user reference to be an object rather than a mongoose document.
         try {
           user = user.toObject();
@@ -1132,13 +1142,37 @@ module.exports = function(app) {
         // Convert all the roles to strings
         user.roles = _(user.roles)
           .filter()
-          .map(util.idToString)
+          .map(formioServer.formio.util.idToString)
           .uniq()
           .value();
 
-        formioServer.formio.teams.getTeams(user, true, true)
-          .then(function(teams) {
+        // Synchronize the user teams with teams they were added to.
+        const syncUserTeams = (user, teams) => {
+          // Do not perform if they have ssoTeams enabled.
+          if (formioServer.formio.config.ssoTeams) {
+            return;
+          }
+          // If the teams length changes, then this means that maybe they were removed from some teams. We need
+          // to perform a quick cleanup of their accepted teams array to ensure we don't have lingering teams sticking
+          // around.
+          if (
+            user.metadata &&
+            user.metadata.teams &&
+            (teams.length !== user.metadata.teams.length)
+          ) {
+            user.metadata.teams = teams;
+            formioServer.formio.resources.submission.model.update(
+              {_id: user._id},
+              {$set: {'metadata.teams': user.metadata.teams}},
+              _.noop
+            );
+          }
+        };
+
+        formioServer.formio.teams.getTeams(user, true, true, true)
+          .then((teams) => {
             if (!teams || !teams.length) {
+              syncUserTeams(user, []);
               return user;
             }
 
@@ -1146,10 +1180,11 @@ module.exports = function(app) {
             user.teams = _(teams)
               .map('_id')
               .filter()
-              .map(util.idToString)
+              .map(formioServer.formio.util.idToString)
               .uniq()
               .value();
 
+            syncUserTeams(user, user.teams);
             return user;
           })
           .nodeify(next);
@@ -1202,7 +1237,7 @@ module.exports = function(app) {
             }
 
             // Make sure assigned role ids are actually in the project.
-            const roleIds = req.currentProject.roles.map(role => role._id);
+            const roleIds = _.map(req.currentProject.roles, role => role._id);
             sandbox.data.user.roles.forEach(roleId => {
               if (!roleIds.includes(roleId)) {
                 throw new Error('Invalid role id. Not in project.');
@@ -1282,6 +1317,73 @@ module.exports = function(app) {
         if (req.projectId) {
           query.project = formioServer.formio.util.idToBson(req.projectId);
         }
+        return query;
+      },
+
+      actionsQuery(query, req) {
+        // Allow only for server to server communication.
+        if (!req.isAdmin) {
+          return query;
+        }
+
+        // Included actions take privilege over excluded.
+        const includedActions = formioServer.formio.util.getHeader(req, 'x-actions-include');
+        const excludedActions = formioServer.formio.util.getHeader(req, 'x-actions-exclude');
+
+        const actionsToProcess = includedActions || excludedActions;
+        if (actionsToProcess) {
+          const {
+            ids,
+            names,
+          } = actionsToProcess.split(',').reduce(
+            ({
+              ids,
+              names,
+            }, action) => {
+              const id = formioServer.formio.util.idToBson(action);
+              return id
+                ? ({
+                  ids: [...ids, id],
+                  names,
+                })
+                : ({
+                  ids,
+                  names: [...names, action],
+                });
+            },
+            {
+              ids: [],
+              names: [],
+            },
+          );
+
+          if (ids.length !== 0 || names.length !== 0) {
+            const expressions = [];
+            const logicalOperator = includedActions ? '$or' : '$and';
+            const comparisonOperator = includedActions ? '$in' : '$nin';
+
+            if (ids.length !== 0) {
+              expressions.push({
+                _id: {
+                  [comparisonOperator]: ids,
+                },
+              });
+            }
+
+            if (names.length !== 0) {
+              expressions.push({
+                name: {
+                  [comparisonOperator]: names,
+                },
+              });
+            }
+
+            if (expressions.length) {
+              query[logicalOperator] = expressions;
+            }
+          }
+        }
+
         return query;
       },
 
@@ -1464,6 +1566,21 @@ module.exports = function(app) {
           }
         });
         return schema;
+      },
+      actionItemSchema(schema) {
+        schema.add({
+          project: {
+            type: formioServer.formio.mongoose.Schema.Types.ObjectId,
+            ref: 'project',
+            index: true,
+            required: true
+          }
+        });
+        return schema;
+      },
+      actionItem(actionItem, req) {
+        actionItem.project = req.projectId;
+        return actionItem;
       },
       formMachineName(machineName, document, done) {
         if (!document) {

@@ -15,6 +15,8 @@ module.exports = function(app, template, hook) {
     return;
   }
 
+  var ignoreFields = ['config'];
+
   // Makes sure given user has external tokens match the expected ones
   // Does NOT fail if user has more tokens than expected ones
   // Returns a promise
@@ -1032,7 +1034,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
-            assert.deepEqual(response, template.forms.oauthRegisterForm);
+            assert.deepEqual(_.omit(response, ignoreFields), _.omit(template.forms.oauthRegisterForm, ignoreFields));
 
             // Store the JWT for future API calls.
             template.users.admin.token = res.headers['x-jwt-token'];

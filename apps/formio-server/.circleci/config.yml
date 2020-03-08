@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/openjdk:8-jdk-node
+      - image: circleci/openjdk:jdk-node
     steps:
       - checkout
       - restore_cache:
@@ -27,7 +27,7 @@ jobs:
           root: build
           paths:
             - favicon.ico
-            - main.js
+            - formio.js
             - package.json
             - package-lock.json
   portal:
@@ -60,7 +60,7 @@ jobs:
       REDIS_ADDR: localhost
       REDIS_PORT: 6379
     docker:
-      - image: circleci/openjdk:8-jdk-node
+      - image: circleci/openjdk:jdk-node
       - image: mongo:3.4.16
       - image: redis:4.0.11
     steps:
@@ -83,10 +83,12 @@ jobs:
       image: circleci/classic:edge
     steps:
       - run:
-          name: Enable docker experimental features.
+          name: Install node@12
           command: |
-            sudo sh -c 'echo '\''DOCKER_OPTS="--experimental=true"'\'' >> /etc/default/docker'
-            sudo service docker restart
+            export NVM_DIR="/opt/circleci/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm install 12
+            nvm alias default 12
       - checkout
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
@@ -98,18 +100,36 @@ jobs:
           command: |
             sudo bash -c "echo \"127.0.0.1 formio.localhost\" >> /etc/hosts"
             sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
-      - run: docker build --squash --no-cache -t $IMAGE_PATH -f deployment/docker/formio-server/Dockerfile .
+      - run: docker build --no-cache -t tmpimage -f deployment/docker/Builder .
+      - run: docker create -ti --name tmpcontainer tmpimage sh
+      - run: docker cp tmpcontainer:/src/node_modules build/
+      - run: docker rm -f tmpcontainer
+      - run: docker build --no-cache -t $IMAGE_PATH -f deployment/docker/Dockerfile .
       - run: docker network create formio
       - run: docker network ls
       - run: docker run -itd --name formio-mongo --net formio -p 27017:27017 mongo
       - run: docker run -itd --name formio-redis --net formio -p 6380 redis
-      - run: docker run -itd --name formio-server --net formio -e "TEST_SUITE=1" -e "DEBUG=formio:*" -e "PROJECT_PLAN=trial" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "JWT_SECRET=CHANGEME" -e "JWT_EXPIRE_TIME=240" -e "DB_SECRET=CHANGEME" -e "ADMIN_KEY=dockertest" -e LICENSE --link formio-redis:redis --link formio-mongo:mongo -p 127.0.0.1:3000:3000 $IMAGE_PATH
+      - run: docker run -itd --name formio-server --net formio -e "FILTER_ACCESS=false" -e "TEST_SUITE=1" -e "DEBUG=formio:*" -e "PROJECT_PLAN=trial" -e "PROTOCOL=http" -e "DOMAIN=localhost" -e "PORT=3000" -e "JWT_SECRET=CHANGEME" -e "JWT_EXPIRE_TIME=240" -e "DB_SECRET=CHANGEME" -e "ADMIN_KEY=dockertest" -e LICENSE --link formio-redis:redis --link formio-mongo:mongo -p 127.0.0.1:3000:3000 $IMAGE_PATH
       - run: docker ps -a
       - run: sleep 5
       - run: docker logs formio-server
-      - run: ADMIN_KEY=dockertest node install
+      - run:
+          name: node install
+          command: |
+            export NVM_DIR="/opt/circleci/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            node -v
+            npm -v
+            ADMIN_KEY=dockertest node install
       - run: curl -f --retry 10 http://api.localhost:3000/health
-      - run: npm run docker
+      - run:
+          name: npm run docker
+          command: |
+            export NVM_DIR="/opt/circleci/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            node -v
+            npm -v
+            npm run docker
       - run:
           name: deploy
           command: |
@@ -125,7 +145,7 @@ jobs:
 
   deploy_npm:
     docker:
-      - image: circleci/openjdk:8-jdk-node
+      - image: circleci/openjdk:jdk-node
     steps:
       - checkout
       - attach_workspace:

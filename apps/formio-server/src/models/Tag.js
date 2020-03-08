@@ -18,26 +18,27 @@ module.exports = function(router) {
         required: true,
         validate: [
           {
-            isAsync: true,
             message: 'The tag must be unique.',
-            validator(value, done) {
-              const search = {
-                project: this.project,
-                tag: value,
-                deleted: {$eq: null}
-              };
+            validator(value) {
+              return new Promise((resolve) => {
+                const search = {
+                  project: this.project,
+                  tag: value,
+                  deleted: {$eq: null}
+                };
 
-              // Ignore the id if this is an update.
-              if (this._id) {
-                search._id = {$ne: this._id};
-              }
-
-              formio.mongoose.model('tag').findOne(search).lean().exec(function(err, result) {
-                if (err || result) {
-                  return done(false);
+                // Ignore the id if this is an update.
+                if (this._id) {
+                  search._id = {$ne: this._id};
                 }
 
-                done(true);
+                formio.mongoose.model('tag').findOne(search).lean().exec(function(err, result) {
+                  if (err || result) {
+                    return resolve(false);
+                  }
+
+                  resolve(true);
+                });
               });
             }
           }
@@ -53,10 +54,17 @@ module.exports = function(router) {
         description: 'The project template.'
       },
       owner: {
-        type: router.formio.mongoose.Schema.Types.ObjectId,
+        type: formio.mongoose.Schema.Types.Mixed,
         ref: 'submission',
         index: true,
-        default: null
+        default: null,
+        set: owner => {
+          // Attempt to convert to objectId.
+          return formio.util.ObjectId(owner);
+        },
+        get: owner => {
+          return owner ? owner.toString() : owner;
+        }
       },
       deleted: {
         type: Number,

@@ -134,7 +134,7 @@ module.exports = function(app, template, hook) {
           var uploadForm = {
             title: 'Upload Form',
             name: 'uploadForm',
-            path: 'upload/form',
+            path: 'uploadfile',
             type: 'form',
             access: [],
             submissionAccess: [
@@ -399,7 +399,7 @@ module.exports = function(app, template, hook) {
           var uploadForm = {
             title: 'Upload Form',
             name: 'uploadForm',
-            path: 'upload/form',
+            path: 'uploadfile',
             type: 'form',
             access: [],
             submissionAccess: [
@@ -662,7 +662,7 @@ module.exports = function(app, template, hook) {
           var uploadForm = {
             title: 'Upload Form',
             name: 'uploadForm',
-            path: 'upload/form',
+            path: 'uploadfile',
             type: 'form',
             access: [],
             submissionAccess: [
@@ -778,10 +778,10 @@ module.exports = function(app, template, hook) {
               };
 
               // Policy signatures are time sensitive so we have to match the time or the signatures won't work.
-              var serverPolicy = JSON.parse(new Buffer(res.body.data.policy, 'base64').toString('binary'));
+              var serverPolicy = JSON.parse(new Buffer.from(res.body.data.policy, 'base64').toString('binary'));
               policy.expiration = serverPolicy.expiration;
 
-              var policyBase64 = new Buffer(JSON.stringify(policy)).toString('base64');
+              var policyBase64 = new Buffer.from(JSON.stringify(policy)).toString('base64');
 
               assert.equal(res.body.data.policy, policyBase64);
               assert.equal(res.body.data.signature, CryptoJS.HmacSHA1(policyBase64, template.project.settings.storage.s3.AWSSecretKey).toString(CryptoJS.enc.Base64));
@@ -1023,7 +1023,7 @@ module.exports = function(app, template, hook) {
           var uploadForm = {
             title: 'Upload Form',
             name: 'uploadForm',
-            path: 'upload/form',
+            path: 'uploadfile',
             type: 'form',
             access: [],
             submissionAccess: [
@@ -1139,10 +1139,10 @@ module.exports = function(app, template, hook) {
               };
 
               // Policy signatures are time sensitive so we have to match the time or the signatures won't work.
-              var serverPolicy = JSON.parse(new Buffer(res.body.data.policy, 'base64').toString('binary'));
+              var serverPolicy = JSON.parse(new Buffer.from(res.body.data.policy, 'base64').toString('binary'));
               policy.expiration = serverPolicy.expiration;
 
-              var policyBase64 = new Buffer(JSON.stringify(policy)).toString('base64');
+              var policyBase64 = new Buffer.from(JSON.stringify(policy)).toString('base64');
 
               assert.equal(res.body.data.policy, policyBase64);
               assert.equal(res.body.data.signature, CryptoJS.HmacSHA1(policyBase64, template.project.settings.storage.s3.AWSSecretKey).toString(CryptoJS.enc.Base64));

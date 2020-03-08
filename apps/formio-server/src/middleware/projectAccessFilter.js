@@ -80,12 +80,12 @@ module.exports = function(formio) {
         let currentTeams = [];
         project.access.forEach(access => {
           if (access.type.indexOf('team_') === 0 || access.type.indexOf('stage_') === 0) {
-            currentTeams = currentTeams.concat(access.roles.map(formio.util.idToString));
+            currentTeams = currentTeams.concat(_.map(access.roles, formio.util.idToString));
           }
         });
 
         // Find all the Teams for the current user.
-        formio.teams.getTeams(req.user, false, true)
+        formio.teams.getTeams(req.user, false, true, true)
           .then(function(teams) {
             teams = teams || [];
             teams = _.map(_.map(teams, '_id'), formio.util.idToString);

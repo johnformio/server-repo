@@ -3,7 +3,31 @@ const aws = require('./s3/aws');
 const minio = require('./s3/minio');
 const CryptoJS = require('crypto-js');
 const _ = require('lodash');
-module.exports = function(router) {
+const debug = {
+  startup: require('debug')('formio:startup')
+};
+
+async function getUrl(options = {}) {
+  // Allow options.project as an alternative to options.settings
+  if (options.project && !options.settings) {
+    options.settings = _.get(options.project, 'settings.storage.s3');
+  }
+
+  if (!options.settings) {
+    throw new Error('Storage settings not set.');
+  }
+
+  options.bucket = options.bucket || _.get(options, 'file.bucket');
+  options.key    = options.key    || _.get(options, 'file.key');
+
+  const _getUrl = options.settings.minio ? minio : aws;
+  const url = await _getUrl(options);
+
+  return url || options.settings.bucketUrl;
+}
+
+const middleware = function(router) {
+  debug.startup('Attaching middleware: S3 storage GET');
   router.get('/project/:projectId/form/:formId/storage/s3',
     router.formio.formio.middleware.tokenHandler,
     function(req, res, next) {
@@ -23,44 +47,25 @@ module.exports = function(router) {
           return res.status(400).send('Project not found.');
         }
 
-        if (!project.settings.storage || !project.settings.storage.s3) {
-          return res.status(400).send('Storage settings not set.');
-        }
-
-        try {
-          if (project.settings.storage.s3.minio) {
-            minio.getUrl(req, project, (err, url) => {
-              if (err) {
-                return res.status(400).send(err);
-              }
-              res.send({url});
-            });
-          }
-          else {
-            aws.getUrl(req, project, (err, url) => {
-              if (err) {
-                return res.status(400).send(err);
-              }
-              res.send({url});
-            });
-          }
-        }
-        catch (err) {
-          return res.status(400).send(err.message);
-        }
+        getUrl({project, bucket: req.query.bucket, key: req.query.key}).then(
+          url => res.send({url}),
+          err => res.status(400).send(err.message));
       });
     }
   );
 
   const uploadResponse = function(project, file, signedUrl) {
+    const bucketUrl = project.settings.storage.s3.bucketUrl || `https://${project.settings.storage.s3.bucket}.s3.amazonaws.com`;
+
     const response = {
-      signed: signedUrl,
+      signed: signedUrl !== bucketUrl ? signedUrl : null,
       minio: project.settings.storage.s3.minio,
-      url: project.settings.storage.s3.bucketUrl || `https://${project.settings.storage.s3.bucket}.s3.amazonaws.com`,
+      url: bucketUrl,
       bucket: project.settings.storage.s3.bucket
     };
 
-    const policy = new Buffer(JSON.stringify({
+    /* eslint-disable new-cap */
+    const policy = new Buffer.from(JSON.stringify({
       expiration: file.expiration,
       conditions: [
         {'bucket': project.settings.storage.s3.bucket},
@@ -71,6 +76,7 @@ module.exports = function(router) {
         ['content-length-range', 0, project.settings.storage.s3.maxSize || (100 * 1024 * 1024)]
       ]
     })).toString('base64');
+    /* eslint-enable new-cap */
 
     /* eslint-disable new-cap */
     response.data = {
@@ -91,6 +97,7 @@ module.exports = function(router) {
     return response;
   };
 
+  debug.startup('Attaching middleware: S3 storage POST');
   router.post('/project/:projectId/form/:formId/storage/s3',
     router.formio.formio.middleware.tokenHandler,
     function(req, res, next) {
@@ -119,28 +126,16 @@ module.exports = function(router) {
         file.expiresin = parseInt(project.settings.storage.s3.expiration || (15 * 60), 10);
         file.expiration = (new Date(Date.now() + (file.expiresin * 1000))).toISOString();
         file.path = _.trim(`${_.trim(file.dir, '/')}/${_.trim(file.name, '/')}`, '/');
-        try {
-          if (project.settings.storage.s3.minio) {
-            minio.putUrl(project, file, (err, signedUrl) => {
-              if (err) {
-                return res.status(400).send(err);
-              }
-              res.send(uploadResponse(project, file, signedUrl));
-            });
-          }
-          else {
-            aws.putUrl(project, file, (err, signedUrl) => {
-              if (err) {
-                return res.status(400).send(err);
-              }
-              res.send(uploadResponse(project, file, signedUrl));
-            });
-          }
-        }
-        catch (err) {
-          return res.status(400).send(err.message);
-        }
+
+        getUrl({project, method: 'PUT', file}).then(
+          url => res.send(uploadResponse(project, file, url)),
+          err => res.status(400).send(err.message));
       });
     }
   );
+};
+
+module.exports = {
+  middleware,
+  getUrl
 };

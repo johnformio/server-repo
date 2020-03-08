@@ -6,8 +6,25 @@ module.exports = function(app, formio) {
   // Load custom CRM action.
   formio.middleware.customCrmAction = require('../middleware/customCrmAction')(formio);
 
+  const doNotAllowNewAccounts = function(req, res, next) {
+    // Skip check for tests.
+    if (!process.env.TEST_SUITE) {
+      if (!req.user || !req.user.created) {
+        return res.status(400).send('Your account cannot perform an upgrade yet. Please try again in one hour.');
+      }
+      const current = (new Date()).getTime();
+      const created = (new Date(req.user.created)).getTime();
+      // If less than one hour in milliseconds.
+      if ((current - created) < 3600000) {
+        return res.status(400).send('Your account cannot perform an upgrade yet. Please try again in one hour.');
+      }
+    }
+    next();
+  };
+
   app.post('/payeezy',
     formio.middleware.tokenHandler,
+    doNotAllowNewAccounts,
     require('../middleware/userProject')(formio),
     require('./payeezy')(app.formio.config, formio)
   );
@@ -15,7 +32,7 @@ module.exports = function(app, formio) {
   app.post('/project/:projectId/upgrade',
     formio.middleware.tokenHandler,
     require('../middleware/userProject')(formio),
-    require('../middleware/restrictOwnerAccess')(formio),
+    require('../middleware/restrictProjectAccess')(formio)({level: 'owner'}),
     require('./upgrade')(formio),
     formio.middleware.customCrmAction('upgradeproject')
   );
@@ -70,7 +87,8 @@ module.exports = function(app, formio) {
     .then(function(formId) {
       return Q(formio.resources.submission.model.countDocuments({
         form: formId,
-        owner: req.user._id
+        owner: formio.util.ObjectId(req.user._id),
+        'data.transactionStatus': 'approved',
       }));
     })
     .then(function(count) {

@@ -37,29 +37,36 @@ module.exports = function(router) {
             }
           },
           {
-            isAsync: true,
             message: 'The Project name must be unique.',
-            validator(value, done) {
-              const search = {
-                name: value,
-                deleted: {$eq: null}
-              };
+            validator(value) {
+              return new Promise((resolve) => {
+                const search = {
+                  name: value,
+                  deleted: {$eq: null}
+                };
 
-              // Ignore the id if this is an update.
-              if (this._id) {
-                search._id = {$ne: this._id};
-              }
-
-              formio.mongoose.model('project').findOne(search).lean().exec(function(err, result) {
-                if (err || result) {
-                  return done(false);
+                // Ignore the id if this is an update.
+                if (this._id) {
+                  search._id = {$ne: this._id};
                 }
 
-                done(true);
+                formio.mongoose.model('project').findOne(search).lean().exec(function(err, result) {
+                  if (err || result) {
+                    return resolve(false);
+                  }
+
+                  resolve(true);
+                });
               });
             }
           }
         ]
+      },
+      type: {
+        type: String,
+        enum: ['project', 'stage', 'tenant'],
+        default: 'project',
+        index: true
       },
       description: {
         type: String,
@@ -73,10 +80,17 @@ module.exports = function(router) {
         default: '0.0.0'
       },
       owner: {
-        type: formio.mongoose.Schema.Types.ObjectId,
+        type: formio.mongoose.Schema.Types.Mixed,
         ref: 'submission',
         index: true,
-        default: null
+        default: null,
+        set: owner => {
+          // Attempt to convert to objectId.
+          return formio.util.ObjectId(owner);
+        },
+        get: owner => {
+          return owner ? owner.toString() : owner;
+        }
       },
       project: {
         type: formio.mongoose.Schema.Types.ObjectId,
@@ -89,29 +103,30 @@ module.exports = function(router) {
         description: 'The remote project definition.',
         validate: [
           {
-            isAsync: true,
             message: 'Remote already connected to an environment.',
-            validator(value, done) {
-              if (!value || !value.project || !value.project._id) {
-                return done(true);
-              }
-
-              const search = {
-                'remote.url': value.url,
-                'remote.project._id': value.project._id,
-                deleted: {$eq: null}
-              };
-
-              if (this._id) {
-                search._id = {$ne: this._id};
-              }
-
-              formio.mongoose.model('project').findOne(search).lean().exec(function(err, result) {
-                if (err || result) {
-                  return done(false);
+            validator(value) {
+              return new Promise((resolve) => {
+                if (!value || !value.project || !value.project._id) {
+                  return resolve(true);
                 }
 
-                return done(true);
+                const search = {
+                  'remote.url': value.url,
+                  'remote.project._id': value.project._id,
+                  deleted: {$eq: null}
+                };
+
+                if (this._id) {
+                  search._id = {$ne: this._id};
+                }
+
+                formio.mongoose.model('project').findOne(search).lean().exec(function(err, result) {
+                  if (err || result) {
+                    return resolve(false);
+                  }
+
+                  return resolve(true);
+                });
               });
             }
           }
@@ -190,6 +205,19 @@ module.exports = function(router) {
   model.schema.machineName = function(document, done) {
     done(null, document.name);
   };
+
+  model.schema.post('findOne', function(result, next) {
+    if (!result || result.type !== 'tenant') {
+      return next();
+    }
+
+    this.findOne({_id: result.project}).then((project) => {
+      if (project) {
+        result.plan = project.plan;
+      }
+      next();
+    });
+  });
 
   return model;
 };

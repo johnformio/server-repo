@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 const util = require('../../util/util');
 const async = require('async');
 const config = require('../../../config');
-const FormioUtils = require('formiojs/utils').default;
 const _ = require('lodash');
 
 module.exports = app => (mail, req, res, params, cb) => {
@@ -52,25 +51,25 @@ module.exports = app => (mail, req, res, params, cb) => {
     }
   });
 
-  const attachFiles = () => new Promise((resolve) => {
-    if (params.settings && params.settings.attachFiles) {
-      mail.attachments = (mail.attachments || []).concat(_(params.components)
-        .filter((component) => component.type === 'file')
-        .map((component) => params.data[component.key])
-        .flatten()
-        .compact()
-        .filter((file) => file.url.match(/data:(.*);base64,/))
-        .map((file) => ({
-          filename: file.originalName,
-          contentType: file.type,
-          path: file.url,
-        }))
-        .value()
-      );
+  const attachFiles = () => {
+    if (!_.get(params, 'settings.attachFiles')) {
+      return;
     }
 
-    resolve();
-  });
+    const attachments = _.chain(params.components)
+      .filter(component => component.type === 'file')
+      .map(component => params.data[component.key])
+      .flatten()
+      .compact()
+      .map(file => ({
+        filename: file.originalName,
+        contentType: file.type,
+        path: file.url,
+      }))
+      .value();
+
+    mail.attachments = (mail.attachments || []).concat(attachments);
+  };
 
   // Attach a PDF to the email.
   const attachPDF = () => new Promise((resolve) => {
@@ -103,7 +102,7 @@ module.exports = app => (mail, req, res, params, cb) => {
           .replace(/----ob----/g, '{{')
           .replace(/----cb----/g, '}}');
         try {
-          fileName = FormioUtils.interpolate(fileName, {
+          fileName = formioServer.formio.util.FormioUtils.interpolate(fileName, {
             submission: res.resource.item,
             form: req.currentForm
           }).replace('.', '');
@@ -114,13 +113,13 @@ module.exports = app => (mail, req, res, params, cb) => {
 
         // Add the download token to the url.
         url += `?token=${token.key}`;
-        mail.attachments = [
+        mail.attachments = (mail.attachments || []).concat([
           {
             filename: `${fileName}.pdf`,
             contentType: 'application/pdf',
             path: `${config.apiHost}${url}`
           }
-        ];
+        ]);
         return resolve();
       });
     }

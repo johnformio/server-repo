@@ -17,16 +17,21 @@ module.exports = function(router) {
       return next();
     }
 
+    // If we are a tenant, then version tags are based on that tenant.
+    const primaryProjectId = (req.currentProject && req.currentProject.type === 'tenant') ?
+      req.currentProject._id :
+      req.primaryProject._id;
+
     if (req.method === 'PUT' || req.method === 'POST') {
-      req.body.project = req.primaryProject._id;
+      req.body.project = primaryProjectId;
     }
 
     if (req.method === 'GET') {
       req.modelQuery = req.modelQuery || req.model || this.model;
-      req.modelQuery = req.modelQuery.find({project: req.primaryProject._id});
+      req.modelQuery = req.modelQuery.find({project: primaryProjectId});
 
       req.countQuery = req.countQuery || req.model || this.model;
-      req.countQuery = req.countQuery.find({project: req.primaryProject._id});
+      req.countQuery = req.countQuery.find({project: primaryProjectId});
     }
     return next();
   };

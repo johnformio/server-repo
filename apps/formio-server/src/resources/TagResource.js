@@ -86,7 +86,7 @@ module.exports = function(router, formioServer) {
       (req, res, next) => {
         // Remove tag contents to speed up index requests.
         if (!req.query.full) {
-          res.resource.item = res.resource.item.map(item => {
+          res.resource.item = _.map(res.resource.item, item => {
             if (item.constructor.name === 'model') {
               item = item.toObject();
             }

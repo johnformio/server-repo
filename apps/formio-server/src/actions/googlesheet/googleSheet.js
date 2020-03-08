@@ -61,7 +61,7 @@ module.exports = (router) => {
               theme: 'info',
               title: 'Google Sheet Fields',
               input: false,
-              components: (new CSVExporter(form, req, res)).fields.map((field) => ({
+              components: _.map((new CSVExporter(form, req, res)).fields, (field) => ({
                 type: 'textfield',
                 input: true,
                 label: field.title ? `${field.title} Column (${field.label})` : `${field.label} Column`,
@@ -170,7 +170,7 @@ module.exports = (router) => {
         });
         const type = this.settings.externalIdType || this.name;
         let request = null;
-        if (['POST', 'PUT'].includes(req.method)) {
+        if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
           const item = _.get(res, 'resource.item');
           const data = new CSVExporter(req.currentForm, req, res)
             .getSubmissionData(item)
@@ -214,8 +214,9 @@ module.exports = (router) => {
 
           request = spreadSheet.deleteRow(config, this.settings, rowId);
         }
-
-        request.catch((err) => debug(err.message || err));
+        if (request) {
+          request.catch((err) => debug(err.message || err));
+        }
       });
     }
 

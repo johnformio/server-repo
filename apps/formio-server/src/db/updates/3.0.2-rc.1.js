@@ -34,7 +34,7 @@ module.exports = function(db, config, tools, done) {
           }
         });
 
-        actionCollection.update({_id: action._id}, {'$set': {settings: action.settings}});
+        actionCollection.updateOne({_id: action._id}, {'$set': {settings: action.settings}});
         next();
       }, function(err) {
         if (err) {

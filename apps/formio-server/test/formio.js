@@ -32,7 +32,7 @@ var emptyDatabase = template.emptyDatabase = template.clearData = function(done)
    *   The callback to execute.
    */
   var dropDocuments = function(model, next) {
-    model.remove({}, function(err) {
+    model.deleteMany({}, function(err) {
       if (err) {
         return next(err);
       }
@@ -367,6 +367,7 @@ describe('Initial Tests', function() {
 
     after(function() {
       describe('Project Tests', function() {
+        this.retries(4);
         require('./tests/project')(app, template, hook);
         require('./tests/groups')(app, template, hook);
         require('./tests/domain')(app, template, hook);
@@ -383,6 +384,7 @@ describe('Initial Tests', function() {
         require('formio/test/actions')(app, template, hook);
         require('formio/test/submission')(app, template, hook);
         require('formio/test/submission-access')(app, template, hook);
+        require('./tests/validate')(app, template, hook);
         require('./tests/analytics')(app, template, hook);
         require('./tests/teams')(app, template, hook);
         require('./tests/env')(app, template, hook);

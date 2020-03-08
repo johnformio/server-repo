@@ -18,7 +18,9 @@ module.exports = (formioServer) => {
         }
 
         const settings = _.get(project, 'settings.saml', null);
-        if (!settings || !settings.sp || !settings.idp) {
+        if (
+          !settings || (!settings.idp && !settings.passport)
+        ) {
           debug('Project is not configured for SAML');
           return reject('Project is not configured for SAML');
         }
@@ -33,18 +35,31 @@ module.exports = (formioServer) => {
           }
 
           // Make sure to only allow valid role ids.
-          const validRoles = (roles && roles.length) ? roles.map((role) => role._id.toString()) : [];
-          const roleMap = _.filter(settings.roles.map((role) => {
+          const validRoles = (roles && roles.length) ? _.map(roles, (role) => role._id.toString()) : [];
+          const roleMap = _.filter(_.map(settings.roles, (role) => {
             if (validRoles.indexOf(role.id) !== -1) {
               return role;
             }
             return false;
           }));
 
-          const reader = new MetadataReader(settings.idp);
-          const config = toPassportConfig(reader);
-          config.issuer = settings.issuer;
-          config.callbackUrl = settings.callbackUrl;
+          let config = null;
+          try {
+            if (settings.passport) {
+              config = (typeof settings.passport === 'string') ? JSON.parse(settings.passport) : settings.passport;
+            }
+            else if (settings.idp) {
+              config = toPassportConfig(new MetadataReader(settings.idp));
+              config.issuer = settings.issuer;
+              config.callbackUrl = settings.callbackUrl;
+            }
+          }
+          catch (err) {
+            // Do nothing.
+          }
+          if (!config) {
+            return reject('Invalid SAML Configuration');
+          }
           const saml = new SAML(config);
           return resolve({
             saml: saml,
@@ -77,6 +92,12 @@ module.exports = (formioServer) => {
    */
   const getToken = function(profile, settings, project, roleMap, next) {
     let userRoles = _.get(profile, (settings.rolesPath || 'roles'));
+
+    //Default role by Azure ADFS (Azure don't send default roles)
+    if (!userRoles) {
+      userRoles = 'User';
+    }
+
     if (typeof userRoles === 'string') {
       if (userRoles.indexOf(',') !== -1) {
         userRoles = userRoles.split(',');
@@ -90,7 +111,7 @@ module.exports = (formioServer) => {
     }
 
     // Trim all whitespace from the roles.
-    userRoles = userRoles.map(_.trim);
+    userRoles = _.map(userRoles, _.trim);
 
     // Add an "Everyone" role.
     userRoles.push('Everyone');
@@ -102,7 +123,7 @@ module.exports = (formioServer) => {
 
     const roles = [];
     const roleNames = [];
-    roleMap.map(map => {
+    _.map(roleMap, map => {
       const roleName = _.trim(map.role);
       if (_.includes(userRoles, roleName)) {
         roles.push(map.id);
@@ -130,24 +151,24 @@ module.exports = (formioServer) => {
     // If this is the primary project and they user using PORTAL_SSO, then we need to have a way to map the roles
     // within the saml profile to Teams within the Form.io system. To do this, we will assign a "teams" property on
     // the user object that will be read by the teams feature to determine which teams are allocated to this user.
-    if (project.primary && config.portalSSO) {
+    if (project.primary && config.ssoTeams) {
       // Load the teams by name.
-      formio.teams.getSSOTeams(userRoles).then(function(teams) {
+      formio.teams.getSSOTeams(userRoles).then((teams) => {
         teams = teams || [];
         user.teams = _.map(_.map(teams, '_id'), formio.util.idToString);
         debug(`Teams: ${JSON.stringify(user.teams)}`);
         return next(null, {
-          user: user,
+          user,
           decoded: token,
-          token: formio.auth.getToken(token)
+          token: formio.auth.getToken(token),
         });
       });
     }
     else {
       return next(null, {
-        user: user,
+        user,
         decoded: token,
-        token: formio.auth.getToken(token)
+        token: formio.auth.getToken(token),
       });
     }
   };
@@ -155,7 +176,12 @@ module.exports = (formioServer) => {
   // Release the metadata publicly
   router.get('/metadata', (req, res) => {
     getSAMLProviders(req).then((providers) => {
-      return res.header('Content-Type','text/xml').send(providers.saml.generateServiceProviderMetadata());
+      if (providers.settings.sp) {
+        return res.header('Content-Type','text/xml').send(providers.settings.sp);
+      }
+      else {
+        return res.header('Content-Type','text/xml').send(providers.saml.generateServiceProviderMetadata());
+      }
     }).catch((err) => {
       return res.status(400).send(err.message || err);
     });
@@ -168,7 +194,7 @@ module.exports = (formioServer) => {
         RelayState: req.query.relay
       }}, (err, redirect) => {
         if (err) {
-          res.status(400).send(err.message || err);
+          return res.status(400).send(err.message || err);
         }
         if (providers.settings.query) {
           redirect = `${redirect}&${providers.settings.query}`;
@@ -183,7 +209,7 @@ module.exports = (formioServer) => {
 
   router.post('/acs', (req, res) => {
     // Get the relay.
-    const relay = req.query.relay || req.body.RelayState;
+    let relay = req.query.relay || req.body.RelayState;
     if (!relay) {
       return res.status(400).send('No relay provided.');
     }
@@ -210,7 +236,9 @@ module.exports = (formioServer) => {
               return res.status(401).send(token);
             }
 
-            return res.redirect(`${relay}?saml=${token.token}`);
+            relay += (relay.indexOf('?') === -1) ? '?' : '&';
+            relay += `saml=${token.token}`;
+            return res.redirect(relay);
           }
         );
       });
