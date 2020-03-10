@@ -65,6 +65,7 @@ function middleware(formio) {
               licenseKey: getLicenseKey(req),
             }, '', {terms: 1, keys: 1});
             let formManagerEnabled = false;
+            let vPatEnabled = false;
             try {
               await utilization({
                 ...getProjectContext(req),
@@ -76,11 +77,23 @@ function middleware(formio) {
             catch (err) {
               formManagerEnabled = err.message;
             }
+            try {
+              await utilization({
+                ...getProjectContext(req),
+                licenseKey: getLicenseKey(req),
+                type: 'VPAT'
+              });
+              vPatEnabled = true;
+            }
+            catch (err) {
+              vPatEnabled = err.message;
+            }
             res.resource.item.apiCalls = {
               limit: result.terms,
               used: result.used,
               licenseId: result.licenseId,
               formManager: formManagerEnabled,
+              vpat: vPatEnabled,
               tenant: result.keys.hasOwnProperty(result.licenseKey) && result.keys[result.licenseKey].scope.includes('tenant'),
             };
           }

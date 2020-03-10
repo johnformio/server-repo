@@ -32,6 +32,7 @@ module.exports = function(formio) {
         pdfs: req.body.pdfs,
         pdfDownloads: req.body.pdfDownloads,
         formManager: !!req.body.formManager,
+        vpat: !!req.body.vpat,
       };
 
       return formio.payment.userHasPaymentInfo(req)
@@ -46,6 +47,7 @@ module.exports = function(formio) {
           pdfs: 1,
           pdfDownloads: 100,
           formManagers: req.body.formManager ? 1 : 0,
+          vpats: req.body.vpat ? 1 : 0,
         };
 
         const addScopes = [];
@@ -55,6 +57,12 @@ module.exports = function(formio) {
         }
         else {
           removeScopes.push('formManager');
+        }
+        if (req.body.vpat) {
+          addScopes.push('VPAT');
+        }
+        else {
+          removeScopes.push('VPAT');
         }
 
         // Ensure pdfs and pdfDownloads are valid.
@@ -128,6 +136,7 @@ module.exports = function(formio) {
           `<li>Pdfs: {{billing.pdfs}}</li>` +
           `<li>Pdf Downloads: {{billing.pdfDownloads}}</li>` +
           `<li>Form Manager: {{billing.formManager}}</li>` +
+          `<li>VPATs: {{billing.vpat}}</li>` +
           `</ul></p>`
         };
         /* eslint-enable max-len */
