@@ -1,7 +1,7 @@
 'use strict';
 const _ = require('lodash');
 module.exports = app => {
-  const formResponseAlter = {
+  const loadFormAlter = {
     alter: (project, form) => {
       // Add form configs from public configs.
       if (_.get(project, 'settings.addConfigToForms', false)) {
@@ -28,9 +28,9 @@ module.exports = app => {
         if (err) {
           return next(err);
         }
-        return next(null, formResponseAlter.alter(project, form));
+        return next(null, loadFormAlter.alter(project, form));
       });
     }
   };
-  return formResponseAlter;
+  return loadFormAlter;
 };
