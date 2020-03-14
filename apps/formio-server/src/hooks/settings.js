@@ -61,6 +61,15 @@ module.exports = function(app) {
       resources(resources) {
         return _.assign(resources, require('../resources/resources')(app, formioServer));
       },
+      alias(alias, req, res) {
+        // See if this is our validate endpoint
+        if (req.method === 'POST' && alias.match(/\/validate$/)) {
+          return alias.replace(/\/validate$/, '');
+        }
+        else {
+          return alias;
+        }
+      },
       FormResource: require('./alter/FormResource')(app),
       models: require('./alter/models')(app),
       email: require('./alter/email')(app),
@@ -68,6 +77,7 @@ module.exports = function(app) {
       currentUser: require('./alter/currentUser')(app),
       accessInfo: require('./alter/accessInfo')(app),
       loadForm: require('./alter/loadForm')(app).hook,
+      formResponse: require('./alter/loadForm')(app).hook,
       evalContext: require('./alter/evalContext')(app),
       actions: require('./alter/actions')(app),
       actionContext: require('./alter/actionContext')(app),

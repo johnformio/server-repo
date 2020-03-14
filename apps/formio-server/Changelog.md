@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.11
+### Changed
+ - Upgrade portal to 7.0.0-rc.70
+ 
+### Fixed
+ - Validate endpoint to work with aliases
+ - Adding config and modules to form revision endpoints.
+ - Data Source component to always trigger when validate endpoint is called.
+
 ## 6.9.10
 ### Changed
  - Upgrade portal to 7.0.0-rc.68
