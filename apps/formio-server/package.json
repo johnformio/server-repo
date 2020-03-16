@@ -20,9 +20,9 @@
   },
   "cache": "1550086650",
   "main": "./server.js",
-  "version": "6.9.11",
+  "version": "6.9.12",
   "schema": "3.3.6",
-  "portalVersion": "7.0.0-rc.70",
+  "portalVersion": "7.0.0-rc.71",
   "dependencies": {
     "JSONStream": "^1.3.5",
     "adal-node": "^0.2.1",
@@ -90,7 +90,7 @@
     "supertest": "^4.0.2",
     "uglify-es": "git+https://github.com/mishoo/UglifyJS2.git#harmony",
     "webpack": "^4.42.0",
-    "webpack-obfuscator": "^0.25.5"
+    "webpack-obfuscator": "^0.26.0"
   },
   "pre-commit": [
     "lint"
