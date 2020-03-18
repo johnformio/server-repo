@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.13
+### Changed
+ - Upgrade portal to 7.0.0-rc.72
+
+### Fixed
+ - Issues with encrypted fields not working when persistent flag isn't set on a component.
+ - CSV download issues when DateTime components are added.
+
 ## 6.9.12
 ### Chnaged
  - Upgrade portal to 7.0.0-rc.71
