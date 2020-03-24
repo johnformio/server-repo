@@ -12,5 +12,6 @@ module.exports = (formio) => (req, res, next) => {
     throw new Error('Too many recursive requests.');
   }
   subRequest.query = {dryrun: true};
+  subRequest.permissionsChecked = true;
   formio.resourcejs['/form/:formId/submission'].post(subRequest, res, next);
 };
