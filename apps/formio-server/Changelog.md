@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.21
+### Fixed
+ - Issue where DataSource was not populating before validations occur.
+ - Ensure form is loaded with public configurations when interpolating data source component.
+ - Problem with Validate endpoint where only admins could use it.
+ - Issue where the datasource component would hang up the request if it failed.
+ - Issues where datasource checks would fail for any SSL errors that would occur.
+
+### Added
+ - Debug messaging to the data source component.
+
 ## 6.9.20
 ### Changed
  - Upgrade portal to 7.0.0-rc.80
