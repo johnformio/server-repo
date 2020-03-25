@@ -56,7 +56,12 @@ module.exports = (app) => {
           if (component.fetch && component.fetch.headers) {
             _.each(component.fetch.headers, (header) => {
               if (header.key) {
-                requestHeaders[header.key] = header.value;
+                requestHeaders[header.key] = app.formio.formio.util.FormioUtils.interpolate(header.value, {
+                  data: req.body.data,
+                  form,
+                  _,
+                  moment
+                });
               }
             });
           }
