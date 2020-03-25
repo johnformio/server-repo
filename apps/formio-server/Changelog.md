@@ -4,6 +4,74 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.20
+### Changed
+ - Upgrade portal to 7.0.0-rc.80
+ - Upgrade formiojs@4.9.6
+ - Upgrade aws-sdk@2.644.0
+
+## 6.9.19
+### Changed
+ - Upgrade portal to 7.0.0-rc.79
+ - Upgrade formiojs@4.9.5
+
+## 6.9.18
+### Changed
+ - Upgrade portal to 7.0.0-rc.78
+ - Upgrade formiojs@4.9.4
+
+## 6.9.17
+### Changed
+ - Upgrade portal to 7.0.0-rc.77
+ - Upgrade formiojs@4.9.3
+
+## 6.9.16
+### Changed
+ - Upgrade portal to 7.0.0-rc.76
+ - Upgrade formiojs@4.9.2
+
+## 6.9.15
+### Changed
+ - UPgrade portal to 7.0.0-rc.74
+
+## 6.9.14
+### Changed
+ - Upgrade portal to 7.0.0-rc.73
+
+## 6.9.13
+### Changed
+ - Upgrade portal to 7.0.0-rc.72
+
+### Fixed
+ - Issues with encrypted fields not working when persistent flag isn't set on a component.
+ - CSV download issues when DateTime components are added.
+
+## 6.9.12
+### Chnaged
+ - Upgrade portal to 7.0.0-rc.71
+
+## 6.9.11
+### Changed
+ - Upgrade portal to 7.0.0-rc.70
+ 
+### Fixed
+ - Validate endpoint to work with aliases
+ - Adding config and modules to form revision endpoints.
+ - Data Source component to always trigger when validate endpoint is called.
+
+## 6.9.10
+### Changed
+ - Upgrade portal to 7.0.0-rc.68
+
+## 6.9.7
+### Changed
+ - Fixed deployed portal to resolve Exising Resources
+ - Fixed issue with deployed portal erasing spaces in TextAreas.
+
+## 6.9.6
+### Changed
+ - Build process to change from pkg to alpine-node.
+
 ## 6.9.5
 ### Added
  - Validate endpoint for forms to allow them to perform a validation only against a form.

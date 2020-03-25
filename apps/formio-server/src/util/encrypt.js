@@ -8,7 +8,8 @@ const util = require('./util');
 module.exports = (formioServer) => {
   const Encryptor = {
     encryptedComponent: (component) => {
-      return component && component.encrypted && component.persistent;
+      const isPersistent = !component.hasOwnProperty('persistent') || component.persistent;
+      return component && component.encrypted && isPersistent;
     },
 
     encryptHandler: (handlerName) => {

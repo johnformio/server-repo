@@ -586,7 +586,7 @@ module.exports = function(app, template, hook) {
       request(app)
         .get('/project/' + template.project._id + '/report')
         .set('x-token', '123testing123testing')
-        .expect(200)
+        .expect(204)
         .end(done);
     });
 

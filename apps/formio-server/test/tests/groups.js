@@ -992,6 +992,84 @@ module.exports = function(app, template, hook) {
             done();
           });
       });
+
+      it('Should allow user2 to use the report API to view submissions within their departments', (done) => {
+        request(app)
+          .post('/project/' + helper.template.project._id + '/report')
+          .set('x-jwt-token', helper.template.users.user2.token)
+          .send([
+            {
+              '$match': {'form': `ObjectId('${helper.template.forms.departmentreport._id}')`},
+            },
+            {
+              '$limit': 10
+            },
+            {
+              '$sort': {created: -1}
+            }
+          ])
+          .expect(206)
+          .expect('Content-Type', /json/)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.length, 10);
+            assert.equal(res.headers['content-range'], '0-9/13');
+            assert.equal(response[0].data.notes, 'Here is some more IT content!');
+            assert.equal(response[1].data.notes, 'For IT only!');
+            assert.equal(response[2].data.notes, 'Marketing content FTW!');
+            assert.equal(response[3].data.notes, 'Yet some more Marketing content!');
+            assert.equal(response[4].data.notes, 'And some more Marketing content!');
+            assert.equal(response[5].data.notes, 'More Marketing content!');
+            assert.equal(response[6].data.notes, 'Marketing content!');
+            assert.equal(response[7].data.notes, 'And some more for the IT department!');
+            assert.equal(response[8].data.notes, 'More for the IT department!');
+            assert.equal(response[9].data.notes, 'And some more content for Sales department!');
+            helper.template.users.user1.token = res.headers['x-jwt-token'];
+            done();
+          });
+      });
+
+      it('Should allow user2 to use the report API to view submissions within their departments and change limit, sort, and skip', (done) => {
+        request(app)
+          .post('/project/' + helper.template.project._id + '/report')
+          .set('x-jwt-token', helper.template.users.user2.token)
+          .send([
+            {
+              '$match': {'form': `ObjectId('${helper.template.forms.departmentreport._id}')`},
+            },
+            {
+              '$limit': 5
+            },
+            {
+              '$skip': 5
+            },
+            {
+              '$sort': {created: 1}
+            }
+          ])
+          .expect(206)
+          .expect('Content-Type', /json/)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.length, 5);
+            assert.equal(res.headers['content-range'], '5-9/13');
+            assert.equal(response[0].data.notes, 'And some more for the IT department!');
+            assert.equal(response[1].data.notes, 'Marketing content!');
+            assert.equal(response[2].data.notes, 'More Marketing content!');
+            assert.equal(response[3].data.notes, 'And some more Marketing content!');
+            assert.equal(response[4].data.notes, 'Yet some more Marketing content!');
+            helper.template.users.user1.token = res.headers['x-jwt-token'];
+            done();
+          });
+      });
     });
   }
 };
