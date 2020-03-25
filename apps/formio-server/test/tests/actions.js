@@ -166,6 +166,9 @@ module.exports = (app, template, hook) => {
 
   if (!docker)
   describe('x- headers for actions', () => {
+    if (docker || customer) {
+      return;
+    }
     const helper = new template.Helper(template.formio.owner);
     let submissionUrl;
     let email1Id;

@@ -15,8 +15,8 @@ module.exports = function(router) {
       'http://localhost:3001',
       'http://localhost:9002',
       'https://portal.form.io',
+      'https://next.form.io',
       'https://portal.test-form.io',
-      'https://portal.develop-form.io',
       'http://portal.localhost:3000',
       'http://portal.localhost:3001',
       'http://portal.localhost:9002'
