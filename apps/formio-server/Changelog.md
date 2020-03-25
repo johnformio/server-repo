@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## 6.9.22
 ### Fixed
- - Ensure the header values are interpolated.
+ - Ensure the DataSource header values are interpolated. 
 
 ## 6.9.21
 ### Fixed
