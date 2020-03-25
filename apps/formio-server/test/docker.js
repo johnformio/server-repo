@@ -191,7 +191,6 @@ describe('Initial Tests', function() {
         require('./tests/tags')(app, template, hook);
         require('./tests/misc')(app, template, hook);
         require('./tests/oauth')(app, template, hook);
-        require('./tests/s3')(app, template, hook);
         require('./tests/dropbox')(app, template, hook);
         require('./tests/report')(app, template, hook);
         require('./tests/actions')(app, template, hook);
