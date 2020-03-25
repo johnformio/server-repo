@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.22
+### Fixed
+ - Ensure the header values are interpolated.
+
 ## 6.9.21
 ### Fixed
  - Issue where DataSource was not populating before validations occur.
