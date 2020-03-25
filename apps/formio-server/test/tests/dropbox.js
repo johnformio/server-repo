@@ -5,6 +5,7 @@ var request = require('supertest');
 var assert = require('assert');
 var mockRequest = require('request');
 var sinon = require('sinon');
+var _ = require('lodash');
 
 module.exports = function(app, template, hook) {
   if (process.env.DOCKER) {
@@ -41,7 +42,7 @@ module.exports = function(app, template, hook) {
 
           var response = res.body;
           assert.equal(response.hasOwnProperty('settings'), true);
-          assert.deepEqual(response.settings, newSettings);
+          assert.deepEqual(_.omit(response.settings, ['licenseKey']), newSettings);
 
           template.project = response;
 

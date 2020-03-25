@@ -31,6 +31,9 @@ module.exports = (config) => {
     return Promise.all(handlers)
     .then((results) => {
       if (res !== undefined) {
+        if (err.hasOwnProperty('statusCode')) {
+          return res.status(err.statusCode).send(err.error);
+        }
         return res.sendStatus(400);
       }
     })

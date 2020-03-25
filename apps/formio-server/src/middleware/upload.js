@@ -1,10 +1,11 @@
 'use strict';
 const request = require('request');
 const {promisify} = require('util');
-const FORMIO_FILES_SERVER = process.env.FORMIO_FILES_SERVER || 'https://files.form.io';
+const PDF_SERVER = process.env.PDF_SERVER || process.env.FORMIO_FILES_SERVER || 'https://files.form.io';
 const _ = require('lodash');
 const Promise = require('bluebird');
 const fs = require('fs');
+const {getLicenseKey} = require('../util/utilization');
 
 const unlinkAsync = promisify(fs.unlink);
 
@@ -23,17 +24,17 @@ module.exports = (formioServer) => async (req, res, next) => {
 
   try {
     // Load project
-    const project = await formio.cache.loadPrimaryProjectAsync(req);
+    const project = req.primaryProject;
 
     // Set the files server
-    let filesServer = FORMIO_FILES_SERVER;
+    let filesServer = PDF_SERVER;
     if (process.env.FORMIO_HOSTED && project.settings.pdfserver) {
       // Allow them to download from any server if it is set to the default
       filesServer = project.settings.pdfserver;
     }
 
     // Create the headers object
-    const headers = {'x-file-token': project.settings.filetoken};
+    const headers = {'x-license-key': getLicenseKey(req)};
 
     // Pass along the auth token to files server
     if (req.token) {
