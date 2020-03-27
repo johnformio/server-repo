@@ -79,7 +79,9 @@
     "traverse": "^0.6.6",
     "twilio": "^3.41.1",
     "universal-analytics": "^0.4.20",
-    "uuid": "^3.4.0"
+    "uuid": "^3.4.0",
+    "webpack": "^4.41.6",
+    "webpack-obfuscator": "^0.25.2"
   },
   "devDependencies": {
     "eslint": "^6.8.0",
