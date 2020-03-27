@@ -15,7 +15,6 @@ const primaryComparison = ' = {{ params.id }}';
 
 module.exports = (router) => {
   const formio = router.formio;
-  const required = formio.plans.limits.team;
   const util = formio.util;
 
   // Building blocks for sql statements.
@@ -38,8 +37,8 @@ module.exports = (router) => {
         plan = plan[0];
 
         // Check that this plan is acceptable for the sql connector.
-        if ((plan === 'trial') || _.get(formio.plans.limits, plan) < required) {
-          debug.verifyPlan(`The given plan is not high enough for sql connector access.. ${plan} / ${required}`);
+        if (!['trial', 'team', 'commercial'].includes(plan)) {
+          debug.verifyPlan(`The given plan is not high enough for sql connector access.. ${plan}`);
           throw new Error('The current project must be upgraded to access the SQL Connector');
         }
 

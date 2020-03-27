@@ -1,103 +1,189 @@
 'use strict';
 
-const request = require('request-promise-native');
-const crypto = require('crypto');
-const os = require('os');
-const jwt = require('jsonwebtoken');
+const config = require('../../config.js');
+const {utilization} = require('../util/utilization');
+
+const terms = {};
+
+module.exports = {
+  validate: validateWithGracefulDegradation,
+  generateMiddleware: app => (req, res, next) => {
+    if (app.restrictMethods) {
+      if (['PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+        return res.status(503 /* Service Unavailable */).send('Server is in restricted method mode');
+      }
+    }
+
+    next();
+  },
+  terms
+};
+
+async function validateWithGracefulDegradation(app) {
+  //
+  // Kick off our validation process:
+  //
+  //  1. Attempt validation against the license server. If it
+  //     fails to respond, try again every 5 seconds for up to
+  //     100 tries.
+  //
+  //  2. If we couldn't communicate with the license server,
+  //     print a warning message to the console and explain that
+  //     we'll try again in 12 hours.
+  //
+  //  3. After 12 hours, repeat step 1. If we still can't confirm
+  //     the license, tell the middleware (see above) to enter
+  //     restricted method mode and respond to PUT, PATCH, and
+  //     DELETE requests with a 503 Service Unavailable error.
+  //     PUTs relating to form drafts are exempted.
+  //
+  //  4. If, at any point, we get an affirmative response from
+  //     the licensing server that the license is known to be
+  //     invalid, force the server to exit immediately.
+  //
+  app.validated = await performValidationRound(app);
+
+  if (!app.validated) {
+    // First warning
+    // eslint-disable-next-line no-console
+    console.log(`
+
+
+      !!!!!!!!!!!!!
+      !  WARNING  !
+      !!!!!!!!!!!!!
+
+      Communication with the licensing server has failed after repeated attempts.
+
+      If https://license.form.io is accessible outside of this network, this may
+      be due to a network configuration issue specific to this server deployment.
+
+      Another round of validation attempts will begin in 12 hours. If validation
+      still fails, the server will enter a restricted method mode that prevents
+      PUT, PATCH, or DELETE requests.
+
+
+    `.replace(/ {6}/g, ''));
+
+    setTimeout(async () => {
+      app.validated = await performValidationRound(app);
+
+      if (!app.validated) {
+        // Activate restricted method mode
+        app.restrictMethods = true;
+
+        // eslint-disable-next-line no-console
+        console.log(`
+
+
+          !!!!!!!!!!!!!!!
+          !   WARNING   !
+          !-------------!
+          ! RESTRICTED  !
+          ! MODE ACTIVE !
+          !!!!!!!!!!!!!!!
+
+          Communication with the licensing server has failed after repeated attempts.
+
+          If https://license.form.io is accessible outside of this network, this may
+          be due to a network configuration issue specific to this server deployment.
+
+          The server has entered a restricted method mode that prevents PUT, PATCH,
+          or DELETE requests.
+
+
+        `.replace(/ {10}/g, ''));
+      }
+    }, 12 * 60 * 60 * 1000);
+  }
+}
+
+async function performValidationRound(app) {
+  if (process.env.FORMIO_HOSTED) {
+    // eslint-disable-next-line no-console
+    console.log('\nLicense check skipped');
+    return true;
+  }
+
+  // eslint-disable-next-line no-console
+  console.log('\nValidating license key...');
+
+  if (!config.licenseKey) {
+    // eslint-disable-next-line no-console
+    console.log('No license key detected. Please set in LICENSE_KEY environment variable.');
+    process.exit();
+  }
+
+  return await submitUtilizationRequest({
+    // Base validation fields
+    type: 'apiServer',
+    licenseKey: config.licenseKey,
+    environmentId: await getEnvironmentId(app),
+    // Extra details for log
+    mongoHash: md5(config.formio.mongo),
+    hostname: require('os').hostname(),
+  });
+}
 
 /* eslint-disable no-console */
-module.exports = (app, config) => {
-  if (process.env.NO_LICENSE === 'ImNotStealingFromFormioFamilies') {
-    return Promise.resolve();
+async function submitUtilizationRequest(
+  payload,
+  attempts=0,
+  MAX_ATTEMPTS=100,
+  INTERVAL=5*1000
+) {
+  try {
+    const result = await utilization(payload, '', {terms: 1});
+
+    // eslint-disable-next-line no-console
+    console.log('License key validated');
+
+    // Save the received license terms to the exported terms reference
+    Object.assign(terms, result.terms);
+
+    return result;
   }
+  catch (err) {
+    // eslint-disable-next-line no-console
+    console.log(`Error while validating license key: ${err.message}`);
 
-  if (!config.license) {
-    console.error('License error: No license detected. Please set in LICENSE environment variable.');
-    process.exit(1);
-  }
-
-  const schema = app.formio.formio.mongoose.models.schema;
-
-  const getDbIdentifier = function() {
-    return new Promise((resolve, reject) => {
-      schema.findOne({key: 'dbIdentifier'}, (err, info) => {
-        if (err) {
-          return reject(err);
-        }
-        else if (info) {
-          return resolve(info.value);
-        }
-        else {
-          const id = app.formio.formio.mongoose.Types.ObjectId();
-          schema.create({
-            key: 'dbIdentifier',
-            value: id
-          });
-          resolve(id.toString());
-        }
-      });
-    });
-  };
-
-  getDbIdentifier()
-    .then(dbIdentifier => {
-      const timestamp = Date.now() - 6000;
-
-      const payload = jwt.decode(config.license);
-      if (!payload) {
-        console.error('License error: Could not read license.');
-        process.exit(1);
+    // If it's a server error, retry
+    if (!err.statusCode || err.statusCode >= 500) {
+      // (unless we've hit the max number of attempts)
+      if (attempts >= MAX_ATTEMPTS) {
+        // eslint-disable-next-line no-console
+        console.log('Max attempts exceeded - unable to validate license key with license server');
+        return false;
       }
 
-      payload.timestamp = timestamp;
-      const hash = crypto.createHash('md5').update(
-        Buffer.from(JSON.stringify(payload)).toString('base64')
-      ).digest('hex');
+      console.log(`Retrying in ${INTERVAL/1000}s...`);
+      return require('bluebird').delay(INTERVAL).then(
+        () => submitUtilizationRequest(payload, attempts + 1, MAX_ATTEMPTS)
+      );
+    }
+    // Otherwise, print an error and exit
+    else {
+      // eslint-disable-next-line no-console
+      console.log('Invalid license key');
+      process.exit();
+    }
+  }
+}
 
-      let count = 0;
-      const makeRequest = () => {
-        if (count > 120) {
-          console.error('License error: Too many attempts');
-          process.exit(1);
-        }
-        count++;
-        return request({
-          method: 'POST',
-          url: 'https://license.form.io/validate',
-          timeout: 30 * 1000,
-          headers: {
-            'content-type': 'application/json'
-          },
-          json: {
-            timestamp,
-            token: config.license,
-            mongoHash: crypto.createHash('md5').update(config.formio.mongo).digest('hex'),
-            hostname: os.hostname(),
-            dbIdentifier,
-          }
-        })
-          .then(result => {
-            if (result !== hash) {
-              console.error('License error: Invalid license');
-              process.exit(1);
-            }
-            console.log('License validated.');
-          });
-      };
+function md5(str) {
+  return require('crypto').createHash('md5').update(str).digest('hex');
+}
 
-      const finished = setInterval(() => {
-        makeRequest()
-          .then(() => clearInterval(finished))
-          .catch(err => console.error('Temporary License error:', err.message));
-      }, 60 * 1000);
+async function getEnvironmentId(app) {
+  const schema = app.formio.formio.mongoose.models.schema;
+  let dbIdentifierRecord = await schema.findOne({key: 'dbIdentifier'});
 
-      // Call first time.
-      makeRequest()
-        .then(() => clearInterval(finished))
-        .catch(err => console.error('Temporary License error:', err.message));
-    })
-    .catch(err => {
-      console.error('License error:', err);
-      process.exit(1);
+  if (!dbIdentifierRecord) {
+    dbIdentifierRecord = await schema.create({
+      key: 'dbIdentifier',
+      value: app.formio.formio.mongoose.Types.ObjectId()
     });
-};
+  }
+
+  return dbIdentifierRecord.value;
+}

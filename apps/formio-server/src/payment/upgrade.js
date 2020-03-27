@@ -2,7 +2,7 @@
 
 const Q = require('q');
 const debug = require('debug')('formio:payment:upgrade');
-const _merge = require('lodash/merge');
+const {getLicenseKey, setLicensePlan} = require('../util/utilization');
 
 module.exports = function(formio) {
   const emailer = require('formio/src/util/email')(formio);
@@ -28,19 +28,62 @@ module.exports = function(formio) {
       if (project.owner.toString() !== req.user._id.toString()) {
         throw 'Only project owners can upgrade a project';
       }
-      const billing = project.billing || {};
+      const billing = {
+        pdfs: req.body.pdfs,
+        pdfDownloads: req.body.pdfDownloads,
+        formManager: !!req.body.formManager,
+        vpat: !!req.body.vpat,
+      };
 
       return formio.payment.userHasPaymentInfo(req)
-      .then(function(hasPayment) {
+      .then(async (hasPayment) => {
         // Allow the manual transition from trial to basic.
         if (!hasPayment && ['basic', 'trial'].indexOf(req.body.plan) === -1) {
           res.status(400).send('Cannot upgrade project without registered payment info');
           return Q.reject();
         }
 
-        billing.servers = _merge(billing.servers, req.body.servers);
+        const limits = {
+          pdfs: 1,
+          pdfDownloads: 100,
+          formManagers: req.body.formManager ? 1 : 0,
+          vpats: req.body.vpat ? 1 : 0,
+        };
 
-        return formio.resources.project.model.updateOne({
+        const addScopes = [];
+        const removeScopes = [];
+        if (req.body.formManager) {
+          addScopes.push('formManager');
+        }
+        else {
+          removeScopes.push('formManager');
+        }
+        if (req.body.vpat) {
+          addScopes.push('VPAT');
+        }
+        else {
+          removeScopes.push('VPAT');
+        }
+
+        // Ensure pdfs and pdfDownloads are valid.
+        if (
+          req.body.pdfs &&
+          req.body.pdfs > 1 &&
+          req.body.pdfs <= 125 &&
+          req.body.pdfs % 25 === 0 &&
+          req.body.pdfDownloads &&
+          req.body.pdfDownloads > 1 &&
+          req.body.pdfDownloads <= 5000 &&
+          req.body.pdfDownloads % 1000 === 0
+        ) {
+          limits.pdfs = req.body.pdfs;
+          limits.pdfDownloads = req.body.pdfDownloads;
+        }
+
+        const licenseKey = getLicenseKey(req);
+        await setLicensePlan(formio, licenseKey, req.body.plan, limits, addScopes, removeScopes);
+
+        return await formio.resources.project.model.update({
           _id: formio.util.idToBson(req.projectId)
         }, {
           plan: req.body.plan,
@@ -63,13 +106,16 @@ module.exports = function(formio) {
             projectId: project._id,
             oldPlan: project.plan,
             newPlan: req.body.plan,
-            servers: billing.servers
+            billing: JSON.stringify(billing)
           }
         });
       })
       .then(function() {
         const plans = ['trial', 'basic', 'independent', 'team', 'commercial'];
-        const direction = plans.indexOf(project.plan) < plans.indexOf(req.body.plan) ? 'Upgrade' : 'Downgrade';
+        let direction = plans.indexOf(project.plan) < plans.indexOf(req.body.plan) ? 'Upgrade' : 'Downgrade';
+        if (project.plan === req.body.plan) {
+          direction = 'Not Change';
+        }
 
         /* eslint-disable max-len */
         const emailSettings = {
@@ -87,12 +133,21 @@ module.exports = function(formio) {
           `<li>Old Plan: {{project.plan}}</li>` +
           `<li>New Plan: {{newPlan}}</li>` +
           `<li>Project ID: {{project._id}}</li>` +
-          `<li>API Servers: {{servers.api}}</li>` +
-          `<li>PDF Servers: {{servers.pdf}}</li>` +
+          `<li>Pdfs: {{billing.pdfs}}</li>` +
+          `<li>Pdf Downloads: {{billing.pdfDownloads}}</li>` +
+          `<li>Form Manager: {{billing.formManager}}</li>` +
+          `<li>VPATs: {{billing.vpat}}</li>` +
           `</ul></p>`
         };
         /* eslint-enable max-len */
-        const params = {project: project, user: req.user, newPlan: req.body.plan, servers: billing.servers};
+        const params = {
+          project: project,
+          form: {_id: 'new', project: project._id},
+          user: req.user,
+          newPlan: req.body.plan,
+          servers: billing,
+          noUtilization: true,
+        };
         return Q.ninvoke(emailer, 'send', req, res, emailSettings, params);
       });
     })

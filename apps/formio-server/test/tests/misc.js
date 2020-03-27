@@ -6,6 +6,7 @@ var assert = require('assert');
 var async = require('async');
 var chance = new (require('chance'))();
 var util = require('../../src/util/util');
+var _ = require('lodash');
 module.exports = function(app, template, hook) {
   let Helper = require('formio/test/helper')(app);
   describe('Project Form Modules', () => {
@@ -133,7 +134,7 @@ module.exports = function(app, template, hook) {
 
             var response = res.body;
             assert.equal(response.hasOwnProperty('settings'), true);
-            assert.deepEqual(response.settings, newSettings);
+            assert.deepEqual(_.omit(response.settings, ['licenseKey']), newSettings);
             template.project = response;
 
             // Store the JWT for future API calls.

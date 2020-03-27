@@ -4,27 +4,37 @@ const jwt = require('jsonwebtoken');
 const util = require('../../util/util');
 const async = require('async');
 const config = require('../../../config');
+const {utilization, getLicenseKey} = require('../../util/utilization');
 const _ = require('lodash');
 
 module.exports = app => (mail, req, res, params, cb) => {
   const formioServer = app.formio;
 
   // Check the Project plan.
-  const checkPlan = () => new Promise((resolve, reject) => {
-    // Restrict basic and independent plans.
-    if (req && req.primaryProject) {
-      if (formioServer.analytics.isLimitedEmailPlan(req.primaryProject)) {
-        const transport = mail.msgTransport || 'default';
-        if (transport !== 'default' && transport !== 'test') {
-          return reject('Plan limited to default transport only.');
-        }
-
-        formioServer.analytics.checkEmail(req, (err) => {
+  const checkPlan = async () => {
+    let form = params.form;
+    if (typeof params.form === 'string') {
+      form = await new Promise((resolve, reject) => {
+        formioServer.formio.cache.loadForm(req, null, params.form, (err, form) => {
           if (err) {
             return reject(err);
           }
+          resolve(form);
+        });
+      });
+    }
+    if (process.env.FORMIO_HOSTED) {
+      if (params && params.noUtilization) {
+        return;
+      }
+      // Restrict basic and independent plans.
+      if (req && req.primaryProject && ['basic', 'independent'].includes(req.primaryProject.plan)) {
+        const transport = mail.msgTransport || 'default';
+        if (transport !== 'default' && transport !== 'test') {
+          throw new Error('Plan limited to default transport only.');
+        }
 
-          mail.html += `
+        mail.html += `
 <table style="margin: 0px;padding: 20px;background-color:#002941;color:white;width:100%;">
   <tbody>
   <tr>
@@ -35,21 +45,17 @@ module.exports = app => (mail, req, res, params, cb) => {
   </tr>
   </tbody>
 </table>`;
+      }
 
-          formioServer.analytics.recordEmail(req);
-          return resolve();
-        });
-      }
-      else {
-        formioServer.analytics.recordEmail(req);
-        return resolve();
-      }
+      return await utilization({
+        type: 'email',
+        email: mail.to,
+        formId: form._id.toString(),
+        projectId: form.project.toString(),
+        licenseKey: getLicenseKey(req.primaryProject),
+      });
     }
-    else {
-      formioServer.analytics.recordEmail(req);
-      return resolve();
-    }
-  });
+  };
 
   const attachFiles = () => {
     if (!_.get(params, 'settings.attachFiles')) {

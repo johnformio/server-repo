@@ -1,11 +1,13 @@
 'use strict';
 const _ = require('lodash');
 const request = require('request-promise-native');
+const debug = require('debug')('formio:datasource');
+const moment = require('moment');
 
 module.exports = (app) => {
   const before = function(component, data, path, validation, req, res, next) {
     // Only perform before validation has occurred.
-    if (!validation) {
+    if (validation) {
       return next();
     }
 
@@ -18,59 +20,84 @@ module.exports = (app) => {
       return next();
     }
 
-    let requestHeaders = {};
-    const token = app.formio.formio.util.getRequestValue(req, 'x-jwt-token');
-    switch (component.dataSrc || 'url') {
-      case 'url':
-        // Add the request headers if forward headers is enabled.
-        if (component.fetch && component.fetch.forwardHeaders) {
-          requestHeaders = _.clone(req.headers);
+    // Load the current form to put in interpolate context.
+    app.formio.formio.cache.loadCurrentForm(req, function(err, form) {
+      if (err) {
+        return next(err);
+      }
 
-          // Delete headers that shouldn't be forwarded.
-          delete requestHeaders['host'];
-          delete requestHeaders['content-length'];
-          delete requestHeaders['content-type'];
-          delete requestHeaders['connection'];
-          delete requestHeaders['cache-control'];
-        }
+      let requestHeaders = {};
+      const token = app.formio.formio.util.getRequestValue(req, 'x-jwt-token');
+      const url = app.formio.formio.util.FormioUtils.interpolate(_.get(component, 'fetch.url'), {
+        data: req.body.data,
+        form,
+        _,
+        moment
+      });
+      switch (component.dataSrc || 'url') {
+        case 'url':
+          // Add the request headers if forward headers is enabled.
+          if (component.fetch && component.fetch.forwardHeaders) {
+            requestHeaders = _.clone(req.headers);
 
-        // Add additional information.
-        requestHeaders['Accept'] = '*/*';
-        requestHeaders['user-agent'] = 'Form.io DataSource Component';
+            // Delete headers that shouldn't be forwarded.
+            delete requestHeaders['host'];
+            delete requestHeaders['content-length'];
+            delete requestHeaders['content-type'];
+            delete requestHeaders['connection'];
+            delete requestHeaders['cache-control'];
+          }
 
-        // Set custom headers.
-        if (component.fetch && component.fetch.headers) {
-          _.each(component.fetch.headers, (header) => {
-            if (header.key) {
-              requestHeaders[header.key] = header.value;
-            }
-          });
-        }
+          // Add additional information.
+          requestHeaders['Accept'] = '*/*';
+          requestHeaders['user-agent'] = 'Form.io DataSource Component';
 
-        // Set form.io authentication.
-        if (component.fetch && component.fetch.authenticate && token) {
-          requestHeaders['x-jwt-token'] = token;
-        }
+          // Set custom headers.
+          if (component.fetch && component.fetch.headers) {
+            _.each(component.fetch.headers, (header) => {
+              if (header.key) {
+                requestHeaders[header.key] = app.formio.formio.util.FormioUtils.interpolate(header.value, {
+                  data: req.body.data,
+                  form,
+                  _,
+                  moment
+                });
+              }
+            });
+          }
 
-        request({
-          uri: app.formio.formio.util.FormioUtils.interpolate(_.get(component, 'fetch.url'), {data: req.body.data}),
-          method: _.get(component, 'fetch.method', 'get').toUpperCase(),
-          headers: requestHeaders,
-          json: true,
-        })
-          .then((value) => {
-            if (value) {
-              _.set(data, component.key, value);
-            }
-            return next();
-          });
-        break;
-      case 'custom':
-        // TODO: Implement custom async code?
-        return next();
-      default:
-        return next();
-    }
+          // Set form.io authentication.
+          if (component.fetch && component.fetch.authenticate && token) {
+            requestHeaders['x-jwt-token'] = token;
+          }
+
+          debug(`Requesting DataSource: ${url}`);
+          debug(`DataSource Headers: ${JSON.stringify(requestHeaders, null, 2)}`);
+          request({
+            uri: url,
+            method: _.get(component, 'fetch.method', 'get').toUpperCase(),
+            headers: requestHeaders,
+            rejectUnauthorized: false,
+            json: true,
+          })
+            .then((value) => {
+              if (value) {
+                _.set(data, component.key, value);
+              }
+              return next();
+            })
+            .catch((err) => {
+              debug(`Error: ${err.message}`);
+              return next(err);
+            });
+          break;
+        case 'custom':
+          // TODO: Implement custom async code?
+          return next();
+        default:
+          return next();
+      }
+    });
   };
 
   return async (component, data, handler, action, {validation, path, req, res}) => {

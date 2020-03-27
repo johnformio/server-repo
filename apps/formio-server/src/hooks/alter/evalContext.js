@@ -22,6 +22,7 @@ module.exports = app => (context, form) => {
         }
       }
       catch (err) {
+        // eslint-disable-next-line no-console
         console.warn(err);
       }
     }

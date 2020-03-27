@@ -14,6 +14,7 @@ var uuid = require('uuid/v4');
 var fs = require('fs');
 const multipart = require('connect-multiparty');
 const os = require('os');
+const license = require('./src/util/license');
 const vm = require('vm');
 const debug = {
   startup: require('debug')('formio:startup')
@@ -26,6 +27,10 @@ module.exports = function(options) {
   // Use the express application.
   var app = options.app || express();
 
+  // Insert middleware for enforcing gradual degradation
+  // as a result of multiple license check failures
+  app.use(license.generateMiddleware(app));
+
   // Use the given config.
   var config = options.config || require('./config');
 
@@ -35,15 +40,6 @@ module.exports = function(options) {
     jslogger = require('jslogger')({key: config.jslogger});
   }
 
-  // Connect to redis.
-  const RedisInterface = require('formio-services/services/RedisInterface');
-  const redis = new RedisInterface(config.redis);
-
-  // Load the analytics hooks.
-  debug.startup('Attaching middleware: Analytics');
-  const analytics = require('./src/analytics/analytics')(redis);
-
-  debug.startup('Attaching middleware: Logger');
   var Logger = require('./src/logger/index')(config);
 
   // Ensure that we create projects within the helper.
@@ -76,24 +72,29 @@ module.exports = function(options) {
     // Override config.js so we can set onPremise to true.
     app.get('/config.js', (req, res) => {
       fs.readFile(`./portal/config.js`, 'utf8', (err, contents) => {
-        res.send(contents.replace(/var hostedPDFServer = '';|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;/gi, (matched) => {
-          if (config.hostedPDFServer && matched.includes('var hostedPDFServer')) {
-            return `var hostedPDFServer = '${config.hostedPDFServer}';`;
-          }
-          else if (config.portalSSO && matched.includes('var sso =')) {
-            return `var sso = '${config.portalSSO}';`;
-          }
-          else if (config.ssoTeams && matched.includes('var ssoTeamsEnabled =')) {
-            return `var ssoTeamsEnabled = ${config.ssoTeams};`;
-          }
-          else if (config.portalSSOLogout && matched.includes('var ssoLogout =')) {
-            return `var ssoLogout = '${config.portalSSOLogout}';`;
-          }
-          else if (matched.includes('var onPremise')) {
-            return 'var onPremise = true;';
-          }
-          return matched;
-        }));
+        res.send(
+          contents.replace(
+            /var hostedPDFServer = '';|var ssoLogout = '';|var sso = '';|var onPremise = false;/gi,
+            (matched) => {
+              if (config.hostedPDFServer && matched.includes('var hostedPDFServer')) {
+                return `var hostedPDFServer = '${config.hostedPDFServer}';`;
+              }
+              else if (config.portalSSO && matched.includes('var sso =')) {
+                return `var sso = '${config.portalSSO}';`;
+              }
+              else if (config.ssoTeams && matched.includes('var ssoTeamsEnabled =')) {
+                return `var ssoTeamsEnabled = ${config.ssoTeams};`;
+              }
+              else if (config.portalSSOLogout && matched.includes('var ssoLogout =')) {
+                return `var ssoLogout = '${config.portalSSOLogout}';`;
+              }
+              else if (matched.includes('var onPremise')) {
+                return 'var onPremise = true;';
+              }
+              return matched;
+            }
+          )
+        );
       });
     });
     app.use(express.static(`./portal`));
@@ -104,10 +105,6 @@ module.exports = function(options) {
   app.use(cacheControl({
     noCache: true
   }));
-
-  // Hook each request and add analytics support.
-  debug.startup('Attaching middleware: Analytics Hooks');
-  app.use(analytics.hook.bind(analytics));
 
   debug.startup('Attaching middleware: Favicon');
   app.use(favicon('./favicon.ico'));
@@ -137,12 +134,6 @@ module.exports = function(options) {
 
   // Attach the formio-server config.
   app.formio.config = _.omit(config, 'formio');
-
-  // Add the redis interface.
-  app.formio.redis = redis;
-
-  // Attach the analytics to the formio server and attempt to connect.
-  app.formio.analytics = analytics;
 
   // Import the OAuth providers
   debug.startup('Attaching middleware: OAuth Providers');
@@ -199,36 +190,12 @@ module.exports = function(options) {
     });
   });
 
-  // Load current project and roles.
+  // Load projects and roles.
   debug.startup('Attaching middleware: Project & Roles Loader');
-  app.use((req, res, next) => {
-    // If there is no projectId, don't error out, just skip loading the current project.
-    let projectId = req.projectId;
-    if (req.params.projectId) {
-      projectId = req.params.projectId;
-    }
-    if (!projectId) {
-      return next();
-    }
+  app.use(require('./src/middleware/loadProjectContexts')(app.formio.formio));
 
-    app.formio.formio.cache.loadCurrentProject(req, function(err, currentProject) {
-      if (err || !currentProject) {
-        return next();
-      }
-      req.currentProject = currentProject.toObject();
-
-      app.formio.formio.resources.role.model.find(app.formio.formio.hook.alter('roleQuery', {deleted: {$eq: null}}, req))
-        .sort({title: 1})
-        .lean()
-        .exec((err, roles) => {
-          if (err || !roles) {
-            return next();
-          }
-          req.currentProject.roles = roles;
-          return next();
-        });
-    });
-  });
+  // Check project status
+  app.use(require('./src/middleware/projectUtilization')(app.formio.formio));
 
   // Handle our API Keys.
   debug.startup('Attaching middleware: API Key Handler');
@@ -282,28 +249,9 @@ module.exports = function(options) {
   app.formio.init(hooks).then(function(formio) {
     debug.startup('Done initializing Form.io Core');
 
-    // Check the license for validity.
+    // Kick off license validation process
     debug.startup('Checking License');
-    require('./src/util/license')(app, config);
-
-    debug.startup('Attaching middleware: RequestType');
-    app.use((req, res, next) => {
-      const form = /\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}$/;
-      const submission = /\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}\/submission(\/[a-f0-9]{24})?$/;
-      let type;
-      if (submission.test(req.path)) {
-        type = 'Submission';
-      }
-      else if (form.test(req.path)) {
-        type = 'Form';
-      }
-      else {
-        type = 'Other';
-      }
-      app.formio.formio.log('RequestType', req, req.method, type);
-
-      next();
-    });
+    license.validate(app);
 
     debug.startup('Attaching middleware: Cache');
     app.formio.formio.cache = _.assign(app.formio.formio.cache, require('./src/cache/cache')(formio));
@@ -319,6 +267,8 @@ module.exports = function(options) {
     // Don't allow accessing a project's forms and other if it is remote. Redirect to the remote instead.
     debug.startup('Attaching middleware: Remote Redirect');
     app.use('/project/:projectId', require('./src/middleware/remoteRedirect')(app.formio));
+
+    app.post('/project/:projectId/import', app.formio.formio.middleware.licenseUtilization);
 
     // Mount formio at /project/:projectId.
     debug.startup('Mounting Core API');
@@ -362,15 +312,18 @@ module.exports = function(options) {
 
     // Add the form manager.
     debug.startup('Mounting Form Manager');
-    app.get('/project/:projectId/manage', (req, res) => {
-      const script = `<script type="text/javascript">
-        window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/?$/, '');
-        ${appVariables(req.currentProject)}
-      </script>`;
-      fs.readFile(`./portal/manager/index.html`, 'utf8', (err, contents) => {
-        res.send(contents.replace('<head>', `<head>${script}`));
-      });
-    });
+    app.get('/project/:projectId/manage', [
+      require('./src/middleware/licenseUtilization').middleware(formio),
+      (req, res) => {
+        const script = `<script type="text/javascript">
+          window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/?$/, '');
+          ${appVariables(req.currentProject)}
+        </script>`;
+        fs.readFile(`./portal/manager/index.html`, 'utf8', (err, contents) => {
+          res.send(contents.replace('<head>', `<head>${script}`));
+        });
+      }
+    ]);
     debug.startup('Mounting Form Viewer');
     app.get('/project/:projectId/manage/view', (req, res) => {
       const script = `<script type="text/javascript">

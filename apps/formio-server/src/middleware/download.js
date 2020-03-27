@@ -1,8 +1,9 @@
 'use strict';
 const request = require('request');
-const FORMIO_FILES_SERVER = process.env.FORMIO_FILES_SERVER || 'https://files.form.io';
+const PDF_SERVER = process.env.PDF_SERVER || process.env.FORMIO_FILES_SERVER || 'https://files.form.io';
 const _ = require('lodash');
 const Promise = require('bluebird');
+const {getLicenseKey} = require('../util/utilization');
 
 module.exports = (formioServer) => async (req, res, next) => {
   const encrypt = require('../util/encrypt')(formioServer);
@@ -11,7 +12,7 @@ module.exports = (formioServer) => async (req, res, next) => {
 
   try {
     // Load project
-    const project = await formio.cache.loadPrimaryProjectAsync(req);
+    const project = req.primaryProject;
 
     // Load the provided form
     const formId = req.query.form || formio.cache.getCurrentFormId(req);
@@ -22,7 +23,9 @@ module.exports = (formioServer) => async (req, res, next) => {
 
     // Swap in form components from earlier revision, if applicable
     if (form.revisions === 'original' && submission._fvid !== form._vid) {
-      const result = await Promise.promisify(formio.resources.formrevision.model.findOne, {context: formio.resources.formrevision.model})({
+      const result = await Promise.promisify(formio.resources.formrevision.model.findOne, {
+        context: formio.resources.formrevision.model
+      })({
         project: project._id,
         _rid: formio.util.idToBson(form._id),
         _vid: parseInt(submission._fvid),
@@ -53,7 +56,7 @@ module.exports = (formioServer) => async (req, res, next) => {
     }
 
     // Set the files server
-    let filesServer = FORMIO_FILES_SERVER;
+    let filesServer = PDF_SERVER;
     if (process.env.FORMIO_HOSTED && project.settings.pdfserver) {
       // Allow them to download from any server if it is set to the default
       filesServer = project.settings.pdfserver;
@@ -64,7 +67,7 @@ module.exports = (formioServer) => async (req, res, next) => {
     }
 
     // Create the headers object
-    const headers = {'x-file-token': project.settings.filetoken};
+    const headers = {'x-license-key': getLicenseKey(req)};
 
     // Pass along the auth token to files server
     if (req.token) {

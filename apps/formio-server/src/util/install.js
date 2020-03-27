@@ -70,7 +70,10 @@ module.exports = (app, config, next) => {
                 }, (err, user) => {
                   log(` > Super Admin account created for ${  email  }/${  password}`);
                   if (email === 'admin@example.com') {
-                    log(' > Be sure to change the email and password for this account or your environment will not be secure.');
+                    log(
+                      ' > Be sure to change the email and password for this ' +
+                      'account or your environment will not be secure.'
+                    );
                   }
                   project.owner = user._id;
                   project.save();

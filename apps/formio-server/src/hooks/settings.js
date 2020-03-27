@@ -21,9 +21,6 @@ module.exports = function(app) {
   // Attach the teams to formioServer.
   formioServer.formio.teams = require('../teams/index')(app, formioServer);
 
-  // Mount the analytics API at both the root and project endpoints.
-  app.use(require('../analytics')(formioServer));
-
   // Handle Payeezy form signing requests and project upgrades
   app.formio.formio.payment = require('../payment/payment')(app, app.formio.formio);
 
@@ -61,6 +58,15 @@ module.exports = function(app) {
       resources(resources) {
         return _.assign(resources, require('../resources/resources')(app, formioServer));
       },
+      alias(alias, req, res) {
+        // See if this is our validate endpoint
+        if (req.method === 'POST' && alias.match(/\/validate$/)) {
+          return alias.replace(/\/validate$/, '');
+        }
+        else {
+          return alias;
+        }
+      },
       FormResource: require('./alter/FormResource')(app),
       models: require('./alter/models')(app),
       email: require('./alter/email')(app),
@@ -68,6 +74,7 @@ module.exports = function(app) {
       currentUser: require('./alter/currentUser')(app),
       accessInfo: require('./alter/accessInfo')(app),
       loadForm: require('./alter/loadForm')(app).hook,
+      formResponse: require('./alter/loadForm')(app).hook,
       evalContext: require('./alter/evalContext')(app),
       actions: require('./alter/actions')(app),
       actionContext: require('./alter/actionContext')(app),
@@ -275,7 +282,7 @@ module.exports = function(app) {
       },
 
       /**
-       * Modify the temp token to add a redis id to it.
+       * Modify the temp token to add a token id to it.
        *
        * @param req
        * @param res
@@ -525,7 +532,6 @@ module.exports = function(app) {
 
         // Get the permissions for an Project with the given ObjectId.
         handlers.unshift(
-          formioServer.formio.plans.checkRequest(req, res),
           getProjectAccess,
           getTeamAccess
         );
@@ -621,7 +627,10 @@ module.exports = function(app) {
         }
 
         const url = nodeUrl.parse(req.url).pathname.split('/');
-        if (url[5] === 'storage' && ['s3', 'dropbox', 'azure'].indexOf(url[6]) !== -1) {
+        if (
+          (url[5] === 'validate') ||
+          (url[5] === 'storage' && ['s3', 'dropbox', 'azure'].indexOf(url[6]) !== -1)
+        ) {
           entity = {
             type: 'submission',
             id: ''
@@ -1406,15 +1415,11 @@ module.exports = function(app) {
               type: groupPerms.permission
             });
             if (existingAccess) {
-              if (!existingAccess.resouces) {
-                existingAccess.resouces = [];
-              }
+              existingAccess.resouces = existingAccess.resouces || [];
               existingAccess.resouces.push(res.resource.item._id.toString());
             }
             else {
-              if (!res.resource.item.access) {
-                res.resource.item.access = [];
-              }
+              res.resource.item.access = res.resource.item.access || [];
               res.resource.item.access.push({
                 type: groupPerms.permission,
                 resources: [res.resource.item._id.toString()]
@@ -1666,8 +1671,6 @@ module.exports = function(app) {
           config.schema = pkg.schema;
         }
 
-        // Hook the config to add redis data for the update script: 3.0.1-rc.2
-        config.redis = formioServer.config.redis;
         return config;
       },
 
