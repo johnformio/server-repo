@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.23
+### Changed
+ - Adding debug output for DataSource request headers.
+ - Upgrade portal to 7.0.0-rc.82
+ - Upgrade formiojs@4.9.8
+
 ## 6.9.22
 ### Fixed
  - Ensure the DataSource header values are interpolated. 
