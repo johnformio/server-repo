@@ -72,6 +72,7 @@ module.exports = (app) => {
           }
 
           debug(`Requesting DataSource: ${url}`);
+          debug(`DataSource Headers: ${JSON.stringify(requestHeaders, null, 2)}`);
           request({
             uri: url,
             method: _.get(component, 'fetch.method', 'get').toUpperCase(),

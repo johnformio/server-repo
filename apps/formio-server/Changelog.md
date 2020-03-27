@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
  - New Licensing system.
 
+## 6.9.23
+### Changed
+ - Adding debug output for DataSource request headers.
+ - Upgrade portal to 7.0.0-rc.82
+ - Upgrade formiojs@4.9.8
+
+## 6.9.22
+### Fixed
+ - Ensure the DataSource header values are interpolated. 
+
 ## 6.9.21
 ### Fixed
  - Issue where DataSource was not populating before validations occur.
