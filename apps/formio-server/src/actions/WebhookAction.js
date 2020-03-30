@@ -350,7 +350,7 @@ module.exports = (router) => {
 
         const message = data ? (data.message || data) : response.statusMessage;
 
-        return res.status(response.status || 400).send(message);
+        return res.status((response && response.status) ? response.status : 400).send(message);
       };
 
       try {
