@@ -16,7 +16,7 @@ ADD id_rsa /root/.ssh/id_rsa
 RUN chmod 600 /root/.ssh/id_rsa
 RUN npm config set python /usr/bin/python
 RUN npm i -g npm npm-cli-login
-RUN npm-cli-login -u $NPM_USERNAME -p $NPM_PASSWORD -e $NPM_EMAIL --registry https://pkg.form.io
+RUN npm-cli-login -u $NPM_USERNAME -p $NPM_PASSWORD -e $NPM_EMAIL -r https://pkg.form.io
 RUN npm ci --production
 
 EXPOSE      80
