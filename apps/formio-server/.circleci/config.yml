@@ -103,7 +103,7 @@ jobs:
           command: |
             sudo bash -c "echo \"127.0.0.1 formio.localhost\" >> /etc/hosts"
             sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
-      - run: docker build --no-cache -t tmpimage -f deployment/docker/Builder .
+      - run: docker build --no-cache -t tmpimage --build-arg NPM_USERNAME=$NPM_USERNAME --build-arg NPM_PASSWORD=$NPM_PASSWORD --build-arg NPM_EMAIL=$NPM_EMAIL -f deployment/docker/Builder .
       - run: docker create -ti --name tmpcontainer tmpimage sh
       - run: docker cp tmpcontainer:/src/node_modules build/
       - run: docker rm -f tmpcontainer

@@ -1,6 +1,8 @@
 FROM node:12-alpine
 MAINTAINER Form.io <support@form.io>
-
+ARG  NPM_USERNAME
+ARG  NPM_PASSWORD
+ARG  NPM_EMAIL
 COPY ./build /src
 WORKDIR /src
 
