@@ -10,7 +10,7 @@ jobs:
       - run:
           name: Install npm modules
           command: |
-            npm i -g npm-cli-login
+            sudo npm i -g npm-cli-login
             npm-cli-login -u $NPM_USERNAME -p $NPM_PASSWORD -e $NPM_EMAIL --registry https://pkg.form.io
             npm install
       - save_cache:
