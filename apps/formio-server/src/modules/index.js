@@ -1,3 +1,4 @@
 'use strict';
+const premium = require('@formio/premium');
 
-module.exports = [];
+module.exports = [premium];

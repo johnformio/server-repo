@@ -52,7 +52,7 @@ module.exports = function(options) {
     return app.server.listen.apply(app.server, arguments);
   };
 
-  const portalEnabled = config.licenseData && config.licenseData.portal && process.env.PRIMARY;
+  const portalEnabled = !!process.env.PRIMARY;
   // Secure html pages with the proper headers.
   debug.startup('Attaching middleware: Helmet');
   app.use((req, res, next) => {

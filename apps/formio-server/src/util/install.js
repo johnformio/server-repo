@@ -12,10 +12,6 @@ module.exports = (app, config, next) => {
   };
 
   log('\nChecking environment status. ');
-  if (!config.licenseData || !config.licenseData.portal) {
-    log(' > No on-premise portal license. Use https://portal.form.io to connect this environment.\n');
-    return next();
-  }
   if (!process.env.PRIMARY) {
     log(' > This environment is set up as a SECONDARY environment.');
     log(' > Use a primary environment or htps://portal.form.io to connect to this environment.');
