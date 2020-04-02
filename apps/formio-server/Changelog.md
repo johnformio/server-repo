@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.26-rc.1
+### Changed
+ - Upgrade portal to 7.0.0-rc.85
+ - Upgrade formiojs@4.9.12
+ 
+### Fixed
+ - Crash issues with Webhook action.
+ - Ensure process runs as node user.
+
 ## 6.9.25
 ### Changed
  - Upgrade portal to 7.0.0-rc.84
