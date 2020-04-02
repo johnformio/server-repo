@@ -63,6 +63,7 @@ module.exports = (formioServer) => async (req, res, next) => {
 
     try {
       debug('POST: ' + `${filesServer}/pdf/${pdfProject}/file`);
+      debug(`Filepath: ${  req.files.file.path}`);
       request({
         method: 'POST',
         url: `${filesServer}/pdf/${pdfProject}/file`,
@@ -79,7 +80,9 @@ module.exports = (formioServer) => async (req, res, next) => {
           }
         }
       }, async (err, response) => {
+        debug('response', response);
         await tryUnlinkAsync(req.files.file.path);
+        debug('unlinked file');
         if (err) {
           debug('Err1', err);
           return res.status(400).send(err.message);
