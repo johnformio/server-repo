@@ -6,6 +6,7 @@ const _ = require('lodash');
 const Promise = require('bluebird');
 const fs = require('fs');
 const {getLicenseKey} = require('../util/utilization');
+const debug = require('debug')('formio:pdf:upload');
 
 const unlinkAsync = promisify(fs.unlink);
 
@@ -19,6 +20,7 @@ const tryUnlinkAsync = async filepath => {
 };
 
 module.exports = (formioServer) => async (req, res, next) => {
+  debug('Starting pdf upload');
   const formio = formioServer.formio;
   Promise.promisifyAll(formio.cache, {context: formio.cache});
 
@@ -32,6 +34,7 @@ module.exports = (formioServer) => async (req, res, next) => {
       // Allow them to download from any server if it is set to the default
       filesServer = project.settings.pdfserver;
     }
+    debug(`FileServer: ${filesServer}`);
 
     // Create the headers object
     const headers = {'x-license-key': getLicenseKey(req)};
@@ -49,13 +52,17 @@ module.exports = (formioServer) => async (req, res, next) => {
         headers['x-jwt-token'] = formio.auth.getToken(_.omit(req.token, 'allow'));
       }
     }
+    debug(`LicenseKey: ${headers['x-license-key']}`);
     const pdfProject = project._id.toString();
+    debug(`pdfProject: ${pdfProject}`);
 
     if (!req.files.file) {
+      debug('Missing File');
       return res.status(400).send('Missing file');
     }
 
     try {
+      debug('POST: ' + `${filesServer}/pdf/${pdfProject}/file`);
       request({
         method: 'POST',
         url: `${filesServer}/pdf/${pdfProject}/file`,
@@ -74,20 +81,24 @@ module.exports = (formioServer) => async (req, res, next) => {
       }, async (err, response) => {
         await tryUnlinkAsync(req.files.file.path);
         if (err) {
+          debug('Err1', err);
           return res.status(400).send(err.message);
         }
 
+        debug('response', response);
         const body = JSON.parse(response.body);
         body.filesServer = filesServer;
         res.status(201).send(body);
       });
     }
     catch (err) {
+      debug('Err2', err);
       await tryUnlinkAsync(req.files.file.path);
       res.status(400).send(err.message);
     }
   }
   catch (err) {
+    debug('Err3', err);
     await tryUnlinkAsync(req.files.file.path);
     return next(err);
   }
