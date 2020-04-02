@@ -56,7 +56,7 @@ module.exports = (formioServer) => async (req, res, next) => {
     const pdfProject = project._id.toString();
     debug(`pdfProject: ${pdfProject}`);
 
-    if (!req.files.file) {
+    if (!req.files || !req.files.file) {
       debug('Missing File');
       return res.status(400).send('Missing file');
     }
