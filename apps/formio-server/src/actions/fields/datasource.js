@@ -32,6 +32,7 @@ module.exports = (app) => {
         data: req.body.data,
         form,
         _,
+        config: req.currentProject.config || {},
         moment
       });
       switch (component.dataSrc || 'url') {
@@ -60,6 +61,7 @@ module.exports = (app) => {
                   data: req.body.data,
                   form,
                   _,
+                  config: req.currentProject.config || {},
                   moment
                 });
               }
