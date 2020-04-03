@@ -80,7 +80,7 @@ module.exports = (formioServer) => async (req, res, next) => {
           }
         }
       }, async (err, response) => {
-        debug('response', response);
+        debug('response', response.statusCode, response.statusMessage);
         await tryUnlinkAsync(req.files.file.path);
         debug('unlinked file');
         if (err) {
