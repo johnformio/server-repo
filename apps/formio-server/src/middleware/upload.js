@@ -88,7 +88,10 @@ module.exports = (formioServer) => async (req, res, next) => {
           return res.status(400).send(err.message);
         }
 
-        debug('response', response);
+        if (response.statusCode > 299) {
+          return res.status(response.statusCode).send(response.body);
+        }
+
         const body = JSON.parse(response.body);
         body.filesServer = filesServer;
         res.status(201).send(body);
