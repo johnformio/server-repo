@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.26-rc.4
+### Fixed
+ - The checkbox components to properly validate when configured as radio.
+
+### Chanaged
+ - Upgrade portal to 7.0.0-rc.86
+ - Upgrade formiojs@4.9.13
+
 ## 6.9.26-rc.1
 ### Changed
  - Upgrade portal to 7.0.0-rc.85
