@@ -8,6 +8,33 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
  - New Licensing system.
 
+## 6.9.26-rc.4
+### Fixed
+ - The checkbox components to properly validate when configured as radio.
+
+### Chanaged
+ - Upgrade portal to 7.0.0-rc.86
+ - Upgrade formiojs@4.9.13
+
+## 6.9.26-rc.1
+### Changed
+ - Upgrade portal to 7.0.0-rc.85
+ - Upgrade formiojs@4.9.12
+ 
+### Fixed
+ - Crash issues with Webhook action.
+ - Ensure process runs as node user.
+
+## 6.9.25
+### Changed
+ - Upgrade portal to 7.0.0-rc.84
+ - Upgrade formiojs@4.9.10
+
+## 6.9.24
+### Changed
+ - Upgrade portal to 7.0.0-rc.83
+ - Upgrade formiojs@4.9.9
+
 ## 6.9.23
 ### Changed
  - Adding debug output for DataSource request headers.
