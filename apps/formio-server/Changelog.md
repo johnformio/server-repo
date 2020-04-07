@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.27
+### Changed
+ - Upgrade portal to 7.0.0-rc.87
+ - Add config to interpolation for datasource on server side.
+
+## 6.9.26
+ - No changes:
+
 ## 6.9.26-rc.4
 ### Fixed
  - The checkbox components to properly validate when configured as radio.
