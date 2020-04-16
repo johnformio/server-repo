@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.28-rc.4
+### Changed
+ - Upgrade portal to 7.0.0-rc.91
+
+### Fixed
+ - Aggregatiomn to use allowDisk so large queries can be completed.
+
 ## 6.9.28-rc.2
 ### Changed
  - Upgrade portal to 7.0.0-rc.89
