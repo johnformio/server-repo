@@ -205,54 +205,5 @@ module.exports = function(formio) {
     });
   };
 
-  // Override loadSubForms to load revisions if set.
-  ProjectCache._loadSubForms = formio.cache.loadSubForms.bind(formio.cache);
-  ProjectCache.loadSubForms = function(form, req, next, depth, forms) {
-    ProjectCache._loadSubForms(form, req, (err) => {
-      if (err) {
-        return next(err);
-      }
-
-      const comps = {};
-      const formRevisions = [];
-
-      // Find any sub forms that have revision locked.
-      formioUtil.eachComponent(form.components, function(component) {
-        if ((component.type === 'form') && component.form && component.formRevision) {
-          const formId = component.form.toString();
-          if (!comps[formId]) {
-            comps[formId] = [];
-            formRevisions.push({
-              formId,
-              _rid: formId,
-              _vid: component.formRevision,
-            });
-          }
-          comps[formId].push(component);
-        }
-      }, true);
-
-      // Only proceed if we have form revisions.
-      if (!formRevisions.length) {
-        return next();
-      }
-
-      // Set form revision components on sub form.
-      async.each(formRevisions, (rev, done) => {
-        const query = {
-          _rid: formio.util.idToBson(rev._rid),
-          _vid: parseInt(rev._vid),
-        };
-        formio.resources.formrevision.model.findOne(query, function(err, result) {
-          if (err || !result) {
-            return done();
-          }
-          comps[rev.formId].forEach((comp) => (comp.components = result.components.toObject()));
-          done();
-        });
-      }, next);
-    }, depth, forms);
-  };
-
   return ProjectCache;
 };
