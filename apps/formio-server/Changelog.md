@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.29-rc.3
+### Fixed
+ - Upgraded formio@1.75.0 to fix issues with loading subforms with revisions.
+
 ## 6.9.29-rc.2
 ### Fixed
  - Issue with subforms not loading properly when full=true is used and formrevisions enabled.
