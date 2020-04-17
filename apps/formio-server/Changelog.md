@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.29-rc.2
+### Fixed
+ - Issue with subforms not loading properly when full=true is used and formrevisions enabled.
+
+## 6.9.29-rc.1
+### Changed
+ - Upgrade portal to 7.0.1-rc.1
+
 ## 6.9.28
 ### Changed
  - Upgrade portal to 7.0.0
