@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.29-rc.4
+ - Upgrade portal to 7.0.1-rc.2
+
 ## 6.9.29-rc.3
 ### Fixed
  - Upgraded formio@1.75.0 to fix issues with loading subforms with revisions.
