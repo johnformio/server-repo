@@ -86,6 +86,14 @@ module.exports = function(app) {
 
         return false;
       },
+      audit(args, event, req) {
+        args.unshift(new Date());
+        args.splice(1, 0, req.uuid);
+        args.splice(2, 0, req.projectId || 'NoProject');
+        args.splice(3, 0, req.userId || (req.user ? req.user._id : 'NoUser'));
+
+        return args;
+      },
 
       export(req, query, form, exporter, cb) {
         util.getSubmissionModel(formioServer.formio, req, form, true, (err, submissionModel) => {

@@ -15,6 +15,7 @@ var fs = require('fs');
 const multipart = require('connect-multiparty');
 const os = require('os');
 const license = require('./src/util/license');
+const audit = require('./src/util/audit');
 const vm = require('vm');
 const debug = {
   startup: require('debug')('formio:startup')
@@ -164,6 +165,7 @@ module.exports = function(options) {
     }
     req.startTime = new Date();
 
+    app.formio.formio.audit('REQUEST_START', req, req.method, req.path, JSON.stringify(req.query));
     app.formio.formio.log('Request', req, req.method, req.path, JSON.stringify(req.query));
 
     // Override send function to log event
@@ -175,6 +177,10 @@ module.exports = function(options) {
       }
       app.formio.formio.log('Duration', req, `${duration}ms`);
       app.formio.formio.log('Response Code', req, res.statusCode);
+      if (res.statusCode < 300) {
+        audit(req, res, arguments[0], app.formio.formio.audit);
+      }
+      app.formio.formio.audit('REQUEST_END', req, res.statusCode, `${duration}ms`);
       resend.apply(this, arguments);
     };
 
