@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.9.32
+### Changed
+ - Upgrade formio@1.76.0
+ - Upgrade formio-workers@1.15.0
+
 ## 6.9.31
 ### Changed
  - Upgrade portal to 7.0.3
