@@ -8,6 +8,75 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
  - New Licensing system.
 
+## 6.9.32
+### Changed
+ - Upgrade formio@1.76.0
+ - Upgrade formio-workers@1.15.0
+
+## 6.9.31
+### Changed
+ - Upgrade portal to 7.0.3
+ - Upgrade formiojs@4.9.22
+
+## 6.9.30
+### Changed
+ - Upgrade portal to 7.0.2
+ - Upgrade formiojs@4.9.21
+ - Upgrade formio-app@7.0.2
+
+## 6.9.29
+### Changed
+ - Upgrade portal to 7.0.1
+
+## 6.9.29-rc.5
+ - Upgrade portal to 7.0.1-rc.4
+
+## 6.9.29-rc.4
+ - Upgrade portal to 7.0.1-rc.2
+
+## 6.9.29-rc.3
+### Fixed
+ - Upgraded formio@1.75.0 to fix issues with loading subforms with revisions.
+
+## 6.9.29-rc.2
+### Fixed
+ - Issue with subforms not loading properly when full=true is used and formrevisions enabled.
+
+## 6.9.29-rc.1
+### Changed
+ - Upgrade portal to 7.0.1-rc.1
+
+## 6.9.28
+### Changed
+ - Upgrade portal to 7.0.0
+
+## 6.9.28.rc.5
+### Changed
+ - Upgrade portal to 7.0.0-rc.92
+
+## 6.9.28-rc.4
+### Changed
+ - Upgrade portal to 7.0.0-rc.91
+
+### Fixed
+ - Aggregatiomn to use allowDisk so large queries can be completed.
+
+## 6.9.28-rc.2
+### Changed
+ - Upgrade portal to 7.0.0-rc.89
+
+## 6.9.28-rc.1
+### Changed
+ - Upgrade portal to 7.0.0-rc.88
+
+## 6.9.27
+### Changed
+ - Upgrade portal to 7.0.0-rc.87
+ - Add config to interpolation for datasource on server side.
+
+## 6.9.26
+ - No changes:
+
 ## 6.9.26-rc.4
 ### Fixed
  - The checkbox components to properly validate when configured as radio.
