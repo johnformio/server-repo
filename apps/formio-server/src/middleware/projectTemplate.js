@@ -25,73 +25,6 @@ module.exports = function(formio) {
     // The project template they wish to use.
     const template = req.template || 'default';
 
-    // Update the owner of the Project, and give them the Administrator Role.
-    const updateProjectOwner = function(template) {
-      // Give the project owner all the administrator roles.
-      const adminRoles = [];
-      const roles = {};
-      // Normalize roles and access for processing.
-      _.each(template.roles, function(role, name) {
-        roles[name] = role._id;
-        if (role.admin) {
-          adminRoles.push(role._id);
-        }
-      });
-      // Find the Project owner by id, and add the administrator role of this Project to their roles.
-      formio.resources.submission.model.findOne({_id: project.owner, deleted: {$eq: null}}, function(err, owner) {
-        if (err) {
-          debug(err);
-          return next(err);
-        }
-
-        // If there is no owner, don't update.
-        if (!owner) {
-          return next();
-        }
-
-        // Attempt to remove array with one null element, inserted by mongo.
-        owner.roles = _.filter(owner.roles || []);
-
-        // Add the administrative roles of this Project to the creators roles.
-        _.each(adminRoles, function(adminRole) {
-          owner.roles.push(adminRole._id);
-        });
-
-        const roles = owner.roles;
-        owner.save(function(err) {
-          if (err) {
-            debug(err.errors || err);
-            return next(err);
-          }
-
-          // Update the users jwt token to reflect the user role changes.
-          const token = formio.util.getHeader(req, 'x-jwt-token');
-          jwt.verify(token, formio.config.jwt.secret, function(err, decoded) {
-            if (err) {
-              debug(err);
-              return next(err);
-            }
-
-            // Add the user roles to the token.
-            decoded.user.roles = roles;
-
-            // Update req/res tokens.
-            req.user = decoded.user;
-            req.token = decoded;
-            res.token = formio.auth.getToken({
-              form: decoded.form,
-              user: decoded.user,
-              project: decoded.project
-            });
-
-            res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
-            res.setHeader('x-jwt-token', res.token);
-            return next();
-          });
-        });
-      });
-    };
-
     // Method to import the template.
     const importTemplate = function(template) {
       let _project;
@@ -121,11 +54,6 @@ module.exports = function(formio) {
             return res.status(400).send(err);
           }
           res.resource.item = project;
-
-          if (req.templateMode === 'create') {
-            // Update the project owner with the admin role.
-            return updateProjectOwner(template);
-          }
 
           return next();
         });
