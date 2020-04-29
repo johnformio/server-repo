@@ -222,7 +222,7 @@ function middleware(formio) {
           }
           await utilization({
             type: 'form',
-            formId: 'new',
+            formId: req.formId,
             projectId: req.projectId,
             licenseKey: getLicenseKey(req),
           }, '/disable');
