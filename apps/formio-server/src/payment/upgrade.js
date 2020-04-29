@@ -44,25 +44,16 @@ module.exports = function(formio) {
         }
 
         const limits = {
-          pdfs: 1,
-          pdfDownloads: 100,
           formManagers: req.body.formManager ? 1 : 0,
           vpats: req.body.vpat ? 1 : 0,
         };
 
         const addScopes = [];
-        const removeScopes = [];
         if (req.body.formManager) {
           addScopes.push('formManager');
         }
-        else {
-          removeScopes.push('formManager');
-        }
         if (req.body.vpat) {
           addScopes.push('VPAT');
-        }
-        else {
-          removeScopes.push('VPAT');
         }
 
         // Ensure pdfs and pdfDownloads are valid.
@@ -81,7 +72,7 @@ module.exports = function(formio) {
         }
 
         const licenseKey = getLicenseKey(req);
-        await setLicensePlan(formio, licenseKey, req.body.plan, limits, addScopes, removeScopes);
+        await setLicensePlan(formio, licenseKey, req.body.plan, limits, addScopes);
 
         return await formio.resources.project.model.update({
           _id: formio.util.idToBson(req.projectId)

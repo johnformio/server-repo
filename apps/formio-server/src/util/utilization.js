@@ -4,6 +4,7 @@ const _ = require('lodash');
 const {StatusCodeError} = require('request-promise-native/errors');
 const licenseServer = process.env.LICENSE_SERVER || 'https://license.form.io';
 const NodeCache = require('node-cache');
+const plans = require('../plans/plans');
 
 const cache = new NodeCache();
 
@@ -163,18 +164,48 @@ async function getLicense(formio, licenseKey) {
   });
 }
 
-async function setLicensePlan(formio, licenseKey, plan, limits = {}, addScopes = [], removeScopes = []) {
+async function setLicensePlan(formio, licenseKey, planName, additional = {}, addScopes = []) {
+  if (!(Object.keys(plans).includes(planName))) {
+    throw new Error('Invalid Plan');
+  }
+
+  const plan = new plans[planName]();
+
   const license = await getLicense(formio, licenseKey);
   if (!license) {
     throw new Error('No license found');
   }
-  let data = license.toObject().data;
-  data.plan = plan;
+  const {
+    licenseName,
+    user,
+    company,
+    comments,
+    location,
+  } = license.toObject().data;
+
+  const data = {
+    ...plan.getPlan(license.data.licenseKeys[0].key),
+    ...additional,
+    licenseName,
+    user,
+    company,
+    comments,
+    location,
+  };
   _.set(data, 'licenseKeys[0].scope', _.uniq([..._.get(data, 'licenseKeys[0].scope'), ...addScopes]));
-  _.set(data, 'licenseKeys[0].scope', _.difference(_.get(data, 'licenseKeys[0].scope'), removeScopes));
-  data = _.merge(data, limits);
   license.data = data;
   license.save();
+  await clearLicenseCache(license._id);
+}
+
+async function clearLicenseCache(licenseId) {
+  await request({
+    url: `${licenseServer}/license/${licenseId}/clear`,
+    method: 'post',
+    headers: {'content-type': 'application/json'},
+    json: true,
+    timeout: 5000,
+  });
 }
 
 module.exports = {
