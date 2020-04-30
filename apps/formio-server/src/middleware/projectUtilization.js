@@ -78,6 +78,11 @@ module.exports = (formio) => async (req, res, next) => {
       }
     }
 
+    // Always allow access to the project endpoint.
+    if (req.url === `/project/${req.projectId}`) {
+      return next();
+    }
+
     const result = await utilization({
       ...getProjectContext(req),
       licenseKey,

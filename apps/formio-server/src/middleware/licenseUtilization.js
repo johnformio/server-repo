@@ -131,7 +131,9 @@ function middleware(formio) {
             }
           }
           catch (err) {
-            res.resource.item.disabled = err.error;
+            if (res.resource && res.resource.item) {
+              res.resource.item.disabled = err.error;
+            }
           }
           break;
 
