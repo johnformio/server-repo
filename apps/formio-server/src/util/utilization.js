@@ -195,7 +195,12 @@ async function setLicensePlan(formio, licenseKey, planName, additional = {}, add
   _.set(data, 'licenseKeys[0].scope', _.uniq([..._.get(data, 'licenseKeys[0].scope'), ...addScopes]));
   license.data = data;
   license.save();
-  await clearLicenseCache(license._id);
+  try {
+    await clearLicenseCache(license._id);
+  }
+  catch (err) {
+    // Ignore error. This is only trying to clear cache.
+  }
 }
 
 async function clearLicenseCache(licenseId) {
