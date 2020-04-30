@@ -43,7 +43,7 @@
     "express-cache-controller": "^1.1.0",
     "formio": "^1.76.0",
     "formio-services": "formio/formio-services#v2.0.2",
-    "formio-workers": "^1.15.0",
+    "formio-workers": "1.14.0",
     "formiojs": "^4.9.23",
     "helmet": "^3.21.3",
     "is-url": "^1.2.4",
