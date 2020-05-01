@@ -184,7 +184,7 @@ async function setLicensePlan(formio, licenseKey, planName, additional = {}, add
   } = license.toObject().data;
 
   const data = {
-    ...plan.getPlan(license.data.licenseKeys[0].key),
+    ...plan.getPlan(licenseKey),
     ...additional,
     licenseName,
     user,

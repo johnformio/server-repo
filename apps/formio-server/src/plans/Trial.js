@@ -14,8 +14,8 @@ module.exports = class Trial extends Plan {
     };
   }
 
-  getPlan() {
-    const data = super.getPlan();
+  getPlan(key) {
+    const data = super.getPlan(key);
     const expire = new Date();
     expire.setMonth(expire.getMonth() + 1);
     data.endDate = expire.toISOString();
