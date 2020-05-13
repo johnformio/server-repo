@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.10.0-rc.1
+### Changed
+ - Upgrade formio-app@7.0.4
+ - Upgrade formiojs@4.10.0-beta.16
+
+### Added
+ - Added formDefaults property to project.
+
 ## 6.9.33
 ### Changed
  - Upgrade formio@1.78.0
