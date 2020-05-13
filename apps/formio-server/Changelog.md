@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.10.0-rc.2
+### Changed
+ - Upgrade formio-app@7.0.5
+ - Upgrade formiojs@4.10.0-beta.17
+ - Upgrade chance@1.1.5, formio-workers@1.14.6, aws-sdk@2.675.0
+
 ## 6.10.0-rc.1
 ### Changed
  - Upgrade formio-app@7.0.4
