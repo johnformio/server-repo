@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.10.0-rc.3
+### Changed
+ - Upgrade formio-app@7.0.6 to fix submission table issues.
+
 ## 6.10.0-rc.2
 ### Changed
  - Upgrade formio-app@7.0.5
