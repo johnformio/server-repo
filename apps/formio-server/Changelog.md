@@ -8,6 +8,26 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
  - New Licensing system.
 
+## 6.10.0-rc.2
+### Changed
+ - Upgrade portal@7.0.8-beta.1
+ - Upgrade formio@1.79.0
+
+## 6.10.0-rc.1
+### Changed
+ - Upgrade formio-app@7.0.4
+ - Upgrade formiojs@4.10.0-beta.16
+
+### Added
+ - Added formDefaults property to project.
+
+## 6.9.33
+### Changed
+ - Upgrade formio@1.78.0
+ - Upgrade formio-workers@1.14.4
+ - Upgrade minio@7.0.16, mongodb@3.5.7, mocha@7.1.2, aws-sdk@2.670.0, moment@2.25.3, twilio@3.43.0, webpack-obfuscator@0.28.0
+ - Remove adding project role to owners since it isn't needed.
+
 ## 6.9.32
 ### Changed
  - Upgrade formio@1.76.0
