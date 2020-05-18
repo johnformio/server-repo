@@ -4,12 +4,24 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+<<<<<<< HEAD
 ## 6.9.34
 ### Changed
  - Upgrade portal@7.0.8
  - Upgrade formiojs@4.9.27-rc.4
  - Upgrade formmanager@1.93.1
  - Upgrade pro.formview.io@1.93.1
+=======
+## [Unreleased]
+### Changed
+ - Upgrade portal@7.0.8-beta.1
+ - Upgrade formio@1.79.0
+
+## 6.10.0-rc.1
+### Changed
+ - Upgrade formio-app@7.0.4
+ - Upgrade formiojs@4.10.0-beta.16
+>>>>>>> 82f1b990979a48092f9ba59e6ef205a521ca80f0
 
 ### Added
  - Added formDefaults property to project.
