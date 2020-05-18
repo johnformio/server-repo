@@ -52,7 +52,7 @@ module.exports = app => (mail, req, res, params, cb) => {
         email: mail.to,
         formId: form._id.toString(),
         projectId: form.project.toString(),
-        licenseKey: getLicenseKey(req.primaryProject),
+        licenseKey: getLicenseKey(req),
       });
     }
   };
