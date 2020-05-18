@@ -82,7 +82,7 @@
     "universal-analytics": "^0.4.20",
     "uuid": "^3.4.0",
     "webpack": "^4.42.0",
-    "webpack-obfuscator": "^0.27.2"
+    "webpack-obfuscator": "^0.28.1"
   },
   "devDependencies": {
     "eslint": "^6.8.0",
