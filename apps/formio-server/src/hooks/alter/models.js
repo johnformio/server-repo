@@ -28,6 +28,19 @@ module.exports = app => models => {
     }
   });
 
+  // Add a suggested indexes.
+  models.form.schema.index({
+    project: 1,
+    type: 1,
+    deleted: 1,
+    modified: -1
+  });
+  models.form.schema.index({
+    project: 1,
+    name: 1,
+    deleted: 1
+  });
+
   models.submission.schema.add({
     _vid: {
       type: Number,
@@ -55,6 +68,23 @@ module.exports = app => models => {
       index: true,
       default: 'submitted'
     }
+  });
+
+  // Add a suggested indexes.
+  models.submission.schema.index({
+    form: 1,
+    project: 1,
+    deleted: 1
+  });
+  models.submission.schema.index({
+    project: 1,
+    deleted: 1
+  });
+  models.submission.schema.index({
+    form: 1,
+    project: 1,
+    'data.email': 1,
+    deleted: 1
   });
 
   // Add additional models.
