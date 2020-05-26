@@ -4,14 +4,24 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-<<<<<<< HEAD
+## 6.10.0-beta.2
+### Changed
+ - Adding recommended indexes.
+ - Add config options for mongo ssl
+ - Upgrade portal@7.0.11
+ - Upgrade  chance@1.1.6, formio-workers@1.14.6, twilio@3.43.1, aws-sdk@2.683.0, moment@2.26.0, mocha@7.2.0, webpack-obfuscator@0.28.2
+
+### 6.10.0-beta.1
+### Changed
+ - Upgrade portal@7.0.10
+ - Adding mongo SSL.
+
 ## 6.9.34
 ### Changed
  - Upgrade portal@7.0.8
  - Upgrade formiojs@4.9.27-rc.4
  - Upgrade formmanager@1.93.1
  - Upgrade pro.formview.io@1.93.1
-=======
 ## [Unreleased]
 ### Changed
  - Upgrade portal@7.0.8-beta.1
@@ -21,7 +31,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
  - Upgrade formio-app@7.0.4
  - Upgrade formiojs@4.10.0-beta.16
->>>>>>> 82f1b990979a48092f9ba59e6ef205a521ca80f0
 
 ### Added
  - Added formDefaults property to project.
