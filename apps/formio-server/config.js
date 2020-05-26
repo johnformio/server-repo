@@ -256,6 +256,18 @@ if (getConfig('MONGO_SA')) {
   config.formio.mongoSA = getConfig('MONGO_SA');
 }
 
+if (getConfig('MONGO_SSL')) {
+  config.formio.mongoSSL = getConfig('MONGO_SSL');
+}
+
+if (getConfig('MONGO_SSL_VALIDATE')) {
+  config.formio.mongoSSLValidate = getConfig('MONGO_SSL_VALIDATE');
+}
+
+if (getConfig('MONGO_SSL_PASSWORD')) {
+  config.formio.mongoSSLPassword = getConfig('MONGO_SSL_PASSWORD');
+}
+
 if (getConfig('MONGO_CONFIG')) {
   config.formio.mongoConfig = getConfig('MONGO_CONFIG');
 }
