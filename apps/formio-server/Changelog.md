@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.10.0-rc.5
+### Changed
+ - Upgrade formio-app@7.0.12
+ - Upgrade formiojs@4.10.0-rc.6
+ - Upgrade formio-workers@1.14.7
+ - Upgrade "formio": "^1.81.0"
+ - Upgrade mongodb@3.5.8
+
 ## 6.10.0-rc.4
 ### Changed
  - Adding recommended indexes.
