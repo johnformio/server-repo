@@ -272,12 +272,13 @@ module.exports = function(app) {
        * @returns {Object}
        *   The modified token.
        */
-      token(token, form) {
+      token(token, form, req) {
         token.origin = formioServer.formio.config.apiHost;
         token.form.project = form.project;
         token.project = {
           _id: form.project
         };
+        token.session = req.session._id;
         return token;
       },
 
@@ -305,6 +306,138 @@ module.exports = function(app) {
 
           return cb();
         });
+      },
+
+      authenticate(user, req, cb) {
+        const sessionModel = formioServer.formio.mongoose.models.session;
+        return sessionModel.findOne({
+          owner: user._id,
+          issuedAt: {$eq: null},
+        })
+          .then(
+            (document) => (
+              document
+                ? Promise.resolve(document)
+                : sessionModel.create({
+                  owner: user._id,
+                })
+            )
+              .then(
+                (session) => {
+                  req.session = session;
+                  cb();
+                },
+                (err) => cb(err),
+              ),
+            (err) => cb(err),
+          );
+      },
+
+      validateToken(req, decoded, user, cb) {
+        if (!decoded.session) {
+          return cb(new Error('Missing session.'));
+        }
+
+        req.skipTokensValidation = true;
+        return formioServer.formio.mongoose.models.session.findById(decoded.session)
+          .then(
+            (session) => {
+              if (!session) {
+                return cb(new Error('Session not found.'));
+              }
+
+              if (session.deleted) {
+                return cb(new Error('Session no longer valid.'));
+              }
+
+              const {
+                renewedAt,
+              } = session;
+
+              const {
+                session: sessionConfig,
+              } = formioServer.formio.config;
+
+              const now = Date.now();
+
+              if ((now - renewedAt) > (sessionConfig.expireTime * 60 * 1000)) {
+                session.deleted = now;
+                return session.save()
+                  .then(
+                    () => cb(new Error('Session no longer valid.')),
+                    (err) => cb(err),
+                  );
+              }
+
+              const renewSession = (session) => {
+                session.renewedAt = now;
+                return session.save();
+              };
+
+              return (
+                (now - renewedAt) <= (sessionConfig.renewTime * 60 * 1000)
+                  ? Promise.resolve(session)
+                  : renewSession(session)
+              )
+                .then(
+                  (updatedSession) => {
+                    req.session = updatedSession;
+                    cb();
+                  },
+                  (err) => cb(err),
+                );
+            },
+            (err) => cb(err),
+          );
+      },
+
+      invalidateTokens(req, res, cb) {
+        const userId = req.params.submissionId;
+        if (!userId) {
+          return cb(new Error('No user found.'));
+        }
+
+        const updateTokens = (session) => {
+          req.session = session;
+
+          const {
+            token: decoded,
+          } = req;
+          if (!decoded) {
+            return cb();
+          }
+
+          decoded.session = session._id;
+          const token = formioServer.formio.auth.getToken(decoded);
+          res.token = token;
+          if (!res.headersSent) {
+            res.setHeader('x-jwt-token', res.token);
+          }
+          cb();
+        };
+
+        const createAuthorizedSession = () => {
+          return util.createAuthorizedSession(formioServer.formio, userId)
+            .then(
+              updateTokens,
+              (err) => cb(err),
+            );
+        };
+
+        req.skipTokensInvalidation = true;
+        return formioServer.formio.mongoose.models.session.updateMany(
+          {
+            owner: formioServer.formio.util.idToBson(userId),
+            deleted: {$eq: null},
+          },
+          {
+            deleted: Date.now(),
+          },
+        )
+          .then(
+            createAuthorizedSession,
+            (err) => cb(err),
+          );
       },
 
       isAdmin(isAdmin, req) {

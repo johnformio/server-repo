@@ -210,7 +210,7 @@ module.exports = app => (mail, req, res, params, cb) => {
             form: {
               _id: ssoToken.submission.form.toString()
             }
-          }, formObjs[ssoToken.submission.form.toString()]);
+          }, formObjs[ssoToken.submission.form.toString()], req);
           delete ssoToken.token.exp;
           ssoToken.token = jwt.sign(ssoToken.token, formioServer.formio.config.jwt.secret, {
             expiresIn: ssoToken.expireTime * 60

@@ -430,13 +430,13 @@ describe('Initial Tests', function() {
     after(function() {
       describe('Project Tests', function() {
         this.retries(4);
+        require('./tests/sessions')(app, template, hook);
         require('./tests/project')(app, template, hook);
         require('./tests/groups')(app, template, hook);
         require('./tests/domain')(app, template, hook);
         require('./tests/encrypt')(app, template, hook);
         require('./tests/email')(app, template, hook);
         require('./tests/states')(app, template, hook);
-        require('formio/test/unit')(app, template, hook);
         require('formio/test/auth')(app, template, hook);
         require('./tests/externalTokens')(app, template, hook);
         require('formio/test/roles')(app, template, hook);
@@ -460,6 +460,7 @@ describe('Initial Tests', function() {
         require('./tests/group-permissions')(app, template, hook);
         require('formio/test/templates')(app, template, hook);
         require('./tests/templates')(app, template, hook);
+        require('formio/test/unit')(app, template, hook);
       });
     });
   });

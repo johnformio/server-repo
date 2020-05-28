@@ -155,6 +155,15 @@ const Utils = {
       return next(null, formio.mongoose.model(collectionName, formio.schemas.submission, collectionName, init));
     });
   },
+  createAuthorizedSession(formio, userId) {
+    const now = Date.now();
+    return formio.mongoose.models.session.create({
+      owner: userId,
+      lastLoginAttemptAt: now,
+      issuedAt: now,
+      renewedAt: now,
+    });
+  },
 };
 
 module.exports = Utils;
