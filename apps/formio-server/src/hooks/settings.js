@@ -879,6 +879,27 @@ module.exports = function(app) {
           });
         };
 
+        const createFormRevision = (item, doc, {_vid, tag}, done) => {
+          doc.set('_vid', _vid);
+          doc.save((err, result) => {
+            if (err) {
+              return done(err);
+            }
+
+            const body = Object.assign({}, item);
+            body._rid = result._id;
+            body._vid = result._vid;
+            body._vuser = 'system';
+            body._vnote = `Deploy version tag ${tag}`;
+            delete body._id;
+            delete body.__v;
+
+            formioServer.formio.mongoose.models.formrevision.create(body, () => {
+              done(null, item);
+            });
+          });
+        };
+
         alters.form = (item, template, done) => {
           item.project = template._id;
           this.formMachineName(item.machineName, item, (err, machineName) => {
@@ -906,25 +927,51 @@ module.exports = function(app) {
                 return done(null, item);
               }
 
-              doc.set('_vid', parseInt(doc._vid) + 1);
-              doc.save((err, result) => {
-                if (err) {
-                  return done(err);
-                }
-
-                const body = Object.assign({}, item);
-                body._rid = result._id;
-                body._vid = result._vid;
-                body._vuser = 'system';
-                body._vnote = `Deploy version tag ${template.tag}`;
-                delete body._id;
-                delete body.__v;
-
-                formioServer.formio.mongoose.models.formrevision.create(body, () => {
-                  done(null, item);
-                });
-              });
+              createFormRevision(item, doc, {
+                _vid: parseInt(doc._vid) + 1,
+                tag: template.tag,
+              }, done);
             });
+          });
+        };
+
+        const getFormRevisions = (item, done) => {
+          formioServer.formio.resources.form.model.findOne({
+            machineName: item.machineName,
+            deleted: {$eq: null},
+            project: formioServer.formio.util.idToBson(item.project),
+          }).exec((err, form) => {
+            if (err) {
+              return done(err);
+            }
+
+            if (!form || !form.revisions) {
+              return done(null, form);
+            }
+
+            formioServer.formio.resources.formrevision.model.findOne({
+              _rid: form._id,
+            }).exec((err, formrevision) => {
+              if (err) {
+                return done(err);
+              }
+
+              return done(null, form, formrevision);
+            });
+          });
+        };
+
+        alters.formSave = (item, done) => {
+          getFormRevisions(item, (err, form, formrevision) => {
+            if (err) {
+              return done(err);
+            }
+            // If there is no form or formrevision already exists then skip it
+            if (!form || formrevision) {
+              return done(null, item);
+            }
+
+            createFormRevision(item, form, {_vid: 0, tag: ''}, done);
           });
         };
 
