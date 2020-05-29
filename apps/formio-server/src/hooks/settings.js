@@ -739,13 +739,13 @@ module.exports = function(app) {
           }
           // No project but anonymous.
           else {
-            if (_url === '/spec.json') {
-              return true;
-            }
-
             // This req is unauthorized.
             return false;
           }
+        }
+
+        else if (req.projectId  && _url === `/project/${req.projectId}/spec.json`) {
+          return true;
         }
 
         else if (req.projectId && req.token && req.url === `/project/${req.projectId}/report`) {
