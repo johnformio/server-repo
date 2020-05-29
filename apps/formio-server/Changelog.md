@@ -5,11 +5,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## 6.10.0-rc.5
+### Fixed
+ - FJS-888 Unauthorized error when getting spec.json
+ 
+### Added
+ - Added formSave hook on template import.
+ 
 ### Changed
  - Upgrade formio-app@7.0.12
  - Upgrade formiojs@4.10.0-rc.6
  - Upgrade formio-workers@1.14.7
- - Upgrade "formio": "^1.81.0"
+ - Upgrade formio@1.82.0
  - Upgrade mongodb@3.5.8
 
 ## 6.10.0-rc.4
