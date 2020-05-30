@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.10.0-rc.6
+### Changed
+ - Upgrade formio@1.83.0
+
+### Fixed
+ - FOR-2665: Ensure calculate value eval context
+
 ## 6.10.0-rc.5
 ### Fixed
  - FJS-888 Unauthorized error when getting spec.json
