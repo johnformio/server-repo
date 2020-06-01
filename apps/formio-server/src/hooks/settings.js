@@ -273,12 +273,17 @@ module.exports = function(app) {
        *   The modified token.
        */
       token(token, form, req) {
-        token.origin = formioServer.formio.config.apiHost;
+        // See https://tools.ietf.org/html/rfc7519
+        token.iss = formioServer.formio.config.apiHost;
+        token.sub = token.user._id;
+        token.jti = req.session._id;
+
+        // form and project should be removed over time.
         token.form.project = form.project;
         token.project = {
           _id: form.project
         };
-        token.session = req.session._id;
+
         return token;
       },
 
@@ -308,87 +313,50 @@ module.exports = function(app) {
         });
       },
 
-      authenticate(user, req, cb) {
+      login(user, req, cb) {
         const sessionModel = formioServer.formio.mongoose.models.session;
-        return sessionModel.findOne({
-          owner: user._id,
-          issuedAt: {$eq: null},
+
+        return sessionModel.create({
+          project: user.project._id,
+          form: user.form._id,
+          submission: user._id,
         })
-          .then(
-            (document) => (
-              document
-                ? Promise.resolve(document)
-                : sessionModel.create({
-                  owner: user._id,
-                })
-            )
-              .then(
-                (session) => {
-                  req.session = session;
-                  cb();
-                },
-                (err) => cb(err),
-              ),
-            (err) => cb(err),
-          );
+          .catch(cb)
+          .then((session) => {
+            req.session = session;
+            cb();
+          });
       },
 
       validateToken(req, decoded, user, cb) {
-        if (!decoded.session) {
+        if (!decoded.jti) {
           return cb(new Error('Missing session.'));
         }
 
         req.skipTokensValidation = true;
-        return formioServer.formio.mongoose.models.session.findById(decoded.session)
-          .then(
-            (session) => {
-              if (!session) {
-                return cb(new Error('Session not found.'));
-              }
+        return formioServer.formio.mongoose.models.session.findById(decoded.jti)
+          .then((session) => {
+            if (!session) {
+              return cb('Session not found.');
+            }
 
-              if (session.deleted) {
-                return cb(new Error('Session no longer valid.'));
-              }
+            if (session.logout) {
+              return cb('Session no longer valid.');
+            }
 
-              const {
-                renewedAt,
-              } = session;
+            const {
+              session: sessionConfig,
+            } = formioServer.formio.config;
 
-              const {
-                session: sessionConfig,
-              } = formioServer.formio.config;
+            const now = Date.now();
 
-              const now = Date.now();
+            if ((now - session.created) > (sessionConfig.expireTime * 60 * 1000)) {
+              return cb('Session expired.');
+            }
 
-              if ((now - renewedAt) > (sessionConfig.expireTime * 60 * 1000)) {
-                session.deleted = now;
-                return session.save()
-                  .then(
-                    () => cb(new Error('Session no longer valid.')),
-                    (err) => cb(err),
-                  );
-              }
-
-              const renewSession = (session) => {
-                session.renewedAt = now;
-                return session.save();
-              };
-
-              return (
-                (now - renewedAt) <= (sessionConfig.renewTime * 60 * 1000)
-                  ? Promise.resolve(session)
-                  : renewSession(session)
-              )
-                .then(
-                  (updatedSession) => {
-                    req.session = updatedSession;
-                    cb();
-                  },
-                  (err) => cb(err),
-                );
-            },
-            (err) => cb(err),
-          );
+            req.session = session.toObject();
+            cb();
+          });
       },
 
       invalidateTokens(req, res, cb) {
@@ -397,47 +365,18 @@ module.exports = function(app) {
           return cb(new Error('No user found.'));
         }
 
-        const updateTokens = (session) => {
-          req.session = session;
-
-          const {
-            token: decoded,
-          } = req;
-          if (!decoded) {
-            return cb();
-          }
-
-          decoded.session = session._id;
-          const token = formioServer.formio.auth.getToken(decoded);
-          res.token = token;
-          if (!res.headersSent) {
-            res.setHeader('x-jwt-token', res.token);
-          }
-          cb();
-        };
-
-        const createAuthorizedSession = () => {
-          return util.createAuthorizedSession(formioServer.formio, userId)
-            .then(
-              updateTokens,
-              (err) => cb(err),
-            );
-        };
-
         req.skipTokensInvalidation = true;
-        return formioServer.formio.mongoose.models.session.updateMany(
-          {
-            owner: formioServer.formio.util.idToBson(userId),
-            deleted: {$eq: null},
-          },
-          {
-            deleted: Date.now(),
-          },
-        )
-          .then(
-            createAuthorizedSession,
-            (err) => cb(err),
-          );
+
+        return formioServer.formio.mongoose.models.session.updateMany({
+          _id: {$ne: formioServer.formio.util.idToBson(req.session._id)},
+          submission: formioServer.formio.util.idToBson(userId),
+          logout: {$eq: null},
+        },
+        {
+          logout: Date.now(),
+        })
+          .catch(cb)
+          .then(() => cb());
       },
 
       isAdmin(isAdmin, req) {

@@ -13,6 +13,5 @@ module.exports = (app) => (actions) => {
   actions.group = require('../../actions/GroupAction')(formioServer);
   actions.webhook = require('../../actions/WebhookAction')(formioServer);
   actions.twilio = require('../../actions/twilio/twilio')(formioServer);
-  actions.login = require('../../actions/LoginAction')(formioServer, actions.login);
   return actions;
 };

@@ -6,43 +6,26 @@ module.exports = (router) => {
   /* eslint-disable new-cap */
   const model = formio.BaseModel({
     schema: new formio.mongoose.Schema({
-      owner: {
-        type: formio.mongoose.Schema.Types.Mixed,
+      project: {
+        type: formio.mongoose.Schema.Types.ObjectId,
+        ref: 'project',
+        required: true
+      },
+      form: {
+        type: formio.mongoose.Schema.Types.ObjectId,
+        ref: 'form',
+        required: true
+      },
+      submission: {
+        type: formio.mongoose.Schema.Types.ObjectId,
         ref: 'submission',
         index: true,
-        required: true,
-        set(owner) {
-          // Attempt to convert to objectId.
-          return formio.util.ObjectId(owner);
-        },
-        get(owner) {
-          return owner ? owner.toString() : owner;
-        },
+        required: true
       },
-      loginAttempts: {
-        type: Number,
-        default: 0,
-      },
-      lastLoginAttemptAt: {
-        type: Number,
-        default: null,
-      },
-      locked: {
-        type: Boolean,
-        default: false,
-      },
-      issuedAt: {
-        type: Number,
-        default: null,
-      },
-      renewedAt: {
-        type: Number,
-        default: null,
-      },
-      deleted: {
-        type: Number,
-        default: null,
-      },
+      logout: {
+        type: Date,
+        description: 'When the session was logged out.',
+      }
     }),
   });
   /* eslint-enable new-cap */

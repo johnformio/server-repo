@@ -13,19 +13,18 @@ module.exports = (app) => {
       return next();
     }
 
-    if (!req.token.session) {
-      log(req, 'Missing session id in token');
+    if (!req.session) {
+      log(req, 'Missing session');
       return next();
     }
 
     // Get the jwt token for this user.
     app.formio.formio.mongoose.models.session.updateOne(
       {
-        _id: req.token.session,
-        deleted: {$eq: null},
+        _id: req.session._id,
       },
       {
-        deleted: Date.now(),
+        logout: Date.now(),
       },
     )
       .then(() => {
