@@ -236,7 +236,9 @@ module.exports = function(options) {
 
   // Download a submission pdf.
   debug.startup('Attaching middleware: PDF Download');
+
   const downloadPDF = [
+    app.formio.formio.middleware.alias,
     require('./src/middleware/aliasToken')(app),
     app.formio.formio.middleware.tokenHandler,
     app.formio.formio.middleware.params,
@@ -244,7 +246,9 @@ module.exports = function(options) {
     require('./src/middleware/download')(app.formio)
   ];
 
+  app.get('/project/:projectId/:formAlias/submission/:submissionId/download', downloadPDF);
   app.get('/project/:projectId/form/:formId/submission/:submissionId/download', downloadPDF);
+  app.get('/project/:projectId/:formAlias/submission/:submissionId/download/:fileId', downloadPDF);
   app.get('/project/:projectId/form/:formId/submission/:submissionId/download/:fileId', downloadPDF);
 
   debug.startup('Attaching middleware: PDF Upload');
