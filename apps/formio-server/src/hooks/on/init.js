@@ -34,6 +34,14 @@ module.exports = app => (type, formio) => {
         require('../../middleware/logout')(app),
         formio.auth.logout,
       ]);
+      app.get('/logout', [
+        (req, res, next) => {
+          next();
+        },
+        formio.middleware.tokenHandler,
+        require('../../middleware/logout')(app),
+        formio.auth.logout,
+      ]);
       return true;
     case 'getTempToken':
       app.get('/token', formio.auth.tempToken);
