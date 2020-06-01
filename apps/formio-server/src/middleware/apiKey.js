@@ -94,8 +94,8 @@ module.exports = function(formio) {
 
               // Set the headers if they haven't been sent yet.
               if (!res.headersSent) {
-                res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
-                res.setHeader('x-jwt-token', res.token);
+                // res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
+                // res.setHeader('x-jwt-token', res.token);
               }
 
               // Move onto the next middleware.

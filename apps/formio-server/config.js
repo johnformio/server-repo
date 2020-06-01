@@ -233,8 +233,7 @@ config.formio.dropbox.clientSecret = getConfig('DROPBOX_CLIENTSECRET', '');
 
 // Session settings.
 config.formio.session = {
-  expireTime: getConfig('SESSION_EXPIRE_TIME', 240),
-  renewTime: getConfig('SESSION_RENEW_TIME', 15),
+  expireTime: getConfig('SESSION_EXPIRE_TIME', ''),
 };
 
 // Add the JWT data.

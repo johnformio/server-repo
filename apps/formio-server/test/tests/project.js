@@ -554,7 +554,6 @@ module.exports = function(app, template, hook) {
           if (err) {
             return done(err);
           }
-          template.formio.owner.token = res.headers['x-jwt-token'];
           done();
         });
     });

@@ -350,7 +350,7 @@ module.exports = function(app) {
 
             const now = Date.now();
 
-            if ((now - session.created) > (sessionConfig.expireTime * 60 * 1000)) {
+            if (sessionConfig.expireTime !== '' && (now - session.created) > (sessionConfig.expireTime * 60 * 1000)) {
               return cb('Session expired.');
             }
 
