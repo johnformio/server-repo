@@ -92,6 +92,7 @@
     "pre-commit": "^1.2.2",
     "prepack": "^0.2.54",
     "sinon": "^8.1.1",
+    "superagent-use": "^0.1.0",
     "supertest": "^4.0.2",
     "uglify-es": "git+https://github.com/mishoo/UglifyJS2.git#harmony",
     "webpack": "^4.43.0",
