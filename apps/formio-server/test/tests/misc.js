@@ -47,7 +47,7 @@ module.exports = function(app, template, hook) {
         assert.equal(helper.lastResponse.statusCode, 400);
         assert.equal(helper.lastResponse.body.name, 'ValidationError');
         assert.equal(helper.lastResponse.body.details.length, 1);
-        assert.equal(helper.lastResponse.body.details[0].message, '"textField" This is not Bob');
+        assert.equal(helper.lastResponse.body.details[0].message, 'This is not Bob');
         assert.deepEqual(helper.lastResponse.body.details[0].path, ['textField']);
         done();
       });

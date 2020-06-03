@@ -25,7 +25,11 @@ module.exports = (router) => {
       logout: {
         type: Date,
         description: 'When the session was logged out.',
-      }
+      },
+      source: {
+        type: String,
+        description: 'What type of action resulted in the session'
+      },
     }),
   });
   /* eslint-enable new-cap */

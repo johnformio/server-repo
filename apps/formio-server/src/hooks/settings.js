@@ -320,6 +320,7 @@ module.exports = function(app) {
           project: user.project._id,
           form: user.form._id,
           submission: user._id,
+          source: 'login',
         })
           .catch(cb)
           .then((session) => {
