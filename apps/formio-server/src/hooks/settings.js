@@ -945,7 +945,7 @@ module.exports = function(app) {
               return done(err);
             }
 
-            if (!form || !form.revisions) {
+            if (!form || form._vid || !form.revisions) {
               return done(null, form);
             }
 
@@ -967,11 +967,14 @@ module.exports = function(app) {
               return done(err);
             }
             // If there is no form or formrevision already exists then skip it
-            if (!form || formrevision) {
+            if (!form || form._vid || formrevision) {
               return done(null, item);
             }
 
-            createFormRevision(item, form, {_vid: 0, tag: ''}, done);
+            createFormRevision(item, form, {
+              _vid: parseInt(form._vid) + 1,
+              tag: '',
+            }, done);
           });
         };
 
