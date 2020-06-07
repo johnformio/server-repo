@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.10.0-rc.8
+### Changed
+ - Upgrade portal@7.0.14
+ - Upgrade formio@1.85.0
+ - Upgrade formio-workers@1.14.8
+ - Generate form revision on import if revisions are enabled.
+ 
+### Fixed
+ - FOR-2683: Fix (Payment): converted expMonth and expDate to String before concatenation
+ - Fixed issues with group permission errors not being proper English.
+
 ## 6.10.0-rc.7
 ### Changed
  - Upgrade portal@7.0.13
