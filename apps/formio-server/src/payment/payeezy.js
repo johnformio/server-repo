@@ -40,7 +40,7 @@ module.exports = function(config, formio) {
           type: data.ccType,
           cardholder_name: data.cardholderName,
           card_number: `${data.ccNumber}`,
-          exp_date: data.ccExpiryMonth + data.ccExpiryYear,
+          exp_date: `${data.ccExpiryMonth}${data.ccExpiryYear}`,
           cvv: data.securityCode,
         },
         // Wont fit 20 char limit unless converted to base64
