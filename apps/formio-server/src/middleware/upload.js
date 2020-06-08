@@ -66,13 +66,10 @@ module.exports = (formioServer) => async (req, res, next) => {
       debug('POST: ' + `${filesServer}/pdf/${pdfProject}/file`);
       debug(`Filepath: ${  req.files.file.path}`);
       const form = new FormData();
-      form.append('file', {
-        value: fs.createReadStream(req.files.file.path),
-          options: {
-          filename: req.files.file.name,
-            contentType: req.files.file.type,
-            size: req.files.file.size,
-        }
+      form.append('file', fs.createReadStream(req.files.file.path), {
+        filename: req.files.file.name,
+        contentType: req.files.file.type,
+        size: req.files.file.size,
       });
       fetch(`${filesServer}/pdf/${pdfProject}/file`, {
         method: 'POST',
@@ -84,6 +81,7 @@ module.exports = (formioServer) => async (req, res, next) => {
           debug('Err1', err);
           await tryUnlinkAsync(req.files.file.path);
           res.status(400).send(err.message || err);
+          throw err;
         })
         .then((response) => {
           if (response.ok) {

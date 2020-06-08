@@ -234,7 +234,6 @@ module.exports = app => (mail, req, res, params, cb) => {
           return ssoTokens[index++].token || 'INVALID_TOKEN';
         });
 
-        // TO-DO: Generate the token for this user.
         return resolve(mail);
       });
     });

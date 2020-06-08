@@ -67,7 +67,10 @@ module.exports = (formioServer) => async (req, res, next) => {
     }
 
     // Create the headers object
-    const headers = {'x-license-key': getLicenseKey(req)};
+    const headers = {
+      'x-license-key': getLicenseKey(req),
+      'content-type': 'application/json',
+    };
 
     // Pass along the auth token to files server
     if (req.token) {
@@ -114,7 +117,7 @@ module.exports = (formioServer) => async (req, res, next) => {
         .catch((err) => res.status(400).send(err.message || err))
         .then((response) => {
           if (response.ok) {
-            response.body.pipe(res);
+            return response.body.pipe(res);
           }
           res.send(null);
         });
