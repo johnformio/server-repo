@@ -13,7 +13,7 @@ var hook = null;
 var template = _.cloneDeep(require('./tests/fixtures/template')());
 var formioProject = require('../formio.json');
 let EventEmitter = require('events');
-const rpn = require('request-promise-native');
+const fetch = require('formio/src/util/fetch');
 const mockery = require('mockery');
 const sinon = require('sinon');
 let formio;
@@ -37,8 +37,8 @@ const requestMock = sinon.stub()
     json: 'boolean',
     timeout: 'number',
   }))
-  .callsFake(async (args) => {
-    switch(args.url) {
+  .callsFake(async (url, args) => {
+    switch(url.split('?')[0]) {
       case 'https://license.form.io/utilization':
       case 'https://license.form.io/utilization/disable':
         let license;
@@ -48,28 +48,137 @@ const requestMock = sinon.stub()
           });
         }
         return Promise.resolve({
-          ...args.body,
-          hash: md5(base64(args.body)),
-          used: {
-            emails: 0,
-            forms: 0,
-            formRequests: 0,
-            pdfs: 0,
-            pdfDownloads: 0,
-            submissionRequests: 0,
-          },
-          terms: license ? license.data : {
-            plan: 'trial',
-          },
-          licenseId: 'abc123',
+          ok: true,
+          json: async () => ({
+            ...JSON.parse(args.body),
+            hash: md5(base64(JSON.parse(args.body))),
+            used: {
+              emails: 0,
+              forms: 0,
+              formRequests: 0,
+              pdfs: 0,
+              pdfDownloads: 0,
+              submissionRequests: 0,
+            },
+            terms: license ? license.data : {
+              plan: 'trial',
+            },
+            licenseId: 'abc123',
+          }),
+        });
+        break;
+      case 'https://api-cert.payeezy.com/v1/transactions':
+        const body = JSON.parse(args.body);
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            transaction_status: 'approved',
+            transaction_type: 'authorize',
+            method: 'credit_card',
+            amount: 0,
+            card: {
+              ...body.credit_card,
+            },
+            token: {
+              token_type: 'FDToken',
+              token_data: { value: body.credit_card.card_number }
+            }
+          }),
+        });
+        break;
+      case 'https://github.com/login/oauth/access_token':
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            access_token: 'TESTACCESSTOKEN'
+          }),
+        });
+      case 'https://api.github.com/user':
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            login: 'rahatarmanahmed',
+            id: 123456,
+            name: 'Rahat Ahmed',
+            email: null
+          }),
+        });
+        break;
+      case 'https://api.github.com/user/emails':
+        return Promise.resolve({
+          ok: true,
+          json: async () => ([{
+            primary: true,
+            verified: true,
+            email: 'rahatarmanahmed@gmail.com'
+          }]),
+        });
+        break;
+      case 'https://graph.facebook.com/v2.3/oauth/access_token':
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            access_token: 'TESTACCESSTOKEN',
+            expires_in: 86400
+          }),
+          headers: {
+            get: () => {
+              return new Date();
+            },
+          }
+        });
+        break;
+      case 'https://graph.facebook.com/v2.3/me':
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            id: 123456,
+            name: 'Rahat Ahmed',
+            email: 'rahatarmanahmed@gmail.com',
+            first_name: 'Rahat',
+            last_name: 'Ahmed',
+          }),
+        });
+        break;
+      case 'https://api.dropboxapi.com/1/oauth2/token':
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            access_token:'accesstoken123'
+          }),
+        });
+        break;
+      case 'https://content.dropboxapi.com/2/files/download':
+        return Promise.resolve({
+          ok: true,
+          body: async () => ('RAWDATA'),
+          headers: {
+            get: () => false,
+          }
+        });
+        break;
+      case 'https://content.dropboxapi.com/2/files/upload':
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            file: 'abc123',
+          }),
         });
         break;
       default:
-        // Fallback to request-promise-native.
-        return rpn(args);
+        // Fallback to fetch.
+        if (url.includes('localhost')) {
+          return fetch(url, args);
+        }
+        // Don't allow external calls during testing.
+        console.log('Fetch call to ', url);
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({})
+        });
     }
   });
-mockery.registerMock('request-promise-native', requestMock);
+mockery.registerMock('formio/src/util/fetch', requestMock);
 
 process.on('uncaughtException', function(err) {
   console.error(err);
@@ -437,6 +546,7 @@ describe('Initial Tests', function() {
         require('./tests/encrypt')(app, template, hook);
         require('./tests/email')(app, template, hook);
         require('./tests/states')(app, template, hook);
+        require('formio/test/unit')(app, template, hook);
         require('formio/test/auth')(app, template, hook);
         require('./tests/externalTokens')(app, template, hook);
         require('formio/test/roles')(app, template, hook);
@@ -460,7 +570,6 @@ describe('Initial Tests', function() {
         require('./tests/group-permissions')(app, template, hook);
         require('formio/test/templates')(app, template, hook);
         require('./tests/templates')(app, template, hook);
-        require('formio/test/unit')(app, template, hook);
       });
     });
   });

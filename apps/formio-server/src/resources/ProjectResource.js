@@ -356,22 +356,6 @@ module.exports = (router, formioServer) => {
     });
   });
 
-  // Expose the atlassian oauth endpoints.
-  const atlassian = require('../actions/atlassian/util')(formioServer);
-  router.post(
-    '/project/:projectId/atlassian/oauth/authorize',
-    formio.middleware.tokenHandler,
-    formio.middleware.restrictProjectAccess({level: 'admin'}),
-    atlassian.authorizeOAuth,
-  );
-
-  router.post(
-    '/project/:projectId/atlassian/oauth/finalize',
-    formio.middleware.tokenHandler,
-    formio.middleware.restrictProjectAccess({level: 'admin'}),
-    atlassian.storeOAuthReply,
-  );
-
   // Expose the sql connector endpoint
   const sqlconnector = require('../actions/sqlconnector/util')(formioServer);
   router.get(

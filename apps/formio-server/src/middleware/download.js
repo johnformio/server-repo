@@ -1,5 +1,5 @@
 'use strict';
-const request = require('request');
+const fetch = require('formio/src/util/fetch');
 const PDF_SERVER = process.env.PDF_SERVER || process.env.FORMIO_FILES_SERVER || 'https://files.form.io';
 const _ = require('lodash');
 const Promise = require('bluebird');
@@ -102,22 +102,22 @@ module.exports = (formioServer) => async (req, res, next) => {
     }
 
     try {
-      request({
+      fetch(url, {
         method: 'POST',
-        url: url,
         qs: req.query,
         headers: headers,
-        json: true,
-        rejectUnauthorized: false,
-        body: {
+        body: JSON.stringify({
           form,
           submission
-        }
-      }, (err) => {
-        if (err) {
-          res.status(400).send(err.message);
-        }
-      }).pipe(res);
+        }),
+      })
+        .catch((err) => res.status(400).send(err.message || err))
+        .then((response) => {
+          if (response.ok) {
+            response.body.pipe(res);
+          }
+          res.send(null);
+        });
     }
     catch (err) {
       res.status(400).send(err.message);

@@ -1,5 +1,5 @@
 'use strict';
-const request = require('request');
+const fetch = require('formio/src/util/fetch');
 
 class Service {
   constructor(url) {
@@ -7,22 +7,16 @@ class Service {
   }
   start(data) {
     return new Promise((resolve, reject) => {
-      request({
-        url: this.url,
+      fetch(this.url, {
         method: 'POST',
-        body: data,
-        json: true
-      }, function(error, response, body) {
-          if (!response) {
+        body: JSON.stringify(data),
+      })
+        .then((response) => response.ok ? response.json() : null)
+        .then((body) => {
+          if (!body) {
             return reject('Invalid response.');
           }
-
-          if (response.statusCode === 200) {
-            resolve(body);
-          }
-          else {
-            reject(error);
-          }
+          resolve(body);
         });
     });
   }

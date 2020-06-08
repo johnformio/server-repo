@@ -2,7 +2,7 @@
 
 const _ = require('lodash');
 const debug = require('debug')('formio:action:sqlconnector');
-const request = require('request-promise-native');
+const fetch = require('formio/src/util/fetch');
 
 module.exports = (router) => {
   const Action = router.formio.Action;
@@ -334,43 +334,38 @@ module.exports = (router) => {
         }
 
         // Add basic auth if available.
-        if (project.settings.sqlconnector.user) {
-          options.auth = Object.assign({}, options.auth, {
-            user: project.settings.sqlconnector.user,
-          });
-        }
-        if (project.settings.sqlconnector.password) {
-          options.auth = Object.assign({}, options.auth, {
-            password: project.settings.sqlconnector.password,
-          });
+        if (project.settings.sqlconnector.user && project.settings.sqlconnector.password) {
+          const auth = Buffer.from(`${project.settings.sqlconnector.user}:${project.settings.sqlconnector.password}`).toString('base64');
+          options.headers = {
+            'Authentication': `Basic ${auth}`,
+          };
         }
 
         // Build the base url.
-        options.url = `${project.settings.sqlconnector.host}/${settings.table}`;
+        let url = `${project.settings.sqlconnector.host}/${settings.table}`;
 
         // If this was not a post request, determine which existing resource we are modifying.
         if (method !== 'post') {
           const externalId = getSubmissionId(req, res);
           if (externalId !== undefined) {
-            options.url += `/${externalId}`;
+            url += `/${externalId}`;
           }
         }
 
         // If this is a create/update, determine what to send in the request body.
         if (['post', 'put'].includes(method)) {
-          options.json = true;
           const item = res.resource
             ? res.resource.item.toObject()
             : req.body;
 
           // Remove protected fields from the external request.
           formio.util.removeProtectedFields(req.currentForm, method, item);
-          options.body = item;
+          options.body = JSON.stringify(item);
         }
 
         options.timeout = 10000;
-        process.nextTick(() => request(options)
-          .then((response) => {
+        process.nextTick(() => fetch(url, options)
+          .then(async (response) => {
             // If this is not a new resource, skip link phase for new resources.
             if (method !== 'post') {
               // if the request was blocking, return here.
@@ -380,15 +375,12 @@ module.exports = (router) => {
               return;
             }
 
-            if (!response) {
+            if (!response.ok) {
               throw new Error('Invalid response.');
             }
 
-            if (!(response.status >= 200 && response.status < 300)) {
-              throw new Error((response.body || '').toString().replace(/<br>/, ''));
-            }
-
-            const results = response.rows;
+            const body = await response.json();
+            const results = body.rows;
 
             if (!Array.isArray(results)) {
               // No clue what to do here.

@@ -253,10 +253,6 @@ config.templateService = getConfig('TEMPLATE_SERVICE', '');
 
 // Logging config.
 config.jslogger = getConfig('JS_LOGGER');
-config.logging = {
-  console: getConfig('LOGGING_CONSOLE', true),
-  formio: getConfig('LOGGING_FORMIO', false)
-};
 
 // Allow the config to be displayed when debugged.
 var sanitized = _.clone(config, true);

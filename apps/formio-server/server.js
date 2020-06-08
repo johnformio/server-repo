@@ -34,14 +34,6 @@ module.exports = function(options) {
   // Use the given config.
   var config = options.config || require('./config');
 
-  // Add jslogger if configured.
-  var jslogger = null;
-  if (config.jslogger) {
-    jslogger = require('jslogger')({key: config.jslogger});
-  }
-
-  var Logger = require('./src/logger/index')(config);
-
   // Ensure that we create projects within the helper.
   app.hasProjects = true;
 
@@ -358,8 +350,15 @@ module.exports = function(options) {
     app.use('/project/:projectId/form/:formId/validate', require('./src/middleware/validateSubmission')(app.formio));
 
     // Mount the error logging middleware.
-    debug.startup('Attaching middleware: Logger');
-    app.use(Logger.middleware);
+    debug.startup('Attaching middleware: Error Handler');
+    app.use((err, req, res, next) => {
+      /* eslint-disable no-console */
+      console.log('Uncaught exception:');
+      console.log(err);
+      console.log(err.stack);
+      /* eslint-enable no-console */
+      res.status(400).send(typeof err === 'string' ? {message: err} : err);
+    });
 
     debug.startup('Attaching middleware: File Storage');
     app.storage = require('./src/storage/index.js')(app);
@@ -377,23 +376,11 @@ module.exports = function(options) {
 
   // Do some logging on uncaught exceptions in the application.
   process.on('uncaughtException', function(err) {
-    if (config.jslogger && jslogger) {
-      /* eslint-disable no-console */
-      console.log('Uncaught exception:');
-      console.log(err);
-      console.log(err.stack);
-      /* eslint-enable no-console */
-
-      jslogger.log({
-        message: err.stack || err.message,
-        fileName: err.fileName,
-        lineNumber: err.lineNumber
-      });
-    }
-
-    if (Logger.middleware) {
-      Logger.middleware(err, {});
-    }
+    /* eslint-disable no-console */
+    console.log('Uncaught exception:');
+    console.log(err);
+    console.log(err.stack);
+    /* eslint-enable no-console */
 
     // Give the loggers some time to log before exiting.
     setTimeout(function() {

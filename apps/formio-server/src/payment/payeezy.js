@@ -3,7 +3,7 @@
 /* eslint camelcase: 0 */
 const crypto = require('crypto');
 const _ = require('lodash');
-const request = require('request');
+const fetch = require('formio/src/util/fetch');
 const util = require('formio/src/util/util');
 
 module.exports = function(config, formio) {
@@ -58,8 +58,8 @@ module.exports = function(config, formio) {
       const nonce = Math.floor(Math.random() * 100000000000) + 1;
       const transactionBody = JSON.stringify(transactionRequest);
       const timestamp = (new Date()).getTime();
-      return request.post({
-        url: `https://${config.payeezy.host}${config.payeezy.endpoint}`,
+      return fetch(`https://${config.payeezy.host}${config.payeezy.endpoint}`, {
+        method: 'post',
         body: transactionBody,
         headers: {
           'accept': 'application/json',
@@ -70,12 +70,10 @@ module.exports = function(config, formio) {
           'nonce': nonce,
           'Authorization': getAuthorizationHeader(config.payeezy.keyId, config.payeezy.hmacKey, transactionBody, config.payeezy.merchToken, nonce, timestamp)
         }
-      }, (err, response, body) => {
-        if (err) {
-         return next(err);
-        }
-        next(body);
-      });
+      })
+        .then((response) => response.ok ? response.json() : null)
+        .then(next)
+        .catch(next);
     };
     /* eslint-enable new-cap */
 
@@ -127,8 +125,7 @@ module.exports = function(config, formio) {
         txn.metadata.lastRequest = new Date();
         txn.metadata.requestCount++;
 
-        sendAuthTxn((body) => {
-          const transaction = JSON.parse(body);
+        sendAuthTxn((transaction) => {
           if (transaction.transaction_status !== 'approved') {
             // Update the transaction record.
             txn.metadata.failures++;
