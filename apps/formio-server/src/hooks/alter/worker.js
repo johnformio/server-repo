@@ -9,6 +9,9 @@ class Service {
     return new Promise((resolve, reject) => {
       fetch(this.url, {
         method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
         body: JSON.stringify(data),
       })
         .then((response) => response.ok ? response.json() : null)

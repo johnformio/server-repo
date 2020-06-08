@@ -47,6 +47,9 @@ module.exports = function(formio) {
       /* eslint-disable camelcase */
       const response = await fetch('https://github.com/login/oauth/access_token', {
         method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
         body: JSON.stringify({
           client_id: settings.clientId,
           client_secret: settings.clientSecret,

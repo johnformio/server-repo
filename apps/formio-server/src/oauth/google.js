@@ -50,6 +50,9 @@ module.exports = function(formio) {
       /* eslint-disable camelcase */
       const response = await fetch('https://accounts.google.com/o/oauth2/token', {
         method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
         body: JSON.stringify({
           client_id: settings.clientId,
           client_secret: settings.clientSecret,

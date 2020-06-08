@@ -392,6 +392,7 @@ module.exports = (router) => {
 
         // Always set user agent to indicate it came from us.
         options.headers['user-agent'] = 'Form.io Webhook Action';
+        options.headers['content-type'] = 'application/json';
 
         // Add custom headers.
         const headers = settings.headers || [];
