@@ -133,6 +133,7 @@ module.exports = (router, formioServer) => {
   // Fix project plan (pull from actual license instead of stored DB value)
   formio.middleware.licenseUtilization = require('../middleware/licenseUtilization').middleware(formio);
   formio.middleware.licenseRemote = require('../middleware/licenseRemote').middleware(formio);
+  formio.middleware.licenseValid = require('../middleware/licenseValid')(formio);
 
   const hiddenFields = ['deleted', '__v', 'machineName', 'primary'];
   const resource = Resource(
@@ -159,6 +160,7 @@ module.exports = (router, formioServer) => {
     ],
     beforePost: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
+      formio.middleware.licenseValid,
       require('../middleware/fetchTemplate'),
       formio.middleware.checkTenantProjectPlan,
       formio.middleware.projectDefaultPlan,
@@ -199,6 +201,7 @@ module.exports = (router, formioServer) => {
     ],
     beforePut: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
+      formio.middleware.licenseValid,
       formio.middleware.licenseRemote,
       formio.middleware.licenseUtilization,
       function(req, res, next) {

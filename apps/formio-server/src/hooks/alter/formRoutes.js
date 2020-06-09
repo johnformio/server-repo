@@ -219,6 +219,7 @@ module.exports = app => routes => {
   routes.before.unshift(require('../../middleware/projectProtectAccess')(app.formio.formio));
   routes.before.unshift(require('../../middleware/formRevisionUpdate')(app.formio.formio));
   routes.before.unshift(require('../../middleware/formConflictHandler')(app.formio.formio));
+  routes.before.unshift(require('../../middleware/licenseUtilization').middleware(app.formio.formio));
   routes.after.push(require('../../middleware/projectModified')(app.formio.formio));
 
   /**

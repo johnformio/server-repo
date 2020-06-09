@@ -87,6 +87,10 @@ async function utilization(body, action = '', qs = {terms: 1}) {
     qs,
   });
 
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+
   const utilization = await response.json();
 
   if (!hosted && utilization.hash !== md5(base64(body))) {
