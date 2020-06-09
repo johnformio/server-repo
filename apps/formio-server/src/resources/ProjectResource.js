@@ -251,6 +251,10 @@ module.exports = (router, formioServer) => {
           req.body.access = _.uniqBy(req.body.access, 'type');
         }
 
+        if (!req.body.name && req.body.name !== '') {
+          req.body.name = req.currentProject.name;
+        }
+
         // Reset the machine name so that it will regenerate.
         if (req.body.name !== req.currentProject.name) {
           req.body.machineName = '';
