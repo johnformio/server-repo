@@ -6,7 +6,6 @@ var assert = require('assert');
 var _ = require('lodash');
 var Q = require('q');
 var util = require('formio/src/util/util');
-var uuidRegex = /^([a-z]{15})$/;
 var docker = process.env.DOCKER;
 
 module.exports = function(app, template, hook) {
@@ -182,7 +181,7 @@ module.exports = function(app, template, hook) {
             assert.notEqual(response.access[3].roles, [], 'The delete_all Administrator `role` should not be empty.');
             assert.notEqual(response.defaultAccess, [], 'The Projects default `role` should not be empty.');
             assert.equal(response.hasOwnProperty('name'), true);
-            assert.notEqual(response.name.search(uuidRegex), -1);
+            assert.equal(response.name, template.project.name);
             assert.equal(response.description, template.project.description);
             assert.deepEqual(response.settings, tempSettings);
 
