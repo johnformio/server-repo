@@ -279,17 +279,17 @@ module.exports = function(app) {
        */
       tokenDecode(token, req, cb) {
         if (!token.jti) {
-          return cb(token);
+          return cb(null, token);
         }
         return formioServer.formio.mongoose.models.session.findById(token.jti)
           .then((session) => {
             if (!session) {
-              return cb(token);
+              return cb(null, token);
             }
 
             req.session = session.toObject();
 
-            cb({
+            cb(null, {
               ...token,
               form: {
                 _id: req.session.form.toString(),
