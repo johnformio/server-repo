@@ -5,8 +5,92 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## 7.0.0
-### Changed
+### Added
+ - User Sessions
+ - Isomorphic Validation
  - New Licensing system.
+ 
+### Changed
+ - Removed request.js and restler and replaced with node-fetch
+ 
+### Removed
+ - Jira Action
+ - Hubspot Action
+ - Office365 Actions
+ - Facebook, LinkedIn, Twitter, Dropbox OAuth providers
+ 
+## 6.10.0-rc.9
+### Changed
+ - Upgrade portal@7.0.15
+ - Upgrade formiojs@4.10.0-rc.12
+
+### Fixed
+ - Fixed resetting project path on PUT request without name.
+
+## 6.10.0-rc.8
+### Changed
+ - Upgrade portal@7.0.14
+ - Upgrade formio@1.85.0
+ - Upgrade formio-workers@1.14.8
+ - Generate form revision on import if revisions are enabled.
+ 
+### Fixed
+ - FOR-2683: Fix (Payment): converted expMonth and expDate to String before concatenation
+ - Fixed issues with group permission errors not being proper English.
+
+## 6.10.0-rc.7
+### Changed
+ - Upgrade portal@7.0.13
+
+## 6.10.0-rc.6
+### Changed
+ - Upgrade formio@1.83.0
+
+### Fixed
+ - FOR-2665: Ensure calculate value eval context
+
+## 6.10.0-rc.5
+### Fixed
+ - FJS-888 Unauthorized error when getting spec.json
+ 
+### Added
+ - Added formSave hook on template import.
+ 
+### Changed
+ - Upgrade formio-app@7.0.12
+ - Upgrade formiojs@4.10.0-rc.6
+ - Upgrade formio-workers@1.14.7
+ - Upgrade formio@1.82.0
+ - Upgrade mongodb@3.5.8
+
+## 6.10.0-rc.4
+### Changed
+ - Adding recommended indexes.
+ - Add config options for mongo ssl
+ - Upgrade portal@7.0.11
+ - Upgrade  chance@1.1.6, formio-workers@1.14.6, twilio@3.43.1, aws-sdk@2.683.0, moment@2.26.0, mocha@7.2.0, webpack-obfuscator@0.28.2
+
+## 6.10.0-rc.3
+### Changed
+ - Upgrade formio-app@7.0.6 to fix submission table issues.
+
+## 6.10.0-rc.2
+### Changed
+ - Upgrade formio-app@7.0.5
+ - Upgrade formiojs@4.10.0-beta.17
+ - Upgrade chance@1.1.5, formio-workers@1.14.6, aws-sdk@2.675.0
+
+### 6.10.0-beta.1
+### Changed
+ - Upgrade portal@7.0.10
+ - Adding mongo SSL.
+
+## 6.9.34
+### Changed
+ - Upgrade portal@7.0.8
+ - Upgrade formiojs@4.9.27-rc.4
+ - Upgrade formmanager@1.93.1
+ - Upgrade pro.formview.io@1.93.1
 
 ## 6.10.0-rc.2
 ### Changed

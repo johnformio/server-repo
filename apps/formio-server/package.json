@@ -43,8 +43,8 @@
     "express-cache-controller": "^1.1.0",
     "formio": "^2.0.0-beta.7",
     "formio-services": "formio/formio-services#v2.0.2",
-    "formio-workers": "1.14.7",
-    "formiojs": "^4.10.0-rc.6",
+    "formio-workers": "^1.14.8",
+    "formiojs": "^4.10.0-rc.12",
     "helmet": "^3.21.3",
     "is-url": "^1.2.4",
     "jira-connector": "^3.0.2",
@@ -94,7 +94,7 @@
     "supertest-capture-error": "^1.0.0",
     "uglify-es": "git+https://github.com/mishoo/UglifyJS2.git#harmony",
     "webpack": "^4.43.0",
-    "webpack-obfuscator": "^0.28.0"
+    "webpack-obfuscator": "^0.28.2"
   },
   "pre-commit": [
     "lint"
