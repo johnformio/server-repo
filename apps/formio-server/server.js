@@ -275,14 +275,14 @@ module.exports = function(options) {
       },
       require('./src/middleware/health')(app.formio.formio),
       formio.update.sanityCheck,
-      require('./src/middleware/mongodbConnectionStatus')(app.formio.formio),
+      app.formio.formio.middleware.mongodbConnectionState(app.formio.formio),
       require('./src/middleware/requestCount')(requestCache),
       (req, res) => {
-      const { requestCount, mongodbConnectionStatus } = req;
+      const { requestCount, mongodbConnectionState } = req;
       const response = {
         agregatedStatus: res.statusCode === 200 ? 'UP' : 'DOWN',
         requestCount,
-        mongodbConnectionStatus,
+        mongodbConnectionState,
         license: Boolean(app.validated),
       };
 
