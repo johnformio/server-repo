@@ -8,7 +8,7 @@ module.exports = class Commercial extends Plan {
       submissionRequests: 2000000,
       emails: 10000,
       pdfDownloads: 1000,
-      pdfs: 50,
+      pdfs: 25,
       stages: 10,
       plan: 'commercial',
     };
