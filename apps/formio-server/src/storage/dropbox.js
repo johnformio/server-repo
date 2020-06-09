@@ -1,11 +1,12 @@
 'use strict';
 
 const crypto = require('crypto');
-const request = require('request');
+const fetch = require('formio/src/util/fetch');
 const multer  = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({storage: storage});
 const _ = require('lodash');
+const FormData = require('form-data');
 
 async function getUrl(options = {}) {
   // Allow options.project as an alternative to options.settings
@@ -19,8 +20,7 @@ async function getUrl(options = {}) {
 
   const path = _.get(options, 'file.path_lower', options.path_lower);
 
-  const post = require('util').promisify(request.post);
-  const response = await post('https://api.dropboxapi.com/2/files/get_temporary_link', {
+  const response = await fetch('https://api.dropboxapi.com/2/files/get_temporary_link', {
     headers: {
       'Authorization': `Bearer ${options.settings.access_token}`,
       'Content-Type': 'application/json'
@@ -79,23 +79,23 @@ const middleware = router => {
     restrictProjectAccess({level: 'admin'}),
     function(req, res) {
       if (req.body.code) {
+        const form = new FormData();
+        form.append('code', req.body.code);
+        form.append('grant_type', 'authorization_code');
+        form.append('client_id', process.env.DROPBOX_CLIENTID);
+        form.append('client_secret', process.env.DROPBOX_CLIENTSECRET);
+        form.append('redirect_uri', req.body.redirect_uri);
         // Send code to dropbox for token.
-        request.post('https://api.dropboxapi.com/1/oauth2/token', {
-          form: {
-            code: req.body.code,
-            grant_type: 'authorization_code',
-            client_id: process.env.DROPBOX_CLIENTID,
-            client_secret: process.env.DROPBOX_CLIENTSECRET,
-            redirect_uri: req.body.redirect_uri
-          }
-        },
-        function(error, response, body) {
-          if (!response) {
-            return res.status(400).send('Invalid response.');
-          }
+        fetch('https://api.dropboxapi.com/1/oauth2/token', {
+          method: 'post',
+          body: form,
+        })
+          .then((response) => response.ok ? response.json() : null)
+          .then((dropbox) => {
+            if (!dropbox) {
+              return res.status(400).send('Invalid response.');
+            }
 
-          if (response.statusCode === 200) {
-            const dropbox = JSON.parse(body);
             // return token to app
             res.send(dropbox);
 
@@ -112,11 +112,7 @@ const middleware = router => {
                 project.save();
               }
             });
-          }
-          else {
-            res.status(400).send(error);
-          }
-        });
+          });
       }
       else {
         res.send({});
@@ -162,22 +158,17 @@ const middleware = router => {
         }
         const path = req.query.path_lower;
         const name = path.split('/').slice(-1)[0];
-        request.post('https://content.dropboxapi.com/2/files/download',
-          {
-            headers: {
-              'Authorization': `Bearer ${project.settings.storage.dropbox.access_token}`,
-              'Dropbox-API-Arg': JSON.stringify({
-                path: path
-              })
-            },
-            encoding: null
+        fetch('https://content.dropboxapi.com/2/files/download', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${project.settings.storage.dropbox.access_token}`,
+            'Dropbox-API-Arg': JSON.stringify({
+              path: path
+            })
           },
-          function(error, response, body) {
-            if (!response) {
-              return res.status(400).send('Invalid response.');
-            }
-
-            if (response.statusCode === 200) {
+        })
+          .then((response) => {
+            if (response.ok) {
               const headers = [
                 'content-type',
                 'content-length',
@@ -188,15 +179,15 @@ const middleware = router => {
                 'accept-ranges'
               ];
               headers.forEach(function(header) {
-                if (response.headers.hasOwnProperty(header)) {
-                  res.setHeader(header, response.headers[header]);
+                if (response.headers.get(header)) {
+                  res.setHeader(header, response.headers.get(header));
                 }
               });
               res.setHeader('content-disposition', `filename=${name}`);
-              res.send(body);
+              response.body().then((body) => res.send(body));
             }
             else {
-              res.status(400).send(error);
+              return res.status(400).send('Invalid response.');
             }
           });
       });
@@ -238,33 +229,25 @@ const middleware = router => {
         }
 
         // Stream project to dropbox here.
-        request.post('https://content.dropboxapi.com/2/files/upload',
-          {
-            headers: {
-              'Authorization': `Bearer ${project.settings.storage.dropbox.access_token}`,
-              'Content-Type': 'application/octet-stream',
-              'Dropbox-API-Arg': JSON.stringify({
-                path: `/${fileInfo.dir}${fileInfo.name}`,
-                mode: 'add',
-                autorename: true,
-                mute: false
-              })
-            },
-            body: req.file.buffer
+        fetch('https://content.dropboxapi.com/2/files/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${project.settings.storage.dropbox.access_token}`,
+            'Dropbox-API-Arg': JSON.stringify({
+              path: `/${fileInfo.dir}${fileInfo.name}`,
+              mode: 'add',
+              autorename: true,
+              mute: false
+            })
           },
-          function(error, response, body) {
-            if (!response) {
+        })
+          .then((response) => response.ok ? response.json() : null)
+          .then((body) => {
+            if (!body) {
               return res.status(400).send('Invalid response.');
             }
 
-            if (response.statusCode === 200) {
-              const result = JSON.parse(body);
-              // return token to app
-              res.send(result);
-            }
-            else {
-              res.status(400).send(error);
-            }
+            res.send(body);
           });
       });
     }

@@ -4,7 +4,7 @@ const Q = require('q');
 const _ = require('lodash');
 const oauth2 = require('simple-oauth2');
 
-const util = require('formio/src/util/util');
+const fetch = require('formio/src/util/fetch');
 
 const MAX_TIMESTAMP = 8640000000000000;
 
@@ -86,36 +86,34 @@ module.exports = (formio) => {
 
     // Gets user information from oauth access token
     // Returns a promise, or you can provide the next callback arg
-    getUser(tokens, settings, next) {
+    async getUser(tokens, settings, next) {
       const accessToken = _.find(tokens, {type: this.name});
       if (!accessToken) {
-        return Q.reject('No access token found');
+        throw 'No access token found';
       }
-      return util.request({
+      const response = await fetch(accessToken.userInfo, {
         method: 'GET',
-        url: accessToken.userInfo,
-        json: true,
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken.token}`,
           'User-Agent': 'form.io/1.0',
         },
-        body: {},
-      })
-      .spread((response, userInfo) => {
-        if (!userInfo) {
-          const status = 400;
-          throw {
-            status: status,
-            message: `${status} response from OpenID Provider: ${response.statusMessage}`,
-          };
-        }
-        // Make it easier to reference items in userInfo.name
-        userInfo = _.merge(userInfo, userInfo.name);
-        return userInfo;
-      })
-      .nodeify(next);
+      });
+
+      let userInfo = null;
+      if (response.ok) {
+        userInfo = await response.json();
+      }
+
+      if (!userInfo) {
+        throw 'No response from OpenID Provider.';
+      }
+
+      return {
+        ...userInfo,
+        ...userInfo.name,
+      };
     },
 
     // Gets user ID from provider user response from getUser()

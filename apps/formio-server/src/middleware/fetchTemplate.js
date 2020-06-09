@@ -1,7 +1,7 @@
 'use strict';
-const request = require('request');
+const fetch = require('formio/src/util/fetch');
 const isURL = require('is-url');
-const debug = require('debug')('formio:middleware:projectTemplate');
+
 module.exports = (req, res, next) => {
   if (!req.body || !req.body.template) {
     return next();
@@ -21,25 +21,16 @@ module.exports = (req, res, next) => {
     return next();
   }
 
-  return request({
-    url: req.body.template,
-    json: true
-  }, function(err, response, body) {
-    if (err) {
-      debug(err);
-      return next(err.message || err);
-    }
+  return fetch(req.body.template)
+    .catch((err) => next(err.message || err))
+    .then((response) => response.ok ? response.json() : null)
+    .then((body) => {
+      if (!body) {
+        return res.status(400).send('Unable to load template.');
+      }
 
-    if (!response) {
-      return next('Invalid project template.');
-    }
-
-    if (response.statusCode !== 200) {
-      return res.status(400).send('Unable to load template.');
-    }
-
-    // Import the template.
-    req.body.template = body;
-    return next();
-  });
+      // Import the template.
+      req.body.template = body;
+      return next();
+    });
 };

@@ -80,7 +80,7 @@ module.exports = function(formio) {
   const filterDataConnectionSettings = function(req) {
     req.body.settings = req.body.settings || {};
     req.body.settings = _.omit(req.body.settings, [
-      'office365', 'databases', 'google', 'kickbox', 'hubspot', 'sqlconnector', 'atlassian'
+      'databases', 'google', 'kickbox', 'sqlconnector'
     ]);
   };
 

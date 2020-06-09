@@ -119,7 +119,8 @@ module.exports = function(router) {
           ]).exec(function(err, submissions) {
             if (err || !submissions || submissions.length !== 1) {
               debug.loadFilteredSubmission(err || `Submission: ${!submissions ? 'none' : submissions.length}`);
-              deferred.reject(`Could not the ${name} for assignment.`);
+              deferred.reject(`Could not find the ${name} for assignment.`);
+              return;
             }
 
             // We only want to deal with the single result.

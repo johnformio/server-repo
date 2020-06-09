@@ -1,7 +1,6 @@
 'use strict';
-const request = require('request-promise-native');
+const fetch = require('formio/src/util/fetch');
 const _ = require('lodash');
-const {StatusCodeError} = require('request-promise-native/errors');
 const licenseServer = process.env.LICENSE_SERVER || 'https://license.form.io';
 const NodeCache = require('node-cache');
 const plans = require('../plans/plans');
@@ -80,18 +79,22 @@ async function utilization(body, action = '', qs = {terms: 1}) {
     body.timestamp = Date.now() - 6000;
   }
 
-  const utilization = await request({
-    url: `${licenseServer}/utilization${action}`,
+  const response = await fetch(`${licenseServer}/utilization${action}`, {
     method: 'post',
     headers: {'content-type': 'application/json'},
-    qs,
-    body,
-    json: true,
+    body: JSON.stringify(body),
     timeout: 5000,
+    qs,
   });
 
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+
+  const utilization = await response.json();
+
   if (!hosted && utilization.hash !== md5(base64(body))) {
-    throw new StatusCodeError(400, 'Invalid response');
+    throw new Error('Invalid response');
   }
 
   return utilization;
@@ -204,13 +207,12 @@ async function setLicensePlan(formio, licenseKey, planName, additional = {}, add
 }
 
 async function clearLicenseCache(licenseId) {
-  await request({
-    url: `${licenseServer}/license/${licenseId}/clear`,
+  await fetch(`${licenseServer}/license/${licenseId}/clear`, {
     method: 'post',
     headers: {'content-type': 'application/json'},
-    json: true,
     timeout: 5000,
-  });
+  })
+    .then((response) => response.ok ? response.json() : null);
 }
 
 module.exports = {

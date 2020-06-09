@@ -51,7 +51,6 @@ module.exports = function(app) {
       init: require('./on/init')(app),
       formRequest: require('./on/formRequest')(app),
       validateEmail: require('./on/validateEmail')(app),
-      email: require('./on/email')(app)
     },
     alter: {
       formio: require('./alter/formio')(app),
@@ -112,11 +111,7 @@ module.exports = function(app) {
         const premium = [
           'webhook',
           'oauth',
-          'office365contact',
-          'office365calendar',
-          'hubspotContact',
           'googlesheet',
-          'jira',
           'ldap',
           'sqlconnector',
         ];
@@ -182,7 +177,7 @@ module.exports = function(app) {
           return true;
         }
         const premium = [
-          'webhook', 'oauth', 'office365contact', 'office365calendar', 'hubspotContact', 'googlesheet', 'jira', 'ldap'
+          'webhook', 'oauth', 'googlesheet', 'ldap'
         ];
 
         // If the action does not have a name, or is not flagged as being premium, ignore it.
@@ -198,16 +193,6 @@ module.exports = function(app) {
 
       emailTransports(transports, settings, req, cb) {
         settings = settings || {};
-        const office365 = settings.office365 || {};
-        if (office365.tenant && office365.clientId && office365.email && office365.cert && office365.thumbprint) {
-          transports.push(
-            {
-              transport: 'outlook',
-              title: 'Outlook'
-            }
-          );
-        }
-
         // Limit basic and independent
         if (req && req.primaryProject) {
           if (req.primaryProject.plan === 'basic') {
@@ -272,13 +257,49 @@ module.exports = function(app) {
        * @returns {Object}
        *   The modified token.
        */
-      token(token, form) {
-        token.origin = formioServer.formio.config.apiHost;
-        token.form.project = form.project;
-        token.project = {
-          _id: form.project
-        };
+      token(token, form, req) {
+        // See https://tools.ietf.org/html/rfc7519
+        token.iss = formioServer.formio.config.apiHost;
+        token.sub = token.user._id;
+        token.jti = req.session._id;
+
+        // form and project are now stored in session so no longer need to include it in the token.
+        delete token.form;
+        delete token.project;
+
         return token;
+      },
+
+      /**
+       * Token has just been decoded, make sure all the correct data is there.
+       *
+       * @param content
+       * @param req
+       * @param cb
+       */
+      tokenDecode(token, req, cb) {
+        if (!token.jti) {
+          return cb(token);
+        }
+        return formioServer.formio.mongoose.models.session.findById(token.jti)
+          .then((session) => {
+            if (!session) {
+              return cb(token);
+            }
+
+            req.session = session.toObject();
+
+            cb({
+              ...token,
+              form: {
+                _id: req.session.form.toString(),
+                project: req.session.project.toString(),
+              },
+              project: {
+                _id: req.session.project.toString(),
+              },
+            });
+          });
       },
 
       /**
@@ -305,6 +326,85 @@ module.exports = function(app) {
 
           return cb();
         });
+      },
+
+      /**
+       * Called when the user is logged in.
+       *
+       * @param user
+       * @param req
+       * @param cb
+       * @returns {*}
+       */
+      login(user, req, cb) {
+        const sessionModel = formioServer.formio.mongoose.models.session;
+
+        sessionModel.create({
+          project: user.project._id,
+          form: user.form._id,
+          submission: user._id,
+          source: 'login',
+        })
+          .catch(cb)
+          .then((session) => {
+            req.session = session.toObject();
+            cb();
+          });
+      },
+
+      /**
+       * See if a token is valid.
+       *
+       * @param req
+       * @param decoded
+       * @param user
+       * @param cb
+       * @returns {*}
+       */
+      validateToken(req, decoded, user, cb) {
+        if (!decoded.jti) {
+          return cb(new Error('Missing session.'));
+        }
+
+        req.skipTokensValidation = true;
+        if (!req.session) {
+          return cb('Session not found.');
+        }
+        if (req.session.logout) {
+          return cb('Session no longer valid.');
+        }
+
+        const {
+          session: sessionConfig,
+        } = formioServer.formio.config;
+
+        const now = Date.now();
+
+        if (sessionConfig.expireTime !== '' && (now - req.session.created) > (sessionConfig.expireTime * 60 * 1000)) {
+          return cb('Session expired.');
+        }
+
+        return cb();
+      },
+
+      invalidateTokens(req, res, cb) {
+        const userId = req.params.submissionId;
+        if (!userId) {
+          return cb(new Error('No user found.'));
+        }
+
+        req.skipTokensInvalidation = true;
+
+        return formioServer.formio.mongoose.models.session.updateMany({
+          _id: {$ne: formioServer.formio.util.idToBson(req.session._id)},
+          submission: formioServer.formio.util.idToBson(userId),
+          logout: {$eq: null},
+        },
+        {
+          logout: Date.now(),
+        })
+          .catch(cb)
+          .then(() => cb());
       },
 
       isAdmin(isAdmin, req) {
