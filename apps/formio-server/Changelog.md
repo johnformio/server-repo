@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Hubspot Action
  - Office365 Actions
  - Facebook, LinkedIn, Twitter, Dropbox OAuth providers
+
+## 6.10.0-rc.10
+### Changed
+ - Upgrade portal@7.0.16
+ - Upgrade formiojs@4.10.0-rc.13
  
 ## 6.10.0-rc.9
 ### Changed
