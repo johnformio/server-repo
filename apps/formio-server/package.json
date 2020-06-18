@@ -44,7 +44,7 @@
     "formio": "^2.0.0-beta.10",
     "formio-services": "formio/formio-services#v2.0.2",
     "formio-workers": "^1.14.8",
-    "formiojs": "^4.10.0-rc.13",
+    "formiojs": "^4.10.3-rc.5",
     "helmet": "^3.21.3",
     "is-url": "^1.2.4",
     "jira-connector": "^3.0.2",
