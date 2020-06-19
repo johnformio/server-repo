@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.10.1-rc.6
+### Changed
+ - Upgrade formiojs@4.10.3-rc.6
+ - Upgrade portal@7.0.24
+
 ## 6.10.1-rc.5
 ### Changed
  - Upgrade formiojs@4.10.3-rc.5
