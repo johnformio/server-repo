@@ -12,7 +12,6 @@ module.exports = app => models => {
     },
     controller: {
       type: String,
-      default: ''
     },
     revisions: {
       type: String,
