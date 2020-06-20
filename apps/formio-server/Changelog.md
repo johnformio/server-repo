@@ -106,6 +106,35 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Upgrade portal@7.0.10
  - Adding mongo SSL.
 
+## 6.9.38
+### Changed
+ - None. Released 6.9.38-rc.1
+
+## 6.9.38-rc.1
+### Changed
+ - Upgrade formio@1.84.0
+ - Added version id check to formSave alter for template exports/imports.
+
+## 6.9.37
+### Changed
+ - Upgrade portal@7.0.8-1
+
+## 6.9.36
+### Changed
+ - Upgrade formio@1.83.0
+ - Upgrade formio-workers@1.14.7
+
+### Fixed
+ - FOR-2665: Ensure calculate value eval context
+ - FJS-911: Date/Time data in email is displaying two times
+
+## 6.9.35
+### Added
+ - Ability to add additional fields in template export
+ 
+### Fixed
+ - Creating a form with revisions during import will create an initial revision.
+
 ## 6.9.34
 ### Changed
  - Upgrade portal@7.0.8
