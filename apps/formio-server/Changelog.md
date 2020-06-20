@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.10.2-rc.1
+### Changed
+ - Upgrade portal@7.0.26
+ - Upgrade formio@1.87.0
+ - Upgrade mongodb@3.5.9, aws-sdk@2.701.0, helmet@3.23.1, moment@2.27.0, twilio@3.46.0
+
+### Fixed
+ - Removed default value for form controller.
+ - FOR-2689: Fixed performance issue by changing aggregate to findOne
+ - PDF 14 - Allow PDF Submission endpoint to be retrieved by 'Form Alias'
+
 ## 6.10.1
 ### Changed
  - Upgrade formiojs@4.10.3
