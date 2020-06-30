@@ -13,6 +13,7 @@ module.exports = (formio) => async (req, res, next) => {
     if (!license) {
       return res.status(400).send('License key not found');
     }
+    req.body.plan = license.data.plan;
   }
 
   // See if the license can be utilized by this project.
