@@ -20,10 +20,6 @@ module.exports = router => {
    *   This class is used to create the OAuth action.
    */
   class OAuthAction extends Action {
-    constructor(data, req, res) {
-      super(data, req, res);
-    }
-
     static info(req, res, next) {
       next(null, hook.alter('actionInfo', {
         name: 'oauth',

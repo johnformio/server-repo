@@ -59,10 +59,6 @@ module.exports = (router) => {
    *   This class is used to integrate into external SQL Databases.
    */
   class SQLConnector extends Action {
-    constructor(data, req, res) {
-      super(data, req, res);
-    }
-
     static info(req, res, next) {
       next(null, hook.alter('actionInfo', {
         name: 'sqlconnector',

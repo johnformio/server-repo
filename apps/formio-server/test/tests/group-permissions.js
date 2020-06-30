@@ -1,31 +1,25 @@
 /* eslint-env mocha */
 'use strict';
 
-var request = require('supertest');
-var assert = require('assert');
-var _ = require('lodash');
-var Q = require('q');
-var async = require('async');
-var chance = new (require('chance'))();
-var util = require('formio/src/util/util');
-var async = require('async');
-var docker = process.env.DOCKER;
-var customer = process.env.CUSTOMER;
+const request = require('supertest');
+const assert = require('assert');
+const async = require('async');
+const chance = new (require('chance'))();
 
-module.exports = function(app, template, hook) {
-  var deleteForms = function(forms, next) {
-    async.each(forms, function(item, cb) {
+module.exports = (app, template, hook) => {
+  const deleteForms = (forms, next) => {
+    async.each(forms, (item, cb) => {
       request(app)
-        .delete(hook.alter('url', '/form', template) + '/' + item._id)
+        .delete(`${hook.alter('url', '/form', template)}/${item._id}`)
         .set('x-jwt-token', template.users.admin.token)
-        .end(function(err, res) {
+        .end((err, res) => {
           if (err) {
             return cb(err);
           }
 
           cb();
         });
-    }, function(err) {
+    }, (err) => {
       if (err) {
         return next(err);
       }
@@ -34,19 +28,19 @@ module.exports = function(app, template, hook) {
     });
   };
 
-  var deleteSubmissions = function(submissions, next) {
-    async.each(submissions, function(item, cb) {
+  const deleteSubmissions = (submissions, next) => {
+    async.each(submissions, (item, cb) => {
       request(app)
-        .delete(hook.alter('url', '/form', template) + '/' + item.form + '/submission/' + item._id)
+        .delete(`${hook.alter('url', '/form', template)}/${item.form}/submission/${item._id}`)
         .set('x-jwt-token', template.users.admin.token)
-        .end(function(err, res) {
+        .end((err, res) => {
           if (err) {
             return cb(err);
           }
 
           cb();
         });
-    }, function(err) {
+    }, (err) => {
       if (err) {
         return next(err);
       }
@@ -55,48 +49,48 @@ module.exports = function(app, template, hook) {
     });
   };
 
-  var userHasGroupRole = function(user, role, done) {
+  const userHasGroupRole = (user, role, done) => {
     // Check that the user had the role added to their user obj.
     request(app)
-      .get('/project/' + template.project._id + '/form/' + user.form + '/submission/' + user._id)
+      .get(`/project/${template.project._id}/form/${user.form}/submission/${user._id}`)
       .set('x-jwt-token', user.token)
       .expect('Content-Type', /json/)
       .expect(200)
-      .end(function(err, res) {
+      .end((err, res) => {
         if (err) {
           return done(err);
         }
 
-        var response = res.body;
-        assert(response.roles.indexOf(role) !== -1);
+        const response = res.body;
+        assert(response.roles.includes(role));
 
         done();
       });
   };
 
-  describe('Group Permissions', function() {
-    describe('Group Assignment Action', function() {
-      var form = {
-        input: null
+  describe('Group Permissions', () => {
+    describe('Group Assignment Action', () => {
+      const form = {
+        input: null,
       };
-      var resource = {
+      const resource = {
         group: null,
-        groupUser: null
+        groupUser: null,
       };
-      var action = {
+      const action = {
         groupAssignment: null,
-        selfAssignment: null
+        selfAssignment: null,
       };
-      var submissions = [];
-      var group = {
+      let submissions = [];
+      const group = {
         read: null,
         write: null,
         admin: null,
-        none: null
+        none: null,
       };
 
-      describe('Bootstrap', function() {
-        it('Create the input form', function(done) {
+      describe('Bootstrap', () => {
+        it('Create the input form', (done) => {
           form.input = {
             title: 'form',
             name: chance.word(),
@@ -107,9 +101,9 @@ module.exports = function(app, template, hook) {
               {
                 type: 'create_all',
                 roles: [
-                  template.roles.authenticated._id
-                ]
-              }
+                  template.roles.authenticated._id,
+                ],
+              },
             ],
             components: [
               {
@@ -119,7 +113,7 @@ module.exports = function(app, template, hook) {
                   pattern: '',
                   maxLength: '',
                   minLength: '',
-                  required: false
+                  required: false,
                 },
                 defaultValue: '',
                 multiple: false,
@@ -130,7 +124,7 @@ module.exports = function(app, template, hook) {
                 label: 'foo',
                 inputMask: '',
                 inputType: 'text',
-                input: true
+                input: true,
               },
               {
                 type: 'textfield',
@@ -139,7 +133,7 @@ module.exports = function(app, template, hook) {
                   pattern: '',
                   maxLength: '',
                   minLength: '',
-                  required: false
+                  required: false,
                 },
                 defaultValue: '',
                 multiple: false,
@@ -150,23 +144,23 @@ module.exports = function(app, template, hook) {
                 label: 'group',
                 inputMask: '',
                 inputType: 'text',
-                input: true
-              }
-            ]
+                input: true,
+              },
+            ],
           };
 
           request(app)
-            .post('/project/' + template.project._id + '/form')
+            .post(`/project/${template.project._id}/form`)
             .set('x-jwt-token', template.users.admin.token)
             .send(form.input)
             .expect('Content-Type', /json/)
             .expect(201)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
               assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
               assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
@@ -187,29 +181,29 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('Create the self resource assignment action', function(done) {
+        it('Create the self resource assignment action', (done) => {
           action.selfAssignment = {
             title: 'Self Assignment',
             name: 'group',
             handler: ['after'],
-            method: ['create'],
+            method: ['create', 'update', 'delete'],
             settings: {
-              group: 'group'
-            }
+              group: 'group',
+            },
           };
 
           request(app)
-            .post('/project/' + template.project._id + '/form/' + form.input._id + '/action')
+            .post(`/project/${template.project._id}/form/${form.input._id}/action`)
             .set('x-jwt-token', template.users.admin.token)
             .send(action.selfAssignment)
             .expect('Content-Type', /json/)
             .expect(201)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
               assert.equal(response.title, action.selfAssignment.title);
               assert.equal(response.name, action.selfAssignment.name);
@@ -226,7 +220,7 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('Create the group resource', function(done) {
+        it('Create the group resource', (done) => {
           resource.group = {
             title: 'groupResource',
             name: chance.word(),
@@ -242,7 +236,7 @@ module.exports = function(app, template, hook) {
                   pattern: '',
                   maxLength: '',
                   minLength: '',
-                  required: false
+                  required: false,
                 },
                 defaultValue: '',
                 multiple: false,
@@ -253,140 +247,140 @@ module.exports = function(app, template, hook) {
                 label: 'name',
                 inputMask: '',
                 inputType: 'text',
-                input: true
+                input: true,
               },
               {
-                "defaultPermission": "read",
-                "conditional": {
-                  "eq": "",
-                  "when": null,
-                  "show": ""
+                defaultPermission: 'read',
+                conditional: {
+                  eq: '',
+                  when: null,
+                  show: '',
                 },
-                "tags": [],
-                "type": "select",
-                "validate": {
-                  "required": false
+                tags: [],
+                type: 'select',
+                validate: {
+                  required: false,
                 },
-                "clearOnHide": true,
-                "hidden": false,
-                "persistent": true,
-                "unique": false,
-                "protected": false,
-                "multiple": false,
-                "template": "<span>{{ item.label }}</span>",
-                "authenticate": false,
-                "filter": "",
-                "refreshOn": "",
-                "defaultValue": "",
-                "valueProperty": "",
-                "dataSrc": "url",
-                "data": {
-                  "project": "",
-                  "custom": "",
-                  "resource": "",
-                  "url": "http://myfake.com/nothing",
-                  "json": "",
-                  "values": []
+                clearOnHide: true,
+                hidden: false,
+                persistent: true,
+                unique: false,
+                protected: false,
+                multiple: false,
+                template: '<span>{{ item.label }}</span>',
+                authenticate: false,
+                filter: '',
+                refreshOn: '',
+                defaultValue: '',
+                valueProperty: '',
+                dataSrc: 'url',
+                data: {
+                  project: '',
+                  custom: '',
+                  resource: '',
+                  url: 'http://myfake.com/nothing',
+                  json: '',
+                  values: [],
                 },
-                "placeholder": "",
-                "key": "readPerm",
-                "label": "Read Field",
-                "tableView": true,
-                "input": true
+                placeholder: '',
+                key: 'readPerm',
+                label: 'Read Field',
+                tableView: true,
+                input: true,
               },
               {
-                "defaultPermission": "write",
-                "conditional": {
-                  "eq": "",
-                  "when": null,
-                  "show": ""
+                defaultPermission: 'write',
+                conditional: {
+                  eq: '',
+                  when: null,
+                  show: '',
                 },
-                "tags": [],
-                "type": "select",
-                "validate": {
-                  "required": false
+                tags: [],
+                type: 'select',
+                validate: {
+                  required: false,
                 },
-                "clearOnHide": true,
-                "hidden": false,
-                "persistent": true,
-                "unique": false,
-                "protected": false,
-                "multiple": false,
-                "template": "<span>{{ item.label }}</span>",
-                "authenticate": false,
-                "filter": "",
-                "refreshOn": "",
-                "defaultValue": "",
-                "valueProperty": "",
-                "dataSrc": "url",
-                "data": {
-                  "project": "",
-                  "custom": "",
-                  "resource": "",
-                  "url": "http://myfake.com/nothing",
-                  "json": "",
-                  "values": []
+                clearOnHide: true,
+                hidden: false,
+                persistent: true,
+                unique: false,
+                protected: false,
+                multiple: false,
+                template: '<span>{{ item.label }}</span>',
+                authenticate: false,
+                filter: '',
+                refreshOn: '',
+                defaultValue: '',
+                valueProperty: '',
+                dataSrc: 'url',
+                data: {
+                  project: '',
+                  custom: '',
+                  resource: '',
+                  url: 'http://myfake.com/nothing',
+                  json: '',
+                  values: [],
                 },
-                "placeholder": "",
-                "key": "writePerm",
-                "label": "Write Field",
-                "tableView": true,
-                "input": true
+                placeholder: '',
+                key: 'writePerm',
+                label: 'Write Field',
+                tableView: true,
+                input: true,
               },
               {
-                "defaultPermission": "admin",
-                "conditional": {
-                  "eq": "",
-                  "when": null,
-                  "show": ""
+                defaultPermission: 'admin',
+                conditional: {
+                  eq: '',
+                  when: null,
+                  show: '',
                 },
-                "tags": [],
-                "type": "select",
-                "validate": {
-                  "required": false
+                tags: [],
+                type: 'select',
+                validate: {
+                  required: false,
                 },
-                "clearOnHide": true,
-                "hidden": false,
-                "persistent": true,
-                "unique": false,
-                "protected": false,
-                "multiple": false,
-                "template": "<span>{{ item.label }}</span>",
-                "authenticate": false,
-                "filter": "",
-                "refreshOn": "",
-                "defaultValue": "",
-                "valueProperty": "",
-                "dataSrc": "url",
-                "data": {
-                  "project": "",
-                  "custom": "",
-                  "resource": "",
-                  "url": "http://myfake.com/nothing",
-                  "json": "",
-                  "values": []
+                clearOnHide: true,
+                hidden: false,
+                persistent: true,
+                unique: false,
+                protected: false,
+                multiple: false,
+                template: '<span>{{ item.label }}</span>',
+                authenticate: false,
+                filter: '',
+                refreshOn: '',
+                defaultValue: '',
+                valueProperty: '',
+                dataSrc: 'url',
+                data: {
+                  project: '',
+                  custom: '',
+                  resource: '',
+                  url: 'http://myfake.com/nothing',
+                  json: '',
+                  values: [],
                 },
-                "placeholder": "",
-                "key": "adminPerm",
-                "label": "Admin Field",
-                "tableView": true,
-                "input": true
+                placeholder: '',
+                key: 'adminPerm',
+                label: 'Admin Field',
+                tableView: true,
+                input: true,
               }
-            ]
+            ],
           };
 
           request(app)
-            .post('/project/' + template.project._id + '/form')
+            .post(`/project/${template.project._id}/form`)
             .set('x-jwt-token', template.users.admin.token)
             .send(resource.group)
             .expect('Content-Type', /json/)
             .expect(201)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
               assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
               assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
@@ -406,7 +400,7 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('Create the group user resource', function(done) {
+        it('Create the groupUser resource', (done) => {
           resource.groupUser = {
             title: 'groupUser',
             name: chance.word(),
@@ -417,9 +411,9 @@ module.exports = function(app, template, hook) {
               {
                 type: 'create_own',
                 roles: [
-                  template.roles.authenticated._id
-                ]
-              }
+                  template.roles.authenticated._id,
+                ],
+              },
             ],
             components: [
               {
@@ -438,7 +432,7 @@ module.exports = function(app, template, hook) {
                 protected: false,
                 persistent: true,
                 validate: {
-                  required: false
+                  required: false,
                 },
                 defaultPermission: '',
                 type: 'resource',
@@ -446,8 +440,8 @@ module.exports = function(app, template, hook) {
                 conditional: {
                   show: '',
                   when: null,
-                  eq: ''
-                }
+                  eq: '',
+                },
               }, {
                 input: true,
                 tableView: true,
@@ -464,7 +458,7 @@ module.exports = function(app, template, hook) {
                 protected: false,
                 persistent: true,
                 validate: {
-                  required: false
+                  required: false,
                 },
                 defaultPermission: '',
                 type: 'resource',
@@ -472,24 +466,24 @@ module.exports = function(app, template, hook) {
                 conditional: {
                   show: '',
                   when: null,
-                  eq: ''
-                }
-              }
-            ]
+                  eq: '',
+                },
+              },
+            ],
           };
 
           request(app)
-            .post('/project/' + template.project._id + '/form')
+            .post(`/project/${template.project._id}/form`)
             .set('x-jwt-token', template.users.admin.token)
             .send(resource.groupUser)
             .expect('Content-Type', /json/)
             .expect(201)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
               assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
               assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
@@ -509,30 +503,30 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('Create the group resource assignment action', function(done) {
+        it('Create the group resource assignment action', (done) => {
           action.groupAssignment = {
             title: 'Group Assignment',
             name: 'group',
             handler: ['after'],
-            method: ['create'],
+            method: ['create', 'update', 'delete'],
             settings: {
               group: 'group',
-              user: 'user'
-            }
+              user: 'user',
+            },
           };
 
           request(app)
-            .post('/project/' + template.project._id + '/form/' + resource.groupUser._id + '/action')
+            .post(`/project/${template.project._id}/form/${resource.groupUser._id}/action`)
             .set('x-jwt-token', template.users.admin.token)
             .send(action.groupAssignment)
             .expect('Content-Type', /json/)
             .expect(201)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
               assert.equal(response.title, action.groupAssignment.title);
               assert.equal(response.name, action.groupAssignment.name);
@@ -549,26 +543,26 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('Create a group w/ read access permissions', function(done) {
+        it('Create a group w/ read access permissions', (done) => {
           group.read = {
             data: {
               name: 'Group1',
-              readPerm: template.users.user1
-            }
+              readPerm: template.users.user1,
+            },
           };
 
           request(app)
-            .post('/project/' + template.project._id + '/form/' + resource.group._id + '/submission')
+            .post(`/project/${template.project._id}/form/${resource.group._id}/submission`)
             .set('x-jwt-token', template.users.admin.token)
             .send(group.read)
             .expect('Content-Type', /json/)
             .expect(201)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               group.read = response;
 
               // Store the JWT for future API calls.
@@ -578,26 +572,26 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('Create a group w/ write access permissions', function(done) {
+        it('Create a group w/ write access permissions', (done) => {
           group.write = {
             data: {
               name: 'Group2',
-              writePerm: template.users.user1
-            }
+              writePerm: template.users.user1,
+            },
           };
 
           request(app)
-            .post('/project/' + template.project._id + '/form/' + resource.group._id + '/submission')
+            .post(`/project/${template.project._id}/form/${resource.group._id}/submission`)
             .set('x-jwt-token', template.users.admin.token)
             .send(group.write)
             .expect('Content-Type', /json/)
             .expect(201)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               group.write = response;
 
               // Store the JWT for future API calls.
@@ -607,26 +601,26 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('Create a group w/ admin access permissions', function(done) {
+        it('Create a group w/ admin access permissions', (done) => {
           group.admin = {
             data: {
               name: 'Group3',
-              adminPerm: template.users.user1
-            }
+              adminPerm: template.users.user1,
+            },
           };
 
           request(app)
-            .post('/project/' + template.project._id + '/form/' + resource.group._id + '/submission')
+            .post(`/project/${template.project._id}/form/${resource.group._id}/submission`)
             .set('x-jwt-token', template.users.admin.token)
             .send(group.admin)
             .expect('Content-Type', /json/)
             .expect(201)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               group.admin = response;
 
               // Store the JWT for future API calls.
@@ -636,25 +630,25 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('Create a group w/ no access permissions', function(done) {
+        it('Create a group w/ no access permissions', (done) => {
           group.none = {
             data: {
-              name: 'Group4'
-            }
+              name: 'Group4',
+            },
           };
 
           request(app)
-            .post('/project/' + template.project._id + '/form/' + resource.group._id + '/submission')
+            .post(`/project/${template.project._id}/form/${resource.group._id}/submission`)
             .set('x-jwt-token', template.users.admin.token)
             .send(group.none)
             .expect('Content-Type', /json/)
             .expect(201)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               group.none = response;
 
               // Store the JWT for future API calls.
@@ -666,203 +660,207 @@ module.exports = function(app, template, hook) {
       });
 
       // TODO: Add tests to verify that only valid groups can be assigned.
-      describe('Group Resource Assignment', function() {
-        before(function() {
+      describe('Group Resource Assignment', () => {
+        before(() => {
           submissions = [];
         });
 
-        it('A submission to the group user proxy will not assign group access with no resource permissions', function(done) {
+        it('A submission to the group user proxy will not assign group access with no resource permissions', (done) => {
           request(app)
-            .post('/project/' + template.project._id + '/form/' + resource.groupUser._id + '/submission')
+            .post(`/project/${template.project._id}/form/${resource.groupUser._id}/submission`)
             .set('x-jwt-token', template.users.user1.token)
             .send({
               data: {
                 group: group.none._id,
-                user: template.users.user1
-              }
+                user: template.users.user1,
+              },
             })
             .expect('Content-Type', /text/)
             .expect(401)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
               assert.deepEqual(res.body, {});
               assert.equal(res.text, 'Unauthorized');
+
               done()
             });
         });
 
-        it('A submission to the group user proxy will not assign group access with read resource permissions', function(done) {
+        it('A submission to the group user proxy will not assign group access with read resource permissions', (done) => {
           request(app)
-            .post('/project/' + template.project._id + '/form/' + resource.groupUser._id + '/submission')
+            .post(`/project/${template.project._id}/form/${resource.groupUser._id}/submission`)
             .set('x-jwt-token', template.users.user1.token)
             .send({
               data: {
                 group: group.read._id,
-                user: template.users.user1
-              }
+                user: template.users.user1,
+              },
             })
             .expect('Content-Type', /text/)
             .expect(401)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
               assert.deepEqual(res.body, {});
               assert.equal(res.text, 'Unauthorized');
+
               done()
             });
         });
 
-        it('A submission to the group user proxy will assign group access with write resource permissions', function(done) {
+        it('A submission to the group user proxy will assign group access with write resource permissions', (done) => {
           request(app)
-            .post('/project/' + template.project._id + '/form/' + resource.groupUser._id + '/submission')
+            .post(`/project/${template.project._id}/form/${resource.groupUser._id}/submission`)
             .set('x-jwt-token', template.users.user1.token)
             .send({
               data: {
                 group: group.write._id,
-                user: template.users.user1
-              }
+                user: template.users.user1,
+              },
             })
             .expect('Content-Type', /json/)
             .expect(201)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               submissions.push(response);
               userHasGroupRole(template.users.user1, group.write._id, done);
             });
         });
 
-        it('A submission to the group user proxy will assign group access with admin resource permissions', function(done) {
+        it('A submission to the group user proxy will assign group access with admin resource permissions', (done) => {
           request(app)
-            .post('/project/' + template.project._id + '/form/' + resource.groupUser._id + '/submission')
+            .post(`/project/${template.project._id}/form/${resource.groupUser._id}/submission`)
             .set('x-jwt-token', template.users.user1.token)
             .send({
               data: {
                 group: group.admin._id,
-                user: template.users.user1
-              }
+                user: template.users.user1,
+              },
             })
             .expect('Content-Type', /json/)
             .expect(201)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               submissions.push(response);
               userHasGroupRole(template.users.user1, group.admin._id, done);
             });
         });
 
-        after(function(done) {
-          deleteForms([resource.groupUser], function() {
+        after((done) => {
+          deleteForms([resource.groupUser], () => {
             deleteSubmissions(submissions, done);
           });
         });
       });
 
       // TODO: Add tests to verify that only valid groups can be assigned.
-      describe('Self Assignment', function() {
-        before(function() {
+      describe('Self Assignment', () => {
+        before(() => {
           submissions = [];
         });
 
-        it('A submission to the form will not assign group access with no resource permissions', function(done) {
+        it('A submission to the form will not assign group access with no resource permissions', (done) => {
           request(app)
-            .post('/project/' + template.project._id + '/form/' + form.input._id + '/submission')
+            .post(`/project/${template.project._id}/form/${form.input._id}/submission`)
             .set('x-jwt-token', template.users.user1.token)
             .send({
               data: {
                 foo: chance.word(),
-                group: group.none._id
-              }
+                group: group.none._id,
+              },
             })
             .expect('Content-Type', /text/)
             .expect(401)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
               assert.deepEqual(res.body, {});
               assert.equal(res.text, 'Unauthorized');
+
               done()
             });
         });
 
-        it('A submission to the form will not assign group access with read resource permissions', function(done) {
+        it('A submission to the form will not assign group access with read resource permissions', (done) => {
           request(app)
-            .post('/project/' + template.project._id + '/form/' + form.input._id + '/submission')
+            .post(`/project/${template.project._id}/form/${form.input._id}/submission`)
             .set('x-jwt-token', template.users.user1.token)
             .send({
               data: {
                 foo: chance.word(),
-                group: group.read._id
-              }
+                group: group.read._id,
+              },
             })
             .expect('Content-Type', /text/)
             .expect(401)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
               assert.deepEqual(res.body, {});
               assert.equal(res.text, 'Unauthorized');
+
               done()
             });
         });
 
-        it('A submission to the form will assign group access with write resource permissions', function(done) {
+        it('A submission to the form will assign group access with write resource permissions', (done) => {
           request(app)
-            .post('/project/' + template.project._id + '/form/' + form.input._id + '/submission')
+            .post(`/project/${template.project._id}/form/${form.input._id}/submission`)
             .set('x-jwt-token', template.users.user1.token)
             .send({
               data: {
                 foo: chance.word(),
-                group: group.write._id
-              }
+                group: group.write._id,
+              },
             })
             .expect('Content-Type', /json/)
             .expect(201)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               submissions.push(response);
               userHasGroupRole(template.users.user1, group.write._id, done);
             });
         });
 
-        it('A submission to the form will assign group access with write resource permissions', function(done) {
+        it('A submission to the form will assign group access with write resource permissions', (done) => {
           request(app)
-            .post('/project/' + template.project._id + '/form/' + form.input._id + '/submission')
+            .post(`/project/${template.project._id}/form/${form.input._id}/submission`)
             .set('x-jwt-token', template.users.user1.token)
             .send({
               data: {
                 foo: chance.word(),
-                group: group.admin._id
-              }
+                group: group.admin._id,
+              },
             })
             .expect('Content-Type', /json/)
             .expect(201)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               submissions.push(response);
               userHasGroupRole(template.users.user1, group.admin._id, done);
             });
@@ -870,16 +868,16 @@ module.exports = function(app, template, hook) {
       });
     });
 
-    describe('Submissions', function() {
-      var form = null;
-      var assignForm = null;
-      var assignAction = null;
-      var groupResource = null;
-      var group = null;
-      var submissions = [];
+    describe('Submissions', () => {
+      let form = null;
+      let assignForm = null;
+      let assignAction = null;
+      let groupResource = null;
+      let group = null;
+      let submissions = [];
 
-      describe('Bootstrap', function() {
-        it('Create the form', function(done) {
+      describe('Bootstrap', () => {
+        it('Create the form', (done) => {
           form = {
             title: 'form',
             name: chance.word(),
@@ -1029,17 +1027,17 @@ module.exports = function(app, template, hook) {
           };
 
           request(app)
-            .post('/project/' + template.project._id + '/form')
+            .post(`/project/${template.project._id}/form`)
             .set('x-jwt-token', template.users.admin.token)
             .send(form)
             .expect('Content-Type', /json/)
             .expect(201)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
               assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
               assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
@@ -1060,7 +1058,7 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('Create the group resource', function(done) {
+        it('Create the group resource', (done) => {
           groupResource = {
             title: 'groupResource',
             name: chance.word(),
@@ -1093,17 +1091,17 @@ module.exports = function(app, template, hook) {
           };
 
           request(app)
-            .post('/project/' + template.project._id + '/form')
+            .post(`/project/${template.project._id}/form`)
             .set('x-jwt-token', template.users.admin.token)
             .send(groupResource)
             .expect('Content-Type', /json/)
             .expect(201)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
               assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
               assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
@@ -1123,7 +1121,7 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('Create the group', function(done) {
+        it('Create the group', (done) => {
           group = {
             data: {
               name: chance.word()
@@ -1131,17 +1129,17 @@ module.exports = function(app, template, hook) {
           };
 
           request(app)
-            .post('/project/' + template.project._id + '/form/' + groupResource._id + '/submission')
+            .post(`/project/${template.project._id}/form/${groupResource._id}/submission`)
             .set('x-jwt-token', template.users.admin.token)
             .send(group)
             .expect('Content-Type', /json/)
             .expect(201)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               group = response;
 
               // Store the JWT for future API calls.
@@ -1151,7 +1149,7 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('Create the group assignment form', function(done) {
+        it('Create the group assignment form', (done) => {
           assignForm = {
             title: 'assignForm',
             name: chance.word(),
@@ -1224,17 +1222,17 @@ module.exports = function(app, template, hook) {
           };
 
           request(app)
-            .post('/project/' + template.project._id + '/form')
+            .post(`/project/${template.project._id}/form`)
             .set('x-jwt-token', template.users.admin.token)
             .send(assignForm)
             .expect('Content-Type', /json/)
             .expect(201)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
               assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
               assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
@@ -1254,7 +1252,7 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('Create the group assignment action', function(done) {
+        it('Create the group assignment action', (done) => {
           assignAction = {
             title: 'Group Assignment',
             name: 'group',
@@ -1267,17 +1265,17 @@ module.exports = function(app, template, hook) {
           };
 
           request(app)
-            .post('/project/' + template.project._id + '/form/' + assignForm._id + '/action')
+            .post(`/project/${template.project._id}/form/${assignForm._id}/action`)
             .set('x-jwt-token', template.users.admin.token)
             .send(assignAction)
             .expect('Content-Type', /json/)
             .expect(201)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
               assert.equal(response.title, assignAction.title);
               assert.equal(response.name, assignAction.name);
@@ -1294,19 +1292,19 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('Assign the group to the user via submission', function(done) {
+        it('Assign the group to the user via submission', (done) => {
           request(app)
-            .post('/project/' + template.project._id + '/form/' + assignForm._id + '/submission')
+            .post(`/project/${template.project._id}/form/${assignForm._id}/submission`)
             .set('x-jwt-token', template.users.admin.token)
             .send({
               data: {
                 user: template.users.user1,
-                group: group
-              }
+                group: group,
+              },
             })
             .expect('Content-Type', /json/)
             .expect(201)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
@@ -1316,29 +1314,29 @@ module.exports = function(app, template, hook) {
         });
       });
 
-      describe('read access', function() {
-        before(function() {
+      describe('read access', () => {
+        before(() => {
           submissions = [];
         });
 
-        var submission;
-        it('Create a submission', function(done) {
+        let submission;
+        it('Create a submission', (done) => {
           request(app)
-            .post('/project/' + template.project._id + '/form/' + form._id + '/submission')
+            .post(`/project/${template.project._id}/form/${form._id}/submission`)
             .set('x-jwt-token', template.users.admin.token)
             .send({
               data: {
-                foo: chance.word()
-              }
+                foo: chance.word(),
+              },
             })
             .expect('Content-Type', /json/)
             .expect(201)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               submission = response;
               submissions.push(response);
 
@@ -1349,13 +1347,13 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user without group access, should not be able to read a submission', function(done) {
+        it('A user without group access, should not be able to read a submission', (done) => {
           request(app)
-            .get('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .get(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .expect('Content-Type', /text/)
             .expect(401)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
@@ -1370,12 +1368,12 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user without group access, should not be able to read a submission through the index', function(done) {
+        it('A user without group access, should not be able to read a submission through the index', (done) => {
           request(app)
-            .get('/project/' + template.project._id + '/form/' + form._id + '/submission')
+            .get(`/project/${template.project._id}/form/${form._id}/submission`)
             .set('x-jwt-token', template.users.user1.token)
             .expect(200)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
@@ -1390,18 +1388,18 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user without group access, should not be able to update a submission', function(done) {
+        it('A user without group access, should not be able to update a submission', (done) => {
           request(app)
-            .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .put(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .send({
               data: {
-                foo: chance.word()
-              }
+                foo: chance.word(),
+              },
             })
             .expect('Content-Type', /text/)
             .expect(401)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
@@ -1416,16 +1414,16 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user without group access, should not be able to change the owner of a submission', function(done) {
+        it('A user without group access, should not be able to change the owner of a submission', (done) => {
           request(app)
-            .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .put(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .send({
-              owner: template.users.user2._id
+              owner: template.users.user2._id,
             })
             .expect('Content-Type', /text/)
             .expect(401)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
@@ -1440,13 +1438,13 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user without group access, should not be able to delete a submission', function(done) {
+        it('A user without group access, should not be able to delete a submission', (done) => {
           request(app)
-            .delete('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .delete(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .expect('Content-Type', /text/)
             .expect(401)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
@@ -1461,25 +1459,25 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('An Administrative user can grant read access for the group', function(done) {
+        it('An Administrative user can grant read access for the group', (done) => {
           request(app)
-            .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .put(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.admin.token)
             .send({
               data: {
-                readPerm: group
-              }
+                readPerm: group,
+              },
             })
             .expect('Content-Type', /json/)
             .expect(200)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
-              var found = false;
-              response.access.forEach(function(permission) {
+              const response = res.body;
+              let found = false;
+              response.access.forEach((permission) => {
                 if (permission.type === 'read' && permission.resources.indexOf(group._id) !== -1) {
                   found = true;
                 }
@@ -1494,18 +1492,18 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user with group access, should be able to read a submission', function(done) {
+        it('A user with group access, should be able to read a submission', (done) => {
           request(app)
-            .get('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .get(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .expect('Content-Type', /json/)
             .expect(200)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               assert.equal(response.data.foo, submission.data.foo);
 
               // Store the JWT for future API calls.
@@ -1515,21 +1513,21 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user with group access, should be able to read a submission through the index', function(done) {
+        it('A user with group access, should be able to read a submission through the index', (done) => {
           request(app)
-            .get('/project/' + template.project._id + '/form/' + form._id + '/submission')
+            .get(`/project/${template.project._id}/form/${form._id}/submission`)
             .set('x-jwt-token', template.users.user1.token)
             //.expect('Content-Type', /json/)
             //.expect(200)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
-              var found = false;
+              const response = res.body;
+              let found = false;
               assert(response instanceof Array);
-              response.forEach(function(sub) {
+              response.forEach((sub) => {
                 if (sub._id === submission._id) {
                   found = true;
                 }
@@ -1543,18 +1541,18 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user with group access, should not be able to update a submission', function(done) {
+        it('A user with group access, should not be able to update a submission', (done) => {
           request(app)
-            .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .put(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .send({
               data: {
-                foo: chance.word()
-              }
+                foo: chance.word(),
+              },
             })
             .expect('Content-Type', /text/)
             .expect(401)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
@@ -1569,16 +1567,16 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user with group access, should not be able to change the owner of a submission', function(done) {
+        it('A user with group access, should not be able to change the owner of a submission', (done) => {
           request(app)
-            .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .put(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .send({
-              owner: template.users.user2._id
+              owner: template.users.user2._id,
             })
             .expect('Content-Type', /text/)
             .expect(401)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
@@ -1593,13 +1591,13 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user with group access, should not be able to delete a submission', function(done) {
+        it('A user with group access, should not be able to delete a submission', (done) => {
           request(app)
-            .delete('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .delete(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .expect('Content-Type', /text/)
             .expect(401)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
@@ -1614,34 +1612,34 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        after(function(done) {
+        after((done) => {
           deleteSubmissions(submissions, done);
         });
       });
 
-      describe('write access', function() {
-        before(function() {
+      describe('write access', () => {
+        before(() => {
           submissions = [];
         });
 
-        var submission;
-        it('Create a submission', function(done) {
+        let submission;
+        it('Create a submission', (done) => {
           request(app)
-            .post('/project/' + template.project._id + '/form/' + form._id + '/submission')
+            .post(`/project/${template.project._id}/form/${form._id}/submission`)
             .set('x-jwt-token', template.users.admin.token)
             .send({
               data: {
-                foo: chance.word()
-              }
+                foo: chance.word(),
+              },
             })
             .expect('Content-Type', /json/)
             .expect(201)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               submission = response;
               submissions.push(response);
 
@@ -1652,13 +1650,13 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user without group access, should not be able to read a submission', function(done) {
+        it('A user without group access, should not be able to read a submission', (done) => {
           request(app)
-            .get('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .get(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .expect('Content-Type', /text/)
             .expect(401)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
@@ -1673,12 +1671,12 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user without group access, should not be able to read a submission through the index', function(done) {
+        it('A user without group access, should not be able to read a submission through the index', (done) => {
           request(app)
-            .get('/project/' + template.project._id + '/form/' + form._id + '/submission')
+            .get(`/project/${template.project._id}/form/${form._id}/submission`)
             .set('x-jwt-token', template.users.user1.token)
             .expect(200)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
@@ -1693,18 +1691,18 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user without group access, should not be able to update a submission', function(done) {
+        it('A user without group access, should not be able to update a submission', (done) => {
           request(app)
-            .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .put(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .send({
               data: {
-                foo: chance.word()
-              }
+                foo: chance.word(),
+              },
             })
             .expect('Content-Type', /text/)
             .expect(401)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
@@ -1719,16 +1717,16 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user without group access, should not be able to change the owner of a submission', function(done) {
+        it('A user without group access, should not be able to change the owner of a submission', (done) => {
           request(app)
-            .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .put(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .send({
-              owner: template.users.user2._id
+              owner: template.users.user2._id,
             })
             .expect('Content-Type', /text/)
             .expect(401)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
@@ -1743,13 +1741,13 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user without group access, should not be able to delete a submission', function(done) {
+        it('A user without group access, should not be able to delete a submission', (done) => {
           request(app)
-            .delete('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .delete(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .expect('Content-Type', /text/)
             .expect(401)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
@@ -1764,25 +1762,25 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('An Administrative user can grant write access for the group', function(done) {
+        it('An Administrative user can grant write access for the group', (done) => {
           request(app)
-            .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .put(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.admin.token)
             .send({
               data: {
-                writePerm: group
-              }
+                writePerm: group,
+              },
             })
             .expect('Content-Type', /json/)
             .expect(200)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
-              var found = false;
-              response.access.forEach(function(permission) {
+              const response = res.body;
+              let found = false;
+              response.access.forEach((permission) => {
                 if (permission.type === 'write' && permission.resources.indexOf(group._id) !== -1) {
                   found = true;
                 }
@@ -1797,18 +1795,18 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user with group access, should be able to read a submission', function(done) {
+        it('A user with group access, should be able to read a submission', (done) => {
           request(app)
-            .get('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .get(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .expect('Content-Type', /json/)
             .expect(200)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               assert.equal(response.data.foo, submission.data.foo);
 
               // Store the JWT for future API calls.
@@ -1818,21 +1816,21 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user with group access, should be able to read a submission through the index', function(done) {
+        it('A user with group access, should be able to read a submission through the index', (done) => {
           request(app)
-            .get('/project/' + template.project._id + '/form/' + form._id + '/submission')
+            .get(`/project/${template.project._id}/form/${form._id}/submission`)
             .set('x-jwt-token', template.users.user1.token)
             .expect('Content-Type', /json/)
             .expect(200)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
-              var found = false;
+              const response = res.body;
+              let found = false;
               assert(response instanceof Array);
-              response.forEach(function(sub) {
+              response.forEach((sub) => {
                 if (sub._id === submission._id) {
                   found = true;
                 }
@@ -1846,21 +1844,21 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user with group access, should be able to update a submission', function(done) {
+        it('A user with group access, should be able to update a submission', (done) => {
           submission.data.foo = chance.word();
 
           request(app)
-            .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .put(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .send(submission)
             .expect('Content-Type', /json/)
             .expect(200)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              let response = res.body;
               assert.equal(response.data.foo, submission.data.foo);
               response = submission;
 
@@ -1871,20 +1869,20 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user with group access, should not be able to change the owner of a submission', function(done) {
+        it('A user with group access, should not be able to change the owner of a submission', (done) => {
           submission.owner = template.users.user2._id;
           request(app)
-            .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .put(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .send(submission)
             .expect('Content-Type', /json/)
             .expect(200)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               assert.notEqual(response.owner, template.users.user1._id);
               assert.notEqual(response.owner, template.users.user2._id);
               submission = response;
@@ -1896,13 +1894,13 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user with group access, should not be able to delete a submission', function(done) {
+        it('A user with group access, should not be able to delete a submission', (done) => {
           request(app)
-            .delete('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .delete(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .expect('Content-Type', /text/)
             .expect(401)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
@@ -1917,34 +1915,34 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        after(function(done) {
+        after((done) => {
           deleteSubmissions(submissions, done);
         });
       });
 
-      describe('admin access', function() {
-        before(function() {
+      describe('admin access', () => {
+        before(() => {
           submissions = [];
         });
 
-        var submission;
-        it('Create a submission', function(done) {
+        let submission;
+        it('Create a submission', (done) => {
           request(app)
-            .post('/project/' + template.project._id + '/form/' + form._id + '/submission')
+            .post(`/project/${template.project._id}/form/${form._id}/submission`)
             .set('x-jwt-token', template.users.admin.token)
             .send({
               data: {
-                foo: chance.word()
-              }
+                foo: chance.word(),
+              },
             })
             .expect('Content-Type', /json/)
             .expect(201)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               submission = response;
               submissions.push(response);
 
@@ -1955,13 +1953,13 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user without group access, should not be able to read a submission', function(done) {
+        it('A user without group access, should not be able to read a submission', (done) => {
           request(app)
-            .get('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .get(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .expect('Content-Type', /text/)
             .expect(401)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
@@ -1976,12 +1974,12 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user without group access, should not be able to read a submission through the index', function(done) {
+        it('A user without group access, should not be able to read a submission through the index', (done) => {
           request(app)
-            .get('/project/' + template.project._id + '/form/' + form._id + '/submission')
+            .get(`/project/${template.project._id}/form/${form._id}/submission`)
             .set('x-jwt-token', template.users.user1.token)
             .expect(200)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
@@ -1996,18 +1994,18 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user without group access, should not be able to update a submission', function(done) {
+        it('A user without group access, should not be able to update a submission', (done) => {
           request(app)
-            .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .put(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .send({
               data: {
-                foo: chance.word()
-              }
+                foo: chance.word(),
+              },
             })
             .expect('Content-Type', /text/)
             .expect(401)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
@@ -2022,16 +2020,16 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user without group access, should not be able to change the owner of a submission', function(done) {
+        it('A user without group access, should not be able to change the owner of a submission', (done) => {
           request(app)
-            .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .put(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .send({
-              owner: template.users.user2._id
+              owner: template.users.user2._id,
             })
             .expect('Content-Type', /text/)
             .expect(401)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
@@ -2046,13 +2044,13 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user without group access, should not be able to delete a submission', function(done) {
+        it('A user without group access, should not be able to delete a submission', (done) => {
           request(app)
-            .delete('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .delete(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .expect('Content-Type', /text/)
             .expect(401)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
@@ -2067,25 +2065,25 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('An Administrative user can grant admin access for the group', function(done) {
+        it('An Administrative user can grant admin access for the group', (done) => {
           request(app)
-            .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .put(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.admin.token)
             .send({
               data: {
-                adminPerm: group
-              }
+                adminPerm: group,
+              },
             })
             .expect('Content-Type', /json/)
             .expect(200)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
-              var found = false;
-              response.access.forEach(function(permission) {
+              const response = res.body;
+              let found = false;
+              response.access.forEach((permission) => {
                 if (permission.type === 'admin' && permission.resources.indexOf(group._id) !== -1) {
                   found = true;
                 }
@@ -2100,18 +2098,18 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user with group access, should be able to read a submission', function(done) {
+        it('A user with group access, should be able to read a submission', (done) => {
           request(app)
-            .get('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .get(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .expect('Content-Type', /json/)
             .expect(200)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               assert.equal(response.data.foo, submission.data.foo);
 
               // Store the JWT for future API calls.
@@ -2121,21 +2119,21 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user with group access, should be able to read a submission through the index', function(done) {
+        it('A user with group access, should be able to read a submission through the index', (done) => {
           request(app)
-            .get('/project/' + template.project._id + '/form/' + form._id + '/submission')
+            .get(`/project/${template.project._id}/form/${form._id}/submission`)
             .set('x-jwt-token', template.users.user1.token)
             .expect('Content-Type', /json/)
             .expect(200)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
-              var found = false;
+              const response = res.body;
+              let found = false;
               assert(response instanceof Array);
-              response.forEach(function(sub) {
+              response.forEach((sub) => {
                 if (sub._id === submission._id) {
                   found = true;
                 }
@@ -2149,21 +2147,21 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user with group access, should be able to update a submission', function(done) {
+        it('A user with group access, should be able to update a submission', (done) => {
           submission.data.foo = chance.word();
 
           request(app)
-            .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .put(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .send(submission)
             .expect('Content-Type', /json/)
             .expect(200)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               assert.equal(response.data.foo, submission.data.foo);
               submission = response;
 
@@ -2174,20 +2172,20 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user with group access, should be able to change the owner of a submission', function(done) {
+        it('A user with group access, should be able to change the owner of a submission', (done) => {
           submission.owner = template.users.user2._id;
           request(app)
-            .put('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .put(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .send(submission)
             .expect('Content-Type', /json/)
             .expect(200)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               assert.equal(response.owner, template.users.user2._id);
               submission = response;
 
@@ -2198,18 +2196,18 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        it('A user with group access, should be able to delete a submission', function(done) {
+        it('A user with group access, should be able to delete a submission', (done) => {
           request(app)
-            .delete('/project/' + template.project._id + '/form/' + form._id + '/submission/' + submission._id)
+            .delete(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
             .set('x-jwt-token', template.users.user1.token)
             .expect('Content-Type', /json/)
             .expect(200)
-            .end(function(err, res) {
+            .end((err, res) => {
               if (err) {
                 return done(err);
               }
 
-              var response = res.body;
+              const response = res.body;
               assert.deepEqual(response, {});
 
               // Store the JWT for future API calls.
@@ -2219,7 +2217,7 @@ module.exports = function(app, template, hook) {
             });
         });
 
-        after(function(done) {
+        after((done) => {
           deleteSubmissions(submissions, done);
         });
       });
