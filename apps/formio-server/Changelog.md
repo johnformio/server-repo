@@ -19,6 +19,48 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Office365 Actions
  - Facebook, LinkedIn, Twitter, Dropbox OAuth providers
 
+## 6.10.2-rc.7
+### Changed
+ - Upgrade portal@7.0.33
+
+## 6.10.2-rc.6
+### Changed
+ - Upgrade portal@7.0.32
+
+## 6.10.2-rc.5
+### Changed
+ - Upgrade portal@7.0.31
+
+## 6.10.2-rc.4
+### Changed
+ - Upgrade portal@7.0.30
+
+## 6.10.2-rc.3
+### Changed
+ - Upgrade portal@7.0.29
+
+## 6.10.2-rc.2
+### Changed
+ - Upgrade formiojs@4.10.5-rc.4
+ - Upgrade portal@7.0.28
+
+## 6.10.2-rc.1
+### Changed
+ - Upgrade formiojs@4.10.5-rc.3
+ - Upgrade portal@7.0.27
+
+## 6.10.1-rc.6
+### Changed
+ - Upgrade formiojs@4.10.3
+ - Upgrade portal@7.0.26
+ - Upgrade formio@1.87.0
+ - Upgrade mongodb@3.5.9, aws-sdk@2.701.0, helmet@3.23.1, moment@2.27.0, twilio@3.46.0
+
+### Fixed
+ - Removed default value for form controller.
+ - FOR-2689: Fixed performance issue by changing aggregate to findOne
+ - PDF 14 - Allow PDF Submission endpoint to be retrieved by 'Form Alias'
+
 ## 6.10.1-rc.5
 ### Changed
  - Upgrade formiojs@4.10.3-rc.5
