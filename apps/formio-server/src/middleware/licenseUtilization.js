@@ -281,7 +281,7 @@ function middleware(formio) {
       return next();
     }
     catch (e) {
-      return res.status(e.statusCode || 500).send(
+      return res.status(e.statusCode || 400).send(
         e.name === 'StatusCodeError' ? `[${e.statusCode}] ${e.error}` : e.message
       );
     }

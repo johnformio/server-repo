@@ -88,7 +88,9 @@ async function utilization(body, action = '', qs = {terms: 1}) {
   });
 
   if (!response.ok) {
-    throw await response.text();
+    throw {
+      message: await response.text()
+    };
   }
 
   const utilization = await response.json();
