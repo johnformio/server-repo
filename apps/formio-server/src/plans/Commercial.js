@@ -9,7 +9,7 @@ module.exports = class Commercial extends Plan {
       emails: 10000,
       pdfDownloads: 1000,
       pdfs: 25,
-      stages: 10,
+      stages: 5,
       plan: 'commercial',
     };
   }
