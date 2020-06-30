@@ -49,6 +49,7 @@ module.exports = function(formio) {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
+          'accept': 'application/json',
         },
         body: JSON.stringify({
           client_id: settings.clientId,
@@ -90,8 +91,9 @@ module.exports = function(formio) {
       const response = await fetch('https://api.github.com/user', {
         method: 'GET',
         headers: {
-          Authorization: `token ${accessToken.token}`,
-          'User-Agent': 'formio'
+          'Authorization': `token ${accessToken.token}`,
+          'User-Agent': 'formio',
+          'accept': 'application/json',
         }
       });
 

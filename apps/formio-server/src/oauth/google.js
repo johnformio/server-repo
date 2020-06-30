@@ -52,6 +52,7 @@ module.exports = function(formio) {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
+          'accept': 'application/json',
         },
         body: JSON.stringify({
           client_id: settings.clientId,
