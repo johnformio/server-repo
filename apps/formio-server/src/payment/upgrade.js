@@ -97,7 +97,8 @@ module.exports = function(formio) {
       });
     })
     .then(function(response) {
-      return res.sendStatus(200);
+      res.sendStatus(200);
+      return next()
     })
     .catch(function(err) {
       try {
