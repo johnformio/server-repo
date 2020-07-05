@@ -1,17 +1,17 @@
 'use strict';
 
-require('dotenv').load({silent: true});
-var express = require('express');
+require('dotenv').config();
+const express = require('express');
 const helmet = require('helmet')();
-var _ = require('lodash');
-var bodyParser = require('body-parser');
-var methodOverride = require('method-override');
-var favicon = require('serve-favicon');
-var packageJson = require('./package.json');
-var Q = require('q');
-var cacheControl = require('express-cache-controller');
-var uuid = require('uuid/v4');
-var fs = require('fs');
+const _ = require('lodash');
+const bodyParser = require('body-parser');
+const methodOverride = require('method-override');
+const favicon = require('serve-favicon');
+const packageJson = require('./package.json');
+const Q = require('q');
+const cacheControl = require('express-cache-controller');
+const {v4: uuidv4} = require('uuid');
+const fs = require('fs');
 const multipart = require('connect-multiparty');
 const os = require('os');
 const vm = require('vm');
@@ -169,7 +169,7 @@ module.exports = function(options) {
     // Allow audit uuid from external header.
     req.uuid = req.header('X-Request-UUID');
     if (!req.uuid) {
-      req.uuid = uuid();
+      req.uuid = uuidv4();
     }
     req.startTime = new Date();
 
