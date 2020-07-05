@@ -4,9 +4,15 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+## 6.10.4-rc.1
 ### Changed
  - Upgrade dependencies
+ - Upgrade portal@7.0.36-rc.1
+ - Upgrade formiojs@4.11.0-rc.2
+
+### Fixed
+ - FOR-2682: Fixes an issue where x-jwt-token from SAML was too big
+ - fix: added next function calls
 
 ## 6.10.3
 ### Changed

@@ -16,9 +16,9 @@ module.exports = function(formio) {
       const settings = {
         method: 'POST',
         url: process.env.CRM + actionName
-      }
+      };
 
-      const options = { settings };
+      const options = {settings};
       const ActionClass = formio.actions.actions['webhook'];
       const action = new ActionClass(options, modReq, res);
       action.resolve('after', 'create', modReq, res, () => {}, () => {});

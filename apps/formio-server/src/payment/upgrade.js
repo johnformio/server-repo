@@ -98,7 +98,7 @@ module.exports = function(formio) {
     })
     .then(function(response) {
       res.sendStatus(200);
-      return next()
+      return next();
     })
     .catch(function(err) {
       try {
