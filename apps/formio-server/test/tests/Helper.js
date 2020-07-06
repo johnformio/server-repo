@@ -6,7 +6,7 @@ var _ = require('lodash');
 var docker = process.env.DOCKER;
 var customer = process.env.CUSTOMER;
 
-module.exports = function(app, Helper) {
+module.exports = (app, Helper) => {
   if (!docker && !customer)
   Helper.prototype.setProjectPlan = function(plan, done) {
     if (!app.hasProjects && !docker) {

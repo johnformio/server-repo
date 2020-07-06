@@ -133,7 +133,9 @@ module.exports = (formioServer) => {
 
     const user = {
       _id: toMongoId(userId),
-      data: profile,
+      data: _.pickBy(profile, (prop, key) => {
+        return key.match(/objectidentifier|name|email|inresponseto/i);
+      }),
       roles
     };
 
