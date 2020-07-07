@@ -1,9 +1,9 @@
 'use strict';
-const request = require('request-promise-native');
+const fetch = require('formio/src/util/fetch');
 const _ = require('lodash');
-const {StatusCodeError} = require('request-promise-native/errors');
 const licenseServer = process.env.LICENSE_SERVER || 'https://license.form.io';
 const NodeCache = require('node-cache');
+const plans = require('../plans/plans');
 
 const cache = new NodeCache();
 
@@ -60,7 +60,7 @@ const getProjectContext = (req) => {
 
 async function utilization(body, action = '', qs = {terms: 1}) {
   const hosted = process.env.FORMIO_HOSTED;
-  const onPremiseScopes = ['apiServer', 'pdfServer', 'project', 'tenant', 'stage', 'formManager', 'vpat'];
+  const onPremiseScopes = ['apiServer', 'pdfServer', 'project', 'tenant', 'stage', 'formManager', 'accessibility'];
 
   // If on premise and not scoped for on premise, skip check.
   if (!hosted && !onPremiseScopes.includes(body.type)) {
@@ -79,18 +79,24 @@ async function utilization(body, action = '', qs = {terms: 1}) {
     body.timestamp = Date.now() - 6000;
   }
 
-  const utilization = await request({
-    url: `${licenseServer}/utilization${action}`,
+  const response = await fetch(`${licenseServer}/utilization${action}`, {
     method: 'post',
     headers: {'content-type': 'application/json'},
-    qs,
-    body,
-    json: true,
+    body: JSON.stringify(body),
     timeout: 5000,
+    qs,
   });
 
+  if (!response.ok) {
+    throw {
+      message: await response.text()
+    };
+  }
+
+  const utilization = await response.json();
+
   if (!hosted && utilization.hash !== md5(base64(body))) {
-    throw new StatusCodeError(400, 'Invalid response');
+    throw new Error('Invalid response');
   }
 
   return utilization;
@@ -163,18 +169,52 @@ async function getLicense(formio, licenseKey) {
   });
 }
 
-async function setLicensePlan(formio, licenseKey, plan, limits = {}, addScopes = [], removeScopes = []) {
+async function setLicensePlan(formio, licenseKey, planName, additional = {}, addScopes = []) {
+  if (!(Object.keys(plans).includes(planName))) {
+    throw new Error('Invalid Plan');
+  }
+
+  const plan = new plans[planName]();
+
   const license = await getLicense(formio, licenseKey);
   if (!license) {
     throw new Error('No license found');
   }
-  let data = license.toObject().data;
-  data.plan = plan;
+  const {
+    licenseName,
+    user,
+    company,
+    comments,
+    location,
+  } = license.toObject().data;
+
+  const data = {
+    ...plan.getPlan(licenseKey),
+    ...additional,
+    licenseName,
+    user,
+    company,
+    comments,
+    location,
+  };
   _.set(data, 'licenseKeys[0].scope', _.uniq([..._.get(data, 'licenseKeys[0].scope'), ...addScopes]));
-  _.set(data, 'licenseKeys[0].scope', _.difference(_.get(data, 'licenseKeys[0].scope'), removeScopes));
-  data = _.merge(data, limits);
   license.data = data;
   license.save();
+  try {
+    await clearLicenseCache(license._id);
+  }
+  catch (err) {
+    // Ignore error. This is only trying to clear cache.
+  }
+}
+
+async function clearLicenseCache(licenseId) {
+  await fetch(`${licenseServer}/license/${licenseId}/clear`, {
+    method: 'post',
+    headers: {'content-type': 'application/json'},
+    timeout: 5000,
+  })
+    .then((response) => response.ok ? response.json() : null);
 }
 
 module.exports = {

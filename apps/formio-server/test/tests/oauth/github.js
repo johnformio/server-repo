@@ -4,8 +4,6 @@
 var request = require('supertest');
 var assert = require('assert');
 var _ = require('lodash');
-var Q = require('q');
-var sinon = require('sinon');
 var util = require('formio/src/util/util');
 
 module.exports = function(app, template, hook) {
@@ -270,44 +268,6 @@ module.exports = function(app, template, hook) {
           email: 'rahatarmanahmed@gmail.com'
         }
       ];
-
-      beforeEach(function() {
-        // Make the code and token unique for each test
-        TEST_AUTH_CODE = 'TESTAUTHCODE' + Date.now();
-        TEST_ACCESS_TOKEN = 'TESTACCESSTOKEN' + Date.now();
-
-        sinon.stub(util, 'request')
-          .throws(new Error('Request made with unexpected arguments'))
-
-          .withArgs(sinon.match({
-            url: 'https://github.com/login/oauth/access_token',
-            body: sinon.match({
-              client_id: oauthSettings.github.clientId,
-              client_secret: oauthSettings.github.clientSecret,
-              code: TEST_AUTH_CODE
-            })
-          }))
-          .returns(Q([{},
-            {
-              access_token: TEST_ACCESS_TOKEN
-            }
-          ]))
-
-          .withArgs(sinon.match({
-            url: 'https://api.github.com/user',
-            headers: sinon.match({
-              Authorization: 'token ' + TEST_ACCESS_TOKEN
-            })
-          }))
-          .returns(Q([{}, TEST_USER]))
-
-          .withArgs(sinon.match({url: 'https://api.github.com/user/emails'}))
-          .returns(Q([{}, TEST_EMAIL_RESPONSE]));
-      });
-
-      afterEach(function() {
-        util.request.restore();
-      });
 
       it('An anonymous user should be able to register with OAuth provider GitHub', function(done) {
         var submission = {

@@ -195,11 +195,56 @@ module.exports = app => routes => {
     next();
   });
 
+  routes.before.push((req, res, next) => {
+    if (req.method !== 'POST') {
+      return next();
+    }
+
+    app.formio.formio.cache.loadCurrentProject(req, (err, project) => {
+      if (err || !project) {
+        return next();
+      }
+
+      const formDefaults = project.formDefaults || {};
+      Object.keys(formDefaults).forEach((key) => {
+        if (!req.body[key] && formDefaults[key]) {
+          req.body[key] = formDefaults[key];
+        }
+      });
+
+      next();
+    });
+  });
+
   routes.before.unshift(require('../../middleware/projectProtectAccess')(app.formio.formio));
   routes.before.unshift(require('../../middleware/formRevisionUpdate')(app.formio.formio));
   routes.before.unshift(require('../../middleware/formConflictHandler')(app.formio.formio));
   routes.before.unshift(require('../../middleware/licenseUtilization').middleware(app.formio.formio));
   routes.after.push(require('../../middleware/projectModified')(app.formio.formio));
+
+  /**
+   * Ensure primary project is loaded. May fail without Redis otherwise.
+   */
+  routes.before.unshift((req, res, next) => {
+    if (req.primaryProject) {
+      return next();
+    }
+
+    app.formio.formio.cache.loadCurrentProject(req, (err, project) => {
+      if (err || !project) {
+        return next();
+      }
+
+      const formDefaults = project.formDefaults || {};
+      Object.keys(formDefaults).forEach((key) => {
+        if (!req.body[key] && formDefaults[key]) {
+          req.body[key] = formDefaults[key];
+        }
+      });
+
+      next();
+    });
+  });
 
   return routes;
 };

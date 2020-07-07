@@ -9,13 +9,13 @@ module.exports = class Trial extends Plan {
       formRequests: 10000,
       submissionRequests: 10000,
       emails: 100,
-      stages: 10,
+      stages: 5,
       plan: 'trial',
     };
   }
 
-  getPlan() {
-    const data = super.getPlan();
+  getPlan(key) {
+    const data = super.getPlan(key);
     const expire = new Date();
     expire.setMonth(expire.getMonth() + 1);
     data.endDate = expire.toISOString();

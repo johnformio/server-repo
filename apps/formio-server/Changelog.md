@@ -5,8 +5,283 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## 7.0.0
-### Changed
+### Added
+ - User Sessions
+ - Isomorphic Validation
  - New Licensing system.
+ 
+### Changed
+ - Removed request.js and restler and replaced with node-fetch
+ 
+### Removed
+ - Jira Action
+ - Hubspot Action
+ - Office365 Actions
+ - Facebook, LinkedIn, Twitter, Dropbox OAuth providers
+
+## 6.10.2-rc.7
+### Changed
+ - Upgrade portal@7.0.33
+
+## 6.10.2-rc.6
+### Changed
+ - Upgrade portal@7.0.32
+
+## 6.10.2-rc.5
+### Changed
+ - Upgrade portal@7.0.31
+
+## 6.10.2-rc.4
+### Changed
+ - Upgrade portal@7.0.30
+
+## 6.10.2-rc.3
+### Changed
+ - Upgrade portal@7.0.29
+
+## 6.10.2-rc.2
+### Changed
+ - Upgrade formiojs@4.10.5-rc.4
+ - Upgrade portal@7.0.28
+
+## 6.10.2-rc.1
+### Changed
+ - Upgrade formiojs@4.10.5-rc.3
+ - Upgrade portal@7.0.27
+
+## 6.10.1-rc.6
+### Changed
+ - Upgrade formiojs@4.10.3
+ - Upgrade portal@7.0.26
+ - Upgrade formio@1.87.0
+ - Upgrade mongodb@3.5.9, aws-sdk@2.701.0, helmet@3.23.1, moment@2.27.0, twilio@3.46.0
+
+### Fixed
+ - Removed default value for form controller.
+ - FOR-2689: Fixed performance issue by changing aggregate to findOne
+ - PDF 14 - Allow PDF Submission endpoint to be retrieved by 'Form Alias'
+
+## 6.10.1-rc.5
+### Changed
+ - Upgrade formiojs@4.10.3-rc.5
+ - Upgrade portal@7.0.23
+ - Upgrade formio@1.86.0
+
+## 6.10.1-rc.4
+### Changed
+ - Upgrade portal@7.0.22
+ - Upgrade formiojs@4.10.3-rc.4
+ 
+## 6.10.1-rc.3
+### Changed
+ - Upgrade portal@7.0.21
+ - Upgrade formiojs@4.10.3-rc.3
+
+## 6.10.1-rc.1
+### Changed
+ - Upgrade portal@7.0.20
+ - Upgrade formiojs@4.10.3-rc.1	
+
+## 6.10.0
+### Changed
+ - Upgrade portal@7.0.19
+ - Upgrade formiojs@4.10.0
+
+## 6.10.0-rc.10
+### Changed
+ - Upgrade portal@7.0.16
+ - Upgrade formiojs@4.10.0-rc.13
+ 
+## 6.10.0-rc.9
+### Changed
+ - Upgrade portal@7.0.15
+ - Upgrade formiojs@4.10.0-rc.12
+
+### Fixed
+ - Fixed resetting project path on PUT request without name.
+
+## 6.10.0-rc.8
+### Changed
+ - Upgrade portal@7.0.14
+ - Upgrade formio@1.85.0
+ - Upgrade formio-workers@1.14.8
+ - Generate form revision on import if revisions are enabled.
+ 
+### Fixed
+ - FOR-2683: Fix (Payment): converted expMonth and expDate to String before concatenation
+ - Fixed issues with group permission errors not being proper English.
+
+## 6.10.0-rc.7
+### Changed
+ - Upgrade portal@7.0.13
+
+## 6.10.0-rc.6
+### Changed
+ - Upgrade formio@1.83.0
+
+### Fixed
+ - FOR-2665: Ensure calculate value eval context
+
+## 6.10.0-rc.5
+### Fixed
+ - FJS-888 Unauthorized error when getting spec.json
+ 
+### Added
+ - Added formSave hook on template import.
+ 
+### Changed
+ - Upgrade formio-app@7.0.12
+ - Upgrade formiojs@4.10.0-rc.6
+ - Upgrade formio-workers@1.14.7
+ - Upgrade formio@1.82.0
+ - Upgrade mongodb@3.5.8
+
+## 6.10.0-rc.4
+### Changed
+ - Adding recommended indexes.
+ - Add config options for mongo ssl
+ - Upgrade portal@7.0.11
+ - Upgrade  chance@1.1.6, formio-workers@1.14.6, twilio@3.43.1, aws-sdk@2.683.0, moment@2.26.0, mocha@7.2.0, webpack-obfuscator@0.28.2
+
+## 6.10.0-rc.3
+### Changed
+ - Upgrade formio-app@7.0.6 to fix submission table issues.
+
+## 6.10.0-rc.2
+### Changed
+ - Upgrade formio-app@7.0.5
+ - Upgrade formiojs@4.10.0-beta.17
+ - Upgrade chance@1.1.5, formio-workers@1.14.6, aws-sdk@2.675.0
+
+### 6.10.0-beta.1
+### Changed
+ - Upgrade portal@7.0.10
+ - Adding mongo SSL.
+
+## 6.9.38
+### Changed
+ - None. Released 6.9.38-rc.1
+
+## 6.9.38-rc.1
+### Changed
+ - Upgrade formio@1.84.0
+ - Added version id check to formSave alter for template exports/imports.
+
+## 6.9.37
+### Changed
+ - Upgrade portal@7.0.8-1
+
+## 6.9.36
+### Changed
+ - Upgrade formio@1.83.0
+ - Upgrade formio-workers@1.14.7
+
+### Fixed
+ - FOR-2665: Ensure calculate value eval context
+ - FJS-911: Date/Time data in email is displaying two times
+
+## 6.9.35
+### Added
+ - Ability to add additional fields in template export
+ 
+### Fixed
+ - Creating a form with revisions during import will create an initial revision.
+
+## 6.9.34
+### Changed
+ - Upgrade portal@7.0.8
+ - Upgrade formiojs@4.9.27-rc.4
+ - Upgrade formmanager@1.93.1
+ - Upgrade pro.formview.io@1.93.1
+
+## 6.10.0-rc.2
+### Changed
+ - Upgrade portal@7.0.8-beta.1
+ - Upgrade formio@1.79.0
+
+## 6.10.0-rc.1
+### Changed
+ - Upgrade formio-app@7.0.4
+ - Upgrade formiojs@4.10.0-beta.16
+
+### Added
+ - Added formDefaults property to project.
+
+## 6.9.33
+### Changed
+ - Upgrade formio@1.78.0
+ - Upgrade formio-workers@1.14.4
+ - Upgrade minio@7.0.16, mongodb@3.5.7, mocha@7.1.2, aws-sdk@2.670.0, moment@2.25.3, twilio@3.43.0, webpack-obfuscator@0.28.0
+ - Remove adding project role to owners since it isn't needed.
+
+## 6.9.32
+### Changed
+ - Upgrade formio@1.76.0
+ - Upgrade formio-workers@1.15.0
+
+## 6.9.31
+### Changed
+ - Upgrade portal to 7.0.3
+ - Upgrade formiojs@4.9.22
+
+## 6.9.30
+### Changed
+ - Upgrade portal to 7.0.2
+ - Upgrade formiojs@4.9.21
+ - Upgrade formio-app@7.0.2
+
+## 6.9.29
+### Changed
+ - Upgrade portal to 7.0.1
+
+## 6.9.29-rc.5
+ - Upgrade portal to 7.0.1-rc.4
+
+## 6.9.29-rc.4
+ - Upgrade portal to 7.0.1-rc.2
+
+## 6.9.29-rc.3
+### Fixed
+ - Upgraded formio@1.75.0 to fix issues with loading subforms with revisions.
+
+## 6.9.29-rc.2
+### Fixed
+ - Issue with subforms not loading properly when full=true is used and formrevisions enabled.
+
+## 6.9.29-rc.1
+### Changed
+ - Upgrade portal to 7.0.1-rc.1
+
+## 6.9.28
+### Changed
+ - Upgrade portal to 7.0.0
+
+## 6.9.28.rc.5
+### Changed
+ - Upgrade portal to 7.0.0-rc.92
+
+## 6.9.28-rc.4
+### Changed
+ - Upgrade portal to 7.0.0-rc.91
+
+### Fixed
+ - Aggregatiomn to use allowDisk so large queries can be completed.
+
+## 6.9.28-rc.2
+### Changed
+ - Upgrade portal to 7.0.0-rc.89
+
+## 6.9.28-rc.1
+### Changed
+ - Upgrade portal to 7.0.0-rc.88
+
+## 6.9.27
+### Changed
+ - Upgrade portal to 7.0.0-rc.87
+ - Add config to interpolation for datasource on server side.
+
+## 6.9.26
+ - No changes:
 
 ## 6.9.26-rc.4
 ### Fixed

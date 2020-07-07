@@ -119,6 +119,7 @@ config.formio.reservedForms = [
   'v',
   'draft',
   'saml',
+  'oauth2',
   'recaptcha',
   'manage',
   'action',
@@ -211,6 +212,18 @@ if (getConfig('MONGO_SA')) {
   config.formio.mongoSA = getConfig('MONGO_SA');
 }
 
+if (getConfig('MONGO_SSL')) {
+  config.formio.mongoSSL = getConfig('MONGO_SSL');
+}
+
+if (getConfig('MONGO_SSL_VALIDATE')) {
+  config.formio.mongoSSLValidate = getConfig('MONGO_SSL_VALIDATE');
+}
+
+if (getConfig('MONGO_SSL_PASSWORD')) {
+  config.formio.mongoSSLPassword = getConfig('MONGO_SSL_PASSWORD');
+}
+
 if (getConfig('MONGO_CONFIG')) {
   config.formio.mongoConfig = getConfig('MONGO_CONFIG');
 }
@@ -231,6 +244,11 @@ config.formio.dropbox = {};
 config.formio.dropbox.clientId = getConfig('DROPBOX_CLIENTID', '');
 config.formio.dropbox.clientSecret = getConfig('DROPBOX_CLIENTSECRET', '');
 
+// Session settings.
+config.formio.session = {
+  expireTime: getConfig('SESSION_EXPIRE_TIME', ''),
+};
+
 // Add the JWT data.
 config.formio.jwt = {};
 config.formio.jwt.secret = getConfig('JWT_SECRET', 'abc123');
@@ -250,10 +268,6 @@ config.templateService = getConfig('TEMPLATE_SERVICE', '');
 
 // Logging config.
 config.jslogger = getConfig('JS_LOGGER');
-config.logging = {
-  console: getConfig('LOGGING_CONSOLE', true),
-  formio: getConfig('LOGGING_FORMIO', false)
-};
 
 // Allow the config to be displayed when debugged.
 var sanitized = _.clone(config, true);

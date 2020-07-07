@@ -3,7 +3,7 @@
 /* eslint camelcase: 0 */
 const crypto = require('crypto');
 const _ = require('lodash');
-const request = require('request');
+const fetch = require('formio/src/util/fetch');
 const util = require('formio/src/util/util');
 
 module.exports = function(config, formio) {
@@ -12,12 +12,15 @@ module.exports = function(config, formio) {
       return res.status(401);
     }
 
-    if (!req.body || !req.body.data) {
+    if (!req.body) {
       return res.status(400).send('No data received');
     }
+
+    const data = 'data' in req.body ? req.body.data : req.body;
+
     const list = ['ccNumber', 'ccExpiryMonth', 'ccExpiryYear', 'cardholderName', 'securityCode'];
     const missingFields = _.filter(list, function(prop) {
-      return !req.body.data[prop];
+      return !data[prop];
     });
     if (missingFields.length !== 0) {
       return res.status(400).send(`JSON request is missing ${missingFields.join(', ')} properties`);
@@ -34,11 +37,11 @@ module.exports = function(config, formio) {
         method: "credit_card",
         amount: 0,
         credit_card: {
-          type: req.body.data.ccType, // TODO: Add ccType (Credit Card Type Field) field in the Payment Form.
-          cardholder_name: req.body.data.cardholderName,
-          card_number: `${req.body.data.ccNumber}`,
-          exp_date: req.body.data.ccExpiryMonth + req.body.data.ccExpiryYear,
-          cvv: req.body.data.securityCode,
+          type: data.ccType,
+          cardholder_name: data.cardholderName,
+          card_number: `${data.ccNumber}`,
+          exp_date: `${data.ccExpiryMonth}${data.ccExpiryYear}`,
+          cvv: data.securityCode,
         },
         // Wont fit 20 char limit unless converted to base64
         customer_ref: new Buffer.from(userId, 'hex').toString('base64'),
@@ -55,8 +58,8 @@ module.exports = function(config, formio) {
       const nonce = Math.floor(Math.random() * 100000000000) + 1;
       const transactionBody = JSON.stringify(transactionRequest);
       const timestamp = (new Date()).getTime();
-      return request.post({
-        url: `https://${config.payeezy.host}${config.payeezy.endpoint}`,
+      return fetch(`https://${config.payeezy.host}${config.payeezy.endpoint}`, {
+        method: 'post',
         body: transactionBody,
         headers: {
           'accept': 'application/json',
@@ -67,12 +70,10 @@ module.exports = function(config, formio) {
           'nonce': nonce,
           'Authorization': getAuthorizationHeader(config.payeezy.keyId, config.payeezy.hmacKey, transactionBody, config.payeezy.merchToken, nonce, timestamp)
         }
-      }, (err, response, body) => {
-        if (err) {
-         return next(err);
-        }
-        next(body);
-      });
+      })
+        .then((response) => response.ok ? response.json() : null)
+        .then(next)
+        .catch(next);
     };
     /* eslint-enable new-cap */
 
@@ -124,8 +125,7 @@ module.exports = function(config, formio) {
         txn.metadata.lastRequest = new Date();
         txn.metadata.requestCount++;
 
-        sendAuthTxn((body) => {
-          const transaction = JSON.parse(body);
+        sendAuthTxn((transaction) => {
           if (transaction.transaction_status !== 'approved') {
             // Update the transaction record.
             txn.metadata.failures++;

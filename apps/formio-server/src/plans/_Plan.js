@@ -15,7 +15,7 @@ module.exports = class Plan {
       projects: 1,
       tenants: 0,
       stages: 0,
-      vpat: 0,
+      accessibilitys: 0,
       plan: 'trial',
       licenseKeys: [
         {
@@ -27,11 +27,12 @@ module.exports = class Plan {
     };
   }
 
-  getPlan() {
+  getPlan(key) {
     const pool = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     const data = this.data;
     data.startDate = new Date().toISOString();
-    data.licenseKeys[0].key = _.times(30, () => pool[_.random(0, pool.length)]).join('');
+    key = key || _.times(30, () => pool[_.random(0, pool.length)]).join('');
+    data.licenseKeys[0].key = key;
     return data;
   }
 };

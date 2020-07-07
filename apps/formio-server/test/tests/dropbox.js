@@ -3,8 +3,6 @@
 
 var request = require('supertest');
 var assert = require('assert');
-var mockRequest = require('request');
-var sinon = require('sinon');
 var _ = require('lodash');
 
 module.exports = function(app, template, hook) {
@@ -162,19 +160,6 @@ module.exports = function(app, template, hook) {
   });
 
   describe('Dropbox', function() {
-    before(function(done) {
-      sinon.stub(mockRequest, 'post')
-        .withArgs('https://api.dropboxapi.com/1/oauth2/token', sinon.match.any, sinon.match.any).yields(null, {statusCode: 200, headers: {}}, JSON.stringify({access_token:'accesstoken123'}))
-        .withArgs('https://content.dropboxapi.com/2/files/download', sinon.match.any, sinon.match.any).yields(null, {statusCode: 200, headers: {}}, 'RAWDATA')
-        .withArgs('https://content.dropboxapi.com/2/files/upload', sinon.match.any, sinon.match.any).yields(null, {statusCode: 200, headers: {}}, JSON.stringify({file: 'abc123'}));
-      done();
-    });
-
-    after(function(done) {
-      mockRequest.post.restore();
-      done();
-    });
-
     it('Denies access to GET dropbox auth token endpoint for anonymous', function(done) {
       request(app)
         .get('/project/' + template.project._id + '/dropbox/auth')
@@ -264,7 +249,6 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
           assert.equal(res.body.access_token, 'accesstoken123');
-          assert(mockRequest.post.calledOnce);
           done();
         });
     });

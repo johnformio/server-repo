@@ -65,7 +65,7 @@ function middleware(formio) {
               licenseKey: getLicenseKey(req),
             }, '', {terms: 1, keys: 1});
             let formManagerEnabled = false;
-            let vPatEnabled = false;
+            let accessibilityEnabled = false;
             try {
               await utilization({
                 ...getProjectContext(req),
@@ -81,19 +81,19 @@ function middleware(formio) {
               await utilization({
                 ...getProjectContext(req),
                 licenseKey: getLicenseKey(req),
-                type: 'VPAT'
+                type: 'Accessibility'
               });
-              vPatEnabled = true;
+              accessibilityEnabled = true;
             }
             catch (err) {
-              vPatEnabled = err.message;
+              accessibilityEnabled = err.message;
             }
             res.resource.item.apiCalls = {
               limit: result.terms,
               used: result.used,
               licenseId: result.licenseId,
               formManager: formManagerEnabled,
-              vpat: vPatEnabled,
+              accessibility: accessibilityEnabled,
               tenant: result.keys.hasOwnProperty(result.licenseKey) && result.keys[result.licenseKey].scope.includes('tenant'),
             };
           }
@@ -131,7 +131,9 @@ function middleware(formio) {
             }
           }
           catch (err) {
-            res.resource.item.disabled = err.error;
+            if (res.resource && res.resource.item) {
+              res.resource.item.disabled = err.error;
+            }
           }
           break;
 
@@ -222,7 +224,7 @@ function middleware(formio) {
           }
           await utilization({
             type: 'form',
-            formId: 'new',
+            formId: req.formId,
             projectId: req.projectId,
             licenseKey: getLicenseKey(req),
           }, '/disable');
@@ -279,7 +281,7 @@ function middleware(formio) {
       return next();
     }
     catch (e) {
-      return res.status(e.statusCode || 500).send(
+      return res.status(e.statusCode || 400).send(
         e.name === 'StatusCodeError' ? `[${e.statusCode}] ${e.error}` : e.message
       );
     }

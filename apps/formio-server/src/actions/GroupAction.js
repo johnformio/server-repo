@@ -109,25 +109,17 @@ module.exports = function(router) {
           const match = {};
           match[`${name}._id`] = router.formio.util.idToBson(id);
 
-          router.formio.resources.form.model.aggregate([
-            {$match: {project: router.formio.util.idToBson(_.get(req, 'projectId')), deleted: {$eq: null}}},
-            {$project: {_id: 1}},
-            {$lookup: {from: 'submissions', localField: '_id', foreignField: 'form', as: name}},
-            {$match: filter},
-            {$unwind: `$${name}`},
-            {$match: match}
-          ]).exec(function(err, submissions) {
-            if (err || !submissions || submissions.length !== 1) {
+          router.formio.resources.submission.model.findOne({
+            _id: router.formio.util.idToBson(id),
+            project: router.formio.util.idToBson(req.projectId),
+            deleted: {$eq: null},
+          }).exec(function(err, submissions) {
+            if (err || !submissions) {
               debug.loadFilteredSubmission(err || `Submission: ${!submissions ? 'none' : submissions.length}`);
-              deferred.reject(`Could not the ${name} for assignment.`);
+              deferred.reject(`Could not find the ${name} for assignment.`);
+              return;
             }
-
-            // We only want to deal with the single result.
-            debug.loadFilteredSubmission(submissions);
-            submissions = submissions.pop();
-
-            // unwrap the submission obj from the unwind op.
-            deferred.resolve(_.get(submissions, name));
+            deferred.resolve(submissions);
           });
 
           return deferred.promise;

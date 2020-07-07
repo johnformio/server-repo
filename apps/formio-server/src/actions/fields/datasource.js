@@ -1,6 +1,6 @@
 'use strict';
 const _ = require('lodash');
-const request = require('request-promise-native');
+const fetch = require('formio/src/util/fetch');
 const debug = require('debug')('formio:datasource');
 const moment = require('moment');
 
@@ -74,14 +74,11 @@ module.exports = (app) => {
           }
 
           debug(`Requesting DataSource: ${url}`);
-          debug(`DataSource Headers: ${JSON.stringify(requestHeaders, null, 2)}`);
-          request({
-            uri: url,
+          fetch(url, {
             method: _.get(component, 'fetch.method', 'get').toUpperCase(),
             headers: requestHeaders,
-            rejectUnauthorized: false,
-            json: true,
           })
+            .then((response) => response.ok ? response.json() : null)
             .then((value) => {
               if (value) {
                 _.set(data, component.key, value);

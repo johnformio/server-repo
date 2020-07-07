@@ -188,7 +188,11 @@ module.exports = function(router) {
         type: Date,
         description: 'The time of the last deploy.',
         __readonly: true
-      }
+      },
+      formDefaults: {
+        type: formio.mongoose.Schema.Types.Mixed,
+        default: null,
+      },
     })
   });
   /* eslint-enable new-cap, max-len */

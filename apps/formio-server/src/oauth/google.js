@@ -3,7 +3,7 @@
 const Q = require('q');
 const _ = require('lodash');
 
-const util = require('formio/src/util/util');
+const fetch = require('formio/src/util/fetch');
 
 const MAX_TIMESTAMP = 8640000000000000;
 
@@ -44,73 +44,75 @@ module.exports = function(formio) {
     // Exchanges authentication code for auth token
     // Returns a promise, or you can provide the next callback arg
     // Resolves with array of tokens defined like externalTokenSchema
-    getTokens(req, code, state, redirectURI, next) {
-      return oauthUtil.settings(req, this.name)
-        .then(function(settings) {
-          /* eslint-disable camelcase */
-          return util.request({
-            method: 'POST',
-            json: true,
-            url: 'https://accounts.google.com/o/oauth2/token',
-            form: {
-              client_id: settings.clientId,
-              client_secret: settings.clientSecret,
-              grant_type: 'authorization_code',
-              code: code,
-              redirect_uri: redirectURI
-            }
-          });
-          /* eslint-enable camelcase */
-        })
-        .spread(function(response, body) {
-          if (!body) {
-            throw 'No response from Google.';
-          }
-          if (body.error) {
-            throw body.error_description;
-          }
-          return [
-            {
-              type: this.name,
-              token: body.access_token,
-              exp: new Date(MAX_TIMESTAMP) // google tokens never expire
-            }
-          ];
-        }.bind(this))
-        .nodeify(next);
+    async getTokens(req, code, state, redirectURI) {
+      const settings = await oauthUtil.settings(req, this.name);
+
+      /* eslint-disable camelcase */
+      const response = await fetch('https://accounts.google.com/o/oauth2/token', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'accept': 'application/json',
+        },
+        body: JSON.stringify({
+          client_id: settings.clientId,
+          client_secret: settings.clientSecret,
+          grant_type: 'authorization_code',
+          code: code,
+          redirect_uri: redirectURI
+        }),
+      });
+      /* eslint-enable camelcase */
+
+      let body = null;
+      if (response.ok) {
+        body = await response.json();
+      }
+
+      if (!body) {
+        throw 'No response from Google.';
+      }
+      if (body.error) {
+        throw body.error_description;
+      }
+
+      return [
+        {
+          type: this.name,
+          token: body.access_token,
+          exp: new Date(MAX_TIMESTAMP) // google tokens never expire
+        }
+      ];
     },
 
     // Gets user information from oauth access token
     // Returns a promise, or you can provide the next callback arg
-    getUser(tokens, settings, next) {
+    async getUser(tokens, settings, next) {
       const accessToken = _.find(tokens, {type: this.name});
       if (!accessToken) {
-        return Q.reject('No access token found');
+        throw 'No access token found';
       }
-      /* eslint-disable camelcase */
-      return util.request({
+      const response = await fetch('https://www.googleapis.com/oauth2/v1/userinfo', {
         method: 'GET',
-        url: 'https://www.googleapis.com/oauth2/v1/userinfo',
-        json: true,
         qs: {
+          // eslint-disable-next-line camelcase
           access_token: accessToken.token
         }
-      })
-      .spread(function(response, userInfo) {
-        if (!userInfo) {
-          const status = 400;
-          throw {
-            status: status,
-            message: `${status} response from Google: ${response.statusMessage}`
-          };
-        }
-        // Make it easier to reference items in userInfo.name
+      });
 
-        userInfo = _.merge(userInfo, userInfo.name);
-        return userInfo;
-      })
-      .nodeify(next);
-      /* eslint-enable camelcase */
+      let userInfo = null;
+      if (response.ok) {
+        userInfo = await response.json();
+      }
+
+      if (!userInfo) {
+        throw 'No response from Google.';
+      }
+
+      return {
+        ...userInfo,
+        ...userInfo.name,
+      };
     },
 
     // Gets user ID from provider user response from getUser()

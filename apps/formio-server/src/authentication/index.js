@@ -37,28 +37,42 @@ module.exports = function(formio) {
         return null;
       }
 
-      // Respond with a token.
-      const token = {
-        user: {
-          _id: user._id,
-          roles: user.roles
-        },
-        form: {
-          _id: form._id,
-          project: form.project
-        },
-        project: {
-          _id: form.project
-        }
-      };
+      const sessionModel = formio.mongoose.models.session;
 
-      return {
-        user: user,
-        token: {
-          token: formio.auth.getToken(token),
-          decoded: token
-        }
-      };
+      return sessionModel.create({
+        project: form.project,
+        form: form._id,
+        submission: user._id,
+      })
+        .catch(next)
+        .then((session) => {
+          // Respond with a token.
+          const token = {
+            user: {
+              _id: user._id,
+              roles: user.roles
+            },
+            form: {
+              _id: form._id,
+              project: form.project
+            },
+            project: {
+              _id: form.project
+            },
+            source: `oauth:${providerName}`,
+          };
+          token.iss = formio.config.apiHost;
+          token.sub = token.user._id;
+          token.jti = session._id;
+
+          return {
+            user: user,
+            token: {
+              token: formio.auth.getToken(token),
+              decoded: token
+            }
+          };
+        });
     })
     .nodeify(next);
   };
