@@ -5,9 +5,12 @@ module.exports = (req, res, json, audit) => {
     const entities = [
       'action',
       'submission',
+      'team',
       'form',
       'project',
       'role',
+      'tag',
+      'v'
     ];
     const route = req.route.path;
     const handler = {
@@ -27,6 +30,10 @@ module.exports = (req, res, json, audit) => {
         entity = part.toUpperCase();
       }
     });
+
+    if (entity === 'v') {
+      entity = 'formRevision';
+    }
 
     let body = JSON.parse(json);
 
