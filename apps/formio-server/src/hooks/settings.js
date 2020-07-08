@@ -87,6 +87,9 @@ module.exports = function(app) {
         return false;
       },
       audit(args, event, req) {
+        if (!formioServer.formio) {
+          return false;
+        }
         args.unshift(new Date());
         args.splice(1, 0, event);
         args.splice(2, 0, req.uuid);

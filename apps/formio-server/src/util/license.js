@@ -41,9 +41,9 @@ async function validateWithGracefulDegradation(app) {
   //     the licensing server that the license is known to be
   //     invalid, force the server to exit immediately.
   //
-  app.validated = await performValidationRound(app);
+  app.license = await performValidationRound(app);
 
-  if (!app.validated) {
+  if (!app.license) {
     // First warning
     // eslint-disable-next-line no-console
     console.log(`
@@ -66,9 +66,9 @@ async function validateWithGracefulDegradation(app) {
     `.replace(/ {6}/g, ''));
 
     setTimeout(async () => {
-      app.validated = await performValidationRound(app);
+      app.license = await performValidationRound(app);
 
-      if (!app.validated) {
+      if (!app.license) {
         // Activate restricted method mode
         app.restrictMethods = true;
 
