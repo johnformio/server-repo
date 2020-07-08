@@ -255,7 +255,7 @@ config.formio.jwt.secret = getConfig('JWT_SECRET', 'abc123');
 config.formio.jwt.expireTime = getConfig('JWT_EXPIRE_TIME', 240);
 config.remoteSecret = getConfig('PORTAL_SECRET', '');
 
-config.formio.noaudit = !getConfig('NOAUDIT', false);
+config.formio.audit = !getConfig('NOAUDITLOG', false);
 
 // Access endpoint configuration
 config.filterAccess = getConfig('FILTER_ACCESS', true);
