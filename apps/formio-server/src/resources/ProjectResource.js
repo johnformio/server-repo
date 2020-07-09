@@ -200,6 +200,7 @@ module.exports = (router, formioServer) => {
       formio.middleware.projectIndexFilter,
     ],
     afterIndex: [
+      formio.middleware.licenseUtilization,
       formio.middleware.filterResourcejsResponse(hiddenFields),
       projectSettings,
     ],

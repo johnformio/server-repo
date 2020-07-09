@@ -58,6 +58,46 @@ function middleware(formio) {
         //            88                                   ,88
         //            88                                 888P"
 
+        case 'GET /project':
+          if (
+            res.resource && res.resource.item && Array.isArray(res.resource.item) &&
+            req.query.project
+          ) {
+            await Promise.all(res.resource.item.map(async (project) => {
+              if (project.type === 'stage') {
+                // Load primary project
+                try {
+                  await new Promise((resolve, reject) => {
+                    req.projectId = project.project;
+                    formio.cache.loadPrimaryProject(req, (err, primaryProject) => {
+                      if (err) {
+                        return reject(err);
+                      }
+                      req.primaryProject = primaryProject;
+                      return resolve(primaryProject);
+                    });
+                  });
+
+                  const result = await utilization({
+                    type: 'stage',
+                    projectId: project.project.toString(),
+                    tenantId: 'none',
+                    stageId: project._id.toString(),
+                    title: project.title,
+                    name: project.name,
+                    remote: !!project.remote,
+                    projectType: project.type,
+                    licenseKey: getLicenseKey(req),
+                  }, '');
+                  project.live = result.live;
+                }
+                catch (err) {
+                  project.disabled = true;
+                }
+              }
+            }));
+          }
+          break;
         case 'GET /project/:projectId':
           try {
             const result = await utilization({
