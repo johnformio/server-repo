@@ -148,7 +148,8 @@ module.exports = (router) => {
                   input: true,
                   placeholder: 'User for Basic Authentication',
                   type: 'textfield',
-                  multiple: false
+                  multiple: false,
+                  autocomplete: 'off'
                 },
                 {
                   label: 'Authorize Password',
@@ -158,7 +159,8 @@ module.exports = (router) => {
                   input: true,
                   placeholder: 'Password for Basic Authentication',
                   type: 'textfield',
-                  multiple: false
+                  multiple: false,
+                  autocomplete: 'off'
                 }
               ],
               type: "fieldset",
