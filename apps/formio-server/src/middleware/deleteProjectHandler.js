@@ -19,8 +19,8 @@ module.exports = function(formio) {
         debug(err);
         return next(err);
       }
-
-      return res.sendStatus(200);
+      res.sendStatus(200);
+      return next();
     });
   };
 

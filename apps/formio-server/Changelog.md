@@ -19,6 +19,42 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Office365 Actions
  - Facebook, LinkedIn, Twitter, Dropbox OAuth providers
 
+## 6.10.6
+### Changed 
+ - Upgrade formio to 1.90.2 to fix email crash on large emails.
+
+## 6.10.5
+### Changed 
+ - Upgrade formio to 1.90.1 to upgrade resourcejs to 2.3.1 to fix issue with limit and sort.
+
+## 6.10.4
+### No changes: Official build
+
+## 6.10.4-rc.2
+### Changed
+ - Upgrade portal@7.0.36-rc.2
+ - Upgrade formiojs@4.11.0-rc.4
+
+## 6.10.4-rc.1
+### Changed
+ - Upgrade dependencies
+ - Upgrade portal@7.0.36-rc.1
+ - Upgrade formiojs@4.11.0-rc.2
+ - Upgrade formio@1.90.0
+
+### Fixed
+ - FOR-2682: Fixes an issue where x-jwt-token from SAML was too big
+ - fix: added next function calls
+
+## 6.10.3
+### Changed
+ - Upgrade portal@7.0.35
+
+## 6.10.2
+### Changed
+ - Upgrade formiojs@4.10.5
+ - Upgrade portal@7.0.34
+
 ## 6.10.2-rc.7
 ### Changed
  - Upgrade portal@7.0.33
