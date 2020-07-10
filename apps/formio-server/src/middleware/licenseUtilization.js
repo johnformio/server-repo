@@ -89,7 +89,7 @@ function middleware(formio) {
                     projectType: project.type,
                     licenseKey: getLicenseKey(req),
                   }, '');
-                  project.live = result.live;
+                  project.authoring = !result.live;
                 }
                 catch (err) {
                   project.disabled = true;
