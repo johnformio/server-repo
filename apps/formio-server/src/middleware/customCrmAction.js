@@ -11,7 +11,10 @@ module.exports = function(formio) {
 
     if (process.env.hasOwnProperty('CRM')) {
       const modReq = _.cloneDeep(req);
-      modReq.body.name = req.currentProject && req.currentProject.name;
+
+      if(modReq.body && !modReq.body.name) {
+        modReq.body.name = req.currentProject && req.currentProject.name;
+      };
 
       const settings = {
         method: 'POST',
