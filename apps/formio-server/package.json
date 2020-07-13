@@ -77,8 +77,8 @@
     "twilio": "^3.47.0",
     "universal-analytics": "^0.4.22",
     "uuid": "^8.2.0",
-    "webpack": "^4.42.0",
-    "webpack-obfuscator": "^0.28.1"
+    "webpack": "^4.43.0",
+    "webpack-obfuscator": "^1.2.2"
   },
   "devDependencies": {
     "eslint": "^7.3.1",
