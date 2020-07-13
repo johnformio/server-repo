@@ -8,7 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
  - User Sessions
  - Isomorphic Validation
- - New Licensing system.
+ - Audit logging
+ - New Licensing system
+ - Stage Types (Authoring and Live)
  
 ### Changed
  - Removed request.js and restler and replaced with node-fetch
