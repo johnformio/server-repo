@@ -17,6 +17,10 @@ function middleware(formio) {
       return next();
     }
 
+    if (req.skipLicense) {
+      return next();
+    }
+
     // Don't do utilization requests on child requests.
     if (req.childRequests && req.childRequests > 0) {
       return next();

@@ -19,6 +19,8 @@ function middleware(formio) {
 
     // If a project is no longer remote, re-enable it.
     if (req.currentProject.remote && !req.body.remote) {
+      // This is not needed on local but breaks for some reason on production.
+      req.skipLicense = true;
       try {
         await utilization({
           ...getProjectContext(req),
