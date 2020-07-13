@@ -44,7 +44,7 @@ module.exports = function(options) {
     return app.server.listen.apply(app.server, arguments);
   };
 
-  const portalEnabled = !!process.env.PRIMARY;
+  const portalEnabled = (!!process.env.PORTAL_ENABLED || !!process.env.PRIMARY);
   // Secure html pages with the proper headers.
   debug.startup('Attaching middleware: Helmet');
   app.use((req, res, next) => {

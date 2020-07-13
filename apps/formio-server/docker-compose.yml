@@ -19,7 +19,7 @@ services:
     ports:
       - "3000:80"
     environment:
-      PRIMARY: 1
+      PORTAL_ENABLED: 1
       ADMIN_EMAIL: admin@example.com
       ADMIN_PASS: CHANGEME
       LICENSE:
