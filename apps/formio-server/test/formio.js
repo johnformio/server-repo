@@ -16,6 +16,7 @@ let EventEmitter = require('events');
 const fetch = require('formio/src/util/fetch');
 const mockery = require('mockery');
 const sinon = require('sinon');
+const { Readable } = require('stream');
 let formio;
 
 function md5(str) {
@@ -151,7 +152,9 @@ const requestMock = sinon.stub()
       case 'https://content.dropboxapi.com/2/files/download':
         return Promise.resolve({
           ok: true,
-          body: async () => ('RAWDATA'),
+          body: {
+            pipe: Readable.from(['RAWDATA'])
+          },
           headers: {
             get: () => false,
           }
