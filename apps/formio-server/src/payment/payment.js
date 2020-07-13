@@ -34,7 +34,7 @@ module.exports = function(app, formio) {
     require('../middleware/userProject')(formio),
     require('../middleware/restrictProjectAccess')(formio)({level: 'owner'}),
     require('./upgrade')(formio),
-    formio.middleware.customCrmAction('upgradeproject')
+    formio.middleware.customCrmAction('updateproject')
   );
 
   let paymentFormId;
