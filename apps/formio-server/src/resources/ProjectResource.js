@@ -43,16 +43,19 @@ module.exports = (router, formioServer) => {
     // Allow admin key
     if (req.adminKey) {
       decryptSettings(res);
+      formioServer.formio.audit('PROJECT_SETTINGS', req);
       return next();
     }
     // Allow project owners.
     if (req.token && req.projectOwner && (req.token.user._id === req.projectOwner)) {
       decryptSettings(res);
+      formioServer.formio.audit('PROJECT_SETTINGS', req);
       return next();
     }
     // Allow team admins on remote
     else if (req.remotePermission && ['admin', 'owner', 'team_admin'].includes(req.remotePermission)) {
       decryptSettings(res);
+      formioServer.formio.audit('PROJECT_SETTINGS', req);
       return next();
     }
     else if (req.projectId && req.user) {
@@ -65,6 +68,7 @@ module.exports = (router, formioServer) => {
           const isAdmin = _.intersection(adminAccess, roles).length !== 0;
           decryptSettings(res, !isAdmin);
           if (isAdmin) {
+            formioServer.formio.audit('PROJECT_SETTINGS', req);
             return next();
           }
           if (_.intersection(writeAccess, roles).length !== 0) {
@@ -196,6 +200,7 @@ module.exports = (router, formioServer) => {
       formio.middleware.projectIndexFilter,
     ],
     afterIndex: [
+      formio.middleware.licenseUtilization,
       formio.middleware.filterResourcejsResponse(hiddenFields),
       projectSettings,
     ],

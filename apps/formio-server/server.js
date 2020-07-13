@@ -1,20 +1,21 @@
 'use strict';
 
-require('dotenv').load({silent: true});
-var express = require('express');
+require('dotenv').config();
+const express = require('express');
 const helmet = require('helmet')();
-var _ = require('lodash');
-var bodyParser = require('body-parser');
-var methodOverride = require('method-override');
-var favicon = require('serve-favicon');
-var packageJson = require('./package.json');
-var Q = require('q');
-var cacheControl = require('express-cache-controller');
-var uuid = require('uuid/v4');
-var fs = require('fs');
+const _ = require('lodash');
+const bodyParser = require('body-parser');
+const methodOverride = require('method-override');
+const favicon = require('serve-favicon');
+const packageJson = require('./package.json');
+const Q = require('q');
+const cacheControl = require('express-cache-controller');
+const {v4: uuidv4} = require('uuid');
+const fs = require('fs');
 const multipart = require('connect-multiparty');
 const os = require('os');
 const license = require('./src/util/license');
+const audit = require('./src/util/audit');
 const vm = require('vm');
 const debug = {
   startup: require('debug')('formio:startup')
@@ -135,27 +136,16 @@ module.exports = function(options) {
   debug.startup('Attaching middleware: Alias Handler');
   app.use(require('./src/middleware/alias')(app.formio.formio));
 
-  // CORS Support
-  debug.startup('Attaching middleware: CORS');
-  var corsMiddleware = require('./src/middleware/corsOptions')(app);
-  var corsRoute = require('cors')(corsMiddleware);
-  app.use(function(req, res, next) {
-    // If headers already sent, skip cors.
-    if (res.headersSent) {
-      return next();
-    }
-    corsRoute(req, res, next);
-  });
-
   debug.startup('Attaching middleware: UUID Request');
   app.use((req, res, next) => {
     // Allow audit uuid from external header.
     req.uuid = req.header('X-Request-UUID');
     if (!req.uuid) {
-      req.uuid = uuid();
+      req.uuid = uuidv4();
     }
     req.startTime = new Date();
 
+    app.formio.formio.audit('REQUEST_START', req, req.method, req.path, JSON.stringify(req.query));
     app.formio.formio.log('Request', req, req.method, req.path, JSON.stringify(req.query));
 
     // Override send function to log event
@@ -167,6 +157,10 @@ module.exports = function(options) {
       }
       app.formio.formio.log('Duration', req, `${duration}ms`);
       app.formio.formio.log('Response Code', req, res.statusCode);
+      if (res.statusCode < 300) {
+        audit(req, res, arguments[0], app.formio.formio.audit);
+      }
+      app.formio.formio.audit('REQUEST_END', req, res.statusCode, `${duration}ms`);
       resend.apply(this, arguments);
     };
 
@@ -188,6 +182,18 @@ module.exports = function(options) {
 
   // Check project status
   app.use(require('./src/middleware/projectUtilization')(app.formio.formio));
+
+  // CORS Support
+  debug.startup('Attaching middleware: CORS');
+  var corsMiddleware = require('./src/middleware/corsOptions')(app);
+  var corsRoute = require('cors')(corsMiddleware);
+  app.use(function(req, res, next) {
+    // If headers already sent, skip cors.
+    if (res.headersSent) {
+      return next();
+    }
+    corsRoute(req, res, next);
+  });
 
   // Handle our API Keys.
   debug.startup('Attaching middleware: API Key Handler');

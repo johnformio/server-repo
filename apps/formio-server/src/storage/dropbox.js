@@ -184,7 +184,7 @@ const middleware = router => {
                 }
               });
               res.setHeader('content-disposition', `filename=${name}`);
-              response.body().then((body) => res.send(body));
+              return response.body.pipe(res);
             }
             else {
               return res.status(400).send('Invalid response.');
@@ -233,6 +233,7 @@ const middleware = router => {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${project.settings.storage.dropbox.access_token}`,
+            'Content-Type': 'application/octet-stream',
             'Dropbox-API-Arg': JSON.stringify({
               path: `/${fileInfo.dir}${fileInfo.name}`,
               mode: 'add',
@@ -240,6 +241,7 @@ const middleware = router => {
               mute: false
             })
           },
+          body: req.file.buffer,
         })
           .then((response) => response.ok ? response.json() : null)
           .then((body) => {

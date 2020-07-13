@@ -115,11 +115,13 @@ module.exports = (formioServer) => async (req, res, next) => {
         }),
       })
         .catch((err) => res.status(400).send(err.message || err))
-        .then((response) => {
+        .then(async (response) => {
           if (response.ok) {
             return response.body.pipe(res);
           }
-          res.send(null);
+          else {
+            return res.status(response.statusCode).send(await response.text());
+          }
         });
     }
     catch (err) {

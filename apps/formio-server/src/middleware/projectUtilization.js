@@ -26,24 +26,26 @@ module.exports = (formio) => async (req, res, next) => {
 
   try {
     let licenseKey = getLicenseKey(req);
+    const licenseInfo = cache.get(projectId);
 
-    if (cache.get(projectId) && _.has(req.primaryProject, 'settings.licenseKey')) {
+    if (licenseInfo && _.has(req.primaryProject, 'settings.licenseKey')) {
       // We are going to evaluate these after going to the next middleware so not to slow down the request. If there is
       // an issue we will clear the cache which will cause the issue to be caught on the next request.
+      req.projectLicense = licenseInfo;
       // eslint-disable-next-line callback-return
       next();
       // Check every 5 minutes in case something changes.
       if (cache.getTtl(projectId) - Date.now() < (CACHE_TIME - 300) * 1000) {
         try {
           const license = await getLicense(formio, licenseKey);
-          await utilization({
+          const result = await utilization({
             ...getProjectContext(req),
             licenseKey,
           });
 
-          // Everything is still good, update the cache ttl.
+          // Everything is still good, update the cache info.
           if (license.data.plan === req.primaryProject.plan) {
-            cache.ttl(projectId, CACHE_TIME);
+            cache.set(projectId, result, CACHE_TIME);
           }
           else {
             // Plan has changed. Re-evaluate on next request.
@@ -115,6 +117,8 @@ module.exports = (formio) => async (req, res, next) => {
       licenseKey,
     });
 
+    req.projectLicense = result;
+
     const plan = _.get(result, 'terms.plan') || 'basic';
 
     // If the plan is not correct, fix it.
@@ -135,7 +139,7 @@ module.exports = (formio) => async (req, res, next) => {
     }
 
     // Cache response for 3 hours.
-    cache.set(projectId, true, CACHE_TIME);
+    cache.set(projectId, result, CACHE_TIME);
 
     return next();
   }

@@ -1,11 +1,12 @@
 /* eslint-env mocha */
 'use strict';
+
 const _ = require('lodash');
 const request = require('supertest');
 const assert = require('assert');
 const docker = process.env.DOCKER;
 
-module.exports = function(app, template, hook) {
+module.exports = (app, template, hook) => {
   if (!docker) {
     describe('Groups', () => {
       let helper = new template.Helper(template.formio.owner);
@@ -16,20 +17,20 @@ module.exports = function(app, template, hook) {
           .user('user', 'user1', {
             data: {
               email: 'user1@example.com',
-              password: '123testing'
-            }
+              password: '123testing',
+            },
           })
           .user('user', 'user2', {
             data: {
               email: 'user2@example.com',
-              password: '123testing'
-            }
+              password: '123testing',
+            },
           })
           .user('user', 'user3', {
             data: {
               email: 'user3@example.com',
-              password: '123testing'
-            }
+              password: '123testing',
+            },
           })
           .form({
             name: 'department',
@@ -38,57 +39,57 @@ module.exports = function(app, template, hook) {
               {
                 type: 'textfield',
                 label: 'Name',
-                key: 'name'
-              }
+                key: 'name',
+              },
             ],
             submissionAccess: [
               {
                 type: 'group',
-                permission: 'write'
-              }
-            ]
+                permission: 'write',
+              },
+            ],
           })
           .submission('department', {
             data: {
-              name: 'HR'
-            }
+              name: 'HR',
+            },
           })
           .submission('department', {
             data: {
-              name: 'IT'
-            }
+              name: 'IT',
+            },
           })
           .submission('department', {
             data: {
-              name: 'Sales'
-            }
+              name: 'Sales',
+            },
           })
           .submission('department', {
             data: {
-              name: 'Support'
-            }
+              name: 'Support',
+            },
           })
           .submission('department', {
             data: {
-              name: 'QA'
-            }
+              name: 'QA',
+            },
           })
           .submission('department', {
             data: {
-              name: 'Marketing'
-            }
+              name: 'Marketing',
+            },
           })
           .resource('departmentuser', [
             {
               type: 'resource',
               key: 'user',
-              resource: 'user'
+              resource: 'user',
             },
             {
               type: 'resource',
               key: 'department',
-              resource: 'department'
-            }
+              resource: 'department',
+            },
           ])
           .action('departmentuser', {
             data: {
@@ -97,31 +98,29 @@ module.exports = function(app, template, hook) {
               title: 'Group Assignment',
               settings: {
                 group: 'department',
-                user: 'user'
+                user: 'user',
               },
               handler: ['after'],
-              method: ['create'],
+              method: ['create', 'update', 'delete'],
               condition: {},
-              submit: true
+              submit: true,
             },
-            state: 'submitted'
+            state: 'submitted',
           })
           .form('departmentreport', [
             {
               type: 'resource',
               key: 'department',
               resource: 'department',
-              defaultPermission: 'admin'
+              defaultPermission: 'admin',
             },
             {
               type: 'textarea',
               key: 'notes',
-              label: 'Notes'
-            }
+              label: 'Notes',
+            },
           ])
-          .execute(function() {
-            done();
-          });
+          .execute(done);
       });
 
       it('Should have added the department id to the write permission access', (done) => {
@@ -132,18 +131,29 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
-            assert.deepEqual(_.find(res.body.access, {
-              type: 'write'
-            }), {
-              type: 'write',
-              resources: [helper.template.submissions.department[0]._id.toString()]
-            });
-            assert(!_.find(res.body.access, {
-              type: 'admin'
-            }), 'Should not find admin access');
-            assert(!_.find(res.body.access, {
-              type: 'read'
-            }), 'Should not find read access');
+
+            assert.deepEqual(
+              _.find(res.body.access, {
+                type: 'write',
+              }),
+              {
+                type: 'write',
+                resources: [helper.template.submissions.department[0]._id.toString()],
+              },
+            );
+            assert(
+              !_.find(res.body.access, {
+                type: 'admin',
+              }),
+              'Should not find admin access',
+            );
+            assert(
+              !_.find(res.body.access, {
+                type: 'read',
+              }),
+              'Should not find read access',
+            );
+
             done();
           });
       });
@@ -153,120 +163,118 @@ module.exports = function(app, template, hook) {
           .submission('departmentuser', {
             data: {
               user: helper.template.users.user1,
-              department: helper.template.submissions.department[0]
-            }
+              department: helper.template.submissions.department[0],
+            },
           })
           .submission('departmentuser', {
             data: {
               user: helper.template.users.user1,
-              department: helper.template.submissions.department[1]
-            }
+              department: helper.template.submissions.department[1],
+            },
           })
           .submission('departmentuser', {
             data: {
               user: helper.template.users.user2,
-              department: helper.template.submissions.department[1]
-            }
+              department: helper.template.submissions.department[1],
+            },
           })
           .submission('departmentuser', {
             data: {
               user: helper.template.users.user2,
-              department: helper.template.submissions.department[2]
-            }
+              department: helper.template.submissions.department[2],
+            },
           })
           .submission('departmentuser', {
             data: {
               user: helper.template.users.user2,
-              department: helper.template.submissions.department[5]
-            }
+              department: helper.template.submissions.department[5],
+            },
           })
           .submission('departmentreport', {
             data: {
               department: helper.template.submissions.department[0],
-              notes: 'This is only for the HR department!'
-            }
+              notes: 'This is only for the HR department!',
+            },
           })
           .submission('departmentreport', {
             data: {
               department: helper.template.submissions.department[1],
-              notes: 'This is only for the IT department!'
-            }
+              notes: 'This is only for the IT department!',
+            },
           })
           .submission('departmentreport', {
             data: {
               department: helper.template.submissions.department[2],
-              notes: 'This is only for the Sales department!'
-            }
+              notes: 'This is only for the Sales department!',
+            },
           })
           .submission('departmentreport', {
             data: {
               department: helper.template.submissions.department[2],
-              notes: 'More content for Sales department!'
-            }
+              notes: 'More content for Sales department!',
+            },
           })
           .submission('departmentreport', {
             data: {
               department: helper.template.submissions.department[2],
-              notes: 'And some more content for Sales department!'
-            }
+              notes: 'And some more content for Sales department!',
+            },
           })
           .submission('departmentreport', {
             data: {
               department: helper.template.submissions.department[1],
-              notes: 'More for the IT department!'
-            }
+              notes: 'More for the IT department!',
+            },
           })
           .submission('departmentreport', {
             data: {
               department: helper.template.submissions.department[1],
-              notes: 'And some more for the IT department!'
-            }
+              notes: 'And some more for the IT department!',
+            },
           })
           .submission('departmentreport', {
             data: {
               department: helper.template.submissions.department[5],
-              notes: 'Marketing content!'
-            }
+              notes: 'Marketing content!',
+            },
           })
           .submission('departmentreport', {
             data: {
               department: helper.template.submissions.department[5],
-              notes: 'More Marketing content!'
-            }
+              notes: 'More Marketing content!',
+            },
           })
           .submission('departmentreport', {
             data: {
               department: helper.template.submissions.department[5],
-              notes: 'And some more Marketing content!'
-            }
+              notes: 'And some more Marketing content!',
+            },
           })
           .submission('departmentreport', {
             data: {
               department: helper.template.submissions.department[5],
-              notes: 'Yet some more Marketing content!'
-            }
+              notes: 'Yet some more Marketing content!',
+            },
           })
           .submission('departmentreport', {
             data: {
               department: helper.template.submissions.department[5],
-              notes: 'Marketing content FTW!'
-            }
+              notes: 'Marketing content FTW!',
+            },
           })
           .submission('departmentreport', {
             data: {
               department: helper.template.submissions.department[1],
-              notes: 'For IT only!'
-            }
+              notes: 'For IT only!',
+            },
           })
           .submission('departmentreport', {
             data: {
               department: helper.template.submissions.department[1],
-              notes: 'Here is some more IT content!'
-            }
+              notes: 'Here is some more IT content!',
+            },
           })
-          .execute(() => {
-            done();
-          });
+          .execute(done);
       });
 
       it('Should have added the department roles to the users.', (done) => {
@@ -277,8 +285,10 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
-            assert(res.body.roles.indexOf(helper.template.submissions.department[0]._id.toString()) !== -1, 'Must have the department id as a role.');
-            assert(res.body.roles.indexOf(helper.template.submissions.department[1]._id.toString()) !== -1, 'Must have the department id as a role.');
+
+            assert(res.body.roles.includes(helper.template.submissions.department[0]._id.toString()), 'Must have the department id as a role.');
+            assert(res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must have the department id as a role.');
+
             done();
           });
       });
@@ -291,8 +301,10 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
-            assert(res.body.roles.indexOf(helper.template.submissions.department[0]._id.toString()) === -1, 'Must have the department id as a role.');
-            assert(res.body.roles.indexOf(helper.template.submissions.department[1]._id.toString()) !== -1, 'Must not have the department id as a role.');
+
+            assert(!res.body.roles.includes(helper.template.submissions.department[0]._id.toString()), 'Must not have the department id as a role.');
+            assert(res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must have the department id as a role.');
+
             done();
           });
       });
@@ -338,6 +350,7 @@ module.exports = function(app, template, hook) {
             }
 
             assert.equal(res.body.data.name, 'IT2');
+
             done();
           });
       });
@@ -356,6 +369,7 @@ module.exports = function(app, template, hook) {
             }
 
             assert.equal(res.body.data.name, 'IT');
+
             done();
           });
       });
@@ -422,7 +436,7 @@ module.exports = function(app, template, hook) {
       it('Should NOT let a user elevate permissions', (done) => {
         const dept1 = _.cloneDeep(helper.template.submissions.department[0]);
         const groupPerm = _.find(dept1.access, {
-          type: 'write'
+          type: 'write',
         });
         groupPerm.type = 'admin';
         groupPerm.resources.push(helper.template.users.user2._id);
@@ -437,14 +451,18 @@ module.exports = function(app, template, hook) {
             }
 
             const writeAccess = _.find(res.body.access, {
-              type: 'write'
+              type: 'write',
             });
             assert(!!writeAccess, 'Should have found a write permission');
             assert.deepEqual(writeAccess.resources, [helper.template.submissions.department[0]._id.toString()]);
-            assert(!_.find(res.body.access, {
-              type: 'admin'
-            }), 'Should NOT have found an admin permission');
+            assert(
+              !_.find(res.body.access, {
+                type: 'admin',
+              }),
+              'Should NOT have found an admin permission',
+            );
             assert.equal(res.body.data.name, 'HR');
+
             done();
           });
       });
@@ -461,6 +479,7 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
+
             done();
           });
       });
@@ -470,8 +489,8 @@ module.exports = function(app, template, hook) {
         deptForm.submissionAccess = [
           {
             type: 'group',
-            permission: 'read'
-          }
+            permission: 'read',
+          },
         ];
         request(app)
           .put(`/project/${helper.template.project._id}/department`)
@@ -482,9 +501,11 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
+
             helper.template.forms.department = res.body;
             assert.equal(res.body.submissionAccess[0].type, 'group');
             assert.equal(res.body.submissionAccess[0].permission, 'read');
+
             done();
           });
       });
@@ -496,28 +517,37 @@ module.exports = function(app, template, hook) {
           .set('x-jwt-token', helper.owner.token)
           .send({
             data: {
-              name: 'Dept A'
-            }
+              name: 'Dept A',
+            },
           })
           .expect(201)
           .end((err, res) => {
             if (err) {
               return done(err);
             }
+
             deptA = res.body;
             const readAccess = _.find(res.body.access, {
-              type: 'read'
+              type: 'read',
             });
+
             assert.deepEqual(readAccess, {
               type: 'read',
-              resources: [res.body._id.toString()]
+              resources: [res.body._id.toString()],
             });
-            assert(!_.find(res.body.access, {
-              type: 'write'
-            }), 'Should not find write access');
-            assert(!_.find(res.body.access, {
-              type: 'admin'
-            }), 'Should not find admin access');
+            assert(
+              !_.find(res.body.access, {
+                type: 'write',
+              }),
+              'Should not find write access',
+            );
+            assert(
+              !_.find(res.body.access, {
+                type: 'admin',
+              }),
+              'Should not find admin access',
+            );
+
             done();
           });
       });
@@ -529,14 +559,15 @@ module.exports = function(app, template, hook) {
           .send({
             data: {
               department: deptA,
-              user: helper.template.users.user3
-            }
+              user: helper.template.users.user3,
+            },
           })
           .expect(201)
           .end((err, res) => {
             if (err) {
               return done(err);
             }
+
             done();
           });
       });
@@ -550,7 +581,9 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
-            assert(res.body.roles.indexOf(deptA._id.toString()) !== -1, 'Should have the deptA dept role');
+
+            assert(res.body.roles.includes(deptA._id.toString()), 'Should have the deptA dept role');
+
             done();
           });
       });
@@ -564,6 +597,7 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
+
             done();
           });
       });
@@ -577,6 +611,7 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
+
             done();
           });
       });
@@ -590,6 +625,7 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
+
             done();
           });
       });
@@ -605,7 +641,9 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
+
             deptA.data.name = 'deptA';
+
             done();
           });
       });
@@ -621,7 +659,9 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
+
             deptA.data.name = 'deptA';
+
             done();
           });
       });
@@ -635,6 +675,7 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
+
             done();
           });
       });
@@ -648,6 +689,7 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
+
             done();
           });
       });
@@ -657,8 +699,8 @@ module.exports = function(app, template, hook) {
         deptForm.submissionAccess = [
           {
             type: 'group',
-            permission: 'admin'
-          }
+            permission: 'admin',
+          },
         ];
         request(app)
           .put(`/project/${helper.template.project._id}/department`)
@@ -669,9 +711,11 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
+
             helper.template.forms.department = res.body;
             assert.equal(res.body.submissionAccess[0].type, 'group');
             assert.equal(res.body.submissionAccess[0].permission, 'admin');
+
             done();
           });
       });
@@ -683,28 +727,37 @@ module.exports = function(app, template, hook) {
           .set('x-jwt-token', helper.owner.token)
           .send({
             data: {
-              name: 'Dept B'
-            }
+              name: 'Dept B',
+            },
           })
           .expect(201)
           .end((err, res) => {
             if (err) {
               return done(err);
             }
+
             deptB = res.body;
             const access = _.find(res.body.access, {
-              type: 'admin'
+              type: 'admin',
             });
+
             assert.deepEqual(access, {
               type: 'admin',
-              resources: [res.body._id.toString()]
+              resources: [res.body._id.toString()],
             });
-            assert(!_.find(res.body.access, {
-              type: 'read'
-            }), 'Should not find read access');
-            assert(!_.find(res.body.access, {
-              type: 'write'
-            }), 'Should not find write access');
+            assert(
+              !_.find(res.body.access, {
+                type: 'read'
+              }),
+              'Should not find read access',
+            );
+            assert(
+              !_.find(res.body.access, {
+                type: 'write'
+              }),
+              'Should not find write access',
+            );
+
             done();
           });
       });
@@ -716,14 +769,15 @@ module.exports = function(app, template, hook) {
           .send({
             data: {
               department: deptB,
-              user: helper.template.users.user3
-            }
+              user: helper.template.users.user3,
+            },
           })
           .expect(201)
           .end((err, res) => {
             if (err) {
               return done(err);
             }
+
             done();
           });
       });
@@ -737,13 +791,15 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
-            assert(res.body.roles.indexOf(deptA._id.toString()) !== -1, 'Should have the deptA dept role');
-            assert(res.body.roles.indexOf(deptB._id.toString()) !== -1, 'Should also have the qa dept role');
+
+            assert(res.body.roles.includes(deptA._id.toString()), 'Should have the deptA dept role');
+            assert(res.body.roles.includes(deptB._id.toString()), 'Should have the deptB dept role');
+
             done();
           });
       });
 
-      it('Should allow user3 access to read the QA department.', (done) => {
+      it('Should allow user3 access to read the deptB department.', (done) => {
         request(app)
           .get(`/project/${helper.template.project._id}/department/submission/${deptB._id.toString()}`)
           .set('x-jwt-token', helper.template.users.user3.token)
@@ -752,11 +808,12 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
+
             done();
           });
       });
 
-      it('Should NOT allow user1 access to read the QA department.', (done) => {
+      it('Should NOT allow user1 access to read the deptB department.', (done) => {
         request(app)
           .get(`/project/${helper.template.project._id}/department/submission/${deptB._id.toString()}`)
           .set('x-jwt-token', helper.template.users.user1.token)
@@ -765,11 +822,12 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
+
             done();
           });
       });
 
-      it('Should NOT allow user2 access to read the QA department.', (done) => {
+      it('Should NOT allow user2 access to read the deptB department.', (done) => {
         request(app)
           .get(`/project/${helper.template.project._id}/department/submission/${deptB._id.toString()}`)
           .set('x-jwt-token', helper.template.users.user2.token)
@@ -778,11 +836,12 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
+
             done();
           });
       });
 
-      it('Should allow user3 access to update the QA department.', (done) => {
+      it('Should allow user3 access to update the deptB department.', (done) => {
         deptB.data.name = 'Dept B1';
         request(app)
           .put(`/project/${helper.template.project._id}/department/submission/${deptB._id.toString()}`)
@@ -793,12 +852,14 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
+
             assert.equal(res.body.data.name, 'Dept B1');
+
             done();
           });
       });
 
-      it('Should NOT allow user1 access to update the deptA department.', (done) => {
+      it('Should NOT allow user1 access to update the deptB department.', (done) => {
         deptB.data.name = 'Dept B';
         request(app)
           .put(`/project/${helper.template.project._id}/department/submission/${deptB._id.toString()}`)
@@ -809,7 +870,9 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
-            deptB.data.name = 'Dept B';
+
+            deptB.data.name = 'Dept B1';
+
             done();
           });
       });
@@ -823,6 +886,7 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
+
             done();
           });
       });
@@ -836,6 +900,7 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
+
             done();
           });
       });
@@ -848,9 +913,11 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
+
             assert.equal(res.body.access.length, 1);
             assert.equal(res.body.access[0].resources.length, 1);
             assert.equal(res.body.access[0].resources[0], helper.template.submissions.department[0]._id);
+
             done();
           });
       });
@@ -863,25 +930,28 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
+
             assert.equal(res.body.access.length, 1);
             assert.equal(res.body.access[0].resources.length, 1);
             assert.equal(res.body.access[0].resources[0], helper.template.submissions.department[1]._id);
+
             done();
           });
       });
 
       it('Should allow user1 to see the reports from both departments.', (done) => {
         request(app)
-          .get('/project/' + helper.template.project._id + '/departmentreport/submission?sort=-created')
+          .get(`/project/${helper.template.project._id}/departmentreport/submission?sort=-created`)
           .set('x-jwt-token', helper.template.users.user1.token)
           .expect('Content-Type', /json/)
           .expect(200)
-          .end(function(err, res) {
+          .end((err, res) => {
             if (err) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
+
             assert.equal(response.length, 6);
             assert.equal(response[0].data.notes, 'Here is some more IT content!');
             assert.equal(response[1].data.notes, 'For IT only!');
@@ -890,22 +960,24 @@ module.exports = function(app, template, hook) {
             assert.equal(response[4].data.notes, 'This is only for the IT department!');
             assert.equal(response[5].data.notes, 'This is only for the HR department!');
             helper.template.users.user1.token = res.headers['x-jwt-token'];
+
             done();
           });
       });
 
       it('Should allow user2 to see the reports from their departments.', (done) => {
         request(app)
-          .get('/project/' + helper.template.project._id + '/departmentreport/submission?sort=-created')
+          .get(`/project/${helper.template.project._id}/departmentreport/submission?sort=-created`)
           .set('x-jwt-token', helper.template.users.user2.token)
           .expect('Content-Type', /json/)
           .expect(206)
-          .end(function(err, res) {
+          .end((err, res) => {
             if (err) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
+
             assert.equal(response.length, 10);
             assert.equal(res.headers['content-range'], '0-9/13');
             assert.equal(response[0].data.notes, 'Here is some more IT content!');
@@ -918,77 +990,84 @@ module.exports = function(app, template, hook) {
             assert.equal(response[7].data.notes, 'And some more for the IT department!');
             assert.equal(response[8].data.notes, 'More for the IT department!');
             assert.equal(response[9].data.notes, 'And some more content for Sales department!');
-            helper.template.users.user1.token = res.headers['x-jwt-token'];
+            helper.template.users.user2.token = res.headers['x-jwt-token'];
+
             done();
           });
       });
 
       it('Should allow user2 to see the reports from their departments and skip a few.', (done) => {
         request(app)
-          .get('/project/' + helper.template.project._id + '/departmentreport/submission?sort=-created&skip=10')
+          .get(`/project/${helper.template.project._id}/departmentreport/submission?sort=-created&skip=10`)
           .set('x-jwt-token', helper.template.users.user2.token)
           .expect('Content-Type', /json/)
           .expect(206)
-          .end(function(err, res) {
+          .end((err, res) => {
             if (err) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
+
             assert.equal(response.length, 3);
             assert.equal(res.headers['content-range'], '10-12/13');
             assert.equal(response[0].data.notes, 'More content for Sales department!');
             assert.equal(response[1].data.notes, 'This is only for the Sales department!');
             assert.equal(response[2].data.notes, 'This is only for the IT department!');
-            helper.template.users.user1.token = res.headers['x-jwt-token'];
+            helper.template.users.user2.token = res.headers['x-jwt-token'];
+
             done();
           });
       });
 
       it('Should allow user2 to see the reports from their departments and limit the results and change sorts.', (done) => {
         request(app)
-          .get('/project/' + helper.template.project._id + '/departmentreport/submission?sort=created&limit=5')
+          .get(`/project/${helper.template.project._id}/departmentreport/submission?sort=-created&limit=5`)
           .set('x-jwt-token', helper.template.users.user2.token)
           .expect('Content-Type', /json/)
           .expect(206)
-          .end(function(err, res) {
+          .end((err, res) => {
             if (err) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
+
             assert.equal(response.length, 5);
             assert.equal(res.headers['content-range'], '0-4/13');
-            assert.equal(response[0].data.notes, 'This is only for the IT department!');
-            assert.equal(response[1].data.notes, 'This is only for the Sales department!');
-            assert.equal(response[2].data.notes, 'More content for Sales department!');
-            assert.equal(response[3].data.notes, 'And some more content for Sales department!');
-            assert.equal(response[4].data.notes, 'More for the IT department!');
-            helper.template.users.user1.token = res.headers['x-jwt-token'];
+            assert.equal(response[0].data.notes, 'Here is some more IT content!');
+            assert.equal(response[1].data.notes, 'For IT only!');
+            assert.equal(response[2].data.notes, 'Marketing content FTW!');
+            assert.equal(response[3].data.notes, 'Yet some more Marketing content!');
+            assert.equal(response[4].data.notes, 'And some more Marketing content!');
+            helper.template.users.user2.token = res.headers['x-jwt-token'];
+
             done();
           });
       });
 
       it('Should allow user2 to see the reports from their departments and limit the results and change sort and skip.', (done) => {
         request(app)
-          .get('/project/' + helper.template.project._id + '/departmentreport/submission?sort=created&limit=5&skip=5')
+          .get(`/project/${helper.template.project._id}/departmentreport/submission?sort=-created&limit=5&skip=5`)
           .set('x-jwt-token', helper.template.users.user2.token)
           .expect('Content-Type', /json/)
           .expect(206)
-          .end(function(err, res) {
+          .end((err, res) => {
             if (err) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
+
             assert.equal(response.length, 5);
             assert.equal(res.headers['content-range'], '5-9/13');
-            assert.equal(response[0].data.notes, 'And some more for the IT department!');
+            assert.equal(response[0].data.notes, 'More Marketing content!');
             assert.equal(response[1].data.notes, 'Marketing content!');
-            assert.equal(response[2].data.notes, 'More Marketing content!');
-            assert.equal(response[3].data.notes, 'And some more Marketing content!');
-            assert.equal(response[4].data.notes, 'Yet some more Marketing content!');
-            helper.template.users.user1.token = res.headers['x-jwt-token'];
+            assert.equal(response[2].data.notes, 'And some more for the IT department!');
+            assert.equal(response[3].data.notes, 'More for the IT department!');
+            assert.equal(response[4].data.notes, 'And some more content for Sales department!');
+            helper.template.users.user2.token = res.headers['x-jwt-token'];
+
             done();
           });
       });
@@ -1069,6 +1148,457 @@ module.exports = function(app, template, hook) {
             helper.template.users.user1.token = res.headers['x-jwt-token'];
             done();
           });
+      });
+    });
+
+    describe('Self assigned user group actions', () => {
+      const createHelper = (done, multipleGroups = false) => {
+        const helper = new template.Helper(template.formio.owner);
+        helper.project().plan('trial')
+          .form({
+            name: 'department',
+            type: 'resource',
+            components: [
+              {
+                type: 'textfield',
+                label: 'Name',
+                key: 'name',
+              },
+            ],
+            submissionAccess: [
+              {
+                type: 'group',
+                permission: 'write',
+              },
+            ],
+          })
+          .submission('department', {
+            data: {
+              name: 'HR',
+            },
+          })
+          .submission('department', {
+            data: {
+              name: 'IT',
+            },
+          })
+          .form({
+            name: 'user2',
+            type: 'resource',
+            components: [
+              {
+                type: 'textfield',
+                label: 'Username',
+                key: 'username',
+              },
+              {
+                type: 'select',
+                key: 'department',
+                dataSrc: 'resource',
+                multiple: multipleGroups,
+                data: {
+                  resource: helper.template.forms.department,
+                },
+              },
+            ]
+          })
+          .action('user2', {
+            data: {
+              priority: 5,
+              name: 'group',
+              title: 'Group Assignment',
+              settings: {
+                group: 'department',
+                user: '',
+              },
+              handler: ['after'],
+              method: ['create', 'update', 'delete'],
+              condition: {},
+              submit: true,
+            },
+            state: 'submitted',
+          })
+          .execute(() => done(helper));
+      };
+
+      const requestUserRoles = (helper, userId, callback) => {
+        request(app)
+          .get(`/project/${helper.template.project._id}/user2/submission/${userId}`)
+          .set('x-jwt-token', helper.owner.token)
+          .end((err, res) => {
+            callback(err, res);
+          });
+      };
+
+      describe('Single Group', () => {
+        let helper;
+
+        it('Should create all of the forms and resources needed', (done) => {
+          createHelper((h) => {
+            helper = h;
+            done();
+          });
+        });
+
+        it('Should assign user to group', (done) => {
+          helper.submission('user2', {
+            data: {
+              username: 'user1',
+              department: helper.template.submissions.department[0],
+            },
+          }).execute(done);
+        });
+
+        it('Should have added the department roles to the user.', (done) => {
+          requestUserRoles(helper, helper.template.submissions.user2[0]._id, (err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            assert(!res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must not have the department id as a role.');
+            assert(res.body.roles.includes(helper.template.submissions.department[0]._id.toString()), 'Must have the department id as a role.');
+
+            done();
+          });
+        });
+
+        it('Should have updated the department roles to the user', (done) => {
+          helper.submission('user2', {
+            _id: helper.template.submissions.user2[0]._id,
+            form: helper.template.forms.user2._id,
+            data: {
+              username: helper.template.submissions.user2[0].username,
+              department: helper.template.submissions.department[1],
+            },
+          }).execute(() => {
+            requestUserRoles(helper, helper.template.submissions.user2[0]._id, (err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              assert(!res.body.roles.includes(helper.template.submissions.department[0]._id.toString()), 'Must not have the department id as a role.');
+              assert(res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must have the department id as a role.');
+
+              done();
+            });
+          });
+        });
+      });
+
+      describe('Multiple Groups', () => {
+        let helper;
+
+        it('Should create all of the forms and resources needed', (done) => {
+          createHelper((h) => {
+            helper = h;
+            done();
+          }, true);
+        });
+
+        it('Should assign user to group', (done) => {
+          helper.submission('user2', {
+            data: {
+              username: 'user1',
+              department: [helper.template.submissions.department[0]],
+            },
+          }).execute(done);
+        });
+
+        it('Should have added the department roles to the user.', (done) => {
+          requestUserRoles(helper, helper.template.submissions.user2[0]._id, (err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            assert(!res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must not have the department id as a role.');
+            assert(res.body.roles.includes(helper.template.submissions.department[0]._id.toString()), 'Must have the department id as a role.');
+
+            done();
+          });
+        });
+
+        it('Should have updated the department roles to the user', (done) => {
+          helper.submission('user2', {
+            _id: helper.template.submissions.user2[0]._id,
+            form: helper.template.forms.user2._id,
+            data: {
+              username: helper.template.submissions.user2[0].username,
+              department: [helper.template.submissions.department[0], helper.template.submissions.department[1]],
+            },
+          }).execute(() => {
+            requestUserRoles(helper, helper.template.submissions.user2[0]._id, (err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              assert(res.body.roles.includes(helper.template.submissions.department[0]._id.toString()), 'Must have the department id as a role.');
+              assert(res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must have the department id as a role.');
+
+              done();
+            });
+          });
+        });
+
+        it('Should have not the department roles to the user', (done) => {
+          helper.submission('user2', {
+            _id: helper.template.submissions.user2[0]._id,
+            form: helper.template.forms.user2._id,
+            data: {
+              username: helper.template.submissions.user2[0].username,
+              department: [],
+            },
+          }).execute(() => {
+            requestUserRoles(helper, helper.template.submissions.user2[0]._id, (err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              assert(!res.body.roles.includes(helper.template.submissions.department[0]._id.toString()), 'Must not have the department id as a role.');
+              assert(!res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must not have the department id as a role.');
+
+              done();
+            });
+          });
+        });
+      });
+    });
+
+    describe('User Groups actions', () => {
+      const createHelper = (done, multipleGroups = false) => {
+        const helper = new template.Helper(template.formio.owner);
+        helper.project().plan('trial')
+          .user('user', 'user1', {
+            data: {
+              email: 'user1@example.com',
+              password: '123testing',
+            },
+          })
+          .form({
+            name: 'department',
+            type: 'resource',
+            components: [
+              {
+                type: 'textfield',
+                label: 'Name',
+                key: 'name',
+              },
+            ],
+            submissionAccess: [
+              {
+                type: 'group',
+                permission: 'write',
+              },
+            ],
+          })
+          .submission('department', {
+            data: {
+              name: 'HR',
+            },
+          })
+          .submission('department', {
+            data: {
+              name: 'IT',
+            },
+          })
+          .resource('departmentuser', [
+            {
+              type: 'select',
+              key: 'user',
+              dataSrc: 'resource',
+              data: {
+                resource: helper.template.forms.user,
+              },
+            },
+            {
+              type: 'select',
+              key: 'department',
+              dataSrc: 'resource',
+              multiple: multipleGroups,
+              data: {
+                resource: helper.template.forms.department,
+              },
+            },
+          ])
+          .action('departmentuser', {
+            data: {
+              priority: 5,
+              name: 'group',
+              title: 'Group Assignment',
+              settings: {
+                group: 'department',
+                user: 'user',
+              },
+              handler: ['after'],
+              method: ['create', 'update', 'delete'],
+              condition: {},
+              submit: true,
+            },
+            state: 'submitted',
+          })
+          .execute(() => done(helper));
+      };
+
+      const requestUserRoles = (helper, callback) => {
+        request(app)
+          .get(`/project/${helper.template.project._id}/user/submission/${helper.template.users.user1._id}`)
+          .set('x-jwt-token', helper.owner.token)
+          .end((err, res) => {
+            callback(err, res);
+          });
+      };
+
+      describe('Single Group', () => {
+        let helper;
+
+        it('Should create all of the forms and resources needed', (done) => {
+          createHelper((h) => {
+            helper = h;
+            done();
+          });
+        });
+
+        it('Should assign user to group', (done) => {
+          helper.submission('departmentuser', {
+            data: {
+              user: helper.template.users.user1,
+              department: helper.template.submissions.department[0],
+            },
+          }).execute(done);
+        });
+
+        it('Should have added the department roles to the user.', (done) => {
+          requestUserRoles(helper, (err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            assert(!res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must not have the department id as a role.');
+            assert(res.body.roles.includes(helper.template.submissions.department[0]._id.toString()), 'Must have the department id as a role.');
+
+            done();
+          });
+        });
+
+        it('Should have updated the department roles to the user', (done) => {
+          helper.submission('departmentuser', {
+            _id: helper.template.submissions.departmentuser[0]._id,
+            form: helper.template.forms.departmentuser._id,
+            data: {
+              user: helper.template.users.user1,
+              department: helper.template.submissions.department[1],
+            },
+          }).execute(() => {
+            requestUserRoles(helper, (err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              assert(!res.body.roles.includes(helper.template.submissions.department[0]._id.toString()), 'Must not have the department id as a role.');
+              assert(res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must have the department id as a role.');
+
+              done();
+            });
+          });
+        });
+
+        it('Should not have deleted the department roles to the user', (done) => {
+          helper.deleteSubmission({
+            _id: helper.template.submissions.departmentuser[0]._id,
+            form: helper.template.forms.departmentuser._id,
+          }, helper.template.owner, (err) => {
+            if (err) {
+              return done(err);
+            }
+
+            requestUserRoles(helper, (err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              assert(!res.body.roles.includes(helper.template.submissions.department[0]._id.toString()), 'Must not have the department id as a role.');
+              assert(!res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must not have the department id as a role.');
+
+              done();
+            });
+          });
+        });
+      });
+
+      describe('Multiple Groups', () => {
+        let helper;
+
+        it('Should create all of the forms and resources needed', (done) => {
+          createHelper((h) => {
+            helper = h;
+            done();
+          }, true);
+        });
+
+        it('Should assign user to group', (done) => {
+          helper.submission('departmentuser', {
+            data: {
+              user: helper.template.users.user1,
+              department: [helper.template.submissions.department[0], helper.template.submissions.department[1]],
+            },
+          }).execute(done);
+        });
+
+        it('Should have added the department roles to the user.', (done) => {
+          requestUserRoles(helper, (err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            assert(res.body.roles.includes(helper.template.submissions.department[0]._id.toString()), 'Must have the department id as a role.');
+            assert(res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must have the department id as a role.');
+
+            done();
+          });
+        });
+
+        it('Should have updated the department roles to the user', (done) => {
+          helper.submission('departmentuser', {
+            _id: helper.template.submissions.departmentuser[0]._id,
+            form: helper.template.forms.departmentuser._id,
+            data: {
+              user: helper.template.users.user1,
+              department: [helper.template.submissions.department[1]],
+            },
+          }).execute(() => {
+            requestUserRoles(helper, (err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              assert(!res.body.roles.includes(helper.template.submissions.department[0]._id.toString()), 'Must not have the department id as a role.');
+              assert(res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must have the department id as a role.');
+
+              done();
+            });
+          });
+        });
+
+        it('Should not have deleted the department roles to the user', (done) => {
+          helper.deleteSubmission({
+            _id: helper.template.submissions.departmentuser[0]._id,
+            form: helper.template.forms.departmentuser._id,
+          }, helper.template.owner, (err) => {
+            if (err) {
+              return done(err);
+            }
+
+            requestUserRoles(helper, (err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              assert(!res.body.roles.includes(helper.template.submissions.department[0]._id.toString()), 'Must not have the department id as a role.');
+              assert(!res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must not have the department id as a role.');
+
+              done();
+            });
+          });
+        });
       });
     });
   }

@@ -11,6 +11,7 @@ const vm = require('vm');
 
 module.exports = function(app) {
   const formioServer = app.formio;
+  const audit = formioServer.formio.audit;
 
   // Add the encrypt handler.
   const encrypt = require('../util/encrypt')(formioServer);
@@ -84,6 +85,19 @@ module.exports = function(app) {
         log(req.uuid, req.projectId || 'NoProject', event, ...args);
 
         return false;
+      },
+      audit(args, event, req) {
+        if (!app.formio.formio.config.audit || !_.get(app, 'license.terms.options.sac', false)) {
+          return false;
+        }
+        args.unshift(new Date());
+        args.splice(1, 0, event);
+        args.splice(2, 0, req.uuid);
+        args.splice(3, 0, req.projectId || 'NoProject');
+        args.splice(4, 0, req.session ? req.session._id : 'NoSession');
+        args.splice(5, 0, req.userId || (req.user ? req.user._id : 'NoUser'));
+
+        return args;
       },
 
       export(req, query, form, exporter, cb) {
@@ -348,6 +362,8 @@ module.exports = function(app) {
           .catch(cb)
           .then((session) => {
             req.session = session.toObject();
+            req.user = user;
+            audit('AUTH_LOGIN', req);
             cb();
           });
       },
@@ -392,6 +408,8 @@ module.exports = function(app) {
         if (!userId) {
           return cb(new Error('No user found.'));
         }
+
+        audit('AUTH_PASSWORD', req);
 
         req.skipTokensInvalidation = true;
 
