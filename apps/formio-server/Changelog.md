@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.10.7
+### Changed
+ - Upgrade formio to 1.90.5 to fix mongo ssl connections.
+
 ## 6.10.6
 ### Changed 
  - Upgrade formio to 1.90.2 to fix email crash on large emails.
