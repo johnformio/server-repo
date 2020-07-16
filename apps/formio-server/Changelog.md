@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.10.8-rc.1
 ## 6.10.7-rc.2
 ### Changed 
  - Upgrade portal@7.0.38-rc.2
@@ -13,6 +14,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed 
  - Upgrade portal@7.0.38-rc.1
  - Upgrade formiojs@4.11.1-rc.1
+
+## 6.10.7
+### Changed
+ - Upgrade formio to 1.90.5 to fix mongo ssl connections.
 
 ## 6.10.6
 ### Changed 
