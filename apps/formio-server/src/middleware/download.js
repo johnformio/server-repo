@@ -107,7 +107,7 @@ module.exports = (formioServer) => async (req, res, next) => {
     try {
       fetch(url, {
         method: 'POST',
-        qs: req.query,
+        qs: {...req.query, project: req.params.projectId},
         headers: headers,
         body: JSON.stringify({
           form,
