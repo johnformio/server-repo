@@ -102,7 +102,7 @@ module.exports = (formioServer) => async (req, res, next) => {
       request({
         method: 'POST',
         url: url,
-        qs: req.query,
+        qs: {...req.query, project: req.params.projectId},
         headers: headers,
         json: true,
         rejectUnauthorized: false,
