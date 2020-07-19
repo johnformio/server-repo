@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 6.10.8-rc.2
+### Changed
+ - Upgrade portal@7.0.38-rc.4
+ - Upgrade formiojs@4.11.1-rc.5
+
+### Fixed
+ - Passing project to pdf server to solve image displays.
+
 ## 6.10.8-rc.1
 ## 6.10.7-rc.2
 ### Changed 
