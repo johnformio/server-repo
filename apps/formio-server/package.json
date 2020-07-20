@@ -43,7 +43,7 @@
     "formio": "^2.0.0-rc.7",
     "formio-services": "formio/formio-services#v2.0.2",
     "formio-workers": "^1.14.8",
-    "formiojs": "^4.10.5",
+    "formiojs": "^4.11.1-rc.6",
     "helmet": "^3.23.3",
     "is-url": "^1.2.4",
     "jira-connector": "^3.0.2",
