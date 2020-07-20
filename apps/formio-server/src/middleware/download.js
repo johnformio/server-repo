@@ -120,7 +120,7 @@ module.exports = (formioServer) => async (req, res, next) => {
             return response.body.pipe(res);
           }
           else {
-            return res.status(response.statusCode).send(await response.text());
+            return res.status(response.status).send(await response.text());
           }
         });
     }

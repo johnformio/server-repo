@@ -12,6 +12,10 @@ module.exports = app => (mail, req, res, params, cb) => {
 
   // Check the Project plan.
   const checkPlan = async () => {
+    // Allow emails for formio project.
+    if (req.currentProject && req.currentProject.name === 'formio') {
+      return;
+    }
     let form = params.form;
     if (typeof params.form === 'string') {
       form = await new Promise((resolve, reject) => {
@@ -244,5 +248,5 @@ module.exports = app => (mail, req, res, params, cb) => {
     .then(attachPDF)
     .then(replaceSSOTokens)
     .then(mail => cb(null, mail))
-    .catch(cb);
+    .catch(err => cb(err));
 };
