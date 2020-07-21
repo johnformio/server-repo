@@ -1,10 +1,13 @@
 'use strict';
-const request = require('request');
+const fetch = require('formio/src/util/fetch');
 const {promisify} = require('util');
-const FORMIO_FILES_SERVER = process.env.FORMIO_FILES_SERVER || 'https://files.form.io';
+const PDF_SERVER = process.env.PDF_SERVER || process.env.FORMIO_FILES_SERVER || 'https://files.form.io';
 const _ = require('lodash');
 const Promise = require('bluebird');
 const fs = require('fs');
+const {getLicenseKey} = require('../util/utilization');
+const debug = require('debug')('formio:pdf:upload');
+const FormData = require('form-data');
 
 const unlinkAsync = promisify(fs.unlink);
 
@@ -18,22 +21,24 @@ const tryUnlinkAsync = async filepath => {
 };
 
 module.exports = (formioServer) => async (req, res, next) => {
+  debug('Starting pdf upload');
   const formio = formioServer.formio;
   Promise.promisifyAll(formio.cache, {context: formio.cache});
 
   try {
     // Load project
-    const project = await formio.cache.loadPrimaryProjectAsync(req);
+    const project = req.primaryProject;
 
     // Set the files server
-    let filesServer = FORMIO_FILES_SERVER;
+    let filesServer = PDF_SERVER;
     if (process.env.FORMIO_HOSTED && project.settings.pdfserver) {
       // Allow them to download from any server if it is set to the default
       filesServer = project.settings.pdfserver;
     }
+    debug(`FileServer: ${filesServer}`);
 
     // Create the headers object
-    const headers = {'x-file-token': project.settings.filetoken};
+    const headers = {'x-license-key': getLicenseKey(req)};
 
     // Pass along the auth token to files server
     if (req.token) {
@@ -48,45 +53,55 @@ module.exports = (formioServer) => async (req, res, next) => {
         headers['x-jwt-token'] = formio.auth.getToken(_.omit(req.token, 'allow'));
       }
     }
+    debug(`LicenseKey: ${headers['x-license-key']}`);
     const pdfProject = project._id.toString();
+    debug(`pdfProject: ${pdfProject}`);
 
-    if (!req.files.file) {
+    if (!req.files || !req.files.file) {
+      debug('Missing File');
       return res.status(400).send('Missing file');
     }
 
     try {
-      request({
-        method: 'POST',
-        url: `${filesServer}/pdf/${pdfProject}/file`,
-        headers: headers,
-        rejectUnauthorized: false,
-        formData: {
-          file: {
-            value: fs.createReadStream(req.files.file.path),
-            options: {
-              filename: req.files.file.name,
-              contentType: req.files.file.type,
-              size: req.files.file.size,
-            }
-          }
-        }
-      }, async (err, response) => {
-        await tryUnlinkAsync(req.files.file.path);
-        if (err) {
-          return res.status(400).send(err.message);
-        }
-
-        const body = JSON.parse(response.body);
-        body.filesServer = filesServer;
-        res.status(201).send(body);
+      debug('POST: ' + `${filesServer}/pdf/${pdfProject}/file`);
+      debug(`Filepath: ${  req.files.file.path}`);
+      const form = new FormData();
+      form.append('file', fs.createReadStream(req.files.file.path), {
+        filename: req.files.file.name,
+        contentType: req.files.file.type,
+        size: req.files.file.size,
       });
+      fetch(`${filesServer}/pdf/${pdfProject}/file`, {
+        method: 'POST',
+        headers: headers,
+        body: form,
+      })
+        .catch(async (err) => {
+          debug('unlinked file');
+          debug('Err1', err);
+          await tryUnlinkAsync(req.files.file.path);
+          res.status(400).send(err.message || err);
+          throw err;
+        })
+        .then(async (response) => {
+          if (response.ok) {
+            const body = await response.json();
+            body.filesServer = filesServer;
+            return res.status(201).send(body);
+          }
+          else {
+            return res.status(response.status).send(await response.text());
+          }
+        });
     }
     catch (err) {
+      debug('Err2', err);
       await tryUnlinkAsync(req.files.file.path);
       res.status(400).send(err.message);
     }
   }
   catch (err) {
+    debug('Err3', err);
     await tryUnlinkAsync(req.files.file.path);
     return next(err);
   }

@@ -11,6 +11,7 @@ const vm = require('vm');
 
 module.exports = function(app) {
   const formioServer = app.formio;
+  const audit = formioServer.formio.audit;
 
   // Add the encrypt handler.
   const encrypt = require('../util/encrypt')(formioServer);
@@ -20,9 +21,6 @@ module.exports = function(app) {
 
   // Attach the teams to formioServer.
   formioServer.formio.teams = require('../teams/index')(app, formioServer);
-
-  // Mount the analytics API at both the root and project endpoints.
-  app.use(require('../analytics')(formioServer));
 
   // Handle Payeezy form signing requests and project upgrades
   app.formio.formio.payment = require('../payment/payment')(app, app.formio.formio);
@@ -54,7 +52,6 @@ module.exports = function(app) {
       init: require('./on/init')(app),
       formRequest: require('./on/formRequest')(app),
       validateEmail: require('./on/validateEmail')(app),
-      email: require('./on/email')(app)
     },
     alter: {
       formio: require('./alter/formio')(app),
@@ -89,6 +86,19 @@ module.exports = function(app) {
 
         return false;
       },
+      audit(args, event, req) {
+        if (!app.formio.formio.config.audit || !_.get(app, 'license.terms.options.sac', false)) {
+          return false;
+        }
+        args.unshift(new Date());
+        args.splice(1, 0, event);
+        args.splice(2, 0, req.uuid);
+        args.splice(3, 0, req.projectId || 'NoProject');
+        args.splice(4, 0, req.session ? req.session._id : 'NoSession');
+        args.splice(5, 0, req.userId || (req.user ? req.user._id : 'NoUser'));
+
+        return args;
+      },
 
       export(req, query, form, exporter, cb) {
         util.getSubmissionModel(formioServer.formio, req, form, true, (err, submissionModel) => {
@@ -115,11 +125,7 @@ module.exports = function(app) {
         const premium = [
           'webhook',
           'oauth',
-          'office365contact',
-          'office365calendar',
-          'hubspotContact',
           'googlesheet',
-          'jira',
           'ldap',
           'sqlconnector',
         ];
@@ -185,7 +191,7 @@ module.exports = function(app) {
           return true;
         }
         const premium = [
-          'webhook', 'oauth', 'office365contact', 'office365calendar', 'hubspotContact', 'googlesheet', 'jira', 'ldap'
+          'webhook', 'oauth', 'googlesheet', 'ldap'
         ];
 
         // If the action does not have a name, or is not flagged as being premium, ignore it.
@@ -201,16 +207,6 @@ module.exports = function(app) {
 
       emailTransports(transports, settings, req, cb) {
         settings = settings || {};
-        const office365 = settings.office365 || {};
-        if (office365.tenant && office365.clientId && office365.email && office365.cert && office365.thumbprint) {
-          transports.push(
-            {
-              transport: 'outlook',
-              title: 'Outlook'
-            }
-          );
-        }
-
         // Limit basic and independent
         if (req && req.primaryProject) {
           if (req.primaryProject.plan === 'basic') {
@@ -275,17 +271,53 @@ module.exports = function(app) {
        * @returns {Object}
        *   The modified token.
        */
-      token(token, form) {
-        token.origin = formioServer.formio.config.apiHost;
-        token.form.project = form.project;
-        token.project = {
-          _id: form.project
-        };
+      token(token, form, req) {
+        // See https://tools.ietf.org/html/rfc7519
+        token.iss = formioServer.formio.config.apiHost;
+        token.sub = token.user._id;
+        token.jti = req.session._id;
+
+        // form and project are now stored in session so no longer need to include it in the token.
+        delete token.form;
+        delete token.project;
+
         return token;
       },
 
       /**
-       * Modify the temp token to add a redis id to it.
+       * Token has just been decoded, make sure all the correct data is there.
+       *
+       * @param content
+       * @param req
+       * @param cb
+       */
+      tokenDecode(token, req, cb) {
+        if (!token.jti) {
+          return cb(null, token);
+        }
+        return formioServer.formio.mongoose.models.session.findById(token.jti)
+          .then((session) => {
+            if (!session) {
+              return cb(null, token);
+            }
+
+            req.session = session.toObject();
+
+            cb(null, {
+              ...token,
+              form: {
+                _id: req.session.form.toString(),
+                project: req.session.project.toString(),
+              },
+              project: {
+                _id: req.session.project.toString(),
+              },
+            });
+          });
+      },
+
+      /**
+       * Modify the temp token to add a token id to it.
        *
        * @param req
        * @param res
@@ -308,6 +340,89 @@ module.exports = function(app) {
 
           return cb();
         });
+      },
+
+      /**
+       * Called when the user is logged in.
+       *
+       * @param user
+       * @param req
+       * @param cb
+       * @returns {*}
+       */
+      login(user, req, cb) {
+        const sessionModel = formioServer.formio.mongoose.models.session;
+
+        sessionModel.create({
+          project: user.project._id,
+          form: user.form._id,
+          submission: user._id,
+          source: 'login',
+        })
+          .catch(cb)
+          .then((session) => {
+            req.session = session.toObject();
+            req.user = user;
+            audit('AUTH_LOGIN', req);
+            cb();
+          });
+      },
+
+      /**
+       * See if a token is valid.
+       *
+       * @param req
+       * @param decoded
+       * @param user
+       * @param cb
+       * @returns {*}
+       */
+      validateToken(req, decoded, user, cb) {
+        if (!decoded.jti) {
+          return cb(new Error('Missing session.'));
+        }
+
+        req.skipTokensValidation = true;
+        if (!req.session) {
+          return cb('Session not found.');
+        }
+        if (req.session.logout) {
+          return cb('Session no longer valid.');
+        }
+
+        const {
+          session: sessionConfig,
+        } = formioServer.formio.config;
+
+        const now = Date.now();
+
+        if (sessionConfig.expireTime !== '' && (now - req.session.created) > (sessionConfig.expireTime * 60 * 1000)) {
+          return cb('Session expired.');
+        }
+
+        return cb();
+      },
+
+      invalidateTokens(req, res, cb) {
+        const userId = req.params.submissionId;
+        if (!userId) {
+          return cb(new Error('No user found.'));
+        }
+
+        audit('AUTH_PASSWORD', req);
+
+        req.skipTokensInvalidation = true;
+
+        return formioServer.formio.mongoose.models.session.updateMany({
+          _id: {$ne: formioServer.formio.util.idToBson(req.session._id)},
+          submission: formioServer.formio.util.idToBson(userId),
+          logout: {$eq: null},
+        },
+        {
+          logout: Date.now(),
+        })
+          .catch(cb)
+          .then(() => cb());
       },
 
       isAdmin(isAdmin, req) {
@@ -535,7 +650,6 @@ module.exports = function(app) {
 
         // Get the permissions for an Project with the given ObjectId.
         handlers.unshift(
-          formioServer.formio.plans.checkRequest(req, res),
           getProjectAccess,
           getTeamAccess
         );
@@ -1469,15 +1583,11 @@ module.exports = function(app) {
               type: groupPerms.permission
             });
             if (existingAccess) {
-              if (!existingAccess.resouces) {
-                existingAccess.resouces = [];
-              }
+              existingAccess.resouces = existingAccess.resouces || [];
               existingAccess.resouces.push(res.resource.item._id.toString());
             }
             else {
-              if (!res.resource.item.access) {
-                res.resource.item.access = [];
-              }
+              res.resource.item.access = res.resource.item.access || [];
               res.resource.item.access.push({
                 type: groupPerms.permission,
                 resources: [res.resource.item._id.toString()]
@@ -1729,8 +1839,6 @@ module.exports = function(app) {
           config.schema = pkg.schema;
         }
 
-        // Hook the config to add redis data for the update script: 3.0.1-rc.2
-        config.redis = formioServer.config.redis;
         return config;
       },
 

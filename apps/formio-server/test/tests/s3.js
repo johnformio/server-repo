@@ -7,6 +7,7 @@ var CryptoJS = require('crypto-js');
 var AWS = require('aws-sdk');
 var docker = process.env.DOCKER;
 var customer = process.env.CUSTOMER;
+var _ = require('lodash');
 
 module.exports = function(app, template, hook) {
   describe('S3 Tests', function() {
@@ -90,7 +91,7 @@ module.exports = function(app, template, hook) {
               var response = res.body;
               assert.equal(response.plan, 'basic');
               assert.equal(response.hasOwnProperty('settings'), true);
-              assert.deepEqual(response.settings, {cors: '*'});
+              assert.deepEqual(_.omit(response.settings, ['licenseKey']), {cors: '*'});
 
               template.project = response;
 
@@ -355,7 +356,7 @@ module.exports = function(app, template, hook) {
               var response = res.body;
               assert.equal(response.plan, 'independent');
               assert.equal(response.hasOwnProperty('settings'), true);
-              assert.deepEqual(response.settings, {cors: '*'});
+              assert.deepEqual(_.omit(response.settings, ['licenseKey']), {cors: '*'});
 
               template.project = response;
 
@@ -618,7 +619,7 @@ module.exports = function(app, template, hook) {
               var response = res.body;
               assert.equal(response.plan, 'team');
               assert.equal(response.hasOwnProperty('settings'), true);
-              assert.deepEqual(response.settings, newSettings);
+              assert.deepEqual(_.omit(response.settings, ['licenseKey']), newSettings);
 
               template.project = response;
 
@@ -979,7 +980,7 @@ module.exports = function(app, template, hook) {
               var response = res.body;
               assert.equal(response.plan, 'commercial');
               assert.equal(response.hasOwnProperty('settings'), true);
-              assert.deepEqual(response.settings, newSettings);
+              assert.deepEqual(_.omit(response.settings, ['licenseKey']), newSettings);
 
               template.project = response;
 

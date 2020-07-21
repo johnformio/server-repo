@@ -477,10 +477,10 @@ module.exports = (app, template, hook) => {
       }, helper.owner, [/application\/json/, 400], (err, result) => {
         assert.equal(result.name, 'ValidationError');
         assert.equal(result.details.length, 2);
-        assert.equal(result.details[0].message, '"fname" is required');
-        assert.equal(result.details[0].type, 'any.required');
-        assert.equal(result.details[1].message, '"lname" is required');
-        assert.equal(result.details[1].type, 'any.required');
+        assert.equal(result.details[0].message, 'fname is required');
+        assert.equal(result.details[0].context.validator, 'required');
+        assert.equal(result.details[1].message, 'lname is required');
+        assert.equal(result.details[1].context.validator, 'required');
         done();
       });
     });
@@ -492,12 +492,12 @@ module.exports = (app, template, hook) => {
       }, helper.owner, [/application\/json/, 400], (err, result) => {
         assert.equal(result.name, 'ValidationError');
         assert.equal(result.details.length, 3);
-        assert.equal(result.details[0].message, '"fname" is required');
-        assert.equal(result.details[0].type, 'any.required');
-        assert.equal(result.details[1].message, '"lname" is required');
-        assert.equal(result.details[1].type, 'any.required');
-        assert.equal(result.details[2].message, '"mname" is required');
-        assert.equal(result.details[2].type, 'any.required');
+        assert.equal(result.details[0].message, 'fname is required');
+        assert.equal(result.details[0].context.validator, 'required');
+        assert.equal(result.details[1].message, 'lname is required');
+        assert.equal(result.details[1].context.validator, 'required');
+        assert.equal(result.details[2].message, 'mname is required');
+        assert.equal(result.details[2].context.validator, 'required');
         done();
       });
     });
@@ -509,14 +509,14 @@ module.exports = (app, template, hook) => {
       }, helper.owner, [/application\/json/, 400], (err, result) => {
         assert.equal(result.name, 'ValidationError');
         assert.equal(result.details.length, 4);
-        assert.equal(result.details[0].message, '"fname" is required');
-        assert.equal(result.details[0].type, 'any.required');
-        assert.equal(result.details[1].message, '"lname" is required');
-        assert.equal(result.details[1].type, 'any.required');
-        assert.equal(result.details[2].message, '"mname" is required');
-        assert.equal(result.details[2].type, 'any.required');
-        assert.equal(result.details[3].message, '"pname" is required');
-        assert.equal(result.details[3].type, 'any.required');
+        assert.equal(result.details[0].message, 'fname is required');
+        assert.equal(result.details[0].context.validator, 'required');
+        assert.equal(result.details[1].message, 'lname is required');
+        assert.equal(result.details[1].context.validator, 'required');
+        assert.equal(result.details[2].message, 'mname is required');
+        assert.equal(result.details[2].context.validator, 'required');
+        assert.equal(result.details[3].message, 'pname is required');
+        assert.equal(result.details[3].context.validator, 'required');
         done();
       });
     });

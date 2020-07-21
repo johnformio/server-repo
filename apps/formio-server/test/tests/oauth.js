@@ -51,11 +51,6 @@ module.exports = function(app, template, hook) {
           clientSecret: 'TESTCLIENTSECRETFACEBOOK'
         }
       },
-      office365: {
-        tenant: 'testformio.onmicrosoft.com',
-        clientId: 'TESTCLIENTIDOFFICE365',
-        clientSecret: 'TESTCLIENTSECRETOFFICE365'
-      }
     };
 
     var TEST_AUTH_CODE_1 = 'TESTAUTHCODE1';
@@ -1562,7 +1557,5 @@ module.exports = function(app, template, hook) {
     });
 
     require('./oauth/github')(app, template, hook);
-    require('./oauth/facebook')(app, template, hook);
-    require('./oauth/office365')(app, template, hook);
   });
 };

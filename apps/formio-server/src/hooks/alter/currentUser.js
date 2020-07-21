@@ -1,7 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
-const request = require('request');
+const fetch = require('formio/src/util/fetch');
 
 module.exports = (app) => (middleware) => {
   middleware.unshift((req, res, next) => {
@@ -25,7 +25,7 @@ module.exports = (app) => (middleware) => {
     // Check for a bearer token.
     const authorization = app.formio.formio.util.getHeader(req, 'authorization');
 
-    if (!authorization) {
+    if (!authorization || req.token) {
       return next();
     }
 
@@ -53,20 +53,14 @@ module.exports = (app) => (middleware) => {
           return next();
         }
 
-        request({
+        fetch(oauthSettings.userInfoURI,{
           method: 'GET',
-          uri: oauthSettings.userInfoURI,
           headers: {
             Authorization: authorization,
           },
-        }, (err, response) => {
-          if (err) {
-            res.status(400).send(err);
-          }
-
-          try {
-            const data = JSON.parse(response.body);
-
+        })
+          .then((response) => response.ok ? response.json() : null)
+          .then((data) => {
             // Assign roles based on settings.
             const roles = [];
             _.map(oauthSettings.roles, map => {
@@ -89,34 +83,36 @@ module.exports = (app) => (middleware) => {
               roles,
             };
 
-            const token = {
-              external: true,
-              user,
-              // form: {
-              //   _id: req.currentForm._id.toString()
-              // },
-              project: {
-                _id: currentProject._id.toString(),
-              },
-              externalToken: authorization.replace(/^Bearer/, ''),
-            };
+            app.formio.mongoose.models.session.create({
+              project: currentProject._id,
+              // form: ssoToken.submission.form,
+              submission: user._id,
+              source: 'oauth2:token',
+            })
+              .then((session) => {
+                const token = app.formio.hook.alter('token', {
+                  external: true,
+                  user,
+                  project: {
+                    _id: currentProject._id.toString(),
+                  },
+                  externalToken: authorization.replace(/^Bearer/, ''),
+                }, {session});
 
-            req.user = user;
-            req.token = token;
-            res.token = app.formio.formio.auth.getToken(token);
-            req['x-jwt-token'] = res.token;
+                req.user = user;
+                req.token = token;
+                res.token = app.formio.formio.auth.getToken(token);
+                req['x-jwt-token'] = res.token;
 
-            // Set the headers if they haven't been sent yet.
-            if (!res.headersSent) {
-              res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
-              res.setHeader('x-jwt-token', res.token);
-            }
-            return res.send(user);
-          }
-          catch (err) {
-            res.status(400).send(err);
-          }
-        });
+                // Set the headers if they haven't been sent yet.
+                if (!res.headersSent) {
+                  res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
+                  res.setHeader('x-jwt-token', res.token);
+                }
+                return res.send(user);
+              });
+          })
+          .catch((err) => res.status(400).send(err.message || err));
       });
     });
   });

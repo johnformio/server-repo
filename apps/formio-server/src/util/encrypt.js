@@ -125,7 +125,16 @@ module.exports = (formioServer) => {
           }
           else if (_.has(submission.data, path)) {
             // Handle other components including Container, which is object-based.
-            _.set(submission.data, path, Encryptor.getValue(project, operation, _.get(submission.data, path), req.primaryProject.plan));
+            _.set(
+              submission.data,
+              path,
+              Encryptor.getValue(
+                project,
+                operation,
+                _.get(submission.data, path),
+                req.primaryProject.plan
+              )
+            );
           }
         });
 

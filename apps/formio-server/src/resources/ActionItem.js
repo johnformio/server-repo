@@ -2,8 +2,8 @@
 
 const Resource = require('resourcejs');
 
-module.exports = (router, formioServer) => {
-  const {formio} = formioServer;
+module.exports = function(router, formioServer) {
+  const formio = formioServer.formio;
 
   const hiddenFields = ['deleted', '__v'];
   formio.middleware.restrictProjectAccess = require('../middleware/restrictProjectAccess')(formio);

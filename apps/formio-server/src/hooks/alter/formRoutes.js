@@ -219,6 +219,7 @@ module.exports = app => routes => {
   routes.before.unshift(require('../../middleware/projectProtectAccess')(app.formio.formio));
   routes.before.unshift(require('../../middleware/formRevisionUpdate')(app.formio.formio));
   routes.before.unshift(require('../../middleware/formConflictHandler')(app.formio.formio));
+  routes.before.unshift(require('../../middleware/licenseUtilization').middleware(app.formio.formio));
   routes.after.push(require('../../middleware/projectModified')(app.formio.formio));
 
   /**
@@ -228,14 +229,19 @@ module.exports = app => routes => {
     if (req.primaryProject) {
       return next();
     }
-    app.formio.formio.cache.loadPrimaryProject(req, (err, project) => {
-      if (err) {
-        /* eslint-disable no-console */
-        console.error(err);
-        /* eslint-enable no-console */
+
+    app.formio.formio.cache.loadCurrentProject(req, (err, project) => {
+      if (err || !project) {
         return next();
       }
-      req.primaryProject = project.toObject();
+
+      const formDefaults = project.formDefaults || {};
+      Object.keys(formDefaults).forEach((key) => {
+        if (!req.body[key] && formDefaults[key]) {
+          req.body[key] = formDefaults[key];
+        }
+      });
+
       next();
     });
   });

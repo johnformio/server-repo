@@ -13,6 +13,175 @@ var hook = null;
 var template = _.cloneDeep(require('./tests/fixtures/template')());
 var formioProject = require('../formio.json');
 let EventEmitter = require('events');
+const fetch = require('formio/src/util/fetch');
+const mockery = require('mockery');
+const sinon = require('sinon');
+const { Readable } = require('stream');
+let formio;
+
+function md5(str) {
+  return require('crypto').createHash('md5').update(str).digest('hex');
+}
+
+function base64(data) {
+  return Buffer.from(JSON.stringify(data)).toString('base64');
+}
+
+// Set up request mocking for license server.
+const requestMock = sinon.stub()
+  .withArgs(sinon.match({
+    url: 'string',
+    method: 'string',
+    headers: 'object',
+    qs: 'string',
+    body: 'object',
+    json: 'boolean',
+    timeout: 'number',
+  }))
+  .callsFake(async (url, args) => {
+    switch(url.split('?')[0]) {
+      case 'https://license.form.io/utilization':
+      case 'https://license.form.io/utilization/disable':
+        let license;
+        if (args.body.licenseKey) {
+          license = await formio.resources.submission.model.findOne({
+            'data.licenseKeys.key': args.body.licenseKey,
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            ...JSON.parse(args.body),
+            hash: md5(base64(JSON.parse(args.body))),
+            used: {
+              emails: 0,
+              forms: 0,
+              formRequests: 0,
+              pdfs: 0,
+              pdfDownloads: 0,
+              submissionRequests: 0,
+            },
+            terms: license ? license.data : {
+              plan: 'trial',
+            },
+            licenseId: 'abc123',
+          }),
+        });
+        break;
+      case 'https://api-cert.payeezy.com/v1/transactions':
+        const body = JSON.parse(args.body);
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            transaction_status: 'approved',
+            transaction_type: 'authorize',
+            method: 'credit_card',
+            amount: 0,
+            card: {
+              ...body.credit_card,
+            },
+            token: {
+              token_type: 'FDToken',
+              token_data: { value: body.credit_card.card_number }
+            }
+          }),
+        });
+        break;
+      case 'https://github.com/login/oauth/access_token':
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            access_token: 'TESTACCESSTOKEN'
+          }),
+        });
+      case 'https://api.github.com/user':
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            login: 'rahatarmanahmed',
+            id: 123456,
+            name: 'Rahat Ahmed',
+            email: null
+          }),
+        });
+        break;
+      case 'https://api.github.com/user/emails':
+        return Promise.resolve({
+          ok: true,
+          json: async () => ([{
+            primary: true,
+            verified: true,
+            email: 'rahatarmanahmed@gmail.com'
+          }]),
+        });
+        break;
+      case 'https://graph.facebook.com/v2.3/oauth/access_token':
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            access_token: 'TESTACCESSTOKEN',
+            expires_in: 86400
+          }),
+          headers: {
+            get: () => {
+              return new Date();
+            },
+          }
+        });
+        break;
+      case 'https://graph.facebook.com/v2.3/me':
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            id: 123456,
+            name: 'Rahat Ahmed',
+            email: 'rahatarmanahmed@gmail.com',
+            first_name: 'Rahat',
+            last_name: 'Ahmed',
+          }),
+        });
+        break;
+      case 'https://api.dropboxapi.com/1/oauth2/token':
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            access_token:'accesstoken123'
+          }),
+        });
+        break;
+      case 'https://content.dropboxapi.com/2/files/download':
+        return Promise.resolve({
+          ok: true,
+          body: {
+            pipe: Readable.from(['RAWDATA'])
+          },
+          headers: {
+            get: () => false,
+          }
+        });
+        break;
+      case 'https://content.dropboxapi.com/2/files/upload':
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            file: 'abc123',
+          }),
+        });
+        break;
+      default:
+        // Fallback to fetch.
+        if (url.includes('localhost')) {
+          return fetch(url, args);
+        }
+        // Don't allow external calls during testing.
+        console.log('Fetch call to ', url);
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({})
+        });
+    }
+  });
+mockery.registerMock('formio/src/util/fetch', requestMock);
 
 process.on('uncaughtException', function(err) {
   console.error(err);
@@ -104,12 +273,17 @@ var emptyDatabase = template.emptyDatabase = template.clearData = function(done)
 
 describe('Initial Tests', function() {
   before(function(done) {
+    mockery.enable({
+      warnOnReplace: false,
+      warnOnUnregistered: false
+    });
     var hooks = _.merge(require('formio/test/hooks'), require('./tests/hooks')); // Merge all the test hooks.
     require('../server')({
       hooks: hooks
     })
       .then(function(state) {
         app = state.app;
+        formio = app.formio.formio;
         hook = require('formio/src/util/hook')(app.formio.formio);
         state.app.listen(state.config.port);
 
@@ -368,6 +542,7 @@ describe('Initial Tests', function() {
     after(function() {
       describe('Project Tests', function() {
         this.retries(4);
+        require('./tests/sessions')(app, template, hook);
         require('./tests/project')(app, template, hook);
         require('./tests/groups')(app, template, hook);
         require('./tests/domain')(app, template, hook);
@@ -385,7 +560,6 @@ describe('Initial Tests', function() {
         require('formio/test/submission')(app, template, hook);
         require('formio/test/submission-access')(app, template, hook);
         require('./tests/validate')(app, template, hook);
-        require('./tests/analytics')(app, template, hook);
         require('./tests/teams')(app, template, hook);
         require('./tests/env')(app, template, hook);
         require('./tests/tags')(app, template, hook);
@@ -402,4 +576,9 @@ describe('Initial Tests', function() {
       });
     });
   });
+
+  after((done) => {
+    mockery.disable();
+    done();
+  })
 });

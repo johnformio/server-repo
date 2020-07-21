@@ -4,27 +4,41 @@ const jwt = require('jsonwebtoken');
 const util = require('../../util/util');
 const async = require('async');
 const config = require('../../../config');
+const {utilization, getLicenseKey} = require('../../util/utilization');
 const _ = require('lodash');
 
 module.exports = app => (mail, req, res, params, cb) => {
   const formioServer = app.formio;
 
   // Check the Project plan.
-  const checkPlan = () => new Promise((resolve, reject) => {
-    // Restrict basic and independent plans.
-    if (req && req.primaryProject) {
-      if (formioServer.analytics.isLimitedEmailPlan(req.primaryProject)) {
-        const transport = mail.msgTransport || 'default';
-        if (transport !== 'default' && transport !== 'test') {
-          return reject('Plan limited to default transport only.');
-        }
-
-        formioServer.analytics.checkEmail(req, (err) => {
+  const checkPlan = async () => {
+    // Allow emails for formio project.
+    if (req.currentProject && req.currentProject.name === 'formio') {
+      return;
+    }
+    let form = params.form;
+    if (typeof params.form === 'string') {
+      form = await new Promise((resolve, reject) => {
+        formioServer.formio.cache.loadForm(req, null, params.form, (err, form) => {
           if (err) {
             return reject(err);
           }
+          resolve(form);
+        });
+      });
+    }
+    if (process.env.FORMIO_HOSTED) {
+      if (params && params.noUtilization) {
+        return;
+      }
+      // Restrict basic and independent plans.
+      if (req && req.primaryProject && ['basic', 'independent'].includes(req.primaryProject.plan)) {
+        const transport = mail.msgTransport || 'default';
+        if (transport !== 'default' && transport !== 'test') {
+          throw new Error('Plan limited to default transport only.');
+        }
 
-          mail.html += `
+        mail.html += `
 <table style="margin: 0px;padding: 20px;background-color:#002941;color:white;width:100%;">
   <tbody>
   <tr>
@@ -35,21 +49,17 @@ module.exports = app => (mail, req, res, params, cb) => {
   </tr>
   </tbody>
 </table>`;
+      }
 
-          formioServer.analytics.recordEmail(req);
-          return resolve();
-        });
-      }
-      else {
-        formioServer.analytics.recordEmail(req);
-        return resolve();
-      }
+      return await utilization({
+        type: 'email',
+        email: mail.to,
+        formId: form._id.toString(),
+        projectId: form.project.toString(),
+        licenseKey: getLicenseKey(req),
+      });
     }
-    else {
-      formioServer.analytics.recordEmail(req);
-      return resolve();
-    }
-  });
+  };
 
   const attachFiles = () => {
     if (!_.get(params, 'settings.attachFiles')) {
@@ -195,31 +205,41 @@ module.exports = app => (mail, req, res, params, cb) => {
           });
       });
     }, () => {
-      ssoTokens.forEach((ssoToken) => {
-        if (ssoToken.submission) {
-          ssoToken.token = formioServer.formio.hook.alter('token', {
-            user: {
-              _id: ssoToken.submission._id.toString()
-            },
-            form: {
-              _id: ssoToken.submission.form.toString()
-            }
-          }, formObjs[ssoToken.submission.form.toString()]);
-          delete ssoToken.token.exp;
-          ssoToken.token = jwt.sign(ssoToken.token, formioServer.formio.config.jwt.secret, {
-            expiresIn: ssoToken.expireTime * 60
-          });
+      async.eachSeries(ssoTokens, (ssoToken, nextToken) => {
+        if (!ssoToken.submission) {
+          return nextToken();
         }
-      });
+        formioServer.formio.mongoose.models.session.create({
+          project: formObjs[ssoToken.submission.form.toString()].project,
+          form: ssoToken.submission.form,
+          submission: ssoToken.submission._id,
+          source: 'email',
+        })
+          .catch(nextToken)
+          .then((session) => {
+            ssoToken.token = formioServer.formio.hook.alter('token', {
+              user: {
+                _id: ssoToken.submission._id.toString()
+              },
+              form: {
+                _id: ssoToken.submission.form.toString()
+              }
+            }, formObjs[ssoToken.submission.form.toString()], {session});
+            delete ssoToken.token.exp;
+            ssoToken.token = jwt.sign(ssoToken.token, formioServer.formio.config.jwt.secret, {
+              expiresIn: ssoToken.expireTime * 60
+            });
+            nextToken();
+          });
+      }, () => {
+        // Replace the string token with the one generated here.
+        let index = 0;
+        mail.html = mail.html.replace(util.tokenRegex, () => {
+          return ssoTokens[index++].token || 'INVALID_TOKEN';
+        });
 
-      // Replace the string token with the one generated here.
-      let index = 0;
-      mail.html = mail.html.replace(util.tokenRegex, () => {
-        return ssoTokens[index++].token || 'INVALID_TOKEN';
+        return resolve(mail);
       });
-
-      // TO-DO: Generate the token for this user.
-      return resolve(mail);
     });
   });
 
@@ -228,5 +248,5 @@ module.exports = app => (mail, req, res, params, cb) => {
     .then(attachPDF)
     .then(replaceSSOTokens)
     .then(mail => cb(null, mail))
-    .catch(cb);
+    .catch(err => cb(err));
 };

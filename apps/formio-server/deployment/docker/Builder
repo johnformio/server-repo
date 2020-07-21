@@ -1,6 +1,8 @@
 FROM node:12-alpine
 MAINTAINER Form.io <support@form.io>
-
+ARG  NPM_USERNAME
+ARG  NPM_PASSWORD
+ARG  NPM_EMAIL
 COPY ./build /src
 WORKDIR /src
 
@@ -15,7 +17,10 @@ RUN mkdir /root/.ssh/ && ssh-keyscan github.com >> /root/.ssh/known_hosts
 ADD id_rsa /root/.ssh/id_rsa
 RUN chmod 600 /root/.ssh/id_rsa
 RUN npm config set python /usr/bin/python
-RUN npm i -g npm && npm ci --production
+RUN npm i -g npm npm-cli-login
+RUN npm-cli-login -u $NPM_USERNAME -p $NPM_PASSWORD -e $NPM_EMAIL -r https://pkg.form.io
+RUN echo "@formio:registry=https://pkg.form.io" > .npmrc
+RUN npm ci --production
 
 EXPOSE      80
 ENTRYPOINT  ["node", "formio.js --max_old_space_size=4096"]

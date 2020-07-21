@@ -14,6 +14,8 @@ const {v4: uuidv4} = require('uuid');
 const fs = require('fs');
 const multipart = require('connect-multiparty');
 const os = require('os');
+const license = require('./src/util/license');
+const audit = require('./src/util/audit');
 const vm = require('vm');
 const debug = {
   startup: require('debug')('formio:startup')
@@ -26,25 +28,12 @@ module.exports = function(options) {
   // Use the express application.
   var app = options.app || express();
 
+  // Insert middleware for enforcing gradual degradation
+  // as a result of multiple license check failures
+  app.use(license.generateMiddleware(app));
+
   // Use the given config.
   var config = options.config || require('./config');
-
-  // Add jslogger if configured.
-  var jslogger = null;
-  if (config.jslogger) {
-    jslogger = require('jslogger')({key: config.jslogger});
-  }
-
-  // Connect to redis.
-  const RedisInterface = require('formio-services/services/RedisInterface');
-  const redis = new RedisInterface(config.redis);
-
-  // Load the analytics hooks.
-  debug.startup('Attaching middleware: Analytics');
-  const analytics = require('./src/analytics/analytics')(redis);
-
-  debug.startup('Attaching middleware: Logger');
-  var Logger = require('./src/logger/index')(config);
 
   // Ensure that we create projects within the helper.
   app.hasProjects = true;
@@ -56,7 +45,7 @@ module.exports = function(options) {
     return app.server.listen.apply(app.server, arguments);
   };
 
-  const portalEnabled = config.licenseData && config.licenseData.portal && process.env.PRIMARY;
+  const portalEnabled = !!process.env.PRIMARY;
   // Secure html pages with the proper headers.
   debug.startup('Attaching middleware: Helmet');
   app.use((req, res, next) => {
@@ -76,24 +65,29 @@ module.exports = function(options) {
     // Override config.js so we can set onPremise to true.
     app.get('/config.js', (req, res) => {
       fs.readFile(`./portal/config.js`, 'utf8', (err, contents) => {
-        res.send(contents.replace(/var hostedPDFServer = '';|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;/gi, (matched) => {
-          if (config.hostedPDFServer && matched.includes('var hostedPDFServer')) {
-            return `var hostedPDFServer = '${config.hostedPDFServer}';`;
-          }
-          else if (config.portalSSO && matched.includes('var sso =')) {
-            return `var sso = '${config.portalSSO}';`;
-          }
-          else if (config.ssoTeams && matched.includes('var ssoTeamsEnabled =')) {
-            return `var ssoTeamsEnabled = ${config.ssoTeams};`;
-          }
-          else if (config.portalSSOLogout && matched.includes('var ssoLogout =')) {
-            return `var ssoLogout = '${config.portalSSOLogout}';`;
-          }
-          else if (matched.includes('var onPremise')) {
-            return 'var onPremise = true;';
-          }
-          return matched;
-        }));
+        res.send(
+          contents.replace(
+            /var hostedPDFServer = '';|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;/gi,
+            (matched) => {
+              if (config.hostedPDFServer && matched.includes('var hostedPDFServer')) {
+                return `var hostedPDFServer = '${config.hostedPDFServer}';`;
+              }
+              else if (config.portalSSO && matched.includes('var sso =')) {
+                return `var sso = '${config.portalSSO}';`;
+              }
+              else if (config.ssoTeams && matched.includes('var ssoTeamsEnabled =')) {
+                return `var ssoTeamsEnabled = ${config.ssoTeams};`;
+              }
+              else if (config.portalSSOLogout && matched.includes('var ssoLogout =')) {
+                return `var ssoLogout = '${config.portalSSOLogout}';`;
+              }
+              else if (matched.includes('var onPremise')) {
+                return 'var onPremise = true;';
+              }
+              return matched;
+            }
+          )
+        );
       });
     });
     app.use(express.static(`./portal`));
@@ -104,10 +98,6 @@ module.exports = function(options) {
   app.use(cacheControl({
     noCache: true
   }));
-
-  // Hook each request and add analytics support.
-  debug.startup('Attaching middleware: Analytics Hooks');
-  app.use(analytics.hook.bind(analytics));
 
   debug.startup('Attaching middleware: Favicon');
   app.use(favicon('./favicon.ico'));
@@ -138,12 +128,6 @@ module.exports = function(options) {
   // Attach the formio-server config.
   app.formio.config = _.omit(config, 'formio');
 
-  // Add the redis interface.
-  app.formio.redis = redis;
-
-  // Attach the analytics to the formio server and attempt to connect.
-  app.formio.analytics = analytics;
-
   // Import the OAuth providers
   debug.startup('Attaching middleware: OAuth Providers');
   app.formio.formio.oauth = require('./src/oauth/oauth')(app.formio.formio);
@@ -151,18 +135,6 @@ module.exports = function(options) {
   // Establish our url alias middleware.
   debug.startup('Attaching middleware: Alias Handler');
   app.use(require('./src/middleware/alias')(app.formio.formio));
-
-  // CORS Support
-  debug.startup('Attaching middleware: CORS');
-  var corsMiddleware = require('./src/middleware/corsOptions')(app);
-  var corsRoute = require('cors')(corsMiddleware);
-  app.use(function(req, res, next) {
-    // If headers already sent, skip cors.
-    if (res.headersSent) {
-      return next();
-    }
-    corsRoute(req, res, next);
-  });
 
   debug.startup('Attaching middleware: UUID Request');
   app.use((req, res, next) => {
@@ -173,6 +145,7 @@ module.exports = function(options) {
     }
     req.startTime = new Date();
 
+    app.formio.formio.audit('REQUEST_START', req, req.method, req.path, JSON.stringify(req.query));
     app.formio.formio.log('Request', req, req.method, req.path, JSON.stringify(req.query));
 
     // Override send function to log event
@@ -184,6 +157,10 @@ module.exports = function(options) {
       }
       app.formio.formio.log('Duration', req, `${duration}ms`);
       app.formio.formio.log('Response Code', req, res.statusCode);
+      if (res.statusCode < 300) {
+        audit(req, res, arguments[0], app.formio.formio.audit);
+      }
+      app.formio.formio.audit('REQUEST_END', req, res.statusCode, `${duration}ms`);
       resend.apply(this, arguments);
     };
 
@@ -199,35 +176,23 @@ module.exports = function(options) {
     });
   });
 
-  // Load current project and roles.
+  // Load projects and roles.
   debug.startup('Attaching middleware: Project & Roles Loader');
-  app.use((req, res, next) => {
-    // If there is no projectId, don't error out, just skip loading the current project.
-    let projectId = req.projectId;
-    if (req.params.projectId) {
-      projectId = req.params.projectId;
-    }
-    if (!projectId) {
+  app.use(require('./src/middleware/loadProjectContexts')(app.formio.formio));
+
+  // Check project status
+  app.use(require('./src/middleware/projectUtilization')(app.formio.formio));
+
+  // CORS Support
+  debug.startup('Attaching middleware: CORS');
+  var corsMiddleware = require('./src/middleware/corsOptions')(app);
+  var corsRoute = require('cors')(corsMiddleware);
+  app.use(function(req, res, next) {
+    // If headers already sent, skip cors.
+    if (res.headersSent) {
       return next();
     }
-
-    app.formio.formio.cache.loadCurrentProject(req, function(err, currentProject) {
-      if (err || !currentProject) {
-        return next();
-      }
-      req.currentProject = currentProject.toObject();
-
-      app.formio.formio.resources.role.model.find(app.formio.formio.hook.alter('roleQuery', {deleted: {$eq: null}}, req))
-        .sort({title: 1})
-        .lean()
-        .exec((err, roles) => {
-          if (err || !roles) {
-            return next();
-          }
-          req.currentProject.roles = roles;
-          return next();
-        });
-    });
+    corsRoute(req, res, next);
   });
 
   // Handle our API Keys.
@@ -277,6 +242,8 @@ module.exports = function(options) {
     });
   }
 
+  require('./src/util/modules')(app);
+
   var hooks = _.merge(require('./src/hooks/settings')(app), options.hooks);
 
   // Start the api server.
@@ -284,28 +251,9 @@ module.exports = function(options) {
   app.formio.init(hooks).then(function(formio) {
     debug.startup('Done initializing Form.io Core');
 
-    // Check the license for validity.
+    // Kick off license validation process
     debug.startup('Checking License');
-    require('./src/util/license')(app, config);
-
-    debug.startup('Attaching middleware: RequestType');
-    app.use((req, res, next) => {
-      const form = /\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}$/;
-      const submission = /\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}\/submission(\/[a-f0-9]{24})?$/;
-      let type;
-      if (submission.test(req.path)) {
-        type = 'Submission';
-      }
-      else if (form.test(req.path)) {
-        type = 'Form';
-      }
-      else {
-        type = 'Other';
-      }
-      app.formio.formio.log('RequestType', req, req.method, type);
-
-      next();
-    });
+    license.validate(app);
 
     debug.startup('Attaching middleware: Cache');
     app.formio.formio.cache = _.assign(app.formio.formio.cache, require('./src/cache/cache')(formio));
@@ -321,6 +269,8 @@ module.exports = function(options) {
     // Don't allow accessing a project's forms and other if it is remote. Redirect to the remote instead.
     debug.startup('Attaching middleware: Remote Redirect');
     app.use('/project/:projectId', require('./src/middleware/remoteRedirect')(app.formio));
+
+    app.post('/project/:projectId/import', app.formio.formio.middleware.licenseUtilization);
 
     // Mount formio at /project/:projectId.
     debug.startup('Mounting Core API');
@@ -364,15 +314,18 @@ module.exports = function(options) {
 
     // Add the form manager.
     debug.startup('Mounting Form Manager');
-    app.get('/project/:projectId/manage', (req, res) => {
-      const script = `<script type="text/javascript">
-        window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/?$/, '');
-        ${appVariables(req.currentProject)}
-      </script>`;
-      fs.readFile(`./portal/manager/index.html`, 'utf8', (err, contents) => {
-        res.send(contents.replace('<head>', `<head>${script}`));
-      });
-    });
+    app.get('/project/:projectId/manage', [
+      require('./src/middleware/licenseUtilization').middleware(formio),
+      (req, res) => {
+        const script = `<script type="text/javascript">
+          window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/?$/, '');
+          ${appVariables(req.currentProject)}
+        </script>`;
+        fs.readFile(`./portal/manager/index.html`, 'utf8', (err, contents) => {
+          res.send(contents.replace('<head>', `<head>${script}`));
+        });
+      }
+    ]);
     debug.startup('Mounting Form Viewer');
     app.get('/project/:projectId/manage/view', (req, res) => {
       const script = `<script type="text/javascript">
@@ -407,8 +360,15 @@ module.exports = function(options) {
     app.use('/project/:projectId/form/:formId/validate', require('./src/middleware/validateSubmission')(app.formio));
 
     // Mount the error logging middleware.
-    debug.startup('Attaching middleware: Logger');
-    app.use(Logger.middleware);
+    debug.startup('Attaching middleware: Error Handler');
+    app.use((err, req, res, next) => {
+      /* eslint-disable no-console */
+      console.log('Uncaught exception:');
+      console.log(err);
+      console.log(err.stack);
+      /* eslint-enable no-console */
+      res.status(400).send(typeof err === 'string' ? {message: err} : err);
+    });
 
     debug.startup('Attaching middleware: File Storage');
     app.storage = require('./src/storage/index.js')(app);
@@ -426,23 +386,11 @@ module.exports = function(options) {
 
   // Do some logging on uncaught exceptions in the application.
   process.on('uncaughtException', function(err) {
-    if (config.jslogger && jslogger) {
-      /* eslint-disable no-console */
-      console.log('Uncaught exception:');
-      console.log(err);
-      console.log(err.stack);
-      /* eslint-enable no-console */
-
-      jslogger.log({
-        message: err.stack || err.message,
-        fileName: err.fileName,
-        lineNumber: err.lineNumber
-      });
-    }
-
-    if (Logger.middleware) {
-      Logger.middleware(err, {});
-    }
+    /* eslint-disable no-console */
+    console.log('Uncaught exception:');
+    console.log(err);
+    console.log(err.stack);
+    /* eslint-enable no-console */
 
     // Give the loggers some time to log before exiting.
     setTimeout(function() {

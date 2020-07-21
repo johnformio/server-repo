@@ -1,6 +1,6 @@
 'use strict';
 
-const rest = require('restler');
+const fetch = require('formio/src/util/fetch');
 const _ = require('lodash');
 const vm = require('vm');
 
@@ -365,14 +365,6 @@ module.exports = (router) => {
 
         const options = {};
 
-        // Get the settings
-        if (settings.username) {
-          options.username = settings.username;
-        }
-        if (settings.password) {
-          options.password = settings.password;
-        }
-
         if (settings.forwardHeaders) {
           options.headers = _.clone(req.headers);
 
@@ -388,8 +380,15 @@ module.exports = (router) => {
             'Accept': '*/*'
           };
         }
+
+        if (settings.username && settings.password) {
+          const auth = Buffer.from(`${settings.username}:${settings.password}`).toString('base64');
+          options.headers['Authorization'] = `Basic ${auth}`;
+        }
+
         // Always set user agent to indicate it came from us.
         options.headers['user-agent'] = 'Form.io Webhook Action';
+        options.headers['content-type'] = 'application/json';
 
         // Add custom headers.
         const headers = settings.headers || [];
@@ -447,54 +446,34 @@ module.exports = (router) => {
         setActionItemMessage('Transform payload done');
 
         // Use either the method specified in settings or the request method.
-        const reqMethod = settings.method || req.method;
+        const reqMethod = (settings.method || req.method).toLowerCase();
+        options.method = reqMethod;
 
         setActionItemMessage('Attempting webhook', {
           method: reqMethod,
           url,
           options
         });
-        // Make the request.
-        switch (reqMethod.toLowerCase()) {
-          case 'get':
-            rest
-              .get(url, options)
-              .on('success', handleSuccess)
-              .on('fail', handleError)
-              .on('error', handleError);
-            break;
-          case 'post':
-            rest
-              .postJson(url, payload, options)
-              .on('success', handleSuccess)
-              .on('fail', handleError)
-              .on('error', handleError);
-            break;
-          case 'put':
-            rest
-              .putJson(url, payload, options)
-              .on('success', handleSuccess)
-              .on('fail', handleError)
-              .on('error', handleError);
-            break;
-          case 'patch':
-            rest
-              .patchJson(url, payload, options)
-              .on('success', handleSuccess)
-              .on('fail', handleError)
-              .on('error', handleError);
-            break;
-          case 'delete':
-            options.query = req.params;
-            rest
-              .del(url, options)
-              .on('success', handleSuccess)
-              .on('fail', handleError)
-              .on('error', handleError);
-            break;
-          default:
-            return handleError(`Could not match request method: ${req.method.toLowerCase()}`);
+
+        if (['post', 'put', 'patch'].includes(reqMethod)) {
+          options.body = JSON.stringify(payload);
         }
+
+        if (reqMethod === 'delete') {
+          options.qs = req.params;
+          options.body = '';
+        }
+
+        // Make the request.
+        fetch(url, options)
+          .then((response) => {
+            if (response.ok) {
+              return response.json().then((body) => handleSuccess(body, response));
+            }
+            else {
+              return response.json().then((body) => handleError(body, response));
+            }
+          });
       }
       catch (e) {
         handleError(e);

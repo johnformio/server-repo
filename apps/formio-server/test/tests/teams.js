@@ -1129,7 +1129,7 @@ module.exports = function(app, template, hook) {
           .post('/project/' + template.formio.project._id + '/form/' + template.formio.formRegister._id + '/submission')
           .send({
             data: {
-              'name': chance.name(),
+              'name': chance.word({ length: 10 }),
               'email': chance.email(),
               'password': 'test123'
             }
@@ -1160,7 +1160,7 @@ module.exports = function(app, template, hook) {
           .post('/project/' + template.formio.project._id + '/form/' + template.formio.formRegister._id + '/submission')
           .send({
             data: {
-              'name': chance.name(),
+              'name': chance.word({ length: 10 }),
               'email': chance.email(),
               'password': 'test123'
             }
@@ -3168,7 +3168,7 @@ module.exports = function(app, template, hook) {
 
             var response = res.body;
             assert.equal(response.hasOwnProperty('settings'), true);
-            assert.deepEqual(response.settings, temp.settings);
+            assert.deepEqual(_.omit(response.settings, ['licenseKey']), temp.settings);
 
             if (docker) {
               return done();
@@ -3180,7 +3180,7 @@ module.exports = function(app, template, hook) {
               }
 
               // Confirm that the settings were changed.
-              assert.deepEqual(project.settings, temp.settings);
+              assert.deepEqual(_.omit(response.settings, ['licenseKey']), temp.settings);
 
               // Store the JWT for future API calls.
               template.formio.user1.token = res.headers['x-jwt-token'];

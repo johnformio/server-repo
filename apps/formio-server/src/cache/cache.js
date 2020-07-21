@@ -62,6 +62,9 @@ module.exports = function(formio) {
       if (req.params.projectId) {
         projectId = req.params.projectId;
       }
+      if (!projectId && req.body.project) {
+        projectId = req.body.project;
+      }
       if (!projectId) {
         return cb('No project found.');
       }
@@ -69,26 +72,47 @@ module.exports = function(formio) {
       this.loadProject(req, projectId, cb);
     },
 
-    loadPrimaryProject(req, cb) {
+    loadParentProject(req, cb) {
       this.loadCurrentProject(req, function(err, currentProject) {
         if (err) {
           return cb(err);
         }
         // If this is an environment, not a project, load the primary project.
         if ('project' in currentProject && currentProject.project) {
-          this.loadProject(req, currentProject.project, function(err, primaryProject) {
+          this.loadProject(req, currentProject.project, function(err, parentProject) {
             if (err) {
               return cb(err);
             }
-            debug.loadProject('Has primary. ', currentProject._id, primaryProject._id);
+            debug.loadProject('Has parent. ', currentProject._id, parentProject._id);
+            return cb(null, parentProject);
+          });
+        }
+        else {
+          debug.loadProject('Is parent. ', currentProject._id);
+          return cb(null, currentProject);
+        }
+      }.bind(this));
+    },
+
+    loadPrimaryProject(req, cb) {
+      this.loadParentProject(req, (err, parentProject) => {
+        if (err) {
+          return cb(err);
+        }
+        if ('project' in parentProject && parentProject.project) {
+          this.loadProject(req, parentProject.project, function(err, primaryProject) {
+            if (err) {
+              return cb(err);
+            }
+            debug.loadProject('Has primary. ', parentProject._id, primaryProject._id);
             return cb(null, primaryProject);
           });
         }
         else {
-          debug.loadProject('Is primary. ', currentProject._id);
-          return cb(null, currentProject);
+          debug.loadProject('Is primary. ', parentProject._id);
+          return cb(null, parentProject);
         }
-      }.bind(this));
+      });
     },
 
     /**

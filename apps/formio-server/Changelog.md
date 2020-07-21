@@ -4,10 +4,54 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.0.0
+### Added
+ - User Sessions
+ - Isomorphic Validation
+ - Audit logging
+ - New Licensing system
+ - Stage Types (Authoring and Live)
+ 
+### Changed
+ - Removed request.js and restler and replaced with node-fetch
+ 
+### Removed
+ - Jira Action
+ - Hubspot Action
+ - Office365 Actions
+ - Facebook, LinkedIn, Twitter, Dropbox OAuth providers
+
+## 6.10.8-rc.4
+### Changed
+ - Upgrade portal@7.0.38-rc.6
+ - Upgrade formiojs@4.11.1-rc.6
+
+## 6.10.8-rc.3
+### Changed
+ - Upgrade portal@7.0.38-rc.5
+
+## 6.10.8-rc.2
+### Changed
+ - Upgrade portal@7.0.38-rc.4
+ - Upgrade formiojs@4.11.1-rc.5
+
+### Fixed
+ - Passing project to pdf server to solve image displays.
+
+## 6.10.8-rc.1
+## 6.10.7-rc.2
+### Changed 
+ - Upgrade portal@7.0.38-rc.2
+ - Upgrade formiojs@4.11.1-rc.3
+
 ## 6.10.7-rc.1
 ### Changed 
  - Upgrade portal@7.0.38-rc.1
  - Upgrade formiojs@4.11.1-rc.1
+
+## 6.10.7
+### Changed
+ - Upgrade formio to 1.90.5 to fix mongo ssl connections.
 
 ## 6.10.6
 ### Changed 
@@ -219,7 +263,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Upgrade formiojs@4.9.27-rc.4
  - Upgrade formmanager@1.93.1
  - Upgrade pro.formview.io@1.93.1
-## [Unreleased]
+
+## 6.10.0-rc.2
 ### Changed
  - Upgrade portal@7.0.8-beta.1
  - Upgrade formio@1.79.0
