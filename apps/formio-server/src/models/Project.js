@@ -193,15 +193,11 @@ module.exports = function(router) {
         type: formio.mongoose.Schema.Types.Mixed,
         default: null,
       },
-      liveTitle: {
+      stageTitle: {
         type: String,
-        description: 'The live stage title.',
+        description: 'The stage title.',
         maxlength: 63,
       },
-      defaultStage: {
-        type: String,
-        enum: ['prod', 'stage']
-      }
     })
   });
   /* eslint-enable new-cap, max-len */
