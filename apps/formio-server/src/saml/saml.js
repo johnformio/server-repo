@@ -106,7 +106,7 @@ module.exports = (formioServer) => {
         userRoles = userRoles.split(';');
       }
       else {
-        userRoles = userRoles.split(' ');
+        userRoles = [userRoles];
       }
     }
 
