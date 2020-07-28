@@ -664,23 +664,46 @@ module.exports = function(app) {
 
           // We have some groups that we need to validate.
           if (groups.length) {
-            // Verify these are all submissions within this project.
-            formioServer.formio.resources.submission.model.find({
-              _id: {$in: _.map(groups, formioServer.formio.util.idToBson)},
-              project: formioServer.formio.util.idToBson(req.projectId),
-              deleted: {$eq: null}
-            }).lean().select({_id: 1}).exec((err, subs) => {
-              if (err || !subs || !subs.length) {
-                // Don't add any groups to the access roles.
-                return callback(null);
-              }
+            const groupsMap = groups.reduce((result, groupRole) => {
+              const [groupId, role = null] = groupRole.toString().split(':');
+              return {
+                ...result,
+                [groupId]: (result[groupId] || []).concat(role),
+              };
+            }, {});
+            const groupIds = _(groupsMap)
+              .keys()
+              .map(formioServer.formio.util.idToBson)
+              .value();
 
-              // Add the valid groups to the access roles.
-              access.roles = access.roles.concat(_(subs).map((sub) => {
-                return sub._id.toString();
-              }).filter().uniq().value());
-              return callback(null);
-            });
+            // Verify these are all submissions within this project.
+            formioServer.formio.resources.submission.model
+              .find({
+                _id: {$in: groupIds},
+                project: formioServer.formio.util.idToBson(req.projectId),
+                deleted: {$eq: null}
+              })
+              .lean()
+              .select({_id: 1})
+              .exec((err, subs) => {
+                if (err || !subs || !subs.length) {
+                  // Don't add any groups to the access roles.
+                  return callback(null);
+                }
+
+                // Add the valid groups to the access roles.
+                access.roles = access.roles.concat(
+                  _(subs)
+                    .map((sub) => sub._id.toString())
+                    .filter()
+                    .flatMap(
+                      (groupId) => groupsMap[groupId].map((role) => (role ? `${groupId}:${role}` : groupId)),
+                    )
+                    .uniq()
+                    .value(),
+                );
+                return callback(null);
+              });
           }
           else {
             return callback(null);
@@ -1518,7 +1541,7 @@ module.exports = function(app) {
               names,
             }, action) => {
               const id = formioServer.formio.util.idToBson(action);
-              return id
+              return _.isObject(id)
                 ? ({
                   ids: [...ids, id],
                   names,
