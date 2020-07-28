@@ -35,7 +35,7 @@ module.exports = (formio) => async (req, res, next) => {
       // eslint-disable-next-line callback-return
       next();
       // Check every 5 minutes in case something changes.
-      if (!process.env.FORMIO_HOSTED && cache.getTtl(projectId) - Date.now() < (CACHE_TIME - 300) * 1000) {
+      if (process.env.FORMIO_HOSTED && cache.getTtl(projectId) - Date.now() < (CACHE_TIME - 300) * 1000) {
         try {
           const license = await getLicense(formio, licenseKey);
           const result = await utilization({
