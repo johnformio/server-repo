@@ -14,7 +14,7 @@ const NodeCache = require('node-cache');
 const cache = new NodeCache();
 
 // Cache response for 3 hours.
-const CACHE_TIME =  process.env.CACHE_TIME || 3 * 60 * 60;
+const CACHE_TIME =  process.env.FORMIO_HOSTED ? 0 : process.env.CACHE_TIME || 3 * 60 * 60;
 
 module.exports = (formio) => async (req, res, next) => {
   // If this isn't for a project, don't check.
@@ -35,7 +35,7 @@ module.exports = (formio) => async (req, res, next) => {
       // eslint-disable-next-line callback-return
       next();
       // Check every 5 minutes in case something changes.
-      if (cache.getTtl(projectId) - Date.now() < (CACHE_TIME - 300) * 1000) {
+      if (!process.env.FORMIO_HOSTED && cache.getTtl(projectId) - Date.now() < (CACHE_TIME - 300) * 1000) {
         try {
           const license = await getLicense(formio, licenseKey);
           const result = await utilization({
@@ -138,7 +138,7 @@ module.exports = (formio) => async (req, res, next) => {
       });
     }
 
-    // Cache response for 3 hours.
+    // Cache response.
     cache.set(projectId, result, CACHE_TIME);
 
     return next();
