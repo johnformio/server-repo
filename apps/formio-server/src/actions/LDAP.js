@@ -179,6 +179,51 @@ module.exports = router => {
       });
     }
 
+    processAuth(req, res, data, user, token) {
+      return this.checkForLDAPTeams(req, data, user).then((user) => {
+        req.user = user;
+        req.token = token;
+        res.token = formio.auth.getToken(token);
+        req['x-jwt-token'] = res.token;
+        debug('Token Created');
+
+        // Set the headers if they haven't been sent yet.
+        if (!res.headersSent) {
+          res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
+          res.setHeader('x-jwt-token', res.token);
+        }
+        debug('Headers Set');
+
+        debug('Sending response', user);
+
+        return res.send(user);
+      }).catch((err) => {
+        debug('Error occurred 2: ', err);
+        return res.status(401).send(err);
+      });
+    }
+
+    checkForLDAPTeams(req, data, user) {
+      return new Promise((resolve, reject) => {
+        if (req.currentProject.primary && router.config.ssoTeams) {
+          const userRoles = [];
+          _.map(data.dn.split(','), map => {
+            if (map.indexOf('ou') !== -1) {
+              userRoles.push(map.split('=')[1]);
+            }
+          });
+
+          return router.formio.teams.getSSOTeams(userRoles).then((teams) => {
+            teams = teams || [];
+            user.teams = _.map(_.map(teams, '_id'), formio.util.idToString);
+            return resolve(user);
+          },reject);
+        }
+
+        return resolve(user);
+      });
+    }
+
     /**
      * Authenticate with Form.io using LDAP
      *
@@ -346,27 +391,7 @@ module.exports = router => {
             };
             debug('Token payload', token);
 
-            try {
-              req.user = user;
-              req.token = token;
-              res.token = formio.auth.getToken(token);
-              req['x-jwt-token'] = res.token;
-              debug('Token Created');
-
-              // Set the headers if they haven't been sent yet.
-              if (!res.headersSent) {
-                res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
-                res.setHeader('x-jwt-token', res.token);
-              }
-              debug('Headers Set');
-
-              debug('Sending response', user);
-              return res.send(user);
-            }
-            catch (err) {
-              debug('Error occurred 2: ', err);
-              return res.status(401).send(err);
-            }
+            return this.processAuth(req, res, data, user, token);
           }
         );
         /* eslint-enable max-statements */
