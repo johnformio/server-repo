@@ -1,14 +1,18 @@
 'use strict';
-const async = require('async');
 const util = require('../util/util');
+const {utilization} = require('../util/utilization');
+const NodeCache = require('node-cache');
+const ncache = new NodeCache();
+
+const CACHE_TIME =  process.env.FORMIO_HOSTED ? 0 : process.env.CACHE_TIME || 3 * 60 * 60;
 
 const debug = {
   loadProject: require('debug')('formio:cache:loadProject'),
   error: require('debug')('formio:error')
 };
 
-module.exports = function(formio) {
-  const formioUtil = formio.util;
+module.exports = function(server) {
+  const formio = server.formio;
   const ProjectCache = {
     loadProjectByName(req, name, cb) {
       const cache = formio.cache.cache(req);
@@ -142,7 +146,37 @@ module.exports = function(formio) {
           return cb(err);
         }
         if (!result) {
-          return cb('Project not found');
+          if (!process.env.FORMIO_HOSTED) {
+            const cached = ncache.get(id.toString());
+            // Check for cached info.
+            if (cached) {
+              cached.toObject = function() {
+                return this;
+              };
+              return cb(null, cached);
+            }
+            return utilization({
+              licenseKey: server.config.licenseKey,
+              type: 'project',
+              projectId: id,
+            })
+              .then((licenseInfo) => {
+                const project = {
+                  _id: licenseInfo.projectId,
+                  plan: licenseInfo.terms.plan,
+                  owner: req.currentProject ? req.currentProject.owner : null,
+                };
+                ncache.set(id.toString(), project, CACHE_TIME);
+                project.toObject = function() {
+                  return this;
+                };
+                return cb(null, project);
+              })
+              .catch(cb);
+          }
+          else {
+            return cb('Project not found');
+          }
         }
         if (result.plan && result.plan !== 'trial') {
           cache.projects[id] = result;
