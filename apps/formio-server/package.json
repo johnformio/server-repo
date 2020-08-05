@@ -22,7 +22,7 @@
   "main": "./server.js",
   "version": "7.0.0-rc.8",
   "schema": "3.3.6",
-  "portalVersion": "7.1.14",
+  "portalVersion": "7.1.15",
   "dependencies": {
     "@formio/premium": "^1.14.0",
     "JSONStream": "^1.3.5",
@@ -43,7 +43,7 @@
     "formio": "^2.0.0-rc.8",
     "formio-services": "formio/formio-services#v2.0.2",
     "formio-workers": "^1.14.8",
-    "formiojs": "^4.11.1-rc.6",
+    "formiojs": "^4.12.0-rc.2",
     "helmet": "^3.23.3",
     "is-url": "^1.2.4",
     "jira-connector": "^3.0.2",
