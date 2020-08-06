@@ -463,17 +463,27 @@ module.exports = (router) => {
 
         if (reqMethod === 'delete') {
           options.qs = req.params;
-          options.body = '';
+          options.body = JSON.stringify(payload);
         }
 
         // Make the request.
         fetch(url, options)
           .then((response) => {
-            if (response.ok) {
-              return response.json().then((body) => handleSuccess(body, response));
+            if (!response.bodyUsed && reqMethod === 'delete') {
+              if (response.ok) {
+                return handleSuccess({}, response);
+              }
+              else {
+                return handleError({}, response);
+              }
             }
             else {
-              return response.json().then((body) => handleError(body, response));
+              if (response.ok) {
+                return response.json().then((body) => handleSuccess(body, response));
+              }
+              else {
+                return response.json().then((body) => handleError(body, response));
+              }
             }
           });
       }
