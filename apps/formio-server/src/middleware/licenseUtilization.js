@@ -69,23 +69,35 @@ function middleware(formio) {
           ) {
             await Promise.all(res.resource.item.map(async (project) => {
               if (project.type === 'stage') {
-                // Load primary project
                 try {
+                  let parentProject, primaryProject;
+                  // Load primary project
                   await new Promise((resolve, reject) => {
                     req.projectId = project.project;
-                    formio.cache.loadPrimaryProject(req, (err, primaryProject) => {
+                    formio.cache.loadPrimaryProject(req, (err, project) => {
                       if (err) {
                         return reject(err);
                       }
-                      req.primaryProject = primaryProject;
-                      return resolve(primaryProject);
+                      req.primaryProject = primaryProject = project.toObject();
+                      return resolve(project);
+                    });
+                  });
+
+                  // Load parent project
+                  await new Promise((resolve, reject) => {
+                    formio.cache.loadProject(req, project.project, (err, project) => {
+                      if (err) {
+                        return reject(err);
+                      }
+                      parentProject = project.toObject();
+                      return resolve(project);
                     });
                   });
 
                   const result = await utilization({
                     type: 'stage',
-                    projectId: project.project.toString(),
-                    tenantId: 'none',
+                    projectId: primaryProject._id,
+                    tenantId: parentProject._id !== primaryProject._id ? parentProject._id : 'none',
                     stageId: project._id.toString(),
                     title: project.title,
                     name: project.name,

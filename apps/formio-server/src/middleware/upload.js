@@ -27,7 +27,7 @@ module.exports = (formioServer) => async (req, res, next) => {
 
   try {
     // Load project
-    const project = req.primaryProject;
+    const project = req.currentProject;
 
     // Set the files server
     let filesServer = PDF_SERVER;
