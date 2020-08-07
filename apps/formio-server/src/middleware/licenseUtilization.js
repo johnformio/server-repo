@@ -115,6 +115,10 @@ function middleware(formio) {
           }
           break;
         case 'GET /project/:projectId':
+          // Don't check utilization for formio project.
+          if (req.currentProject && req.currentProject.name === 'formio') {
+            break;
+          }
           try {
             const result = await utilization({
               ...getProjectContext(req),
