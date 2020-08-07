@@ -116,7 +116,7 @@ function middleware(formio) {
           break;
         case 'GET /project/:projectId':
           // Don't check utilization for formio project.
-          if (req.currentProject && req.currentProject.name === 'formio') {
+          if (_.get(req, 'primaryProject.name') === 'formio') {
             break;
           }
           try {
@@ -164,7 +164,7 @@ function middleware(formio) {
 
         // Require a license utilization when creating a project
         case 'POST /project':
-          if (req.primaryProject && req.primaryProject.name === 'formio' && !process.env.FORMIO_HOSTED) {
+          if (_.get(req, 'primaryProject.name') === 'formio' && !process.env.FORMIO_HOSTED) {
             throw new Error('Cannot create stages or tenants in formio project. Please create a new project.');
           }
           if (!process.env.FORMIO_HOSTED) {
@@ -177,6 +177,10 @@ function middleware(formio) {
 
         // Allow projects to be updated so that a new license key can be added.
         case 'PUT /project/:projectId':
+          // Don't check utilization for formio project.
+          if (_.get(req, 'primaryProject.name') === 'formio') {
+            break;
+          }
           try {
             const result = await utilization({
               ...getProjectContext(req),
@@ -199,6 +203,10 @@ function middleware(formio) {
 
         // Disable project utilization when deleting a project
         case 'DELETE /project/:projectId':
+          // Don't check utilization for formio project.
+          if (_.get(req, 'primaryProject.name') === 'formio') {
+            throw new Error('Cannot delete the formio project.');
+          }
           await utilization({
             ...getProjectContext(req),
             licenseKey: getLicenseKey(req),
@@ -214,7 +222,7 @@ function middleware(formio) {
           break;
 
         case 'POST /project/:projectId/import':
-          if (_.get(req, 'currentProject.name') === 'formio' && !process.env.FORMIO_HOSTED) {
+          if (_.get(req, 'primaryProject.name') === 'formio' && !process.env.FORMIO_HOSTED) {
             throw new Error('Cannot import to formio project. Please create a new project for your forms.');
           }
           break;
