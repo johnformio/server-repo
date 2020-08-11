@@ -105,8 +105,14 @@ async function performValidationRound(app) {
     return true;
   }
 
+  const environmentId = await getEnvironmentId(app);
+  const hostname = require('os').hostname();
+
   // eslint-disable-next-line no-console
   console.log('\nValidating license key...');
+  console.log(`Scope = API Server`);
+  console.log(`Environment ID = ${environmentId}`);
+  console.log(`Hostname = ${hostname}`);
 
   if (!config.licenseKey) {
     // eslint-disable-next-line no-console
@@ -118,10 +124,10 @@ async function performValidationRound(app) {
     // Base validation fields
     type: 'apiServer',
     licenseKey: config.licenseKey,
-    environmentId: await getEnvironmentId(app),
+    environmentId,
     // Extra details for log
     mongoHash: md5(config.formio.mongo),
-    hostname: require('os').hostname(),
+    hostname,
   });
 }
 
