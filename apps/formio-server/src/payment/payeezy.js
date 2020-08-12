@@ -32,7 +32,7 @@ module.exports = function(config, formio) {
     // Send an authorize transaction.
     /* eslint-disable new-cap */
     const sendAuthTxn = function(next) {
-      let userNameParts = portalUser.fullName.split(' ');
+      const userNameParts = portalUser.fullName.split(' ');
       const paymentApi = config.tpro3.api;
       const customerRequest = {
         request:
@@ -71,7 +71,7 @@ module.exports = function(config, formio) {
                 },
               content: content
             }
-        }
+        };
       };
       const uniqueNum = Math.floor(Math.random() * 1000) + 1;
       return fetch(paymentApi, {
@@ -179,9 +179,9 @@ module.exports = function(config, formio) {
                       const transaction = JSON.parse(decodeURIComponent(transactionResponse));
                       return transaction.response.content.create.transaction;
                     })
-                    .then(next)
-                })
-            })
+                    .then(next);
+                });
+            });
         });
     };
     /* eslint-enable new-cap */
