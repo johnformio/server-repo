@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Audit logging
  - New Licensing system
  - Stage Types (Authoring and Live)
+ - Group Roles and improvements to Group Assignment handling.
  
 ### Changed
  - Removed request.js and restler and replaced with node-fetch

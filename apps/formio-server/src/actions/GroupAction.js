@@ -87,7 +87,29 @@ module.exports = (router) => {
             required: false,
           },
         },
+        {
+          type: 'select',
+          input: true,
+          label: 'User Role',
+          key: 'role',
+          placeholder: 'Select the User Role field',
+          template: '<span>{{ item.label || item.key }}</span>',
+          dataSrc: 'url',
+          data: {url: dataSrc},
+          valueProperty: 'key',
+          multiple: false,
+          validate: {
+            required: false,
+          },
+        },
       ]);
+    }
+
+    getGroups(submission, groupSelector, roleSelector) {
+      const newGroupIds = this.getGroupIds(submission, groupSelector);
+      const newGroupRoles = this.getGroupRoles(submission, roleSelector);
+
+      return this.applyRolesToGroups(newGroupIds, newGroupRoles);
     }
 
     getGroupIds(submission, selector) {
@@ -100,9 +122,23 @@ module.exports = (router) => {
         .value();
     }
 
+    getGroupRoles(submission, selector) {
+      const roles = [].concat(_.get(submission, `data.${selector}`, []));
+      return _.chain(roles)
+        .compact()
+        .uniq()
+        .value();
+    }
+
     getUserId(submission, selector) {
       const user = _.get(submission, `data.${selector}`);
       return idToString(_.get(user, '_id', user));
+    }
+
+    applyRolesToGroups(ids, roles) {
+      return roles.length
+        ? ids.flatMap((id) => roles.map((role) => (`${id}:${role}`)))
+        : ids;
     }
 
     loadSubmission(name, submissionId) {
@@ -122,7 +158,8 @@ module.exports = (router) => {
     }
 
     verifyGroupAccess(groupId) {
-      return this.loadSubmission('group', groupId)
+      const [id] = groupId.split(':');
+      return this.loadSubmission('group', id)
         .then((group) => {
           const context = _.cloneDeep(this.req);
           context.permissionsChecked = false;
@@ -213,14 +250,15 @@ module.exports = (router) => {
         }
 
         const groupSelector = _.get(this.settings, 'group');
-        const newGroupIds = this.getGroupIds(req.submission, groupSelector);
-        const oldGroupIds = this.getGroupIds(req.previousSubmission, groupSelector);
-        const groupIdsToRemove = _.difference(oldGroupIds, newGroupIds);
-        const groupIdsToAdd = _.difference(newGroupIds, oldGroupIds);
+        const roleSelector = _.get(this.settings, 'role');
+        const newGroups = this.getGroups(req.submission, groupSelector, roleSelector);
+        const oldGroups = this.getGroups(req.previousSubmission, groupSelector, roleSelector);
+        const groupsToRemove = _.difference(oldGroups, newGroups);
+        const groupsToAdd = _.difference(newGroups, oldGroups);
 
         if (thisUser) {
           const userId = _.get(res, 'resource.item._id');
-          return this.applyRoleChanges(userId, groupIdsToAdd, groupIdsToRemove)
+          return this.applyRoleChanges(userId, groupsToAdd, groupsToRemove)
             .then((roles) => {
               _.set(res, 'resource.item.roles', roles);
               resolve();
@@ -231,20 +269,20 @@ module.exports = (router) => {
         const oldUserId = this.getUserId(req.previousSubmission, userSelector);
 
         if (!oldUserId) {
-          return this.applyRoleChanges(newUserId, newGroupIds, []).then(resolve, reject);
+          return this.applyRoleChanges(newUserId, newGroups, []).then(resolve, reject);
         }
 
         if (!newUserId) {
-          return this.applyRoleChanges(oldUserId, [], oldGroupIds).then(resolve, reject);
+          return this.applyRoleChanges(oldUserId, [], oldGroups).then(resolve, reject);
         }
 
         if (newUserId === oldUserId) {
-          return this.applyRoleChanges(newUserId, groupIdsToAdd, groupIdsToRemove).then(resolve, reject);
+          return this.applyRoleChanges(newUserId, groupsToAdd, groupsToRemove).then(resolve, reject);
         }
 
         return Promise.all([
-          this.applyRoleChanges(newUserId, newGroupIds, []),
-          this.applyRoleChanges(oldUserId, [], oldGroupIds),
+          this.applyRoleChanges(newUserId, newGroups, []),
+          this.applyRoleChanges(oldUserId, [], oldGroups),
         ]).then(resolve, reject);
       })
         .then(() => next())

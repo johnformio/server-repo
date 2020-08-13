@@ -40,6 +40,7 @@ module.exports = (app, template, hook) => {
                 type: 'textfield',
                 label: 'Name',
                 key: 'name',
+                input: true,
               },
             ],
             submissionAccess: [
@@ -84,11 +85,13 @@ module.exports = (app, template, hook) => {
               type: 'resource',
               key: 'user',
               resource: 'user',
+              input: true,
             },
             {
               type: 'resource',
               key: 'department',
               resource: 'department',
+              input: true,
             },
           ])
           .action('departmentuser', {
@@ -102,10 +105,7 @@ module.exports = (app, template, hook) => {
               },
               handler: ['after'],
               method: ['create', 'update', 'delete'],
-              condition: {},
-              submit: true,
             },
-            state: 'submitted',
           })
           .form('departmentreport', [
             {
@@ -113,11 +113,13 @@ module.exports = (app, template, hook) => {
               key: 'department',
               resource: 'department',
               defaultPermission: 'admin',
+              input: true,
             },
             {
               type: 'textarea',
               key: 'notes',
               label: 'Notes',
+              input: true,
             },
           ])
           .execute(done);
@@ -453,7 +455,7 @@ module.exports = (app, template, hook) => {
             const writeAccess = _.find(res.body.access, {
               type: 'write',
             });
-            assert(!!writeAccess, 'Should have found a write permission');
+            assert(Boolean(writeAccess), 'Should have found a write permission');
             assert.deepEqual(writeAccess.resources, [helper.template.submissions.department[0]._id.toString()]);
             assert(
               !_.find(res.body.access, {
@@ -1074,18 +1076,18 @@ module.exports = (app, template, hook) => {
 
       it('Should allow user2 to use the report API to view submissions within their departments', (done) => {
         request(app)
-          .post('/project/' + helper.template.project._id + '/report')
+          .post(`/project/${helper.template.project._id}/report`)
           .set('x-jwt-token', helper.template.users.user2.token)
           .send([
             {
               '$match': {'form': `ObjectId('${helper.template.forms.departmentreport._id}')`},
             },
             {
-              '$limit': 10
+              '$limit': 10,
             },
             {
-              '$sort': {created: -1}
-            }
+              '$sort': {created: -1},
+            },
           ])
           .expect(206)
           .expect('Content-Type', /json/)
@@ -1094,7 +1096,7 @@ module.exports = (app, template, hook) => {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.length, 10);
             assert.equal(res.headers['content-range'], '0-9/13');
             assert.equal(response[0].data.notes, 'Here is some more IT content!');
@@ -1114,21 +1116,21 @@ module.exports = (app, template, hook) => {
 
       it('Should allow user2 to use the report API to view submissions within their departments and change limit, sort, and skip', (done) => {
         request(app)
-          .post('/project/' + helper.template.project._id + '/report')
+        .post(`/project/${helper.template.project._id}/report`)
           .set('x-jwt-token', helper.template.users.user2.token)
           .send([
             {
               '$match': {'form': `ObjectId('${helper.template.forms.departmentreport._id}')`},
             },
             {
-              '$limit': 5
+              '$limit': 5,
             },
             {
-              '$skip': 5
+              '$skip': 5,
             },
             {
-              '$sort': {created: 1}
-            }
+              '$sort': {created: 1},
+            },
           ])
           .expect(206)
           .expect('Content-Type', /json/)
@@ -1137,7 +1139,7 @@ module.exports = (app, template, hook) => {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.length, 5);
             assert.equal(res.headers['content-range'], '5-9/13');
             assert.equal(response[0].data.notes, 'And some more for the IT department!');
@@ -1154,7 +1156,9 @@ module.exports = (app, template, hook) => {
     describe('Self assigned user group actions', () => {
       const createHelper = (done, multipleGroups = false) => {
         const helper = new template.Helper(template.formio.owner);
-        helper.project().plan('trial')
+        helper
+          .project()
+          .plan('trial')
           .form({
             name: 'department',
             type: 'resource',
@@ -1163,6 +1167,7 @@ module.exports = (app, template, hook) => {
                 type: 'textfield',
                 label: 'Name',
                 key: 'name',
+                input: true,
               },
             ],
             submissionAccess: [
@@ -1190,6 +1195,7 @@ module.exports = (app, template, hook) => {
                 type: 'textfield',
                 label: 'Username',
                 key: 'username',
+                input: true,
               },
               {
                 type: 'select',
@@ -1199,8 +1205,9 @@ module.exports = (app, template, hook) => {
                 data: {
                   resource: helper.template.forms.department,
                 },
+                input: true,
               },
-            ]
+            ],
           })
           .action('user2', {
             data: {
@@ -1213,10 +1220,7 @@ module.exports = (app, template, hook) => {
               },
               handler: ['after'],
               method: ['create', 'update', 'delete'],
-              condition: {},
-              submit: true,
             },
-            state: 'submitted',
           })
           .execute(() => done(helper));
       };
@@ -1255,8 +1259,8 @@ module.exports = (app, template, hook) => {
               return done(err);
             }
 
-            assert(!res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must not have the department id as a role.');
             assert(res.body.roles.includes(helper.template.submissions.department[0]._id.toString()), 'Must have the department id as a role.');
+            assert(!res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must not have the department id as a role.');
 
             done();
           });
@@ -1310,8 +1314,8 @@ module.exports = (app, template, hook) => {
               return done(err);
             }
 
-            assert(!res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must not have the department id as a role.');
             assert(res.body.roles.includes(helper.template.submissions.department[0]._id.toString()), 'Must have the department id as a role.');
+            assert(!res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must not have the department id as a role.');
 
             done();
           });
@@ -1366,7 +1370,15 @@ module.exports = (app, template, hook) => {
     describe('User Groups actions', () => {
       const createHelper = (done, multipleGroups = false) => {
         const helper = new template.Helper(template.formio.owner);
-        helper.project().plan('trial')
+        helper
+          .project()
+          .plan('trial')
+          .user('user', 'user0', {
+            data: {
+              email: 'user0@example.com',
+              password: '123testing',
+            },
+          })
           .user('user', 'user1', {
             data: {
               email: 'user1@example.com',
@@ -1381,6 +1393,7 @@ module.exports = (app, template, hook) => {
                 type: 'textfield',
                 label: 'Name',
                 key: 'name',
+                input: true,
               },
             ],
             submissionAccess: [
@@ -1408,6 +1421,7 @@ module.exports = (app, template, hook) => {
               data: {
                 resource: helper.template.forms.user,
               },
+              input: true,
             },
             {
               type: 'select',
@@ -1417,6 +1431,7 @@ module.exports = (app, template, hook) => {
               data: {
                 resource: helper.template.forms.department,
               },
+              input: true,
             },
           ])
           .action('departmentuser', {
@@ -1430,17 +1445,14 @@ module.exports = (app, template, hook) => {
               },
               handler: ['after'],
               method: ['create', 'update', 'delete'],
-              condition: {},
-              submit: true,
             },
-            state: 'submitted',
           })
           .execute(() => done(helper));
       };
 
-      const requestUserRoles = (helper, callback) => {
+      const requestUserRoles = (helper, userId, callback) => {
         request(app)
-          .get(`/project/${helper.template.project._id}/user/submission/${helper.template.users.user1._id}`)
+          .get(`/project/${helper.template.project._id}/user/submission/${userId}`)
           .set('x-jwt-token', helper.owner.token)
           .end((err, res) => {
             callback(err, res);
@@ -1460,22 +1472,66 @@ module.exports = (app, template, hook) => {
         it('Should assign user to group', (done) => {
           helper.submission('departmentuser', {
             data: {
-              user: helper.template.users.user1,
+              user: helper.template.users.user0,
               department: helper.template.submissions.department[0],
             },
           }).execute(done);
         });
 
         it('Should have added the department roles to the user.', (done) => {
-          requestUserRoles(helper, (err, res) => {
+          requestUserRoles(helper, helper.template.users.user0._id, (err, res) => {
             if (err) {
               return done(err);
             }
 
-            assert(!res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must not have the department id as a role.');
             assert(res.body.roles.includes(helper.template.submissions.department[0]._id.toString()), 'Must have the department id as a role.');
+            assert(!res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must not have the department id as a role.');
 
             done();
+          });
+        });
+
+        it('Should not have added the department roles to another user.', (done) => {
+          requestUserRoles(helper, helper.template.users.user1._id, (err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            assert(!res.body.roles.includes(helper.template.submissions.department[0]._id.toString()), 'Must not have the department id as a role.');
+            assert(!res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must not have the department id as a role.');
+
+            done();
+          });
+        });
+
+        it('Should have updated the department roles to the users', (done) => {
+          helper.submission('departmentuser', {
+            _id: helper.template.submissions.departmentuser[0]._id,
+            form: helper.template.forms.departmentuser._id,
+            data: {
+              user: helper.template.users.user1,
+              department: helper.template.submissions.department[0],
+            },
+          }).execute(() => {
+            requestUserRoles(helper, helper.template.users.user0._id, (err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              assert(!res.body.roles.includes(helper.template.submissions.department[0]._id.toString()), 'Must not have the department id as a role.');
+              assert(!res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must not have the department id as a role.');
+
+              requestUserRoles(helper, helper.template.users.user1._id, (err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert(res.body.roles.includes(helper.template.submissions.department[0]._id.toString()), 'Must have the department id as a role.');
+                assert(!res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must not have the department id as a role.');
+
+                done();
+              });
+            });
           });
         });
 
@@ -1488,7 +1544,7 @@ module.exports = (app, template, hook) => {
               department: helper.template.submissions.department[1],
             },
           }).execute(() => {
-            requestUserRoles(helper, (err, res) => {
+            requestUserRoles(helper, helper.template.users.user1._id, (err, res) => {
               if (err) {
                 return done(err);
               }
@@ -1510,7 +1566,7 @@ module.exports = (app, template, hook) => {
               return done(err);
             }
 
-            requestUserRoles(helper, (err, res) => {
+            requestUserRoles(helper, helper.template.users.user1._id, (err, res) => {
               if (err) {
                 return done(err);
               }
@@ -1534,17 +1590,74 @@ module.exports = (app, template, hook) => {
           }, true);
         });
 
-        it('Should assign user to group', (done) => {
+        it('Should assign user to groups', (done) => {
           helper.submission('departmentuser', {
             data: {
-              user: helper.template.users.user1,
+              user: helper.template.users.user0,
               department: [helper.template.submissions.department[0], helper.template.submissions.department[1]],
             },
           }).execute(done);
         });
 
         it('Should have added the department roles to the user.', (done) => {
-          requestUserRoles(helper, (err, res) => {
+          requestUserRoles(helper, helper.template.users.user0._id, (err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            assert(res.body.roles.includes(helper.template.submissions.department[0]._id.toString()), 'Must have the department id as a role.');
+            assert(res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must have the department id as a role.');
+
+            done();
+          });
+        });
+
+        it('Should not have added the department roles to another user.', (done) => {
+          requestUserRoles(helper, helper.template.users.user1._id, (err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            assert(!res.body.roles.includes(helper.template.submissions.department[0]._id.toString()), 'Must not have the department id as a role.');
+            assert(!res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must not have the department id as a role.');
+
+            done();
+          });
+        });
+
+        it('Should have updated the department roles to the users', (done) => {
+          helper.submission('departmentuser', {
+            _id: helper.template.submissions.departmentuser[0]._id,
+            form: helper.template.forms.departmentuser._id,
+            data: {
+              user: helper.template.users.user1,
+              department: [helper.template.submissions.department[0], helper.template.submissions.department[1]],
+            },
+          }).execute(() => {
+            requestUserRoles(helper, helper.template.users.user0._id, (err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              assert(!res.body.roles.includes(helper.template.submissions.department[0]._id.toString()), 'Must not have the department id as a role.');
+              assert(!res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must not have the department id as a role.');
+
+              requestUserRoles(helper, helper.template.users.user1._id, (err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert(res.body.roles.includes(helper.template.submissions.department[0]._id.toString()), 'Must have the department id as a role.');
+                assert(res.body.roles.includes(helper.template.submissions.department[1]._id.toString()), 'Must have the department id as a role.');
+
+                done();
+              });
+            });
+          });
+        });
+
+        it('Should have added the department roles to the user.', (done) => {
+          requestUserRoles(helper, helper.template.users.user1._id, (err, res) => {
             if (err) {
               return done(err);
             }
@@ -1565,7 +1678,7 @@ module.exports = (app, template, hook) => {
               department: [helper.template.submissions.department[1]],
             },
           }).execute(() => {
-            requestUserRoles(helper, (err, res) => {
+            requestUserRoles(helper, helper.template.users.user1._id, (err, res) => {
               if (err) {
                 return done(err);
               }
@@ -1587,7 +1700,7 @@ module.exports = (app, template, hook) => {
               return done(err);
             }
 
-            requestUserRoles(helper, (err, res) => {
+            requestUserRoles(helper, helper.template.users.user1._id, (err, res) => {
               if (err) {
                 return done(err);
               }
