@@ -22,11 +22,11 @@ module.exports = function(app, formio) {
     next();
   };
 
-  app.post('/payeezy',
+  app.post('/payment-gateway',
     formio.middleware.tokenHandler,
     doNotAllowNewAccounts,
     require('../middleware/userProject')(formio),
-    require('./payeezy')(app.formio.config, formio)
+    require('./gateway')(app.formio.config, formio)
   );
 
   app.post('/project/:projectId/upgrade',

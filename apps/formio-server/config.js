@@ -183,10 +183,10 @@ config.payeezy = {
 };
 // tpro3 fields
 config.tpro3 = {
-  gateway: getConfig('TPRO3_GATEWAY', 'form.io Sandbox'),
+  gateway: getConfig('TPRO3_GATEWAY'),
   api: getConfig('TPRO3_API', 'https://api.tpro3.com/json'),
-  useremail: getConfig('TPRO3_EMAIL', 'edwin@form.io'),
-  password: getConfig('TPRO3_PASSWORD', 'Password123'),
+  useremail: getConfig('TPRO3_EMAIL'),
+  password: getConfig('TPRO3_PASSWORD'),
 };
 
 // Using docker, support legacy linking and network links.

@@ -49,7 +49,7 @@ module.exports = function(config, formio) {
                   }
               },
             content:{
-              create:
+              update:
                 {
                   customer:
                     {
@@ -57,8 +57,21 @@ module.exports = function(config, formio) {
                       displayname: data.companyName ? data.companyName : portalUser.fullName,
                       '@refname': 'customer'
                     },
+                },
+              if: [
+                {
+                  create: {
+                    customer: {
+                      name: data.companyName ? data.companyName : `${portalUser.name}-${userId}`,
+                      displayname: data.companyName ? data.companyName : portalUser.fullName,
+                      '@refname': 'customer'
+                    }
+                  },
+                  '@condition': `{!customer.responsestatus!} != 'success'`
                 }
-            },
+              ],
+              '@continueonfailue': true
+            }
           }
       };
       const buildRequest = (sessionId, content) => {
@@ -86,7 +99,7 @@ module.exports = function(config, formio) {
           const customerId = customer.response.content.create ? customer.response.content.create.customer.id : customer.response.content.update.customer.id;
           const sessionId = customer.response.authentication.sessionid;
           const contactContent = {
-            create:
+            update:
               {
                 contact:
                   {
@@ -96,9 +109,30 @@ module.exports = function(config, formio) {
                     companyname: data.companyName ? data.companyName : portalUser.fullName,
                     firstname: userNameParts[0],
                     lastname: userNameParts[1] ? userNameParts[1] : '',
-                    email1: portalUser.email
+                    email1: portalUser.email,
+                    '@refname': 'contact'
                   }
               },
+            if: [
+              {
+                create:
+                  {
+                    contact:
+                      {
+                        name: portalUser.name,
+                        customer: customerId,
+                        contacttype: 'billing',
+                        companyname: data.companyName ? data.companyName : portalUser.fullName,
+                        firstname: userNameParts[0],
+                        lastname: userNameParts[1] ? userNameParts[1] : '',
+                        email1: portalUser.email,
+                        '@refname': 'contact'
+                      }
+                  },
+                '@condition': `{!contact.responsestatus!} != 'success'`
+              },
+            ],
+            '@continueonfailue': true
           };
           fetch(paymentApi, {
             method: 'post',
@@ -135,7 +169,8 @@ module.exports = function(config, formio) {
                             []
                         },
                     }
-                }
+                },
+                '@continueonfailue': true
               };
               fetch(paymentApi, {
                 method: 'post',
@@ -148,26 +183,39 @@ module.exports = function(config, formio) {
                   const saledocument = JSON.parse(decodeURIComponent(salesResponse));
                   const saledocumentId = saledocument.response.content.create ? saledocument.response.content.create.salesdocument.id : saledocument.response.content.update.salesdocument.id;
                   const transactionContent = {
-                 create: {
-                   transaction: {
-                     account: 'Form.ioTestCC', // Account for CC -
-                     amount: '0.00',
-                     salesdocument: saledocumentId,
-                     transactiontype: 'Authorization',
-                     description: `Formio Pre Authorization - ${portalUser.name}:${userId}`,
-                     customer: customerId,
-                     contact: contactId,
-                     creditcard: {
-                       keyed: {
-                         cardholdernumber: `${data.ccNumber}`,
-                         cardholdername: data.cardholderName,
-                         expiresmonth: data.ccExpiryMonth,
-                         expiresyear: data.ccExpiryYear,
-                         cvv: data.securityCode
+                    create: {
+                      transaction: {
+                        account: 'Form.ioTestCC', // Account for CC -
+                        amount: '0.00',
+                        salesdocument: saledocumentId,
+                        transactiontype: 'Authorization',
+                        description: `Formio Pre Authorization - ${portalUser.name}:${userId}`,
+                        customer: customerId,
+                        contact: contactId,
+                        creditcard: {
+                          keyed: {
+                            cardholdernumber: `${data.ccNumber}`,
+                            cardholdername: data.cardholderName,
+                            expiresmonth: data.ccExpiryMonth,
+                            expiresyear: data.ccExpiryYear,
+                            cvv: data.securityCode
                           }
                         },
+                        '@refname': 'auth'
                       }
                     },
+                    if:[
+                      {
+                        delete:
+                          {
+                            salesdocument:
+                              {
+                                id: saledocumentId
+                              }
+                          },
+                        '@condition': `{!auth.responsestatus!} != 'success'`
+                      }
+                    ]
                   };
                   fetch(paymentApi, {
                     method: 'post',
@@ -226,9 +274,9 @@ module.exports = function(config, formio) {
             }
           }
 
-        if (txn.metadata.failures >= 5) {
-          return res.status(400).send('Account disabled. Please contact support to enable.');
-        }
+          if (txn.metadata.failures >= 5) {
+            return res.status(400).send('Account disabled. Please contact support to enable.');
+          }
 
           // Set the last request and increment the request count.
           txn.metadata.lastRequest = new Date();
@@ -257,7 +305,7 @@ module.exports = function(config, formio) {
               // Replace all but last 4 digits with *'s
               ccNumber: transaction.hash.replace(/#/g, '*'),
               ccExpiryMonth: data.ccExpiryMonth,
-              ccExpiryYear: data.ccExpiryYear,
+              ccExpiryYear: data.ccExpiryYear, // TODO: Change the value from 2 digits to 4 i.e 2023
               cardType: transaction['cardtype.name'],
               transactionTag: transaction.authorizationcode, // TODO: Add Text field in the Transactions Record Resource
               transactionId: transaction.id, // TODO: Add Text field in the Transactions Record Resource
