@@ -185,6 +185,7 @@ config.payeezy = {
 config.tpro3 = {
   gateway: getConfig('TPRO3_GATEWAY'),
   api: getConfig('TPRO3_API', 'https://api.tpro3.com/json'),
+  account: getConfig('TPRO3_ACCOUNT', 'Form.ioTestCC'),
   useremail: getConfig('TPRO3_EMAIL'),
   password: getConfig('TPRO3_PASSWORD'),
 };

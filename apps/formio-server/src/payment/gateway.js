@@ -70,7 +70,7 @@ module.exports = function(config, formio) {
                   '@condition': `{!customer.responsestatus!} != 'success'`
                 }
               ],
-              '@continueonfailue': true
+              '@continueonfailure': true
             }
           }
       };
@@ -132,7 +132,7 @@ module.exports = function(config, formio) {
                 '@condition': `{!contact.responsestatus!} != 'success'`
               },
             ],
-            '@continueonfailue': true
+            '@continueonfailure': true
           };
           fetch(paymentApi, {
             method: 'post',
@@ -170,7 +170,7 @@ module.exports = function(config, formio) {
                         },
                     }
                 },
-                '@continueonfailue': true
+                '@continueonfailure': true
               };
               fetch(paymentApi, {
                 method: 'post',
@@ -185,7 +185,7 @@ module.exports = function(config, formio) {
                   const transactionContent = {
                     create: {
                       transaction: {
-                        account: 'Form.ioTestCC', // Account for CC -
+                        account: config.tpro3.account, // Account for CC -
                         amount: '0.00',
                         salesdocument: saledocumentId,
                         transactiontype: 'Authorization',
@@ -215,7 +215,8 @@ module.exports = function(config, formio) {
                           },
                         '@condition': `{!auth.responsestatus!} != 'success'`
                       }
-                    ]
+                    ],
+                    '@continueonfailure': true
                   };
                   fetch(paymentApi, {
                     method: 'post',
