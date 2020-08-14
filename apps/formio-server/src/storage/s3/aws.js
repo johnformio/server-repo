@@ -12,8 +12,8 @@ const getAWS = function(settings = {}) {
   if (settings.encryption) {
     config.signatureVersion = 'v4';
   }
-  if (settings.bucketUrl) {
-    config.endpoint = settings.bucketUrl;
+  if (settings.endpoint) {
+    config.endpoint = settings.endpoint;
   }
 
   // Return the AWS.S3 object.
