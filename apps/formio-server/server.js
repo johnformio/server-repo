@@ -319,7 +319,7 @@ module.exports = function(options) {
     // Add the form manager.
     debug.startup('Mounting Form Manager');
     app.get('/project/:projectId/manage', [
-      require('./src/middleware/licenseUtilization').middleware(formio),
+      require('./src/middleware/licenseUtilization').middleware(app),
       (req, res) => {
         const script = `<script type="text/javascript">
           window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/?$/, '');

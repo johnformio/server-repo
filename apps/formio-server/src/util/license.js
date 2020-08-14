@@ -2,6 +2,7 @@
 
 const config = require('../../config.js');
 const {utilization} = require('../util/utilization');
+const {JWK, JWS} = require('jose');
 
 const terms = {};
 
@@ -118,6 +119,38 @@ async function performValidationRound(app) {
     // eslint-disable-next-line no-console
     console.log('No license key detected. Please set in LICENSE_KEY environment variable.');
     process.exit();
+  }
+
+  if (config.licenseRemote) {
+    try {
+      const pubkey = JWK.asKey(`-----BEGIN PUBLIC KEY-----
+MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAyESFs0sS16TAOSiLE/XQ
+tieqYESD265xHfLGoffQBhyoEJ+Bfma9NvSu6WYU5T8Y6mMz3bXtNGy32AMVvRNa
+bNGi/BZxu0ZmR7GOTh8y58GQEW/hQ4qXfgW7UxBCDoCmZhnU3gtO2yW8GlWZl4WN
+x/fp8oYivvXR30rboWCwEU9hadkJMKOeB/2dJRQJ3nQcPqX9VC4q0mXtcpbrn0qq
+VxtHRJCQJbOuO5YhnVTe0FY+OHZp67sbOEXC5mesIZAz2xNqUlWIHFsFqrirQvoX
+nzK0oaY8swXVIJO3slVgHY0fx7/FNdo29OioQDuPHWlXMlRM5F3Ro/Bc3t4cNNZC
+GYmvNLI2bp2tFOHIdczYdh+vygklOqmO/7FpW2E2AS+vbmLuEaViyAYecdgC7aF5
+ZsLwumQpO80kzPLc/t9pGkFATqKKYRHvSDvLqNG69ZzHWM0FLRbh6w4CKZ7MhkFv
+EF01aANqOqx3p3bghu0xKBlvGHdR69BUs/ry5guDM2XKi7TiXZPTm4KdOOjlOltk
+uppscNxvgK8Ljy/DJqBiX42idTmybr5GYAU5hcw+JcdPlLikn6whNM7kUCcl1aNu
+IzaxfXn16qCWfwKGE+VXkSM7OAS5iunoyHr5QYL9bUh2+vKshM/pnhvoMfDXnIZR
+3RR5A++atmNeqWrkKVPOpPMCAwEAAQ==
+-----END PUBLIC KEY-----`);
+      const payload = JWS.verify(config.licenseKey, pubkey);
+      // eslint-disable-next-line no-console
+      if (payload.exp < Date.now()) {
+        console.log('License is expired');
+        process.exit();
+      }
+      console.log('License key validated remotely');
+      payload.remote = true;
+      return payload;
+    }
+    catch (err) {
+      console.log('Invalid license');
+      process.exit();
+    }
   }
 
   return await submitUtilizationRequest({
