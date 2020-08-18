@@ -378,6 +378,11 @@ module.exports = function(app) {
        * @returns {*}
        */
       validateToken(req, decoded, user, cb) {
+        // If this is an external token, don't try to check for a session.
+        if ('external' in decoded && decoded.external) {
+          return cb();
+        }
+
         if (!decoded.jti) {
           return cb(new Error('Missing session.'));
         }
