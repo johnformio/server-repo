@@ -3,7 +3,7 @@
 const _ = require('lodash');
 
 module.exports = app => routes => {
-  const licenseUtilizationMiddleware = require('../../middleware/licenseUtilization').middleware(app.formio.formio);
+  const licenseUtilizationMiddleware = require('../../middleware/licenseUtilization').middleware(app);
 
   const filterExternalTokens = app.formio.formio.middleware.filterResourcejsResponse(['externalTokens']);
   const conditionalFilter = function(req, res, next) {
