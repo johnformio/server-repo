@@ -3175,14 +3175,6 @@ module.exports = function(app, template, hook) {
 
       if (!docker)
       it('Saving a payment method', function(done) {
-        app.formio.config.tpro3 = {
-          gateway: config.tpro3.gateway, // Test Key
-          api: config.tpro3.api,
-          useremail: config.tpro3.useremail,
-          password: config.tpro3.password,
-          account: 'Form.ioTestCC'
-        };
-
         var paymentData = {
           ccNumber: '4012000033330026',
           ccType: 'visa',
