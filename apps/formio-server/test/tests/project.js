@@ -3195,7 +3195,13 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
-            done();
+            Q(app.formio.formio.resources.form.model.findOne({name: 'paymentAuthorization'}))
+            .then(function(form) {
+              return app.formio.formio.resources.submission.model.findOne({form: form._id, owner: util.ObjectId(template.formio.owner._id)});
+            })
+            .then(function() {
+              done();
+            });
           });
       });
 /*

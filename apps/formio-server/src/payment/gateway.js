@@ -98,7 +98,6 @@ module.exports = function(config, formio) {
       })
         .then((response) => {
           if (process.env.TEST_SUITE) {
-            res.sendStatus(200);
            return next();
           }
           return response.ok ? response.text() : null;
@@ -293,7 +292,10 @@ module.exports = function(config, formio) {
           txn.metadata.requestCount++;
 
           sendAuthTxn((transaction) => {
-            if (transaction['@responsestatus'] !== 'success') {
+            if (process.env.TEST_SUITE) {
+              return res.sendStatus(200);
+            }
+            if (transaction && transaction['@responsestatus'] !== 'success') {
               // Update the transaction record.
               txn.metadata.failures++;
               txn.markModified('metadata');
