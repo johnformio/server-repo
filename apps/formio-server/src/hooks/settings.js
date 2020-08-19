@@ -1410,7 +1410,7 @@ module.exports = function(app) {
        */
       external(decoded, req) {
         // Get the projectId from the remote token.
-        const projectId = decoded.project ? decoded.project._id : decoded.form.project;
+        const projectId = decoded.project ? decoded.project._id : (decoded.form ? decoded.form.project : null);
 
         // Don't allow token parsing for hosted version.
         if (
