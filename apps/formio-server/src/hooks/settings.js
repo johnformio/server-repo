@@ -292,7 +292,8 @@ module.exports = function(app) {
        * @param cb
        */
       tokenDecode(token, req, cb) {
-        if (!token.jti) {
+        // Do not use if a sessionKey has been provided by an external token, or if jti is not available.
+        if (!token.jti || token.sessionKey) {
           return cb(null, token);
         }
         return formioServer.formio.mongoose.models.session.findById(token.jti)
@@ -380,6 +381,11 @@ module.exports = function(app) {
       validateToken(req, decoded, user, cb) {
         // If this is an external token, don't try to check for a session.
         if ('external' in decoded && decoded.external) {
+          return cb();
+        }
+
+        // If this token was provided by an external entity, then skip sessions as well.
+        if (decoded.sessionKey) {
           return cb();
         }
 
