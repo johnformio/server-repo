@@ -3,6 +3,7 @@ const template = require('../../project.json');
 const debug = {
   install: require('debug')('formio:install')
 };
+const portalEnabled = (process.env.PRIMARY && process.env.PRIMARY !==  'false') || (process.env.PORTAL_ENABLED && process.env.PORTAL_ENABLED !==  'false');
 
 module.exports = (app, config, next) => {
   const formio = app.formio.formio;
@@ -12,9 +13,9 @@ module.exports = (app, config, next) => {
   };
 
   log('\nChecking environment status. ');
-  if (!process.env.PRIMARY) {
-    log(' > This environment is set up as a SECONDARY environment.');
-    log(' > Use a primary environment or htps://portal.form.io to connect to this environment.');
+  if (!portalEnabled) {
+    log(' > This environment is set up as a REMOTE environment.');
+    log(' > Use a PORTAL environment to connect to this environment.');
     return next();
   }
   try {
@@ -24,10 +25,10 @@ module.exports = (app, config, next) => {
         return next();
       }
       if (project) {
-        log(' > Existing primary project found.');
+        log(' > Existing portal project found.');
         return next();
       }
-      log(' > Starting primary project install');
+      log(' > Starting portal project install');
       const alters = formio.hook.alter('templateAlters', {});
 
       template.isPrimary = true;
@@ -35,7 +36,7 @@ module.exports = (app, config, next) => {
         if (err) {
           log('Error: ', err);
         }
-        log(' > Finished creating primary project\n');
+        log(' > Finished creating portal project\n');
         formio.resources.project.model.findOne({
           name: template.name
         }, (err, project) => {

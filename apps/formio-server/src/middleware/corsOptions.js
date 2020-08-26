@@ -27,6 +27,11 @@ module.exports = function(router) {
       origin: 'https://form.io'
     };
 
+    // Disallow cors if they are attempting to use a token as querystring.
+    if (!req.header('Origin') || req.header('Origin') === 'null') {
+      return callback(null, fail);
+    }
+
     // Allow CORS if there is no project.
     if (
       !req.projectId ||
@@ -70,6 +75,9 @@ module.exports = function(router) {
     // Load the project settings.
     router.formio.formio.hook.settings(req, function(err, settings) {
       if (err) {
+        if (err === 'Project not found') {
+          return callback(null, pass);
+        }
         return callback(err);
       }
 

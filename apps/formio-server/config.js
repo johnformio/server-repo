@@ -166,6 +166,7 @@ config.formio.apiHost = apiHost;
 config.formioHost = formioHost;
 config.formio.formioHost = formioHost;
 config.licenseKey = getConfig('LICENSE_KEY');
+config.licenseRemote = getConfig('LICENSE_REMOTE', false);
 config.hostedPDFServer = getConfig('PDF_SERVER', getConfig('FORMIO_FILES_SERVER', ''));
 config.portalSSO = getConfig('PORTAL_SSO', '');
 config.ssoTeams = Boolean(getConfig('SSO_TEAMS', false) || config.portalSSO);
@@ -210,6 +211,10 @@ else if (getConfig('MONGO1')) {
 
 if (getConfig('MONGO_SA')) {
   config.formio.mongoSA = getConfig('MONGO_SA');
+}
+
+if (getConfig('MONGO_CA')) {
+  config.formio.mongoCA = getConfig('MONGO_CA');
 }
 
 if (getConfig('MONGO_SSL')) {
