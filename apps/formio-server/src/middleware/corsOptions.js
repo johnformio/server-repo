@@ -27,6 +27,11 @@ module.exports = function(router) {
       origin: 'https://form.io'
     };
 
+    // Disallow cors if they are attempting to use a token as querystring.
+    if (!req.header('Origin') || req.header('Origin') === 'null') {
+      return callback(null, fail);
+    }
+
     // Allow CORS if there is no project.
     if (
       !req.projectId ||
