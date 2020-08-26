@@ -108,7 +108,7 @@ module.exports = (formio) => async (req, res, next) => {
     }
 
     // Always allow access to the project endpoint.
-    if (req.url === `/project/${req.projectId}`) {
+    if (req.url === `/project/${req.projectId}` ||  `/project/${req.projectId}/access/remote`) {
       return next();
     }
 

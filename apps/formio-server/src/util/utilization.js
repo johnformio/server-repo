@@ -8,7 +8,7 @@ const plans = require('../plans/plans');
 const cache = new NodeCache();
 
 // Cache response for 3 hours.
-const CACHE_TIME =  process.env.CACHE_TIME || 3 * 60 * 60 * 1000;
+const CACHE_TIME =  process.env.CACHE_TIME || 3 * 60 * 60;
 
 const getLicenseKey = (req) => {
   return _.get(req, 'primaryProject.settings.licenseKey', _.get(req, 'licenseKey', process.env.LICENSE_KEY));
@@ -37,8 +37,8 @@ const getProjectContext = (req) => {
     case 'stage':
       return {
         type: 'stage',
-        projectId: req.primaryProject._id,
-        tenantId: req.parentProject._id.toString() !== req.primaryProject._id.toString() ? req.parentProject._id : 'none',
+        projectId: req.primaryProject ? req.primaryProject._id : ((req.body && req.body.project) ? req.body.project : 'new'),
+        tenantId: (req.parentProject && req.parentProject._id.toString() !== req.primaryProject._id.toString()) ? req.parentProject._id : 'none',
         stageId: req.currentProject ? req.currentProject._id : 'new',
         title: req.currentProject ? req.currentProject.title : req.body.title,
         name: req.currentProject ? req.currentProject.name : req.body.name,
