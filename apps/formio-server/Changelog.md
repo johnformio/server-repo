@@ -22,6 +22,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Office365 Actions
  - Facebook, LinkedIn, Twitter, Dropbox OAuth providers
 
+## 7.0.0-rc.19
+### Added
+ - Feat: allowed admins pass "noValidate" flag when they create submissions
+
+### Fixed
+ - Fixes an issue related to externalIds in Webhooks.
+ - FOR-2727: Change the message to upgrade
+ - FOR-2699: added storageAccessHanler in init script
+ 
+### Changed
+ - Upgrade formio@2.0.0-rc.10
+ - Upgrade formiojs@4.12.0-rc.7
+
 ## 6.10.8-rc.4
 ### Changed
  - Upgrade portal@7.0.38-rc.6
