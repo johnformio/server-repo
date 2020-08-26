@@ -16,7 +16,12 @@ module.exports = function(formio) {
       }
 
       if (!project) {
-        return res.status(400).send('Environment project doesnt exist.');
+        return res.status(400).send('Stage parent project doesnt exist.');
+      }
+
+      // If there is no access defined, like on premise stages in separate environment from project.
+      if (!project.access) {
+        return next();
       }
 
       if (req.token && req.token.user._id === project.owner.toString()) {
