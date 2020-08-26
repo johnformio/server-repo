@@ -213,6 +213,10 @@ if (getConfig('MONGO_SA')) {
   config.formio.mongoSA = getConfig('MONGO_SA');
 }
 
+if (getConfig('MONGO_CA')) {
+  config.formio.mongoCA = getConfig('MONGO_CA');
+}
+
 if (getConfig('MONGO_SSL')) {
   config.formio.mongoSSL = getConfig('MONGO_SSL');
 }
