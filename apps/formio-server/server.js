@@ -5,7 +5,6 @@ const express = require('express');
 const helmet = require('helmet')();
 const _ = require('lodash');
 const bodyParser = require('body-parser');
-const methodOverride = require('method-override');
 const favicon = require('serve-favicon');
 const packageJson = require('./package.json');
 const Q = require('q');
@@ -107,7 +106,6 @@ module.exports = function(options) {
   debug.startup('Attaching middleware: Body Parser and MethodOverride');
   app.use(bodyParser.urlencoded({extended: true, limit: config.maxBodySize}));
   app.use(bodyParser.json({limit: config.maxBodySize}));
-  app.use(methodOverride('X-HTTP-Method-Override'));
 
   // Error handler for malformed JSON
   debug.startup('Attaching middleware: Malformed JSON Handler');

@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Removed request.js and restler and replaced with node-fetch
  
 ### Removed
+ - Method Override header functionality
  - Jira Action
  - Hubspot Action
  - Office365 Actions
