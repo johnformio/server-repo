@@ -20,7 +20,7 @@
   },
   "cache": "1550086650",
   "main": "./server.js",
-  "version": "7.0.0-rc.20",
+  "version": "7.0.0-rc.21",
   "schema": "3.3.6",
   "portalVersion": "7.1.17",
   "dependencies": {
