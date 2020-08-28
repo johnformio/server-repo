@@ -31,8 +31,7 @@ module.exports = (formioServer) => async (req, res, next) => {
 
     // Set the files server
     let filesServer = PDF_SERVER;
-    if (process.env.FORMIO_HOSTED && project.settings.pdfserver) {
-      // Allow them to download from any server if it is set to the default
+    if (project.settings.pdfserver) {
       filesServer = project.settings.pdfserver;
     }
     debug(`FileServer: ${filesServer}`);
