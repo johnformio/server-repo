@@ -1,9 +1,9 @@
 'use strict';
 const fetch = require('formio/src/util/fetch');
-const PDF_SERVER = process.env.PDF_SERVER || process.env.FORMIO_FILES_SERVER || 'https://files.form.io';
 const _ = require('lodash');
 const Promise = require('bluebird');
 const {getLicenseKey} = require('../util/utilization');
+const {getPDFUrls} = require('../util/pdf');
 
 module.exports = (formioServer) => async (req, res, next) => {
   const encrypt = require('../util/encrypt')(formioServer);
@@ -55,13 +55,10 @@ module.exports = (formioServer) => async (req, res, next) => {
       await new Promise((resolve) => encrypt.encryptDecrypt(req, submission, 'decrypt', resolve));
     }
 
-    // Set the files server
-    let filesServer = PDF_SERVER;
-    if (project.settings.pdfserver) {
-      filesServer = project.settings.pdfserver;
-    }
+    const pdfUrls = getPDFUrls(project);
+
     if (req.query.from) {
-      filesServer = req.query.from;
+      pdfUrls.local = req.query.from;
       delete req.query.from;
     }
 
@@ -99,8 +96,7 @@ module.exports = (formioServer) => async (req, res, next) => {
       // Otherwise, fall back to old behavior
       const pdfProject = req.query.project || project._id.toString();
       const fileId = req.params.fileId || 'pdf';
-
-      url = `${filesServer}/pdf/${pdfProject}/file/${fileId}/download`;
+      url = `${pdfUrls.local}/pdf/${pdfProject}/file/${fileId}/download`;
     }
 
     try {
