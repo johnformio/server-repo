@@ -1,11 +1,11 @@
 'use strict';
 const fetch = require('formio/src/util/fetch');
 const {promisify} = require('util');
-const PDF_SERVER = process.env.PDF_SERVER || process.env.FORMIO_FILES_SERVER || 'https://files.form.io';
 const _ = require('lodash');
 const Promise = require('bluebird');
 const fs = require('fs');
 const {getLicenseKey} = require('../util/utilization');
+const {getPDFUrls} = require('../util/pdf');
 const debug = require('debug')('formio:pdf:upload');
 const FormData = require('form-data');
 
@@ -30,11 +30,8 @@ module.exports = (formioServer) => async (req, res, next) => {
     const project = req.currentProject;
 
     // Set the files server
-    let filesServer = PDF_SERVER;
-    if (project.settings.pdfserver) {
-      filesServer = project.settings.pdfserver;
-    }
-    debug(`FileServer: ${filesServer}`);
+    const pdfUrls = getPDFUrls(project);
+    debug(`FileServer: ${pdfUrls.local}`);
 
     // Create the headers object
     const headers = {'x-license-key': getLicenseKey(req)};
@@ -62,7 +59,7 @@ module.exports = (formioServer) => async (req, res, next) => {
     }
 
     try {
-      debug('POST: ' + `${filesServer}/pdf/${pdfProject}/file`);
+      debug('POST: ' + `${pdfUrls.local}/pdf/${pdfProject}/file`);
       debug(`Filepath: ${  req.files.file.path}`);
       const form = new FormData();
       form.append('file', fs.createReadStream(req.files.file.path), {
@@ -70,7 +67,7 @@ module.exports = (formioServer) => async (req, res, next) => {
         contentType: req.files.file.type,
         size: req.files.file.size,
       });
-      fetch(`${filesServer}/pdf/${pdfProject}/file`, {
+      fetch(`${pdfUrls.local}/pdf/${pdfProject}/file`, {
         method: 'POST',
         headers: headers,
         body: form,
@@ -85,7 +82,7 @@ module.exports = (formioServer) => async (req, res, next) => {
         .then(async (response) => {
           if (response.ok) {
             const body = await response.json();
-            body.filesServer = filesServer;
+            body.filesServer = pdfUrls.public;
             return res.status(201).send(body);
           }
           else {
