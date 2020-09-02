@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Office365 Actions
  - Facebook, LinkedIn, Twitter, Dropbox OAuth providers
 
+## 7.0.0-rc.25
+### Fixed
+ - Attach as PDF to work inline without the need for Save Submission. 
+
 ## 7.0.0-rc.19
 ### Added
  - Feat: allowed admins pass "noValidate" flag when they create submissions
