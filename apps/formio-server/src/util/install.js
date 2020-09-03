@@ -13,8 +13,7 @@ module.exports = (app, config, next) => {
 
   log('\nChecking environment status. ');
   if (!(process.env.PORTAL_ENABLED || process.env.PRIMARY)) {
-    log(' > This environment is set up as a SECONDARY environment.');
-    log(' > Use a primary environment or htps://portal.form.io to connect to this environment.');
+    log(' > Portal is not enabled for this environment.');
     return next();
   }
   try {
