@@ -20,7 +20,7 @@
   },
   "cache": "1550086650",
   "main": "./server.js",
-  "version": "7.0.0-rc.25",
+  "version": "7.0.0-rc.26",
   "schema": "3.3.6",
   "portalVersion": "7.1.17-rc.3",
   "dependencies": {
@@ -40,7 +40,7 @@
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-cache-controller": "^1.1.0",
-    "formio": "^2.0.0-rc.12",
+    "formio": "^2.0.0-rc.13",
     "formio-services": "formio/formio-services#v2.0.2",
     "formio-workers": "^1.14.8",
     "formiojs": "^4.11.3",
@@ -78,7 +78,7 @@
     "universal-analytics": "^0.4.22",
     "uuid": "^8.2.0",
     "webpack": "^4.43.0",
-    "webpack-obfuscator": "^1.12.0"
+    "webpack-obfuscator": "^1.12.1"
   },
   "devDependencies": {
     "eslint": "^7.8.1",
