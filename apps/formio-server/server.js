@@ -39,9 +39,6 @@ module.exports = function(options) {
   // Ensure that we create projects within the helper.
   app.hasProjects = true;
 
-  // Skip assert for response body in Webhook on Delete
-  app.skipWHDeleteBody = true;
-
   // Create the app server.
   debug.startup('Creating application server');
   app.server = require('http').createServer(app);
