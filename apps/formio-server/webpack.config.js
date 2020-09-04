@@ -50,7 +50,7 @@ module.exports = {
       shuffleStringArray: true,
       splitStrings: false,
       stringArray: true,
-      stringArrayEncoding: false,
+      stringArrayEncoding: [],
       stringArrayThreshold: 0.75,
       unicodeEscapeSequence: false
     })
