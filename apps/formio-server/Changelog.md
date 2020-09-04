@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Office365 Actions
  - Facebook, LinkedIn, Twitter, Dropbox OAuth providers
 
+## 7.0.0-rc.27
+### Changed
+ - Upgrade portal@7.1.17-rc.4
+
 ## 7.0.0-rc.26
 ### Changed
  - Upgrade formio@2.0.0-rc.13
