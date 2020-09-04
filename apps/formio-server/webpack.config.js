@@ -10,7 +10,7 @@ module.exports = {
   node: {
     __filename: true,
     __dirname: true,
-    module: true
+    global: false
   },
   output: {
     path: path.resolve(__dirname, 'build'),

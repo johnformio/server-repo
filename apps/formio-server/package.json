@@ -19,7 +19,7 @@
     "validate": "circleci config validate -c .circleci/config.yml"
   },
   "cache": "1550086650",
-  "main": "./server.js",
+  "main": "./main.js",
   "version": "7.0.0-rc.26",
   "schema": "3.3.6",
   "portalVersion": "7.1.17-rc.3",
