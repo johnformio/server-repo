@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Office365 Actions
  - Facebook, LinkedIn, Twitter, Dropbox OAuth providers
 
+## 7.0.0-rc.28
+### Fixed
+ - Issue where portal was not accessible due to Helmet upgrade.
+
 ## 7.0.0-rc.27
 ### Changed
  - Upgrade portal@7.1.17-rc.4

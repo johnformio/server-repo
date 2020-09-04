@@ -2,7 +2,9 @@
 
 require('dotenv').config();
 const express = require('express');
-const helmet = require('helmet')();
+const helmet = require('helmet')({
+  contentSecurityPolicy: false
+});
 const _ = require('lodash');
 const bodyParser = require('body-parser');
 const favicon = require('serve-favicon');
