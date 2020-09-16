@@ -17,10 +17,45 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Removed request.js and restler and replaced with node-fetch
  
 ### Removed
+ - Method Override header functionality
  - Jira Action
  - Hubspot Action
  - Office365 Actions
  - Facebook, LinkedIn, Twitter, Dropbox OAuth providers
+
+## 7.0.0-rc.31
+### Changed
+ - Upgrade formio@2.0.0-rc.14
+ - Upgrade portal@7.1.17-rc.7
+
+## 7.0.0-rc.28
+### Fixed
+ - Issue where portal was not accessible due to Helmet upgrade.
+
+## 7.0.0-rc.27
+### Changed
+ - Upgrade portal@7.1.17-rc.4
+
+## 7.0.0-rc.26
+### Changed
+ - Upgrade formio@2.0.0-rc.13
+
+## 7.0.0-rc.25
+### Fixed
+ - Attach as PDF to work inline without the need for Save Submission. 
+
+## 7.0.0-rc.19
+### Added
+ - Feat: allowed admins pass "noValidate" flag when they create submissions
+
+### Fixed
+ - Fixes an issue related to externalIds in Webhooks.
+ - FOR-2727: Change the message to upgrade
+ - FOR-2699: added storageAccessHanler in init script
+ 
+### Changed
+ - Upgrade formio@2.0.0-rc.10
+ - Upgrade formiojs@4.12.0-rc.7
 
 ## 6.10.8-rc.4
 ### Changed

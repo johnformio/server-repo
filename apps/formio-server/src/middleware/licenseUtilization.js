@@ -104,7 +104,7 @@ function middleware(app) {
                     const result = await utilization({
                       type: 'stage',
                       projectId: primaryProject._id,
-                      tenantId: parentProject._id !== primaryProject._id ? parentProject._id : 'none',
+                      tenantId: parentProject._id.toString() !== primaryProject._id.toString() ? parentProject._id.toString() : 'none',
                       stageId: project._id.toString(),
                       title: project.title,
                       name: project.name,

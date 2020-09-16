@@ -1,0 +1,100 @@
+'use strict';
+const _ = require('lodash');
+const Promise = require('bluebird');
+const fetch = require('formio/src/util/fetch');
+const {getLicenseKey} = require('./utilization');
+const {getPDFUrls} = require('./pdf');
+module.exports = (formioServer) => {
+  const formio = formioServer.formio;
+  const encrypt = require('./encrypt')(formioServer);
+  Promise.promisifyAll(formio.cache, {context: formio.cache});
+  return async (req, project, form, submission) => {
+    // Swap in form components from earlier revision, if applicable
+    if (form.revisions === 'original' && submission._fvid !== form._vid) {
+      const result = await Promise.promisify(formio.resources.formrevision.model.findOne, {
+        context: formio.resources.formrevision.model
+      })({
+        project: project._id,
+        _rid: formio.util.idToBson(form._id),
+        _vid: parseInt(submission._fvid),
+      });
+
+      if (result) {
+        form.components = result.toObject().components;
+        form.settings = result.toObject().settings;
+      }
+    }
+
+    // Speed up performance by loading all subforms inline to the form
+    await formio.cache.loadSubFormsAsync(form, req);
+
+    // Load all subform submissions
+    await formio.cache.loadSubSubmissionsAsync(form, submission, req);
+
+    // Remove protected fields
+    formio.util.removeProtectedFields(form, 'download', submission);
+
+    // Decrypt encrypted fields
+    req.flattenedComponents = formio.util.flattenComponents(form.components, true);
+
+    if (
+      encrypt.hasEncryptedComponents(req)
+    ) {
+      await new Promise((resolve) => encrypt.encryptDecrypt(req, submission, 'decrypt', resolve));
+    }
+
+    const pdfUrls = getPDFUrls(project);
+
+    if (req.query.from) {
+      pdfUrls.local = req.query.from;
+      delete req.query.from;
+    }
+
+    // Create the headers object
+    const headers = {
+      'x-license-key': getLicenseKey(req),
+      'content-type': 'application/json',
+    };
+
+    // Pass along the auth token to files server
+    if (req.token) {
+      if (req.token.user && req.token.form) {
+        headers['x-jwt-token'] = formio.auth.getToken({
+          form: req.token.form,
+          user: req.token.user,
+          project: req.token.project
+        });
+      }
+      else {
+        headers['x-jwt-token'] = formio.auth.getToken(_.omit(req.token, 'allow'));
+      }
+    }
+
+    const pdfSrc = _.get(form, 'settings.pdf.src');
+    let url = null;
+
+    if (pdfSrc && !req.query.project && !req.params.fileId) {
+      // If settings.pdf.src is available, and no custom settings were supplied, use it
+      url = `${pdfSrc}/download`;
+
+      // Use pdf as default format
+      req.query.format = req.query.format || 'pdf';
+    }
+    else {
+      // Otherwise, fall back to old behavior
+      const pdfProject = req.query.project || project._id.toString();
+      const fileId = req.params.fileId || 'pdf';
+      url = `${pdfUrls.local}/pdf/${pdfProject}/file/${fileId}/download`;
+    }
+
+    return fetch(url, {
+      method: 'POST',
+      qs: {...req.query, project: req.params.projectId},
+      headers: headers,
+      body: JSON.stringify({
+        form,
+        submission
+      }),
+    });
+  };
+};
