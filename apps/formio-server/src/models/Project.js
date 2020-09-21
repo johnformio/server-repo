@@ -15,6 +15,7 @@ module.exports = function(router) {
         type: String,
         description: 'The project title.',
         required: true,
+        index: true,
         maxlength: 63
       },
       name: {
