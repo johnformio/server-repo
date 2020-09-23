@@ -194,6 +194,11 @@ module.exports = function(router) {
         type: formio.mongoose.Schema.Types.Mixed,
         default: null,
       },
+      stageTitle: {
+        type: String,
+        description: 'The stage title.',
+        maxlength: 63,
+      },
     })
   });
   /* eslint-enable new-cap, max-len */
