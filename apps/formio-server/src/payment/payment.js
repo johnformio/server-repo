@@ -16,7 +16,7 @@ module.exports = function(app, formio) {
       const created = (new Date(req.user.created)).getTime();
       // If less than one hour in milliseconds.
       if ((current - created) < 3600000) {
-        return res.status(400).send('Your account cannot perform an upgrade yet. Please try again in one hour.');
+        return res.status(400).send('Due to security reasons, you must wait 1 hour after creating an account to input credit card information');
       }
     }
     next();
@@ -34,7 +34,7 @@ module.exports = function(app, formio) {
     require('../middleware/userProject')(formio),
     require('../middleware/restrictProjectAccess')(formio)({level: 'owner'}),
     require('./upgrade')(formio),
-    formio.middleware.customCrmAction('upgradeproject')
+    formio.middleware.customCrmAction('updateproject')
   );
 
   let paymentFormId;

@@ -92,6 +92,7 @@ module.exports = (formioServer) => {
    */
   const getToken = function(profile, settings, project, roleMap, next) {
     let userRoles = _.get(profile, (settings.rolesPath || 'roles'));
+    const {rolesDelimiter} = settings;
 
     //Default role by Azure ADFS (Azure don't send default roles)
     if (!userRoles) {
@@ -99,7 +100,10 @@ module.exports = (formioServer) => {
     }
 
     if (typeof userRoles === 'string') {
-      if (userRoles.indexOf(',') !== -1) {
+      if (rolesDelimiter) {
+        userRoles = userRoles.split(rolesDelimiter);
+      }
+      else if (userRoles.indexOf(',') !== -1) {
         userRoles = userRoles.split(',');
       }
       else if (userRoles.indexOf(';') !== -1) {
@@ -133,7 +137,9 @@ module.exports = (formioServer) => {
 
     const user = {
       _id: toMongoId(userId),
-      data: profile,
+      data: _.pickBy(profile, (prop, key) => {
+        return key.match(/objectidentifier|name|email|inresponseto/i);
+      }),
       roles
     };
 

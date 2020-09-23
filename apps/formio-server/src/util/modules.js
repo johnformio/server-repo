@@ -26,7 +26,7 @@ module.exports = (app) => {
         shuffleStringArray: true,
         splitStrings: false,
         stringArray: true,
-        stringArrayEncoding: false,
+        stringArrayEncoding: ['none'],
         stringArrayThreshold: 0.75,
         unicodeEscapeSequence: false
       })

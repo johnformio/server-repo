@@ -2,6 +2,9 @@
 
 module.exports = function(formio) {
   return function(req, res, next) {
+    if (req.header('Origin') && !formio.origin) {
+      formio.origin = req.header('Origin');
+    }
     if (!formio.resources) {
       return res.status(500).send('No Resources');
     }

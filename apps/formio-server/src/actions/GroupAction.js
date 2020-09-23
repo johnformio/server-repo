@@ -1,27 +1,39 @@
 'use strict';
 
-const Q = require('q');
 const _ = require('lodash');
 const debug = {
   settingsForm: require('debug')('formio:actions:GroupAction#settingsForm'),
   resolve: require('debug')('formio:actions:GroupAction#resolve'),
   canAssignGroup: require('debug')('formio:actions:GroupAction#canAssignGroup'),
-  loadFilteredSubmission: require('debug')('formio:actions:GroupAction#loadFilteredSubmission')
+  loadSubmission: require('debug')('formio:actions:GroupAction#loadSubmission'),
 };
 
-module.exports = function(router) {
-  const Action = router.formio.Action;
-  const hook = router.formio.hook;
+const filterAsync = (array, predicate) => Promise.all(array.map(predicate))
+  .then((results) => array.filter((item, index) => results[index]));
+
+module.exports = (router) => {
+  const {
+    Action,
+    hook,
+    resources: {
+      submission: {
+        model: submissionModel,
+      },
+    },
+    middleware: {
+      permissionHandler,
+    },
+    util: {
+      idToBson,
+      idToString,
+    },
+  } = router.formio;
 
   /**
    * GroupAction class.
    *   This class is used to create the Role action.
    */
   class GroupAction extends Action {
-    constructor(data, req, res) {
-      super(data, req, res);
-    }
-
     static info(req, res, next) {
       next(null, {
         name: 'group',
@@ -31,18 +43,19 @@ module.exports = function(router) {
         priority: 5,
         defaults: {
           handler: ['after'],
-          method: ['create']
+          method: ['create', 'update', 'delete'],
         },
         access: {
           handler: false,
-          method: false
-        }
+          method: false,
+        },
       });
     }
 
     static settingsForm(req, res, next) {
       const basePath = hook.alter('path', '/form', req);
       const dataSrc = `${basePath}/${req.params.formId}/components`;
+
       next(null, [
         {
           type: 'select',
@@ -56,8 +69,8 @@ module.exports = function(router) {
           valueProperty: 'key',
           multiple: false,
           validate: {
-            required: true
-          }
+            required: true,
+          },
         },
         {
           type: 'select',
@@ -71,10 +84,145 @@ module.exports = function(router) {
           valueProperty: 'key',
           multiple: false,
           validate: {
-            required: false
-          }
-        }
+            required: false,
+          },
+        },
+        {
+          type: 'select',
+          input: true,
+          label: 'User Role',
+          key: 'role',
+          placeholder: 'Select the User Role field',
+          template: '<span>{{ item.label || item.key }}</span>',
+          dataSrc: 'url',
+          data: {url: dataSrc},
+          valueProperty: 'key',
+          multiple: false,
+          validate: {
+            required: false,
+          },
+        },
       ]);
+    }
+
+    getGroups(submission, groupSelector, roleSelector) {
+      const newGroupIds = this.getGroupIds(submission, groupSelector);
+      const newGroupRoles = this.getGroupRoles(submission, roleSelector);
+
+      return this.applyRolesToGroups(newGroupIds, newGroupRoles);
+    }
+
+    getGroupIds(submission, selector) {
+      const groups = [].concat(_.get(submission, `data.${selector}`, []));
+      return _.chain(groups)
+        .map((group) => _.get(group, '_id', group))
+        .map(idToString)
+        .compact()
+        .uniq()
+        .value();
+    }
+
+    getGroupRoles(submission, selector) {
+      const roles = [].concat(_.get(submission, `data.${selector}`, []));
+      return _.chain(roles)
+        .compact()
+        .uniq()
+        .value();
+    }
+
+    getUserId(submission, selector) {
+      const user = _.get(submission, `data.${selector}`);
+      return idToString(_.get(user, '_id', user));
+    }
+
+    applyRolesToGroups(ids, roles) {
+      return roles.length
+        ? ids.flatMap((id) => roles.map((role) => (`${id}:${role}`)))
+        : ids;
+    }
+
+    loadSubmission(name, submissionId) {
+      return submissionModel.findOne({
+        _id: idToBson(submissionId),
+        project: idToBson(this.req.projectId),
+        deleted: {$eq: null},
+      })
+        .then((submission) => {
+          if (!submission) {
+            debug.loadSubmission(`Could not find the ${name} for assignment.`);
+            throw new Error(`Could not find the ${name} for assignment.`);
+          }
+
+          return submission;
+        });
+    }
+
+    verifyGroupAccess(groupId) {
+      const [id] = groupId.split(':');
+      return this.loadSubmission('group', id)
+        .then((group) => {
+          const context = _.cloneDeep(this.req);
+          context.permissionsChecked = false;
+          context.formioCache = hook.alter('cacheInit', {
+            names: {},
+            aliases: {},
+            forms: {},
+            submissions: {},
+          });
+          context.method = 'PUT'; // the user must have update access to the group for assignment access.
+          context.formId = idToString(group.form);
+          context.subId = idToString(group._id);
+
+          return new Promise((resolve) => {
+            permissionHandler(context, this.res, (err) => {
+              if (err) {
+                debug.canAssignGroup(err);
+                return resolve(false);
+              }
+
+              resolve(true);
+            });
+          });
+        });
+    }
+
+    applyRoleChanges(userId, rolesToAdd, rolesToRemove) {
+      return this.loadSubmission('user', userId)
+        .then((user) => Promise.all([
+            filterAsync(rolesToAdd, (groupId) => this.verifyGroupAccess(groupId)),
+            filterAsync(rolesToRemove, (groupId) => this.verifyGroupAccess(groupId)),
+          ])
+            .then(([
+              verifiedGroupsToAdd,
+              verifiedGroupsToRemove,
+            ]) => {
+              const {
+                roles = [],
+              } = user;
+
+              const newRoles = _.chain(roles)
+                .map(idToString)
+                .concat(verifiedGroupsToAdd)
+                .difference(verifiedGroupsToRemove)
+                .uniq()
+                .map(idToBson)
+                .value();
+
+              return submissionModel.updateOne(
+                {
+                  _id: idToBson(userId),
+                  project: idToBson(this.req.projectId),
+                  deleted: {$eq: null},
+                },
+                {
+                  '$set': {
+                    roles: newRoles,
+                  },
+                },
+              )
+                .then(() => newRoles);
+            }),
+        );
     }
 
     /**
@@ -92,170 +240,68 @@ module.exports = function(router) {
      *   The callback function to execute upon completion.
      */
     resolve(handler, method, req, res, next) {
-      try {
-        /**
-         * Load the submission with the given _id, but using the current project as a filter restriction.
-         *
-         * @param name
-         * @param id
-         * @returns {*}
-         */
-        const loadFilteredSubmission = function(name, id) {
-          const deferred = Q.defer();
+      new Promise((resolve, reject) => {
+        const userSelector = _.get(this.settings, 'user');
+        const thisUser = !userSelector;
 
-          const filter = {deleted: {$eq: null}};
-          filter[name] = {$exists: true, $ne: []};
-
-          const match = {};
-          match[`${name}._id`] = router.formio.util.idToBson(id);
-
-          router.formio.resources.submission.model.findOne({
-            _id: router.formio.util.idToBson(id),
-            project: router.formio.util.idToBson(req.projectId),
-            deleted: {$eq: null},
-          }).exec(function(err, submissions) {
-            if (err || !submissions) {
-              debug.loadFilteredSubmission(err || `Submission: ${!submissions ? 'none' : submissions.length}`);
-              deferred.reject(`Could not find the ${name} for assignment.`);
-              return;
-            }
-            deferred.resolve(submissions);
-          });
-
-          return deferred.promise;
-        };
-
-        /**
-         * Check if the current user has request to edit the given group.
-         *
-         * @param gid
-         * @returns {*}
-         */
-        const canAssignGroup = function(gid) {
-          return loadFilteredSubmission('group', gid)
-          .then(function(group) {
-            const context = _.cloneDeep(req);
-            context.permissionsChecked = false;
-            context.formioCache = hook.alter('cacheInit', {
-              names: {},
-              aliases: {},
-              forms: {},
-              submissions: {}
-            });
-            context.method = 'PUT'; // the user must have update access to the group for assignment access.
-            context.formId = router.formio.util.idToString(group.form);
-            context.subId = router.formio.util.idToString(group._id);
-
-            debug.loadFilteredSubmission(group);
-            debug.loadFilteredSubmission(`context.formId: ${context.formId}`);
-            debug.loadFilteredSubmission(`context.subId: ${context.subId}`);
-
-            const deferred = Q.defer();
-            router.formio.middleware.permissionHandler(context, res, function(err) {
-              if (err) {
-                debug.canAssignGroup(err);
-                deferred.reject(err);
-              }
-
-              deferred.resolve(true);
-            });
-
-            return deferred.promise;
-          });
-        };
-
-        const user = _.get(this.settings, 'user');
-        let group = _.get(this.settings, 'group');
-        group = _.get(req.submission, `data.${group}`); // Set the group to its search value.
-        // If the _id is present in a resource object, then pluck only the _id.
-        if (_.has(group, '_id')) {
-          group = _.get(group, '_id');
+        if (thisUser && method === 'delete') {
+          // No need to do anything.
+          return next();
         }
 
-        // Check for required settings.
-        if (!group) {
-          debug.resolve('Cant resolve the action, because no group was set.');
-          debug.resolve(this.settings);
-          debug.resolve(req.submission);
-          return res.status(400).send('Can not resolve the action, because no group was set.');
+        const groupSelector = _.get(this.settings, 'group');
+        const roleSelector = _.get(this.settings, 'role');
+        const newGroups = this.getGroups(req.submission, groupSelector, roleSelector);
+        const oldGroups = this.getGroups(req.previousSubmission, groupSelector, roleSelector);
+        const groupsToRemove = _.difference(oldGroups, newGroups);
+        const groupsToAdd = _.difference(newGroups, oldGroups);
+
+        if (thisUser) {
+          const userId = _.get(res, 'resource.item._id');
+          return this.applyRoleChanges(userId, groupsToAdd, groupsToRemove)
+            .then((roles) => {
+              _.set(res, 'resource.item.roles', roles);
+              resolve();
+            }, reject);
         }
 
-        // Check for the user, either just created (with this) or defined in the submission.
-        const userDefined = user && _.has(req.submission, `data.${user}`);
-        const thisUser = !user && _.has(res, 'resource.item');
-        if (!userDefined && !thisUser) {
-          return res.status(400).send('A User reference is required for group assignment.');
-        }
-        debug.resolve(`userDefined: ${userDefined}`);
-        debug.resolve(`thisUser: ${thisUser}`);
+        const newUserId = this.getUserId(req.submission, userSelector);
+        const oldUserId = this.getUserId(req.previousSubmission, userSelector);
 
-        // Search for the user within the cache.
-        let searchUser = userDefined
-          ? _.get(req.submission, `data.${user}`)
-          : _.get(res, 'resource.item._id');
-        // If the _id is present in a resource object, then pluck only the _id.
-        if (_.has(searchUser, '_id')) {
-          searchUser = _.get(searchUser, '_id');
+        if (!oldUserId) {
+          return this.applyRoleChanges(newUserId, newGroups, []).then(resolve, reject);
         }
 
-        loadFilteredSubmission('user', searchUser)
-        .then(function(user) {
-          return canAssignGroup(group)
-          .then(function() {
-            const deferred = Q.defer();
+        if (!newUserId) {
+          return this.applyRoleChanges(oldUserId, [], oldGroups).then(resolve, reject);
+        }
 
-            // Add the new role and make sure its unique.
-            let newRoles = user.roles || [];
-            _.map(newRoles, router.formio.util.idToString);
-            newRoles.push(router.formio.util.idToString(group));
-            newRoles = _.uniq(newRoles);
-            debug.canAssignGroup('newRoles:');
-            debug.canAssignGroup(newRoles);
-            _.map(newRoles, router.formio.util.idToBson);
+        if (newUserId === oldUserId) {
+          return this.applyRoleChanges(newUserId, groupsToAdd, groupsToRemove).then(resolve, reject);
+        }
 
-            router.formio.resources.submission.model.updateOne(
-              {
-                _id: router.formio.util.idToBson(user._id),
-                deleted: {$eq: null}
-              },
-              {
-                $set: {
-                  roles: newRoles
-                }
-              },
-              function(err) {
-                if (err) {
-                  debug.canAssignGroup(err);
-                  throw new Error('Could not add the given group role to the user.');
-                }
+        return Promise.all([
+          this.applyRoleChanges(newUserId, newGroups, []),
+          this.applyRoleChanges(oldUserId, [], oldGroups),
+        ]).then(resolve, reject);
+      })
+        .then(() => next())
+        .catch((err) => {
+          const errorMessage = err
+            ? err.message
+              ? err.message
+              : err
+            : 'Unknown issue occured in group assignment action.';
 
-                // Attempt to update the response item, if present.
-                if (thisUser) {
-                  _.set(res, 'resource.item.roles', newRoles);
-                  debug.canAssignGroup(res.resource.item);
-                }
-
-                debug.canAssignGroup(`Updated: ${user._id}`);
-                return deferred.fulfill();
-              }
-            );
-
-            return deferred.promise;
-          })
-          .then(next);
-        })
-        .catch(function(err) {
-          debug.resolve(err);
-          return res.status(400).send(err);
+          return res.status(400).send(errorMessage);
         });
-      }
-      catch (e) {
-        debug.resolve(e);
-        return next();
-      }
     }
   }
 
-  // Return the GroupAction.
+  GroupAction.access = {
+    handler: false,
+    method: false,
+  };
+
   return GroupAction;
 };

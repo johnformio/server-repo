@@ -10,22 +10,22 @@ module.exports = function(formio) {
     /* eslint-enable callback-return */
 
     if (process.env.hasOwnProperty('CRM')) {
-      formio.resources.project.model.findOne({
-        name: 'formio',
-        primary: true
-      }).lean().exec(function(err, project) {
-        if (err) {
-          return;
-        }
+      const modReq = _.cloneDeep(req);
 
-        const modReq = _.cloneDeep(req);
-        modReq.projectId = project._id;
-        const options = {settings: {}};
-        options.settings['url'] = process.env.CRM + actionName;
-        const ActionClass = formio.actions.actions['webhook'];
-        const action = new ActionClass(options, modReq, res);
-        action.resolve('after', 'create', modReq, res, () => {}, () => {});
-      });
+      if (req.currentProject) {
+        modReq.body.name = req.currentProject.name;
+        modReq.body._id = req.currentProject._id;
+      }
+
+      const settings = {
+        method: 'POST',
+        url: process.env.CRM + actionName
+      };
+
+      const options = {settings};
+      const ActionClass = formio.actions.actions['webhook'];
+      const action = new ActionClass(options, modReq, res);
+      action.resolve('after', 'create', modReq, res, () => {}, () => {});
     }
   };
 };

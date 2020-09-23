@@ -11,6 +11,7 @@ const vm = require('vm');
 
 module.exports = function(app) {
   const formioServer = app.formio;
+  const audit = formioServer.formio.audit;
 
   // Add the encrypt handler.
   const encrypt = require('../util/encrypt')(formioServer);
@@ -84,6 +85,19 @@ module.exports = function(app) {
         log(req.uuid, req.projectId || 'NoProject', event, ...args);
 
         return false;
+      },
+      audit(args, event, req) {
+        if (!app.formio.formio.config.audit || !_.get(app, 'license.terms.options.sac', false)) {
+          return false;
+        }
+        args.unshift(new Date());
+        args.splice(1, 0, event);
+        args.splice(2, 0, req.uuid);
+        args.splice(3, 0, req.projectId || 'NoProject');
+        args.splice(4, 0, req.session ? req.session._id : 'NoSession');
+        args.splice(5, 0, req.userId || (req.user ? req.user._id : 'NoUser'));
+
+        return args;
       },
 
       export(req, query, form, exporter, cb) {
@@ -278,7 +292,8 @@ module.exports = function(app) {
        * @param cb
        */
       tokenDecode(token, req, cb) {
-        if (!token.jti) {
+        // Do not use if a sessionKey has been provided by an external token, or if jti is not available.
+        if (!token.jti || token.sessionKey) {
           return cb(null, token);
         }
         return formioServer.formio.mongoose.models.session.findById(token.jti)
@@ -348,6 +363,8 @@ module.exports = function(app) {
           .catch(cb)
           .then((session) => {
             req.session = session.toObject();
+            req.user = user;
+            audit('AUTH_LOGIN', req);
             cb();
           });
       },
@@ -362,6 +379,16 @@ module.exports = function(app) {
        * @returns {*}
        */
       validateToken(req, decoded, user, cb) {
+        // If this is an external token, don't try to check for a session.
+        if ('external' in decoded && decoded.external) {
+          return cb();
+        }
+
+        // If this token was provided by an external entity, then skip sessions as well.
+        if (decoded.sessionKey) {
+          return cb();
+        }
+
         if (!decoded.jti) {
           return cb(new Error('Missing session.'));
         }
@@ -392,6 +419,8 @@ module.exports = function(app) {
         if (!userId) {
           return cb(new Error('No user found.'));
         }
+
+        audit('AUTH_PASSWORD', req);
 
         req.skipTokensInvalidation = true;
 
@@ -646,23 +675,46 @@ module.exports = function(app) {
 
           // We have some groups that we need to validate.
           if (groups.length) {
-            // Verify these are all submissions within this project.
-            formioServer.formio.resources.submission.model.find({
-              _id: {$in: _.map(groups, formioServer.formio.util.idToBson)},
-              project: formioServer.formio.util.idToBson(req.projectId),
-              deleted: {$eq: null}
-            }).lean().select({_id: 1}).exec((err, subs) => {
-              if (err || !subs || !subs.length) {
-                // Don't add any groups to the access roles.
-                return callback(null);
-              }
+            const groupsMap = groups.reduce((result, groupRole) => {
+              const [groupId, role = null] = groupRole.toString().split(':');
+              return {
+                ...result,
+                [groupId]: (result[groupId] || []).concat(role),
+              };
+            }, {});
+            const groupIds = _(groupsMap)
+              .keys()
+              .map(formioServer.formio.util.idToBson)
+              .value();
 
-              // Add the valid groups to the access roles.
-              access.roles = access.roles.concat(_(subs).map((sub) => {
-                return sub._id.toString();
-              }).filter().uniq().value());
-              return callback(null);
-            });
+            // Verify these are all submissions within this project.
+            formioServer.formio.resources.submission.model
+              .find({
+                _id: {$in: groupIds},
+                project: formioServer.formio.util.idToBson(req.projectId),
+                deleted: {$eq: null}
+              })
+              .lean()
+              .select({_id: 1})
+              .exec((err, subs) => {
+                if (err || !subs || !subs.length) {
+                  // Don't add any groups to the access roles.
+                  return callback(null);
+                }
+
+                // Add the valid groups to the access roles.
+                access.roles = access.roles.concat(
+                  _(subs)
+                    .map((sub) => sub._id.toString())
+                    .filter()
+                    .flatMap(
+                      (groupId) => groupsMap[groupId].map((role) => (role ? `${groupId}:${role}` : groupId)),
+                    )
+                    .uniq()
+                    .value(),
+                );
+                return callback(null);
+              });
           }
           else {
             return callback(null);
@@ -1358,7 +1410,7 @@ module.exports = function(app) {
        */
       external(decoded, req) {
         // Get the projectId from the remote token.
-        const projectId = decoded.project ? decoded.project._id : decoded.form.project;
+        const projectId = decoded.project ? decoded.project._id : (decoded.form ? decoded.form.project : null);
 
         // Don't allow token parsing for hosted version.
         if (
@@ -1500,7 +1552,7 @@ module.exports = function(app) {
               names,
             }, action) => {
               const id = formioServer.formio.util.idToBson(action);
-              return id
+              return _.isObject(id)
                 ? ({
                   ids: [...ids, id],
                   names,

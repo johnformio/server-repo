@@ -49,7 +49,7 @@ module.exports = function(formio) {
     // Creating/Modifying a stage.
     else {
       formio.cache.loadProject(req, req.body.project, function(err, project) {
-        if (err || !project) {
+        if (err || !project || !project.access) {
           debug(err || 'No Project');
           return next();
         }

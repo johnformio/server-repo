@@ -2,7 +2,7 @@
 
 const Q = require('q');
 const _ = require('lodash');
-const oauth2 = require('simple-oauth2');
+const {AuthorizationCode} = require('simple-oauth2');
 
 const fetch = require('formio/src/util/fetch');
 
@@ -45,7 +45,7 @@ module.exports = (formio) => {
           const tokenHost = _.initial(uriPaths).join('/');
           const tokenPath = `/${_.last(uriPaths)}`;
           this.userInfoURI = userInfoURI;
-          const provider = oauth2.create({
+          const provider = new AuthorizationCode({
             client: {
               id: clientId,
               secret: clientSecret,
@@ -59,7 +59,7 @@ module.exports = (formio) => {
             },
           });
 
-          return provider.authorizationCode.getToken({
+          return provider.getToken({
             code,
             redirect_uri: redirectURI,
           });

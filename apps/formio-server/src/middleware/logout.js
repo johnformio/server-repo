@@ -18,6 +18,8 @@ module.exports = (app) => {
       return next();
     }
 
+    app.formio.formio.audit('AUTH_LOGOUT', req);
+
     // Get the jwt token for this user.
     app.formio.formio.mongoose.models.session.updateOne(
       {

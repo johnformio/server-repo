@@ -165,7 +165,8 @@ config.apiHost = apiHost;
 config.formio.apiHost = apiHost;
 config.formioHost = formioHost;
 config.formio.formioHost = formioHost;
-config.licenseKey =getConfig('LICENSE_KEY');
+config.licenseKey = getConfig('LICENSE_KEY');
+config.licenseRemote = getConfig('LICENSE_REMOTE', false);
 config.hostedPDFServer = getConfig('PDF_SERVER', getConfig('FORMIO_FILES_SERVER', ''));
 config.portalSSO = getConfig('PORTAL_SSO', '');
 config.ssoTeams = Boolean(getConfig('SSO_TEAMS', false) || config.portalSSO);
@@ -212,6 +213,10 @@ if (getConfig('MONGO_SA')) {
   config.formio.mongoSA = getConfig('MONGO_SA');
 }
 
+if (getConfig('MONGO_CA')) {
+  config.formio.mongoCA = getConfig('MONGO_CA');
+}
+
 if (getConfig('MONGO_SSL')) {
   config.formio.mongoSSL = getConfig('MONGO_SSL');
 }
@@ -254,6 +259,8 @@ config.formio.jwt = {};
 config.formio.jwt.secret = getConfig('JWT_SECRET', 'abc123');
 config.formio.jwt.expireTime = getConfig('JWT_EXPIRE_TIME', 240);
 config.remoteSecret = getConfig('PORTAL_SECRET', '');
+
+config.formio.audit = !getConfig('NOAUDITLOG', false);
 
 // Access endpoint configuration
 config.filterAccess = getConfig('FILTER_ACCESS', true);

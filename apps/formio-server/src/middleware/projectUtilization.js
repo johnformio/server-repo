@@ -14,7 +14,7 @@ const NodeCache = require('node-cache');
 const cache = new NodeCache();
 
 // Cache response for 3 hours.
-const CACHE_TIME =  process.env.CACHE_TIME || 3 * 60 * 60;
+const CACHE_TIME =  process.env.FORMIO_HOSTED ? 0 : process.env.CACHE_TIME || 3 * 60 * 60;
 
 module.exports = (formio) => async (req, res, next) => {
   // If this isn't for a project, don't check.
@@ -26,24 +26,26 @@ module.exports = (formio) => async (req, res, next) => {
 
   try {
     let licenseKey = getLicenseKey(req);
+    const licenseInfo = cache.get(projectId);
 
-    if (cache.get(projectId) && _.has(req.primaryProject, 'settings.licenseKey')) {
+    if (licenseInfo && _.has(req.primaryProject, 'settings.licenseKey')) {
       // We are going to evaluate these after going to the next middleware so not to slow down the request. If there is
       // an issue we will clear the cache which will cause the issue to be caught on the next request.
+      req.projectLicense = licenseInfo;
       // eslint-disable-next-line callback-return
       next();
       // Check every 5 minutes in case something changes.
-      if (cache.getTtl(projectId) - Date.now() < (CACHE_TIME - 300) * 1000) {
+      if (process.env.FORMIO_HOSTED && cache.getTtl(projectId) - Date.now() < (CACHE_TIME - 300) * 1000) {
         try {
           const license = await getLicense(formio, licenseKey);
-          await utilization({
+          const result = await utilization({
             ...getProjectContext(req),
             licenseKey,
           });
 
-          // Everything is still good, update the cache ttl.
+          // Everything is still good, update the cache info.
           if (license.data.plan === req.primaryProject.plan) {
-            cache.ttl(projectId, CACHE_TIME);
+            cache.set(projectId, result, CACHE_TIME);
           }
           else {
             // Plan has changed. Re-evaluate on next request.
@@ -106,7 +108,7 @@ module.exports = (formio) => async (req, res, next) => {
     }
 
     // Always allow access to the project endpoint.
-    if (req.url === `/project/${req.projectId}`) {
+    if (req.url === `/project/${req.projectId}` ||  `/project/${req.projectId}/access/remote`) {
       return next();
     }
 
@@ -114,6 +116,8 @@ module.exports = (formio) => async (req, res, next) => {
       ...getProjectContext(req),
       licenseKey,
     });
+
+    req.projectLicense = result;
 
     const plan = _.get(result, 'terms.plan') || 'basic';
 
@@ -134,8 +138,8 @@ module.exports = (formio) => async (req, res, next) => {
       });
     }
 
-    // Cache response for 3 hours.
-    cache.set(projectId, true, CACHE_TIME);
+    // Cache response.
+    cache.set(projectId, result, CACHE_TIME);
 
     return next();
   }

@@ -15,10 +15,6 @@ module.exports = (router) => {
    *   This class is used to create webhook interface.
    */
   class WebhookAction extends Action {
-    constructor(data, req, res) {
-      super(data, req, res);
-    }
-
     static info(req, res, next) {
       next(null, hook.alter('actionInfo', {
         name: 'webhook',
@@ -148,7 +144,8 @@ module.exports = (router) => {
                   input: true,
                   placeholder: 'User for Basic Authentication',
                   type: 'textfield',
-                  multiple: false
+                  multiple: false,
+                  autocomplete: 'off'
                 },
                 {
                   label: 'Authorize Password',
@@ -158,7 +155,8 @@ module.exports = (router) => {
                   input: true,
                   placeholder: 'Password for Basic Authentication',
                   type: 'textfield',
-                  multiple: false
+                  multiple: false,
+                  autocomplete: 'off'
                 }
               ],
               type: "fieldset",
@@ -317,8 +315,8 @@ module.exports = (router) => {
         setActionItemMessage('Webhook succeeded');
         if (settings.externalIdType && settings.externalIdPath) {
           const type = settings.externalIdType;
-          const id = data[settings.externalIdPath] || '';
 
+          const id = _.get(data, settings.externalIdPath, '');
           util.setCustomExternalIdType(req, res, router, type, id);
         }
 
@@ -365,7 +363,15 @@ module.exports = (router) => {
         }
 
         const submission = _.get(res, 'resource.previousItem') || _.get(res, 'resource.item') || {};
-        const externalId = submission[settings.externalIdType || 'none'] || '';
+        const externalIds = submission.externalIds || [];
+        let externalId = '';
+        const externalIdType = settings.externalIdType || 'none';
+
+        externalIds.forEach((external) => {
+          if (external.type === externalIdType && external.id) {
+            externalId = external.id;
+          }
+        });
 
         const options = {};
 
@@ -465,17 +471,27 @@ module.exports = (router) => {
 
         if (reqMethod === 'delete') {
           options.qs = req.params;
-          options.body = '';
+          options.body = JSON.stringify(payload);
         }
 
         // Make the request.
         fetch(url, options)
           .then((response) => {
-            if (response.ok) {
-              return response.json().then((body) => handleSuccess(body, response));
+            if (!response.bodyUsed && reqMethod === 'delete') {
+              if (response.ok) {
+                return handleSuccess({}, response);
+              }
+              else {
+                return handleError({}, response);
+              }
             }
             else {
-              return response.json().then((body) => handleError(body, response));
+              if (response.ok) {
+                return response.json().then((body) => handleSuccess(body, response));
+              }
+              else {
+                return response.json().then((body) => handleError(body, response));
+              }
             }
           });
       }
