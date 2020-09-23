@@ -23,6 +23,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Office365 Actions
  - Facebook, LinkedIn, Twitter, Dropbox OAuth providers
 
+## 7.0.0-rc.34
+### Fixed
+ - FOR-2717: Fixes an issue where SAML roles received like a string and have just one role that contains more than one word was being split each word to a special role.
+ - Fix indexes so cosmos works.
+ - Upgrade formio@2.0.0-rc.15
+ - Upgrade simple-oauth2 to latest major version.
+ - FOR-2722: Fixes an issue where Webhook Delete is not firing and not populating request with the submission data
+ - Work on stages: Enable to rename Live stage, Added 2 default stages. PR for Master
+
+### Changed
+ - Upgraded helmet@4.1.1, mongodb@3.6.2, passport-saml@1.3.5, resourcejs@2.3.2, twilio@3.49.3, webpack@4.44.2, copy-webpack-plugin@6.1.1, @formio/premium@1.15.0, aws-sdk@2.759.0, debug@4.2.0, moment@2.29.0, webpack-obfuscator@2.3.1, eslint@7.9.0, jose@2.0.2
+
 ## 7.0.0-rc.32
 ### Changed
  - Upgrade portal@7.1.17-rc.9
