@@ -2,10 +2,11 @@
 
 require('dotenv').config();
 const express = require('express');
-const helmet = require('helmet')();
+const helmet = require('helmet')({
+  contentSecurityPolicy: false
+});
 const _ = require('lodash');
 const bodyParser = require('body-parser');
-const methodOverride = require('method-override');
 const favicon = require('serve-favicon');
 const packageJson = require('./package.json');
 const Q = require('q');
@@ -17,6 +18,7 @@ const os = require('os');
 const license = require('./src/util/license');
 const audit = require('./src/util/audit');
 const vm = require('vm');
+const cors = require('cors');
 const debug = {
   startup: require('debug')('formio:startup')
 };
@@ -45,7 +47,7 @@ module.exports = function(options) {
     return app.server.listen.apply(app.server, arguments);
   };
 
-  const portalEnabled = !!process.env.PRIMARY;
+  const portalEnabled = (process.env.PRIMARY && process.env.PRIMARY !==  'false') || (process.env.PORTAL_ENABLED && process.env.PORTAL_ENABLED !==  'false');
   // Secure html pages with the proper headers.
   debug.startup('Attaching middleware: Helmet');
   app.use((req, res, next) => {
@@ -81,7 +83,7 @@ module.exports = function(options) {
               else if (config.portalSSOLogout && matched.includes('var ssoLogout =')) {
                 return `var ssoLogout = '${config.portalSSOLogout}';`;
               }
-              else if (matched.includes('var onPremise')) {
+              else if (!process.env.FORMIO_HOSTED && matched.includes('var onPremise')) {
                 return 'var onPremise = true;';
               }
               return matched;
@@ -106,7 +108,6 @@ module.exports = function(options) {
   debug.startup('Attaching middleware: Body Parser and MethodOverride');
   app.use(bodyParser.urlencoded({extended: true, limit: config.maxBodySize}));
   app.use(bodyParser.json({limit: config.maxBodySize}));
-  app.use(methodOverride('X-HTTP-Method-Override'));
 
   // Error handler for malformed JSON
   debug.startup('Attaching middleware: Malformed JSON Handler');
@@ -169,12 +170,15 @@ module.exports = function(options) {
 
   // Status response.
   debug.startup('Attaching middleware: Status');
-  app.get('/status', (req, res) => {
-    res.json({
-      version: packageJson.version,
-      schema: packageJson.schema
-    });
-  });
+  app.get('/status', [
+    cors(),
+    (req, res) => {
+      res.json({
+        version: packageJson.version,
+        schema: packageJson.schema
+      });
+    }
+  ]);
 
   // Load projects and roles.
   debug.startup('Attaching middleware: Project & Roles Loader');
@@ -186,7 +190,7 @@ module.exports = function(options) {
   // CORS Support
   debug.startup('Attaching middleware: CORS');
   var corsMiddleware = require('./src/middleware/corsOptions')(app);
-  var corsRoute = require('cors')(corsMiddleware);
+  var corsRoute = cors(corsMiddleware);
   app.use(function(req, res, next) {
     // If headers already sent, skip cors.
     if (res.headersSent) {
@@ -256,7 +260,7 @@ module.exports = function(options) {
     license.validate(app);
 
     debug.startup('Attaching middleware: Cache');
-    app.formio.formio.cache = _.assign(app.formio.formio.cache, require('./src/cache/cache')(formio));
+    app.formio.formio.cache = _.assign(app.formio.formio.cache, require('./src/cache/cache')(app.formio));
 
     // The formio app sanity endpoint.
     debug.startup('Attaching middleware: Health Check');
@@ -315,7 +319,7 @@ module.exports = function(options) {
     // Add the form manager.
     debug.startup('Mounting Form Manager');
     app.get('/project/:projectId/manage', [
-      require('./src/middleware/licenseUtilization').middleware(formio),
+      require('./src/middleware/licenseUtilization').middleware(app),
       (req, res) => {
         const script = `<script type="text/javascript">
           window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/?$/, '');

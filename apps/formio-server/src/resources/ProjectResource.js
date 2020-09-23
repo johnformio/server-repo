@@ -135,7 +135,7 @@ module.exports = (router, formioServer) => {
   formio.middleware.customCrmAction = require('../middleware/customCrmAction')(formio);
 
   // Fix project plan (pull from actual license instead of stored DB value)
-  formio.middleware.licenseUtilization = require('../middleware/licenseUtilization').middleware(formio);
+  formio.middleware.licenseUtilization = require('../middleware/licenseUtilization').middleware(router);
   formio.middleware.licenseRemote = require('../middleware/licenseRemote').middleware(formio);
   formio.middleware.licenseValid = require('../middleware/licenseValid')(formio);
 

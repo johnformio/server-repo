@@ -53,7 +53,7 @@ module.exports = app => (type, formio) => {
       app.get('/access', formio.middleware.accessHandler);
       return false;
     case 'perms':
-      app.use(formio.middleware.permissionHandler);
+      app.use(formio.middleware.storageAccessHandler, formio.middleware.permissionHandler);
       return true;
   }
 
