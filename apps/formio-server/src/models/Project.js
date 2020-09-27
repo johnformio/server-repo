@@ -15,6 +15,7 @@ module.exports = function(router) {
         type: String,
         description: 'The project title.',
         required: true,
+        index: true,
         maxlength: 63
       },
       name: {
@@ -192,6 +193,11 @@ module.exports = function(router) {
       formDefaults: {
         type: formio.mongoose.Schema.Types.Mixed,
         default: null,
+      },
+      stageTitle: {
+        type: String,
+        description: 'The stage title.',
+        maxlength: 63,
       },
     })
   });
