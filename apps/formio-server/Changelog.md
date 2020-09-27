@@ -23,6 +23,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Office365 Actions
  - Facebook, LinkedIn, Twitter, Dropbox OAuth providers
 
+## 7.0.0-rc.35
+### Fixed
+ - FOR-2757: Added a correct header for Authorization to sql-connector.
+ - Upgrade formiojs@4.12.1-rc.2 to resolve issue with losing data in form submission.
+
 ## 7.0.0-rc.34
 ### Fixed
  - FOR-2717: Fixes an issue where SAML roles received like a string and have just one role that contains more than one word was being split each word to a special role.
