@@ -82,26 +82,26 @@ module.exports = (app) => (middleware) => {
               data,
               roles,
             };
+            const formio = app.formio.formio;
 
-            app.formio.mongoose.models.session.create({
+            formio.mongoose.models.session.create({
               project: currentProject._id,
               // form: ssoToken.submission.form,
               submission: user._id,
               source: 'oauth2:token',
             })
               .then((session) => {
-                const token = app.formio.hook.alter('token', {
+                const token = formio.hook.alter('token', {
                   external: true,
                   user,
                   project: {
                     _id: currentProject._id.toString(),
                   },
-                  externalToken: authorization.replace(/^Bearer/, ''),
-                }, {session});
+                }, '', {session});
 
                 req.user = user;
                 req.token = token;
-                res.token = app.formio.formio.auth.getToken(token);
+                res.token = formio.auth.getToken(token);
                 req['x-jwt-token'] = res.token;
 
                 // Set the headers if they haven't been sent yet.
