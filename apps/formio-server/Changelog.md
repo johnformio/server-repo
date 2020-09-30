@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Upgrade portal@7.1.17-rc.11
  -Upgrade formiojs@4.12.1-rc.5
 
+## 7.0.0-rc.39
+### Changed
+ - Upgrade portal@7.1.17-rc.11
+ -Upgrade formiojs@4.12.1-rc.5
+
 ## 7.0.0
 ### Added
  - User Sessions
