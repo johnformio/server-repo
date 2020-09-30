@@ -23,6 +23,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Office365 Actions
  - Facebook, LinkedIn, Twitter, Dropbox OAuth providers
 
+## 7.0.0-rc.38
+### Fixed
+ - FOR-2771: Fixed issue where calculated values (with allowOverride) would get overridden on the server.
+
+### Changed
+ - Upgrade formio@2.0.0-rc.20
+
 ## 7.0.0-rc.37
 ### Changed
  - Upgrade formio@2.0.0-rc.19
