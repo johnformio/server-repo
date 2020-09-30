@@ -14,13 +14,19 @@ module.exports = (router) => {
       form: {
         type: formio.mongoose.Schema.Types.ObjectId,
         ref: 'form',
-        required: true
       },
       submission: {
-        type: formio.mongoose.Schema.Types.ObjectId,
+        type: formio.mongoose.Schema.Types.Mixed,
         ref: 'submission',
         index: true,
-        required: true
+        required: true,
+        set: id => {
+          // Attempt to convert to objectId.
+          return formio.util.ObjectId(id);
+        },
+        get: id => {
+          return id ? id.toString() : id;
+        }
       },
       logout: {
         type: Date,

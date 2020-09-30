@@ -307,11 +307,11 @@ module.exports = function(app) {
             cb(null, {
               ...token,
               form: {
-                _id: req.session.form.toString(),
-                project: req.session.project.toString(),
+                _id: req.session.form ? req.session.form.toString() : '',
+                project: req.session.project ? req.session.project.toString() : '',
               },
               project: {
-                _id: req.session.project.toString(),
+                _id: req.session.project ? req.session.project.toString() : '',
               },
             });
           });
