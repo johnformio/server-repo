@@ -23,6 +23,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Office365 Actions
  - Facebook, LinkedIn, Twitter, Dropbox OAuth providers
 
+## 7.0.0-rc.36
+### Changed
+ - Fix Current endpoint token exchange to work with sessions.
+ - Upgrade formiojs@4.12.1-rc.4
+ - Upgrade formio@2.0.0-rc.18
+
 ## 7.0.0-rc.35
 ### Fixed
  - FOR-2757: Added a correct header for Authorization to sql-connector.
