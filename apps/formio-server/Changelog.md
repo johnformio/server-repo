@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.0.0-rc.40
+### Fixed
+ - Added an email attachment fallback to use url attachments when it works.
+
+### Changed
+ - Change the number of submission requests per month to 1000000 from 2000000
+ - Upgrade formio@2.0.0-rc.21
+ - Upgrade formiojs@4.12.1-rc.7
+
 ## 7.0.0-rc.39
 ### Changed
  - Upgrade portal@7.1.17-rc.11
