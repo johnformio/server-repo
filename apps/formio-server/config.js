@@ -161,6 +161,7 @@ config.host = host;
 
 config.project = project;
 config.plan = plan;
+config.baseUrl = getConfig('BASE_URL', '');
 config.apiHost = apiHost;
 config.formio.apiHost = apiHost;
 config.formioHost = formioHost;
