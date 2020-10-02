@@ -98,11 +98,22 @@ module.exports = function(config, formio) {
       })
         .then((response) => {
           if (process.env.TEST_SUITE) {
-           return next();
+            return response.ok;
           }
           return response.ok ? response.text() : null;
         })
         .then((customerResponse) => {
+          if (process.env.TEST_SUITE) {
+            return next({
+              cardholdernumber: `${data.ccNumber}`,
+              cartype: data.ccType,
+              cardholdername: data.cardholderName,
+              expiresmonth: data.ccExpiryMonth,
+              expiresyear: data.ccExpiryYear,
+              cvv: data.securityCode,
+              '@responsestatus': 'success'
+            });
+          }
           const customer = JSON.parse(decodeURIComponent(customerResponse));
           const customerId = customer.response.content.create ? customer.response.content.create.customer.id : customer.response.content.update.customer.id;
           const sessionId = customer.response.authentication.sessionid;
@@ -234,9 +245,43 @@ module.exports = function(config, formio) {
                   }).then((transactionRequest) => transactionRequest.ok ? transactionRequest.text() : null)
                     .then((transactionResponse) => {
                       const transaction = JSON.parse(decodeURIComponent(transactionResponse));
-                      return transaction.response.content.create.transaction;
+                      const storeContent = {
+                        update: {
+                          storedaccount: {
+                            name: `${portalUser.name} ${data.ccNumber.replace(data.ccNumber.substring(0, 12), "***")}`, customer: customerId, contact: contactId, creditcard: {
+                              keyed: {
+                                cardholdernumber: `${data.ccNumber}`, cardholdername: data.cardholderName, expiresmonth: data.ccExpiryMonth, expiresyear: data.ccExpiryYear, cvv: data.securityCode
+                              }
+                            },
+                            '@refname': 'store'
+                          }
+                        },
+                        if: [
+                          {
+                            create: {
+                              storedaccount: {
+                                name: `${portalUser.name} ${data.ccNumber.replace(data.ccNumber.substring(0, 12), "***")}`, customer: customerId, contact: contactId, creditcard: {
+                                  keyed: {
+                                    cardholdernumber: `${data.ccNumber}`, cardholdername: data.cardholderName, expiresmonth: data.ccExpiryMonth, expiresyear: data.ccExpiryYear, cvv: data.securityCode
+                                  }
+                                }
+                              }
+                            },
+                            '@condition': `{!store.responsestatus!} != 'success'`
+                          }
+                        ],
+                        '@continueonfailure': true
+                      };
+                      fetch(paymentApi, {
+                        method: 'post',
+                        mode: 'cors',
+                        dataType: "json",
+                        body: JSON.stringify(buildRequest(sessionId, storeContent)),
+                      }).then((stored) => stored.ok ? stored.text() : null)
+                        .then(() => {
+                          next(transaction.response.content.create.transaction);
+                        })
                     })
-                    .then(next);
                 });
             });
         });
@@ -293,6 +338,17 @@ module.exports = function(config, formio) {
 
           sendAuthTxn((transaction) => {
             if (process.env.TEST_SUITE) {
+              txn.data = {
+                cardholderName: transaction.cardholdername,
+                // Replace all but last 4 digits with *'s
+                ccNumber: transaction.cardholdernumber.replace(/^.{12}/g, ''),
+                ccExpiryMonth: data.ccExpiryMonth,
+                ccExpiryYear: data.ccExpiryYear, // TODO: Change the value from 2 digits to 4 i.e 2023
+                cardType: transaction.ccType,
+                transactionTag: 'approved', // TODO: Add Text field in the Transactions Record Resource
+                transactionId: '00132', // TODO: Add Text field in the Transactions Record Resource
+              };
+              txn.save();
               return res.sendStatus(200);
             }
             if (transaction && transaction['@responsestatus'] !== 'success') {
@@ -320,6 +376,7 @@ module.exports = function(config, formio) {
               ccExpiryYear: data.ccExpiryYear, // TODO: Change the value from 2 digits to 4 i.e 2023
               cardType: transaction['cardtype.name'],
               transactionTag: transaction.authorizationcode, // TODO: Add Text field in the Transactions Record Resource
+              transactionStatus: transaction['@responsestatus'], // TODO: Add Text field in the Transactions Record Resource
               transactionId: transaction.id, // TODO: Add Text field in the Transactions Record Resource
             };
 
