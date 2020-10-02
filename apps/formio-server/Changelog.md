@@ -8,8 +8,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
  - Upgrade portal@7.1.17-rc.13
  -Upgrade formiojs@4.12.1-rc.8
-
-## [Unreleased]
 ### Changed
  - Added tpro3 payments
 
