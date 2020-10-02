@@ -280,8 +280,8 @@ module.exports = function(config, formio) {
                       }).then((stored) => stored.ok ? stored.text() : null)
                         .then(() => {
                           next(transaction.response.content.create.transaction);
-                        })
-                    })
+                        });
+                    });
                 });
             });
         });
