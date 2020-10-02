@@ -196,7 +196,7 @@ module.exports = function(config, formio) {
                         account: config.tpro3.account, // Account for CC -
                         amount: '0.00',
                         salesdocument: saledocumentId,
-                        transactiontype: 'Authorization',
+                        transactiontype: 'Verify',
                         description: `Formio Pre Authorization - ${portalUser.name}:${userId}`,
                         customer: customerId,
                         contact: contactId,
