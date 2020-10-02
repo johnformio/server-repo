@@ -183,6 +183,14 @@ config.payeezy = {
   hmacKey: getConfig('PAYEEZY_HMAC_KEY'),
   merchToken: getConfig('PAYEEZY_TOKEN'),
 };
+// tpro3 fields
+config.tpro3 = {
+  gateway: getConfig('TPRO3_GATEWAY'),
+  api: getConfig('TPRO3_API', 'https://api.tpro3.com/json'),
+  account: getConfig('TPRO3_ACCOUNT', 'Form.ioTestCC'),
+  useremail: getConfig('TPRO3_EMAIL'),
+  password: getConfig('TPRO3_PASSWORD'),
+};
 
 // Using docker, support legacy linking and network links.
 var mongoCollection = getConfig('MONGO_COLLECTION', 'formio');
