@@ -70,7 +70,7 @@ module.exports = function(formio) {
       formio.cache.loadProject(req, project.project, function(err, primaryProject) {
         formio.template.export({
           projectId: project.project,
-          access: primaryProject.access.toObject()
+          access: primaryProject.access ? primaryProject.access.toObject() : [],
         }, function(err, template) {
           if (err) {
             // If something went wrong, just import the default template instead.

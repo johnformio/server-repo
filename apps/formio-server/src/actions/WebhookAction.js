@@ -315,8 +315,8 @@ module.exports = (router) => {
         setActionItemMessage('Webhook succeeded');
         if (settings.externalIdType && settings.externalIdPath) {
           const type = settings.externalIdType;
-          const id = data[settings.externalIdPath] || '';
 
+          const id = _.get(data, settings.externalIdPath, '');
           util.setCustomExternalIdType(req, res, router, type, id);
         }
 
@@ -363,7 +363,15 @@ module.exports = (router) => {
         }
 
         const submission = _.get(res, 'resource.previousItem') || _.get(res, 'resource.item') || {};
-        const externalId = submission[settings.externalIdType || 'none'] || '';
+        const externalIds = submission.externalIds || [];
+        let externalId = '';
+        const externalIdType = settings.externalIdType || 'none';
+
+        externalIds.forEach((external) => {
+          if (external.type === externalIdType && external.id) {
+            externalId = external.id;
+          }
+        });
 
         const options = {};
 
@@ -463,17 +471,27 @@ module.exports = (router) => {
 
         if (reqMethod === 'delete') {
           options.qs = req.params;
-          options.body = '';
+          options.body = JSON.stringify(payload);
         }
 
         // Make the request.
         fetch(url, options)
           .then((response) => {
-            if (response.ok) {
-              return response.json().then((body) => handleSuccess(body, response));
+            if (!response.bodyUsed && reqMethod === 'delete') {
+              if (response.ok) {
+                return handleSuccess({}, response);
+              }
+              else {
+                return handleError({}, response);
+              }
             }
             else {
-              return response.json().then((body) => handleError(body, response));
+              if (response.ok) {
+                return response.json().then((body) => handleSuccess(body, response));
+              }
+              else {
+                return response.json().then((body) => handleError(body, response));
+              }
             }
           });
       }

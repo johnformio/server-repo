@@ -161,6 +161,7 @@ config.host = host;
 
 config.project = project;
 config.plan = plan;
+config.baseUrl = getConfig('BASE_URL', '');
 config.apiHost = apiHost;
 config.formio.apiHost = apiHost;
 config.formioHost = formioHost;
@@ -219,6 +220,10 @@ else if (getConfig('MONGO1')) {
 
 if (getConfig('MONGO_SA')) {
   config.formio.mongoSA = getConfig('MONGO_SA');
+}
+
+if (getConfig('MONGO_CA')) {
+  config.formio.mongoCA = getConfig('MONGO_CA');
 }
 
 if (getConfig('MONGO_SSL')) {

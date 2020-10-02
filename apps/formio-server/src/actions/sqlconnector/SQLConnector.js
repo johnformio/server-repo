@@ -333,7 +333,7 @@ module.exports = (router) => {
         if (project.settings.sqlconnector.user && project.settings.sqlconnector.password) {
           const auth = Buffer.from(`${project.settings.sqlconnector.user}:${project.settings.sqlconnector.password}`).toString('base64');
           options.headers = {
-            'Authentication': `Basic ${auth}`,
+            'Authorization': `Basic ${auth}`
           };
         }
 

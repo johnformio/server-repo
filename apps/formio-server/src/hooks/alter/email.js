@@ -6,9 +6,11 @@ const async = require('async');
 const config = require('../../../config');
 const {utilization, getLicenseKey} = require('../../util/utilization');
 const _ = require('lodash');
+const PassThrough = require('stream').PassThrough;
 
 module.exports = app => (mail, req, res, params, cb) => {
   const formioServer = app.formio;
+  const formio = formioServer.formio;
 
   // Check the Project plan.
   const checkPlan = async () => {
@@ -19,7 +21,7 @@ module.exports = app => (mail, req, res, params, cb) => {
     let form = params.form;
     if (typeof params.form === 'string') {
       form = await new Promise((resolve, reject) => {
-        formioServer.formio.cache.loadForm(req, null, params.form, (err, form) => {
+        formio.cache.loadForm(req, null, params.form, (err, form) => {
           if (err) {
             return reject(err);
           }
@@ -82,61 +84,61 @@ module.exports = app => (mail, req, res, params, cb) => {
   };
 
   // Attach a PDF to the email.
-  const attachPDF = () => new Promise((resolve) => {
+  const attachPDF = async () => {
     // If they wish to attach a PDF.
-    if (
-      params.settings &&
-      params.settings.attachPDF &&
-      res.resource &&
-      res.resource.item &&
-      res.resource.item._id
-    ) {
-      let url = `/project/${req.projectId}`;
-      url += `/form/${req.formId}`;
-      url += `/submission/${res.resource.item._id}`;
-      url += '/download';
-      const expireTime = 3600;
-      formioServer.formio.auth.getTempToken(req, res, `GET:${url}`, expireTime, true, (err, token) => {
-        if (err) {
-          return resolve();
-        }
-
-        // Get the file name settings.
-        let fileName = params.settings.pdfName || '{{ form.name }}-{{ submission._id }}';
-
-        // Only allow certain characters and keep malicious code from executing.
-        fileName = fileName
-          .replace(/{{/g, '----ob----')
-          .replace(/}}/g, '----cb----')
-          .replace(/[^0-9A-Za-z._-]/g, '')
-          .replace(/----ob----/g, '{{')
-          .replace(/----cb----/g, '}}');
-        try {
-          fileName = formioServer.formio.util.FormioUtils.interpolate(fileName, {
-            submission: res.resource.item,
-            form: req.currentForm
-          }).replace('.', '');
-        }
-        catch (err) {
-          fileName = `submission-${ res.resource.item._id }`;
-        }
-
-        // Add the download token to the url.
-        url += `?token=${token.key}`;
-        mail.attachments = (mail.attachments || []).concat([
-          {
-            filename: `${fileName}.pdf`,
-            contentType: 'application/pdf',
-            path: `${config.apiHost}${url}`
-          }
-        ]);
-        return resolve();
+    if (params.settings && params.settings.attachPDF) {
+      let attachment = {};
+      const project = await new Promise((resolve) => {
+        formio.cache.loadPrimaryProject(req, (err, project) => resolve(project));
       });
+      const form = await new Promise((resolve) => {
+        formio.cache.loadCurrentForm(req, (err, form) => resolve(form));
+      });
+      const submission = _.get(res.resource, 'item', req.body);
+
+      // If they have provided BASE_URL and the submission object was created, then use the URL method of email attachments.
+      if (config.baseUrl && submission._id) {
+        let url = `/project/${req.projectId}/form/${req.formId}/submission/${submission._id}/download`;
+        const expireTime = 3600;
+        const token = await new Promise((resolve) => {
+          formioServer.formio.auth.getTempToken(req, res, `GET:${url}`, expireTime, true, (err, token) => resolve(token));
+        });
+        url += `?token=${token.key}`;
+        attachment = {path: `${config.baseUrl}${url}`};
+      }
+      else {
+        const downloadPDF = require('../../util/downloadPDF')(formioServer);
+        const response = await downloadPDF(req, project, form, submission);
+        const pdfStream = new PassThrough();
+        response.body.pipe(pdfStream);
+        attachment = {content: pdfStream};
+      }
+
+      // Get the file name settings.
+      let fileName = params.settings.pdfName || '{{ form.name }}-{{ submission._id }}';
+
+      // Only allow certain characters and keep malicious code from executing.
+      fileName = fileName
+        .replace(/{{/g, '----ob----')
+        .replace(/}}/g, '----cb----')
+        .replace(/[^0-9A-Za-z._-]/g, '')
+        .replace(/----ob----/g, '{{')
+        .replace(/----cb----/g, '}}');
+      try {
+        fileName = formio.util.FormioUtils.interpolate(fileName, {
+          submission: submission,
+          form: form
+        }).replace('.', '');
+      }
+      catch (err) {
+        fileName = `submission-${submission._id || submission.created}`;
+      }
+
+      attachment.filename = `${fileName}.pdf`;
+      attachment.contentType = 'application/pdf';
+      mail.attachments = (mail.attachments || []).concat([attachment]);
     }
-    else {
-      return resolve();
-    }
-  });
+  };
 
   // Replace SSO tokens.
   const replaceSSOTokens = () => new Promise((resolve) => {
@@ -150,7 +152,7 @@ module.exports = app => (mail, req, res, params, cb) => {
       return resolve(mail);
     }
 
-    const query = formioServer.formio.hook.alter('formQuery', {
+    const query = formio.hook.alter('formQuery', {
       deleted: {$eq: null}
     }, req);
 
@@ -165,7 +167,7 @@ module.exports = app => (mail, req, res, params, cb) => {
       else {
         query.name = {'$in': ssoToken.resources};
       }
-      formioServer.formio.resources.form.model.find(query).lean().exec((err, result) => {
+      formio.resources.form.model.find(query).lean().exec((err, result) => {
         if (err || !result || !result.length) {
           ssoToken.submission = null;
           return nextToken();
@@ -183,19 +185,19 @@ module.exports = app => (mail, req, res, params, cb) => {
         }
 
         const query = {
-          project: formioServer.formio.util.idToBson(req.projectId),
+          project: formio.util.idToBson(req.projectId),
           form: {'$in': forms},
           deleted: {$eq: null}
         };
 
         // Set the username field to the email address this is getting sent to.
         query[ssoToken.field] = {
-          $regex: new RegExp(`^${formioServer.formio.util.escapeRegExp(mail.to)}$`),
+          $regex: new RegExp(`^${formio.util.escapeRegExp(mail.to)}$`),
           $options: 'i'
         };
 
         // Find the submission.
-        formioServer.formio.resources.submission.model
+        formio.resources.submission.model
           .findOne(query)
           .lean()
           .select('_id, form')
@@ -209,7 +211,7 @@ module.exports = app => (mail, req, res, params, cb) => {
         if (!ssoToken.submission) {
           return nextToken();
         }
-        formioServer.formio.mongoose.models.session.create({
+        formio.mongoose.models.session.create({
           project: formObjs[ssoToken.submission.form.toString()].project,
           form: ssoToken.submission.form,
           submission: ssoToken.submission._id,
@@ -217,7 +219,7 @@ module.exports = app => (mail, req, res, params, cb) => {
         })
           .catch(nextToken)
           .then((session) => {
-            ssoToken.token = formioServer.formio.hook.alter('token', {
+            ssoToken.token = formio.hook.alter('token', {
               user: {
                 _id: ssoToken.submission._id.toString()
               },
@@ -226,7 +228,7 @@ module.exports = app => (mail, req, res, params, cb) => {
               }
             }, formObjs[ssoToken.submission.form.toString()], {session});
             delete ssoToken.token.exp;
-            ssoToken.token = jwt.sign(ssoToken.token, formioServer.formio.config.jwt.secret, {
+            ssoToken.token = jwt.sign(ssoToken.token, formio.config.jwt.secret, {
               expiresIn: ssoToken.expireTime * 60
             });
             nextToken();

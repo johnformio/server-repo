@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.0.0-rc.41
+### Changed
+ - Upgrade portal@7.1.17-rc.12
+ -Upgrade formiojs@4.12.1-rc.7
+
+## 7.0.0-rc.40
+### Fixed
+ - Added an email attachment fallback to use url attachments when it works.
+
+### Changed
+ - Change the number of submission requests per month to 1000000 from 2000000
+ - Upgrade formio@2.0.0-rc.21
+ - Upgrade formiojs@4.12.1-rc.7
+
+## 7.0.0-rc.39
+### Changed
+ - Upgrade portal@7.1.17-rc.11
+ -Upgrade formiojs@4.12.1-rc.5
+
+## 7.0.0-rc.39
+### Changed
+ - Upgrade portal@7.1.17-rc.11
+ -Upgrade formiojs@4.12.1-rc.5
+
+## 7.0.0-rc.39
+### Changed
+ - Upgrade portal@7.1.17-rc.11
+ -Upgrade formiojs@4.12.1-rc.5
+
 ## 7.0.0
 ### Added
  - User Sessions
@@ -17,10 +46,84 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Removed request.js and restler and replaced with node-fetch
  
 ### Removed
+ - Method Override header functionality
  - Jira Action
  - Hubspot Action
  - Office365 Actions
  - Facebook, LinkedIn, Twitter, Dropbox OAuth providers
+
+## 7.0.0-rc.38
+### Fixed
+ - FOR-2771: Fixed issue where calculated values (with allowOverride) would get overridden on the server.
+
+### Changed
+ - Upgrade formio@2.0.0-rc.20
+
+## 7.0.0-rc.37
+### Changed
+ - Upgrade formio@2.0.0-rc.19
+
+## 7.0.0-rc.36
+### Changed
+ - Fix Current endpoint token exchange to work with sessions.
+ - Upgrade formiojs@4.12.1-rc.4
+ - Upgrade formio@2.0.0-rc.18
+
+## 7.0.0-rc.35
+### Fixed
+ - FOR-2757: Added a correct header for Authorization to sql-connector.
+ - Upgrade formiojs@4.12.1-rc.2 to resolve issue with losing data in form submission.
+
+## 7.0.0-rc.34
+### Fixed
+ - FOR-2717: Fixes an issue where SAML roles received like a string and have just one role that contains more than one word was being split each word to a special role.
+ - Fix indexes so cosmos works.
+ - Upgrade formio@2.0.0-rc.15
+ - Upgrade simple-oauth2 to latest major version.
+ - FOR-2722: Fixes an issue where Webhook Delete is not firing and not populating request with the submission data
+ - Work on stages: Enable to rename Live stage, Added 2 default stages. PR for Master
+
+### Changed
+ - Upgraded helmet@4.1.1, mongodb@3.6.2, passport-saml@1.3.5, resourcejs@2.3.2, twilio@3.49.3, webpack@4.44.2, copy-webpack-plugin@6.1.1, @formio/premium@1.15.0, aws-sdk@2.759.0, debug@4.2.0, moment@2.29.0, webpack-obfuscator@2.3.1, eslint@7.9.0, jose@2.0.2
+
+## 7.0.0-rc.32
+### Changed
+ - Upgrade portal@7.1.17-rc.9
+ - Upgrade formio.js@4.12.0-rc.16
+
+## 7.0.0-rc.31
+### Changed
+ - Upgrade formio@2.0.0-rc.14
+ - Upgrade portal@7.1.17-rc.7
+
+## 7.0.0-rc.28
+### Fixed
+ - Issue where portal was not accessible due to Helmet upgrade.
+
+## 7.0.0-rc.27
+### Changed
+ - Upgrade portal@7.1.17-rc.4
+
+## 7.0.0-rc.26
+### Changed
+ - Upgrade formio@2.0.0-rc.13
+
+## 7.0.0-rc.25
+### Fixed
+ - Attach as PDF to work inline without the need for Save Submission. 
+
+## 7.0.0-rc.19
+### Added
+ - Feat: allowed admins pass "noValidate" flag when they create submissions
+
+### Fixed
+ - Fixes an issue related to externalIds in Webhooks.
+ - FOR-2727: Change the message to upgrade
+ - FOR-2699: added storageAccessHanler in init script
+ 
+### Changed
+ - Upgrade formio@2.0.0-rc.10
+ - Upgrade formiojs@4.12.0-rc.7
 
 ## 6.10.8-rc.4
 ### Changed

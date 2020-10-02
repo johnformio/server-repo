@@ -236,6 +236,7 @@
           "type": "password",
           "lockKey": true,
           "validate": {
+            "minLength": 8,
             "required": true
           },
           "tableView": false,
@@ -260,6 +261,7 @@
           "type": "password",
           "validate": {
             "required": true,
+            "minLength": 8,
             "custom": "valid = (input == '{{ password }}') ? true : 'Passwords must match.';"
           },
           "tableView": false,
@@ -416,7 +418,8 @@
             "eq": ""
           },
           "validate": {
-            "required": true
+            "required": true,
+            "minLength": 8
           }
         },
         {
@@ -751,7 +754,10 @@
           "prefix": "",
           "suffix": "",
           "type": "password",
-          "tableView": false
+          "tableView": false,
+          "validate": {
+            "minLength": 8
+          }
         },
         {
           "theme": "primary",
