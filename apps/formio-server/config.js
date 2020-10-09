@@ -172,6 +172,8 @@ config.hostedPDFServer = getConfig('PDF_SERVER', getConfig('FORMIO_FILES_SERVER'
 config.portalSSO = getConfig('PORTAL_SSO', '');
 config.ssoTeams = Boolean(getConfig('SSO_TEAMS', false) || config.portalSSO);
 config.portalSSOLogout = getConfig('PORTAL_SSO_LOGOUT', '');
+config.vpat = Boolean(getConfig('VPAT', false));
+config.sac = Boolean(getConfig('SAC', false));
 
 // Payeezy fields
 config.payeezy = {
