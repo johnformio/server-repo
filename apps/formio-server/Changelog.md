@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+### Changed
+ - Added vpat and sac support for apps.
+ - Set admin permissions in apiKey middleware if project owner does not exist.
+
+### Changed
+ - Now using Alpine 3.12 base image.
+
 ## 7.0.0-rc.43
 ### Changed
  - Upgrade portal@7.1.17-rc.14
