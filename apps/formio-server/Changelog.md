@@ -4,10 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## 7.0.0-rc.43
 ### Changed
  - Added vpat and sac support for apps.
  - Set admin permissions in apiKey middleware if project owner does not exist.
+ - Upgrade portal@7.1.17-rc.17
+ - Upgrade formiojs@4.12.1-rc.10
+ - Upgrade premium@1.15.1-rc.7
 
 ### Changed
  - Now using Alpine 3.12 base image.
