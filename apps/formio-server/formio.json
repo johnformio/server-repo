@@ -961,7 +961,7 @@
           },
           "validate": {
             "required": true,
-            "minLength": 8,
+            "minLength": 8
           }
         },
         {
