@@ -250,8 +250,7 @@
           "type": "password",
           "lockKey": true,
           "validate": {
-            "required": true,
-            "minLength": 8
+            "required": true
           },
           "tableView": false,
           "conditional": {
@@ -262,6 +261,7 @@
           "tabindex": "zack@form.io"
         },
         {
+          "customError": "Passwords must match.",
           "input": true,
           "inputType": "password",
           "label": "",
@@ -960,8 +960,7 @@
             "eq": ""
           },
           "validate": {
-            "required": true,
-            "minLength": 8
+            "required": true
           }
         },
         {
@@ -982,8 +981,7 @@
             "eq": ""
           },
           "validate": {
-            "required": true,
-            "custom": "valid = (input == '{{ password }}') ? true : 'Passwords must match.';"
+            "required": true
           }
         },
         {

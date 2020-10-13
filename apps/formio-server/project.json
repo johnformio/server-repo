@@ -248,6 +248,7 @@
           "tabindex": "zack@form.io"
         },
         {
+          "customError": "Passwords must match.",
           "input": true,
           "inputType": "password",
           "label": "",
@@ -260,6 +261,7 @@
           "type": "password",
           "validate": {
             "required": true,
+            "minLength": 8,
             "custom": "valid = (input == '{{ password }}') ? true : 'Passwords must match.';"
           },
           "tableView": false,
@@ -438,8 +440,7 @@
             "eq": ""
           },
           "validate": {
-            "required": true,
-            "custom": "valid = (input == '{{ password }}') ? true : 'Passwords must match.';"
+            "required": true
           }
         },
         {
