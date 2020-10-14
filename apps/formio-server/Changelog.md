@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+### Fixed
+ - Don't disable the primary project when moving it to a remote environment.
+
 ## 7.0.0-rc.44
 ### Fixed
  - FOR-2781: fixed an issue where validation is not triggered when resetting password.
