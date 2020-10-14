@@ -174,6 +174,7 @@ config.ssoTeams = Boolean(getConfig('SSO_TEAMS', false) || config.portalSSO);
 config.portalSSOLogout = getConfig('PORTAL_SSO_LOGOUT', '');
 config.vpat = Boolean(getConfig('VPAT', false));
 config.sac = Boolean(getConfig('SAC', false));
+config.readAllAdminOnly = Boolean(getConfig('READ_ALL_ADMIN_ONLY', false));
 
 // Payeezy fields
 config.payeezy = {

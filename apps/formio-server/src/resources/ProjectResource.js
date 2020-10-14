@@ -191,6 +191,38 @@ module.exports = (router, formioServer) => {
     ],
     afterPost: [
       require('../middleware/projectTemplate')(formio),
+      // Leaves just only the Admin role for the read_all access if the READ_ALL_ADMIN_ONLY option is configured.
+      (req, res, next) => {
+        if (req.template || !formioServer.config.readAllAdminOnly || !req.templateMode === 'create') {
+          return next();
+        }
+
+        if (!res || !res.resource || !res.resource.item) {
+          return next();
+        }
+
+        const {item} = res.resource;
+
+        if (item && item.id) {
+          formio.resources.role.model.findOne({project: item.id, admin: true})
+            .then((role) => {
+              if (role && role._id) {
+                res.resource.item.access = (item.access || []).map((roleItem) => {
+                  if (roleItem.type === 'read_all') {
+                    roleItem.roles = [role._id];
+                  }
+                  return roleItem;
+                });
+                return res.resource.item.save();
+              }
+              return Promise.resolve();
+            })
+            .then(() => next());
+        }
+        else {
+          return next();
+        }
+      },
       formio.middleware.filterResourcejsResponse(hiddenFields),
       projectSettings,
       formio.middleware.customCrmAction('newproject'),
