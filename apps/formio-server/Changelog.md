@@ -4,9 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## 7.0.0-rc.46
 ### Fixed
  - Don't disable the primary project when moving it to a remote environment.
+
+### Changed
+ - Upgrade portal@7.1.17-rc.19
+ - Upgrade formiojs@4.12.1-rc.14
+ - Upgrade premium@1.15.1-rc.8
 
 ## 7.0.0-rc.44
 ### Fixed
