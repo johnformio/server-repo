@@ -17,6 +17,10 @@ module.exports = (app) => {
     }
     // If not set to trigger on server, skip.
     if (!_.get(component, 'trigger.server', false)) {
+      const value = _.get(req.body.data, path);
+      if (value && _.isArray(value)) {
+        _.set(component, 'multiple', true);
+      }
       return next();
     }
 
@@ -82,6 +86,9 @@ module.exports = (app) => {
             .then((value) => {
               if (value) {
                 _.set(data, component.key, value);
+                if (_.isArray(value)) {
+                  _.set(component, 'multiple', true);
+                }
               }
               return next();
             })
