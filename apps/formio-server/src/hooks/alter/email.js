@@ -87,13 +87,32 @@ module.exports = app => (mail, req, res, params, cb) => {
   const attachPDF = async () => {
     // If they wish to attach a PDF.
     if (params.settings && params.settings.attachPDF) {
-      const downloadPDF = require('../../util/downloadPDF')(formioServer);
+      let attachment = {};
+      const project = await new Promise((resolve) => {
+        formio.cache.loadPrimaryProject(req, (err, project) => resolve(project));
+      });
+      const form = await new Promise((resolve) => {
+        formio.cache.loadCurrentForm(req, (err, form) => resolve(form));
+      });
       const submission = _.get(res.resource, 'item', req.body);
-      const project = await formio.cache.loadPrimaryProjectAsync(req);
-      const form = await formio.cache.loadCurrentFormAsync(req);
-      const response = await downloadPDF(req, project, form, submission);
-      const pdfStream = new PassThrough();
-      response.body.pipe(pdfStream);
+
+      // If they have provided BASE_URL and the submission object was created, then use the URL method of email attachments.
+      if (config.baseUrl && submission._id) {
+        let url = `/project/${req.projectId}/form/${req.formId}/submission/${submission._id}/download`;
+        const expireTime = 3600;
+        const token = await new Promise((resolve) => {
+          formioServer.formio.auth.getTempToken(req, res, `GET:${url}`, expireTime, true, (err, token) => resolve(token));
+        });
+        url += `?token=${token.key}`;
+        attachment = {path: `${config.baseUrl}${url}`};
+      }
+      else {
+        const downloadPDF = require('../../util/downloadPDF')(formioServer);
+        const response = await downloadPDF(req, project, form, submission);
+        const pdfStream = new PassThrough();
+        response.body.pipe(pdfStream);
+        attachment = {content: pdfStream};
+      }
 
       // Get the file name settings.
       let fileName = params.settings.pdfName || '{{ form.name }}-{{ submission._id }}';
@@ -115,13 +134,9 @@ module.exports = app => (mail, req, res, params, cb) => {
         fileName = `submission-${submission._id || submission.created}`;
       }
 
-      mail.attachments = (mail.attachments || []).concat([
-        {
-          filename: `${fileName}.pdf`,
-          contentType: 'application/pdf',
-          content: pdfStream
-        }
-      ]);
+      attachment.filename = `${fileName}.pdf`;
+      attachment.contentType = 'application/pdf';
+      mail.attachments = (mail.attachments || []).concat([attachment]);
     }
   };
 

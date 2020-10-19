@@ -5,7 +5,7 @@ const {utilization, getProjectContext, getLicenseKey} = require('../util/utiliza
 function middleware(formio) {
   return async (req, res, next) => {
     // If project is made remote, disable it.
-    if (!req.currentProject.remote && req.body.remote) {
+    if (!req.currentProject.remote && req.body.remote && req.currentProject.project) {
       try {
         await utilization({
           ...getProjectContext(req),

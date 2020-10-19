@@ -5,7 +5,7 @@ module.exports = class Commercial extends Plan {
   get data() {
     return {
       ...super.data,
-      submissionRequests: 2000000,
+      submissionRequests: 1000000,
       emails: 10000,
       pdfDownloads: 1000,
       pdfs: 25,

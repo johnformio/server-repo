@@ -4,6 +4,75 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.0.0-rc.46
+### Fixed
+ - Don't disable the primary project when moving it to a remote environment.
+
+### Changed
+ - Upgrade portal@7.1.17-rc.19
+ - Upgrade formiojs@4.12.1-rc.14
+ - Upgrade premium@1.15.1-rc.8
+
+## 7.0.0-rc.44
+### Fixed
+ - FOR-2781: fixed an issue where validation is not triggered when resetting password.
+
+### Changed
+ - Upgrade portal@7.1.17-rc.18
+ - Upgrade formiojs@4.12.1-rc.12
+
+## 7.0.0-rc.43
+### Changed
+ - Added vpat and sac support for apps.
+ - Set admin permissions in apiKey middleware if project owner does not exist.
+ - Upgrade portal@7.1.17-rc.17
+ - Upgrade formiojs@4.12.1-rc.10
+ - Upgrade premium@1.15.1-rc.7
+
+### Changed
+ - Now using Alpine 3.12 base image.
+
+## 7.0.0-rc.43
+### Changed
+ - Upgrade portal@7.1.17-rc.14
+ -Upgrade formiojs@4.12.1-rc.9
+
+## 7.0.0-rc.42
+### Changed
+ - Upgrade portal@7.1.17-rc.13
+ -Upgrade formiojs@4.12.1-rc.8
+### Changed
+ - Added tpro3 payments
+
+## 7.0.0-rc.41
+### Changed
+ - Upgrade portal@7.1.17-rc.12
+ -Upgrade formiojs@4.12.1-rc.7
+
+## 7.0.0-rc.40
+### Fixed
+ - Added an email attachment fallback to use url attachments when it works.
+
+### Changed
+ - Change the number of submission requests per month to 1000000 from 2000000
+ - Upgrade formio@2.0.0-rc.21
+ - Upgrade formiojs@4.12.1-rc.7
+
+## 7.0.0-rc.39
+### Changed
+ - Upgrade portal@7.1.17-rc.11
+ -Upgrade formiojs@4.12.1-rc.5
+
+## 7.0.0-rc.39
+### Changed
+ - Upgrade portal@7.1.17-rc.11
+ -Upgrade formiojs@4.12.1-rc.5
+
+## 7.0.0-rc.39
+### Changed
+ - Upgrade portal@7.1.17-rc.11
+ -Upgrade formiojs@4.12.1-rc.5
+
 ## 7.0.0
 ### Added
  - User Sessions
@@ -22,6 +91,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Hubspot Action
  - Office365 Actions
  - Facebook, LinkedIn, Twitter, Dropbox OAuth providers
+
+## 7.0.0-rc.38
+### Fixed
+ - FOR-2771: Fixed issue where calculated values (with allowOverride) would get overridden on the server.
+
+### Changed
+ - Upgrade formio@2.0.0-rc.20
+
+## 7.0.0-rc.37
+### Changed
+ - Upgrade formio@2.0.0-rc.19
+
+## 7.0.0-rc.36
+### Changed
+ - Fix Current endpoint token exchange to work with sessions.
+ - Upgrade formiojs@4.12.1-rc.4
+ - Upgrade formio@2.0.0-rc.18
 
 ## 7.0.0-rc.35
 ### Fixed

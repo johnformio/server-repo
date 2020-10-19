@@ -69,7 +69,7 @@ module.exports = function(options) {
       fs.readFile(`./portal/config.js`, 'utf8', (err, contents) => {
         res.send(
           contents.replace(
-            /var hostedPDFServer = '';|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;/gi,
+            /var hostedPDFServer = '';|var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;/gi,
             (matched) => {
               if (config.hostedPDFServer && matched.includes('var hostedPDFServer')) {
                 return `var hostedPDFServer = '${config.hostedPDFServer}';`;
@@ -85,6 +85,9 @@ module.exports = function(options) {
               }
               else if (!process.env.FORMIO_HOSTED && matched.includes('var onPremise')) {
                 return 'var onPremise = true;';
+              }
+              else if (config.sac && app.license.terms.options.sac && matched.includes('var sac')) {
+                return 'var sac = true;';
               }
               return matched;
             }
@@ -303,6 +306,8 @@ module.exports = function(options) {
      */
     const appVariables = function(project) {
       return `
+        window.VPAT_ENABLED = ${app.license.terms.options.vpat && (config.vpat || _.get(project, 'config.vpat', '').toLowerCase()==='true')};
+        window.SAC_ENABLED = ${app.license.terms.options.sac && (config.sac || _.get(project, 'config.sac', '').toLowerCase()==='true')};
         window.APP_SSO = '${_.get(project, 'config.sso', '')}';
         window.SSO_PROJECT = '${_.get(project, 'config.ssoProject', '')}';
         window.APP_LOGOUT = '${_.get(project, 'config.logout', '')}';

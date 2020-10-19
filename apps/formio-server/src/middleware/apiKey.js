@@ -54,62 +54,43 @@ module.exports = function(formio) {
         // Load the user form.
         formio.resources.form.model.findOne(query).exec(function(err, userResource) {
           if (err || !userResource) {
-            // If we are a deployed server, then go ahead and allow access when no user is found.
-            if (!process.env.FORMIO_HOSTED) {
-              req.permissionsChecked = true;
-              req.isAdmin = true;
-            }
+            req.permissionsChecked = true;
+            req.isAdmin = true;
             return next();
           }
 
           // Load the owner as the current user.
           formio.cache.loadSubmission(req, userResource._id, currentProject.owner, function(err, user) {
-            if (err) {
-              // If we are a deployed server, then go ahead and allow access when no user is found.
-              if (!process.env.FORMIO_HOSTED) {
-                req.permissionsChecked = true;
-                req.isAdmin = true;
+            if (err || !user) {
+              req.permissionsChecked = true;
+              req.isAdmin = true;
+              return next();
+            }
+
+            // Set the user and user token.
+            req.user = user;
+            req.token = {
+              user: {
+                _id: user._id.toString()
+              },
+              form: {
+                _id: userResource._id.toString()
+              },
+              project: {
+                _id: formioProject._id.toString()
               }
-              return next();
+            };
+
+            // Refresh the token that is sent back to the user when appropriate.
+            res.token = formio.auth.getToken(req.token);
+
+            // Set the headers if they haven't been sent yet.
+            if (!res.headersSent) {
+              // res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
+              // res.setHeader('x-jwt-token', res.token);
             }
 
-            // A user was found.
-            if (user) {
-              // Set the user and user token.
-              req.user = user;
-              req.token = {
-                user: {
-                  _id: user._id.toString()
-                },
-                form: {
-                  _id: userResource._id.toString()
-                },
-                project: {
-                  _id: formioProject._id.toString()
-                }
-              };
-
-              // Refresh the token that is sent back to the user when appropriate.
-              res.token = formio.auth.getToken(req.token);
-
-              // Set the headers if they haven't been sent yet.
-              if (!res.headersSent) {
-                // res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
-                // res.setHeader('x-jwt-token', res.token);
-              }
-
-              // Move onto the next middleware.
-              return next();
-            }
-
-            // If we are hosted and no user is found, then just skip this middleware.
-            if (process.env.FORMIO_HOSTED) {
-              return next();
-            }
-
-            // We are not hosted so go ahead and allow request as admin.
-            req.permissionsChecked = true;
-            req.isAdmin = true;
+            // Move onto the next middleware.
             return next();
           });
         });

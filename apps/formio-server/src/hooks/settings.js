@@ -22,7 +22,7 @@ module.exports = function(app) {
   // Attach the teams to formioServer.
   formioServer.formio.teams = require('../teams/index')(app, formioServer);
 
-  // Handle Payeezy form signing requests and project upgrades
+  // Handle Payment Gateway form signing requests and project upgrades
   app.formio.formio.payment = require('../payment/payment')(app, app.formio.formio);
 
   return {
@@ -307,11 +307,11 @@ module.exports = function(app) {
             cb(null, {
               ...token,
               form: {
-                _id: req.session.form.toString(),
-                project: req.session.project.toString(),
+                _id: req.session.form ? req.session.form.toString() : '',
+                project: req.session.project ? req.session.project.toString() : '',
               },
               project: {
-                _id: req.session.project.toString(),
+                _id: req.session.project ? req.session.project.toString() : '',
               },
             });
           });
@@ -875,7 +875,7 @@ module.exports = function(app) {
               return req.userProject.primary;
             }
 
-            if (_url === '/payeezy') {
+            if (_url === '/payment-gateway') {
               return req.userProject.primary;
             }
 

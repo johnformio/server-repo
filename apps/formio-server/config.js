@@ -161,6 +161,7 @@ config.host = host;
 
 config.project = project;
 config.plan = plan;
+config.baseUrl = getConfig('BASE_URL', '');
 config.apiHost = apiHost;
 config.formio.apiHost = apiHost;
 config.formioHost = formioHost;
@@ -171,6 +172,8 @@ config.hostedPDFServer = getConfig('PDF_SERVER', getConfig('FORMIO_FILES_SERVER'
 config.portalSSO = getConfig('PORTAL_SSO', '');
 config.ssoTeams = Boolean(getConfig('SSO_TEAMS', false) || config.portalSSO);
 config.portalSSOLogout = getConfig('PORTAL_SSO_LOGOUT', '');
+config.vpat = Boolean(getConfig('VPAT', false));
+config.sac = Boolean(getConfig('SAC', false));
 
 // Payeezy fields
 config.payeezy = {
@@ -181,6 +184,14 @@ config.payeezy = {
   gatewayPassword: getConfig('PAYEEZY_GATEWAY_PASSWORD'),
   hmacKey: getConfig('PAYEEZY_HMAC_KEY'),
   merchToken: getConfig('PAYEEZY_TOKEN'),
+};
+// tpro3 fields
+config.tpro3 = {
+  gateway: getConfig('TPRO3_GATEWAY'),
+  api: getConfig('TPRO3_API', 'https://api.tpro3.com/json'),
+  account: getConfig('TPRO3_ACCOUNT', 'Form.ioTestCC'),
+  useremail: getConfig('TPRO3_EMAIL'),
+  password: getConfig('TPRO3_PASSWORD'),
 };
 
 // Using docker, support legacy linking and network links.
