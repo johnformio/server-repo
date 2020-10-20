@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+### Fixed
+ - FJS-1337: Fixes an issue where multiple validation fails for DataSource
+ 
+### Changed
+ - Upgrade formio@2.0.0-rc.24
+
 ## 7.0.0-rc.46
 ### Fixed
  - Don't disable the primary project when moving it to a remote environment.
