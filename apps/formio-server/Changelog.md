@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  
 ### Changed
  - Upgrade formio@2.0.0-rc.24
+ - Upgrade base image to use Node 14
+ - Upgrade aws-sdk@2.774.0, twilio@3.50.0, webpack-obfuscator@2.6.0, eslint@7.11.0, mocha@8.2.0
 
 ## 7.0.0-rc.46
 ### Fixed
