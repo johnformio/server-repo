@@ -4,9 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## 7.0.0-rc.47
 ### Fixed
  - FJS-1337: Fixes an issue where multiple validation fails for DataSource
+### Changed
+ - Upgrade portal@7.1.17-rc.20
+ - Upgrade formiojs@4.12.1-rc.16
+ - Upgrade premium@1.15.1-rc.9
  
 ### Changed
  - Upgrade formio@2.0.0-rc.24
