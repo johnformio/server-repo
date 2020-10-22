@@ -328,7 +328,7 @@ describe('Initial Tests', function() {
                 data: {
                   name: chance.word(),
                   email: chance.email(),
-                  password: chance.word()
+                  password: chance.word({ length: 8 })
                 }
               }
             };

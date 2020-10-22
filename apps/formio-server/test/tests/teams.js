@@ -17,7 +17,7 @@ module.exports = function(app, template, hook) {
       data: {
         name: chance.word(),
         email: chance.email(),
-        password: chance.word()
+        password: chance.word({ length: 8 })
       }
     };
     describe('Single Team Tests', function() {
@@ -1131,7 +1131,7 @@ module.exports = function(app, template, hook) {
             data: {
               'name': chance.word({ length: 10 }),
               'email': chance.email(),
-              'password': 'test123'
+              'password': 'test1234'
             }
           })
           .expect(200)
@@ -1162,7 +1162,7 @@ module.exports = function(app, template, hook) {
             data: {
               'name': chance.word({ length: 10 }),
               'email': chance.email(),
-              'password': 'test123'
+              'password': 'test1234'
             }
           })
           .expect(200)
