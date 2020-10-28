@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.0.0-rc.48
+### Fixed
+ - FOR-2781: fixed an issue where validation is not triggered for password reset
+ - FOR-2829: (SRF) Webhook action: Displays “externalId is not defined”
+ - FOR-2797: Add remote token middleware for pdf requests
+ - FOR-2796: Fix Not Found issue
+ - FOR-2817/2818: Fixes an issue when you were able create a form, submissions etc. on the disabled tenant. And there is wasn't any notification that tenant is disabled. Also, fixed tests for this fix.
+
+### Changed
+ - Upgrade formio@2.0.0-rc.25
+ - Upgrade portal@7.1.17-rc.21
+ - Upgrade formiojs@4.12.1-rc.19
+ - Upgrade premium@1.15.1-rc.11
+
 ## 7.0.0-rc.47
 ### Fixed
  - FJS-1337: Fixes an issue where multiple validation fails for DataSource
