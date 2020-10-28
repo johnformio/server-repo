@@ -162,7 +162,7 @@ module.exports = function(app, template, hook) {
           data: {
             'name': chance.word({ length: 10 }),
             'email': chance.email(),
-            'password': 'test123'
+            'password': 'test1234'
           }
         })
         .expect(200)
