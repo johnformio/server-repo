@@ -210,6 +210,7 @@ module.exports = function(options) {
   debug.startup('Attaching middleware: PDF Download');
 
   const downloadPDF = [
+    require('./src/middleware/remoteToken')(app),
     app.formio.formio.middleware.alias,
     require('./src/middleware/aliasToken')(app),
     app.formio.formio.middleware.tokenHandler,
@@ -225,6 +226,7 @@ module.exports = function(options) {
 
   debug.startup('Attaching middleware: PDF Upload');
   const uploadPDF = [
+    require('./src/middleware/remoteToken')(app),
     require('./src/middleware/aliasToken')(app),
     app.formio.formio.middleware.tokenHandler,
     app.formio.formio.middleware.params,
