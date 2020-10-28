@@ -111,7 +111,7 @@ function middleware(app) {
                       remote: !!project.remote,
                       projectType: project.type,
                       licenseKey: getLicenseKey(req),
-                    }
+                    };
 
                     if (project.type === 'tenant') {
                       body = {
