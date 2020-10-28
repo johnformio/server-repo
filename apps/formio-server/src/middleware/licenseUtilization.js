@@ -70,7 +70,7 @@ function middleware(app) {
             req.query.project
           ) {
             await Promise.all(res.resource.item.map(async (project) => {
-              if (project.type === 'stage') {
+              if (['stage', 'tenant'].includes(project.type)) {
                 if (remote) {
                   project.disabled = false;
                   project.authoring = false;
@@ -101,7 +101,7 @@ function middleware(app) {
                       });
                     });
 
-                    const result = await utilization({
+                    let body = {
                       type: 'stage',
                       projectId: primaryProject._id,
                       tenantId: parentProject._id.toString() !== primaryProject._id.toString() ? parentProject._id.toString() : 'none',
@@ -111,11 +111,34 @@ function middleware(app) {
                       remote: !!project.remote,
                       projectType: project.type,
                       licenseKey: getLicenseKey(req),
-                    }, '');
-                    project.authoring = !result.live;
+                    }
+
+                    if (project.type === 'tenant') {
+                      body = {
+                        type: 'tenant',
+                        projectId: primaryProject._id,
+                        tenantId: project._id.toString(),
+                        title: project.title,
+                        name: project.name,
+                        remote: !!project.remote,
+                        projectType: project.type,
+                        licenseKey: getLicenseKey(req),
+                      };
+                    }
+
+                    const result = await utilization(body, '');
+
+                    if (project.type === 'stage') {
+                      project.authoring = !result.live;
+                    }
                   }
                   catch (err) {
-                    project.disabled = true;
+                    if (project.type === 'stage') {
+                      project.disabled = true;
+                    }
+                    else {
+                      project.disabled = err.error || err.message || true;
+                    }
                   }
                 }
               }
@@ -181,7 +204,7 @@ function middleware(app) {
             };
           }
           catch (err) {
-            res.resource.item.disabled = err.error;
+            res.resource.item.disabled = err.error || err.message;
           }
           break;
 

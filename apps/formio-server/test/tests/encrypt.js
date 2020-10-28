@@ -463,18 +463,35 @@ module.exports = function(app, template, hook) {
 
 
     it('Should upgrade the project to "commercial"', (done) => {
-      app.formio.formio.mongoose.model('project').updateOne({
-        _id: ObjectID(template.project._id)
-      }, {
-        '$set': {
-          plan: 'commercial'
-        }
-      }, (err, project) => {
-        if (err) {
-          return done(err);
-        }
+      app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
+        if (err) return done(err);
 
-        done();
+        app.formio.formio.resources.submission.model.findOne({
+          'data.licenseKeys.key': project.settings.licenseKey,
+        }, function(err, sub) {
+          if (err) return done(err);
+
+          if (sub) {
+            sub.data = {
+              ...sub.data,
+              plan: 'commercial',
+            };
+          }
+
+          sub.markModified('data');
+          sub.save(function(err) {
+            if (err) return done(err);
+
+            project.plan = 'commercial';
+            project.save(function(err) {
+              if (err) {
+                return done(err);
+              }
+
+              done();
+            });
+          });
+        });
       });
     });
 
@@ -656,18 +673,35 @@ module.exports = function(app, template, hook) {
     });
 
     it('Should downgrade the project to "trial"', (done) => {
-      app.formio.formio.mongoose.model('project').updateOne({
-        _id: ObjectID(template.project._id)
-      }, {
-        '$set': {
-          plan: 'trial'
-        }
-      }, (err, project) => {
-        if (err) {
-          return done(err);
-        }
+      app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
+        if (err) return done(err);
 
-        done();
+        app.formio.formio.resources.submission.model.findOne({
+          'data.licenseKeys.key': project.settings.licenseKey,
+        }, function(err, sub) {
+          if (err) return done(err);
+
+          if (sub) {
+            sub.data = {
+              ...sub.data,
+              plan: 'trial',
+            };
+          }
+
+          sub.markModified('data');
+          sub.save(function(err) {
+            if (err) return done(err);
+
+            project.plan = 'trial';
+            project.save(function(err) {
+              if (err) {
+                return done(err);
+              }
+
+              done();
+            });
+          });
+        });
       });
     });
   });

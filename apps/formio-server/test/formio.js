@@ -43,9 +43,10 @@ const requestMock = sinon.stub()
       case 'https://license.form.io/utilization':
       case 'https://license.form.io/utilization/disable':
         let license;
-        if (args.body.licenseKey) {
+        const argsBody = typeof args.body === 'string' ? JSON.parse(args.body) : args.body
+        if (argsBody.licenseKey) {
           license = await formio.resources.submission.model.findOne({
-            'data.licenseKeys.key': args.body.licenseKey,
+            'data.licenseKeys.key': argsBody.licenseKey,
           });
         }
         return Promise.resolve({
