@@ -187,9 +187,6 @@ module.exports = function(options) {
   debug.startup('Attaching middleware: Project & Roles Loader');
   app.use(require('./src/middleware/loadProjectContexts')(app.formio.formio));
 
-  // Check project status
-  app.use(require('./src/middleware/projectUtilization')(app.formio.formio));
-
   // CORS Support
   debug.startup('Attaching middleware: CORS');
   var corsMiddleware = require('./src/middleware/corsOptions')(app);
@@ -201,6 +198,9 @@ module.exports = function(options) {
     }
     corsRoute(req, res, next);
   });
+
+   // Check project status
+   app.use(require('./src/middleware/projectUtilization')(app.formio.formio));
 
   // Handle our API Keys.
   debug.startup('Attaching middleware: API Key Handler');
