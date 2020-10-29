@@ -346,7 +346,7 @@ module.exports = function(config, formio) {
                 ccExpiryYear: data.ccExpiryYear, // TODO: Change the value from 2 digits to 4 i.e 2023
                 cardType: transaction.ccType,
                 transactionTag: 'O1', // TODO: Add Text field in the Transactions Record Resource
-                transactionStatus: 'approved', // TODO: Add Text field in the Transactions Record Resource
+                transactionStatus: 'success', // TODO: Add Text field in the Transactions Record Resource
                 transactionId: '00132', // TODO: Add Text field in the Transactions Record Resource
               };
               txn.save();
