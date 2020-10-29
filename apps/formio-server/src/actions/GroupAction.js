@@ -236,7 +236,7 @@ module.exports = (router) => {
      */
     resolve(handler, method, req, res, next) {
       new Promise((resolve, reject) => {
-        const collectionName = req.model.modelName;
+        const collectionName = req.model && req.model.modelName ? req.model.modelName : router.formio.resources.submission.modelName;
         const submissionModel = router.formio.mongoose.model(
           collectionName,
           router.formio.schemas.submission);
