@@ -15,11 +15,6 @@ module.exports = (router) => {
   const {
     Action,
     hook,
-    resources: {
-      submission: {
-        model: submissionModel,
-      },
-    },
     middleware: {
       permissionHandler,
     },
@@ -141,7 +136,7 @@ module.exports = (router) => {
         : ids;
     }
 
-    loadSubmission(name, submissionId) {
+    loadSubmission(name, submissionId, submissionModel) {
       return submissionModel.findOne({
         _id: idToBson(submissionId),
         project: idToBson(this.req.projectId),
@@ -157,9 +152,9 @@ module.exports = (router) => {
         });
     }
 
-    verifyGroupAccess(groupId) {
+    verifyGroupAccess(groupId, submissionModel) {
       const [id] = groupId.split(':');
-      return this.loadSubmission('group', id)
+      return this.loadSubmission('group', id, submissionModel)
         .then((group) => {
           const context = _.cloneDeep(this.req);
           context.permissionsChecked = false;
@@ -186,11 +181,11 @@ module.exports = (router) => {
         });
     }
 
-    applyRoleChanges(userId, rolesToAdd, rolesToRemove) {
-      return this.loadSubmission('user', userId)
+    applyRoleChanges(userId, rolesToAdd, rolesToRemove, submissionModel) {
+      return this.loadSubmission('user', userId, submissionModel)
         .then((user) => Promise.all([
-            filterAsync(rolesToAdd, (groupId) => this.verifyGroupAccess(groupId)),
-            filterAsync(rolesToRemove, (groupId) => this.verifyGroupAccess(groupId)),
+            filterAsync(rolesToAdd, (groupId) => this.verifyGroupAccess(groupId, submissionModel)),
+            filterAsync(rolesToRemove, (groupId) => this.verifyGroupAccess(groupId, submissionModel)),
           ])
             .then(([
               verifiedGroupsToAdd,
@@ -241,6 +236,10 @@ module.exports = (router) => {
      */
     resolve(handler, method, req, res, next) {
       new Promise((resolve, reject) => {
+        const collectionName = req.model && req.model.modelName ? req.model.modelName : router.formio.resources.submission.modelName;
+        const submissionModel = router.formio.mongoose.model(
+          collectionName,
+          router.formio.schemas.submission);
         const userSelector = _.get(this.settings, 'user');
         const thisUser = !userSelector;
 
@@ -269,20 +268,20 @@ module.exports = (router) => {
         const oldUserId = this.getUserId(req.previousSubmission, userSelector);
 
         if (!oldUserId) {
-          return this.applyRoleChanges(newUserId, newGroups, []).then(resolve, reject);
+          return this.applyRoleChanges(newUserId, newGroups, [], submissionModel).then(resolve, reject);
         }
 
         if (!newUserId) {
-          return this.applyRoleChanges(oldUserId, [], oldGroups).then(resolve, reject);
+          return this.applyRoleChanges(oldUserId, [], oldGroups, submissionModel).then(resolve, reject);
         }
 
         if (newUserId === oldUserId) {
-          return this.applyRoleChanges(newUserId, groupsToAdd, groupsToRemove).then(resolve, reject);
+          return this.applyRoleChanges(newUserId, groupsToAdd, groupsToRemove, submissionModel).then(resolve, reject);
         }
 
         return Promise.all([
-          this.applyRoleChanges(newUserId, newGroups, []),
-          this.applyRoleChanges(oldUserId, [], oldGroups),
+          this.applyRoleChanges(newUserId, newGroups, [], submissionModel),
+          this.applyRoleChanges(oldUserId, [], oldGroups, submissionModel),
         ]).then(resolve, reject);
       })
         .then(() => next())
