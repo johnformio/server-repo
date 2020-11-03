@@ -257,7 +257,7 @@ module.exports = (router) => {
 
         if (thisUser) {
           const userId = _.get(res, 'resource.item._id');
-          return this.applyRoleChanges(userId, groupsToAdd, groupsToRemove)
+          return this.applyRoleChanges(userId, groupsToAdd, groupsToRemove, submissionModel)
             .then((roles) => {
               _.set(res, 'resource.item.roles', roles);
               resolve();
