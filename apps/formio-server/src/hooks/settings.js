@@ -80,6 +80,7 @@ module.exports = function(app) {
       actionContext: require('./alter/actionContext')(app),
       fieldActions: require('./alter/fieldActions')(app),
       propertyActions: require('./alter/propertyActions')(app),
+      configFormio: require('./alter/configFormio'),
       log() {
         const [event, req, ...args] = arguments;
         log(req.uuid, req.projectId || 'NoProject', event, ...args);
