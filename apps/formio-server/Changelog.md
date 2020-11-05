@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+### Fixed
+ - Fixed an issue where server respond with InvalidAlias when updating submission of the NestedForm with revision number specified
+ - FJS-1336, FJS-1337, FJS-1422: Adds a hook which adds premium components to Formio instance
+
 ## 7.0.0-rc.50
 ### Changed
  - Upgrade formio@2.0.0-rc.28
