@@ -62,7 +62,7 @@ module.exports = (formio) => {
           return provider.getToken({
             code,
             redirect_uri: redirectURI,
-          });
+          }, {json: true});
           /* eslint-enable camelcase */
         })
         .then((token) => {
