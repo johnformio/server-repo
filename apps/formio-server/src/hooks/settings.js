@@ -618,6 +618,8 @@ module.exports = function(app) {
                 access.role.update_all = access.role.update_all || [];
                 access.role.delete_all = access.role.delete_all || [];
 
+                const isFormCreation = req.method === 'POST' && req.url.endsWith('/form');
+
                 teamAccess.forEach(function(permission) {
                   permission.roles = permission.roles || [];
                   // Note: These roles are additive. team_admin gets all roles in team_write and team_read.
@@ -629,7 +631,9 @@ module.exports = function(app) {
                         access.project.delete_all.push(id.toString());
                       case 'team_write':
                       case 'stage_write':
-                        access.project.create_all.push(id.toString()); // This controls form creation.
+                        if (isFormCreation || permission.type === 'team_admin') {
+                          access.project.create_all.push(id.toString()); // This controls form creation.
+                        }
                         access.form.create_all.push(id.toString());
                         access.form.update_all.push(id.toString());
                         access.form.delete_all.push(id.toString());
