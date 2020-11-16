@@ -45,7 +45,10 @@
           "key": "email",
           "label": "Email",
           "inputType": "email",
-          "input": true
+          "input": true,
+          "validate": {
+          "required": true
+        }
         },
         {
           "source": "553db94e72f702e714dd9779",
@@ -60,7 +63,10 @@
           "key": "password",
           "label": "Password",
           "inputType": "password",
-          "input": true
+          "input": true,
+          "validate": {
+            "required": true
+          }
         },
         {
           "tableView": false,
