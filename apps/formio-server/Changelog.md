@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.0.0-rc.53
+### Fixed
+ - FOR-2820: Stage Versions not showing up after you hit deploy button
+ - FOR-2850: Restore old JSON response parsing mode of simple-oauth2
+
+### Changed
+ - Upgrade portal@7.1.17-rc.27
+ - Upgrade formiojs@4.12.1
+ - Upgrade premium@1.15.1
+ - Upgrade formio@2.0.0-rc.31
+
 ## 7.0.0-rc.52
 ### Changed
  - Upgrade portal@7.1.17-rc.26
