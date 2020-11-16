@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.0.0-rc.54
+### Fixed
+ - FOR-2840: Removed possibility to create a stage version and import project template with team write permission.
+ - NFP-4: Require validations are not present
+
 ## 7.0.0-rc.53
 ### Fixed
  - FOR-2820: Stage Versions not showing up after you hit deploy button
