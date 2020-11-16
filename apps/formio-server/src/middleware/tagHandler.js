@@ -1,6 +1,25 @@
 'use strict';
 const nodeUrl = require('url');
 
+function getPrimaryProjectId({
+  currentProject,
+  primaryProject,
+  parentProject,
+}) {
+  // If we are a at tenant's stage, then version tags are based on that tenant.
+  if (
+    currentProject && currentProject.type === 'stage' &&
+    parentProject && parentProject.type === 'tenant'
+  ) {
+    return parentProject._id;
+  }
+  // If we are a tenant, then version tags are based on that tenant.
+  else if (currentProject && currentProject.type === 'tenant') {
+    return currentProject._id;
+  }
+  return primaryProject._id;
+}
+
 /**
  * A handler for tag based requests.
  *
@@ -17,10 +36,7 @@ module.exports = function(router) {
       return next();
     }
 
-    // If we are a tenant, then version tags are based on that tenant.
-    const primaryProjectId = (req.currentProject && req.currentProject.type === 'tenant') ?
-      req.currentProject._id :
-      req.primaryProject._id;
+    const primaryProjectId = getPrimaryProjectId(req);
 
     if (req.method === 'PUT' || req.method === 'POST') {
       req.body.project = primaryProjectId;
