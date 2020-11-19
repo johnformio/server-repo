@@ -3,7 +3,7 @@ module.exports = (formioServer) => async (req, res, next) => {
   const downloadPDF = require('../util/downloadPDF')(formioServer);
   const formio = formioServer.formio;
   try {
-    const project = req.primaryProject;
+    const project = req.currentProject;
     const formId = req.query.form || formio.cache.getCurrentFormId(req);
     const form = await formio.cache.loadFormAsync(req, null, formId);
     const submission = await formio.cache.loadCurrentSubmissionAsync(req);
