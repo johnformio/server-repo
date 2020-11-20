@@ -4,7 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## 7.0.0-rc.55
+### Changed
+- Upgrade portal@7.1.17-rc.28
+ - Upgrade formiojs@4.12.2-rc.3
+ - Upgrade premium@1.15.2-rc.1
 ### Fixed
  - FOR-2819: PDF Download not calculating on Project Limits on Tenants and Stages
  - FOR-2830: Fixed issue when headers is undefined in sql connector action.
