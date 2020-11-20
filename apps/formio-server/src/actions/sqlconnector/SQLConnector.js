@@ -357,6 +357,8 @@ module.exports = (router) => {
           // Remove protected fields from the external request.
           formio.util.removeProtectedFields(req.currentForm, method, item);
           options.body = JSON.stringify(item);
+
+          options.headers = options.headers || {};
           options.headers['content-type'] = 'application/json';
         }
 
