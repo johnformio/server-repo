@@ -5,7 +5,7 @@ module.exports = {
   getPDFUrls(project) {
     let localServer = PDF_SERVER;
     if (!localServer) {
-      if (project.settings.pdfserver) {
+      if (project.settings && project.settings.pdfserver) {
         localServer = project.settings.pdfserver;
       }
       else {
@@ -14,7 +14,7 @@ module.exports = {
     }
     return {
       local: localServer,
-      public: project.settings.pdfserver || localServer
+      public: (project.settings && project.settings.pdfserver) || localServer
     };
   }
 };
