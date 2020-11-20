@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+### Fixed
+ - FOR-2819: PDF Download not calculating on Project Limits on Tenants and Stages
+ - FOR-2830: Fixed issue when headers is undefined in sql connector action.
+ - FOR-2760: Check settings before using pdfserver configurations.
+
+### Changed
+ - Upgrade formio@2.0.0-rc.32, formiojs@4.12.2-rc.3
+
 ## 7.0.0-rc.54
 ### Fixed
  - FOR-2840: Removed possibility to create a stage version and import project template with team write permission.
