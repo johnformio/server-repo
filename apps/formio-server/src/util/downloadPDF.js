@@ -4,6 +4,7 @@ const Promise = require('bluebird');
 const fetch = require('formio/src/util/fetch');
 const {getLicenseKey} = require('./utilization');
 const {getPDFUrls} = require('./pdf');
+const PDF_SERVER = process.env.PDF_SERVER || process.env.FORMIO_FILES_SERVER;
 module.exports = (formioServer) => {
   const formio = formioServer.formio;
   const encrypt = require('./encrypt')(formioServer);
@@ -73,7 +74,8 @@ module.exports = (formioServer) => {
     const pdfSrc = _.get(form, 'settings.pdf.src');
     let url = null;
 
-    if (pdfSrc && !req.query.project && !req.params.fileId) {
+    // If they do not provide any PDF_SERVER definition, then we will use the project configuration.
+    if (!PDF_SERVER && pdfSrc && !req.query.project && !req.params.fileId) {
       // If settings.pdf.src is available, and no custom settings were supplied, use it
       url = `${pdfSrc}/download`;
 
