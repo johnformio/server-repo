@@ -43,7 +43,7 @@ module.exports = (formioServer) => {
       await new Promise((resolve) => encrypt.encryptDecrypt(req, submission, 'decrypt', resolve));
     }
 
-    const pdfUrls = getPDFUrls(project);
+    const pdfUrls = getPDFUrls(req.currentProject);
 
     if (req.query.from) {
       pdfUrls.local = req.query.from;
