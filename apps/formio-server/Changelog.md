@@ -6,10 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## 7.0.0-rc.55
 ### Changed
-- Upgrade portal@7.1.17-rc.28
+ - Upgrade formio@2.0.0-rc.33
+ - Upgrade portal@7.1.17-rc.28
  - Upgrade formiojs@4.12.2-rc.3
  - Upgrade premium@1.15.2-rc.1
 ### Fixed
+ - Issues where SAML authentication would fail due to undefined method.
+ - PDF download issue where local pdf-server to enterprise server would not make connection.
  - FOR-2819: PDF Download not calculating on Project Limits on Tenants and Stages
  - FOR-2830: Fixed issue when headers is undefined in sql connector action.
  - FOR-2760: Check settings before using pdfserver configurations.
