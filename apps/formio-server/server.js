@@ -178,7 +178,8 @@ module.exports = function(options) {
     (req, res) => {
       res.json({
         version: packageJson.version,
-        schema: packageJson.schema
+        schema: packageJson.schema,
+        environmentId: app.environmentId
       });
     }
   ]);
