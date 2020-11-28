@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.0.0-rc.56
+### Added
+ - FOR-2851: Adds an environment ID in the status endpoint
+
+### Changed
+
 ## 7.0.0-rc.55
 ### Changed
  - Upgrade formio@2.0.0-rc.33
