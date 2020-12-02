@@ -21,7 +21,7 @@
   "cache": "1550086650",
   "main": "./main.js",
   "version": "7.0.0-rc.57",
-  "schema": "3.3.6",
+  "schema": "3.3.7",
   "portalVersion": "7.1.17-rc.30",
   "dependencies": {
     "@formio/premium": "^1.15.2-rc.3",
