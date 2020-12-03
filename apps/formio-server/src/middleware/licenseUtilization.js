@@ -5,8 +5,10 @@
 const _ = require('lodash');
 const {utilization, cachedUtilization, getProjectContext, getLicenseKey} = require('../util/utilization');
 
-function middleware(formio) {
+function middleware(app) {
+  const formio = app.formio ? app.formio.formio : app;
   return async (req, res, next) => {
+    const remote = _.get(app, 'license.remote', false);
     // Don't put default in function definition as it breaks express.
     if (!next) {
       next = () => {};
@@ -14,6 +16,10 @@ function middleware(formio) {
 
     // Bypass the main formio project that hosts the licenses.
     if (_.get(req, 'currentProject.name') === 'formio' && process.env.FORMIO_HOSTED) {
+      return next();
+    }
+
+    if (req.skipLicense) {
       return next();
     }
 
@@ -58,53 +64,156 @@ function middleware(formio) {
         //            88                                   ,88
         //            88                                 888P"
 
+        case 'GET /project':
+          if (
+            res.resource && res.resource.item && Array.isArray(res.resource.item) &&
+            req.query.project
+          ) {
+            await Promise.all(res.resource.item.map(async (project) => {
+              if (['stage', 'tenant'].includes(project.type)) {
+                if (remote) {
+                  project.disabled = false;
+                  project.authoring = false;
+                }
+                else {
+                  try {
+                    let parentProject, primaryProject;
+                    // Load primary project
+                    await new Promise((resolve, reject) => {
+                      req.projectId = project.project;
+                      formio.cache.loadPrimaryProject(req, (err, project) => {
+                        if (err) {
+                          return reject(err);
+                        }
+                        req.primaryProject = primaryProject = project.toObject();
+                        return resolve(project);
+                      });
+                    });
+
+                    // Load parent project
+                    await new Promise((resolve, reject) => {
+                      formio.cache.loadProject(req, project.project, (err, project) => {
+                        if (err) {
+                          return reject(err);
+                        }
+                        parentProject = project.toObject();
+                        return resolve(project);
+                      });
+                    });
+
+                    let body = {
+                      type: 'stage',
+                      projectId: primaryProject._id,
+                      tenantId: parentProject._id.toString() !== primaryProject._id.toString() ? parentProject._id.toString() : 'none',
+                      stageId: project._id.toString(),
+                      title: project.title,
+                      name: project.name,
+                      remote: !!project.remote,
+                      projectType: project.type,
+                      licenseKey: getLicenseKey(req),
+                    };
+
+                    if (project.type === 'tenant') {
+                      body = {
+                        type: 'tenant',
+                        projectId: primaryProject._id,
+                        tenantId: project._id.toString(),
+                        title: project.title,
+                        name: project.name,
+                        remote: !!project.remote,
+                        projectType: project.type,
+                        licenseKey: getLicenseKey(req),
+                      };
+                    }
+
+                    const result = await utilization(body, '');
+
+                    if (project.type === 'stage') {
+                      project.authoring = !result.live;
+                    }
+                  }
+                  catch (err) {
+                    if (project.type === 'stage') {
+                      project.disabled = true;
+                    }
+                    else {
+                      project.disabled = err.error || err.message || true;
+                    }
+                  }
+                }
+              }
+            }));
+          }
+          break;
         case 'GET /project/:projectId':
+          // Don't check utilization for formio project.
+          if (_.get(req, 'primaryProject.name') === 'formio') {
+            break;
+          }
           try {
-            const result = await utilization({
-              ...getProjectContext(req),
-              licenseKey: getLicenseKey(req),
-            }, '', {terms: 1, keys: 1});
             let formManagerEnabled = false;
-            let vPatEnabled = false;
-            try {
-              await utilization({
+            let accessibilityEnabled = false;
+            let tenantEnabled = false;
+            let terms = app.license.terms;
+            let used = {};
+            let licenseId = 'remote';
+            if (remote) {
+              formManagerEnabled = app.license.terms.scopes.includes('formManager');
+              accessibilityEnabled = app.license.terms.options.sac;
+              tenantEnabled = app.license.terms.scopes.includes('tenant');
+            }
+            else {
+              const result = await utilization({
                 ...getProjectContext(req),
                 licenseKey: getLicenseKey(req),
-                type: 'formManager'
-              });
-              formManagerEnabled = true;
-            }
-            catch (err) {
-              formManagerEnabled = err.message;
-            }
-            try {
-              await utilization({
-                ...getProjectContext(req),
-                licenseKey: getLicenseKey(req),
-                type: 'VPAT'
-              });
-              vPatEnabled = true;
-            }
-            catch (err) {
-              vPatEnabled = err.message;
+              }, '', {terms: 1, keys: 1});
+              try {
+                await utilization({
+                  ...getProjectContext(req),
+                  licenseKey: getLicenseKey(req),
+                  type: 'formManager'
+                });
+                formManagerEnabled = true;
+              }
+              catch (err) {
+                formManagerEnabled = err.message;
+              }
+              try {
+                await utilization({
+                  ...getProjectContext(req),
+                  licenseKey: getLicenseKey(req),
+                  type: 'Accessibility'
+                });
+                accessibilityEnabled = true;
+              }
+              catch (err) {
+                accessibilityEnabled = err.message;
+              }
+              terms = result.terms;
+              used = result.used;
+              licenseId = result.licenseId;
+              tenantEnabled = result.keys.hasOwnProperty(result.licenseKey) && result.keys[result.licenseKey].scope.includes('tenant');
             }
             res.resource.item.apiCalls = {
-              limit: result.terms,
-              used: result.used,
-              licenseId: result.licenseId,
+              limit: terms,
+              used,
+              licenseId,
               formManager: formManagerEnabled,
-              vpat: vPatEnabled,
-              tenant: result.keys.hasOwnProperty(result.licenseKey) && result.keys[result.licenseKey].scope.includes('tenant'),
+              accessibility: accessibilityEnabled,
+              tenant: tenantEnabled,
             };
           }
           catch (err) {
-            res.resource.item.disabled = err.error;
+            res.resource.item.disabled = err.error || err.message;
           }
           break;
 
         // Require a license utilization when creating a project
         case 'POST /project':
-          if (req.primaryProject && req.primaryProject.name === 'formio' && !process.env.FORMIO_HOSTED) {
+          if (remote) {
+            break;
+          }
+          if (_.get(req, 'primaryProject.name') === 'formio' && !process.env.FORMIO_HOSTED) {
             throw new Error('Cannot create stages or tenants in formio project. Please create a new project.');
           }
           if (!process.env.FORMIO_HOSTED) {
@@ -117,6 +226,10 @@ function middleware(formio) {
 
         // Allow projects to be updated so that a new license key can be added.
         case 'PUT /project/:projectId':
+          // Don't check utilization for formio project.
+          if (_.get(req, 'primaryProject.name') === 'formio' || remote) {
+            break;
+          }
           try {
             const result = await utilization({
               ...getProjectContext(req),
@@ -139,6 +252,13 @@ function middleware(formio) {
 
         // Disable project utilization when deleting a project
         case 'DELETE /project/:projectId':
+          if (remote) {
+            break;
+          }
+          // Don't check utilization for formio project.
+          if (_.get(req, 'primaryProject.name') === 'formio') {
+            throw new Error('Cannot delete the formio project.');
+          }
           await utilization({
             ...getProjectContext(req),
             licenseKey: getLicenseKey(req),
@@ -146,6 +266,9 @@ function middleware(formio) {
           break;
 
         case 'GET /project/:projectId/manage':
+          if (remote) {
+            break;
+          }
           await utilization({
             ...getProjectContext(req),
             licenseKey: getLicenseKey(req),
@@ -154,7 +277,10 @@ function middleware(formio) {
           break;
 
         case 'POST /project/:projectId/import':
-          if (_.get(req, 'currentProject.name') === 'formio' && !process.env.FORMIO_HOSTED) {
+          if (remote) {
+            break;
+          }
+          if (_.get(req, 'primaryProject.name') === 'formio' && !process.env.FORMIO_HOSTED) {
             throw new Error('Cannot import to formio project. Please create a new project for your forms.');
           }
           break;
@@ -281,7 +407,7 @@ function middleware(formio) {
       return next();
     }
     catch (e) {
-      return res.status(e.statusCode || 500).send(
+      return res.status(e.statusCode || 400).send(
         e.name === 'StatusCodeError' ? `[${e.statusCode}] ${e.error}` : e.message
       );
     }

@@ -3,7 +3,7 @@
 const Q = require('q');
 const _ = require('lodash');
 
-const util = require('formio/src/util/util');
+const fetch = require('formio/src/util/fetch');
 
 const MAX_TIMESTAMP = 8640000000000000;
 
@@ -41,90 +41,100 @@ module.exports = function(formio) {
     // Exchanges authentication code for access tokens
     // Returns a promise, or you can provide the next callback arg
     // Resolves with array of tokens defined like externalTokenSchema
-    getTokens(req, code, state, redirectURI, next) {
-      return oauthUtil.settings(req, this.name)
-      .then(function(settings) {
-        /* eslint-disable camelcase */
-        return util.request({
-          method: 'POST',
-          json: true,
-          url: 'https://github.com/login/oauth/access_token',
-          body: {
-            client_id: settings.clientId,
-            client_secret: settings.clientSecret,
-            code: code,
-            state: state
-          }
-        });
-        /* eslint-enable camelcase */
-      })
-      .spread(function(response, body) {
-        if (!body) {
-          throw 'No response from GitHub.';
+    async getTokens(req, code, state, redirectURI) {
+      const settings = await oauthUtil.settings(req, this.name);
+
+      /* eslint-disable camelcase */
+      const response = await fetch('https://github.com/login/oauth/access_token', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'accept': 'application/json',
+        },
+        body: JSON.stringify({
+          client_id: settings.clientId,
+          client_secret: settings.clientSecret,
+          code: code,
+          state: state
+        }),
+      });
+      /* eslint-enable camelcase */
+
+      let body = null;
+      if (response.ok) {
+        body = await response.json();
+      }
+
+      if (!body) {
+        throw 'No response from GitHub.';
+      }
+      if (body.error) {
+        throw body.error;
+      }
+
+      return [
+        {
+          type: this.name,
+          token: body.access_token,
+          exp: new Date(MAX_TIMESTAMP) // Github tokens never expire
         }
-        if (body.error) {
-          throw body.error;
-        }
-        return [
-          {
-            type: this.name,
-            token: body.access_token,
-            exp: new Date(MAX_TIMESTAMP) // Github tokens never expire
-          }
-        ];
-      }.bind(this))
-      .nodeify(next);
+      ];
     },
 
     // Gets user information from oauth access token
     // Returns a promise, or you can provide the next callback arg
-    getUser(tokens, settings, next) {
+    async getUser(tokens, settings) {
       const accessToken = _.find(tokens, {type: this.name});
       if (!accessToken) {
-        return Q.reject('No access token found');
+        throw 'No access token found';
       }
-      return util.request({
+      const response = await fetch('https://api.github.com/user', {
         method: 'GET',
-        url: 'https://api.github.com/user',
-        json: true,
         headers: {
-          Authorization: `token ${accessToken.token}`,
-          'User-Agent': 'formio'
+          'Authorization': `token ${accessToken.token}`,
+          'User-Agent': 'formio',
+          'accept': 'application/json',
         }
-      })
-      .spread(function(response, userInfo) {
-        if (!userInfo) {
-          throw 'No response from GitHub.';
+      });
+
+      let userInfo = null;
+      if (response.ok) {
+        userInfo = await response.json();
+      }
+
+      if (!userInfo) {
+        throw 'No response from GitHub.';
+      }
+      if (userInfo.email) {
+        return userInfo;
+      }
+      else {
+        // GitHub users can make their email private. If they do so,
+        // we have to explicitly request the email endpoint to get an email
+        const response = await fetch('https://api.github.com/user/emails', {
+          method: 'GET',
+          headers: {
+            Authorization: `token ${accessToken.token}`,
+            'User-Agent': 'formio'
+          }
+        });
+
+        let body = null;
+        if (response.ok) {
+          body = await response.json();
         }
-        if (userInfo.email) {
-          return userInfo;
+
+        if (!body) {
+          throw 'No response from GitHub';
         }
-        else {
-          // GitHub users can make their email private. If they do so,
-          // we have to explicitly request the email endpoint to get an email
-          return util.request({
-            method: 'GET',
-            url: 'https://api.github.com/user/emails',
-            json: true,
-            headers: {
-              Authorization: `token ${accessToken.token}`,
-              'User-Agent': 'formio'
-            }
-          })
-          .spread(function(response, body) {
-            if (!body) {
-              throw 'No response from GitHub';
-            }
-            const primaryEmail = _.find(body, 'primary');
-            if (!primaryEmail) {
-              throw 'Could not retrieve primary email';
-            }
-            userInfo.email = primaryEmail.email;
-            return userInfo;
-          });
+
+        const primaryEmail = _.find(body, 'primary');
+        if (!primaryEmail) {
+          throw 'Could not retrieve primary email';
         }
-      })
-      .nodeify(next);
+        userInfo.email = primaryEmail.email;
+        return userInfo;
+      }
     },
 
     // Gets user ID from provider user response from getUser()

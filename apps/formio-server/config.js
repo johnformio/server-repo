@@ -119,6 +119,7 @@ config.formio.reservedForms = [
   'v',
   'draft',
   'saml',
+  'oauth2',
   'recaptcha',
   'manage',
   'action',
@@ -160,16 +161,20 @@ config.host = host;
 
 config.project = project;
 config.plan = plan;
+config.baseUrl = getConfig('BASE_URL', '');
 config.apiHost = apiHost;
 config.formio.apiHost = apiHost;
 config.formioHost = formioHost;
 config.formio.formioHost = formioHost;
-config.licenseKey =getConfig('LICENSE_KEY');
+config.licenseKey = getConfig('LICENSE_KEY');
+config.licenseRemote = getConfig('LICENSE_REMOTE', false);
 config.hostedPDFServer = getConfig('PDF_SERVER', getConfig('FORMIO_FILES_SERVER', ''));
 config.portalSSO = getConfig('PORTAL_SSO', '');
 config.ssoTeams = Boolean(getConfig('SSO_TEAMS', false) || config.portalSSO);
 config.portalSSOLogout = getConfig('PORTAL_SSO_LOGOUT', '');
 config.verboseHealth = getConfig('VERBOSE_HEALTH');
+config.vpat = Boolean(getConfig('VPAT', false));
+config.sac = Boolean(getConfig('SAC', false));
 
 // Payeezy fields
 config.payeezy = {
@@ -180,6 +185,14 @@ config.payeezy = {
   gatewayPassword: getConfig('PAYEEZY_GATEWAY_PASSWORD'),
   hmacKey: getConfig('PAYEEZY_HMAC_KEY'),
   merchToken: getConfig('PAYEEZY_TOKEN'),
+};
+// tpro3 fields
+config.tpro3 = {
+  gateway: getConfig('TPRO3_GATEWAY'),
+  api: getConfig('TPRO3_API', 'https://api.tpro3.com/json'),
+  account: getConfig('TPRO3_ACCOUNT', 'Form.ioTestCC'),
+  useremail: getConfig('TPRO3_EMAIL'),
+  password: getConfig('TPRO3_PASSWORD'),
 };
 
 // Using docker, support legacy linking and network links.
@@ -212,6 +225,22 @@ if (getConfig('MONGO_SA')) {
   config.formio.mongoSA = getConfig('MONGO_SA');
 }
 
+if (getConfig('MONGO_CA')) {
+  config.formio.mongoCA = getConfig('MONGO_CA');
+}
+
+if (getConfig('MONGO_SSL')) {
+  config.formio.mongoSSL = getConfig('MONGO_SSL');
+}
+
+if (getConfig('MONGO_SSL_VALIDATE')) {
+  config.formio.mongoSSLValidate = getConfig('MONGO_SSL_VALIDATE');
+}
+
+if (getConfig('MONGO_SSL_PASSWORD')) {
+  config.formio.mongoSSLPassword = getConfig('MONGO_SSL_PASSWORD');
+}
+
 if (getConfig('MONGO_CONFIG')) {
   config.formio.mongoConfig = getConfig('MONGO_CONFIG');
 }
@@ -232,11 +261,18 @@ config.formio.dropbox = {};
 config.formio.dropbox.clientId = getConfig('DROPBOX_CLIENTID', '');
 config.formio.dropbox.clientSecret = getConfig('DROPBOX_CLIENTSECRET', '');
 
+// Session settings.
+config.formio.session = {
+  expireTime: getConfig('SESSION_EXPIRE_TIME', ''),
+};
+
 // Add the JWT data.
 config.formio.jwt = {};
 config.formio.jwt.secret = getConfig('JWT_SECRET', 'abc123');
 config.formio.jwt.expireTime = getConfig('JWT_EXPIRE_TIME', 240);
 config.remoteSecret = getConfig('PORTAL_SECRET', '');
+
+config.formio.audit = !getConfig('NOAUDITLOG', false);
 
 // Access endpoint configuration
 config.filterAccess = getConfig('FILTER_ACCESS', true);
@@ -249,10 +285,6 @@ config.templateService = getConfig('TEMPLATE_SERVICE', '');
 
 // Logging config.
 config.jslogger = getConfig('JS_LOGGER');
-config.logging = {
-  console: getConfig('LOGGING_CONSOLE', true),
-  formio: getConfig('LOGGING_FORMIO', false)
-};
 
 // Allow the config to be displayed when debugged.
 var sanitized = _.clone(config, true);

@@ -1,4 +1,5 @@
 'use strict';
+const _ = require('lodash');
 
 /**
  * Provides CORS capabilities.
@@ -11,15 +12,13 @@ module.exports = function(router) {
       'https://form.io',
       'https://test-form.io',
       'https://develop-form.io',
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://localhost:9002',
       'https://portal.form.io',
-      'https://next.form.io',
       'https://portal.test-form.io',
-      'http://portal.localhost:3000',
-      'http://portal.localhost:3001',
-      'http://portal.localhost:9002'
+      'https://portal.develop-form.io',
+      'https://next.form.io',
+      'https://alpha.form.io',
+      'https://beta.form.io',
+      'https://classic.form.io',
     ];
     const pass = {
       origin: true
@@ -27,6 +26,11 @@ module.exports = function(router) {
     const fail = {
       origin: 'https://form.io'
     };
+
+    // Disallow cors if they are attempting to use a token as querystring.
+    if (!req.header('Origin') || req.header('Origin') === 'null') {
+      return callback(null, fail);
+    }
 
     // Allow CORS if there is no project.
     if (
@@ -37,14 +41,43 @@ module.exports = function(router) {
       return callback(null, pass);
     }
 
-    // Disallow cors if they are attempting to use a querystring.
+    // Disallow cors if they are attempting to use a token as querystring.
     if (req.query.hasOwnProperty('token')) {
       return callback(null, fail);
+    }
+
+    // Support localhost for domain name.
+    if (
+      req.header('Origin') && (
+        req.header('Origin').includes('http://localhost:') ||
+        req.header('Origin').includes('http://portal.localhost:')
+      )
+    ) {
+      return callback(null, pass);
+    }
+
+    // Disallow CORS for authoring stages.
+    if (
+      !_.get(req, 'projectLicense.live', true) &&
+      req.url.includes('/submission')
+    ) {
+      if (
+        whitelist.includes(req.header('Origin')) ||
+        router.formio.formio.origin === req.header('Origin')
+      ) {
+        return callback(null, pass);
+      }
+      else {
+        return callback(null, fail);
+      }
     }
 
     // Load the project settings.
     router.formio.formio.hook.settings(req, function(err, settings) {
       if (err) {
+        if (err === 'Project not found') {
+          return callback(null, pass);
+        }
         return callback(err);
       }
 

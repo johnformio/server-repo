@@ -160,9 +160,9 @@ module.exports = function(app, template, hook) {
         .post('/project/' + template.formio.project._id + '/form/' + template.formio.formRegister._id + '/submission')
         .send({
           data: {
-            'name': chance.name(),
+            'name': chance.word({ length: 10 }),
             'email': chance.email(),
-            'password': 'test123'
+            'password': 'test1234'
           }
         })
         .expect(200)

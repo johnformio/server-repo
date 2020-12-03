@@ -17,13 +17,31 @@ module.exports = function(app, template, hook) {
         app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
           if (err) return done(err);
 
-          project.plan = 'basic';
-          project.save(function(err) {
-            if (err) {
-              return done(err);
+          app.formio.formio.resources.submission.model.findOne({
+            'data.licenseKeys.key': project.settings.licenseKey,
+          }, function(err, sub) {
+            if (err) return done(err);
+
+            if (sub) {
+              sub.data = {
+                ...sub.data,
+                plan: 'basic',
+              };
             }
 
-            done();
+            sub.markModified('data');
+            sub.save(function(err) {
+              if (err) return done(err);
+
+              project.plan = 'basic';
+              project.save(function(err) {
+                if (err) {
+                  return done(err);
+                }
+
+                done();
+              });
+            });
           });
         });
       });
@@ -282,13 +300,31 @@ module.exports = function(app, template, hook) {
         app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
           if (err) return done(err);
 
-          project.plan = 'independent';
-          project.save(function(err) {
-            if (err) {
-              return done(err);
+          app.formio.formio.resources.submission.model.findOne({
+            'data.licenseKeys.key': project.settings.licenseKey,
+          }, function(err, sub) {
+            if (err) return done(err);
+
+            if (sub) {
+              sub.data = {
+                ...sub.data,
+                plan: 'independent',
+              };
             }
 
-            done();
+            sub.markModified('data');
+            sub.save(function(err) {
+              if (err) return done(err);
+
+              project.plan = 'independent';
+              project.save(function(err) {
+                if (err) {
+                  return done(err);
+                }
+
+                done();
+              });
+            });
           });
         });
       });
@@ -547,13 +583,31 @@ module.exports = function(app, template, hook) {
         app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
           if (err) return done(err);
 
-          project.plan = 'team';
-          project.save(function(err) {
-            if (err) {
-              return done(err);
+          app.formio.formio.resources.submission.model.findOne({
+            'data.licenseKeys.key': project.settings.licenseKey,
+          }, function(err, sub) {
+            if (err) return done(err);
+
+            if (sub) {
+              sub.data = {
+                ...sub.data,
+                plan: 'team',
+              };
             }
 
-            done();
+            sub.markModified('data');
+            sub.save(function(err) {
+              if (err) return done(err);
+
+              project.plan = 'team';
+              project.save(function(err) {
+                if (err) {
+                  return done(err);
+                }
+
+                done();
+              });
+            });
           });
         });
       });
@@ -906,13 +960,31 @@ module.exports = function(app, template, hook) {
         app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
           if (err) return done(err);
 
-          project.plan = 'commercial';
-          project.save(function(err) {
-            if (err) {
-              return done(err);
+          app.formio.formio.resources.submission.model.findOne({
+            'data.licenseKeys.key': project.settings.licenseKey,
+          }, function(err, sub) {
+            if (err) return done(err);
+
+            if (sub) {
+              sub.data = {
+                ...sub.data,
+                plan: 'commercial',
+              };
             }
 
-            done();
+            sub.markModified('data');
+            sub.save(function(err) {
+              if (err) return done(err);
+
+              project.plan = 'commercial';
+              project.save(function(err) {
+                if (err) {
+                  return done(err);
+                }
+
+                done();
+              });
+            });
           });
         });
       });

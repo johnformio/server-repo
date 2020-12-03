@@ -45,7 +45,10 @@
           "key": "email",
           "label": "Email",
           "inputType": "email",
-          "input": true
+          "input": true,
+          "validate": {
+          "required": true
+        }
         },
         {
           "source": "553db94e72f702e714dd9779",
@@ -60,7 +63,10 @@
           "key": "password",
           "label": "Password",
           "inputType": "password",
-          "input": true
+          "input": true,
+          "validate": {
+            "required": true
+          }
         },
         {
           "tableView": false,
@@ -236,6 +242,7 @@
           "type": "password",
           "lockKey": true,
           "validate": {
+            "minLength": 8,
             "required": true
           },
           "tableView": false,
@@ -243,11 +250,9 @@
             "show": null,
             "when": null,
             "eq": ""
-          },
-          "tabindex": "zack@form.io"
+          }
         },
         {
-          "customError": "Passwords must match.",
           "input": true,
           "inputType": "password",
           "label": "",
@@ -267,8 +272,7 @@
             "show": null,
             "when": null,
             "eq": ""
-          },
-          "tabindex": "zack@form.io"
+          }
         },
         {
           "conditional": {
@@ -416,7 +420,8 @@
             "eq": ""
           },
           "validate": {
-            "required": true
+            "required": true,
+            "minLength": 8
           }
         },
         {
@@ -437,7 +442,8 @@
             "eq": ""
           },
           "validate": {
-            "required": true
+            "required": true,
+            "custom": "valid = (input == '{{ password }}') ? true : 'Passwords must match.';"
           }
         },
         {
@@ -751,7 +757,10 @@
           "prefix": "",
           "suffix": "",
           "type": "password",
-          "tableView": false
+          "tableView": false,
+          "validate": {
+            "minLength": 8
+          }
         },
         {
           "theme": "primary",

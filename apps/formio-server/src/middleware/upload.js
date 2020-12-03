@@ -1,12 +1,13 @@
 'use strict';
-const request = require('request');
+const fetch = require('formio/src/util/fetch');
 const {promisify} = require('util');
-const PDF_SERVER = process.env.PDF_SERVER || process.env.FORMIO_FILES_SERVER || 'https://files.form.io';
 const _ = require('lodash');
 const Promise = require('bluebird');
 const fs = require('fs');
 const {getLicenseKey} = require('../util/utilization');
+const {getPDFUrls} = require('../util/pdf');
 const debug = require('debug')('formio:pdf:upload');
+const FormData = require('form-data');
 
 const unlinkAsync = promisify(fs.unlink);
 
@@ -26,15 +27,11 @@ module.exports = (formioServer) => async (req, res, next) => {
 
   try {
     // Load project
-    const project = req.primaryProject;
+    const project = req.currentProject;
 
     // Set the files server
-    let filesServer = PDF_SERVER;
-    if (process.env.FORMIO_HOSTED && project.settings.pdfserver) {
-      // Allow them to download from any server if it is set to the default
-      filesServer = project.settings.pdfserver;
-    }
-    debug(`FileServer: ${filesServer}`);
+    const pdfUrls = getPDFUrls(project);
+    debug(`FileServer: ${pdfUrls.local}`);
 
     // Create the headers object
     const headers = {'x-license-key': getLicenseKey(req)};
@@ -62,40 +59,36 @@ module.exports = (formioServer) => async (req, res, next) => {
     }
 
     try {
-      debug('POST: ' + `${filesServer}/pdf/${pdfProject}/file`);
+      debug('POST: ' + `${pdfUrls.local}/pdf/${pdfProject}/file`);
       debug(`Filepath: ${  req.files.file.path}`);
-      request({
-        method: 'POST',
-        url: `${filesServer}/pdf/${pdfProject}/file`,
-        headers: headers,
-        rejectUnauthorized: false,
-        formData: {
-          file: {
-            value: fs.createReadStream(req.files.file.path),
-            options: {
-              filename: req.files.file.name,
-              contentType: req.files.file.type,
-              size: req.files.file.size,
-            }
-          }
-        }
-      }, async (err, response) => {
-        debug('response', response.statusCode, response.statusMessage);
-        await tryUnlinkAsync(req.files.file.path);
-        debug('unlinked file');
-        if (err) {
-          debug('Err1', err);
-          return res.status(400).send(err.message);
-        }
-
-        if (response.statusCode > 299) {
-          return res.status(response.statusCode).send(response.body);
-        }
-
-        const body = JSON.parse(response.body);
-        body.filesServer = filesServer;
-        res.status(201).send(body);
+      const form = new FormData();
+      form.append('file', fs.createReadStream(req.files.file.path), {
+        filename: req.files.file.name,
+        contentType: req.files.file.type,
+        size: req.files.file.size,
       });
+      fetch(`${pdfUrls.local}/pdf/${pdfProject}/file`, {
+        method: 'POST',
+        headers: headers,
+        body: form,
+      })
+        .catch(async (err) => {
+          debug('unlinked file');
+          debug('Err1', err);
+          await tryUnlinkAsync(req.files.file.path);
+          res.status(400).send(err.message || err);
+          throw err;
+        })
+        .then(async (response) => {
+          if (response.ok) {
+            const body = await response.json();
+            body.filesServer = pdfUrls.public;
+            return res.status(201).send(body);
+          }
+          else {
+            return res.status(response.status).send(await response.text());
+          }
+        });
     }
     catch (err) {
       debug('Err2', err);

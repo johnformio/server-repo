@@ -16,17 +16,17 @@ module.exports = function(app, formio) {
       const created = (new Date(req.user.created)).getTime();
       // If less than one hour in milliseconds.
       if ((current - created) < 3600000) {
-        return res.status(400).send('Your account cannot perform an upgrade yet. Please try again in one hour.');
+        return res.status(400).send('Due to security reasons, you must wait 1 hour after creating an account to input credit card information');
       }
     }
     next();
   };
 
-  app.post('/payeezy',
+  app.post('/payment-gateway',
     formio.middleware.tokenHandler,
     doNotAllowNewAccounts,
     require('../middleware/userProject')(formio),
-    require('./payeezy')(app.formio.config, formio)
+    require('./gateway')(app.formio.config, formio)
   );
 
   app.post('/project/:projectId/upgrade',
@@ -34,7 +34,7 @@ module.exports = function(app, formio) {
     require('../middleware/userProject')(formio),
     require('../middleware/restrictProjectAccess')(formio)({level: 'owner'}),
     require('./upgrade')(formio),
-    formio.middleware.customCrmAction('upgradeproject')
+    formio.middleware.customCrmAction('updateproject')
   );
 
   let paymentFormId;
@@ -88,7 +88,7 @@ module.exports = function(app, formio) {
       return Q(formio.resources.submission.model.countDocuments({
         form: formId,
         owner: formio.util.ObjectId(req.user._id),
-        'data.transactionStatus': 'approved',
+        'data.transactionStatus': 'success',
       }));
     })
     .then(function(count) {

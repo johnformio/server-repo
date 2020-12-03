@@ -3,7 +3,8 @@
 module.exports = app => (form, submission, done) => {
   if (
     !submission.hasOwnProperty('_fvid') ||
-    (form.hasOwnProperty('revisions') && (form.revisions === 'current'))
+    (form.hasOwnProperty('revisions') && (form.revisions === 'current')) ||
+    form._vid === submission._fvid
   ) {
     return done();
   }

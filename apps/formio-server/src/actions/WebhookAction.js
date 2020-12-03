@@ -1,6 +1,6 @@
 'use strict';
 
-const rest = require('restler');
+const fetch = require('formio/src/util/fetch');
 const _ = require('lodash');
 const vm = require('vm');
 
@@ -15,10 +15,6 @@ module.exports = (router) => {
    *   This class is used to create webhook interface.
    */
   class WebhookAction extends Action {
-    constructor(data, req, res) {
-      super(data, req, res);
-    }
-
     static info(req, res, next) {
       next(null, hook.alter('actionInfo', {
         name: 'webhook',
@@ -104,7 +100,7 @@ module.exports = (router) => {
                   validate: {
                     required: true
                   },
-                  description: 'The URL the request will be made to. You can interpolate the URL with {{ data.myfield }} or {{ externalId }} variables.'
+                  description: 'The URL the request will be made to. You can interpolate the URL with <b>data.myfield</b> or <b>externalId</b> variables.'
                 },
 
               ],
@@ -148,7 +144,8 @@ module.exports = (router) => {
                   input: true,
                   placeholder: 'User for Basic Authentication',
                   type: 'textfield',
-                  multiple: false
+                  multiple: false,
+                  autocomplete: 'off'
                 },
                 {
                   label: 'Authorize Password',
@@ -158,7 +155,8 @@ module.exports = (router) => {
                   input: true,
                   placeholder: 'Password for Basic Authentication',
                   type: 'textfield',
-                  multiple: false
+                  multiple: false,
+                  autocomplete: 'off'
                 }
               ],
               type: "fieldset",
@@ -258,7 +256,7 @@ module.exports = (router) => {
             {
               key: "content",
               input: false,
-              html: '<p>When making a request to an external service, you may want to save an external Id in association with this submission so you can refer to the same external resource later. To do that, enter an external ID reference name and the path to the id in the response data object. This value will then be available as {{externalId}} in the Request URL and Transform Payload fields.</p>',
+              html: '<p>When making a request to an external service, you may want to save an external Id in association with this submission so you can refer to the same external resource later. To do that, enter an external ID reference name and the path to the id in the response data object. This value will then be available as <b>externalId</b> in the Request URL and Transform Payload fields.</p>',
               type: "content",
               label: "content",
             },
@@ -317,8 +315,8 @@ module.exports = (router) => {
         setActionItemMessage('Webhook succeeded');
         if (settings.externalIdType && settings.externalIdPath) {
           const type = settings.externalIdType;
-          const id = data[settings.externalIdPath] || '';
 
+          const id = _.get(data, settings.externalIdPath, '');
           util.setCustomExternalIdType(req, res, router, type, id);
         }
 
@@ -365,17 +363,17 @@ module.exports = (router) => {
         }
 
         const submission = _.get(res, 'resource.previousItem') || _.get(res, 'resource.item') || {};
-        const externalId = submission[settings.externalIdType || 'none'] || '';
+        const externalIds = submission.externalIds || [];
+        let externalId = '';
+        const externalIdType = settings.externalIdType || 'none';
+
+        externalIds.forEach((external) => {
+          if (external.type === externalIdType && external.id) {
+            externalId = external.id;
+          }
+        });
 
         const options = {};
-
-        // Get the settings
-        if (settings.username) {
-          options.username = settings.username;
-        }
-        if (settings.password) {
-          options.password = settings.password;
-        }
 
         if (settings.forwardHeaders) {
           options.headers = _.clone(req.headers);
@@ -392,8 +390,15 @@ module.exports = (router) => {
             'Accept': '*/*'
           };
         }
+
+        if (settings.username && settings.password) {
+          const auth = Buffer.from(`${settings.username}:${settings.password}`).toString('base64');
+          options.headers['Authorization'] = `Basic ${auth}`;
+        }
+
         // Always set user agent to indicate it came from us.
         options.headers['user-agent'] = 'Form.io Webhook Action';
+        options.headers['content-type'] = 'application/json';
 
         // Add custom headers.
         const headers = settings.headers || [];
@@ -451,54 +456,44 @@ module.exports = (router) => {
         setActionItemMessage('Transform payload done');
 
         // Use either the method specified in settings or the request method.
-        const reqMethod = settings.method || req.method;
+        const reqMethod = (settings.method || req.method).toLowerCase();
+        options.method = reqMethod;
 
         setActionItemMessage('Attempting webhook', {
           method: reqMethod,
           url,
           options
         });
-        // Make the request.
-        switch (reqMethod.toLowerCase()) {
-          case 'get':
-            rest
-              .get(url, options)
-              .on('success', handleSuccess)
-              .on('fail', handleError)
-              .on('error', handleError);
-            break;
-          case 'post':
-            rest
-              .postJson(url, payload, options)
-              .on('success', handleSuccess)
-              .on('fail', handleError)
-              .on('error', handleError);
-            break;
-          case 'put':
-            rest
-              .putJson(url, payload, options)
-              .on('success', handleSuccess)
-              .on('fail', handleError)
-              .on('error', handleError);
-            break;
-          case 'patch':
-            rest
-              .patchJson(url, payload, options)
-              .on('success', handleSuccess)
-              .on('fail', handleError)
-              .on('error', handleError);
-            break;
-          case 'delete':
-            options.query = req.params;
-            rest
-              .del(url, options)
-              .on('success', handleSuccess)
-              .on('fail', handleError)
-              .on('error', handleError);
-            break;
-          default:
-            return handleError(`Could not match request method: ${req.method.toLowerCase()}`);
+
+        if (['post', 'put', 'patch'].includes(reqMethod)) {
+          options.body = JSON.stringify(payload);
         }
+
+        if (reqMethod === 'delete') {
+          options.qs = req.params;
+          options.body = JSON.stringify(payload);
+        }
+
+        // Make the request.
+        fetch(url, options)
+          .then((response) => {
+            if (!response.bodyUsed && reqMethod === 'delete') {
+              if (response.ok) {
+                return handleSuccess({}, response);
+              }
+              else {
+                return handleError({}, response);
+              }
+            }
+            else {
+              if (response.ok) {
+                return response.json().then((body) => handleSuccess(body, response));
+              }
+              else {
+                return response.json().then((body) => handleError(body, response));
+              }
+            }
+          });
       }
       catch (e) {
         handleError(e);

@@ -43,16 +43,19 @@ module.exports = (router, formioServer) => {
     // Allow admin key
     if (req.adminKey) {
       decryptSettings(res);
+      formioServer.formio.audit('PROJECT_SETTINGS', req);
       return next();
     }
     // Allow project owners.
     if (req.token && req.projectOwner && (req.token.user._id === req.projectOwner)) {
       decryptSettings(res);
+      formioServer.formio.audit('PROJECT_SETTINGS', req);
       return next();
     }
     // Allow team admins on remote
     else if (req.remotePermission && ['admin', 'owner', 'team_admin'].includes(req.remotePermission)) {
       decryptSettings(res);
+      formioServer.formio.audit('PROJECT_SETTINGS', req);
       return next();
     }
     else if (req.projectId && req.user) {
@@ -65,6 +68,7 @@ module.exports = (router, formioServer) => {
           const isAdmin = _.intersection(adminAccess, roles).length !== 0;
           decryptSettings(res, !isAdmin);
           if (isAdmin) {
+            formioServer.formio.audit('PROJECT_SETTINGS', req);
             return next();
           }
           if (_.intersection(writeAccess, roles).length !== 0) {
@@ -131,8 +135,9 @@ module.exports = (router, formioServer) => {
   formio.middleware.customCrmAction = require('../middleware/customCrmAction')(formio);
 
   // Fix project plan (pull from actual license instead of stored DB value)
-  formio.middleware.licenseUtilization = require('../middleware/licenseUtilization').middleware(formio);
+  formio.middleware.licenseUtilization = require('../middleware/licenseUtilization').middleware(router);
   formio.middleware.licenseRemote = require('../middleware/licenseRemote').middleware(formio);
+  formio.middleware.licenseValid = require('../middleware/licenseValid')(formio);
 
   const hiddenFields = ['deleted', '__v', 'machineName', 'primary'];
   const resource = Resource(
@@ -159,6 +164,7 @@ module.exports = (router, formioServer) => {
     ],
     beforePost: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
+      formio.middleware.licenseValid,
       require('../middleware/fetchTemplate'),
       formio.middleware.checkTenantProjectPlan,
       formio.middleware.projectDefaultPlan,
@@ -194,11 +200,13 @@ module.exports = (router, formioServer) => {
       formio.middleware.projectIndexFilter,
     ],
     afterIndex: [
+      formio.middleware.licenseUtilization,
       formio.middleware.filterResourcejsResponse(hiddenFields),
       projectSettings,
     ],
     beforePut: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
+      formio.middleware.licenseValid,
       formio.middleware.licenseRemote,
       formio.middleware.licenseUtilization,
       function(req, res, next) {
@@ -251,6 +259,10 @@ module.exports = (router, formioServer) => {
           });
 
           req.body.access = _.uniqBy(req.body.access, 'type');
+        }
+
+        if (!req.body.name && req.body.name !== '') {
+          req.body.name = req.currentProject.name;
         }
 
         // Reset the machine name so that it will regenerate.
@@ -355,22 +367,6 @@ module.exports = (router, formioServer) => {
       return res.status(200).json({available: !project});
     });
   });
-
-  // Expose the atlassian oauth endpoints.
-  const atlassian = require('../actions/atlassian/util')(formioServer);
-  router.post(
-    '/project/:projectId/atlassian/oauth/authorize',
-    formio.middleware.tokenHandler,
-    formio.middleware.restrictProjectAccess({level: 'admin'}),
-    atlassian.authorizeOAuth,
-  );
-
-  router.post(
-    '/project/:projectId/atlassian/oauth/finalize',
-    formio.middleware.tokenHandler,
-    formio.middleware.restrictProjectAccess({level: 'admin'}),
-    atlassian.storeOAuthReply,
-  );
 
   // Expose the sql connector endpoint
   const sqlconnector = require('../actions/sqlconnector/util')(formioServer);

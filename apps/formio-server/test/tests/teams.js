@@ -10,14 +10,14 @@ var docker = process.env.DOCKER;
 var customer = process.env.CUSTOMER;
 
 module.exports = function(app, template, hook) {
-  var ignoreFields = ['config'];
+  var ignoreFields = ['config', 'disabled'];
 
   describe('Teams', function() {
     let formioUser = {
       data: {
         name: chance.word(),
         email: chance.email(),
-        password: chance.word()
+        password: chance.word({ length: 8 })
       }
     };
     describe('Single Team Tests', function() {
@@ -1129,9 +1129,9 @@ module.exports = function(app, template, hook) {
           .post('/project/' + template.formio.project._id + '/form/' + template.formio.formRegister._id + '/submission')
           .send({
             data: {
-              'name': chance.name(),
+              'name': chance.word({ length: 10 }),
               'email': chance.email(),
-              'password': 'test123'
+              'password': 'test1234'
             }
           })
           .expect(200)
@@ -1160,9 +1160,9 @@ module.exports = function(app, template, hook) {
           .post('/project/' + template.formio.project._id + '/form/' + template.formio.formRegister._id + '/submission')
           .send({
             data: {
-              'name': chance.name(),
+              'name': chance.word({ length: 10 }),
               'email': chance.email(),
-              'password': 'test123'
+              'password': 'test1234'
             }
           })
           .expect(200)
@@ -1846,7 +1846,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
-            assert.deepEqual(_.omit(template.project, 'settings', 'billing', 'modified', 'public'), _.omit(response, 'modified', 'public'));
+            assert.deepEqual(_.omit(template.project, 'settings', 'billing', 'modified', 'public'), _.omit(response, 'modified', 'public', 'disabled'));
 
             // Store the JWT for future API calls.
             template.formio.user1.token = res.headers['x-jwt-token'];
@@ -2447,7 +2447,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
-            assert.deepEqual(_.omit(template.project, 'settings', 'modified', 'billing', 'public'), _.omit(response, 'modified', 'billing', 'public'));
+            assert.deepEqual(_.omit(template.project, 'settings', 'modified', 'billing', 'public', 'disabled'), _.omit(response, ['modified', 'billing', 'public', 'disabled']));
 
             // Store the JWT for future API calls.
             template.formio.user1.token = res.headers['x-jwt-token'];
@@ -2673,7 +2673,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
-            assert.deepEqual(_.omit(response, ['modified', 'config']), _.omit(tempForm,['modified', 'config']));
+            assert.deepEqual(_.omit(response, ['modified', 'config', 'disabled']), _.omit(tempForm,['modified', 'config']));
 
             // Store the JWT for future API calls.
             template.formio.user1.token = res.headers['x-jwt-token'];
@@ -2786,7 +2786,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
-            assert.deepEqual(_.omit(response, ['modified', 'config']), _.omit(tempForm, ['modified', 'config']));
+            assert.deepEqual(_.omit(response, ['modified', 'config', 'disabled']), _.omit(tempForm, ['modified', 'config']));
 
             // Store the JWT for future API calls.
             template.formio.user1.token = res.headers['x-jwt-token'];
@@ -3092,7 +3092,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
-            assert.deepEqual(_.omit(template.project, 'modified', 'billing'), _.omit(response, 'modified', 'billing'));
+            assert.deepEqual(_.omit(template.project, 'modified', 'billing', 'disabled'), _.omit(response, ['modified', 'billing', 'disabled']));
 
             // Store the JWT for future API calls.
             template.formio.user1.token = res.headers['x-jwt-token'];
@@ -3314,7 +3314,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
-            assert.deepEqual(_.omit(response, ['modified', 'config']), _.omit(tempForm, ['modified', 'config']));
+            assert.deepEqual(_.omit(response, ['modified', 'config', 'disabled']), _.omit(tempForm, ['modified', 'config', 'disabled']));
 
             // Store the JWT for future API calls.
             template.formio.user1.token = res.headers['x-jwt-token'];

@@ -5,7 +5,7 @@ const {utilization, getProjectContext, getLicenseKey} = require('../util/utiliza
 function middleware(formio) {
   return async (req, res, next) => {
     // If project is made remote, disable it.
-    if (!req.currentProject.remote && req.body.remote) {
+    if (!req.currentProject.remote && req.body.remote && req.currentProject.project) {
       try {
         await utilization({
           ...getProjectContext(req),
@@ -19,6 +19,8 @@ function middleware(formio) {
 
     // If a project is no longer remote, re-enable it.
     if (req.currentProject.remote && !req.body.remote) {
+      // This is not needed on local but breaks for some reason on production.
+      req.skipLicense = true;
       try {
         await utilization({
           ...getProjectContext(req),

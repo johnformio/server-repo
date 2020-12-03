@@ -9,7 +9,8 @@ module.exports = class Trial extends Plan {
       formRequests: 10000,
       submissionRequests: 10000,
       emails: 100,
-      stages: 10,
+      stages: 5,
+      livestages: 2,
       plan: 'trial',
     };
   }

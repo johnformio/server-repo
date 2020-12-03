@@ -5,8 +5,6 @@ var request = require('supertest');
 var assert = require('assert');
 var _ = require('lodash');
 var Q = require('q');
-var sinon = require('sinon');
-var moment = require('moment');
 var async = require('async');
 var chance = new (require('chance'))();
 var uuidRegex = /^([a-z]{15})$/;
@@ -554,7 +552,6 @@ module.exports = function(app, template, hook) {
           if (err) {
             return done(err);
           }
-          template.formio.owner.token = res.headers['x-jwt-token'];
           done();
         });
     });
@@ -1892,9 +1889,6 @@ module.exports = function(app, template, hook) {
           .set('x-jwt-token', template.formio.owner.token)
           .send({
             settings: {
-              atlassian: {
-                url: chance.word()
-              },
               databases: {
                 mssql: {
                   azure: true,
@@ -1917,18 +1911,8 @@ module.exports = function(app, template, hook) {
                 cskey: chance.word(),
                 refreshtoken: chance.word()
               },
-              hubspot: {
-                apikey: chance.word()
-              },
               kickbox: {
                 apikey: chance.word()
-              },
-              office365: {
-                cert: chance.word(),
-                clientId: chance.word(),
-                email: chance.word(),
-                tenant: chance.word(),
-                thumbprint: chance.word()
               },
               sqlconnector: {
                 host: chance.word(),
@@ -1948,12 +1932,9 @@ module.exports = function(app, template, hook) {
             var response = res.body;
             assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('settings'), true);
-            assert.equal(response.settings.hasOwnProperty('atlassian'), false);
             assert.equal(response.settings.hasOwnProperty('databases'), false);
             assert.equal(response.settings.hasOwnProperty('google'), false);
-            assert.equal(response.settings.hasOwnProperty('hubspot'), false);
             assert.equal(response.settings.hasOwnProperty('kickbox'), false);
-            assert.equal(response.settings.hasOwnProperty('office365'), false);
             assert.equal(response.settings.hasOwnProperty('sqlconnector'), false);
 
             // Store the JWT for future API calls.
@@ -3075,21 +3056,40 @@ module.exports = function(app, template, hook) {
     });
 
     describe('Upgrading Plans', function() {
-      if (!docker)
-      before(function(done) {
-        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
-          if (err) return done(err);
+      if (!docker) {
+        before(function(done) {
+          app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
+            if (err) return done(err);
 
-          project.plan = 'basic';
-          project.save(function(err) {
-            if (err) {
-              return done(err);
-            }
+            app.formio.formio.resources.submission.model.findOne({
+              'data.licenseKeys.key': project.settings.licenseKey,
+            }, function(err, sub) {
+              if (err) return done(err);
 
-            done();
+              if (sub) {
+                sub.data = {
+                  ...sub.data,
+                  plan: 'basic',
+                };
+              }
+
+              sub.markModified('data');
+              sub.save(function(err) {
+                if (err) return done(err);
+
+                project.plan = 'basic';
+                project.save(function(err) {
+                  if (err) {
+                    return done(err);
+                  }
+
+                  done();
+                });
+              });
+            });
           });
         });
-      });
+      }
 
       if (docker)
       before(function(done) {
@@ -3116,6 +3116,7 @@ module.exports = function(app, template, hook) {
             done();
           });
       });
+
 
       it('Anonymous users should not be allowed to upgrade a project', function(done) {
         request(app)
@@ -3194,72 +3195,21 @@ module.exports = function(app, template, hook) {
 
       if (!docker)
       it('Saving a payment method', function(done) {
-        app.formio.config.payeezy = {
-          keyId: 'lFGgmH7ibDkNdCV6LiSbFdmSFXtIVncD', // Test Key
-          host: 'api-cert.payeezy.com',
-          endpoint: '/v1/transactions',
-          gatewayId: 'AJ1234-01',
-          gatewayPassword: '12345678901234567890123456789012',
-          hmacKey: '0efeeaf6f21fdd71e5076dea683b3a11614972d7d8e798d42624b8f999597355', // Test Secret
-          merchToken: 'fdoa-9b1a70e39b4f6b4fb0cef1c25de68010625408dc0b1025ae' // Test Token
-        };
-
         var paymentData = {
           ccNumber: '4012000033330026',
           ccType: 'visa',
           ccExpiryMonth: '12',
-          ccExpiryYear: '30',
+          ccExpiryYear: '2030',
           cardholderName: 'FORMIO Test Account',
           securityCode: '123'
         };
 
-        sinon.stub()
-        .withArgs(sinon.match({
-          method: 'POST',
-          url: 'https://api-cert.payeezy.com/v1/transactions',
-          body: sinon.match({
-            transaction_type: 'authorize', // Pre-Authorization
-            currency_code: 'USD',
-            method: 'credit_card',
-            amount: 0,
-            credit_card: {
-              type: paymentData.type,
-              cardholder_name: paymentData.cardholderName,
-              card_number: '' + paymentData.ccNumber,
-              exp_date: paymentData.ccExpiryMonth + paymentData.ccExpiryYear,
-              cvv: paymentData.securityCode,
-            },
-            customer_ref: new Buffer.from(template.formio.owner._id.toString(), 'hex').toString('base64'),
-            reference_3: template.formio.owner._id.toString(),
-            user_name: template.formio.owner._id.toString(),
-            client_email: template.formio.owner.data.email
-          })
-        }))
-        .returns(Q([{},
-          {
-            transaction_status: 'approved',
-            transaction_type: 'authorize',
-            method: 'credit_card',
-            amount: 0,
-            credit_card: {
-              type: 'visa',
-              cardholder_name: paymentData.cardholderName,
-              exp_date: '1250'
-            },
-            token: {
-              token_type: 'FDToken',
-              token_data: { value: '1234567899991111' }
-              }
-          }
-        ]));
-
         request(app)
-          .post('/payeezy')
+          .post('/payment-gateway')
           .set('x-jwt-token', template.formio.owner.token)
           .send({
             data: paymentData
           })
-          .expect('Content-Type', /text\/plain; charset=utf-8/)
           .expect(200)
           .end(function(err, res) {
             if (err) {
@@ -3269,20 +3219,8 @@ module.exports = function(app, template, hook) {
             .then(function(form) {
               return app.formio.formio.resources.submission.model.findOne({form: form._id, owner: util.ObjectId(template.formio.owner._id)});
             })
-            .then(function(submission) {
-              assert.equal(submission.data.ccNumber, '************0026', 'Only the last 4 digits of the cc number should be stored.');
-              assert.equal(submission.data.ccExpiryMonth, '12', 'The expiration month should be stored.');
-              assert.equal(submission.data.ccExpiryYear, '30', 'The expiration year should be stored.');
-              assert.equal(submission.data.cardholderName, 'FORMIO Test Account', 'The cardholder name should be stored.');
-              assert(submission.data.token.token_data.value.substr(-4) === '0026', 'The transarmor token should have the same last 4 digits as CC number.');
-              assert(submission.data.hasOwnProperty('transactionTag'), 'The submission should store the transactionTag');
-              assert.equal(submission.data.securityCode, undefined, 'The security card should not be stored.');
-
-              sinon.restore();
+            .then(function() {
               done();
-            })
-            .catch(function(err) {
-              done(err);
             });
           });
       });

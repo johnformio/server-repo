@@ -1,7 +1,6 @@
 'use strict';
-const request = require('request-promise-native');
+const fetch = require('formio/src/util/fetch');
 const _ = require('lodash');
-const {StatusCodeError} = require('request-promise-native/errors');
 const licenseServer = process.env.LICENSE_SERVER || 'https://license.form.io';
 const NodeCache = require('node-cache');
 const plans = require('../plans/plans');
@@ -9,7 +8,7 @@ const plans = require('../plans/plans');
 const cache = new NodeCache();
 
 // Cache response for 3 hours.
-const CACHE_TIME =  process.env.CACHE_TIME || 3 * 60 * 60 * 1000;
+const CACHE_TIME =  process.env.CACHE_TIME || 3 * 60 * 60;
 
 const getLicenseKey = (req) => {
   return _.get(req, 'primaryProject.settings.licenseKey', _.get(req, 'licenseKey', process.env.LICENSE_KEY));
@@ -38,8 +37,8 @@ const getProjectContext = (req) => {
     case 'stage':
       return {
         type: 'stage',
-        projectId: req.primaryProject._id,
-        tenantId: req.parentProject._id.toString() !== req.primaryProject._id.toString() ? req.parentProject._id : 'none',
+        projectId: req.primaryProject ? req.primaryProject._id : ((req.body && req.body.project) ? req.body.project : 'new'),
+        tenantId: (req.parentProject && req.parentProject._id.toString() !== req.primaryProject._id.toString()) ? req.parentProject._id : 'none',
         stageId: req.currentProject ? req.currentProject._id : 'new',
         title: req.currentProject ? req.currentProject.title : req.body.title,
         name: req.currentProject ? req.currentProject.name : req.body.name,
@@ -61,7 +60,7 @@ const getProjectContext = (req) => {
 
 async function utilization(body, action = '', qs = {terms: 1}) {
   const hosted = process.env.FORMIO_HOSTED;
-  const onPremiseScopes = ['apiServer', 'pdfServer', 'project', 'tenant', 'stage', 'formManager', 'vpat'];
+  const onPremiseScopes = ['apiServer', 'pdfServer', 'project', 'tenant', 'stage', 'formManager', 'accessibility'];
 
   // If on premise and not scoped for on premise, skip check.
   if (!hosted && !onPremiseScopes.includes(body.type)) {
@@ -80,18 +79,24 @@ async function utilization(body, action = '', qs = {terms: 1}) {
     body.timestamp = Date.now() - 6000;
   }
 
-  const utilization = await request({
-    url: `${licenseServer}/utilization${action}`,
+  const response = await fetch(`${licenseServer}/utilization${action}`, {
     method: 'post',
     headers: {'content-type': 'application/json'},
-    qs,
-    body,
-    json: true,
+    body: JSON.stringify(body),
     timeout: 5000,
+    qs,
   });
 
+  if (!response.ok) {
+    throw {
+      message: await response.text()
+    };
+  }
+
+  const utilization = await response.json();
+
   if (!hosted && utilization.hash !== md5(base64(body))) {
-    throw new StatusCodeError(400, 'Invalid response');
+    throw new Error('Invalid response');
   }
 
   return utilization;
@@ -204,13 +209,12 @@ async function setLicensePlan(formio, licenseKey, planName, additional = {}, add
 }
 
 async function clearLicenseCache(licenseId) {
-  await request({
-    url: `${licenseServer}/license/${licenseId}/clear`,
+  await fetch(`${licenseServer}/license/${licenseId}/clear`, {
     method: 'post',
     headers: {'content-type': 'application/json'},
-    json: true,
     timeout: 5000,
-  });
+  })
+    .then((response) => response.ok ? response.json() : null);
 }
 
 module.exports = {
