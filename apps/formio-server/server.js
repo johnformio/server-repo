@@ -290,16 +290,15 @@ module.exports = function(options) {
       app.formio.formio.middleware.mongodbConnectionState(app.formio.formio),
       require('./src/middleware/requestCount')(requestCache),
       (req, res) => {
-      const { requestCount, mongodbConnectionState } = req;
+      const {requestCount, mongodbConnectionState} = req;
       const response = {
         agregatedStatus: res.statusCode === 200 ? 'UP' : 'DOWN',
         requestCount,
         mongodbConnectionState,
-        license: Boolean(app.validated),
+        license: Boolean(app.license),
       };
 
       res.send(response);
-
     });
 
     // Respond with default server information.
