@@ -81,6 +81,10 @@ module.exports = function(app) {
       fieldActions: require('./alter/fieldActions')(app),
       propertyActions: require('./alter/propertyActions')(app),
       configFormio: require('./alter/configFormio'),
+      schemaIndex(index) {
+        index.project = 1;
+        return index;
+      },
       log() {
         const [event, req, ...args] = arguments;
         log(req.uuid, req.projectId || 'NoProject', event, ...args);
