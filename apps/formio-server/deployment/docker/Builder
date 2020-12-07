@@ -1,4 +1,4 @@
-FROM node:12-alpine
+FROM node:14-alpine3.12
 MAINTAINER Form.io <support@form.io>
 ARG  NPM_USERNAME
 ARG  NPM_PASSWORD
@@ -8,7 +8,7 @@ WORKDIR /src
 
 RUN apk update && \
     apk upgrade && \
-    apk add --no-cache --virtual .build-deps bash git make gcc g++ python openssh-client && \
+    apk add --no-cache --virtual .build-deps bash git make gcc g++ python3 openssh-client nghttp2 && \
     rm -rf /var/lib/apt/lists/* && \
     rm /var/cache/apk/*
 
