@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.0.0-rc.59
+### Changed
+ - Upgrade portal@7.1.17-rc.32
+ - Upgrade formiojs@4.12.2
+ - Upgrade premium@1.15.2
+ - Upgrade formio@2.0.0-rc.35 
+ - Upgrade semver@7.3.4, aws-sdk@2.804.0, twilio@3.53.0, eslint@7.15.0
+
+### Fixed
+ - FOR-2862: Updates the nghttp2 package. Updates alpine to v3.12 and node.js to v14.15
+ - Optimizing queries for performance improvements with Report API + action items.
+
 ## 7.0.0-rc.58
 ### Changed
  - Upgrade portal@7.1.17-rc.31
