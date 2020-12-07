@@ -330,7 +330,6 @@ module.exports = function(formioServer) {
             // Perform the aggregation.
             debug.report('final pipeline', stages);
             model.aggregate(stages)
-              .allowDiskUse(true)
               .cursor()
               .exec()
               .pipe(through(function(doc) {
