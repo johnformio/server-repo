@@ -399,6 +399,9 @@ describe('Initial Tests', function() {
                 else if (form.name === 'team') {
                   template.formio.teamResource = form;
                 }
+                else if (form.name == 'member') {
+                  template.formio.memberResource = form;
+                }
               });
 
               cb();
@@ -543,8 +546,11 @@ describe('Initial Tests', function() {
     after(function() {
       describe('Project Tests', function() {
         this.retries(4);
+        require('./tests/teams')(app, template, hook);
         require('./tests/sessions')(app, template, hook);
         require('./tests/project')(app, template, hook);
+        require('./tests/env')(app, template, hook);
+        require('./tests/tags')(app, template, hook);
         require('./tests/groups')(app, template, hook);
         require('./tests/domain')(app, template, hook);
         require('./tests/encrypt')(app, template, hook);
@@ -561,9 +567,6 @@ describe('Initial Tests', function() {
         require('formio/test/submission')(app, template, hook);
         require('formio/test/submission-access')(app, template, hook);
         require('./tests/validate')(app, template, hook);
-        require('./tests/teams')(app, template, hook);
-        require('./tests/env')(app, template, hook);
-        require('./tests/tags')(app, template, hook);
         require('./tests/misc')(app, template, hook);
         require('./tests/oauth')(app, template, hook);
         require('./tests/s3')(app, template, hook);

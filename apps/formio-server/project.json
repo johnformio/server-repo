@@ -1,6 +1,6 @@
 {
   "title": "Portal Base",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "The is the primary project for your server. It holds the users and teams that have access to the portal. DO NOT build your app in this project. Create a new project.",
   "primary": true,
   "name": "formio",
@@ -87,21 +87,8 @@
         {
           "type": "read_all",
           "roles": [
-            "administrator",
             "authenticated",
             "anonymous"
-          ]
-        },
-        {
-          "type": "update_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "delete_all",
-          "roles": [
-            "administrator"
           ]
         }
       ],
@@ -111,51 +98,6 @@
           "roles": [
             "anonymous",
             "authenticated"
-          ]
-        },
-        {
-          "type": "read_own",
-          "roles": [
-            "anonymous",
-            "authenticated"
-          ]
-        },
-        {
-          "type": "update_own",
-          "roles": [
-            "anonymous",
-            "authenticated"
-          ]
-        },
-        {
-          "type": "delete_own",
-          "roles": [
-            "anonymous",
-            "authenticated"
-          ]
-        },
-        {
-          "type": "create_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "read_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "update_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "delete_all",
-          "roles": [
-            "administrator"
           ]
         }
       ]
@@ -169,150 +111,19 @@
       "tags": [],
       "components": [
         {
-          "conditional": {
-            "eq": "",
-            "when": null,
-            "show": ""
-          },
-          "source": "553db94e72f702e714dd9779",
-          "input": true,
-          "inputType": "text",
-          "inputMask": "",
-          "label": "",
-          "key": "name",
-          "placeholder": "Desired Username",
-          "prefix": "",
-          "suffix": "",
-          "multiple": false,
-          "defaultValue": "",
-          "protected": false,
-          "unique": true,
-          "persistent": true,
-          "validate": {
-            "required": true,
-            "minLength": "",
-            "maxLength": "",
-            "pattern": "[A-Za-z0-9]+",
-            "custom": "",
-            "customPrivate": false
-          },
-          "type": "textfield",
-          "lockKey": true,
-          "tableView": true
-        },
-        {
-          "source": "553db94e72f702e714dd9779",
-          "input": true,
-          "inputType": "email",
-          "label": "",
-          "key": "email",
-          "placeholder": "Email",
-          "prefix": "",
-          "suffix": "",
-          "defaultValue": "",
-          "unique": true,
-          "type": "email",
-          "persistent": true,
-          "lockKey": true,
-          "protected": false,
-          "validate": {
-            "required": true
-          },
-          "tableView": true,
-          "conditional": {
-            "show": null,
-            "when": null,
-            "eq": ""
-          },
-          "kickbox": {
-            "enabled": false
-          }
-        },
-        {
-          "source": "553db94e72f702e714dd9779",
-          "input": true,
-          "inputType": "password",
-          "label": "",
-          "key": "password",
-          "placeholder": "Password",
-          "prefix": "",
-          "suffix": "",
-          "protected": true,
-          "persistent": true,
-          "type": "password",
-          "lockKey": true,
-          "validate": {
-            "minLength": 8,
-            "required": true
-          },
-          "tableView": false,
-          "conditional": {
-            "show": null,
-            "when": null,
-            "eq": ""
-          }
-        },
-        {
-          "input": true,
-          "inputType": "password",
-          "label": "",
-          "key": "verifyPassword",
-          "placeholder": "Verify Password",
-          "prefix": "",
-          "suffix": "",
-          "protected": true,
-          "persistent": false,
-          "type": "password",
-          "validate": {
-            "required": true,
-            "custom": "valid = (input == '{{ password }}') ? true : 'Passwords must match.';"
-          },
-          "tableView": false,
-          "conditional": {
-            "show": null,
-            "when": null,
-            "eq": ""
-          }
-        },
-        {
-          "conditional": {
-            "eq": "",
-            "when": null,
-            "show": ""
-          },
-          "theme": "primary",
-          "disableOnInvalid": true,
-          "action": "submit",
-          "block": true,
-          "rightIcon": "",
-          "leftIcon": "",
-          "size": "md",
-          "key": "register",
-          "label": "REGISTER",
-          "input": true,
-          "type": "button",
-          "tableView": false
+          "label": "HTML",
+          "content": "Registrations are disabled",
+          "key": "html",
+          "type": "htmlelement",
+          "tag": "p"
         }
       ],
       "access": [
         {
           "type": "read_all",
           "roles": [
-            "administrator",
             "authenticated",
             "anonymous"
-          ]
-        },
-        {
-          "type": "update_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "delete_all",
-          "roles": [
-            "administrator"
           ]
         }
       ],
@@ -322,51 +133,6 @@
           "roles": [
             "anonymous",
             "authenticated"
-          ]
-        },
-        {
-          "type": "read_own",
-          "roles": [
-            "anonymous",
-            "authenticated"
-          ]
-        },
-        {
-          "type": "update_own",
-          "roles": [
-            "anonymous",
-            "authenticated"
-          ]
-        },
-        {
-          "type": "delete_own",
-          "roles": [
-            "anonymous",
-            "authenticated"
-          ]
-        },
-        {
-          "type": "create_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "read_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "update_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "delete_all",
-          "roles": [
-            "administrator"
           ]
         }
       ]
@@ -465,7 +231,6 @@
         {
           "type": "read_all",
           "roles": [
-            "administrator",
             "authenticated",
             "anonymous"
           ]
@@ -473,38 +238,11 @@
       ],
       "submissionAccess": [
         {
-          "type": "create_all",
-          "roles": []
-        },
-        {
-          "type": "read_all",
-          "roles": []
-        },
-        {
-          "type": "update_all",
-          "roles": []
-        },
-        {
-          "type": "delete_all",
-          "roles": []
-        },
-        {
           "type": "create_own",
           "roles": [
-            "anonymous"
+            "anonymous",
+            "authenticated"
           ]
-        },
-        {
-          "type": "read_own",
-          "roles": []
-        },
-        {
-          "type": "update_own",
-          "roles": []
-        },
-        {
-          "type": "delete_own",
-          "roles": []
         }
       ]
     }
@@ -560,38 +298,11 @@
         "before"
       ]
     },
-    "userRegistrationForm:login": {
-      "title": "Login",
-      "name": "login",
-      "form": "userRegistrationForm",
-      "settings": {
-        "resources": [
-          "user"
-        ],
-        "username": "email",
-        "password": "password"
-      },
-      "priority": 2,
-      "method": [
-        "create"
-      ],
-      "handler": [
-        "before"
-      ]
-    },
-    "userRegistrationForm:save": {
+    "team:save": {
       "title": "Save Submission",
       "name": "save",
-      "form": "userRegistrationForm",
-      "settings": {
-        "resource": "user",
-        "fields": {
-          "fullName": "fullName",
-          "name": "name",
-          "email": "email",
-          "password": "password"
-        }
-      },
+      "form": "team",
+      "settings": {},
       "priority": 10,
       "method": [
         "create",
@@ -601,10 +312,10 @@
         "before"
       ]
     },
-    "team:save": {
+    "member:save": {
       "title": "Save Submission",
       "name": "save",
-      "form": "team",
+      "form": "member",
       "settings": {},
       "priority": 10,
       "method": [
@@ -689,37 +400,6 @@
           }
         },
         {
-          "lockKey": true,
-          "type": "textfield",
-          "validate": {
-            "customPrivate": false,
-            "custom": "",
-            "pattern": "[A-Za-z0-9]+",
-            "maxLength": "",
-            "minLength": "",
-            "required": true
-          },
-          "persistent": true,
-          "unique": true,
-          "protected": false,
-          "defaultValue": "",
-          "multiple": false,
-          "suffix": "",
-          "prefix": "",
-          "placeholder": "Enter your username.",
-          "key": "name",
-          "label": "Username",
-          "inputMask": "",
-          "inputType": "text",
-          "input": true,
-          "tableView": true,
-          "conditional": {
-            "show": null,
-            "when": null,
-            "eq": ""
-          }
-        },
-        {
           "persistent": true,
           "unique": true,
           "input": true,
@@ -781,29 +461,12 @@
         {
           "type": "read_all",
           "roles": [
-            "administrator",
             "authenticated",
             "anonymous"
-          ]
-        },
-        {
-          "type": "update_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "delete_all",
-          "roles": [
-            "administrator"
           ]
         }
       ],
       "submissionAccess": [
-        {
-          "type": "create_own",
-          "roles": []
-        },
         {
           "type": "read_own",
           "roles": [
@@ -821,34 +484,6 @@
           "roles": [
             "authenticated"
           ]
-        },
-        {
-          "type": "create_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "read_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "update_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "delete_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "self",
-          "roles": []
         }
       ]
     },
@@ -860,208 +495,82 @@
       "tags": [],
       "components": [
         {
-          "lockKey": true,
-          "type": "textfield",
-          "validate": {
-            "customPrivate": false,
-            "custom": "",
-            "pattern": "",
-            "maxLength": "",
-            "minLength": "",
-            "required": true
-          },
-          "persistent": true,
-          "unique": false,
-          "protected": false,
-          "defaultValue": "",
-          "multiple": false,
-          "suffix": "",
-          "prefix": "",
-          "placeholder": "Enter the name for this team",
-          "key": "name",
           "label": "Team Name",
-          "inputMask": "",
-          "inputType": "text",
-          "input": true,
-          "tableView": true
-        },
-        {
-          "searchField": "name",
-          "type": "select",
+          "key": "name",
+          "type": "textfield",
+          "placeholder": "Enter the name for this team",
           "validate": {
-            "required": false
-          },
-          "persistent": true,
-          "unique": false,
-          "protected": false,
-          "refreshDelay": 0,
-          "refresh": false,
-          "multiple": true,
-          "template": "<span>{{ item.data.name }}</span>",
-          "defaultValue": [],
-          "valueProperty": "",
-          "dataSrc": "url",
-          "data": {
-            "url": "https://api.form.io/team/members",
-            "json": "",
-            "values": [
-              {
-                "label": "",
-                "value": ""
-              }
-            ]
-          },
-          "placeholder": "Select the admins on this team.",
-          "key": "admins",
-          "label": "Team Admins",
-          "tableView": true,
-          "input": true
+            "required": true
+          }
         },
         {
-          "searchField": "name",
-          "type": "select",
-          "validate": {
-            "required": false
-          },
-          "persistent": true,
-          "unique": false,
-          "protected": false,
-          "refreshDelay": 0,
-          "refresh": false,
-          "multiple": true,
-          "template": "<span>{{ item.data.name }}</span>",
-          "defaultValue": [],
-          "valueProperty": "",
-          "dataSrc": "url",
-          "data": {
-            "url": "https://api.form.io/team/members",
-            "json": "",
-            "values": [
-              {
-                "label": "",
-                "value": ""
-              }
-            ]
-          },
-          "placeholder": "Select the members on this team.",
-          "key": "members",
-          "label": "Members",
-          "tableView": true,
-          "input": true
-        },
-        {
-          "theme": "primary",
-          "disableOnInvalid": true,
-          "action": "submit",
-          "block": false,
-          "rightIcon": "",
-          "leftIcon": "",
-          "size": "md",
-          "key": "submit",
           "label": "Submit",
-          "input": true,
+          "key": "submit",
           "type": "button",
-          "tableView": false
+          "theme": "primary"
         }
       ],
       "access": [
         {
           "type": "read_all",
           "roles": [
-            "administrator",
             "authenticated",
             "anonymous"
           ]
-        },
-        {
-          "type": "update_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "delete_all",
-          "roles": [
-            "administrator"
-          ]
         }
       ],
-      "submissionAccess": [
+      "submissionAccess": []
+    },
+    "member": {
+      "title": "Team Member",
+      "type": "resource",
+      "name": "member",
+      "path": "member",
+      "components": [
         {
-          "type": "create_all",
-          "roles": [
-            "administrator"
-          ]
+          "label": "Team",
+          "key": "team",
+          "type": "select",
+          "reference": true,
+          "dataSrc": "resource",
+          "data": {
+            "resource": "team"
+          },
+          "template": "<span>{{ item.data.name }}</span>"
         },
+        {
+          "label": "User ID",
+          "key": "userId",
+          "type": "hidden"
+        },
+        {
+          "label": "Email",
+          "key": "email",
+          "type": "email"
+        },
+        {
+          "label": "Team Admin",
+          "key": "admin",
+          "type": "checkbox",
+          "tooltip": "Team Admins can add and remove other team members."
+        },
+        {
+          "label": "Submit",
+          "key": "submit",
+          "type": "button",
+          "theme": "primary"
+        }
+      ],
+      "access": [
         {
           "type": "read_all",
           "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "update_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "delete_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "create_own",
-          "roles": [
-            "authenticated"
-          ]
-        },
-        {
-          "type": "read_own",
-          "roles": [
-            "authenticated"
-          ]
-        },
-        {
-          "type": "update_own",
-          "roles": [
-            "authenticated"
-          ]
-        },
-        {
-          "type": "delete_own",
-          "roles": [
             "authenticated"
           ]
         }
-      ]
+      ],
+      "submissionAccess": []
     }
   },
-  "access": [
-    {
-      "type": "create_all",
-      "roles": [
-        "administrator"
-      ]
-    },
-    {
-      "type": "read_all",
-      "roles": [
-        "administrator"
-      ]
-    },
-    {
-      "type": "update_all",
-      "roles": [
-        "administrator"
-      ]
-    },
-    {
-      "type": "delete_all",
-      "roles": [
-        "administrator"
-      ]
-    }
-  ]
+  "access": []
 }
