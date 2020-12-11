@@ -124,21 +124,22 @@ module.exports = app => routes => {
         return createVersion(item, req.user, req.body._vnote, next);
       }
 
-      if (item) {
-        utilization({
-          type: 'form',
-          formId: item._id,
-          title: item.title,
-          name: item.name,
-          path: item.path,
-          formType: item.type,
-          projectId: item.project,
-          licenseKey: getLicenseKey(req),
-        })
-        .then(next)
-        .catch(next);
+      if (!item) {
+        return next();
       }
-      next();
+
+      utilization({
+        type: 'form',
+        formId: item._id,
+        title: item.title,
+        name: item.name,
+        path: item.path,
+        formType: item.type,
+        projectId: item.project,
+        licenseKey: getLicenseKey(req),
+      })
+      .then(next)
+      .catch(next);
     }
   };
 
