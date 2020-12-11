@@ -138,7 +138,7 @@ module.exports = app => routes => {
         projectId: item.project,
         licenseKey: getLicenseKey(req),
       })
-      .then(next)
+      .then(() => next())
       .catch(next);
     }
   };
