@@ -14,14 +14,15 @@ module.exports = function(formio) {
       return next('Parent project not found.');
     }
 
-    formio.mongoose.model('project').findOne({
-      _id: req.body.project
-    }).then((project) => {
-      if (project) {
-        return next();
-      }
+    formio.mongoose.model('project')
+      .findById(req.body.project)
+      .then((project) => {
+        if (project) {
+          return next();
+        }
 
-      next('No such parent project.');
-    });
+        next('No such parent project.');
+      })
+      .catch(next);
   };
 };
