@@ -1,16 +1,17 @@
-FROM node:14-alpine3.12
+FROM alpine:latest
 MAINTAINER Form.io <support@form.io>
 ARG  NPM_USERNAME
 ARG  NPM_PASSWORD
 ARG  NPM_EMAIL
-COPY ./build /src
-WORKDIR /src
 
-RUN apk update && \
-    apk upgrade && \
-    apk add --no-cache --virtual .build-deps bash git make gcc g++ python3 openssh-client nghttp2 && \
+# Install the latest versions from edge
+RUN sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories && \
+    apk add --upgrade --virtual .build-deps nodejs npm nghttp2 nghttp2-libs bash git make gcc g++ python3 openssh-client && \
     rm -rf /var/lib/apt/lists/* && \
     rm /var/cache/apk/*
+
+COPY ./build /src
+WORKDIR /src
 
 # Add deployment key
 RUN mkdir /root/.ssh/ && ssh-keyscan github.com >> /root/.ssh/known_hosts
