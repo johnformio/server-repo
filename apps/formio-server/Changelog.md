@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.0.0-rc.60
+### Changed
+ - FOR-2862: Rewrote Docker files from node:14-alpine3.12 to alpine:latest. Solved an issue with nghttp2 v1.40
+
 ## 7.0.0-rc.59
 ### Changed
  - Upgrade portal@7.1.17-rc.32
