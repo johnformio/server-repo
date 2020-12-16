@@ -293,7 +293,7 @@ const debugConfigVars = getConfig(
 ).split(',') || [];
 sanitized = _.pick(sanitized, debugConfigVars);
 
-const debugFormioConfigVars = getConfig('DEBUG_CONFIG_FORMIO_VARS', 'domain,schema,mongo').split(',') || [];
+const debugFormioConfigVars = getConfig('DEBUG_CONFIG_FORMIO_VARS', 'domain,schema').split(',') || [];
 sanitized.formio = _.pick(_.clone(config.formio), debugFormioConfigVars);
 
 config.maxBodySize = getConfig('MAX_BODY_SIZE', '16mb');
