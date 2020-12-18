@@ -85,6 +85,7 @@ async function utilization(body, action = '', qs = {terms: 1}) {
     body: JSON.stringify(body),
     timeout: 5000,
     qs,
+    rejectUnauthorized: false,
   });
 
   if (!response.ok) {
@@ -213,6 +214,7 @@ async function clearLicenseCache(licenseId) {
     method: 'post',
     headers: {'content-type': 'application/json'},
     timeout: 5000,
+    rejectUnauthorized: false,
   })
     .then((response) => response.ok ? response.json() : null);
 }
