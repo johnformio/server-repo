@@ -108,6 +108,7 @@ module.exports = (router, formioServer) => {
       ])(req, res, next);
     }
   };
+  formio.middleware.projectSettings = projectSettings;
 
   // Check tenant's parent project plan
   formio.middleware.checkTenantProjectPlan = require('../middleware/checkTenantProjectPlan')(formio);

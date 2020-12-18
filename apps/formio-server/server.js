@@ -323,10 +323,18 @@ module.exports = function(options) {
       `;
     };
 
+    const loadProjectSettings = (req, res, next) => {
+      // Create fake user and project so that it will load public settings.
+      res.resource = {item: req.currentProject};
+      req.user = {teams: []};
+      formio.middleware.projectSettings(req, res, next);
+    };
+
     // Add the form manager.
     debug.startup('Mounting Form Manager');
     app.get('/project/:projectId/manage', [
       require('./src/middleware/licenseUtilization').middleware(app),
+      loadProjectSettings,
       (req, res) => {
         const script = `<script type="text/javascript">
           window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/?$/, '');
@@ -338,15 +346,18 @@ module.exports = function(options) {
       }
     ]);
     debug.startup('Mounting Form Viewer');
-    app.get('/project/:projectId/manage/view', (req, res) => {
-      const script = `<script type="text/javascript">
-        window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/view\\/?$/, '');
-        ${appVariables(req.currentProject)}
-      </script>`;
-      fs.readFile(`./portal/manager/view/index.html`, 'utf8', (err, contents) => {
-        res.send(contents.replace('<head>', `<head>${script}`));
-      });
-    });
+    app.get('/project/:projectId/manage/view',
+      loadProjectSettings,
+      (req, res) => {
+        const script = `<script type="text/javascript">
+          window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/view\\/?$/, '');
+          ${appVariables(req.currentProject)}
+        </script>`;
+        fs.readFile(`./portal/manager/view/index.html`, 'utf8', (err, contents) => {
+          res.send(contents.replace('<head>', `<head>${script}`));
+        });
+      }
+    );
     app.use('/project/:projectId/manage', express.static(`./portal/manager`));
 
     // Mount the saml integration.
