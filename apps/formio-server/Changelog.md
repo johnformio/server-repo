@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.0.0-rc.62
+### Fixed
+ - Issue where the server would crash if project=null was provided when saving the project settings.
+ - Issue where the public project configurations would not get passed to formview pro and formmanager
+ - FOR-2868: Adds the rejectUnauthorized flag to license utilization requests. 
+ - FOR-2889: Everyone role is not saved on Access page
+ - FIO-975: Added possibility to configure server config log.
+
+### Changed
+ - Upgrade portal@7.1.17-rc.35
+ - Upgrade formio@2.0.0-rc.36
+
 ## 7.0.0-rc.61
 ### Changed
  - Upgrade portal@7.1.17-rc.33
