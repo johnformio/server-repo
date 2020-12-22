@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.0.0-rc.63
+#### Changed
+ - Upgrade portal@7.1.17-rc.36
+ - Upgrade @formio/premium@1.15.3
+ - Upgrade formiojs@4.12.4
+
 ## 7.0.0-rc.62
 ### Fixed
  - Issue where the server would crash if project=null was provided when saving the project settings.
