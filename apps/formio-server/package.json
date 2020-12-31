@@ -64,7 +64,7 @@
     "node-paginate-anything": "^1.0.0",
     "on-finished": "^2.3.0",
     "opn": "^6.0.0",
-    "passport-saml": "^1.3.5",
+    "passport-saml": "^2.0.2",
     "passport-saml-metadata": "^2.3.0",
     "q": "^1.5.1",
     "resourcejs": "^2.3.2",

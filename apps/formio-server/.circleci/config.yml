@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/node:12
+      - image: circleci/node:14
     steps:
       - checkout
       - restore_cache:
@@ -12,7 +12,7 @@ jobs:
           command: |
             sudo npm i -g npm-cli-login
             npm-cli-login -u $NPM_USERNAME -p $NPM_PASSWORD -e $NPM_EMAIL -r https://pkg.form.io
-            npm install
+            npm ci
       - save_cache:
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
@@ -63,7 +63,7 @@ jobs:
       REDIS_ADDR: localhost
       REDIS_PORT: 6379
     docker:
-      - image: circleci/node:12
+      - image: circleci/node:14
       - image: mongo:3.4.16
       - image: redis:4.0.11
     steps:
@@ -82,16 +82,15 @@ jobs:
     environment:
       IMAGE_PATH: formio/formio-enterprise
     machine:
-      enabled: true
       image: circleci/classic:edge
     steps:
       - run:
-          name: Install node@12
+          name: Install node@14
           command: |
             export NVM_DIR="/opt/circleci/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            nvm install 12
-            nvm alias default 12
+            nvm install 14
+            nvm alias default 14
       - checkout
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
@@ -150,7 +149,7 @@ jobs:
 
   deploy_npm:
     docker:
-      - image: circleci/node:12
+      - image: circleci/node:14
     steps:
       - checkout
       - attach_workspace:
