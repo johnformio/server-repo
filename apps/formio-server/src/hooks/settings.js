@@ -685,6 +685,9 @@ module.exports = function(app) {
           // We have some groups that we need to validate.
           if (groups.length) {
             const groupsMap = groups.reduce((result, groupRole) => {
+              if (!groupRole) {
+                return;
+              }
               const [groupId, role = null] = groupRole.toString().split(':');
               return {
                 ...result,
