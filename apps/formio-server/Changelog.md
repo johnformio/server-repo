@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.0.0-rc.66
+### Fixed
+ - FIO-785: Fixes creation a new stage/tenant in the utilization.
+ - Fixing a crash that could occur in group role assignments.
+ - Upgrade build process and saml dependencies.
+
+### Changed
+ - Upgrade formio@2.0.0-rc.37
+ - Upgrade minio@7.0.18, uuid@8.3.2, sinon@9.2.2, aws-sdk@2.820.0, helmet@4.3.1, javascript-obfuscator@2.10.1, passport-saml-metadata@2.4.0, twilio@3.54.1, 
+eslint@7.17.0, passport-saml@2.0.2
+
 ## 7.0.0-rc.65
 ### Changed
  - Upgrade portal@7.1.17-rc.38
