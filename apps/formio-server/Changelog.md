@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FOR-2785: Form utilizations were not created until you edit form
  - FOR-2863: Stages are not deleted after deleting a project
 
+### Changed
+ - Upgrade formio@2.0.0-rc.38
+
 ## 7.0.0-rc.66
 ### Fixed
  - FIO-785: Fixes creation a new stage/tenant in the utilization.
