@@ -189,6 +189,42 @@ module.exports = function(formio) {
   };
 
   /**
+   * Flag all stages for the given project as deleted.
+   *
+   * @param {String|ObjectId} projectId
+   *   The project id to flag all stages as deleted.
+   * @param {Function} next
+   *   The callback function to return the results.
+   */
+  const deleteStages = function(projectId, next) {
+    const util = formio.util;
+    if (!projectId) {
+      return next();
+    }
+
+    // Find all the stages that are associated with the given projectId and have not been deleted.
+    const query = {project: util.idToBson(projectId), deleted: {$eq: null}};
+    formio.resources.project.model.find(query).lean().select('_id').exec(function(err, stageIds) {
+      if (err) {
+        return next(err);
+      }
+      if (!stageIds || stageIds.length === 0) {
+        return next();
+      }
+
+      Promise.all(
+        stageIds.map(stageId => new Promise((res, rej) => {
+          deleteProject(stageId, err => err ? rej(err) : res());
+        }))
+      ).then(() => {
+        next();
+      }).catch(err => {
+        next(err);
+      });
+    });
+  };
+
+  /**
    * Flag all Roles for the given project as deleted.
    *
    * @param {String|ObjectId} projectId
@@ -239,7 +275,7 @@ module.exports = function(formio) {
    * @param {Function} next
    *   The callback function to return the results.
    */
-  const deleteProject = function(projectId, next) {
+  function deleteProject(projectId, next) {
     const util = formio.util;
     if (!projectId) {
       return next();
@@ -270,13 +306,23 @@ module.exports = function(formio) {
             if (err) {
               return next(err.message || err);
             }
+            else if (project.type !== 'stage') {
+              deleteStages(projectId, function(err) {
+                if (err) {
+                  return next(err.message || err);
+                }
 
-            next();
+                next();
+              });
+            }
+            else {
+              return next();
+            }
           });
         });
       });
     });
-  };
+  }
 
   /**
    * Expose the internal functionality for hiding 'deleted' entities.
