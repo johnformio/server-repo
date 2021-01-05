@@ -113,6 +113,9 @@ module.exports = (router, formioServer) => {
   // Check tenant's parent project plan
   formio.middleware.checkTenantProjectPlan = require('../middleware/checkTenantProjectPlan')(formio);
 
+  // Check stage's parent project
+  formio.middleware.checkStageProject = require('../middleware/checkStageProject')(formio);
+
   // Load the project plan filter for use.
   formio.middleware.projectPlanFilter = require('../middleware/projectPlanFilter')(formio);
   formio.middleware.projectDefaultPlan = require('../middleware/projectDefaultPlan')(formioServer);
@@ -167,6 +170,7 @@ module.exports = (router, formioServer) => {
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       formio.middleware.licenseValid,
       require('../middleware/fetchTemplate'),
+      formio.middleware.checkStageProject,
       formio.middleware.checkTenantProjectPlan,
       formio.middleware.projectDefaultPlan,
       formio.middleware.projectEnvCreatePlan,
