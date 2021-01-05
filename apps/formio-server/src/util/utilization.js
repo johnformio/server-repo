@@ -8,7 +8,7 @@ const plans = require('../plans/plans');
 const cache = new NodeCache();
 
 // Cache response for 3 hours.
-const CACHE_TIME =  process.env.CACHE_TIME || 3 * 60 * 60;
+const CACHE_TIME = process.env.CACHE_TIME || 3 * 60 * 60;
 
 const getLicenseKey = (req) => {
   return _.get(req, 'primaryProject.settings.licenseKey', _.get(req, 'licenseKey', process.env.LICENSE_KEY));

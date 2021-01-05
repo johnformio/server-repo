@@ -14,7 +14,7 @@ const NodeCache = require('node-cache');
 const cache = new NodeCache();
 
 // Cache response for 3 hours.
-const CACHE_TIME =  process.env.FORMIO_HOSTED ? 0 : process.env.CACHE_TIME || 3 * 60 * 60;
+const CACHE_TIME = process.env.FORMIO_HOSTED ? 0 : process.env.CACHE_TIME || 3 * 60 * 60;
 
 module.exports = (formio) => async (req, res, next) => {
   // If this isn't for a project, don't check.
@@ -112,6 +112,13 @@ module.exports = (formio) => async (req, res, next) => {
       return next();
     }
 
+    // Don't block next middleware execution if we have project utilization in cache
+    const cachedProjectUtilization = cache.get(projectId);
+    if (cachedProjectUtilization) {
+      /* eslint-disable-next-line callback-return */
+      next();
+    }
+
     const result = await utilization({
       ...getProjectContext(req),
       licenseKey,
@@ -141,7 +148,10 @@ module.exports = (formio) => async (req, res, next) => {
     // Cache response.
     cache.set(projectId, result, CACHE_TIME);
 
-    return next();
+    // Don't call next if we already did it before
+    if (!cachedProjectUtilization) {
+      return next();
+    }
   }
   catch (err) {
     cache.del(projectId);
