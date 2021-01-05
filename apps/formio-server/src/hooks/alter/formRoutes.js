@@ -2,6 +2,7 @@
 
 const _ = require('lodash');
 const util = require('../../util/util');
+const {utilization, getLicenseKey} = require('../../util/utilization');
 
 module.exports = app => routes => {
   const loadFormAlter = require('../../hooks/alter/loadForm')(app).alter;
@@ -122,7 +123,23 @@ module.exports = app => routes => {
       ) {
         return createVersion(item, req.user, req.body._vnote, next);
       }
-      next();
+
+      if (!item) {
+        return next();
+      }
+
+      utilization({
+        type: 'form',
+        formId: item._id,
+        title: item.title,
+        name: item.name,
+        path: item.path,
+        formType: item.type,
+        projectId: item.project,
+        licenseKey: getLicenseKey(req),
+      })
+      .then(() => next())
+      .catch(next);
     }
   };
 
