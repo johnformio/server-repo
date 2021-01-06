@@ -46,6 +46,35 @@ module.exports = function(app, template, hook) {
 
       const roles = rolesRes.body.reduce((prev, role) => {prev[role.title.toLowerCase()] = role._id; return prev;}, {});
 
+       //Sets permissions to read all for the project to all roles.
+       await request(app)
+       .put(`/project/${stuff.project._id}`)
+       .set("x-jwt-token", stuff.admin.token)
+       .send({
+         access: [
+           {
+             type: "create_all",
+             roles: [roles.administrator],
+           },
+           {
+             type: "read_all",
+             roles: [
+               roles.administrator,
+               roles.authenticated,
+               roles.anonymous
+             ],
+           },
+           {
+             type: "update_all",
+             roles: [roles.administrator],
+           },
+           {
+             type: "delete_all",
+             roles: [roles.administrator],
+           },
+         ],
+       })
+
       // Set owner permissions on user
       const permRes = await request(app)
         .put(`/project/${stuff.project._id}/user`)
