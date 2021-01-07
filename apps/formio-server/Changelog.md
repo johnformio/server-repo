@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## 7.0.0-rc.66
+## 7.0.0-rc.67
 ### Fixed
  - FIO-1060: Added caching for project utilization to prevent blocking middlewares execution.
  - FIO-949: Stage Project Request Issues
