@@ -4,15 +4,17 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## 7.0.0-rc.66
 ### Fixed
  - FIO-1060: Added caching for project utilization to prevent blocking middlewares execution.
  - FIO-949: Stage Project Request Issues
  - FOR-2785: Form utilizations were not created until you edit form
  - FOR-2863: Stages are not deleted after deleting a project
-
 ### Changed
  - Upgrade formio@2.0.0-rc.38
+ - Upgrade portal@7.1.17-rc.39
+ - Upgrade @formio/premium@1.15.3-rc.2
+ - Upgrade formiojs@4.13.0-rc.5
 
 ## 7.0.0-rc.66
 ### Fixed
