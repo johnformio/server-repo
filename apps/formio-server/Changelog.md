@@ -4,8 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## 7.0.0-rc.68
 ### Changed
+ - Upgrade formiojs@4.13.0-rc.6
+ - Upgrade portal@7.1.17-rc.40
  - Upgrade resourcejs@2.3.3, formio@2.0.0-rc.39, formio-workers@1.14.10, aws-sdk@2.824.0
 
 ## 7.0.0-rc.67
