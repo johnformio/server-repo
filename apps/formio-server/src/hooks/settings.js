@@ -1321,6 +1321,9 @@ module.exports = function(app) {
 
       importOptions(options, req, res) {
         const currentProject = formioServer.formio.cache.currentProject(req);
+        if (!(options instanceof Object)) {
+          options = {};
+        }
         options._id = currentProject._id;
         options.name = currentProject.name;
         options.machineName = currentProject.machineName;
