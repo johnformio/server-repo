@@ -248,6 +248,9 @@ module.exports = (router, formioServer) => {
               access.roles = _.map(accesses[access.type], role => role.toString());
               delete accesses[access.type];
             }
+            if (['team_access', 'team_admin', 'team_write', 'team_read'].includes(access.type)) {
+              delete accesses[access.type];
+            }
           });
           Object.keys(accesses).forEach((key) => {
             const access = _.find(req.body.access, {type: key});
