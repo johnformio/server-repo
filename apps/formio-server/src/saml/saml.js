@@ -47,6 +47,9 @@ module.exports = (formioServer) => {
           try {
             if (settings.passport) {
               config = (typeof settings.passport === 'string') ? JSON.parse(settings.passport) : settings.passport;
+              if (!config.callbackUrl && settings.callbackUrl) {
+                config.callbackUrl = settings.callbackUrl;
+              }
             }
             else if (settings.idp) {
               config = toPassportConfig(new MetadataReader(settings.idp));
@@ -182,12 +185,10 @@ module.exports = (formioServer) => {
   // Release the metadata publicly
   router.get('/metadata', (req, res) => {
     getSAMLProviders(req).then((providers) => {
-      if (providers.settings.sp) {
-        return res.header('Content-Type','text/xml').send(providers.settings.sp);
-      }
-      else {
-        return res.header('Content-Type','text/xml').send(providers.saml.generateServiceProviderMetadata());
-      }
+      return res.header('Content-Type','text/xml').send(providers.saml.generateServiceProviderMetadata(
+        providers.saml.options.decryptionPvk,
+        providers.saml.options.privateKey
+      ));
     }).catch((err) => {
       return res.status(400).send(err.message || err);
     });
