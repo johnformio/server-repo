@@ -4,7 +4,7 @@ module.exports = (app) => (actions) => {
   const formioServer = app.formio;
   actions.oauth = require('../../actions/oauth/OAuthAction')(formioServer);
   actions.ldap = require('../../actions/LDAP')(formioServer);
-  actions.googlesheet = require('../../actions/googlesheet/googleSheet')(formioServer);
+  actions.googlesheet = require('../../actions/googlesheet/GoogleSheetAction')(formioServer);
   actions.sqlconnector = require('../../actions/sqlconnector/SQLConnector')(formioServer);
   actions.group = require('../../actions/GroupAction')(formioServer);
   actions.webhook = require('../../actions/WebhookAction')(formioServer);
