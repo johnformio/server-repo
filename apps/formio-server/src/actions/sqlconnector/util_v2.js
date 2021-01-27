@@ -80,7 +80,8 @@ module.exports = (router) => {
 
     method = method.toString().toLowerCase();
     const route = {
-      endpoint: `/${path}`
+      endpoint: `/${path}`,
+      db: 'default'
     };
 
     let _sql, param;
@@ -118,12 +119,25 @@ module.exports = (router) => {
             .where(`${primary}=${idFn[type]}`)
             .toString();
 
-          route.query = [
-            [
-              `${param.text}; ${_sql}`,
-              ...param.values
-            ]
-          ];
+            if ( isMysql() ) {
+              route.query = [
+                [
+                  param.text,
+                  ...param.values
+                ],
+                [
+                  _sql
+                ]
+              ];
+            }
+            else {
+              route.query = [
+                [
+                  `${param.text}; ${_sql}`,
+                  ...param.values
+                ]
+              ];
+            }
 
           // Get the select string for the new record.
           route.query;
