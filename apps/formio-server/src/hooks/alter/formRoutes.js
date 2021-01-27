@@ -39,21 +39,30 @@ module.exports = app => routes => {
 
   const revisionPlans = ['trial', 'commercial'];
 
+  const shouldCreateNewRevision = (req, item, form) => {
+    const trackedProperties = ['components', 'settings', 'tags', 'properties', 'controller'];
+
+    const currentFormTrackedProperties = _.pick(form, trackedProperties);
+    const updatedFormTrackedProperties = _.pick(req.body, trackedProperties);
+
+    const isFormChanged = !_.isEqual(currentFormTrackedProperties, updatedFormTrackedProperties);
+
+    const areRevisionsAllowed = item.revisions && revisionPlans.includes(req.primaryProject.plan);
+
+    return (
+      req.isDraft ||
+      item.revisions && !form.revisions ||
+      (areRevisionsAllowed && isFormChanged)
+    );
+  };
+
   routes.hooks.put = {
     before(req, res, item, next) {
       if (item.components) {
         item.markModified('components');
       }
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
-        if (
-          req.isDraft ||
-          item.revisions && !form.revisions ||
-          (
-            item.revisions &&
-            revisionPlans.includes(req.primaryProject.plan) &&
-            !_.isEqual(form.components, req.body.components)
-          )
-        ) {
+        if (shouldCreateNewRevision(req, item, form)) {
           incrementVersion(item);
         }
         next();
@@ -61,15 +70,7 @@ module.exports = app => routes => {
     },
     after(req, res, item, next) {
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
-        if (
-          req.isDraft ||
-          item.revisions && !form.revisions ||
-          (
-            item.revisions &&
-            revisionPlans.includes(req.primaryProject.plan) &&
-            !_.isEqual(form.components, req.body.components)
-          )
-        ) {
+        if (shouldCreateNewRevision(req, item, form)) {
           return createVersion(item, req.user, req.body._vnote, next);
         }
         next();
@@ -83,15 +84,7 @@ module.exports = app => routes => {
         item.markModified('components');
       }
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
-        if (
-          req.isDraft ||
-          item.revisions && !form.revisions ||
-          (
-            item.revisions &&
-            revisionPlans.includes(req.primaryProject.plan) &&
-            !_.isEqual(form.components, req.body.components)
-          )
-        ) {
+        if (shouldCreateNewRevision(req, item, form)) {
           incrementVersion(item);
         }
         return next();
@@ -99,15 +92,7 @@ module.exports = app => routes => {
     },
     after(req, res, item, next) {
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
-        if (
-          req.isDraft ||
-          item.revisions && !form.revisions ||
-          (
-            item.revisions &&
-            revisionPlans.includes(req.primaryProject.plan) &&
-            !_.isEqual(form.components, req.body.components)
-          )
-        ) {
+        if (shouldCreateNewRevision(req, item, form)) {
           return createVersion(item, req.user, '', next);
         }
         next();
