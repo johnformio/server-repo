@@ -220,9 +220,6 @@ module.exports = (router) => {
             param.text,
             ...param.values
           ]);
-
-          // Get the select string for the updated record.
-          // route.query += `; ${ _sql.toString()}`;
         }
 
         break;
