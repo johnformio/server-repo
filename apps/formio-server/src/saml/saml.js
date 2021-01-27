@@ -140,12 +140,14 @@ module.exports = (formioServer) => {
       }
     });
 
-    const defaultFields = `objectidentifier|name|email|inresponseto|${rolesPath}|${idPath}`;
-    const profileFields = settings.hasOwnProperty('profileFields') ? (settings.profileFields || defaultFields) : false;
+    const defaultFields = `objectidentifier,name,email,inresponseto,${rolesPath},${idPath}`;
+    let profileFields = settings.hasOwnProperty('profileFields') ? (settings.profileFields || defaultFields) : false;
+    profileFields = profileFields ? _.map(profileFields.split(','), _.trim).join('|').replace(/[^A-z0-9_|-]/g, '') : '';
+    const fieldsRegex = new RegExp(profileFields || '', 'i');
     const user = {
       _id: toMongoId(userId),
-      data: profileFields ? _.pickBy(profile, (prop, key) => {
-        return key.match(new RegExp(profileFields, 'i'));
+      data: fieldsRegex ? _.pickBy(profile, (prop, key) => {
+        return key.match(fieldsRegex);
       }) : profile,
       roles
     };
