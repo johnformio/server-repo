@@ -376,14 +376,19 @@ module.exports = (router, formioServer) => {
     });
   });
 
-  // Expose the sql connector endpoint
   const sqlconnector = require('../actions/sqlconnector/util')(formioServer);
+  const sqlconnector2 = require('../actions/sqlconnector/util_v2')(formioServer);
   router.get(
     '/project/:projectId/sqlconnector',
     formio.middleware.tokenHandler,
     formio.middleware.restrictProjectAccess({level: 'admin'}),
     formio.middleware.restrictToPlans(['commercial', 'team', 'trial']),
-    sqlconnector.generateQueries,
+    (req,res,next) => {
+      if ( req.query.format === "v2") {
+        return sqlconnector2.generateQueries(req,res,next);
+      }
+      return sqlconnector.generateQueries(req,res,next);
+    },
   );
 
   return resource;
