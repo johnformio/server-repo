@@ -146,7 +146,7 @@ module.exports = (formioServer) => {
     const fieldsRegex = new RegExp(profileFields || '', 'i');
     const user = {
       _id: toMongoId(userId),
-      data: fieldsRegex ? _.pickBy(profile, (prop, key) => {
+      data: profileFields ? _.pickBy(profile, (prop, key) => {
         return key.match(fieldsRegex);
       }) : profile,
       roles
