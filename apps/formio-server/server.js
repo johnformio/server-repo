@@ -310,8 +310,8 @@ module.exports = function(options) {
     const appVariables = function(project) {
       return `
         window.LICENSE_ENABLED = true;
-        window.VPAT_ENABLED = ${app.license.terms.options.vpat && (config.vpat || _.get(project, 'config.vpat', '').toLowerCase()==='true')};
-        window.SAC_ENABLED = ${app.license.terms.options.sac && (config.sac || _.get(project, 'config.sac', '').toLowerCase()==='true')};
+        window.VPAT_ENABLED = ${_.get(app, 'license.terms.options.vpat') && (config.vpat || _.get(project, 'config.vpat', '').toLowerCase()==='true')};
+        window.SAC_ENABLED = ${_.get(app, 'license.terms.options.sac') && (config.sac || _.get(project, 'config.sac', '').toLowerCase()==='true')};
         window.PROJECT = ${JSON.stringify({
           _id: project._id,
           title: project.title,
