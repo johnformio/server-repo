@@ -94,7 +94,9 @@ module.exports = (formioServer) => {
    * @return {*}
    */
   const getToken = function(profile, settings, project, roleMap, next) {
-    let userRoles = _.get(profile, (settings.rolesPath || 'roles'));
+    const rolesPath = settings.rolesPath || 'roles';
+    const idPath = settings.idPath || 'id';
+    let userRoles = _.get(profile, rolesPath);
     const {rolesDelimiter} = settings;
 
     //Default role by Azure ADFS (Azure don't send default roles)
@@ -123,7 +125,7 @@ module.exports = (formioServer) => {
     // Add an "Everyone" role.
     userRoles.push('Everyone');
 
-    const userId = _.get(profile, (settings.idPath || 'id'));
+    const userId = _.get(profile, idPath);
     if (!userId) {
       return next('No User ID was found within your SAML profile.');
     }
@@ -138,11 +140,15 @@ module.exports = (formioServer) => {
       }
     });
 
+    const defaultFields = `objectidentifier,name,email,inresponseto,${rolesPath},${idPath}`;
+    let profileFields = settings.hasOwnProperty('profileFields') ? (settings.profileFields || defaultFields) : false;
+    profileFields = profileFields ? _.map(profileFields.split(','), _.trim).join('|').replace(/[^A-z0-9_|-]/g, '') : '';
+    const fieldsRegex = new RegExp(profileFields || '', 'i');
     const user = {
       _id: toMongoId(userId),
-      data: _.pickBy(profile, (prop, key) => {
-        return key.match(/objectidentifier|name|email|inresponseto/i);
-      }),
+      data: profileFields ? _.pickBy(profile, (prop, key) => {
+        return key.match(fieldsRegex);
+      }) : profile,
       roles
     };
 
