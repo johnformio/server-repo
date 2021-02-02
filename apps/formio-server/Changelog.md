@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
  - FOR-2866: added hook for getting proper mongo collection
 
+### Changed
+ - Upgrade formio@2.0.0-rc.43
+
 ## 7.1.0-rc.1
 ### Fixed
  - FIO-1000: Fix an error for import with empty template
