@@ -335,12 +335,15 @@ module.exports = function(options) {
     app.get('/project/:projectId/manage', [
       require('./src/middleware/licenseUtilization').middleware(app),
       loadProjectSettings,
-      (req, res) => {
+      (req, res, next) => {
         const script = `<script type="text/javascript">
           window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/?$/, '');
           ${appVariables(req.currentProject)}
         </script>`;
         fs.readFile(`./portal/manager/index.html`, 'utf8', (err, contents) => {
+          if (err) {
+            return next(err);
+          }
           res.send(contents.replace('<head>', `<head>${script}`));
         });
       }
@@ -348,12 +351,15 @@ module.exports = function(options) {
     debug.startup('Mounting Form Viewer');
     app.get('/project/:projectId/manage/view',
       loadProjectSettings,
-      (req, res) => {
+      (req, res, next) => {
         const script = `<script type="text/javascript">
           window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/view\\/?$/, '');
           ${appVariables(req.currentProject)}
         </script>`;
         fs.readFile(`./portal/manager/view/index.html`, 'utf8', (err, contents) => {
+          if (err) {
+            return next(err);
+          }
           res.send(contents.replace('<head>', `<head>${script}`));
         });
       }
