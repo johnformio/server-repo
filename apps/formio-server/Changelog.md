@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FOR-2709: Makes changing 'tags', 'controller', 'properties' and 'settings' form's properties cause creating a new revision if allowed
  - FIO-1138: Fixed possibility to update teams in protected mode. 
  - FIO-128: Fix saving custom properties in form revision.
+ - FOR-2763: Changed the default template for creating new projects that include the only Administrator for Read All
 
 ## 7.1.0-rc.1
 ### Fixed
