@@ -1048,9 +1048,7 @@
     {
       "type": "read_all",
       "roles": [
-        "administrator",
-        "authenticated",
-        "anonymous"
+        "administrator"
       ]
     },
     {
