@@ -41,12 +41,9 @@ module.exports = app => routes => {
 
   const shouldCreateNewRevision = (req, item, form) => {
     const trackedProperties = ['components', 'settings', 'tags', 'properties', 'controller'];
-
     const currentFormTrackedProperties = _.pick(form, trackedProperties);
     const updatedFormTrackedProperties = _.pick(req.body, trackedProperties);
-
     const isFormChanged = !_.isEqual(currentFormTrackedProperties, updatedFormTrackedProperties);
-
     const areRevisionsAllowed = item.revisions && revisionPlans.includes(req.primaryProject.plan);
 
     return (
@@ -58,9 +55,7 @@ module.exports = app => routes => {
 
   routes.hooks.put = {
     before(req, res, item, next) {
-      if (item.components) {
-        item.markModified('components');
-      }
+      app.formio.formio.util.markModifiedParameters(item, ['components', 'properties']);
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
         if (shouldCreateNewRevision(req, item, form)) {
           incrementVersion(item);
@@ -80,9 +75,7 @@ module.exports = app => routes => {
 
   routes.hooks.patch = {
     before(req, res, item, next) {
-      if (item.components) {
-        item.markModified('components');
-      }
+      app.formio.formio.util.markModifiedParameters(item, ['components', 'properties']);
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
         if (shouldCreateNewRevision(req, item, form)) {
           incrementVersion(item);
