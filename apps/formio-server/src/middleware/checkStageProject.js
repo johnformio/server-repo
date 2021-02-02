@@ -14,15 +14,6 @@ module.exports = function(formio) {
       return next('Parent project not found.');
     }
 
-    formio.mongoose.model('project')
-      .findById(req.body.project)
-      .then((project) => {
-        if (project) {
-          return next();
-        }
-
-        next('No such parent project.');
-      })
-      .catch(next);
+    return next();
   };
 };

@@ -1,18 +1,17 @@
 'use strict';
-// For: SQLConnector 0.1.0
-// Maintenance mode
+// For: SQLConnector 1.0.0+
 const _ = require('lodash');
 const Q = require('q');
 const debug = {
-  generateQueries: require('debug')('formio:sqlconnector:generateQueries'),
-  getConnectorActions: require('debug')('formio:sqlconnector:getConnectorActions'),
-  actionsToRoutes: require('debug')('formio:sqlconnector:actionsToRoutes'),
-  getExpressRoute: require('debug')('formio:sqlconnector:getExpressRoute'),
-  verifyPlan: require('debug')('formio:sqlconnector:verifyPlan')
+  generateQueries: require('debug')('formio:sqlconnector2:generateQueries'),
+  getConnectorActions: require('debug')('formio:sqlconnector2:getConnectorActions'),
+  actionsToRoutes: require('debug')('formio:sqlconnector2:actionsToRoutes'),
+  getExpressRoute: require('debug')('formio:sqlconnector2:getExpressRoute'),
+  verifyPlan: require('debug')('formio:sqlconnector2:verifyPlan')
 };
 const squel = require('squel');
 
-const primaryComparison = ' = {{ params.id }}';
+const primaryComparison = 'params.id';
 
 module.exports = (router) => {
   const formio = router.formio;
@@ -51,6 +50,8 @@ module.exports = (router) => {
       });
   }
 
+  // FIXME: This function should be broken up
+  // eslint-disable-next-line max-statements
   function getExpressRoute(method, path, primary, data, type) {
     debug.getExpressRoute('type:');
     debug.getExpressRoute(type);
@@ -79,10 +80,11 @@ module.exports = (router) => {
 
     method = method.toString().toLowerCase();
     const route = {
-      endpoint: `/${path}`
+      endpoint: `/${path}`,
+      db: 'default'
     };
 
-    let _sql;
+    let _sql, param;
     switch (method) {
       case 'create':
         route.method = 'POST';
@@ -94,16 +96,22 @@ module.exports = (router) => {
         debug.getExpressRoute(data);
 
         for (const [column, value] of Object.entries(data)) {
-          _sql.set(column, `{{ data.${value} }}`);
+          _sql.set(column, `body.data.${value}`);
         }
 
         if (isPostgresql()) {
           _sql.returning('*');
-          route.query = _sql.toString();
+          param = _sql.toParam();
+          route.query = [
+            [
+              param.text,
+              ...param.values
+            ]
+          ];
         }
         else {
           // Get the primary insert string.
-          route.query = _sql.toString();
+          param = _sql.toParam();
 
           _sql = _squel
             .select(defaultSettings)
@@ -111,8 +119,28 @@ module.exports = (router) => {
             .where(`${primary}=${idFn[type]}`)
             .toString();
 
+            if ( isMysql() ) {
+              route.query = [
+                [
+                  param.text,
+                  ...param.values
+                ],
+                [
+                  _sql
+                ]
+              ];
+            }
+            else {
+              route.query = [
+                [
+                  `${param.text}; ${_sql}`,
+                  ...param.values
+                ]
+              ];
+            }
+
           // Get the select string for the new record.
-          route.query += `; ${ _sql}`;
+          route.query;
         }
 
         break;
@@ -121,8 +149,14 @@ module.exports = (router) => {
         _sql = _squel
           .select(defaultSettings)
           .from(path.toString());
+        param = _sql.toParam();
 
-        route.query = _sql.toString();
+        route.query = [
+          [
+            param.text,
+            ...param.values
+          ]
+        ];
         break;
       case 'read':
         route.method = 'GET';
@@ -130,9 +164,15 @@ module.exports = (router) => {
         _sql = _squel
           .select(defaultSettings)
           .from(path.toString())
-          .where(primary.toString() + primaryComparison);
+          .where(`${primary} = ?`,primaryComparison);
+          param = _sql.toParam();
 
-        route.query = _sql.toString();
+          route.query = [
+            [
+              param.text,
+              ...param.values
+            ]
+          ];
         break;
       case 'update':
         route.method = 'PUT';
@@ -144,27 +184,42 @@ module.exports = (router) => {
         debug.getExpressRoute('data:');
         debug.getExpressRoute(data);
         for (const [column, value] of Object.entries(data)) {
-          _sql.set(column, `{{ data.${value} }}`);
+          _sql.set(column, `body.data.${value}`);
         }
 
-        _sql.where(primary.toString() + primaryComparison);
+        _sql.where(`${primary} = ?`,primaryComparison);
 
         if (isPostgresql()) {
           _sql.returning('*');
-          route.query = _sql.toString();
+          param = _sql.toParam();
+          route.query = [
+            [
+              param.text,
+              ...param.values
+            ]
+          ];
         }
         else {
           // Get the primary insert string.
-          route.query = _sql.toString();
+          param = _sql.toParam();
+
+          route.query = [
+            [
+              param.text,
+              ...param.values
+            ]
+          ];
 
           _sql = _squel
             .select(defaultSettings)
             .from(path.toString())
-            .where(primary.toString() + primaryComparison)
-            .toString();
+            .where(`${primary} = ?`,primaryComparison);
+          param = _sql.toParam();
 
-          // Get the select string for the updated record.
-          route.query += `; ${ _sql.toString()}`;
+          route.query.push([
+            param.text,
+            ...param.values
+          ]);
         }
 
         break;
@@ -174,9 +229,15 @@ module.exports = (router) => {
         _sql = _squel
           .delete(defaultSettings)
           .from(path.toString())
-          .where(primary.toString() + primaryComparison);
+          .where(`${primary} = ?`,primaryComparison);
+          param = _sql.toParam();
 
-        route.query = _sql.toString();
+          route.query = [
+            [
+              param.text,
+              ...param.values
+            ]
+          ];
         break;
     }
 

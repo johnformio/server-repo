@@ -248,6 +248,9 @@ module.exports = (router, formioServer) => {
               access.roles = _.map(accesses[access.type], role => role.toString());
               delete accesses[access.type];
             }
+            if (['team_access', 'team_admin', 'team_write', 'team_read'].includes(access.type)) {
+              delete accesses[access.type];
+            }
           });
           Object.keys(accesses).forEach((key) => {
             const access = _.find(req.body.access, {type: key});
@@ -373,14 +376,19 @@ module.exports = (router, formioServer) => {
     });
   });
 
-  // Expose the sql connector endpoint
   const sqlconnector = require('../actions/sqlconnector/util')(formioServer);
+  const sqlconnector2 = require('../actions/sqlconnector/util_v2')(formioServer);
   router.get(
     '/project/:projectId/sqlconnector',
     formio.middleware.tokenHandler,
     formio.middleware.restrictProjectAccess({level: 'admin'}),
     formio.middleware.restrictToPlans(['commercial', 'team', 'trial']),
-    sqlconnector.generateQueries,
+    (req,res,next) => {
+      if ( req.query.format === "v2") {
+        return sqlconnector2.generateQueries(req,res,next);
+      }
+      return sqlconnector.generateQueries(req,res,next);
+    },
   );
 
   return resource;

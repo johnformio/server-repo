@@ -2,7 +2,7 @@
 
 const _ = require('lodash');
 const debug = require('debug')('formio:action:googlesheet');
-const GoogleSheet = require('formio-services/services/GoogleSheet');
+const GoogleSheet = require('./GoogleSheet');
 const CSVExporter = require('formio/src/export').csv;
 
 const util = require('./util');
@@ -161,9 +161,7 @@ module.exports = (router) => {
           client_secret: _.get(settings, 'google.cskey'), // eslint-disable-line camelcase
           refresh_token: _.get(settings, 'google.refreshtoken') // eslint-disable-line camelcase
         };
-        const spreadSheet = new GoogleSheet({
-          service: process.env.GOOGLE_SHEETS_SERVICE || ''
-        });
+        const spreadSheet = new GoogleSheet();
         const type = this.settings.externalIdType || this.name;
         let request = null;
         if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
