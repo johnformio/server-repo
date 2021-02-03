@@ -126,6 +126,9 @@ module.exports = function(server) {
      * @param cb
      */
     loadProject(req, id, cb) {
+      if (!cb) {
+        cb = (err, result) => new Promise((resolve, reject) => (err ? reject(err) : resolve(result)));
+      }
       id = formio.util.idToString(id);
       const cache = formio.cache.cache(req);
       if (cache.projects[id]) {

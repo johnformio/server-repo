@@ -96,6 +96,7 @@ module.exports = (formioServer) => {
   const getToken = function(profile, settings, project, roleMap, next) {
     const rolesPath = settings.rolesPath || 'roles';
     const idPath = settings.idPath || 'id';
+    const emailPath = settings.emailPath || 'email';
     let userRoles = _.get(profile, rolesPath);
     const {rolesDelimiter} = settings;
 
@@ -126,8 +127,9 @@ module.exports = (formioServer) => {
     userRoles.push('Everyone');
 
     const userId = _.get(profile, idPath);
-    if (!userId) {
-      return next('No User ID was found within your SAML profile.');
+    const email = _.get(profile, emailPath);
+    if (!userId || !email) {
+      return next('No User ID or Email was found within your SAML profile.');
     }
 
     const roles = [];
@@ -140,17 +142,20 @@ module.exports = (formioServer) => {
       }
     });
 
-    const defaultFields = `objectidentifier,name,email,inresponseto,${rolesPath},${idPath}`;
+    const defaultFields = `objectidentifier,name,email,inresponseto,${rolesPath},${idPath},${emailPath}`;
     let profileFields = settings.hasOwnProperty('profileFields') ? (settings.profileFields || defaultFields) : false;
     profileFields = profileFields ? _.map(profileFields.split(','), _.trim).join('|').replace(/[^A-z0-9_|-]/g, '') : '';
     const fieldsRegex = new RegExp(profileFields || '', 'i');
     const user = {
       _id: toMongoId(userId),
-      data: profileFields ? _.pickBy(profile, (prop, key) => {
-        return key.match(fieldsRegex);
-      }) : profile,
+      data: profileFields ? _.pickBy(profile, (prop, key) => key.match(fieldsRegex)) : profile,
       roles
     };
+
+    // If an email is provided, then set it here.
+    if (email) {
+      user.data.email = email;
+    }
 
     debug(`Requested Roles: ${JSON.stringify(userRoles)}`);
     debug(`User: ${JSON.stringify(user)}`);

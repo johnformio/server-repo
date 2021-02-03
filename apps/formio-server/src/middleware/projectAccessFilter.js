@@ -89,7 +89,7 @@ module.exports = function(formio) {
         });
 
         // Find all the Teams for the current user.
-        formio.teams.getTeams(req.user, false, true, true)
+        formio.teams.getTeams(req.user, false, true)
           .then(function(teams) {
             teams = teams || [];
             teams = _.map(_.map(teams, '_id'), formio.util.idToString);
