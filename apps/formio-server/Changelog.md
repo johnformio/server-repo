@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-1138: Fixed possibility to update teams in protected mode. 
  - FIO-128: Fix saving custom properties in form revision.
  - FOR-2763: Changed the default template for creating new projects that include the only Administrator for Read All
+ 
+### Changed
+ - FIO-920: Adding email support for Teams.
 
 ## 7.1.0-rc.1
 ### Fixed
