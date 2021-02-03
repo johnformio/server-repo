@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FOR-2763: Changed the default template for creating new projects that include the only Administrator for Read All.
 
 ### Changed
+ - FIO-920: Adding email support for Teams.
  - Upgrade formio@2.0.0-rc.43
  - Upgrade javascript-obfuscator@2.10.3, mongodb@3.6.4, passport-saml@2.0.5, twilio@3.55.1, sinon@9.2.4, aws-sdk@2.834.0, eslint@7.19.0
 
