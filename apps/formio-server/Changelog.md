@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## 7.1.0-rc.2
 ### Added
  - FOR-2866: added hook for getting proper mongo collection
  - FIO-1196: Added SQLConector2 support.
@@ -22,6 +22,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Upgrade formio@2.0.0-rc.43
  - Upgrade javascript-obfuscator@2.10.3, mongodb@3.6.4, passport-saml@2.0.5, twilio@3.55.1, sinon@9.2.4, aws-sdk@2.834.0, eslint@7.19.0
 
+### Changed
+ - Upgrade formiojs@4.12.7-rc.2
+ - Upgrade portal@7.2.0-rc.2
+ - Upgrade premium@1.15.4-rc.3
+ 
 ## 7.1.0-rc.1
 ### Fixed
  - FIO-1000: Fix an error for import with empty template
