@@ -734,6 +734,7 @@ module.exports = function(app, template, hook) {
         });
       });
 
+      if (!docker)
       it('Upgrade the project to a team project plan', function(done) {
           app.formio.formio.resources.project.model.findOne({_id: teamProject._id, deleted: {$eq: null}}, function(err, project) {
             if(err) {
@@ -1001,6 +1002,7 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      if (!docker)
       it('Upgrade the project to a commercial project plan', function(done) {
         app.formio.formio.resources.project.model.findOne({_id: teamProject._id, deleted: {$eq: null}}, function(err, project) {
           if(err) {
@@ -1091,6 +1093,7 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      if (!docker)
       it('Upgrade the project to a commercial project plan', function(done) {
         app.formio.formio.resources.project.model.findOne({_id: teamProject._id, deleted: {$eq: null}}, function(err, project) {
           if(err) {
@@ -1181,6 +1184,7 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      if (!docker)
       it('Revert the project to a team project plan', function(done) {
         app.formio.formio.resources.project.model.findOne({_id: teamProject._id, deleted: {$eq: null}}, function(err, project) {
           if(err) {
