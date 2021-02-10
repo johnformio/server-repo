@@ -10,6 +10,10 @@ var docker = process.env.DOCKER;
 var customer = process.env.CUSTOMER;
 
 module.exports = function(app, template, hook) {
+  // Don't run for docker.
+  if (docker) {
+    return;
+  }
   var ignoreFields = ['config', 'disabled'];
   let teamProject = null;
   describe('Teams', function() {
@@ -734,7 +738,6 @@ module.exports = function(app, template, hook) {
         });
       });
 
-      if (!docker)
       it('Upgrade the project to a team project plan', function(done) {
           app.formio.formio.resources.project.model.findOne({_id: teamProject._id, deleted: {$eq: null}}, function(err, project) {
             if(err) {
@@ -1003,7 +1006,6 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      if (!docker)
       it('Upgrade the project to a commercial project plan', function(done) {
         app.formio.formio.resources.project.model.findOne({_id: teamProject._id, deleted: {$eq: null}}, function(err, project) {
           if(err) {
@@ -1095,7 +1097,6 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      if (!docker)
       it('Upgrade the project to a commercial project plan', function(done) {
         app.formio.formio.resources.project.model.findOne({_id: teamProject._id, deleted: {$eq: null}}, function(err, project) {
           if(err) {
@@ -1187,7 +1188,6 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      if (!docker)
       it('Revert the project to a team project plan', function(done) {
         app.formio.formio.resources.project.model.findOne({_id: teamProject._id, deleted: {$eq: null}}, function(err, project) {
           if(err) {
@@ -1383,10 +1383,6 @@ module.exports = function(app, template, hook) {
     });
 
     describe('Multi Team Tests', function() {
-      if (docker) {
-        return;
-      }
-
       let testTeamProject = null;
       it('Create another project', function(done) {
         request(app)
@@ -1770,10 +1766,6 @@ module.exports = function(app, template, hook) {
     var testSubmission = null;
     var testTeamMember = null;
     describe('Permissions test bootstrap', function() {
-      if (docker) {
-        return;
-      }
-
       it('Create a new team', (done) => {
         request(app)
         .post('/team')
@@ -2568,10 +2560,6 @@ module.exports = function(app, template, hook) {
     });
 
     describe('Permissions - team_write', function() {
-      if (docker) {
-        return;
-      }
-
       // Bootstrap
       it('A Project Owner should be able to add one of their teams to have access with the team_write permission', function(done) {
         var teamAccess = {type: 'team_write', roles: [testTeam._id]};
@@ -3188,10 +3176,6 @@ module.exports = function(app, template, hook) {
     });
 
     describe('Permissions - team_admin', function() {
-      if (docker) {
-        return;
-      }
-
       // Bootstrap
       it('A Project Owner should be able to add one of their teams to have access with the team_admin permission', function(done) {
         var teamAccess = {type: 'team_admin', roles: [testTeam._id]};
@@ -3509,11 +3493,6 @@ module.exports = function(app, template, hook) {
             var response = res.body;
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.deepEqual(_.omit(response.settings, ['licenseKey']), temp.settings);
-
-            if (docker) {
-              return done();
-            }
-
             app.formio.formio.resources.project.model.findOne({_id: teamProject._id}, function(err, project) {
               if(err) {
                 return done(err);
@@ -3843,10 +3822,6 @@ module.exports = function(app, template, hook) {
     });
 
     describe('Resource normalization', function() {
-      if (docker) {
-        return;
-      }
-
       it('Delete a test submission', function(done) {
         request(app)
           .delete('/project/' + teamProject._id + '/form/' + testForm._id + '/submission/' + testSubmission._id)
