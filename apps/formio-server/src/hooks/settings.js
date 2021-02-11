@@ -425,6 +425,9 @@ module.exports = function(app) {
         if (!userId) {
           return cb(new Error('No user found.'));
         }
+        if (req.body.owner && userId !==  req.body.owner) {
+          return cb();
+        }
 
         audit('AUTH_PASSWORD', req);
 
