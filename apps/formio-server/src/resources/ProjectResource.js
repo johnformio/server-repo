@@ -5,6 +5,7 @@ const config = require('../../config');
 const _ = require('lodash');
 const debug = require('debug')('formio:resources:projects');
 const util = require('../util/util');
+const crypto = require('crypto');
 
 module.exports = (router, formioServer) => {
   const {formio} = formioServer;
@@ -34,6 +35,7 @@ module.exports = (router, formioServer) => {
       if (noAdmin) {
         delete item.settings;
       }
+      _.unset(item, 'settings.portalDomain');
       return item;
     });
     res.resource.item = multi ? list : list[0];
@@ -389,6 +391,46 @@ module.exports = (router, formioServer) => {
       }
       return sqlconnector.generateQueries(req,res,next);
     },
+  );
+  // The portal check endpoint
+  router.post(
+    '/project/:projectId/portal-check',
+      formio.middleware.tokenHandler,
+      (req, res, next) => {
+        const origin = req.header('Origin');
+        if (
+          !origin || (origin.includes('http://localhost:') ||
+            origin.includes('http://portal.localhost:'))
+          ) {
+            return res.status(200).send('OK');
+        }
+
+        if (req.body && req.body.payload) {
+          const hash = crypto.createHash('md5').update(origin).digest('hex');
+
+          if (hash === req.body.payload && origin) {
+            formio.cache.loadCurrentProject(req, (err, project) => {
+              if (err) {
+                return next(err);
+              }
+              util.decryptProperty(project, 'settings_encrypted', 'settings', formio.config.mongoSecret);
+
+              const domain = _.get(project, 'settings.portalDomain', '');
+              if (!domain || domain !== origin) {
+                project.settings = {...project.settings, portalDomain: origin};
+                project.save();
+              }
+              return res.status(200).send('OK');
+            });
+          }
+          else {
+            res.status(400).send();
+          }
+        }
+        else {
+          res.status(400).send();
+        }
+      }
   );
 
   return resource;

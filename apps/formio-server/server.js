@@ -2,9 +2,7 @@
 
 require('dotenv').config();
 const express = require('express');
-const helmet = require('helmet')({
-  contentSecurityPolicy: false
-});
+const _helmet = require('helmet');
 const _ = require('lodash');
 const bodyParser = require('body-parser');
 const favicon = require('serve-favicon');
@@ -22,6 +20,13 @@ const cors = require('cors');
 const debug = {
   startup: require('debug')('formio:startup')
 };
+
+const helmet = _helmet({
+  hsts: {
+    preload: true,
+  },
+  contentSecurityPolicy: false,
+});
 
 module.exports = function(options) {
   options = options || {};
@@ -199,6 +204,23 @@ module.exports = function(options) {
     }
     corsRoute(req, res, next);
   });
+
+  // Strict-Transport-Security middleware
+  const hsts = _helmet.hsts({
+    preload: true,
+  });
+
+  // Referer-Policy middleware
+  const referrerPolicy = _helmet.referrerPolicy({
+    policy: ['origin', 'same-origin'],
+  });
+
+  const cspSettings = require('./src/middleware/cspSettings')(app);
+
+  if (portalEnabled) {
+    debug.startup('Attaching middleware: Helmet\'s middlewares');
+    app.use(cspSettings, hsts, referrerPolicy);
+  }
 
    // Check project status
    app.use(require('./src/middleware/projectUtilization')(app.formio.formio));
