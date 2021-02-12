@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 #### Fixed
  - Fixing issues where logging into some users would cause "Unauthorized" to show.
 
+#### Changed
+ - FIO-1026: When creating a new stage or tenant, allow selecting which stage to copy from (instead of only live).
+
 ## 7.1.0-rc.2
 ### Added
  - FOR-2866: added hook for getting proper mongo collection
