@@ -325,7 +325,7 @@ const Teams = {
         (
           !accepted ||
           (memberTeam._id && userTeams.indexOf(memberTeam._id.toString()) !== -1) ||
-          (memberTeam.owner && user._id && (user._id.toString() === member.owner.toString()))
+          (memberTeam.owner && user._id && (user._id.toString() === memberTeam.owner.toString()))
         )
       ) {
         teams.push(member.data.team);
