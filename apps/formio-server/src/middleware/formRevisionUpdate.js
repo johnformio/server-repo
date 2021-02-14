@@ -28,11 +28,19 @@ module.exports = function(formio) {
       if (component.type === 'form') {
         promises.push(new Promise((resolve, reject) => {
           formio.cache.loadForm(req, null, component.form, (err, form) => {
+            const hasOldRevisionProperty = component.hasOwnProperty('formRevision');
             if (err || !form) {
-              component.formRevision = 0;
+              if (hasOldRevisionProperty) {
+                component.formRevision = 0;
+              }
+              component.revision = 0;
               return resolve();
             }
-            component.formRevision = form._vid;
+
+            if (hasOldRevisionProperty) {
+              component.formRevision = form._vid;
+            }
+            component.revision = form._vid;
             return resolve();
           });
         }));
