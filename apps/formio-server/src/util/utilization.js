@@ -8,7 +8,7 @@ const plans = require('../plans/plans');
 const cache = new NodeCache();
 
 // Cache response for 3 hours.
-const CACHE_TIME =  process.env.CACHE_TIME || 3 * 60 * 60;
+const CACHE_TIME = process.env.CACHE_TIME || 3 * 60 * 60;
 
 const getLicenseKey = (req) => {
   return _.get(req, 'primaryProject.settings.licenseKey', _.get(req, 'licenseKey', process.env.LICENSE_KEY));
@@ -22,28 +22,29 @@ function base64(data) {
   return Buffer.from(JSON.stringify(data)).toString('base64');
 }
 
-const getProjectContext = (req) => {
-  switch (_.get(req, 'currentProject.type', req.body.type || 'project')) {
+const getProjectContext = (req, isNew = false) => {
+  const type = isNew ? _.get(req, 'body.type', 'project') : _.get(req, 'currentProject.type', req.body.type || 'project');
+  switch (type) {
     case 'tenant':
       return {
         type: 'tenant',
-        projectId: req.primaryProject._id,
-        tenantId: req.currentProject ? req.currentProject._id : 'new',
-        title: req.currentProject ? req.currentProject.title : req.body.title,
-        name: req.currentProject ? req.currentProject.name : req.body.name,
-        remote: req.currentProject ? !!req.currentProject.remote : false,
-        projectType: req.currentProject ? req.currentProject.type : req.body.type,
+        projectId: req.primaryProject ? req.primaryProject._id : ((req.body && req.body.project) ? req.body.project : 'new'),
+        tenantId: req.currentProject && !isNew ? req.currentProject._id : 'new',
+        title: req.currentProject && !isNew ? req.currentProject.title : req.body.title,
+        name: req.currentProject && !isNew ? req.currentProject.name : req.body.name,
+        remote: req.currentProject && !isNew ? !!req.currentProject.remote : false,
+        projectType: req.currentProject && !isNew ? req.currentProject.type : req.body.type,
       };
     case 'stage':
       return {
         type: 'stage',
         projectId: req.primaryProject ? req.primaryProject._id : ((req.body && req.body.project) ? req.body.project : 'new'),
         tenantId: (req.parentProject && req.parentProject._id.toString() !== req.primaryProject._id.toString()) ? req.parentProject._id : 'none',
-        stageId: req.currentProject ? req.currentProject._id : 'new',
-        title: req.currentProject ? req.currentProject.title : req.body.title,
-        name: req.currentProject ? req.currentProject.name : req.body.name,
-        remote: req.currentProject ? !!req.currentProject.remote : false,
-        projectType: req.currentProject ? req.currentProject.type : req.body.type,
+        stageId: req.currentProject && !isNew ? req.currentProject._id : 'new',
+        title: req.currentProject && !isNew ? req.currentProject.title : req.body.title,
+        name: req.currentProject && !isNew ? req.currentProject.name : req.body.name,
+        remote: req.currentProject && !isNew ? !!req.currentProject.remote : false,
+        projectType: req.currentProject && !isNew ? req.currentProject.type : req.body.type,
       };
     case 'project':
     default:
@@ -85,6 +86,7 @@ async function utilization(body, action = '', qs = {terms: 1}) {
     body: JSON.stringify(body),
     timeout: 5000,
     qs,
+    rejectUnauthorized: false,
   });
 
   if (!response.ok) {
@@ -213,6 +215,7 @@ async function clearLicenseCache(licenseId) {
     method: 'post',
     headers: {'content-type': 'application/json'},
     timeout: 5000,
+    rejectUnauthorized: false,
   })
     .then((response) => response.ok ? response.json() : null);
 }

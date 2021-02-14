@@ -1,5 +1,5 @@
 'use strict';
-const premium = require('@formio/premium/dist/premium-server.min.js');
+const {premium} = require('@formio/premium/dist/premium-server.min.js');
 
 module.exports = ({Formio}) => {
   // eslint-disable-next-line no-debugger

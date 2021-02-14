@@ -2,6 +2,7 @@
 
 const _ = require('lodash');
 const debug = require('debug')('formio:middleware:projectAccessFilter');
+const EVERYONE = '000000000000000000000000';
 
 module.exports = function(formio) {
   /**
@@ -64,6 +65,9 @@ module.exports = function(formio) {
         roles = _.map(_.map(roles, '_id'), formio.util.idToString);
         accessIds = accessIds.concat(roles);
 
+        // Support for Everyone role
+        accessIds.push(EVERYONE);
+
         /**
          * Filter the access obj in the current request based on the calculated accessIds.
          */
@@ -85,7 +89,7 @@ module.exports = function(formio) {
         });
 
         // Find all the Teams for the current user.
-        formio.teams.getTeams(req.user, false, true, true)
+        formio.teams.getTeams(req.user, false, true)
           .then(function(teams) {
             teams = teams || [];
             teams = _.map(_.map(teams, '_id'), formio.util.idToString);

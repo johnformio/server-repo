@@ -173,6 +173,20 @@ async function submitUtilizationRequest(
 ) {
   try {
     const result = await utilization(payload, '', {terms: 1});
+    if (result && result.devLicense) {
+      const regexUri = /^mongodb:\/\/((localhost)|(mongo)):\d+\/[a-z0-9_-]+/i;
+      const regexReplica = /replicaSet/gi;
+
+      if (!regexUri.test(config.formio.mongo)) {
+        console.log('Invalid MongoDB URI. With Development License you can use only a local database.');
+        process.exit();
+      }
+
+      if (regexReplica.test(config.formio.mongo)) {
+        console.log('Invalid MongoDB URI. With Development License you can not use Replica Sets.');
+        process.exit();
+      }
+    }
 
     // eslint-disable-next-line no-console
     console.log('License key validated');

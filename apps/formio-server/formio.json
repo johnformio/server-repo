@@ -2601,6 +2601,20 @@
         "before"
       ]
     },
+    "member:save": {
+      "title": "Save Submission",
+      "name": "save",
+      "form": "member",
+      "settings": {},
+      "priority": 10,
+      "method": [
+        "create",
+        "update"
+      ],
+      "handler": [
+        "before"
+      ]
+    },
     "license2:save": {
       "title": "Save Submission",
       "name": "save",
@@ -3138,7 +3152,10 @@
           "prefix": "",
           "suffix": "",
           "type": "password",
-          "tableView": false
+          "tableView": false,
+          "validate": {
+            "minLength": 8
+          }
         },
         {
           "theme": "primary",
@@ -3159,29 +3176,12 @@
         {
           "type": "read_all",
           "roles": [
-            "administrator",
             "authenticated",
             "anonymous"
-          ]
-        },
-        {
-          "type": "update_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "delete_all",
-          "roles": [
-            "administrator"
           ]
         }
       ],
       "submissionAccess": [
-        {
-          "type": "create_own",
-          "roles": []
-        },
         {
           "type": "read_own",
           "roles": [
@@ -3199,34 +3199,6 @@
           "roles": [
             "authenticated"
           ]
-        },
-        {
-          "type": "create_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "read_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "update_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "delete_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "self",
-          "roles": []
         }
       ]
     },
@@ -3238,182 +3210,81 @@
       "tags": [],
       "components": [
         {
-          "lockKey": true,
-          "type": "textfield",
-          "validate": {
-            "customPrivate": false,
-            "custom": "",
-            "pattern": "",
-            "maxLength": "",
-            "minLength": "",
-            "required": true
-          },
-          "persistent": true,
-          "unique": false,
-          "protected": false,
-          "defaultValue": "",
-          "multiple": false,
-          "suffix": "",
-          "prefix": "",
-          "placeholder": "Enter the name for this team",
-          "key": "name",
           "label": "Team Name",
-          "inputMask": "",
-          "inputType": "text",
-          "input": true,
-          "tableView": true
-        },
-        {
-          "searchField": "name",
-          "type": "select",
+          "key": "name",
+          "type": "textfield",
+          "placeholder": "Enter the name for this team",
           "validate": {
-            "required": false
-          },
-          "persistent": true,
-          "unique": false,
-          "protected": false,
-          "refreshDelay": 0,
-          "refresh": false,
-          "multiple": true,
-          "template": "<span>{{ item.data.name }}</span>",
-          "defaultValue": [],
-          "valueProperty": "",
-          "dataSrc": "url",
-          "data": {
-            "url": "https://api.form.io/team/members",
-            "json": "",
-            "values": [
-              {
-                "label": "",
-                "value": ""
-              }
-            ]
-          },
-          "placeholder": "Select the admins on this team.",
-          "key": "admins",
-          "label": "Team Admins",
-          "tableView": true,
-          "input": true
+            "required": true
+          }
         },
         {
-          "searchField": "name",
-          "type": "select",
-          "validate": {
-            "required": false
-          },
-          "persistent": true,
-          "unique": false,
-          "protected": false,
-          "refreshDelay": 0,
-          "refresh": false,
-          "multiple": true,
-          "template": "<span>{{ item.data.name }}</span>",
-          "defaultValue": [],
-          "valueProperty": "",
-          "dataSrc": "url",
-          "data": {
-            "url": "https://api.form.io/team/members",
-            "json": "",
-            "values": [
-              {
-                "label": "",
-                "value": ""
-              }
-            ]
-          },
-          "placeholder": "Select the members on this team.",
-          "key": "members",
-          "label": "Members",
-          "tableView": true,
-          "input": true
-        },
-        {
-          "theme": "primary",
-          "disableOnInvalid": true,
-          "action": "submit",
-          "block": false,
-          "rightIcon": "",
-          "leftIcon": "",
-          "size": "md",
-          "key": "submit",
           "label": "Submit",
-          "input": true,
+          "key": "submit",
           "type": "button",
-          "tableView": false
+          "theme": "primary"
         }
       ],
       "access": [
         {
           "type": "read_all",
           "roles": [
-            "administrator",
             "authenticated",
             "anonymous"
           ]
-        },
-        {
-          "type": "update_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "delete_all",
-          "roles": [
-            "administrator"
-          ]
         }
       ],
-      "submissionAccess": [
+      "submissionAccess": []
+    },
+    "member": {
+      "title": "Team Member",
+      "type": "resource",
+      "name": "member",
+      "path": "member",
+      "components": [
         {
-          "type": "create_all",
-          "roles": [
-            "administrator"
-          ]
+          "label": "Team",
+          "key": "team",
+          "type": "select",
+          "reference": true,
+          "dataSrc": "resource",
+          "data": {
+            "resource": "team"
+          },
+          "template": "<span>{{ item.data.name }}</span>"
         },
+        {
+          "label": "User ID",
+          "key": "userId",
+          "type": "hidden"
+        },
+        {
+          "label": "Email",
+          "key": "email",
+          "type": "email"
+        },
+        {
+          "label": "Team Admin",
+          "key": "admin",
+          "type": "checkbox",
+          "tooltip": "Team Admins can add and remove other team members."
+        },
+        {
+          "label": "Submit",
+          "key": "submit",
+          "type": "button",
+          "theme": "primary"
+        }
+      ],
+      "access": [
         {
           "type": "read_all",
           "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "update_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "delete_all",
-          "roles": [
-            "administrator"
-          ]
-        },
-        {
-          "type": "create_own",
-          "roles": [
-            "authenticated"
-          ]
-        },
-        {
-          "type": "read_own",
-          "roles": [
-            "authenticated"
-          ]
-        },
-        {
-          "type": "update_own",
-          "roles": [
-            "authenticated"
-          ]
-        },
-        {
-          "type": "delete_own",
-          "roles": [
             "authenticated"
           ]
         }
-      ]
+      ],
+      "submissionAccess": []
     },
     "admin": {
       "title": "Admin",
@@ -3501,6 +3372,72 @@
             "multiple": false
           },
           "components": [
+            {
+              "label": "Development License",
+              "tableView": false,
+              "key": "developmentLicense",
+              "type": "checkbox",
+              "input": true,
+              "defaultValue": false,
+              "placeholder": "",
+              "prefix": "",
+              "customClass": "",
+              "suffix": "",
+              "multiple": false,
+              "protected": false,
+              "unique": false,
+              "persistent": true,
+              "hidden": false,
+              "clearOnHide": true,
+              "refreshOn": "",
+              "redrawOn": "",
+              "modalEdit": false,
+              "labelPosition": "right",
+              "description": "",
+              "errorLabel": "",
+              "tooltip": "",
+              "hideLabel": false,
+              "tabindex": "",
+              "disabled": false,
+              "autofocus": false,
+              "dbIndex": false,
+              "customDefaultValue": "",
+              "calculateValue": "",
+              "calculateServer": false,
+              "widget": null,
+              "attributes": {},
+              "validateOn": "change",
+              "validate": {
+                "required": false,
+                "custom": "",
+                "customPrivate": false,
+                "strictDateValidation": false,
+                "multiple": false,
+                "unique": false
+              },
+              "conditional": {
+                "show": null,
+                "when": null,
+                "eq": ""
+              },
+              "overlay": {
+                "style": "",
+                "left": "",
+                "top": "",
+                "width": "",
+                "height": ""
+              },
+              "allowCalculateOverride": false,
+              "encrypted": false,
+              "showCharCount": false,
+              "showWordCount": false,
+              "properties": {},
+              "allowMultipleMasks": false,
+              "inputType": "checkbox",
+              "dataGridLabel": true,
+              "value": "",
+              "name": ""
+            },
             {
               "label": "License Name",
               "placeholder": "Enter a descriptive title for this license",

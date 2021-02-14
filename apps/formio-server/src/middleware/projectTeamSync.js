@@ -23,7 +23,7 @@ module.exports = function(formio) {
 
   return function(req, res, next) {
     // Creating/Modifying a project.
-    if (!('project' in req.body)) {
+    if (!('project' in req.body) || !req.body.project) {
       // Only update when modifying a project. When creating a project, there are no stages.
       if (req.method === 'PUT') {
         const teamAccess = _.filter(req.body.access || [], access => _.startsWith(access.type, 'team_'));

@@ -108,9 +108,13 @@ module.exports = (router, formioServer) => {
       ])(req, res, next);
     }
   };
+  formio.middleware.projectSettings = projectSettings;
 
   // Check tenant's parent project plan
   formio.middleware.checkTenantProjectPlan = require('../middleware/checkTenantProjectPlan')(formio);
+
+  // Check stage's parent project
+  formio.middleware.checkStageProject = require('../middleware/checkStageProject')(formio);
 
   // Load the project plan filter for use.
   formio.middleware.projectPlanFilter = require('../middleware/projectPlanFilter')(formio);
@@ -166,6 +170,7 @@ module.exports = (router, formioServer) => {
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       formio.middleware.licenseValid,
       require('../middleware/fetchTemplate'),
+      formio.middleware.checkStageProject,
       formio.middleware.checkTenantProjectPlan,
       formio.middleware.projectDefaultPlan,
       formio.middleware.projectEnvCreatePlan,
@@ -241,6 +246,9 @@ module.exports = (router, formioServer) => {
           req.body.access.forEach(access => {
             if (['read_all', 'create_all', 'update_all', 'delete_all'].includes(access.type)) {
               access.roles = _.map(accesses[access.type], role => role.toString());
+              delete accesses[access.type];
+            }
+            if (['team_access', 'team_admin', 'team_write', 'team_read'].includes(access.type)) {
               delete accesses[access.type];
             }
           });
@@ -368,14 +376,19 @@ module.exports = (router, formioServer) => {
     });
   });
 
-  // Expose the sql connector endpoint
   const sqlconnector = require('../actions/sqlconnector/util')(formioServer);
+  const sqlconnector2 = require('../actions/sqlconnector/util_v2')(formioServer);
   router.get(
     '/project/:projectId/sqlconnector',
     formio.middleware.tokenHandler,
     formio.middleware.restrictProjectAccess({level: 'admin'}),
     formio.middleware.restrictToPlans(['commercial', 'team', 'trial']),
-    sqlconnector.generateQueries,
+    (req,res,next) => {
+      if ( req.query.format === "v2") {
+        return sqlconnector2.generateQueries(req,res,next);
+      }
+      return sqlconnector.generateQueries(req,res,next);
+    },
   );
 
   return resource;

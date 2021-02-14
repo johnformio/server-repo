@@ -25,10 +25,10 @@ module.exports = function(app, template, hook) {
           name: chance.word(),
           template: _template
         };
-        
+
         request(app)
           .post('/project')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send(primaryProject)
           .expect('Content-Type', /json/)
           .expect(201)
@@ -40,7 +40,7 @@ module.exports = function(app, template, hook) {
             project = res.body;
 
             // Store the JWT for future API calls.
-            template.formio.owner.token = res.headers['x-jwt-token'];
+            template.env.owner.token = res.headers['x-jwt-token'];
 
             done();
           });
@@ -49,18 +49,18 @@ module.exports = function(app, template, hook) {
       it('Set to team plan', done => {
         request(app)
           .post('/project/' + project._id + '/upgrade')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send({plan: 'commercial'})
           .expect(200)
           .end(done);
       });
 
       it('A Project Owner should be able to add one of their teams to have access with the team_admin permission', done => {
-        let teamAccess = {type: 'team_admin', roles: [template.team1._id]};
+        let teamAccess = {type: 'team_admin', roles: [template.env.teams.team1._id]};
 
         request(app)
           .get('/project/' + project._id)
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
           .end((err, res) => {
@@ -72,11 +72,11 @@ module.exports = function(app, template, hook) {
             let oldResponse = res.body;
 
             // Store the JWT for future API calls.
-            template.formio.owner.token = res.headers['x-jwt-token'];
+            template.env.owner.token = res.headers['x-jwt-token'];
 
             request(app)
               .put('/project/' + project._id)
-              .set('x-jwt-token', template.formio.owner.token)
+              .set('x-jwt-token', template.env.owner.token)
               .send({ access: oldResponse.access.concat(teamAccess) })
               .expect('Content-Type', /json/)
               .expect(200)
@@ -90,8 +90,8 @@ module.exports = function(app, template, hook) {
                 response.access.forEach(element => {
                   if (element.type === 'team_admin') {
                     found = true;
-                    assert.notEqual(template.team1._id, null);
-                    assert.notEqual(template.team1._id, '');
+                    assert.notEqual(template.env.teams.team1._id, null);
+                    assert.notEqual(template.env.teams.team1._id, '');
                     assert.deepEqual(element, teamAccess);
                   }
                 });
@@ -102,7 +102,7 @@ module.exports = function(app, template, hook) {
                 project = response;
 
                 // Store the JWT for future API calls.
-                template.formio.owner.token = res.headers['x-jwt-token'];
+                template.env.owner.token = res.headers['x-jwt-token'];
 
                 done();
               });
@@ -118,7 +118,7 @@ module.exports = function(app, template, hook) {
         };
         request(app)
           .post('/project')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send(myProject)
           .expect('Content-Type', /json/)
           .expect(201)
@@ -127,10 +127,10 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            template.env = res.body;
+            template.env.project = res.body;
 
             // Store the JWT for future API calls.
-            template.formio.owner.token = res.headers['x-jwt-token'];
+            template.env.owner.token = res.headers['x-jwt-token'];
 
             done();
           });
@@ -144,7 +144,7 @@ module.exports = function(app, template, hook) {
         request(app)
           .post('/project/' + project._id + '/tag')
           .send({ tag: '0.0.1' })
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .expect('Content-Type', /json/)
           .expect(201)
           .end((err, res) => {
@@ -155,7 +155,7 @@ module.exports = function(app, template, hook) {
             tag = res.body;
 
             // Store the JWT for future API calls.
-            template.formio.owner.token = res.headers['x-jwt-token'];
+            template.env.owner.token = res.headers['x-jwt-token'];
 
             done();
           });
@@ -165,7 +165,7 @@ module.exports = function(app, template, hook) {
         request(app)
           .post('/project/' + project._id + '/tag')
           .send({ tag: '0.0.1' })
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .expect('Content-Type', /json/)
           .expect(400)
           .end(done);
@@ -175,7 +175,7 @@ module.exports = function(app, template, hook) {
         request(app)
           .post('/project/' + project._id + '/tag')
           .send({ tag: '0.0.2' })
-          .set('x-jwt-token', template.formio.user1.token)
+          .set('x-jwt-token', template.env.users.user1.token)
           .expect(201)
           .expect('Content-Type', /json/)
           .end((err, res) => {
@@ -185,10 +185,10 @@ module.exports = function(app, template, hook) {
 
             tag2 = res.body;
 
-            assert.equal(tag.owner, template.formio.owner._id, 'Project owner should own the tag.');
+            assert.equal(tag.owner, template.env.owner._id, 'Project owner should own the tag.');
 
             // Store the JWT for future API calls.
-            template.formio.user1.token = res.headers['x-jwt-token'];
+            template.env.users.user1.token = res.headers['x-jwt-token'];
 
             done();
           });
@@ -198,7 +198,7 @@ module.exports = function(app, template, hook) {
         request(app)
           .post('/project/' + project._id + '/tag')
           .send({ tag: '0.0.3' })
-          .set('x-jwt-token', template.formio.user2.token)
+          .set('x-jwt-token', template.env.users.user2.token)
           .expect(401)
           .end(done);
       });
@@ -215,7 +215,7 @@ module.exports = function(app, template, hook) {
         request(app)
           .put('/project/' + project._id + '/tag/' + tag._id)
           .send(tag)
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .expect(400)
           .end(done);
       });
@@ -224,7 +224,7 @@ module.exports = function(app, template, hook) {
         request(app)
           .put('/project/' + project._id + '/tag/' + tag2._id)
           .send(tag2)
-          .set('x-jwt-token', template.formio.user1.token)
+          .set('x-jwt-token', template.env.users.user1.token)
           .expect(400)
           .end(done);
       });
@@ -233,7 +233,7 @@ module.exports = function(app, template, hook) {
         request(app)
           .put('/project/' + project._id + '/tag/' + tag._id)
           .send(tag)
-          .set('x-jwt-token', template.formio.user2.token)
+          .set('x-jwt-token', template.env.users.user2.token)
           .expect(401)
           .end(done);
       });
@@ -250,7 +250,7 @@ module.exports = function(app, template, hook) {
         request(app)
           .get('/project/' + project._id + '/tag/' + tag._id)
           .send()
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
           .end((err, res) => {
@@ -261,7 +261,7 @@ module.exports = function(app, template, hook) {
             assert.deepEqual(tag, res.body);
 
             // Store the JWT for future API calls.
-            template.formio.owner.token = res.headers['x-jwt-token'];
+            template.env.owner.token = res.headers['x-jwt-token'];
 
             done();
           });
@@ -271,7 +271,7 @@ module.exports = function(app, template, hook) {
         request(app)
           .get('/project/' + project._id + '/tag/' + tag._id)
           .send()
-          .set('x-jwt-token', template.formio.user1.token)
+          .set('x-jwt-token', template.env.users.user1.token)
           .expect('Content-Type', /json/)
           .expect(200)
           .end((err, res) => {
@@ -282,7 +282,7 @@ module.exports = function(app, template, hook) {
             assert.deepEqual(tag, res.body);
 
             // Store the JWT for future API calls.
-            template.formio.user1.token = res.headers['x-jwt-token'];
+            template.env.users.user1.token = res.headers['x-jwt-token'];
 
             done();
           });
@@ -292,7 +292,7 @@ module.exports = function(app, template, hook) {
         request(app)
           .get('/project/' + project._id + '/tag/' + tag._id)
           .send()
-          .set('x-jwt-token', template.formio.user2.token)
+          .set('x-jwt-token', template.env.users.user2.token)
           .expect(401)
           .end(done);
       });
@@ -309,7 +309,7 @@ module.exports = function(app, template, hook) {
         request(app)
           .get('/project/' + project._id + '/tag')
           .send()
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
           .end((err, res) => {
@@ -320,7 +320,7 @@ module.exports = function(app, template, hook) {
             assert.equal(2, res.body.length);
 
             // Store the JWT for future API calls.
-            template.formio.owner.token = res.headers['x-jwt-token'];
+            template.env.owner.token = res.headers['x-jwt-token'];
 
             done();
           });
@@ -330,7 +330,7 @@ module.exports = function(app, template, hook) {
         request(app)
           .get('/project/' + project._id + '/tag')
           .send()
-          .set('x-jwt-token', template.formio.user1.token)
+          .set('x-jwt-token', template.env.users.user1.token)
           .expect('Content-Type', /json/)
           .expect(200)
           .end((err, res) => {
@@ -341,7 +341,7 @@ module.exports = function(app, template, hook) {
             assert.equal(2, res.body.length);
 
             // Store the JWT for future API calls.
-            template.formio.user1.token = res.headers['x-jwt-token'];
+            template.env.users.user1.token = res.headers['x-jwt-token'];
 
             done();
           });
@@ -351,7 +351,7 @@ module.exports = function(app, template, hook) {
         request(app)
           .get('/project/' + project._id + '/tag')
           .send()
-          .set('x-jwt-token', template.formio.user2.token)
+          .set('x-jwt-token', template.env.users.user2.token)
           .expect(401)
           .end(done);
       });
@@ -367,7 +367,7 @@ module.exports = function(app, template, hook) {
       it('A Project owner should be able to access the current tag', done => {
         request(app)
           .get('/project/' + project._id + '/tag/current')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send()
           .expect(200)
           .end((err, res) => {
@@ -384,7 +384,7 @@ module.exports = function(app, template, hook) {
       it('A Team Member with team_admin should be able to access the current tag', done => {
         request(app)
           .get('/project/' + project._id + '/tag/current')
-          .set('x-jwt-token', template.formio.user1.token)
+          .set('x-jwt-token', template.env.users.user1.token)
           .send()
           .expect(200)
           .end((err, res) => {
@@ -401,7 +401,7 @@ module.exports = function(app, template, hook) {
       it('A Non Team Member should be able to access the current tag', done => {
         request(app)
           .get('/project/' + project._id + '/tag/current')
-          .set('x-jwt-token', template.formio.user2.token)
+          .set('x-jwt-token', template.env.users.user2.token)
           .send()
           .expect(200)
           .end((err, res) => {
@@ -434,7 +434,7 @@ module.exports = function(app, template, hook) {
       it('A Project owner should be able to deploy the tag', done => {
         request(app)
           .post('/project/' + project._id + '/deploy')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send({
             type: 'tag',
             tag: '0.0.1'
@@ -463,7 +463,7 @@ module.exports = function(app, template, hook) {
       it('Deploying unknown tag throws error', done => {
         request(app)
           .post('/project/' + project._id + '/deploy')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send({
             type: 'tag',
             tag: '0.0.3'
@@ -475,7 +475,7 @@ module.exports = function(app, template, hook) {
       it('A Team Member with team_admin should be able to deploy the tag', done => {
         request(app)
           .post('/project/' + project._id + '/deploy')
-          .set('x-jwt-token', template.formio.user1.token)
+          .set('x-jwt-token', template.env.users.user1.token)
           .send({
             type: 'tag',
             tag: '0.0.2'
@@ -501,7 +501,7 @@ module.exports = function(app, template, hook) {
       it('A Non Team Member should not be able to deploy the tag', done => {
         request(app)
           .post('/project/' + project._id + '/deploy')
-          .set('x-jwt-token', template.formio.user2.token)
+          .set('x-jwt-token', template.env.users.user2.token)
           .send({
             type: 'tag',
             tag: '0.0.0'
@@ -525,7 +525,7 @@ module.exports = function(app, template, hook) {
         request(app)
           .delete('/project/' + project._id + '/tag/' + tag2._id)
           .send()
-          .set('x-jwt-token', template.formio.user2.token)
+          .set('x-jwt-token', template.env.users.user2.token)
           .expect(401)
           .end(done);
       });
@@ -534,7 +534,7 @@ module.exports = function(app, template, hook) {
         request(app)
           .delete('/project/' + project._id + '/tag/' + tag2._id)
           .send()
-          .set('x-jwt-token', template.formio.user2.token)
+          .set('x-jwt-token', template.env.users.user2.token)
           .expect(401)
           .end(done);
       });
@@ -543,7 +543,7 @@ module.exports = function(app, template, hook) {
         request(app)
           .delete('/project/' + project._id + '/tag/' + tag2._id)
           .send()
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .expect(200)
           .end(done);
       });
@@ -552,7 +552,7 @@ module.exports = function(app, template, hook) {
         request(app)
           .delete('/project/' + project._id + '/tag/' + tag._id)
           .send()
-          .set('x-jwt-token', template.formio.user1.token)
+          .set('x-jwt-token', template.env.users.user1.token)
           .expect(200)
           .end(done);
       });
@@ -561,7 +561,7 @@ module.exports = function(app, template, hook) {
         request(app)
           .post('/project/' + project._id + '/tag')
           .send({ tag: '0.0.1' })
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .expect('Content-Type', /json/)
           .expect(201)
           .end((err, res) => {
@@ -573,7 +573,7 @@ module.exports = function(app, template, hook) {
             console.log(res.body);
 
             // Store the JWT for future API calls.
-            template.formio.owner.token = res.headers['x-jwt-token'];
+            template.env.owner.token = res.headers['x-jwt-token'];
 
             done();
           });
@@ -585,7 +585,7 @@ module.exports = function(app, template, hook) {
       it('Set to basic plan', done => {
         request(app)
           .post('/project/' + project._id + '/upgrade')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send({plan: 'basic'})
           .expect(200)
           .end(done);
@@ -594,7 +594,7 @@ module.exports = function(app, template, hook) {
       it('Should not allow deploying for a basic plans', done => {
         request(app)
           .post('/project/' + project._id + '/deploy')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send({
             type: 'tag',
             tag: '0.0.1'
@@ -606,7 +606,7 @@ module.exports = function(app, template, hook) {
       it('Should not allow tagging for a basic plans', done => {
         request(app)
           .post('/project/' + project._id + '/tag')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send({
             tag: '0.0.3'
           })
@@ -617,7 +617,7 @@ module.exports = function(app, template, hook) {
       it('Set to independent plan', done => {
         request(app)
           .post('/project/' + project._id + '/upgrade')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send({plan: 'independent'})
           .expect(200)
           .end(done);
@@ -626,7 +626,7 @@ module.exports = function(app, template, hook) {
       it('Should not allow deploying for a independent plans', done => {
         request(app)
           .post('/project/' + project._id + '/deploy')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send({
             type: 'tag',
             tag: '0.0.1'
@@ -638,7 +638,7 @@ module.exports = function(app, template, hook) {
       it('Should not allow tagging for a independent plans', done => {
         request(app)
           .post('/project/' + project._id + '/tag')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send({
             tag: '0.0.3'
           })
@@ -649,7 +649,7 @@ module.exports = function(app, template, hook) {
       it('Set to team plan', done => {
         request(app)
           .post('/project/' + project._id + '/upgrade')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send({plan: 'team'})
           .expect(200)
           .end(done);
@@ -658,7 +658,7 @@ module.exports = function(app, template, hook) {
       it('Should not allow deploying for a team plans', done => {
         request(app)
           .post('/project/' + project._id + '/deploy')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send({
             type: 'tag',
             tag: '0.0.1'
@@ -670,7 +670,7 @@ module.exports = function(app, template, hook) {
       it('Should not allow tagging for a team plans', done => {
         request(app)
           .post('/project/' + project._id + '/tag')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send({
             tag: '0.0.3'
           })
@@ -681,7 +681,7 @@ module.exports = function(app, template, hook) {
       it('Set to commercial plan', done => {
         request(app)
           .post('/project/' + project._id + '/upgrade')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send({plan: 'commercial'})
           .expect(200)
           .end(done);
@@ -690,7 +690,7 @@ module.exports = function(app, template, hook) {
       it('Should allow deploying for a commercial plans', done => {
         request(app)
           .post('/project/' + project._id + '/deploy')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send({
             type: 'tag',
             tag: '0.0.1'
@@ -702,7 +702,7 @@ module.exports = function(app, template, hook) {
       it('Should allow tagging for a commercial plans', done => {
         request(app)
           .post('/project/' + project._id + '/tag')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send({
             tag: '0.0.3'
           })
@@ -713,7 +713,7 @@ module.exports = function(app, template, hook) {
       it('Set to trial plan', done => {
         request(app)
           .post('/project/' + project._id + '/upgrade')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send({plan: 'trial'})
           .expect(200)
           .end(done);
@@ -722,7 +722,7 @@ module.exports = function(app, template, hook) {
       it('Should allow deploying for a trial plans', done => {
         request(app)
           .post('/project/' + project._id + '/deploy')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send({
             type: 'tag',
             tag: '0.0.1'
@@ -734,7 +734,7 @@ module.exports = function(app, template, hook) {
       it('Should allow tagging for a trial plans', done => {
         request(app)
           .post('/project/' + project._id + '/tag')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send({
             tag: '0.1.0'
           })
@@ -755,7 +755,7 @@ module.exports = function(app, template, hook) {
         };
         request(app)
           .post('/project')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send(myProject)
           .expect('Content-Type', /json/)
           .expect(201)
@@ -767,7 +767,7 @@ module.exports = function(app, template, hook) {
             env1 = res.body;
 
             // Store the JWT for future API calls.
-            template.formio.owner.token = res.headers['x-jwt-token'];
+            template.env.owner.token = res.headers['x-jwt-token'];
 
             done();
           });
@@ -783,7 +783,7 @@ module.exports = function(app, template, hook) {
         };
         request(app)
           .post('/project')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send(myProject)
           .expect('Content-Type', /json/)
           .expect(201)
@@ -795,7 +795,7 @@ module.exports = function(app, template, hook) {
             env2 = res.body;
 
             // Store the JWT for future API calls.
-            template.formio.owner.token = res.headers['x-jwt-token'];
+            template.env.owner.token = res.headers['x-jwt-token'];
 
             done();
           });
@@ -836,7 +836,7 @@ module.exports = function(app, template, hook) {
 
         request(app)
           .post('/project/' + env1._id + '/form')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send(tempForm)
           .expect('Content-Type', /json/)
           .expect(201)
@@ -848,7 +848,7 @@ module.exports = function(app, template, hook) {
             form = res.body;
 
             // Store the JWT for future API calls.
-            template.formio.owner.token = res.headers['x-jwt-token'];
+            template.env.owner.token = res.headers['x-jwt-token'];
 
             done();
           });
@@ -888,7 +888,7 @@ module.exports = function(app, template, hook) {
 
         request(app)
           .post('/project/' + env1._id + '/form')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send(tempResource)
           .expect('Content-Type', /json/)
           .expect(201)
@@ -900,7 +900,7 @@ module.exports = function(app, template, hook) {
             resource = res.body;
 
             // Store the JWT for future API calls.
-            template.formio.owner.token = res.headers['x-jwt-token'];
+            template.env.owner.token = res.headers['x-jwt-token'];
 
             done();
           });
@@ -913,7 +913,7 @@ module.exports = function(app, template, hook) {
         };
         request(app)
           .post('/project/' + env1._id + '/role')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send(myRole)
           .expect('Content-Type', /json/)
           .expect(201)
@@ -925,7 +925,7 @@ module.exports = function(app, template, hook) {
             role = res.body;
 
             // Store the JWT for future API calls.
-            template.formio.owner.token = res.headers['x-jwt-token'];
+            template.env.owner.token = res.headers['x-jwt-token'];
 
             done();
           });
@@ -946,7 +946,7 @@ module.exports = function(app, template, hook) {
         };
         request(app)
           .post('/project/' + env1._id + '/form/' + form._id + '/action')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send(myAction)
           .expect('Content-Type', /json/)
           .expect(201)
@@ -958,7 +958,7 @@ module.exports = function(app, template, hook) {
             action = res.body;
 
             // Store the JWT for future API calls.
-            template.formio.owner.token = res.headers['x-jwt-token'];
+            template.env.owner.token = res.headers['x-jwt-token'];
 
             done();
           });
@@ -973,7 +973,7 @@ module.exports = function(app, template, hook) {
         });
         request(app)
           .put('/project/' + env1._id)
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send(env1)
           .expect('Content-Type', /json/)
           .expect(200)
@@ -985,7 +985,7 @@ module.exports = function(app, template, hook) {
             env1 = res.body;
 
             // Store the JWT for future API calls.
-            template.formio.owner.token = res.headers['x-jwt-token'];
+            template.env.owner.token = res.headers['x-jwt-token'];
 
             done();
           });
@@ -994,7 +994,7 @@ module.exports = function(app, template, hook) {
       it('Tag Environment 1', done => {
         request(app)
           .post('/project/' + env1._id + '/tag')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send({
             tag: '0.0.4'
           })
@@ -1008,7 +1008,7 @@ module.exports = function(app, template, hook) {
 
             request(app)
               .get('/project/' + env1._id)
-              .set('x-jwt-token', template.formio.owner.token)
+              .set('x-jwt-token', template.env.owner.token)
               .send()
               .expect(200)
               .end((err, res) => {
@@ -1062,7 +1062,7 @@ module.exports = function(app, template, hook) {
       it('Deploy tag to environment 2', done => {
         request(app)
           .post('/project/' + env2._id + '/deploy')
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .send({
             type: 'tag',
             tag: '0.0.4'
@@ -1075,7 +1075,7 @@ module.exports = function(app, template, hook) {
 
             request(app)
               .get('/project/' + env2._id + '/export')
-              .set('x-jwt-token', template.formio.owner.token)
+              .set('x-jwt-token', template.env.owner.token)
               .send()
               .expect(200)
               .end((err, res) => {
@@ -1129,7 +1129,7 @@ module.exports = function(app, template, hook) {
       it('A Project Owner should be able to remove any team with access to the project', done => {
         request(app)
           .get('/project/' + project._id)
-          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-jwt-token', template.env.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
           .end((err, res) => {
@@ -1148,11 +1148,11 @@ module.exports = function(app, template, hook) {
             });
 
             // Store the JWT for future API calls.
-            template.formio.owner.token = res.headers['x-jwt-token'];
+            template.env.owner.token = res.headers['x-jwt-token'];
 
             request(app)
               .put('/project/' + project._id)
-              .set('x-jwt-token', template.formio.owner.token)
+              .set('x-jwt-token', template.env.owner.token)
               .send({ access: newAccess })
               .expect('Content-Type', /json/)
               .expect(200)
@@ -1169,7 +1169,7 @@ module.exports = function(app, template, hook) {
                 project = response;
 
                 // Store the JWT for future API calls.
-                template.formio.owner.token = res.headers['x-jwt-token'];
+                template.env.owner.token = res.headers['x-jwt-token'];
 
                 done();
               });

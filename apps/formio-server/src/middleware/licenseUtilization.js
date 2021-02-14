@@ -218,7 +218,7 @@ function middleware(app) {
           }
           if (!process.env.FORMIO_HOSTED) {
             await utilization({
-              ...getProjectContext(req),
+              ...getProjectContext(req, true),
               licenseKey: getLicenseKey(req),
             });
           }

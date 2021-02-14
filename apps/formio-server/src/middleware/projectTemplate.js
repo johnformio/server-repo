@@ -67,9 +67,19 @@ module.exports = function(formio) {
     }
     // New environments should copy their primary project template.
     else if ('project' in project && project.project) {
-      formio.cache.loadProject(req, project.project, function(err, primaryProject) {
+      if (req.body.hasOwnProperty('copyFromProject') && req.body.copyFromProject === 'empty') {
+        return importTemplate(_.cloneDeep(formio.templates['empty']));
+      }
+
+      let projectId = project.project;
+
+      if (req.body.hasOwnProperty('copyFromProject') && req.body.copyFromProject !== formio.util.idToString(project.project)) {
+        projectId = formio.util.idToBson(req.body.copyFromProject);
+      }
+
+      formio.cache.loadProject(req, projectId, function(err, primaryProject) {
         formio.template.export({
-          projectId: project.project,
+          projectId: projectId,
           access: primaryProject.access ? primaryProject.access.toObject() : [],
         }, function(err, template) {
           if (err) {

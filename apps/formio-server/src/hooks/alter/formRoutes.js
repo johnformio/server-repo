@@ -2,6 +2,7 @@
 
 const _ = require('lodash');
 const util = require('../../util/util');
+const {utilization, getLicenseKey} = require('../../util/utilization');
 
 module.exports = app => routes => {
   const loadFormAlter = require('../../hooks/alter/loadForm')(app).alter;
@@ -38,21 +39,25 @@ module.exports = app => routes => {
 
   const revisionPlans = ['trial', 'commercial'];
 
+  const shouldCreateNewRevision = (req, item, form) => {
+    const trackedProperties = ['components', 'settings', 'tags', 'properties', 'controller'];
+    const currentFormTrackedProperties = _.pick(form, trackedProperties);
+    const updatedFormTrackedProperties = _.pick(req.body, trackedProperties);
+    const isFormChanged = !_.isEqual(currentFormTrackedProperties, updatedFormTrackedProperties);
+    const areRevisionsAllowed = item.revisions && revisionPlans.includes(req.primaryProject.plan);
+
+    return (
+      req.isDraft ||
+      item.revisions && !form.revisions ||
+      (areRevisionsAllowed && isFormChanged)
+    );
+  };
+
   routes.hooks.put = {
     before(req, res, item, next) {
-      if (item.components) {
-        item.markModified('components');
-      }
+      app.formio.formio.util.markModifiedParameters(item, ['components', 'properties']);
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
-        if (
-          req.isDraft ||
-          item.revisions && !form.revisions ||
-          (
-            item.revisions &&
-            revisionPlans.includes(req.primaryProject.plan) &&
-            !_.isEqual(form.components, req.body.components)
-          )
-        ) {
+        if (shouldCreateNewRevision(req, item, form)) {
           incrementVersion(item);
         }
         next();
@@ -60,15 +65,7 @@ module.exports = app => routes => {
     },
     after(req, res, item, next) {
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
-        if (
-          req.isDraft ||
-          item.revisions && !form.revisions ||
-          (
-            item.revisions &&
-            revisionPlans.includes(req.primaryProject.plan) &&
-            !_.isEqual(form.components, req.body.components)
-          )
-        ) {
+        if (shouldCreateNewRevision(req, item, form)) {
           return createVersion(item, req.user, req.body._vnote, next);
         }
         next();
@@ -78,19 +75,9 @@ module.exports = app => routes => {
 
   routes.hooks.patch = {
     before(req, res, item, next) {
-      if (item.components) {
-        item.markModified('components');
-      }
+      app.formio.formio.util.markModifiedParameters(item, ['components', 'properties']);
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
-        if (
-          req.isDraft ||
-          item.revisions && !form.revisions ||
-          (
-            item.revisions &&
-            revisionPlans.includes(req.primaryProject.plan) &&
-            !_.isEqual(form.components, req.body.components)
-          )
-        ) {
+        if (shouldCreateNewRevision(req, item, form)) {
           incrementVersion(item);
         }
         return next();
@@ -98,15 +85,7 @@ module.exports = app => routes => {
     },
     after(req, res, item, next) {
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
-        if (
-          req.isDraft ||
-          item.revisions && !form.revisions ||
-          (
-            item.revisions &&
-            revisionPlans.includes(req.primaryProject.plan) &&
-            !_.isEqual(form.components, req.body.components)
-          )
-        ) {
+        if (shouldCreateNewRevision(req, item, form)) {
           return createVersion(item, req.user, '', next);
         }
         next();
@@ -122,7 +101,23 @@ module.exports = app => routes => {
       ) {
         return createVersion(item, req.user, req.body._vnote, next);
       }
-      next();
+
+      if (!item) {
+        return next();
+      }
+
+      utilization({
+        type: 'form',
+        formId: item._id,
+        title: item.title,
+        name: item.name,
+        path: item.path,
+        formType: item.type,
+        projectId: item.project,
+        licenseKey: getLicenseKey(req),
+      })
+      .then(() => next())
+      .catch(next);
     }
   };
 

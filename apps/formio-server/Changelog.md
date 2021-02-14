@@ -4,6 +4,112 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+### Added
+ - FOR-2866: added hook for getting proper mongo collection
+ - FIO-1196: Added SQLConector2 support.
+ - FIO-841: Implements the Dev License.
+ 
+### Fixed
+ - FIO-1282: Fixes an issue when the server was crashing if doesn't reach manager index.html
+ - FOR-2709: Makes changing 'tags', 'controller', 'properties' and 'settings' form's properties cause creating a new revision if allowed
+ - FIO-1138: Fixed possibility to update teams in protected mode. 
+ - FIO-128: Fix saving custom properties in form revision.
+ - FOR-2763: Changed the default template for creating new projects that include the only Administrator for Read All
+ - FIO-1026: When creating a new stage or tenant, allow selecting which stage to copy from (instead of only live).
+ 
+### Changed
+ - FIO-920: Adding email support for Teams.
+
+## 7.1.0-rc.1
+### Fixed
+ - FIO-1000: Fix an error for import with empty template
+
+### Changed
+ - Upgrade portal@7.2.0-rc.1
+
+## 7.0.0-rc.68
+### Changed
+ - Upgrade formiojs@4.13.0-rc.6
+ - Upgrade portal@7.1.17-rc.40
+ - Upgrade resourcejs@2.3.3, formio@2.0.0-rc.39, formio-workers@1.14.10, aws-sdk@2.824.0
+
+## 7.0.0-rc.67
+### Fixed
+ - FIO-1060: Added caching for project utilization to prevent blocking middlewares execution.
+ - FIO-949: Stage Project Request Issues
+ - FOR-2785: Form utilizations were not created until you edit form
+ - FOR-2863: Stages are not deleted after deleting a project
+### Changed
+ - Upgrade formio@2.0.0-rc.38
+ - Upgrade portal@7.1.17-rc.39
+ - Upgrade @formio/premium@1.15.3-rc.2
+ - Upgrade formiojs@4.13.0-rc.5
+
+## 7.0.0-rc.66
+### Fixed
+ - FIO-785: Fixes creation a new stage/tenant in the utilization.
+ - Fixing a crash that could occur in group role assignments.
+ - Upgrade build process and saml dependencies.
+
+### Changed
+ - Upgrade formio@2.0.0-rc.37
+ - Upgrade minio@7.0.18, uuid@8.3.2, sinon@9.2.2, aws-sdk@2.820.0, helmet@4.3.1, javascript-obfuscator@2.10.1, passport-saml-metadata@2.4.0, twilio@3.54.1, 
+eslint@7.17.0, passport-saml@2.0.2
+
+## 7.0.0-rc.65
+### Changed
+ - Upgrade portal@7.1.17-rc.38
+
+## 7.0.0-rc.64
+### Changed
+ - Upgrade portal@7.1.17-rc.37
+
+## 7.0.0-rc.63
+#### Changed
+ - Upgrade portal@7.1.17-rc.36
+ - Upgrade @formio/premium@1.15.3
+ - Upgrade formiojs@4.12.4
+
+## 7.0.0-rc.62
+### Fixed
+ - Issue where the server would crash if project=null was provided when saving the project settings.
+ - Issue where the public project configurations would not get passed to formview pro and formmanager
+ - FOR-2868: Adds the rejectUnauthorized flag to license utilization requests. 
+ - FOR-2889: Everyone role is not saved on Access page
+ - FIO-975: Added possibility to configure server config log.
+
+### Changed
+ - Upgrade portal@7.1.17-rc.35
+ - Upgrade formio@2.0.0-rc.36
+
+## 7.0.0-rc.61
+### Changed
+ - Upgrade portal@7.1.17-rc.33
+ - Changed application variables.
+
+## 7.0.0-rc.60
+### Changed
+ - FOR-2862: Rewrote Docker files from node:14-alpine3.12 to alpine:latest. Solved an issue with nghttp2 v1.40
+
+## 7.0.0-rc.59
+### Changed
+ - Upgrade portal@7.1.17-rc.32
+ - Upgrade formiojs@4.12.2
+ - Upgrade premium@1.15.2
+ - Upgrade formio@2.0.0-rc.35 
+ - Upgrade semver@7.3.4, aws-sdk@2.804.0, twilio@3.53.0, eslint@7.15.0
+
+### Fixed
+ - FOR-2862: Updates the nghttp2 package. Updates alpine to v3.12 and node.js to v14.15
+ - Optimizing queries for performance improvements with Report API + action items.
+
+## 7.0.0-rc.58
+### Changed
+ - Upgrade portal@7.1.17-rc.31
+ - Upgrade formiojs@4.12.2-rc.8
+ - Upgrade premium@1.15.2-rc.4
+
 ## 7.0.0-rc.57
 ### Changed
  - Upgrade portal@7.1.17-rc.30

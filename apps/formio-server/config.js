@@ -287,10 +287,14 @@ config.jslogger = getConfig('JS_LOGGER');
 
 // Allow the config to be displayed when debugged.
 var sanitized = _.clone(config, true);
-sanitized = _.pick(sanitized, [
-  'https', 'domain', 'port', 'host', 'project', 'plan', 'formioHost', 'apiHost', 'debug', 'docker'
-]);
-sanitized.formio = _.pick(_.clone(config.formio), ['domain', 'schema', 'mongo']);
+
+const debugConfigVars = getConfig(
+  'DEBUG_CONFIG_VARS', 'https,domain,port,host,project,plan,formioHost,apiHost,debug,docker',
+).split(',') || [];
+sanitized = _.pick(sanitized, debugConfigVars);
+
+const debugFormioConfigVars = getConfig('DEBUG_CONFIG_FORMIO_VARS', 'domain,schema').split(',') || [];
+sanitized.formio = _.pick(_.clone(config.formio), debugFormioConfigVars);
 
 config.maxBodySize = getConfig('MAX_BODY_SIZE', '16mb');
 

@@ -309,46 +309,61 @@ module.exports = function(options) {
      */
     const appVariables = function(project) {
       return `
-        window.VPAT_ENABLED = ${app.license.terms.options.vpat && (config.vpat || _.get(project, 'config.vpat', '').toLowerCase()==='true')};
-        window.SAC_ENABLED = ${app.license.terms.options.sac && (config.sac || _.get(project, 'config.sac', '').toLowerCase()==='true')};
-        window.APP_SSO = '${_.get(project, 'config.sso', '')}';
-        window.SSO_PROJECT = '${_.get(project, 'config.ssoProject', '')}';
-        window.APP_LOGOUT = '${_.get(project, 'config.logout', '')}';
-        window.APP_TITLE = '${_.get(project, 'config.title', '')}';
-        window.APP_JS = '${_.get(project, 'config.js', '')}';
-        window.APP_CSS = '${_.get(project, 'config.css', '')}';
-        window.APP_LOGO = '${_.get(project, 'config.logo', '')}';
-        window.APP_LOGOHEIGHT = '${_.get(project, 'config.logoHeight', '')}';
-        window.APP_NAVBAR = '${_.get(project, 'config.navbar', '')}';
+        window.LICENSE_ENABLED = true;
+        window.VPAT_ENABLED = ${_.get(app, 'license.terms.options.vpat') && (config.vpat || _.get(project, 'config.vpat', '').toLowerCase()==='true')};
+        window.SAC_ENABLED = ${_.get(app, 'license.terms.options.sac') && (config.sac || _.get(project, 'config.sac', '').toLowerCase()==='true')};
+        window.PROJECT = ${JSON.stringify({
+          _id: project._id,
+          title: project.title,
+          name: project.name,
+          config: project.config,
+          public: project.public
+        })};
         window.APP_BRANDING = false;
       `;
+    };
+
+    const loadProjectSettings = (req, res, next) => {
+      // Create fake user and project so that it will load public settings.
+      res.resource = {item: req.currentProject};
+      req.user = {teams: []};
+      formio.middleware.projectSettings(req, res, next);
     };
 
     // Add the form manager.
     debug.startup('Mounting Form Manager');
     app.get('/project/:projectId/manage', [
       require('./src/middleware/licenseUtilization').middleware(app),
-      (req, res) => {
+      loadProjectSettings,
+      (req, res, next) => {
         const script = `<script type="text/javascript">
           window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/?$/, '');
           ${appVariables(req.currentProject)}
         </script>`;
         fs.readFile(`./portal/manager/index.html`, 'utf8', (err, contents) => {
+          if (err) {
+            return next(err);
+          }
           res.send(contents.replace('<head>', `<head>${script}`));
         });
       }
     ]);
     debug.startup('Mounting Form Viewer');
-    app.get('/project/:projectId/manage/view', (req, res) => {
-      const script = `<script type="text/javascript">
-        window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/view\\/?$/, '');
-        window.ALLOW_SWITCH = false;
-        ${appVariables(req.currentProject)}
-      </script>`;
-      fs.readFile(`./portal/manager/view/index.html`, 'utf8', (err, contents) => {
-        res.send(contents.replace('<head>', `<head>${script}`));
-      });
-    });
+    app.get('/project/:projectId/manage/view',
+      loadProjectSettings,
+      (req, res, next) => {
+        const script = `<script type="text/javascript">
+          window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/view\\/?$/, '');
+          ${appVariables(req.currentProject)}
+        </script>`;
+        fs.readFile(`./portal/manager/view/index.html`, 'utf8', (err, contents) => {
+          if (err) {
+            return next(err);
+          }
+          res.send(contents.replace('<head>', `<head>${script}`));
+        });
+      }
+    );
     app.use('/project/:projectId/manage', express.static(`./portal/manager`));
 
     // Mount the saml integration.

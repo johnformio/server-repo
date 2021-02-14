@@ -21,8 +21,14 @@ module.exports = app => (req, res, next) => {
     req.userProject = decoded.project;
     req.remotePermission = decoded.permission;
 
-    // TODO: return a new token to renew.
-    res.token = req.token;
+    res.token = app.formio.formio.auth.getToken(req.token, app.formio.config.remoteSecret);
+
+    // Set the headers if they haven't been sent yet.
+    if (!res.headersSent) {
+      res.setHeader('Access-Control-Expose-Headers', 'x-remote-token');
+      res.setHeader('x-remote-token', res.token);
+    }
+
     return next();
   });
 };

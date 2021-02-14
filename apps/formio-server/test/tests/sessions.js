@@ -46,6 +46,35 @@ module.exports = function(app, template, hook) {
 
       const roles = rolesRes.body.reduce((prev, role) => {prev[role.title.toLowerCase()] = role._id; return prev;}, {});
 
+       //Sets permissions to read all for the project to all roles.
+       await request(app)
+       .put(`/project/${stuff.project._id}`)
+       .set("x-jwt-token", stuff.admin.token)
+       .send({
+         access: [
+           {
+             type: "create_all",
+             roles: [roles.administrator],
+           },
+           {
+             type: "read_all",
+             roles: [
+               roles.administrator,
+               roles.authenticated,
+               roles.anonymous
+             ],
+           },
+           {
+             type: "update_all",
+             roles: [roles.administrator],
+           },
+           {
+             type: "delete_all",
+             roles: [roles.administrator],
+           },
+         ],
+       })
+
       // Set owner permissions on user
       const permRes = await request(app)
         .put(`/project/${stuff.project._id}/user`)
@@ -145,7 +174,7 @@ module.exports = function(app, template, hook) {
 
     it('A user can use the first token', async () => {
       const res = await request(app)
-        .get(`/project/${stuff.project._id}/form`)
+        .get(`/project/${stuff.project._id}/current`)
         .set('x-jwt-token', stuff.user1.token1);
 
       assert.equal(res.status, 200);
@@ -153,7 +182,7 @@ module.exports = function(app, template, hook) {
 
     it('A user can use the second token', async () => {
       const res = await request(app)
-        .get(`/project/${stuff.project._id}/form`)
+        .get(`/project/${stuff.project._id}/current`)
         .set('x-jwt-token', stuff.user1.token2);
 
       assert.equal(res.status, 200);
@@ -163,7 +192,7 @@ module.exports = function(app, template, hook) {
       // Wait one second so the iat is not the same and the token will be unique.
       await new Promise((resolve) => setTimeout(resolve, 1000));
       const res = await request(app)
-        .get(`/project/${stuff.project._id}/form`)
+        .get(`/project/${stuff.project._id}/current`)
         .set('x-jwt-token', stuff.user1.token1);
 
       assert.equal(res.status, 200);
@@ -176,7 +205,7 @@ module.exports = function(app, template, hook) {
 
     it('A user gets a new token on each request for token 2', async () => {
       const res = await request(app)
-        .get(`/project/${stuff.project._id}/form`)
+        .get(`/project/${stuff.project._id}/current`)
         .set('x-jwt-token', stuff.user1.token2);
 
       assert.equal(res.status, 200);
@@ -199,7 +228,7 @@ module.exports = function(app, template, hook) {
 
     it('A user can not use an original token for a session that is logged out', async () => {
       const res = await request(app)
-        .get(`/project/${stuff.project._id}/form`)
+        .get(`/project/${stuff.project._id}/current`)
         .set('x-jwt-token', stuff.user1.token1);
 
       assert.equal(res.status, 440);
@@ -207,7 +236,7 @@ module.exports = function(app, template, hook) {
 
     it('A user can not use a derived token for a session that is logged out', async () => {
       const res = await request(app)
-        .get(`/project/${stuff.project._id}/form`)
+        .get(`/project/${stuff.project._id}/current`)
         .set('x-jwt-token', stuff.user1.token3);
 
       assert.equal(res.status, 440);
@@ -215,7 +244,7 @@ module.exports = function(app, template, hook) {
 
     it('A user can use a token for a session that is not logged out', async () => {
       const res = await request(app)
-        .get(`/project/${stuff.project._id}/form`)
+        .get(`/project/${stuff.project._id}/current`)
         .set('x-jwt-token', stuff.user1.token2);
 
       assert.equal(res.status, 200);
@@ -223,7 +252,7 @@ module.exports = function(app, template, hook) {
 
     it('A user can use a derived token for a session that is not logged out', async () => {
       const res = await request(app)
-        .get(`/project/${stuff.project._id}/form`)
+        .get(`/project/${stuff.project._id}/current`)
         .set('x-jwt-token', stuff.user1.token4);
 
       assert.equal(res.status, 200);
@@ -249,7 +278,7 @@ module.exports = function(app, template, hook) {
       // Wait one second so the iat is not the same and the token will be unique.
       await new Promise((resolve) => setTimeout(resolve, 1000));
       const res = await request(app)
-        .get(`/project/${stuff.project._id}/form`)
+        .get(`/project/${stuff.project._id}/current`)
         .set('x-jwt-token', stuff.user1.token1);
 
       assert.equal(res.status, 200);
@@ -276,7 +305,7 @@ module.exports = function(app, template, hook) {
 
     it('Existing tokens for a session still work', async () => {
       const res = await request(app)
-        .get(`/project/${stuff.project._id}/form`)
+        .get(`/project/${stuff.project._id}/current`)
         .set('x-jwt-token', stuff.user1.token1);
 
       assert.equal(res.status, 200);
@@ -284,7 +313,7 @@ module.exports = function(app, template, hook) {
 
     it('A user can not use an original token for a session when password has been changed', async () => {
       const res = await request(app)
-        .get(`/project/${stuff.project._id}/form`)
+        .get(`/project/${stuff.project._id}/current`)
         .set('x-jwt-token', stuff.user1.token2);
 
       assert.equal(res.status, 440);
@@ -292,7 +321,7 @@ module.exports = function(app, template, hook) {
 
     it('A user can not use a derived token for a session when password has been changed', async () => {
       const res = await request(app)
-        .get(`/project/${stuff.project._id}/form`)
+        .get(`/project/${stuff.project._id}/current`)
         .set('x-jwt-token', stuff.user1.token4);
 
       assert.equal(res.status, 440);

@@ -52,6 +52,7 @@ module.exports = function(app) {
       init: require('./on/init')(app),
       formRequest: require('./on/formRequest')(app),
       validateEmail: require('./on/validateEmail')(app),
+      submissionCollection: require('./on/submissionCollection')(app),
     },
     alter: {
       formio: require('./alter/formio')(app),
@@ -81,6 +82,10 @@ module.exports = function(app) {
       fieldActions: require('./alter/fieldActions')(app),
       propertyActions: require('./alter/propertyActions')(app),
       configFormio: require('./alter/configFormio'),
+      schemaIndex(index) {
+        index.project = 1;
+        return index;
+      },
       log() {
         const [event, req, ...args] = arguments;
         log(req.uuid, req.projectId || 'NoProject', event, ...args);
@@ -681,6 +686,9 @@ module.exports = function(app) {
           // We have some groups that we need to validate.
           if (groups.length) {
             const groupsMap = groups.reduce((result, groupRole) => {
+              if (!groupRole) {
+                return;
+              }
               const [groupId, role = null] = groupRole.toString().split(':');
               return {
                 ...result,
@@ -1314,6 +1322,9 @@ module.exports = function(app) {
 
       importOptions(options, req, res) {
         const currentProject = formioServer.formio.cache.currentProject(req);
+        if (!(options instanceof Object)) {
+          options = {};
+        }
         options._id = currentProject._id;
         options.name = currentProject.name;
         options.machineName = currentProject.machineName;
@@ -1362,34 +1373,10 @@ module.exports = function(app) {
           .uniq()
           .value();
 
-        // Synchronize the user teams with teams they were added to.
-        const syncUserTeams = (user, teams) => {
-          // Do not perform if they have ssoTeams enabled.
-          if (formioServer.formio.config.ssoTeams) {
-            return;
-          }
-          // If the teams length changes, then this means that maybe they were removed from some teams. We need
-          // to perform a quick cleanup of their accepted teams array to ensure we don't have lingering teams sticking
-          // around.
-          if (
-            user.metadata &&
-            user.metadata.teams &&
-            (teams.length !== user.metadata.teams.length)
-          ) {
-            user.metadata.teams = teams;
-            formioServer.formio.resources.submission.model.update(
-              {_id: user._id},
-              {$set: {'metadata.teams': user.metadata.teams}},
-              _.noop
-            );
-          }
-        };
-
-        formioServer.formio.teams.getTeams(user, true, true, true)
+        formioServer.formio.teams.getTeams(user, false, true)
           .then((teams) => {
             if (!teams || !teams.length) {
-              syncUserTeams(user, []);
-              return user;
+              return next(null, user);
             }
 
             // Filter the teams to only contain the team ids.
@@ -1400,10 +1387,10 @@ module.exports = function(app) {
               .uniq()
               .value();
 
-            syncUserTeams(user, user.teams);
-            return user;
-          })
-          .nodeify(next);
+            next(null, user);
+          }).catch((err) => {
+            next(err);
+          });
       },
 
       /**
