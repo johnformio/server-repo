@@ -4,13 +4,16 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## 7.2.0-rc.1
 ### Added
  - FOR-2866: added hook for getting proper mongo collection
  - FIO-1196: Added SQLConector2 support.
  - FIO-841: Implements the Dev License.
- 
+ - Adding expiring action items.
+ - FIO-889 and FIO-1368: Implements the CSP, Strict-Transport-Security and Referrer Policy. Implements the portal-check endpoint for CORS policy.  
+
 ### Fixed
+ - FIO-1246: fix server fail after submitting an editted password field value
  - FIO-1282: Fixes an issue when the server was crashing if doesn't reach manager index.html
  - FOR-2709: Makes changing 'tags', 'controller', 'properties' and 'settings' form's properties cause creating a new revision if allowed
  - FIO-1138: Fixed possibility to update teams in protected mode. 
