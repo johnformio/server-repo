@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.2.0-rc.2
+### Added
+ - Adding expiring action items.
+ - FIO-889 and FIO-1368: Implements the CSP, Strict-Transport-Security and Referrer Policy. Implements the portal-check endpoint for CORS policy.
+ - Made the health endpoint for ECB
+
+### Fixed
+ - FIO-1140: Fixes an issue where server adds formRevision property to the nested form
+
+### Changed
+ - Upgrade portal@7.3.0-rc.3
+ - Upgrade formiojs@4.13.0-rc.10
+
 ## 7.2.0-rc.1
 ### Added
  - FOR-2866: added hook for getting proper mongo collection
