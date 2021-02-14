@@ -20,6 +20,7 @@ const cors = require('cors');
 const debug = {
   startup: require('debug')('formio:startup')
 };
+const RequestCache = require('./src/util/requestCache');
 
 const helmet = _helmet({
   hsts: {
@@ -31,6 +32,9 @@ const helmet = _helmet({
 module.exports = function(options) {
   options = options || {};
   var q = Q.defer();
+
+  // Create cache for requests
+  const requestCache = new RequestCache();
 
   // Use the express application.
   var app = options.app || express();
@@ -126,6 +130,8 @@ module.exports = function(options) {
 
     next();
   });
+
+  app.use(require('./src/middleware/requestCache')(requestCache));
 
   // Create the formio server.
   debug.startup('Creating Form.io Core Server');
@@ -292,7 +298,30 @@ module.exports = function(options) {
 
     // The formio app sanity endpoint.
     debug.startup('Attaching middleware: Health Check');
-    app.get('/health', require('./src/middleware/health')(app.formio.formio), formio.update.sanityCheck);
+    app.get(
+      '/health',
+      (req, res, next) => {
+        if (config.verboseHealth) {
+          req.verboseHealth = true;
+        }
+
+        next();
+      },
+      require('./src/middleware/health')(app.formio.formio),
+      formio.update.sanityCheck,
+      app.formio.formio.middleware.mongodbConnectionState(app.formio.formio),
+      require('./src/middleware/requestCount')(requestCache),
+      (req, res) => {
+      const {requestCount, mongodbConnectionState} = req;
+      const response = {
+        agregatedStatus: res.statusCode === 200 ? 'UP' : 'DOWN',
+        requestCount,
+        mongodbConnectionState,
+        license: Boolean(app.license),
+      };
+
+      res.send(response);
+    });
 
     // Respond with default server information.
     debug.startup('Attaching middleware: Project Index');
