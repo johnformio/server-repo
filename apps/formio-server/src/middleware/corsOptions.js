@@ -56,22 +56,6 @@ module.exports = function(router) {
       return callback(null, pass);
     }
 
-    // Disallow CORS for authoring stages.
-    if (
-      !_.get(req, 'projectLicense.live', true) &&
-      req.url.includes('/submission')
-    ) {
-      if (
-        whitelist.includes(req.header('Origin')) ||
-        router.formio.formio.origin === req.header('Origin')
-      ) {
-        return callback(null, pass);
-      }
-      else {
-        return callback(null, fail);
-      }
-    }
-
     // Load the project settings.
     router.formio.formio.hook.settings(req, function(err, settings) {
       if (err) {
@@ -81,10 +65,30 @@ module.exports = function(router) {
         return callback(err);
       }
 
-      // Build the list of supported domains.
       settings = settings || {};
+      const domain = settings.portalDomain || '';
+
+       // Disallow CORS for authoring stages.
+      if (
+        !_.get(req, "projectLicense.live", true) &&
+        req.url.includes("/submission")
+      ) {
+        whitelist.push(domain);
+
+        if (
+          whitelist.includes(req.header("Origin")) ||
+          router.formio.formio.origin === req.header("Origin")
+        ) {
+          return callback(null, pass);
+        }
+        else {
+          return callback(null, fail);
+        }
+      }
+
+      // Build the list of supported domains.
       const cors = settings.cors || '*';
-      whitelist = whitelist.concat(cors.split(/[\s,]+/));
+      whitelist = whitelist.concat(cors.split(/[\s,]+/), domain);
 
       // Support * for domain name.
       if (whitelist.indexOf('*') !== -1) {
