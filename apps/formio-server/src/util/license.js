@@ -2,7 +2,8 @@
 
 const config = require('../../config.js');
 const {utilization} = require('../util/utilization');
-const {JWK, JWS} = require('jose');
+const crypto = require('crypto');
+const {default: compactVerify} = require('jose/jws/compact/verify');
 
 const terms = {};
 
@@ -123,7 +124,7 @@ async function performValidationRound(app) {
 
   if (config.licenseRemote) {
     try {
-      const pubkey = JWK.asKey(`-----BEGIN PUBLIC KEY-----
+      const pubkey = crypto.createPublicKey(`-----BEGIN PUBLIC KEY-----
 MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAyESFs0sS16TAOSiLE/XQ
 tieqYESD265xHfLGoffQBhyoEJ+Bfma9NvSu6WYU5T8Y6mMz3bXtNGy32AMVvRNa
 bNGi/BZxu0ZmR7GOTh8y58GQEW/hQ4qXfgW7UxBCDoCmZhnU3gtO2yW8GlWZl4WN
@@ -137,9 +138,9 @@ uppscNxvgK8Ljy/DJqBiX42idTmybr5GYAU5hcw+JcdPlLikn6whNM7kUCcl1aNu
 IzaxfXn16qCWfwKGE+VXkSM7OAS5iunoyHr5QYL9bUh2+vKshM/pnhvoMfDXnIZR
 3RR5A++atmNeqWrkKVPOpPMCAwEAAQ==
 -----END PUBLIC KEY-----`);
-      const payload = JWS.verify(config.licenseKey, pubkey);
+      const {payload} = await compactVerify(config.licenseKey, pubkey);
       // eslint-disable-next-line no-console
-      if (payload.exp < Date.now()) {
+      if (JSON.parse(payload.toString()).exp < Date.now()) {
         console.log('License is expired');
         process.exit();
       }
