@@ -116,6 +116,7 @@ module.exports = (formio) => async (req, res, next) => {
     const cachedProjectUtilization = cache.get(projectId);
     if (cachedProjectUtilization) {
       /* eslint-disable-next-line callback-return */
+      req.projectLicense = cachedProjectUtilization;
       next();
     }
 
