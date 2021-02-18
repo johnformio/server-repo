@@ -251,7 +251,7 @@ config.formio.mongoSecret = getConfig('DB_SECRET', 'abc123');
 config.formio.mongoSecretOld = getConfig('DB_SECRET_OLD', false);
 
 // TODO: Need a better way of setting the formio specific configurations.
-if (getConfig('SENDGRID_USERNAME')) {
+if (getConfig('SENDGRID_PASSWORD')) {
   config.formio.email = {};
   config.formio.email.type = 'sendgrid';
   config.formio.email.username = getConfig('SENDGRID_USERNAME');
