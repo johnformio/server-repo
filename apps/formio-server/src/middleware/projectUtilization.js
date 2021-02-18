@@ -120,35 +120,35 @@ module.exports = (formio) => async (req, res, next) => {
       next();
     }
 
-    const result = await utilization({
-      ...getProjectContext(req),
-      licenseKey,
-    });
-
-    req.projectLicense = result;
-
-    const plan = _.get(result, 'terms.plan') || 'basic';
-
-    // If the plan is not correct, fix it.
-    if (plan !== req.currentProject.plan) {
-      req.currentProject.plan = plan;
-      await new Promise((resolve) => {
-        formio.mongoose.models.project.findOne({
-          _id: req.currentProject._id,
-        }).exec((err, project) => {
-          if (err || !project) {
-            return resolve();
-          }
-          project.plan = plan;
-          project.save();
-          return resolve();
-        });
+    if (!process.env.LICENSE_REMOTE) {
+      const result = await utilization({
+        ...getProjectContext(req),
+        licenseKey,
       });
+
+      req.projectLicense = result;
+
+      const plan = _.get(result, 'terms.plan') || 'basic';
+
+      // If the plan is not correct, fix it.
+      if (plan !== req.currentProject.plan) {
+        req.currentProject.plan = plan;
+        await new Promise((resolve) => {
+          formio.mongoose.models.project.findOne({
+            _id: req.currentProject._id,
+          }).exec((err, project) => {
+            if (err || !project) {
+              return resolve();
+            }
+            project.plan = plan;
+            project.save();
+            return resolve();
+          });
+        });
+      }
+      // Cache response.
+      cache.set(projectId, result, CACHE_TIME);
     }
-
-    // Cache response.
-    cache.set(projectId, result, CACHE_TIME);
-
     // Don't call next if we already did it before
     if (!cachedProjectUtilization) {
       return next();
