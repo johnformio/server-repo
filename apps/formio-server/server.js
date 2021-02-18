@@ -101,6 +101,12 @@ module.exports = function(options) {
               return matched;
             }
           )
+          .replace(/https:\/\/license.form.io/gi, (matched) => {
+            if (config.licenseServer && config.licenseServer !== matched) {
+              return config.licenseServer;
+            }
+            return matched;
+          })
         );
       });
     });
