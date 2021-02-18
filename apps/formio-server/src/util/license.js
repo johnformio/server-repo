@@ -138,9 +138,10 @@ uppscNxvgK8Ljy/DJqBiX42idTmybr5GYAU5hcw+JcdPlLikn6whNM7kUCcl1aNu
 IzaxfXn16qCWfwKGE+VXkSM7OAS5iunoyHr5QYL9bUh2+vKshM/pnhvoMfDXnIZR
 3RR5A++atmNeqWrkKVPOpPMCAwEAAQ==
 -----END PUBLIC KEY-----`);
-      const {payload} = await compactVerify(config.licenseKey, pubkey);
+      let {payload} = await compactVerify(config.licenseKey, pubkey);
+      payload = JSON.parse(payload.toString());
       // eslint-disable-next-line no-console
-      if (JSON.parse(payload.toString()).exp < Date.now()) {
+      if (payload.exp < Date.now()) {
         console.log('License is expired');
         process.exit();
       }
