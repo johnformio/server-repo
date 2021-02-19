@@ -298,7 +298,7 @@ sanitized = _.pick(sanitized, debugConfigVars);
 const debugFormioConfigVars = getConfig('DEBUG_CONFIG_FORMIO_VARS', 'domain,schema').split(',') || [];
 sanitized.formio = _.pick(_.clone(config.formio), debugFormioConfigVars);
 
-config.maxBodySize = getConfig('MAX_BODY_SIZE', '16mb');
+config.maxBodySize = getConfig('MAX_BODY_SIZE', '25mb');
 
 // Only output sanitized data.
 debug.config(sanitized);
