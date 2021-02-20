@@ -41,11 +41,7 @@
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-cache-controller": "^1.1.0",
-<<<<<<< HEAD
     "formio": "^2.1.0-rc.8",
-=======
-    "formio": "^2.1.0-rc.4",
->>>>>>> 3fbdae8a (FIO-1277: Fixing the evaluations to use vm2 to add more security.)
     "formio-workers": "1.14.10",
     "formiojs": "^4.13.0-rc.11",
     "googleapis": "^33.0.0",
