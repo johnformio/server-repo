@@ -41,7 +41,7 @@
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-cache-controller": "^1.1.0",
-    "formio": "^2.1.0-rc.2",
+    "formio": "^2.1.0-rc.4",
     "formio-workers": "1.14.10",
     "formiojs": "^4.13.0-rc.10",
     "googleapis": "^33.0.0",
@@ -80,6 +80,7 @@
     "twilio": "^3.56.0",
     "universal-analytics": "^0.4.22",
     "uuid": "^8.3.2",
+    "vm2": "^3.9.2",
     "webpack": "^4.44.2",
     "webpack-obfuscator": "^2.6.0",
     "xml2js": "^0.4.23"

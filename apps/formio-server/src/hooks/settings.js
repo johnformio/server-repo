@@ -7,7 +7,7 @@ const async = require('async');
 const fs = require('fs');
 const log = require('debug')('formio:log');
 const util = require('../util/util');
-const vm = require('vm');
+const {VM} = require('vm2');
 
 module.exports = function(app) {
   const formioServer = app.formio;
@@ -1415,43 +1415,44 @@ module.exports = function(app) {
           req.currentProject.settings.tokenParse
         ) {
           try {
-            const script = new vm.Script(req.currentProject.settings.tokenParse);
-            const sandbox = {
-              token: decoded,
-              roles: req.currentProject.roles
-            };
-            script.runInContext(vm.createContext(sandbox), {
-              timeout: 500
-            });
-            if (!sandbox.data.hasOwnProperty('user')) {
+            const data = (new VM({
+              timeout: 500,
+              sandbox: {
+                token: decoded,
+                roles: req.currentProject.roles
+              },
+              eval: false,
+              fixAsync: true
+            })).run(req.currentProject.settings.tokenParse);
+            if (!data.hasOwnProperty('user')) {
               throw new Error('User not defined on data.');
             }
-            if (typeof sandbox.data.user !== 'object') {
+            if (typeof data.user !== 'object') {
               throw new Error('User not an object.');
             }
-            if (!sandbox.data.user.hasOwnProperty('_id')) {
+            if (!data.user.hasOwnProperty('_id')) {
               throw new Error('_id not defined on user.');
             }
-            if (typeof sandbox.data.user._id !== 'string') {
+            if (typeof data.user._id !== 'string') {
               throw new Error('_id not a string.');
             }
-            if (!sandbox.data.user.hasOwnProperty('roles')) {
+            if (!data.user.hasOwnProperty('roles')) {
               throw new Error('roles not defined on user.');
             }
-            if (!Array.isArray(sandbox.data.user.roles)) {
+            if (!Array.isArray(data.user.roles)) {
               throw new Error('roles not an array.');
             }
 
             // Make sure assigned role ids are actually in the project.
-            const roleIds = _.map(req.currentProject.roles, role => role._id);
-            sandbox.data.user.roles.forEach(roleId => {
+            const roleIds = _.map(req.currentProject.roles, role => role._id.toString());
+            data.user.roles.forEach(roleId => {
               if (!roleIds.includes(roleId)) {
                 throw new Error('Invalid role id. Not in project.');
               }
             });
 
-            req.token = sandbox.data;
-            req.user = sandbox.user.data;
+            req.token = data;
+            req.user = data.user;
             return false;
           }
           catch (err) {
