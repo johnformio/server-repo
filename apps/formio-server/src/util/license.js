@@ -146,8 +146,8 @@ IzaxfXn16qCWfwKGE+VXkSM7OAS5iunoyHr5QYL9bUh2+vKshM/pnhvoMfDXnIZR
         process.exit();
       }
       const numberOfProjects = await app.formio.formio.resources.project.model.estimatedDocumentCount({deleted: {$ne: null}});
-      if (payload.terms.projectsNumberLimit && numberOfProjects>payload.terms.projectsNumberLimit) {
-        console.log(`Exceeded the allowed number of projects. Max number is ${payload.terms.projectsNumberLimit}`);
+      if (payload.terms.projectsNumberLimit && numberOfProjects-1>payload.terms.projectsNumberLimit) {
+        console.log(`Exceeded the allowed number of projects. Max number of your projects is ${payload.terms.projectsNumberLimit}`);
         process.exit();
       }
       console.log('License key validated remotely');
