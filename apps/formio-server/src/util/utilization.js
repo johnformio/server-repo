@@ -61,7 +61,7 @@ const getProjectContext = (req, isNew = false) => {
 
 async function utilization(body, action = '', qs = {terms: 1}) {
   const hosted = process.env.FORMIO_HOSTED;
-  const onPremiseScopes = ['apiServer', 'pdfServer', 'project', 'tenant', 'stage', 'formManager', 'accessibility'];
+  const onPremiseScopes = ['apiServer', 'pdfServer', 'project', 'tenant', 'stage', 'formManager', 'accessibility', 'submissionServer'];
 
   // If on premise and not scoped for on premise, skip check.
   if (!hosted && !onPremiseScopes.includes(body.type)) {
