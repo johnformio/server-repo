@@ -4,11 +4,17 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.0-rc.4
+### Fixed
+- Upgrade formiojs@4.13.0-rc.11
+ - Upgrade portal@7.2.0-rc.4
+ - Upgrade formio@2.1.0-rc.8
+
 ## 7.1.0-rc.3
-#### Fixed
+### Fixed
  - Fixing issues where logging into some users would cause "Unauthorized" to show.
 
-#### Changed
+### Changed
  - FIO-1026: When creating a new stage or tenant, allow selecting which stage to copy from (instead of only live).
 
 ## 7.1.0-rc.2
