@@ -49,7 +49,7 @@
     "is-url": "^1.2.4",
     "javascript-obfuscator": "^2.10.3",
     "jira-connector": "^3.0.2",
-    "jose": "^2.0.2",
+    "jose": "^3.6.2",
     "jslogger": "^1.0.3",
     "jsonwebtoken": "^8.5.1",
     "keygenerator": "^1.0.4",
