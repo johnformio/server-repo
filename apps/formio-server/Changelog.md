@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## 7.1.0-rc.5
 ### Fixed
  - FIO-1277: Fixing the evaluations to use vm2 to add more security.
+ - Upgrade formio@2.1.0-rc.8 
 
 ## 7.1.0-rc.4
 ### Fixed
