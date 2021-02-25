@@ -199,6 +199,9 @@ module.exports = function(options) {
   debug.startup('Attaching middleware: Project & Roles Loader');
   app.use(require('./src/middleware/loadProjectContexts')(app.formio.formio));
 
+  // Set the project query middleware for filtering disabled projects
+  app.use(require('./src/middleware/projectQueryLimits'));
+
   // CORS Support
   debug.startup('Attaching middleware: CORS');
   var corsMiddleware = require('./src/middleware/corsOptions')(app);
