@@ -213,20 +213,20 @@ module.exports = function(app) {
 
       emailTransports(transports, settings, req, cb) {
         settings = settings || {};
-        // Limit basic and independent
+        // Limit independent
         if (req && req.primaryProject) {
-          if (req.primaryProject.plan === 'basic') {
-            transports = [{
-              transport: 'default',
-              title: 'Default (limit 100 per month)'
-            }];
-          }
           if (req.primaryProject.plan === 'independent') {
             transports = [{
               transport: 'default',
               title: 'Default (limit 1000 per month)'
             }];
           }
+          if (req.primaryProject.plan === 'commercial' || req.primaryProject.plan === 'trial') {
+            transports.push({
+              transport: 'default',
+              title: 'Default (limit 1000 per month)'
+            });
+           }
         }
         return cb(null, transports);
       },
