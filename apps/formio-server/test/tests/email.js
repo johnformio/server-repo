@@ -4,6 +4,7 @@ var assert = require('assert');
 var async = require('async');
 var chance = new (require('chance'))();
 let EventEmitter = require('events');
+const defaultEmail = process.env.DEFAULT_EMAIL_SOURCE || 'no-reply@example.com';
 
 module.exports = function(app, template, hook) {
   describe('Emails', function() {
@@ -214,7 +215,7 @@ module.exports = function(app, template, hook) {
           priority: 0,
           settings: {
             resources: ['user'],
-            from: 'no-reply@form.io',
+            from: defaultEmail,
             label: 'Send Reset Password',
             message: '{{ resetlink }}',
             password: 'password',
