@@ -444,12 +444,12 @@ module.exports = (router) => {
           try {
             const newPayload = (new VM({
               timeout: 500,
-              sandbox: {
+              sandbox: _.cloneDeep({
                 externalId,
                 payload,
                 headers: options.headers,
                 config: req.currentProject && req.currentProject.hasOwnProperty('config') ? req.currentProject.config : {},
-              },
+              }),
               eval: false,
               fixAsync: true
             })).run(settings.transform);

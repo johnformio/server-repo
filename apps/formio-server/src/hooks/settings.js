@@ -1414,10 +1414,10 @@ module.exports = function(app) {
           try {
             const data = (new VM({
               timeout: 500,
-              sandbox: {
+              sandbox: _.cloneDeep({
                 token: decoded,
                 roles: req.currentProject.roles
-              },
+              }),
               eval: false,
               fixAsync: true
             })).run(req.currentProject.settings.tokenParse);
