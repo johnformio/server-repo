@@ -269,7 +269,8 @@ module.exports = function(options) {
   app.post('/project/:projectId/upload', uploadPDF);
 
   // Adding google analytics to our api.
-  if (config.gaTid) {
+  // Does not apply if deployed
+  if (config.gaTid && process.env.FORMIO_HOSTED) {
     debug.startup('Attaching middleware: Google Analytics');
     var ua = require('universal-analytics');
     app.use(function(req, res, next) {
