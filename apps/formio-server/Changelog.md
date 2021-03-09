@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.0-rc.6
+### Changed
+ - cloneDeep the vm sandbox.
+ - Upgrade formio@2.1.0-rc.10
+ - Upgrade formio-workers@1.14.13
+
 ## 7.1.0-rc.5
 ### Fixed
  - FIO-1277: Fixing the evaluations to use vm2 to add more security.
