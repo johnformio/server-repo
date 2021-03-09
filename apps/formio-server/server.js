@@ -225,6 +225,8 @@ module.exports = function(options) {
   app.get('/project/:projectId/:formAlias/submission/:submissionId/download/:fileId', downloadPDF);
   app.get('/project/:projectId/form/:formId/submission/:submissionId/download/:fileId', downloadPDF);
 
+  app.post('/project/:projectId/form/:formId/download', downloadPDF);
+
   debug.startup('Attaching middleware: PDF Upload');
   const uploadPDF = [
     require('./src/middleware/remoteToken')(app),
