@@ -11,6 +11,7 @@ module.exports = function(app, template, hook) {
 
   describe('Token swap', function(){
     let oauthSettings;
+    let token;
 
     describe('Bootstrap', function() {
 
@@ -32,14 +33,14 @@ module.exports = function(app, template, hook) {
            assert(oauthSettings.openid.clientId);
            assert(oauthSettings.openid.clientSecret);
            assert(oauthSettings.openid.userInfoURI);
+           assert(oauthSettings.openid.roles);
 
            // Store the JWT for future API calls.
-            template.formio.owner.token = res.headers['x-jwt-token'];
+           template.formio.owner.token = res.headers['x-jwt-token'];
 
-            done();
+           done();
           });
       });
-
     });
 
     describe ('Token swap', function() {
@@ -57,10 +58,25 @@ module.exports = function(app, template, hook) {
               assert(res.headers.hasOwnProperty('x-jwt-token'), 'The response should contain a `x-jwt-token` header.');
               assert(response.hasOwnProperty('data'), 'The response should contain an `data`.');
               assert(response.hasOwnProperty('roles'), 'The response should contain an `roles`.');
+              token = res.headers['x-jwt-token'];
 
               done();
             });
 
+      })
+
+      it('Check the received x-jwt-token', function(done){
+        request(app)
+        .get('/project/' + template.project._id)
+        .set('x-jwt-token', token)
+        .expect(200)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          done();
+        })
       })
     })
   })

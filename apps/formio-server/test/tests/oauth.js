@@ -154,6 +154,7 @@ module.exports = function(app, template, hook) {
 
     describe('Bootstrap', function() {
       it('Configure Project OAuth settings', function(done) {
+        oauthSettings.oauth.openid.roles = [{ role: template.roles.administrator._id.toString()}]
         var tempSettings = _.assign({}, template.project.settings, oauthSettings);
         request(app)
           .put('/project/' + template.project._id)
