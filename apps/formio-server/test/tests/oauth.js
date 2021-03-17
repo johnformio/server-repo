@@ -49,6 +49,12 @@ module.exports = function(app, template, hook) {
         facebook: {
           clientId: 'TESTCLIENTIDFACEBOOK',
           clientSecret: 'TESTCLIENTSECRETFACEBOOK'
+        },
+        openid: {
+          clientId: 'TEST_CLIENT_ID',
+          clientSecret: 'TEST_CLIENT-SECRET',
+          authURL: 'https://mydomain.com',
+          userInfoURI: 'https://openIdProvider.com/userInfo.com'
         }
       },
     };
@@ -1557,5 +1563,6 @@ module.exports = function(app, template, hook) {
     });
 
     require('./oauth/github')(app, template, hook);
+    require('./oauth/tokenSwap')(app, template, hook);
   });
 };
