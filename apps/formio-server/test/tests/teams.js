@@ -1785,22 +1785,6 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
-      it('Create a new team', (done) => {
-        request(app)
-        .post('/team')
-        .set('x-jwt-token', template.formio.teamAdmin.token)
-        .send({
-          data: {
-            name: chance.word()
-          }
-        })
-        .expect('Content-Type', /json/)
-        .expect(201)
-        .end(function(err, res) {
-          if (err) {
-            return done(err);
-          }
-
           // Store the JWT for future API calls.
           template.formio.teamAdmin.token = res.headers['x-jwt-token'];
 
