@@ -797,7 +797,7 @@ module.exports = function(app, template, hook) {
             request(app)
               .put('/project/' + teamProject._id)
               .set('x-jwt-token', template.formio.teamAdmin.token)
-              .send(oldResponse)
+              .send({ access: oldResponse.access.concat(teamAccess) })
               .expect('Content-Type', /json/)
               .expect(200)
               .end(function(err, res) {
@@ -1065,7 +1065,7 @@ module.exports = function(app, template, hook) {
             request(app)
               .put('/project/' + teamProject._id)
               .set('x-jwt-token', template.formio.teamAdmin.token)
-              .send(oldResponse)
+              .send({ access: oldResponse.access.concat(teamAccess) })
               .expect('Content-Type', /json/)
               .expect(200)
               .end(function(err, res) {
@@ -1156,7 +1156,7 @@ module.exports = function(app, template, hook) {
             request(app)
               .put('/project/' + teamProject._id)
               .set('x-jwt-token', template.formio.teamAdmin.token)
-              .send(oldResponse)
+              .send({ access: oldResponse.access.concat(teamAccess) })
               .expect('Content-Type', /json/)
               .expect(200)
               .end(function(err, res) {
@@ -1246,12 +1246,11 @@ module.exports = function(app, template, hook) {
 
             // Store the JWT for future API calls.
             template.formio.teamAdmin.token = res.headers['x-jwt-token'];
-            oldResponse.access = newAccess;
 
             request(app)
               .put('/project/' + teamProject._id)
               .set('x-jwt-token', template.formio.teamAdmin.token)
-              .send(oldResponse)
+              .send({ access: newAccess })
               .expect('Content-Type', /json/)
               .expect(200)
               .end(function(err, res) {
@@ -1383,6 +1382,10 @@ module.exports = function(app, template, hook) {
     });
 
     describe('Multi Team Tests', function() {
+      if (docker) {
+        return;
+      }
+
       let testTeamProject = null;
       it('Create another project', function(done) {
         request(app)
@@ -1782,6 +1785,22 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
+      it('Create a new team', (done) => {
+        request(app)
+        .post('/team')
+        .set('x-jwt-token', template.formio.teamAdmin.token)
+        .send({
+          data: {
+            name: chance.word()
+          }
+        })
+        .expect('Content-Type', /json/)
+        .expect(201)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
           // Store the JWT for future API calls.
           template.formio.teamAdmin.token = res.headers['x-jwt-token'];
 
@@ -2000,7 +2019,7 @@ module.exports = function(app, template, hook) {
             request(app)
               .put('/project/' + teamProject._id)
               .set('x-jwt-token', template.formio.teamAdmin.token)
-              .send(oldResponse)
+              .send({ access: oldResponse.access.concat(teamAccess) })
               .expect('Content-Type', /json/)
               .expect(200)
               .end(function(err, res) {
@@ -2530,12 +2549,11 @@ module.exports = function(app, template, hook) {
 
             // Store the JWT for future API calls.
             template.formio.teamAdmin.token = res.headers['x-jwt-token'];
-            oldResponse.access = newAccess;
 
             request(app)
               .put('/project/' + teamProject._id)
               .set('x-jwt-token', template.formio.teamAdmin.token)
-              .send(oldResponse)
+              .send({ access: newAccess })
               .expect('Content-Type', /json/)
               .expect(200)
               .end(function(err, res) {
@@ -2579,12 +2597,11 @@ module.exports = function(app, template, hook) {
 
             // Store the JWT for future API calls.
             template.formio.teamAdmin.token = res.headers['x-jwt-token'];
-            oldResponse.access = oldResponse.access.concat(teamAccess);
 
             request(app)
               .put('/project/' + teamProject._id)
               .set('x-jwt-token', template.formio.teamAdmin.token)
-              .send(oldResponse)
+              .send({ access: oldResponse.access.concat(teamAccess) })
               .expect('Content-Type', /json/)
               .expect(200)
               .end(function(err, res) {
@@ -3146,12 +3163,11 @@ module.exports = function(app, template, hook) {
 
             // Store the JWT for future API calls.
             template.formio.teamAdmin.token = res.headers['x-jwt-token'];
-            oldResponse.access = newAccess;
 
             request(app)
               .put('/project/' + teamProject._id)
               .set('x-jwt-token', template.formio.teamAdmin.token)
-              .send(oldResponse)
+              .send({ access: newAccess })
               .expect('Content-Type', /json/)
               .expect(200)
               .end(function(err, res) {
@@ -3195,12 +3211,11 @@ module.exports = function(app, template, hook) {
 
             // Store the JWT for future API calls.
             template.formio.teamAdmin.token = res.headers['x-jwt-token'];
-            oldResponse.access = oldResponse.access.concat(teamAccess);
 
             request(app)
               .put('/project/' + teamProject._id)
               .set('x-jwt-token', template.formio.teamAdmin.token)
-              .send(oldResponse)
+              .send({ access: oldResponse.access.concat(teamAccess) })
               .expect('Content-Type', /json/)
               .expect(200)
               .end(function(err, res) {
@@ -3493,6 +3508,11 @@ module.exports = function(app, template, hook) {
             var response = res.body;
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.deepEqual(_.omit(response.settings, ['licenseKey']), temp.settings);
+
+            if (docker) {
+              return done();
+            }
+
             app.formio.formio.resources.project.model.findOne({_id: teamProject._id}, function(err, project) {
               if(err) {
                 return done(err);
@@ -3792,12 +3812,11 @@ module.exports = function(app, template, hook) {
 
             // Store the JWT for future API calls.
             template.formio.teamAdmin.token = res.headers['x-jwt-token'];
-            oldResponse.access = newAccess;
 
             request(app)
               .put('/project/' + teamProject._id)
               .set('x-jwt-token', template.formio.teamAdmin.token)
-              .send(oldResponse)
+              .send({ access: newAccess })
               .expect('Content-Type', /json/)
               .expect(200)
               .end(function(err, res) {

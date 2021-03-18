@@ -33,6 +33,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FOR-2866: added hook for getting proper mongo collection
  - FIO-1196: Added SQLConector2 support.
  - FIO-841: Implements the Dev License.
+ 
+### Fixed
+ - FIO-1282: Fixes an issue when the server was crashing if doesn't reach manager index.html
+ - FOR-2709: Makes changing 'tags', 'controller', 'properties' and 'settings' form's properties cause creating a new revision if allowed
+ - FIO-1138: Fixed possibility to update teams in protected mode. 
+ - FIO-128: Fix saving custom properties in form revision.
+ - FOR-2763: Changed the default template for creating new projects that include the only Administrator for Read All
+ - FIO-1026: When creating a new stage or tenant, allow selecting which stage to copy from (instead of only live).
+ 
+### Changed
+ - FIO-920: Adding email support for Teams.
 
 ### Fixed
  - FIO-1282: Fixes an issue when the server was crashing if doesn't reach manager index.html
