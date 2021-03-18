@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.0-rc.7
+### Changed
+ - Upgrade formiojs@4.13.0-rc.19
+ - Upgrade portal@7.2.0-rc.5
+ - Upgrade formio@2.1.0-rc.13
+
 ## 7.1.0-rc.6
 ### Changed
  - cloneDeep the vm sandbox.
@@ -17,7 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## 7.1.0-rc.4
 ### Fixed
-- Upgrade formiojs@4.13.0-rc.11
+ - Upgrade formiojs@4.13.0-rc.11
  - Upgrade portal@7.2.0-rc.4
  - Upgrade formio@2.1.0-rc.8
 
