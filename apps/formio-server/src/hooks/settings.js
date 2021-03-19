@@ -736,6 +736,23 @@ module.exports = function(app) {
             return callback(null);
           }
         });
+        handlers.push((callback) => {
+          const permissionNames = ["create_all", "read_all", "update_all", "delete_all"];
+
+          // Set project "all" permissions to each instance.
+          permissionNames.forEach(name => {
+            if (access.form[name]) {
+              access.form[name] = _.uniq(access.form[name].concat(access.project[name]));
+            }
+            if (access.submission[name]) {
+              access.submission[name] = _.uniq(access.submission[name].concat(access.project[name]));
+            }
+            if (access.role[name]) {
+              access.role[name] = _.uniq(access.role[name].concat(access.project[name]));
+            }
+          });
+          return callback(null);
+        });
         return handlers;
       },
 
