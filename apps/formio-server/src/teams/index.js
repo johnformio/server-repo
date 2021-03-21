@@ -29,7 +29,7 @@ module.exports = function(app, formioServer) {
    * Ensure the user accessing this is authenticated.
    */
   const ensureAuthenticated = async (req, res, next) => {
-    if (!req.token || !req.token.user) {
+    if (!req.token || !req.token.user || !formioServer.formio.twoFa.is2FAuthenticated(req)) {
       return res.sendStatus(401);
     }
     const formioProject = await Teams.getFormioProject();

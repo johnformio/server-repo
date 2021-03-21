@@ -8,5 +8,7 @@ module.exports = (app) => (actions) => {
   actions.sqlconnector = require('../../actions/sqlconnector/SQLConnector')(formioServer);
   actions.group = require('../../actions/GroupAction')(formioServer);
   actions.webhook = require('../../actions/WebhookAction')(formioServer);
+  actions.twofalogin = require('../../actions/twoFa/twofalogin')(formioServer);
+  actions.twofareset = require('../../actions/twoFa/twofareset')(formioServer);
   return actions;
 };

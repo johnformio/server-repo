@@ -147,6 +147,7 @@ module.exports = function(options) {
   debug.startup('Attaching middleware: OAuth Providers');
   app.formio.formio.oauth = require('./src/oauth/oauth')(app.formio.formio);
 
+  app.formio.formio.twoFa = require('./src/authentication/2FA')(app.formio);
   // Establish our url alias middleware.
   debug.startup('Attaching middleware: Alias Handler');
   app.use(require('./src/middleware/alias')(app.formio.formio));
