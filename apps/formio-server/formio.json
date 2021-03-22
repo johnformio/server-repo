@@ -3633,7 +3633,7 @@
                 {
                   "components": [
                     {
-                      "label": "Turn On 2AF",
+                      "label": "Turn On 2FA",
                       "action": "custom",
                       "showValidations": false,
                       "block": true,
