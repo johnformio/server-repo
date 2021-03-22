@@ -92,13 +92,16 @@ module.exports = (formioServer) => {
       url = `${pdfUrls.local}/pdf/${pdfProject}/file/${fileId}/download`;
     }
 
+    const globalPdfSettings = _.get(project, 'settings.pdf', {});
+
     return fetch(url, {
       method: 'POST',
       qs: {...req.query, project: req.params.projectId},
       headers: headers,
       body: JSON.stringify({
         form,
-        submission
+        submission,
+        settings: globalPdfSettings
       }),
     });
   };
