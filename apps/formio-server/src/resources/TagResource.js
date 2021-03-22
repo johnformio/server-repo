@@ -10,6 +10,8 @@ module.exports = function(router, formioServer) {
   formio.middleware.tagHandler = require('../middleware/tagHandler')(router);
   formio.middleware.restrictToPlans = require('../middleware/restrictToPlans')(router);
   formio.middleware.deleteTagHandler = require('../middleware/deleteTagHandler')(router, formioServer);
+  formio.middleware.createTagChunks = require('../middleware/createTagChunks')(formio);
+  formio.middleware.getFullTagTemplate = require('../middleware/getFullTagTemplate')(formio);
 
   const hiddenFields = ['deleted', '__v'];
 
@@ -24,6 +26,7 @@ module.exports = function(router, formioServer) {
       formio.middleware.tagHandler
     ],
     afterGet: [
+      formio.middleware.getFullTagTemplate,
       formio.middleware.filterResourcejsResponse(hiddenFields)
     ],
     beforePatch: [
@@ -53,12 +56,27 @@ module.exports = function(router, formioServer) {
           else {
             req.body.template.tag = req.body.tag;
             req.body.owner = project.owner.toString();
+
             return next();
           }
         });
+      },
+      function(req, res, next) {
+        const template = {};
+        template.forms = req.body.template.forms;
+        template.resources = req.body.template.resources;
+        template.actions = req.body.template.actions;
+        req.templateData = template;
+
+        delete req.body.template.forms;
+        delete req.body.template.resources;
+        delete req.body.template.actions;
+        next();
       }
     ],
     afterPost: [
+      formio.middleware.createTagChunks,
+      formio.middleware.getFullTagTemplate,
       function(req, res, next) {
         formio.cache.loadCurrentProject(req, (err, project) => {
           project.tag = req.body.tag;
@@ -80,6 +98,15 @@ module.exports = function(router, formioServer) {
     ],
     beforeIndex: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
+      function(req, res, next) {
+        req.modelQuery = req.modelQuery || req.model || this.model;
+        req.modelQuery = req.modelQuery.find({chunk: {$ne: true}});
+
+        req.countQuery = req.countQuery || req.model || this.model;
+        req.countQuery = req.countQuery.find({chunk: {$ne: true}});
+
+        next();
+      },
       formio.middleware.tagHandler
     ],
     afterIndex: [
@@ -146,15 +173,15 @@ module.exports = function(router, formioServer) {
               project: project.project || project._id,
               deleted: {$eq: null}
             };
-            formio.mongoose.model('tag').findOne(search).exec((err, tag) => {
+            formio.mongoose.model('tag').find(search).exec((err, tags) => {
               if (err) {
                 return res.status(400).send(err);
               }
-              if (!tag) {
+              if (tags.length===0) {
                 return res.status(400).send('Tag not found.');
               }
 
-              const template = tag.template;
+              const template = _.merge(...tags.map(tag=>tag.template));
 
               Object.assign(template, _.pick(project, ['name', 'title', 'description', 'machineName']));
               const alters = hook.alter('templateAlters', {});
@@ -165,7 +192,7 @@ module.exports = function(router, formioServer) {
                   return res.status(400).send(err);
                 }
 
-                project.tag = tag.tag;
+                project.tag = tags[0].tag;
                 project.markModified('tag');
                 project.set('lastDeploy', Date.now());
                 project.save((err) => {
