@@ -2169,7 +2169,7 @@ module.exports = function(app, template, hook) {
             }
 
             var response = res.body;
-            assert.deepEqual(_.omit(teamProject, 'settings', 'billing', 'modified', 'public'), _.omit(response, 'modified', 'public', 'disabled'));
+            assert.deepEqual(_.omit(teamProject, 'settings', 'billing', 'modified', 'public', 'addConfigToForms'), _.omit(response, 'modified', 'public', 'disabled'));
 
             // Store the JWT for future API calls.
             template.formio.user1.token = res.headers['x-jwt-token'];
