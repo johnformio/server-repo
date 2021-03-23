@@ -230,6 +230,10 @@ module.exports = function(app) {
         }
         return cb(null, transports);
       },
+      hasEmailAccess(req) {
+        const noEmailPlans = ['basic'];
+        return !(req.projectLicense && noEmailPlans.includes(req.projectLicense.terms.plan));
+      },
       path(url, req) {
         return `/project/${req.projectId}${url}`;
       },
