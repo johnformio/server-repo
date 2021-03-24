@@ -32,69 +32,9 @@ module.exports = function(formio) {
         return next();
       }
 
-      // Load the formio project.
-      formio.cache.loadProjectByName(req, 'formio', function(err, formioProject) {
-        if (err || !formioProject) {
-          // If there is no formio project, then this means we are a remote environment. Set as admin and skip
-          // permission check.
-          if (err === 'Project not found') {
-            req.permissionsChecked = true;
-            req.isAdmin = true;
-          }
-          return next();
-        }
-
-        // Load the user object.
-        const query = {
-          name: 'user',
-          project: formioProject._id,
-          deleted: {$eq: null}
-        };
-
-        // Load the user form.
-        formio.resources.form.model.findOne(query).exec(function(err, userResource) {
-          if (err || !userResource) {
-            req.permissionsChecked = true;
-            req.isAdmin = true;
-            return next();
-          }
-
-          // Load the owner as the current user.
-          formio.cache.loadSubmission(req, userResource._id, currentProject.owner, function(err, user) {
-            if (err || !user) {
-              req.permissionsChecked = true;
-              req.isAdmin = true;
-              return next();
-            }
-
-            // Set the user and user token.
-            req.user = user;
-            req.token = {
-              user: {
-                _id: user._id.toString()
-              },
-              form: {
-                _id: userResource._id.toString()
-              },
-              project: {
-                _id: formioProject._id.toString()
-              }
-            };
-
-            // Refresh the token that is sent back to the user when appropriate.
-            res.token = formio.auth.getToken(req.token);
-
-            // Set the headers if they haven't been sent yet.
-            if (!res.headersSent) {
-              // res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
-              // res.setHeader('x-jwt-token', res.token);
-            }
-
-            // Move onto the next middleware.
-            return next();
-          });
-        });
-      });
+      req.permissionsChecked = true;
+      req.isAdmin = true;
+      return next();
     });
   };
 };
