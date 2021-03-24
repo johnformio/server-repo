@@ -33,7 +33,7 @@ module.exports = function(formioServer) {
       }
 
       // A user is always required for this operation.
-      if (!req.user || !req.user.roles || !req.user.roles.length) {
+      if (!req.isAdmin && (!req.user || !req.user.roles || !req.user.roles.length)) {
         debug.report('Unauthorized');
         return res.status(401).send('Unauthorized');
       }
@@ -93,7 +93,7 @@ module.exports = function(formioServer) {
 
       const query = {};
       const userRoles = [];
-      if (req.user && req.user._id) {
+      if (!req.isAdmin && req.user && req.user._id) {
         userRoles.push(formio.util.idToBson(req.user._id));
         if (req.user.roles && req.user.roles.length) {
           req.user.roles.forEach((role) => userRoles.push(formio.util.idToBson(role)));
@@ -232,50 +232,51 @@ module.exports = function(formioServer) {
             query.form = {$in: forms};
           }
 
-          // Setup the prestage.
-          preStage = [
-            {'$match': query},
-            {
-              '$addFields': {
-                'hasAccess': {
-                  $gt: [{
-                    $size: {
-                      $setIntersection: [
-                        userRoles,
-                        {
-                          $reduce: {
-                            input: '$access',
-                            initialValue: [],
-                            in: {$concatArrays: ["$$value", "$$this.resources"]}
+          preStage = [{'$match': query}];
+          if (!req.isAdmin) {
+            preStage = preStage.concat([
+              {
+                '$addFields': {
+                  'hasAccess': {
+                    $gt: [{
+                      $size: {
+                        $setIntersection: [
+                          userRoles,
+                          {
+                            $reduce: {
+                              input: '$access',
+                              initialValue: [],
+                              in: {$concatArrays: ["$$value", "$$this.resources"]}
+                            }
                           }
-                        }
-                      ]
+                        ]
+                      }
+                    }, 0]
+                  }
+                }
+              },
+              {
+                '$match': {
+                  '$or': [
+                    {
+                      form: {
+                        '$in': readAllForms
+                      }
+                    },
+                    {
+                      form: {
+                        '$in': readOwnForms
+                      },
+                      owner: formio.util.idToBson(req.user._id)
+                    },
+                    {
+                      hasAccess: true
                     }
-                  }, 0]
+                  ]
                 }
               }
-            },
-            {
-              '$match': {
-                '$or': [
-                  {
-                    form: {
-                      '$in': readAllForms
-                    }
-                  },
-                  {
-                    form: {
-                      '$in': readOwnForms
-                    },
-                    owner: formio.util.idToBson(req.user._id)
-                  },
-                  {
-                    hasAccess: true
-                  }
-                ]
-              }
-            }
-          ];
+            ]);
+          }
 
           formsNext();
         });
