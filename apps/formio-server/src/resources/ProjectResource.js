@@ -216,7 +216,11 @@ module.exports = (router, formioServer) => {
       formio.middleware.licenseUtilization,
       function(req, res, next) {
         // Always keep the licenseKey even if they don't send it.
-        if (req.body.settings && !_.get(req.body, 'settings.licenseKey') && _.get(req.currentProject, 'settings.licenseKey', false)) {
+        const licenseKey = _.get(req.body, 'settings.licenseKey');
+        if (licenseKey==='') {
+          delete req.body.settings.licenseKey;
+        }
+        if (req.body.settings && !licenseKey && _.get(req.currentProject, 'settings.licenseKey', false)) {
           _.set(req.body, 'settings.licenseKey', _.get(req.currentProject, 'settings.licenseKey'));
         }
         return next();
