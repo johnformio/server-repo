@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.0-rc.10
+### Changed
+ - Upgrade formiojs@4.13.0-rc.23
+ - Upgrade premium@1.16.0-rc.6
+ - Upgrade formio@2.1.0-rc.15
+ - Upgrade portal@7.2.0-rc.8
+
+### Fixed
+ - FIO-1546: clear license key typing issue fix
+ - FIO-153: Fixes an issue where "revision" is added to Nested Forms when update a Parent form
+ - FIO-2512-2518: Fixes security issues with the base image
+ - FIO-2459: Increase timeout for PDF-server response
+ - FIO-644: Fix pdf uploading with team_write permissions
+
 ## 7.1.0-rc.9
 ### Changed
  - Upgrade formiojs@4.13.0-rc.22
