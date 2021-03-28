@@ -21,9 +21,9 @@
   },
   "cache": "1550086650",
   "main": "./main.js",
-  "version": "7.1.0-rc.11",
+  "version": "7.1.0-rc.12",
   "schema": "3.3.9",
-  "portalVersion": "7.2.0-rc.9",
+  "portalVersion": "7.2.0-rc.10",
   "dependencies": {
     "@formio/premium": "^1.16.0-rc.6",
     "JSONStream": "^1.3.5",
