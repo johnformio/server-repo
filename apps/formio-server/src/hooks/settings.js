@@ -627,6 +627,7 @@ module.exports = function(app) {
                 access.role.delete_all = access.role.delete_all || [];
 
                 const isFormCreation = req.method === 'POST' && req.url.endsWith('/form');
+                const isPdfUploading = req.method === 'POST' && req.url.endsWith('/upload');
 
                 teamAccess.forEach(function(permission) {
                   permission.roles = permission.roles || [];
@@ -639,7 +640,7 @@ module.exports = function(app) {
                         access.project.delete_all.push(id.toString());
                       case 'team_write':
                       case 'stage_write':
-                        if (isFormCreation || permission.type === 'team_admin') {
+                        if (isFormCreation || isPdfUploading || permission.type === 'team_admin') {
                           access.project.create_all.push(id.toString()); // This controls form creation.
                         }
                         access.form.create_all.push(id.toString());
