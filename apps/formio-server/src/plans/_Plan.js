@@ -15,7 +15,6 @@ module.exports = class Plan {
       projects: 1,
       tenants: 0,
       stages: 0,
-      livestages: 0,
       accessibilitys: 0,
       plan: 'trial',
       licenseKeys: [
