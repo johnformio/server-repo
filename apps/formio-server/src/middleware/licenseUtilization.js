@@ -1,6 +1,8 @@
 'use strict';
 
 /* eslint-disable no-console */
+/* eslint-disable max-statements */
+/* eslint-disable max-depth */
 
 const _ = require('lodash');
 const {utilization, cachedUtilization, getProjectContext, getLicenseKey} = require('../util/utilization');
@@ -74,7 +76,6 @@ function middleware(app) {
               if (['stage', 'tenant'].includes(project.type)) {
                 if (remote) {
                   project.disabled = false;
-                  project.authoring = false;
                 }
                 else {
                   try {
@@ -128,10 +129,7 @@ function middleware(app) {
                     }
 
                     const result = await utilization(body, '');
-
-                    if (project.type === 'stage') {
-                      project.authoring = !result.live;
-                    }
+                    project.live = result.live;
                   }
                   catch (err) {
                     if (project.type === 'stage') {
