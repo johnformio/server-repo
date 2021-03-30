@@ -22,7 +22,7 @@ module.exports = class Plan {
         {
           key: '',
           name: 'Project',
-          scope: ['project', 'stage', 'livestage', 'form', 'submissionRequest', 'formRequest', 'pdf', 'pdfDownload', 'email'],
+          scope: ['project', 'stage', 'form', 'submissionRequest', 'formRequest', 'pdf', 'pdfDownload', 'email'],
         }
       ]
     };
