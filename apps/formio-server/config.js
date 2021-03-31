@@ -176,6 +176,7 @@ config.portalSSOLogout = getConfig('PORTAL_SSO_LOGOUT', '');
 config.verboseHealth = getConfig('VERBOSE_HEALTH');
 config.vpat = Boolean(getConfig('VPAT', false));
 config.sac = Boolean(getConfig('SAC', false));
+config.licenseServer = getConfig('LICENSE_SERVER', 'https://license.form.io');
 config.formio.defaultEmailSource= getConfig('DEFAULT_EMAIL_SOURCE', 'no-reply@example.com');
 
 // Payeezy fields

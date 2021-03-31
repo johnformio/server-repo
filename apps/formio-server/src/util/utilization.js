@@ -45,6 +45,11 @@ const getProjectContext = (req, isNew = false) => {
         name: req.currentProject && !isNew ? req.currentProject.name : req.body.name,
         remote: req.currentProject && !isNew ? !!req.currentProject.remote : false,
         projectType: req.currentProject && !isNew ? req.currentProject.type : req.body.type,
+        isDefaultAuthoring: (
+          req.currentProject && !isNew
+          ?  _.get(req.currentProject, 'config.defaultStageName', '')
+          :  _.get(req, 'body.config.defaultStageName', '')
+          ) === 'authoring',
       };
     case 'project':
     default:

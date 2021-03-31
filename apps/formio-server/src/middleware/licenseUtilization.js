@@ -275,7 +275,7 @@ function middleware(app) {
           await utilization({
             ...getProjectContext(req),
             licenseKey: getLicenseKey(req),
-          }, '/disable');
+          }, '/delete');
           break;
 
         case 'GET /project/:projectId/manage':
@@ -366,7 +366,7 @@ function middleware(app) {
             formId: req.formId,
             projectId: req.projectId,
             licenseKey: getLicenseKey(req),
-          }, '/disable');
+          }, '/delete');
           break;
 
          //           d8                       88                               88                        88

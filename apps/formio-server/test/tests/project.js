@@ -2059,6 +2059,22 @@ module.exports = function(app, template, hook) {
 
       if (!docker)
       before(function(done) {
+        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
+          if (err) return done(err);
+
+          project.plan = 'commercial';
+          project.save(function(err) {
+            if (err) {
+              return done(err);
+            }
+
+            done();
+          });
+        });
+      });
+
+      if (!docker)
+      before(function(done) {
         request(app)
           .put('/project/' + template.project._id)
           .set('x-jwt-token', template.formio.owner.token)

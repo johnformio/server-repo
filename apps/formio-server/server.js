@@ -101,6 +101,12 @@ module.exports = function(options) {
               return matched;
             }
           )
+          .replace(/https:\/\/license.form.io/gi, (matched) => {
+            if (config.licenseServer && config.licenseServer !== matched) {
+              return config.licenseServer;
+            }
+            return matched;
+          })
         );
       });
     });
@@ -232,7 +238,19 @@ module.exports = function(options) {
   }
 
    // Check project status
-   app.use(require('./src/middleware/projectUtilization')(app.formio.formio));
+  app.use(require('./src/middleware/projectUtilization')(app.formio.formio));
+
+   // // CORS Support
+  debug.startup('Attaching middleware: CORS');
+  var corsMiddleware = require('./src/middleware/corsOptions')(app);
+  var corsRoute = cors(corsMiddleware);
+  app.use(function(req, res, next) {
+    // If headers already sent, skip cors.
+    if (res.headersSent) {
+      return next();
+    }
+    corsRoute(req, res, next);
+  });
 
   // Handle our API Keys.
   debug.startup('Attaching middleware: API Key Handler');
