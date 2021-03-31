@@ -15,14 +15,13 @@ module.exports = class Plan {
       projects: 1,
       tenants: 0,
       stages: 0,
-      livestages: 0,
       accessibilitys: 0,
       plan: 'trial',
       licenseKeys: [
         {
           key: '',
           name: 'Project',
-          scope: ['project', 'stage', 'livestage', 'form', 'submissionRequest', 'formRequest', 'pdf', 'pdfDownload', 'email'],
+          scope: ['project', 'stage', 'form', 'submissionRequest', 'formRequest', 'pdf', 'pdfDownload', 'email'],
         }
       ]
     };
