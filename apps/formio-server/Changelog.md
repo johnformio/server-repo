@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+### Fixed
+ - FIO-2652 livestage => stage
+ - FIO-1365: Fixes Authoring stage issues for master
+ - FIO-1439: increased max body size
+ - FIO-1536: Allow endpoint on API server to provide submission JSON to generate PDF
+ - FIO-1565: Server | Form Manager | Revisions | Making changes to a Form with Revisions enabled the user is displayed as "anonymous". Want to show email of the user from FMG that made the change.
+ - FIO-1497: Fixes an issue when stages were loaded with disabled utilization and were limited by 10
+
 ## 7.1.0-rc.12
 ### Changed
  - Upgrade portal@7.2.0-rc.10
