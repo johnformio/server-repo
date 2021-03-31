@@ -15,7 +15,7 @@ module.exports = app => routes => {
 
     const body = item.toObject();
     body._rid = body._id;
-    body._vuser = user ? (user.data ? user.data.name : user._id) : '';
+    body._vuser = _.get(user, "data.name") || _.get(user, "data.email", user._id);
     body._vnote = note || '';
     delete body._id;
     delete body.__v;
@@ -212,7 +212,6 @@ module.exports = app => routes => {
   });
 
   routes.before.unshift(require('../../middleware/projectProtectAccess')(app.formio.formio));
-  routes.before.unshift(require('../../middleware/formRevisionUpdate')(app.formio.formio));
   routes.before.unshift(require('../../middleware/formConflictHandler')(app.formio.formio));
   routes.before.unshift(require('../../middleware/licenseUtilization').middleware(app));
   routes.after.push(require('../../middleware/projectModified')(app.formio.formio));

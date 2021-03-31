@@ -2,7 +2,7 @@
 
 const fetch = require('formio/src/util/fetch');
 const _ = require('lodash');
-const vm = require('vm');
+const {VM} = require('vm2');
 
 const util = require('./util');
 
@@ -441,17 +441,23 @@ module.exports = (router) => {
         // Allow user scripts to transform the payload.
         setActionItemMessage('Transforming payload');
         if (settings.transform) {
-          const script = new vm.Script(settings.transform);
-          const sandbox = {
-            externalId,
-            payload,
-            headers: options.headers,
-            config: req.currentProject && req.currentProject.hasOwnProperty('config') ? req.currentProject.config : {},
-          };
-          script.runInContext(vm.createContext(sandbox), {
-            timeout: 500
-          });
-          payload = sandbox.payload;
+          try {
+            const newPayload = (new VM({
+              timeout: 500,
+              sandbox: {
+                externalId,
+                payload,
+                headers: options.headers,
+                config: req.currentProject && req.currentProject.hasOwnProperty('config') ? req.currentProject.config : {},
+              },
+              eval: false,
+              fixAsync: true
+            })).run(settings.transform);
+            payload = newPayload;
+          }
+          catch (err) {
+            setActionItemMessage('Webhook transform failed', err, 'error');
+          }
         }
         setActionItemMessage('Transform payload done');
 

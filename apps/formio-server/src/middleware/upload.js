@@ -1,3 +1,4 @@
+/* eslint-disable max-statements */
 'use strict';
 const fetch = require('formio/src/util/fetch');
 const {promisify} = require('util');
@@ -67,6 +68,7 @@ module.exports = (formioServer) => async (req, res, next) => {
         contentType: req.files.file.type,
         size: req.files.file.size,
       });
+      req.setTimeout(0);
       fetch(`${pdfUrls.local}/pdf/${pdfProject}/file`, {
         method: 'POST',
         headers: headers,

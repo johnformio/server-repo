@@ -205,6 +205,21 @@ module.exports = function(options) {
   debug.startup('Attaching middleware: Project & Roles Loader');
   app.use(require('./src/middleware/loadProjectContexts')(app.formio.formio));
 
+  // Set the project query middleware for filtering disabled projects
+  app.use(require('./src/middleware/projectQueryLimits'));
+
+  // CORS Support
+  debug.startup('Attaching middleware: CORS');
+  var corsMiddleware = require('./src/middleware/corsOptions')(app);
+  var corsRoute = cors(corsMiddleware);
+  app.use(function(req, res, next) {
+    // If headers already sent, skip cors.
+    if (res.headersSent) {
+      return next();
+    }
+    corsRoute(req, res, next);
+  });
+
   // Strict-Transport-Security middleware
   const hsts = _helmet.hsts({
     preload: true,
@@ -258,6 +273,8 @@ module.exports = function(options) {
   app.get('/project/:projectId/form/:formId/submission/:submissionId/download', downloadPDF);
   app.get('/project/:projectId/:formAlias/submission/:submissionId/download/:fileId', downloadPDF);
   app.get('/project/:projectId/form/:formId/submission/:submissionId/download/:fileId', downloadPDF);
+
+  app.post('/project/:projectId/form/:formId/download', downloadPDF);
 
   debug.startup('Attaching middleware: PDF Upload');
   const uploadPDF = [

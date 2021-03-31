@@ -169,6 +169,18 @@ const requestMock = sinon.stub()
           }),
         });
         break;
+      case 'https://openIdProvider.com/userInfo.com':
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            id: 123456,
+            name: 'Rahat Ahmed',
+            email: 'rahatarmanahmed@gmail.com',
+            first_name: 'Rahat',
+            last_name: 'Ahmed',
+          }),
+        });
+        break;
       default:
         // Fallback to fetch.
         if (url.includes('localhost')) {
