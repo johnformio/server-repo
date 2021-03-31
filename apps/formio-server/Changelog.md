@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 ### Fixed
  - FIO-1528: change default 'from' email address domain to use example in the deployment environment variable
+ - FIO-2652 livestage => stage
+ - FIO-1497: Fixes an issue when stages were loaded with disabled utilization and were limited by 10.
+ - FIO-1541: added token swap automation testing
+ - FIO-1565: Server | Form Manager | Revisions | Making changes to a Form with Revisions enabled the user is displayed as "anonymous". Want to show email of the user from FMG that made the change. 
+ - FIO-1536: Allow endpoint on API server to provide submission JSON to generate PDF
+ - FIO-1439: increased max body size
+ - FIO-1365: Fixes Authoring stage issues for master
+ - FIO-1475-master: Fixes an issue when after update the server DB schema to 3.3.8, the owners of old teams won't set as the admin.
 
 ## 7.2.0-rc.2
 ### Added
