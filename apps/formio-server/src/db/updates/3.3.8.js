@@ -203,7 +203,7 @@ module.exports = async function(db, config, tools, done) {
         },
         access: [],
         metadata: {
-          accepted: (_.get(user, 'metadata.teams', []).indexOf(team._id.toString()) !== -1)
+          accepted: (_.get(user, 'metadata.teams', []).indexOf(team._id.toString()) !== -1) || user._id.toString() === team.owner.toString(),
         },
         externalIds: [],
         externalTokens: [],
@@ -222,7 +222,13 @@ module.exports = async function(db, config, tools, done) {
       return addMember(await submissions.findOne({_id: mongodb.ObjectId(admin._id.toString())}), true);
     }));
     await Promise.all(members.map(async (member) => {
-      return addMember(await submissions.findOne({_id: mongodb.ObjectId(member._id.toString())}), false);
+      let isAdmin = false;
+
+      if (member._id.toString() === team.owner.toString()) {
+        isAdmin = true;
+      }
+
+      return addMember(await submissions.findOne({_id: mongodb.ObjectId(member._id.toString())}), isAdmin);
     }));
 
     // Update the team resource.
