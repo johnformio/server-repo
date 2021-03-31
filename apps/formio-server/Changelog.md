@@ -13,9 +13,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-1565: Server | Form Manager | Revisions | Making changes to a Form with Revisions enabled the user is displayed as "anonymous". Want to show email of the user from FMG that made the change.
  - FIO-1497: Fixes an issue when stages were loaded with disabled utilization and were limited by 10
 ## Changed
-- Upgrade portal@7.2.0-rc.11
+ - Upgrade portal@7.2.0-rc.11
  - Upgrade formiojs@4.13.0-rc.25
  - Upgrade premium@1.16.0-rc.8
+ - Upgrade formio@2.1.0-rc.16
 
 ## 7.1.0-rc.12
 ### Changed
