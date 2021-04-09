@@ -208,18 +208,6 @@ module.exports = function(options) {
   // Set the project query middleware for filtering disabled projects
   app.use(require('./src/middleware/projectQueryLimits'));
 
-  // CORS Support
-  debug.startup('Attaching middleware: CORS');
-  var corsMiddleware = require('./src/middleware/corsOptions')(app);
-  var corsRoute = cors(corsMiddleware);
-  app.use(function(req, res, next) {
-    // If headers already sent, skip cors.
-    if (res.headersSent) {
-      return next();
-    }
-    corsRoute(req, res, next);
-  });
-
   // Strict-Transport-Security middleware
   const hsts = _helmet.hsts({
     preload: true,
