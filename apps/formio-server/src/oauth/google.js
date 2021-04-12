@@ -58,7 +58,7 @@ module.exports = function(formio) {
           client_id: settings.clientId,
           client_secret: settings.clientSecret,
           grant_type: 'authorization_code',
-          code: code,
+          code: decodeURIComponent(code),
           redirect_uri: redirectURI
         }),
       });
