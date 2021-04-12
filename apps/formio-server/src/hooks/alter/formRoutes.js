@@ -137,7 +137,10 @@ module.exports = app => routes => {
       }
 
       if (!submissionModel) {
-        return next();
+        submissionModel = null, _.get(app.formio.formio, 'resources.submission.model');
+        if (submissionModel) {
+          return next();
+        }
       }
 
       // Set the indexes.
