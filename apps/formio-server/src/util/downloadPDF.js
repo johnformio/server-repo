@@ -55,6 +55,7 @@ module.exports = (formioServer) => {
     const headers = {
       'x-license-key': getLicenseKey(req),
       'content-type': 'application/json',
+      'x-host': formio.config.formioHost
     };
 
     // Pass along the auth token to files server
@@ -63,7 +64,8 @@ module.exports = (formioServer) => {
         headers['x-jwt-token'] = formio.auth.getToken({
           form: req.token.form,
           user: req.token.user,
-          project: req.token.project
+          project: req.token.project,
+          jti: req.token.jti
         });
       }
       else {
