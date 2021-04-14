@@ -416,14 +416,6 @@ module.exports = function(options) {
     });
   });
 
-  process.on('unhandledRejection', function(err) {
-    /* eslint-disable no-console */
-    console.log('Uncaught promise rejection:');
-    console.log(err);
-    console.log(err.stack);
-    /* eslint-enable no-console */
-  });
-
   // Do some logging on uncaught exceptions in the application.
   process.on('uncaughtException', function(err) {
     /* eslint-disable no-console */
