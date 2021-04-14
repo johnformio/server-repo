@@ -263,7 +263,7 @@ module.exports = (router) => {
      * @param next
      *   The callback function to execute upon completion.
      */
-    resolve(handler, method, req, res, next) { // eslint-disable-line max-statements
+    resolve(handler, method, req, res, next) {
       const settings = this.settings || {};
 
       // Only block on the external request, if configured

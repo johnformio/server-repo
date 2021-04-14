@@ -51,7 +51,6 @@ module.exports = (router) => {
   }
 
   // FIXME: This function should be broken up
-  // eslint-disable-next-line max-statements
   function getExpressRoute(method, path, primary, data, type) {
     debug.getExpressRoute('type:');
     debug.getExpressRoute(type);
