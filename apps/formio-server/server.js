@@ -15,7 +15,6 @@ const multipart = require('connect-multiparty');
 const os = require('os');
 const license = require('./src/util/license');
 const audit = require('./src/util/audit');
-const vm = require('vm');
 const cors = require('cors');
 const debug = {
   startup: require('debug')('formio:startup')
@@ -248,6 +247,7 @@ module.exports = function(options) {
   debug.startup('Attaching middleware: PDF Download');
 
   const downloadPDF = [
+    require('./src/middleware/apiKey')(app),
     require('./src/middleware/remoteToken')(app),
     app.formio.formio.middleware.alias,
     require('./src/middleware/aliasToken')(app),
@@ -471,6 +471,14 @@ module.exports = function(options) {
         config: config
       });
     });
+  });
+
+  process.on('unhandledRejection', function(err) {
+    /* eslint-disable no-console */
+    console.log('Uncaught promise rejection:');
+    console.log(err);
+    console.log(err.stack);
+    /* eslint-enable no-console */
   });
 
   // Do some logging on uncaught exceptions in the application.
