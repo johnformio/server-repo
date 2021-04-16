@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.1-rc.2
+### Chagned
+ - Upgrade formio@2.1.1-rc.2
+
+### Fixed
+ - Changed update hook to add try/catch around expiring index creation.
+
 ## 7.1.0
 ### Changed
  - Upgrade formiojs@4.13.0
