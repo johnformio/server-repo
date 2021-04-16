@@ -4,11 +4,22 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.2-rc.2
+### Changed
+ - Upgrade formio@v2.2.0-rc.2
+
 ## 7.1.2-rc.1
 ### Changed
  - FIO-2484: Implements tests for Split Role
  - Upgrade formiojs@4.13.1-rc.1
  - Upgrade portal@7.2.2-rc.1
+
+## 7.1.1-rc.2
+### Chagned
+ - Upgrade formio@2.1.1-rc.2
+
+### Fixed
+ - Changed update hook to add try/catch around expiring index creation.
 
 ## 7.1.0
 ### Changed
