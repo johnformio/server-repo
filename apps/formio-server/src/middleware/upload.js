@@ -1,4 +1,3 @@
-/* eslint-disable max-statements */
 'use strict';
 const fetch = require('formio/src/util/fetch');
 const {promisify} = require('util');
