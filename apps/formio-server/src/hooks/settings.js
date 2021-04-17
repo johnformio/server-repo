@@ -234,6 +234,9 @@ module.exports = function(app) {
         return `/project/${req.projectId}${url}`;
       },
       skip(_default, req) {
+        if (req.isAdmin) {
+          return true;
+        }
         if (req.url.indexOf(`/project/${req.projectId}/saml/`) === 0) {
           return true;
         }

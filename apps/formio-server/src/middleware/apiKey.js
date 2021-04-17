@@ -34,6 +34,8 @@ module.exports = function(formio) {
 
       req.permissionsChecked = true;
       req.isAdmin = true;
+      req.user = null;
+      req.token = null;
       return next();
     });
   };
