@@ -45,7 +45,6 @@ module.exports = app => routes => {
     const updatedFormTrackedProperties = _.pick(req.body, trackedProperties);
     const isFormChanged = !_.isEqual(currentFormTrackedProperties, updatedFormTrackedProperties);
     const areRevisionsAllowed = item.revisions && revisionPlans.includes(req.primaryProject.plan);
-
     return (
       req.isDraft ||
       item.revisions && !form.revisions ||

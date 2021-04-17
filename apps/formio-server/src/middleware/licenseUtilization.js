@@ -1,7 +1,6 @@
 'use strict';
 
 /* eslint-disable no-console */
-/* eslint-disable max-statements */
 /* eslint-disable max-depth */
 
 const _ = require('lodash');

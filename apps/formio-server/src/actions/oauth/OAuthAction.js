@@ -118,6 +118,7 @@ module.exports = router => {
                   dataSrc: 'url',
                   data: {url: resourceSrc},
                   valueProperty: 'name',
+                  authenticate: true,
                   multiple: false,
                   validate: {
                     required: true

@@ -16,9 +16,14 @@ module.exports = function(db, config, tools, done) {
   done();
   console.log('Adding 30d expiration to actionitems.');
   db.collection('actionitems').dropIndex({created: 1}).then(() => {
-    db.collection('actionitems').createIndex({created: 1}, {
-      background: true,
-      expireAfterSeconds: 2592000
-    });
+    try {
+      db.collection('actionitems').createIndex({created: 1}, {
+        background: true,
+        expireAfterSeconds: 2592000
+      });
+    }
+    catch (err) {
+      console.log(err.message);
+    }
   });
 };

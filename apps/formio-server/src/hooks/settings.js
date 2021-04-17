@@ -234,6 +234,9 @@ module.exports = function(app) {
         return `/project/${req.projectId}${url}`;
       },
       skip(_default, req) {
+        if (req.isAdmin) {
+          return true;
+        }
         if (req.url.indexOf(`/project/${req.projectId}/saml/`) === 0) {
           return true;
         }
@@ -1418,10 +1421,10 @@ module.exports = function(app) {
           try {
             const data = (new VM({
               timeout: 500,
-              sandbox: {
+              sandbox: _.cloneDeep({
                 token: decoded,
                 roles: req.currentProject.roles
-              },
+              }),
               eval: false,
               fixAsync: true
             })).run(req.currentProject.settings.tokenParse);
