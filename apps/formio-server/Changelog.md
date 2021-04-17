@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.3-rc.1
+### Changed
+ - Upgrade portal @ 7.2.2-rc.2
+ - Upgrade formiojs@4.13.1-rc.2
+ - Upgrade premium@1.16.1-rc.1
+
+### Changed
+ - FIO-977: Allow x-token to be used to download pdfs.
+ - FIO-2761: Fixes an issue when a user was created by an admin on the freshly deployed portal, he couldn't edit his profile.
+ - FIO 2459: Increase timeout for PDF server response
+
 ## 7.1.2-rc.3
 ### Changed
  - Downgrade portal to 7.2.1-rc.1
