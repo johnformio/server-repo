@@ -300,7 +300,6 @@ module.exports = (router) => {
      * @param next
      *   The callback function to execute upon completion.
      */
-    /* eslint-disable max-statements */
     resolve(handler, method, req, res, next, setActionItemMessage) {
       const settings = this.settings || {};
 
