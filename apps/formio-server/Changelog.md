@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Upgrade formiojs@4.13.1-rc.1
  - Upgrade portal@7.2.2-rc.1
 
+## 7.1.1
+### Changed
+ - Upgrade formio@2.1.1
+
 ## 7.1.1-rc.2
 ### Chagned
  - Upgrade formio@2.1.1-rc.2
