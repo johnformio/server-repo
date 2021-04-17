@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.1
+### Changed
+ - Upgrade formio@2.1.1
+
 ## 7.1.1-rc.2
 ### Chagned
  - Upgrade formio@2.1.1-rc.2

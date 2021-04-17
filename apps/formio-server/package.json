@@ -21,7 +21,7 @@
   },
   "cache": "1550086650",
   "main": "./main.js",
-  "version": "7.1.1-rc.2",
+  "version": "7.1.1",
   "schema": "3.3.9",
   "portalVersion": "7.2.0",
   "dependencies": {
@@ -41,7 +41,7 @@
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-cache-controller": "^1.1.0",
-    "formio": "2.1.1-rc.2",
+    "formio": "2.1.1",
     "formio-workers": "1.14.13",
     "formiojs": "^4.13.0",
     "googleapis": "^33.0.0",
