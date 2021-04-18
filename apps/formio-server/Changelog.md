@@ -6,7 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## 7.1.3-rc.3
 ### Fixed
- - FIO-2790: Fixing issues with SAML team authentication. 
+ - FIO-2790: Fixing issues with SAML team authentication.
+
+### Changed
+ - Upgrade portal@7.2.2-rc.2 
 
 ## 7.1.3-rc.2
 ### Fixed
