@@ -129,8 +129,8 @@ module.exports = function(app, formioServer) {
     Teams.teamAccessHandler(true),
     respondWith((req) => Teams.updateTeam(
       req.currentTeam,
-      req.body.data.name,
-      req.body.metadata.ssoteam
+      _.get(req.body, 'data.name', ''),
+      _.get(req.body, 'metadata.ssoteam', false)
     ))
   );
 
