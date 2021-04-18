@@ -213,7 +213,7 @@ module.exports = router => {
             }
           });
 
-          return router.formio.teams.getSSOTeams(userRoles).then((teams) => {
+          return router.formio.teams.getSSOTeams(user, userRoles).then((teams) => {
             teams = teams || [];
             user.teams = _.map(_.map(teams, '_id'), formio.util.idToString);
             return resolve(user);
@@ -371,10 +371,15 @@ module.exports = router => {
               }
             });
 
+            if (data.mail && !data.email) {
+              data.email = data.mail;
+            }
+
             const user = {
               _id: data.uidNumber || data.uid || data.dn, // Try to use numbers but fall back to dn which is guaranteed.
               data,
-              roles
+              roles,
+              project: req.currentProject._id.toString()
             };
             debug('Final user object', user);
 

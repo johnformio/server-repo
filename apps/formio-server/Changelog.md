@@ -29,6 +29,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Upgrade portal@7.3.0-rc.3
  - Upgrade formiojs@4.13.0-rc.10
 
+## 7.1.3-rc.3
+### Fixed
+ - FIO-2790: Fixing issues with SAML team authentication.
+
+### Changed
+ - Upgrade portal@7.2.2-rc.2 
+
 ## 7.1.3-rc.2
 ### Fixed
  - FIO-2623, FIO-2605: Fixing anomalies with the x-token project API keys.

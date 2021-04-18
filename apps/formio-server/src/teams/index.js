@@ -127,7 +127,11 @@ module.exports = function(app, formioServer) {
   app.put('/team/:teamId',
     ...initializeTeams,
     Teams.teamAccessHandler(true),
-    respondWith((req) => Teams.updateTeam(req.currentTeam, req.body.data.name))
+    respondWith((req) => Teams.updateTeam(
+      req.currentTeam,
+      req.body.data.name,
+      req.body.metadata.ssoteam
+    ))
   );
 
   // Delete a team.
