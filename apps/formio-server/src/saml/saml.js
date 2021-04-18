@@ -126,9 +126,9 @@ module.exports = (formioServer) => {
     // Add an "Everyone" role.
     userRoles.push('Everyone');
 
-    const userId = _.get(profile, idPath);
     const email = _.get(profile, emailPath);
-    if (!userId || !email) {
+    const userId = _.get(profile, idPath, email);
+    if (!userId) {
       return next('No User ID or Email was found within your SAML profile.');
     }
 
@@ -148,6 +148,7 @@ module.exports = (formioServer) => {
     const fieldsRegex = new RegExp(profileFields || '', 'i');
     const user = {
       _id: toMongoId(userId),
+      project: project._id.toString(),
       data: profileFields ? _.pickBy(profile, (prop, key) => key.match(fieldsRegex)) : profile,
       roles
     };
@@ -173,7 +174,7 @@ module.exports = (formioServer) => {
     // the user object that will be read by the teams feature to determine which teams are allocated to this user.
     if (project.primary && config.ssoTeams) {
       // Load the teams by name.
-      formio.teams.getSSOTeams(userRoles).then((teams) => {
+      formio.teams.getSSOTeams(user, userRoles).then((teams) => {
         teams = teams || [];
         user.teams = _.map(_.map(teams, '_id'), formio.util.idToString);
         debug(`Teams: ${JSON.stringify(user.teams)}`);
