@@ -247,7 +247,7 @@ module.exports = function(options) {
   debug.startup('Attaching middleware: PDF Download');
 
   const downloadPDF = [
-    require('./src/middleware/apiKey')(app),
+    require('./src/middleware/apiKey')(app.formio.formio),
     require('./src/middleware/remoteToken')(app),
     app.formio.formio.middleware.alias,
     require('./src/middleware/aliasToken')(app),
