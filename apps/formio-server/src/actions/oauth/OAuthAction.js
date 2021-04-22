@@ -221,6 +221,17 @@ module.exports = router => {
                   clearOnHide: true,
                   type: "datagrid",
                   customConditional: "show = ['remote'].indexOf(data.settings.association) !== -1;"
+                },
+                {
+                  type: 'textfield',
+                  input: true,
+                  label: 'OAuth Callback URL',
+                  key: 'redirectURI',
+                  placeholder: 'Enter Callback URL (Default window.location.origin of your app)',
+                  multiple: false,
+                  validate: {
+                    required: false
+                  }
                 }
               ];
 
@@ -749,6 +760,7 @@ module.exports = router => {
                     provider: provider.name,
                     clientId: oauthSettings.clientId,
                     authURI: oauthSettings.authURI || provider.authURI,
+                    redirectURI: self.settings.redirectURI,
                     state: state,
                     scope: oauthSettings.scope || provider.scope
                   };

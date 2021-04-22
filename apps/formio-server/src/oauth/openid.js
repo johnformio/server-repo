@@ -25,6 +25,8 @@ module.exports = (formio) => {
 
     userInfoURI: '',
 
+    redirectURI: '',
+
     // List of field data that can be autofilled from user info API request
     autofillFields: [],
 
