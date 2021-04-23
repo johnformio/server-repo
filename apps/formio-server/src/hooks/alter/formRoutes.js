@@ -136,8 +136,8 @@ module.exports = app => routes => {
       }
 
       if (!submissionModel) {
-        submissionModel = null, _.get(app.formio.formio, 'resources.submission.model');
-        if (submissionModel) {
+        submissionModel = _.get(app.formio.formio, 'resources.submission.model');
+        if (!submissionModel) {
           return next();
         }
       }
