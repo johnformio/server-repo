@@ -32,6 +32,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-2761: Fixes an issue when a user was created by an admin on the freshly deployed portal, he couldn't edit his profile.
  - FIO 2459: Increase timeout for PDF server response
 
+## 7.1.2
+### Changed
+ - Official release of 7.1.2-rc.4
+
+## 7.1.2-rc.4
+### Fixed
+ - FIO-2623, FIO-2605: Fixing anomalies with the x-token project API keys.
+
 ## 7.1.2-rc.3
 ### Changed
  - Downgrade portal to 7.2.1-rc.1
