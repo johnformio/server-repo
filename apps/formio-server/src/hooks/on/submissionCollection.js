@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = app => req => {
+module.exports = app => (req) => {
   let submissionModel = null;
 
   app.formio.formio.cache.loadCurrentForm(req, (err, form) => {
@@ -22,7 +22,10 @@ module.exports = app => req => {
       `${projectName}_${collection}`
     );
   });
+  if (submissionModel) {
+    req.countQuery = submissionModel;
+    req.modelQuery = submissionModel;
+  }
 
   return submissionModel;
 };
-
