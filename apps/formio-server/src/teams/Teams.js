@@ -157,15 +157,17 @@ const Teams = {
    */
   async getSSOTeams(user, names) {
     // Legacy sso teams method.
-    const teamResource = await Teams.getTeamResource();
-    const teams = await Teams.submissionModel().find({
-      form: teamResource._id,
-      deleted: {$eq: null},
-      'data.name': {$in: names},
-      'metadata.ssoteam': true
-    }).lean().exec();
-    if (teams && teams.length) {
-      return teams;
+    if (names && names.length) {
+      const teamResource = await Teams.getTeamResource();
+      const teams = await Teams.submissionModel().find({
+        form: teamResource._id,
+        deleted: {$eq: null},
+        'data.name': {$in: names},
+        'metadata.ssoteam': true
+      }).lean().exec();
+      if (teams && teams.length) {
+        return teams;
+      }
     }
 
     // User new teams method.
