@@ -2,6 +2,7 @@
 
 const Q = require('q');
 const _ = require('lodash');
+const URL = require('url').URL;
 const {AuthorizationCode} = require('simple-oauth2');
 
 const fetch = require('formio/src/util/fetch');
@@ -41,9 +42,9 @@ module.exports = (formio) => {
           userInfoURI
         }) => {
           /* eslint-disable camelcase */
-          const uriPaths = tokenURI.split('/');
-          const tokenHost = _.initial(uriPaths).join('/');
-          const tokenPath = `/${_.last(uriPaths)}`;
+          const url = new URL(tokenURI);
+          const tokenHost = url.origin;
+          const tokenPath = url.pathname;
           this.userInfoURI = userInfoURI;
           const provider = new AuthorizationCode({
             client: {
@@ -62,7 +63,7 @@ module.exports = (formio) => {
           return provider.getToken({
             code,
             redirect_uri: redirectURI,
-          }, {json: true});
+          }).then(accessToken => accessToken.token);
           /* eslint-enable camelcase */
         })
         .then((token) => {
