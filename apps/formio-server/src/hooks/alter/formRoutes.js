@@ -15,7 +15,11 @@ module.exports = app => routes => {
 
     const body = item.toObject();
     body._rid = body._id;
-    body._vuser = _.get(user, "data.name") || _.get(user, "data.email", user._id);
+
+    if (user) {
+      body._vuser = _.get(user, "data.name") || _.get(user, "data.email", user._id);
+    }
+
     body._vnote = note || '';
     delete body._id;
     delete body.__v;
@@ -52,6 +56,11 @@ module.exports = app => routes => {
     );
   };
 
+  const getRequestUser = (req) => {
+    const user = req.user || (req.adminKey ? {data: {name: 'admin'}} : null);
+    return user;
+  };
+
   routes.hooks.put = {
     before(req, res, item, next) {
       app.formio.formio.util.markModifiedParameters(item, ['components', 'properties']);
@@ -65,7 +74,7 @@ module.exports = app => routes => {
     after(req, res, item, next) {
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
         if (shouldCreateNewRevision(req, item, form)) {
-          return createVersion(item, req.user, req.body._vnote, next);
+          return createVersion(item, getRequestUser(req), req.body._vnote, next);
         }
         next();
       });
@@ -85,7 +94,7 @@ module.exports = app => routes => {
     after(req, res, item, next) {
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
         if (shouldCreateNewRevision(req, item, form)) {
-          return createVersion(item, req.user, '', next);
+          return createVersion(item, getRequestUser(req), '', next);
         }
         next();
       });
@@ -98,7 +107,7 @@ module.exports = app => routes => {
         item.revisions &&
         revisionPlans.includes(req.primaryProject.plan)
       ) {
-        return createVersion(item, req.user, req.body._vnote, next);
+        return createVersion(item, getRequestUser(req), req.body._vnote, next);
       }
 
       if (!item) {
