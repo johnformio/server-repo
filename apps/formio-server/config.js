@@ -159,6 +159,9 @@ config.formio.protocol = protocol;
 config.formio.baseUrl = domain + (port !== 80 ? `:${port}` : '');
 config.port = port;
 config.host = host;
+config.enableSsl = getConfig('ENABLE_SSL', false);
+config.sslKey = getConfig('SSL_KEY', false);
+config.sslCert = getConfig('SSL_CERT', false);
 
 config.project = project;
 config.plan = plan;
