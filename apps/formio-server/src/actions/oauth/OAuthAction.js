@@ -8,6 +8,7 @@ const chance = require('chance').Chance();
 
 module.exports = router => {
   const formio = router.formio;
+  const config = router.config;
   const {
     Action,
     hook
@@ -531,6 +532,21 @@ module.exports = router => {
       // Do not execute the form CRUD methods.
       req.skipResource = true;
 
+      var getUserTeams = function(user) {
+        return new Promise((resolve) => {
+          if (req.currentProject.primary && config.ssoTeams) {
+            formio.teams.getSSOTeams(user).then((teams) => {
+              teams = teams || [];
+              user.teams = _.map(_.map(teams, '_id'), formio.util.idToString);
+              return resolve(user);
+            }).catch(() => resolve(user));
+          }
+          else {
+            resolve(user);
+          }
+        });
+      };
+
       var tokensPromise = provider.getTokens(req, oauthResponse.code, oauthResponse.state, oauthResponse.redirectURI);
       switch (self.settings.association) {
         case 'new':
@@ -637,10 +653,14 @@ module.exports = router => {
 
                     const user = {
                       _id: provider.getUserId(data),
+                      project: req.currentProject._id.toString(),
                       data,
                       roles
                     };
 
+                    return getUserTeams(user);
+                  })
+                  .then((user) => {
                     const token = {
                       external: true,
                       user,
