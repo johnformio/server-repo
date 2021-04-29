@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.3-rc.6
+### Changed
+ - Upgrade portal@7.2.2-rc.5
+ - Upgrade formiojs@4.13.1-rc.6
+ - Upgrade premium@1.16.1-rc.4
+
+### Fixed
+ - FIO-2672: creation index field issue fix
+ - FIO-2832: Fixing OpenID Connect to work with non-standard token paths.
+
 ## 7.1.3-rc.5
 ### Changed
  - Upgrade portal@7.2.2-rc.4
