@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## 7.1.3-rc.8
 ### Changed
  - Upgrade portal@7.2.2-rc.7
+ - FIO-2788: Oauth add Callback URL optional field
 
 ## 7.1.3-rc.7
 ### Changed
