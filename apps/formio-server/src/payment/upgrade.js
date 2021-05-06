@@ -111,7 +111,7 @@ module.exports = function(formio) {
         /* eslint-disable max-len */
         const emailSettings = {
           transport: 'default',
-          from: 'no-reply@form.io',
+          from: formio.config.defaultEmailSource,
           emails: ['payment@form.io'],
           subject: `Project ${direction} Notification`,
           message: `<p>A project has been ${direction.toLowerCase()}d from <strong>{{project.plan}}</strong> to <strong>{{newPlan}}</strong>.</p>` +

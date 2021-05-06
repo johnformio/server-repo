@@ -155,14 +155,23 @@ const Teams = {
   /**
    * Get the teams by name.
    */
-  async getSSOTeams(names) {
-    const teamResource = await Teams.getTeamResource();
-    return await Teams.submissionModel().find({
-      form: teamResource._id,
-      deleted: {$eq: null},
-      'data.name': {$in: names},
-      'metadata.ssoteam': true
-    }).lean().exec();
+  async getSSOTeams(user, names) {
+    // Legacy sso teams method.
+    if (names && names.length) {
+      const teamResource = await Teams.getTeamResource();
+      const teams = await Teams.submissionModel().find({
+        form: teamResource._id,
+        deleted: {$eq: null},
+        'data.name': {$in: names},
+        'metadata.ssoteam': true
+      }).lean().exec();
+      if (teams && teams.length) {
+        return teams;
+      }
+    }
+
+    // User new teams method.
+    return this.getTeams(user);
   },
 
   /**
@@ -364,11 +373,14 @@ const Teams = {
    * @param team
    * @param name
    */
-  async updateTeam(team, name) {
+  async updateTeam(team, name, ssoTeam = false) {
     await Teams.submissionModel().updateOne({
       _id: team._id
     }, {
-      $set: {'data.name': name}
+      $set: {
+        'data.name': name,
+        'metadata.ssoteam': ssoTeam
+      }
     }).exec();
     return await Teams.getTeam(team._id.toString());
   },

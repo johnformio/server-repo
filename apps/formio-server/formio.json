@@ -2388,7 +2388,7 @@
       "settings": {
         "template": "",
         "sendEach": false,
-        "from": "no-reply@form.io",
+        "from": "no-reply@example.com",
         "transport": "sendgrid",
         "message": "The following person just registered at Form.IO!\n\nName: {{ data.fullName }}\nEmail: {{ data.email }}",
         "subject": "Someone just registered @ Form.IO!",
@@ -2689,7 +2689,7 @@
         "emails": [
           "support@form.io"
         ],
-        "from": "no-reply@form.io",
+        "from": "no-reply@example.com",
         "transport": "sendgrid"
       },
       "priority": 0,
@@ -2732,7 +2732,7 @@
         "emails": [
           "support@form.io"
         ],
-        "from": "no-reply@form.io",
+        "from": "no-reply@example.com",
         "transport": "sendgrid"
       },
       "priority": 0,
@@ -2773,7 +2773,7 @@
         ],
         "message": "<p>Forgot your password? No problem.</p><p><a href=\"{{ resetlink }}\">Click here to reset your password</a></p> ",
         "subject": "You requested a password reset",
-        "from": "no-reply@form.io",
+        "from": "no-reply@example.com",
         "transport": "sendgrid",
         "label": "Send Reset Password",
         "url": "https://portal.form.io/#/resetpass",
@@ -2902,7 +2902,7 @@
           "payment@form.io",
           "denise@form.io"
         ],
-        "from": "no-reply@form.io",
+        "from": "no-reply@example.com",
         "transport": "sendgrid"
       },
       "priority": 0,
@@ -2961,7 +2961,7 @@
           "gary@form.io",
           "jeriah@form.io"
         ],
-        "from": "no-reply@form.io",
+        "from": "no-reply@example.com",
         "transport": "sendgrid"
       },
       "priority": 0,
@@ -2991,7 +2991,7 @@
           "payment@form.io",
           "denise@form.io"
         ],
-        "from": "no-reply@form.io",
+        "from": "no-reply@example.com",
         "transport": "sendgrid"
       },
       "priority": 0,
@@ -3199,6 +3199,9 @@
           "roles": [
             "authenticated"
           ]
+        },
+        {
+          "type": "self"
         }
       ]
     },

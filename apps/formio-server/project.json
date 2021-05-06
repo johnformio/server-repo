@@ -342,7 +342,7 @@
         ],
         "message": "<p>Forgot your password? No problem.</p><p><a href=\"{{ resetlink }}\">Click here to reset your password</a></p> ",
         "subject": "You requested a password reset",
-        "from": "no-reply@form.io",
+        "from": "no-reply@example.com",
         "transport": "sendgrid",
         "label": "Send Reset Password",
         "url": "https://portal.form.io/#/resetpass",
@@ -484,6 +484,9 @@
           "roles": [
             "authenticated"
           ]
+        },
+        {
+          "type": "self"
         }
       ]
     },
