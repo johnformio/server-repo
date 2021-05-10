@@ -433,11 +433,16 @@ module.exports = function(app) {
 
         req.skipTokensInvalidation = true;
 
-        return formioServer.formio.mongoose.models.session.updateMany({
-          _id: {$ne: formioServer.formio.util.idToBson(req.session._id)},
+        const sessionQuery = {
           submission: formioServer.formio.util.idToBson(userId),
           logout: {$eq: null},
-        },
+        };
+
+        if (req.session && req.session._id) {
+          _.set(sessionQuery, '_id', {$ne: formioServer.formio.util.idToBson(req.session._id)});
+        }
+
+        return formioServer.formio.mongoose.models.session.updateMany(sessionQuery,
         {
           logout: Date.now(),
         })
