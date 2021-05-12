@@ -23,5 +23,6 @@ module.exports = {
   '3.3.6': require('./3.3.6'),
   '3.3.7': (db, config, tools, done) => {done()},
   '3.3.8': require('./3.3.8'),
-  '3.3.9': require('./3.3.9')
+  '3.3.9': require('./3.3.9'),
+  '3.3.10': require('./3.3.10')
 };
