@@ -90,6 +90,7 @@
     "eslint": "^7.24.0",
     "eslint-config-formio": "^1.1.2",
     "mocha": "^8.3.0",
+    "nock": "^13.0.11",
     "mockery": "^2.1.0",
     "pre-commit": "^1.2.2",
     "prepack": "^0.2.54",

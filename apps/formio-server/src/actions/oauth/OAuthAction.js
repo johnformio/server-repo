@@ -540,6 +540,17 @@ module.exports = router => {
         return res.status(400).send('No authorization code provided.');
       }
 
+      this.triggeredBy = oauthResponse.triggeredBy;
+
+      /*
+        Needs for the exclude oAuth Actions that not related to the triggered action.
+        Without this, we can face an error that the OAuth code has already been used.
+      */
+
+      if (this.triggeredBy && this.triggeredBy !== this.settings.button) {
+        return next();
+      }
+
       // Do not execute the form CRUD methods.
       req.skipResource = true;
 
@@ -743,6 +754,10 @@ module.exports = router => {
 
       if (!this.settings.button) {
         return res.status(400).send('OAuth Action is missing Button setting.');
+      }
+
+      if (this.triggeredBy && this.triggeredBy !== this.settings.button) {
+        return next();
       }
 
       var self = this;
