@@ -109,7 +109,13 @@ const Teams = {
     Teams.formioProject = await Teams.projectModel().findOne({
       name: 'formio'
     }).lean().exec();
-    debug.getFormioProject(`formio project: ${Teams.formioProject._id}`);
+
+    if (Teams.formioProject) {
+      debug.getFormioProject(`formio project: ${Teams.formioProject._id}`);
+    }
+    else {
+      debug.getFormioProject('formio project: Not Found');
+    }
     return Teams.formioProject;
   },
 
@@ -134,6 +140,11 @@ const Teams = {
       return Teams.memberResource;
     }
     const formio = await Teams.getFormioProject();
+
+    if (!formio) {
+      return null;
+    }
+
     Teams.memberResource = await Teams.formModel().findOne({name: 'member', project: formio._id}).lean().exec();
     debug.getMemberResource(`member resource: ${Teams.memberResource._id}`);
     return Teams.memberResource;
@@ -279,7 +290,7 @@ const Teams = {
     const memberResource = await Teams.getMemberResource();
 
     // Only allow users who belong to the same project as the team member resource.
-    if (!user.project || (user.project.toString() !== memberResource.project.toString())) {
+    if (!memberResource || !user.project || (user.project.toString() !== memberResource.project.toString())) {
       return [];
     }
 
