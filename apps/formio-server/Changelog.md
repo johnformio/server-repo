@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.4-rc.1
+### Fixed
+ - FIO-2924: Fixes an issue when the server was crashing while changing a password using a remote. And fixes an issue when got Unauthorized using a server without primary project.
+ - FIO-2846: Fixes an issue when got an error "Cannot read property '_id' of null" and the server was crashing while trying to create a form with revisions using x-admin-key.  
+ - FIO-2823: Fixes an issue where a custom mongodb collection on a resource breaks the resource and the submission data cannot be accessed
+
+### Changed
+ - Upgrade formio@2.2.1-rc.1 
+
 ## 7.1.3
 ### Changed
  - Upgrade portal@7.2.2
