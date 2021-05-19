@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.4-rc.2
+### Fixed
+ - Allow the minio port to be set in SSL mode.
+ - FIO-2672: added hook for database update (update all emails to be lower case)
+
+### Changed
+ - Upgrade formiojs@4.14.0-rc.6
+ - Upgrade formio@2.2.1-rc.2
+
 ## 7.1.4-rc.1
 ### Fixed
  - FIO-2924: Fixes an issue when the server was crashing while changing a password using a remote. And fixes an issue when got Unauthorized using a server without primary project.
