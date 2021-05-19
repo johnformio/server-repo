@@ -22,7 +22,7 @@
   "cache": "1550086650",
   "main": "./main.js",
   "version": "7.2.0-rc.2",
-  "schema": "3.3.9",
+  "schema": "3.3.10",
   "portalVersion": "7.3.0-rc.3",
   "dependencies": {
     "@formio/premium": "^1.17.0-rc.1",
