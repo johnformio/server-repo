@@ -90,7 +90,6 @@ module.exports = function(router, formioServer) {
             if (item.constructor.name === 'model') {
               item = item.toObject();
             }
-            delete item.template;
             return item;
           });
         }
