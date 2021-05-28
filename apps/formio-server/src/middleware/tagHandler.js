@@ -44,10 +44,10 @@ module.exports = function(router) {
 
     if (req.method === 'GET') {
       req.modelQuery = req.modelQuery || req.model || this.model;
-      req.modelQuery = req.modelQuery.find({project: primaryProjectId}).select({template: 0});
+      req.modelQuery = req.modelQuery.find({project: primaryProjectId});
 
       req.countQuery = req.countQuery || req.model || this.model;
-      req.countQuery = req.countQuery.find({project: primaryProjectId}).select({template: 0});
+      req.countQuery = req.countQuery.find({project: primaryProjectId});
     }
     return next();
   };
