@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.5-rc.1
+### Fixed
+ - FIO-3006: API | JavaScript heap out of memory
+ - FIO-2989: Fixes an issue when for the oAuth redirect URI as host that trigger conflicts with OpenID
+
 ## 7.1.4
 ### Changed
  - Upgrade portal@7.2.3
