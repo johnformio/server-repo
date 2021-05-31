@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-1475-master: Fixes an issue when after update the server DB schema to 3.3.8, the owners of old teams won't set as the admin.
  - FIO-2672: added hook for database update (update all emails to be lower case)
  - Allow them to set the Minio port.
+ - FIO-3006: API | JavaScript heap out of memory
+ - FIO-2989: Fixes an issue when got an 400 error if a form has more then one oAuth actions.
 
 ## 7.2.0-rc.2
 ### Added
