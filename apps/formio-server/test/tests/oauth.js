@@ -7,8 +7,21 @@ var _ = require('lodash');
 var Q = require('q');
 var util = require('formio/src/util/util');
 var docker = process.env.DOCKER;
+const nock = require('nock');
 
-module.exports = function(app, template, hook) {
+nock('https://openidprovider-token.com').post('/token')
+  .reply(200, () => {
+    return {
+      access_token: "eyJ0eXAiOiJKV1QiLCJub25jZSI6ImJvd3lraDFWQ2NkRUQ1NzZ4QTZWdFVoeEt5RFZUNDBESjZpMURieHJoNHMiLCJhbGciOiJSUzI1NiIsIng1dCI6Im5PbzNaRHJPRFhFSzFqS1doWHNsSFJfS1hFZyIsImtpZCI6Im5PbzNaRHJPRFhFSzFqS1doWHNsSFJfS1hFZyJ9.eyJhdWQiOiIwMDAwMDAwMy0wMDAwLTAwMDAtYzAwMC0wMDAwMDAwMDAwMDAiLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC84YmUzYWUyNC02YzkwLTRmMzUtYWRhNy0zZWVkNGY3ZjcyMGMvIiwiaWF0IjoxNjIwOTE0NTY5LCJuYmYiOjE2MjA5MTQ1NjksImV4cCI6MTYyMDkxODQ2OSwiYWNjdCI6MCwiYWNyIjoiMSIsImFjcnMiOlsidXJuOnVzZXI6cmVnaXN0ZXJzZWN1cml0eWluZm8iLCJ1cm46bWljcm9zb2Z0OnJlcTEiLCJ1cm46bWljcm9zb2Z0OnJlcTIiLCJ1cm46bWljcm9zb2Z0OnJlcTMiLCJjMSIsImMyIiwiYzMiLCJjNCIsImM1IiwiYzYiLCJjNyIsImM4IiwiYzkiLCJjMTAiLCJjMTEiLCJjMTIiLCJjMTMiLCJjMTQiLCJjMTUiLCJjMTYiLCJjMTciLCJjMTgiLCJjMTkiLCJjMjAiLCJjMjEiLCJjMjIiLCJjMjMiLCJjMjQiLCJjMjUiXSwiYWlvIjoiQVVRQXUvOFRBQUFBNytJM2NvWUx0bjdiejdvM01LcytQQ1QzT0xNbUtJa3AyOHV6bVRGbEFhRlNQY1NWVGt2QkNhNG05TUtlZEdIU0R5WFZFYUwwU1Y4RnJmVXkxRDdVVXc9PSIsImFsdHNlY2lkIjoiMTpsaXZlLmNvbTowMDAzNDAwMTMzREMyRTIxIiwiYW1yIjpbInB3ZCJdLCJhcHBfZGlzcGxheW5hbWUiOiJGb3JtaW8gVGVzdCBBdXRoIiwiYXBwaWQiOiIxZWIwZjc4ZS1iYzU1LTQ5ODAtYWQ3My02ZTAwZDZiYmU0YWMiLCJhcHBpZGFjciI6IjEiLCJlbWFpbCI6Im1ha3NAZm9ybS5pbyIsImZhbWlseV9uYW1lIjoiRmFsZWkiLCJnaXZlbl9uYW1lIjoiTWFrc2ltIiwiaWRwIjoibGl2ZS5jb20iLCJpZHR5cCI6InVzZXIiLCJpcGFkZHIiOiI0Ni41My4yNDAuMTU0IiwibmFtZSI6Ik1ha3NpbSBGYWxlaSIsIm9pZCI6IjY3MzYyYzVmLTQ3NDAtNGU3Yy1iMjJhLTQ2NDg4OGUwZjMyMCIsInBsYXRmIjoiMyIsInB1aWQiOiIxMDAzMjAwMTNGREQ0QjlEIiwicmgiOiIwLkFZRUFKSzdqaTVCc05VLXRwejd0VDM5eURJNzNzQjVWdklCSnJYTnVBTmE3NUt5QkFNUS4iLCJzY3AiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6IlR4OXc1VHVaTDM5VDBOU2VBaS1OZXdxVkJtZWF6YU9JX3VWR04tckZETnMiLCJ0ZW5hbnRfcmVnaW9uX3Njb3BlIjoiRVUiLCJ0aWQiOiI4YmUzYWUyNC02YzkwLTRmMzUtYWRhNy0zZWVkNGY3ZjcyMGMiLCJ1bmlxdWVfbmFtZSI6ImxpdmUuY29tI21ha3NAZm9ybS5pbyIsInV0aSI6Ii1fR1llT2NDeWs2MHZEako2WVRPQUEiLCJ2ZXIiOiIxLjAiLCJ3aWRzIjpbIjYyZTkwMzk0LTY5ZjUtNDIzNy05MTkwLTAxMjE3NzE0NWUxMCIsImI3OWZiZjRkLTNlZjktNDY4OS04MTQzLTc2YjE5NGU4NTUwOSJdLCJ4bXNfc3QiOnsic3ViIjoiM0xDQy1EdzhpSzFrMmJWTFFMZVFjaHEwZTJfd2huVmtTaG9TZXJyVFZXRSJ9LCJ4bXNfdGNkdCI6MTYyMDgxMjMyMH0.KS9zVuFuk_HrDzbHROWU3DjDU_xGLEWvVdBGN_jyYlne84j5PMX5Mx6SWOrOsMWcUn8QRyia_9tFwDeypI9MV85K4nC3qE8JnltrLc-j2vPkhbqtGH3jLXQZn5fAJD4c6iepUyKCd1vlC4pBrudw7QCqIZevD1Pj5PbK3nEM9FZbGnVNUEdJabeGq8y0CH-U2-XeAd_GR6Iv9zq0_2w-s8ACpyPwRhOWnMESAiX02Cfj2DpagFHBKuJoEej6Tgpa5F7PSuM25CAU0vwnoaRYiIkbdjl9GvCQXS9xcDfZ48_K6BbTmJ1EJqBVlZOQ2LOEuSunLPDn9XM-whF7nuRrzg",
+      expires_in: 3599,
+      ext_expires_in: 3599,
+      id_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Im5PbzNaRHJPRFhFSzFqS1doWHNsSFJfS1hFZyJ9.eyJhdWQiOiIxZWIwZjc4ZS1iYzU1LTQ5ODAtYWQ3My02ZTAwZDZiYmU0YWMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vOGJlM2FlMjQtNmM5MC00ZjM1LWFkYTctM2VlZDRmN2Y3MjBjL3YyLjAiLCJpYXQiOjE2MjA5MTQ1NjksIm5iZiI6MTYyMDkxNDU2OSwiZXhwIjoxNjIwOTE4NDY5LCJhaW8iOiJBV1FBbS84VEFBQUFUVkRtTFRwZnFlN0VCR0FjTEdEVjllYjNsdGZ0a0VnS3RLRnpjbEFLZFFPMWRnTmlWUFNYcXYxYlFHdTlWVVMvOE5TREpXQ2k1ZUs4U05YNzFyMzdwVVIyUTNtSEQveWRxbjB1MkxEaWF3Vk1MODBPOEk5Q0NlOGo5TlAzNytHVyIsImlkcCI6Imh0dHBzOi8vc3RzLndpbmRvd3MubmV0LzkxODgwNDBkLTZjNjctNGM1Yi1iMTEyLTM2YTMwNGI2NmRhZC8iLCJyaCI6IjAuQVlFQUpLN2ppNUJzTlUtdHB6N3RUMzl5REk3M3NCNVZ2SUJKclhOdUFOYTc1S3lCQU1RLiIsInN1YiI6IjNMQ0MtRHc4aUsxazJiVkxRTGVRY2hxMGUyX3doblZrU2hvU2VyclRWV0UiLCJ0aWQiOiI4YmUzYWUyNC02YzkwLTRmMzUtYWRhNy0zZWVkNGY3ZjcyMGMiLCJ1dGkiOiItX0dZZU9jQ3lrNjB2RGpKNllUT0FBIiwidmVyIjoiMi4wIn0.jI3Bgvj4Bxh00KPwVEq5vus9ARRG3GJwUQ-byT92b8IfwfRf5g-6aSTZ2Qe5OV5RYcSVOv-c587naiz8kEOvgO6KuDCz1ObN-wCQpIzEVR_XkPiJoT11hoUYL9WwqmFzS1JSzMrI8FpV6_hAplz7HRqUYfVb_W1Cl7jZGaJt3Kl8AszmxUwRn83yRBe_ED-cSSZeD6IyeFeo09nxx8t1n-jmucWj3kt63lZdensZKaLGAecNn6WielW3WpOPKzv56qHx5xOpVnZnopV5bT0ILlRdaNb_zIcV2sG0bPZ_GhskpxI02oE98e435cGjOvvZKokpdlAo6iqf-Zgm93t7yQ",
+      scope: "openid profile email",
+      token_type: "Bearer"
+    }
+  });
+
+module.exports = function(app, template, hook, eventEmitter) {
   // Cannot run these tests without access to formio instance
   if (docker) {
     return;
@@ -54,7 +67,8 @@ module.exports = function(app, template, hook) {
           clientId: 'TEST_CLIENT_ID',
           clientSecret: 'TEST_CLIENT-SECRET',
           authURL: 'https://mydomain.com',
-          userInfoURI: 'https://openIdProvider.com/userInfo.com'
+          userInfoURI: 'https://openIdProvider.com/userInfo.com',
+          tokenURI: 'https://openidprovider-token.com/token',
         }
       },
     };
@@ -1560,6 +1574,369 @@ module.exports = function(app, template, hook) {
           assert.deepEqual(token, REFRESHED_TEST_ACCESS_TOKEN_2.token, 'Returned token should match correct token.');
           checkExternalTokens(template.users.oauthUser2, [REFRESHED_TEST_ACCESS_TOKEN_2]);
         });
+      });
+    });
+
+    describe('Tests for multiple oAuth Actions per form', function() {
+      const OPENID_PAYLOAD_1 = {
+        data:{},
+        oauth:{
+          openid:{
+            code:'0.AYEAJK7ji5BsNU-tpz7tT39yDI73sB5VvIBJrXNuANa75KyBAAA.AQABAAIAAAD--DLA3VO7QrddgJg7WevrhFvv0LV6AkztdmOJAcJ8lLkuG8hpJvt-RcgcKETEs3J8ohduux7qcmRHJZzDTjpz8w_R5gaKoCykopsXHNsDr2TPmngJrAGgPDA9WGix8uHc1WzVhL2G54ILL-NQDvVCH5G91X02ybO6uDJnhNI812CdofP5z3_UmV4hY3X1hm-SLh_VWpv6QIleBAkw82xsIWd8UHWPWrIBT-G4OW05Rwl1ddjUMX0WJB3y6dZH1PfJzXxv0XJnge8rxL3X-gGMQnkuvnhhzKYix57UIDQJlk-hJmitubeJQ4DTsNE7ZWfIR6XhDnzxuMc4CyVTthrTzxE2wO2H8KIpW_coC2WUqRuc8OEscUBZCqT28AkboTxaULjsiV1AslgFr0aZlvC5ZXLTFCde4aVcs3cAqCH-uQr6Z5rBtLlc0kBWMCM_j0RTt7Rb0cGl33c3PBu4uVLC5ZlOnHfLu0lYaXLZWEZtLAKbm876iwlGUOS846_-_FsNvdslSG2nudIKx7h5x_IU7Wt-PQpGP4Dj5oZbsh-5YeEoNRIU-Tz1MtxGKj-aapoIELnk5icjiYVj6h4h1SNnzpoZ7WWwpiJov8NGffkEdFfzKreUeshYNHVUxFddqWPPa6xmM4PBF5UvS3BaTe7-fOmG8BUtFEQcBPQyrNHnunEFrYJou9G8XtT6R6MJKDq1ch2DINUEnilv19AwWtSCy517ZCQneFG1RkG6mvA9HwMGoTNPFUwELAm1hszJkP_yCXQhwt3-V9-xDjPbPLVk8ZwfpCEP1A5IZsQpQvdVQghNBIKxr78mnzpjneHA-H77eXHNvbkYJPheHNP0s81kqi798grELg3lIthJd1Pbr9AjdVxGkKPK2XF1mrTsnNJgv-pNfHxHDSAkpYe71Yu1OKJ6_wUQwd7av6HyYHOyCRSPF8oB0Q9Dn85Iy2GAj6o9fagKZble6qTaDvY2VmLutW78jVpuf6w_5Nq5o6kH2yAA',
+            state: 'c9d7bb8c797ddc650eaccb07303e8c5714de6a7e4c015e82d2f2b05b965903f3e53c903efd4ca3eaf2ad099058478ea7340a2e860445002df91fcf3ea40f1896',
+            session_state: 'ff3a2704-e053-4ca3-852e-a94f87f50983',
+            redirectURI: 'http://localhost:3000'
+          }
+        }
+      };
+
+      const OPENID_PAYLOAD_2 = {
+        data:{},
+        oauth:{
+          openid:{
+            code:'0.AYEAJK7ji5BsNU-tpz7tT39yDI73sB5VvIBJrXNuANa75KyBAAA.AQABAAIAAAD--DLA3VO7QrddgJg7WevrhFvv0LV6AkztdmOJAcJ8lLkuG8hpJvt-RcgcKETEs3J8ohduux7qcmRHJZzDTjpz8w_R5gaKoCykopsXHNsDr2TPmngJrAGgPDA9WGix8uHc1WzVhL2G54ILL-NQDvVCH5G91X02ybO6uDJnhNI812CdofP5z3_UmV4hY3X1hm-SLh_VWpv6QIleBAkw82xsIWd8UHWPWrIBT-G4OW05Rwl1ddjUMX0WJB3y6dZH1PfJzXxv0XJnge8rxL3X-gGMQnkuvnhhzKYix57UIDQJlk-hJmitubeJQ4DTsNE7ZWfIR6XhDnzxuMc4CyVTthrTzxE2wO2H8KIpW_coC2WUqRuc8OEscUBZCqT28AkboTxaULjsiV1AslgFr0aZlvC5ZXLTFCde4aVcs3cAqCH-uQr6Z5rBtLlc0kBWMCM_j0RTt7Rb0cGl33c3PBu4uVLC5ZlOnHfLu0lYaXLZWEZtLAKbm876iwlGUOS846_-_FsNvdslSG2nudIKx7h5x_IU7Wt-PQpGP4Dj5oZbsh-5YeEoNRIU-Tz1MtxGKj-aapoIELnk5icjiYVj6h4h1SNnzpoZ7WWwpiJov8NGffkEdFfzKreUeshYNHVUxFddqWPPa6xmM4PBF5UvS3BaTe7-fOmG8BUtFEQcBPQyrNHnunEFrYJou9G8XtT6R6MJKDq1ch2DINUEnilv19AwWtSCy517ZCQneFG1RkG6mvA9HwMGoTNPFUwELAm1hszJkP_yCXQhwt3-V9-xDjPbPLVk8ZwfpCEP1A5IZsQpQvdVQghNBIKxr78mnzpjneHA-H77eXHNvbkYJPheHNP0s81kqi798grELg3lIthJd1Pbr9AjdVxGkKPK2XF1mrTsnNJgv-pNfHxHDSAkpYe71Yu1OKJ6_wUQwd7av6HyYHOyCRSPF8oB0Q9Dn85Iy2GAj6o9fagKZble6qTaDvY2VmLutW78jVpuf6w_5Nq5o6kH2yAA',
+            state: 'c9d7bb8c797ddc650eaccb07303e8c5714de6a7e4c015e82d2f2b05b965903f3e53c903efd4ca3eaf2ad099058478ea7340a2e860445002df91fcf3ea40f1896',
+            session_state: 'ff3a2704-e053-4ca3-852e-a94f87f50983',
+            redirectURI: 'http://localhost:3000',
+            triggeredBy: 'oauthSignup',
+          }
+        }
+      };
+
+      it('Create a Form with Register and Login OAuth Action tests', function(done) {
+        var oauthRegisterAndLoginForm = {
+          title: 'OAuth Register and Login Form',
+          name: 'oauthRegisterAndLoginForm',
+          path: 'oauthregisterandloginform',
+          type: 'form',
+          access: [],
+          submissionAccess: [],
+          noSave: true,
+          components: [
+            {
+              input: true,
+              inputType: 'email',
+              label: 'Email',
+              key: 'email',
+              type: 'email',
+              validate: {
+                required: true
+              }
+            },
+            {
+              input: true,
+              inputType: 'password',
+              label: 'password',
+              key: 'password',
+              type: 'password',
+              validate: {
+                required: true
+              }
+            },
+            {
+              input: true,
+              type: 'button',
+              theme: 'primary',
+              disableOnInvalid: 'false',
+              action: 'oauth',
+              key: 'oauthSignup',
+              label: 'Sign-Up with OpenId'
+            },
+            {
+              input: true,
+              type: 'button',
+              theme: 'primary',
+              disableOnInvalid: 'false',
+              action: 'oauth',
+              key: 'oauthLogin',
+              label: 'Login with OpenId'
+            }
+          ]
+        };
+
+        request(app)
+          .post(hook.alter('url', '/form', template))
+          .set('x-jwt-token', template.users.admin.token)
+          .send(oauthRegisterAndLoginForm)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
+            assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
+            assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
+            assert(response.hasOwnProperty('access'), 'The response should contain an the `access`.');
+            assert.equal(response.title, oauthRegisterAndLoginForm.title);
+            assert.equal(response.name, oauthRegisterAndLoginForm.name);
+            assert.equal(response.path, oauthRegisterAndLoginForm.path);
+            assert.equal(response.type, 'form');
+            assert.equal(response.access.length, 1);
+            assert.equal(response.access[0].type, 'read_all');
+            assert.equal(response.access[0].roles.length, 3);
+            assert.notEqual(response.access[0].roles.indexOf(template.roles.anonymous._id.toString()), -1);
+            assert.notEqual(response.access[0].roles.indexOf(template.roles.authenticated._id.toString()), -1);
+            assert.notEqual(response.access[0].roles.indexOf(template.roles.administrator._id.toString()), -1);
+            assert.deepEqual(response.submissionAccess, []);
+            assert.deepEqual(response.components, oauthRegisterAndLoginForm .components);
+            template.forms.oauthRegisterAndLoginForm  = response;
+
+            // Store the JWT for future API calls.
+            template.users.admin.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+
+      it('Set up submission create_own access for Anonymous users for Register and Login Form', function(done) {
+        request(app)
+          .put(hook.alter('url', '/form/' + template.forms.oauthRegisterAndLoginForm ._id, template))
+          .set('x-jwt-token', template.users.admin.token)
+          .send({submissionAccess: [{
+            type: 'create_own',
+            roles: [template.roles.anonymous._id.toString()]
+          }]})
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert.equal(response.submissionAccess[0].type, 'create_own');
+            assert.equal(response.submissionAccess[0].roles.length, 1);
+            assert.equal(response.submissionAccess[0].roles[0], template.roles.anonymous._id.toString());
+
+            // Save this form for later use.
+            template.forms.oauthRegisterAndLoginForm  = response;
+
+            // Store the JWT for future API calls.
+            template.users.admin.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('Create AuthRegisterAction for Register and Login Form', function(done) {
+        var authRegisterAction = {
+          title: "Save Submission",
+          name: "save",
+          handler: ["before"],
+          method: ["create", "update"],
+          priority: 11,
+          settings: {
+            resource: template.forms.oauthUserResource._id.toString(),
+            fields: {
+              email: "email",
+              password: "password"
+            }
+          }
+        };
+        request(app)
+          .post(hook.alter('url', '/form/' + template.forms.oauthRegisterAndLoginForm._id + '/action', template))
+          .set('x-jwt-token', template.users.admin.token)
+          .send(authRegisterAction)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
+            assert.equal(response.title, authRegisterAction.title);
+            assert.equal(response.name, authRegisterAction.name);
+            assert.deepEqual(response.handler, authRegisterAction.handler);
+            assert.deepEqual(response.method, authRegisterAction.method);
+            assert.equal(response.priority, authRegisterAction.priority);
+            assert.deepEqual(response.settings, authRegisterAction.settings);
+            assert.equal(response.form, template.forms.oauthRegisterAndLoginForm._id);
+            template.actions['oauthRegisterAndLoginForm:save'] = response;
+
+            // Store the JWT for future API calls.
+            template.users.admin.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+      it('Create AuthLoginAction for Register and Login Form', function(done) {
+        var authRegisterLoginAction = {
+          "name": "login",
+          "title": "Login",
+          "priority": 2,
+          "method": ["create"],
+          "handler": ["before"],
+          "settings": {
+            "resources": [template.forms.oauthUserResource._id.toString()],
+            "username": "email",
+            "password": "password"
+          }
+        };
+        request(app)
+          .post(hook.alter('url', '/form/' + template.forms.oauthRegisterAndLoginForm._id + '/action', template))
+          .set('x-jwt-token', template.users.admin.token)
+          .send(authRegisterLoginAction)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
+            assert.equal(response.title, authRegisterLoginAction.title);
+            assert.equal(response.name, authRegisterLoginAction.name);
+            assert.deepEqual(response.handler, authRegisterLoginAction.handler);
+            assert.deepEqual(response.method, authRegisterLoginAction.method);
+            assert.equal(response.priority, authRegisterLoginAction.priority);
+            assert.deepEqual(response.settings, authRegisterLoginAction.settings);
+            assert.equal(response.form, template.forms.oauthRegisterAndLoginForm._id);
+            template.actions['oauthRegisterAndLoginForm:login'] = response;
+
+            // Store the JWT for future API calls.
+            template.users.admin.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+
+      it('Create first OAuthAction for openId provider for Register and Login Form', function(done) {
+        var oauthRegisterAction1 = {
+          title: 'OAuth',
+          name: 'oauth',
+          handler: ['after', 'before'],
+          method: ['form', 'create'],
+          priority: 20,
+          settings: {
+            provider: 'openid',
+            association: 'new',
+            button: 'oauthSignup',
+            resource: template.forms.oauthUserResource.name,
+            role: template.roles.authenticated._id.toString(),
+            'autofill-test1-email': 'email'
+          }
+        };
+
+        request(app)
+          .post(hook.alter('url', '/form/' + template.forms.oauthRegisterAndLoginForm._id + '/action', template))
+          .set('x-jwt-token', template.users.admin.token)
+          .send(oauthRegisterAction1)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
+            assert.equal(response.title, oauthRegisterAction1.title);
+            assert.equal(response.name, oauthRegisterAction1.name);
+            assert.deepEqual(response.handler, oauthRegisterAction1.handler);
+            assert.deepEqual(response.method, oauthRegisterAction1.method);
+            assert.equal(response.priority, oauthRegisterAction1.priority);
+            assert.deepEqual(response.settings, oauthRegisterAction1.settings);
+            assert.equal(response.form, template.forms.oauthRegisterAndLoginForm._id);
+            oauthRegisterAction1 = response;
+
+            // Store the JWT for future API calls.
+            template.users.admin.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('Create second OAuthAction for openId provider for Register and Login Form', function(done) {
+        var oauthLoginAction1 = {
+          title: 'OAuth',
+          name: 'oauth',
+          handler: ['after', 'before'],
+          method: ['form', 'create'],
+          priority: 20,
+          settings: {
+            provider: 'openid',
+            association: 'existing',
+            resource: template.forms.oauthUserResource.name,
+            button: 'oauthLogin'
+          }
+        };
+
+        request(app)
+          .post(hook.alter('url', '/form/' + template.forms.oauthRegisterAndLoginForm._id + '/action', template))
+          .set('x-jwt-token', template.users.admin.token)
+          .send(oauthLoginAction1)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+            assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
+            assert.equal(response.title, oauthLoginAction1.title);
+            assert.equal(response.name, oauthLoginAction1.name);
+            assert.deepEqual(response.handler, oauthLoginAction1.handler);
+            assert.deepEqual(response.method, oauthLoginAction1.method);
+            assert.equal(response.priority, oauthLoginAction1.priority);
+            assert.deepEqual(response.settings, oauthLoginAction1.settings);
+            assert.equal(response.form, template.forms.oauthRegisterAndLoginForm._id);
+            oauthLoginAction1 = response;
+
+            // Store the JWT for future API calls.
+            template.users.admin.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('Should run two Actions and get the ERR_HTTP_HEADERS_SENT', function(done) {
+
+        const listener = (err) => {
+          assert.equal(err.code, 'ERR_HTTP_HEADERS_SENT');
+          eventEmitter.removeListener('testException', listener);
+          done();
+        };
+        eventEmitter.once('testException', listener);
+        request(app)
+          .post(hook.alter('url', '/form/' + template.forms.oauthRegisterAndLoginForm._id + '/submission', template))
+          .send(OPENID_PAYLOAD_1)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+          });
+      });
+
+      it('Should run only one Action and shouldn\'t get the ERR_HTTP_HEADERS_SENT', function(done) {
+        let isDoneUsed = false;
+
+        const listener = (err) => {
+          if (err && err.code === 'ERR_HTTP_HEADERS_SENT') {
+            isDoneUsed = true;
+            eventEmitter.removeListener('testException', listener);
+            done(err);
+          }
+        };
+        eventEmitter.once('testException', listener);
+        request(app)
+          .post(hook.alter('url', '/form/' + template.forms.oauthRegisterAndLoginForm._id + '/submission', template))
+          .send(OPENID_PAYLOAD_2)
+          .then(() => {
+            if (!isDoneUsed) {
+              eventEmitter.removeListener('testException', listener);
+              done()
+            }
+          })
+          .catch(done);
       });
     });
 
