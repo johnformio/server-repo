@@ -340,7 +340,7 @@ describe('Initial Tests', function() {
               owner: {
                 data: {
                   name: chance.word(),
-                  email: chance.email(),
+                  email: 'user@form.io',
                   password: chance.word({ length: 8 })
                 }
               }
