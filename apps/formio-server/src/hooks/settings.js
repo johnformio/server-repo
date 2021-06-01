@@ -1917,7 +1917,47 @@ module.exports = function(app) {
         }
 
         return update;
-      }
+      },
+
+       /**
+       * A hook to check permissions to send emails from the form.io domain.
+       *
+       * @param mail {Object}
+       *   The mail object.
+       * @param form {Object}
+       *   The form object.
+       * @return {Promise}
+       */
+      checkEmailPermission(mail, form) {
+        return new Promise((resolve, reject) => {
+          let isAllowed = !(mail.from || '').match(/form\.io/gi);
+
+          if (!isAllowed) {
+            const ownerId = _.get(form, 'owner', '');
+            const submissionModel = formioServer.formio.resources.submission.model;
+
+            submissionModel.findOne({_id: ownerId.toString()}, (err, owner) => {
+              if (err) {
+                return reject(err);
+              }
+
+              const email = _.get(owner, 'data.email');
+
+              isAllowed = !!email && email.match(/form\.io/gi);
+
+              if (isAllowed) {
+                resolve(mail);
+              }
+              else {
+                reject('You are not allowed to send a message from the form.io domain');
+              }
+            });
+          }
+          else {
+            resolve(mail);
+          }
+        });
+      },
     }
   };
 };
