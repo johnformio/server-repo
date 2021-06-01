@@ -1,3 +1,4 @@
+/* eslint-disable max-depth */
 'use strict';
 const {VM} = require('vm2');
 const moment = require('moment');
@@ -8,12 +9,12 @@ module.exports = app => (context, form) => {
       try {
         const formModule = (new VM({
           timeout: 250,
-          sandbox: {
+          sandbox: _.cloneDeep({
             moment,
             _,
             form,
             formModule: null
-          },
+          }),
           fixAsync: true,
           eval: false,
         })).run(`formModule = ${form.module}`);

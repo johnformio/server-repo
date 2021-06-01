@@ -27,6 +27,9 @@ function base64(data) {
   return Buffer.from(JSON.stringify(data)).toString('base64');
 }
 
+  const eventEmitter = new EventEmitter();
+  const testLogger = (err) => eventEmitter.emit('testException', err);
+
 // Set up request mocking for license server.
 const requestMock = sinon.stub()
   .withArgs(sinon.match({
@@ -169,6 +172,18 @@ const requestMock = sinon.stub()
           }),
         });
         break;
+      case 'https://openIdProvider.com/userInfo.com':
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            id: 123456,
+            name: 'Rahat Ahmed',
+            email: 'rahatarmanahmed@gmail.com',
+            first_name: 'Rahat',
+            last_name: 'Ahmed',
+          }),
+        });
+        break;
       default:
         // Fallback to fetch.
         if (url.includes('localhost')) {
@@ -189,6 +204,7 @@ process.on('uncaughtException', function(err) {
 });
 
 process.on('unhandledRejection', (err) => {
+  testLogger(err);
   console.error(err);
 });
 
@@ -284,6 +300,11 @@ describe('Initial Tests', function() {
     })
       .then(function(state) {
         app = state.app;
+
+        app.use((err) => {
+          testLogger(err);
+        });
+
         formio = app.formio.formio;
         hook = require('formio/src/util/hook')(app.formio.formio);
         state.app.listen(state.config.port);
@@ -568,7 +589,7 @@ describe('Initial Tests', function() {
         require('formio/test/submission-access')(app, template, hook);
         require('./tests/validate')(app, template, hook);
         require('./tests/misc')(app, template, hook);
-        require('./tests/oauth')(app, template, hook);
+        require('./tests/oauth')(app, template, hook, eventEmitter);
         require('./tests/s3')(app, template, hook);
         require('./tests/dropbox')(app, template, hook);
         require('./tests/report')(app, template, hook);

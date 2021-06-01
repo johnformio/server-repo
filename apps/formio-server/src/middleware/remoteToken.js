@@ -5,6 +5,11 @@ const jwt = require('jsonwebtoken');
 module.exports = app => (req, res, next) => {
   const token = app.formio.formio.util.getRequestValue(req, 'x-remote-token');
 
+  // Bypass check if apiKey was provided
+  if (req.isAdmin || req.token) {
+    return next();
+  }
+
   if (!token || !app.formio.config.remoteSecret) {
     return next();
   }

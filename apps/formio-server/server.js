@@ -15,7 +15,6 @@ const multipart = require('connect-multiparty');
 const os = require('os');
 const license = require('./src/util/license');
 const audit = require('./src/util/audit');
-const vm = require('vm');
 const cors = require('cors');
 const debug = {
   startup: require('debug')('formio:startup')
@@ -101,6 +100,12 @@ module.exports = function(options) {
               return matched;
             }
           )
+          .replace(/https:\/\/license.form.io/gi, (matched) => {
+            if (config.licenseServer && config.licenseServer !== matched) {
+              return config.licenseServer;
+            }
+            return matched;
+          })
         );
       });
     });
@@ -200,17 +205,8 @@ module.exports = function(options) {
   debug.startup('Attaching middleware: Project & Roles Loader');
   app.use(require('./src/middleware/loadProjectContexts')(app.formio.formio));
 
-  // CORS Support
-  debug.startup('Attaching middleware: CORS');
-  var corsMiddleware = require('./src/middleware/corsOptions')(app);
-  var corsRoute = cors(corsMiddleware);
-  app.use(function(req, res, next) {
-    // If headers already sent, skip cors.
-    if (res.headersSent) {
-      return next();
-    }
-    corsRoute(req, res, next);
-  });
+  // Set the project query middleware for filtering disabled projects
+  app.use(require('./src/middleware/projectQueryLimits'));
 
   // Strict-Transport-Security middleware
   const hsts = _helmet.hsts({
@@ -230,7 +226,19 @@ module.exports = function(options) {
   }
 
    // Check project status
-   app.use(require('./src/middleware/projectUtilization')(app.formio.formio));
+  app.use(require('./src/middleware/projectUtilization')(app.formio.formio));
+
+   // CORS Support
+  debug.startup('Attaching middleware: CORS');
+  var corsMiddleware = require('./src/middleware/corsOptions')(app);
+  var corsRoute = cors(corsMiddleware);
+  app.use(function(req, res, next) {
+    // If headers already sent, skip cors.
+    if (res.headersSent) {
+      return next();
+    }
+    corsRoute(req, res, next);
+  });
 
   // Handle our API Keys.
   debug.startup('Attaching middleware: API Key Handler');
@@ -240,6 +248,7 @@ module.exports = function(options) {
   debug.startup('Attaching middleware: PDF Download');
 
   const downloadPDF = [
+    require('./src/middleware/apiKey')(app.formio.formio),
     require('./src/middleware/remoteToken')(app),
     app.formio.formio.middleware.alias,
     require('./src/middleware/aliasToken')(app),
@@ -253,6 +262,8 @@ module.exports = function(options) {
   app.get('/project/:projectId/form/:formId/submission/:submissionId/download', downloadPDF);
   app.get('/project/:projectId/:formAlias/submission/:submissionId/download/:fileId', downloadPDF);
   app.get('/project/:projectId/form/:formId/submission/:submissionId/download/:fileId', downloadPDF);
+
+  app.post('/project/:projectId/form/:formId/download', downloadPDF);
 
   debug.startup('Attaching middleware: PDF Upload');
   const uploadPDF = [

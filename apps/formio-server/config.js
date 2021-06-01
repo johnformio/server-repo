@@ -181,6 +181,8 @@ config.verboseHealth = getConfig('VERBOSE_HEALTH');
 config.vpat = Boolean(getConfig('VPAT', false));
 config.sac = Boolean(getConfig('SAC', false));
 config.twoFactorAuthAppName = getConfig('TWO_FACTOR_AUTHENTICATION_APP_NAME', 'Form.io');
+config.licenseServer = getConfig('LICENSE_SERVER', 'https://license.form.io');
+config.formio.defaultEmailSource= getConfig('DEFAULT_EMAIL_SOURCE', 'no-reply@example.com');
 
 // Payeezy fields
 config.payeezy = {
@@ -303,7 +305,7 @@ sanitized = _.pick(sanitized, debugConfigVars);
 const debugFormioConfigVars = getConfig('DEBUG_CONFIG_FORMIO_VARS', 'domain,schema').split(',') || [];
 sanitized.formio = _.pick(_.clone(config.formio), debugFormioConfigVars);
 
-config.maxBodySize = getConfig('MAX_BODY_SIZE', '16mb');
+config.maxBodySize = getConfig('MAX_BODY_SIZE', '25mb');
 
 // Only output sanitized data.
 debug.config(sanitized);

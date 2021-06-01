@@ -16,9 +16,10 @@ WORKDIR /src
 # Add deployment key
 RUN mkdir /root/.ssh/ && ssh-keyscan github.com >> /root/.ssh/known_hosts
 ADD id_rsa /root/.ssh/id_rsa
+RUN npm i -g npm@6
 RUN chmod 600 /root/.ssh/id_rsa
 RUN npm config set python /usr/bin/python
-RUN npm i -g npm npm-cli-login
+RUN npm i -g npm-cli-login
 RUN npm-cli-login -u $NPM_USERNAME -p $NPM_PASSWORD -e $NPM_EMAIL -r https://pkg.form.io
 RUN echo "@formio:registry=https://pkg.form.io" > .npmrc
 RUN npm ci --production

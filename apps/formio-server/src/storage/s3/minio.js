@@ -10,12 +10,9 @@ const getMinio = function(settings = {}) {
     endPoint: parsed.hostname,
     useSSL: useSSL,
     accessKey: settings.AWSAccessKeyId,
-    secretKey: settings.AWSSecretKey
+    secretKey: settings.AWSSecretKey,
+    port: parseInt(parsed.port, 10) || (useSSL ? 443 : 9000)
   };
-
-  if (!useSSL) {
-    config.port = parseInt(parsed.port, 10) || 9000;
-  }
 
   if (settings.region) {
     config.region = settings.region;
