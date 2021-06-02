@@ -498,6 +498,9 @@ module.exports = (router) => {
                 return response.json().then((body) => handleError(body, response));
               }
             }
+          })
+          .catch((err) => {
+            handleError(err);
           });
       }
       catch (e) {
