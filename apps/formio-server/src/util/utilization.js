@@ -84,7 +84,7 @@ async function utilization(body, action = '', qs = {terms: 1}) {
     method: 'post',
     headers: {'content-type': 'application/json'},
     body: JSON.stringify(body),
-    timeout: 5000,
+    timeout: 30000,
     qs,
     rejectUnauthorized: false,
   });
@@ -214,7 +214,7 @@ async function clearLicenseCache(licenseId) {
   await fetch(`${licenseServer}/license/${licenseId}/clear`, {
     method: 'post',
     headers: {'content-type': 'application/json'},
-    timeout: 5000,
+    timeout: 30000,
     rejectUnauthorized: false,
   })
     .then((response) => response.ok ? response.json() : null);
