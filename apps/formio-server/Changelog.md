@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.5
+### Changes
+ - No changes. Released 7.1.5-rc.1 as official release.
+
 ## 7.1.5-rc.1
 ### Fixed
  - FIO-3006: API | JavaScript heap out of memory
