@@ -79,7 +79,7 @@ module.exports = (formio) => {
             {
               type: this.name,
               userInfo: this.userInfoURI,
-              token: token.access_token,
+              token: token.access_token || token.id_token || token.token,
               exp: new Date(MAX_TIMESTAMP),
             }
           ];
