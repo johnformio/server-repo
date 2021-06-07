@@ -1,4 +1,6 @@
-version: 2
+version: 2.1
+orbs:
+  snyk: snyk/snyk@0.0.13
 jobs:
   build:
     docker:
@@ -146,6 +148,13 @@ jobs:
               fi
               ./deployment/scripts/createVersion.sh $CIRCLE_TAG
             fi
+      - snyk/scan:
+          docker-image-name: $IMAGE_PATH
+          fail-on-issues: false
+          monitor-on-build: true
+          organization: ${SNYK_CICD_ORGANIZATION}
+          project: ${IMAGE_PATH}:${CIRCLE_TAG}
+          token-variable: SNYK_TOKEN
 
   deploy_npm:
     docker:
@@ -171,7 +180,7 @@ jobs:
             git push --tags
 
 workflows:
-  version: 2
+  version: 2.1
   do-build:
     jobs:
       - build:

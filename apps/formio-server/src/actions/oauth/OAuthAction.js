@@ -8,6 +8,7 @@ const chance = require('chance').Chance();
 
 module.exports = router => {
   const formio = router.formio;
+  const config = router.config;
   const {
     Action,
     hook
@@ -118,6 +119,7 @@ module.exports = router => {
                   dataSrc: 'url',
                   data: {url: resourceSrc},
                   valueProperty: 'name',
+                  authenticate: true,
                   multiple: false,
                   validate: {
                     required: true
@@ -221,6 +223,17 @@ module.exports = router => {
                   clearOnHide: true,
                   type: "datagrid",
                   customConditional: "show = ['remote'].indexOf(data.settings.association) !== -1;"
+                },
+                {
+                  type: 'textfield',
+                  input: true,
+                  label: 'OAuth Callback URL',
+                  key: 'redirectURI',
+                  placeholder: 'Enter Callback URL (Default window.location.origin of your app)',
+                  multiple: false,
+                  validate: {
+                    required: false
+                  }
                 }
               ];
 
@@ -527,8 +540,34 @@ module.exports = router => {
         return res.status(400).send('No authorization code provided.');
       }
 
+      this.triggeredBy = oauthResponse.triggeredBy;
+
+      /*
+        Needs for the exclude oAuth Actions that not related to the triggered action.
+        Without this, we can face an error that the OAuth code has already been used.
+      */
+
+      if (this.triggeredBy && this.triggeredBy !== this.settings.button) {
+        return next();
+      }
+
       // Do not execute the form CRUD methods.
       req.skipResource = true;
+
+      var getUserTeams = function(user) {
+        return new Promise((resolve) => {
+          if (req.currentProject.primary && config.ssoTeams) {
+            formio.teams.getSSOTeams(user).then((teams) => {
+              teams = teams || [];
+              user.teams = _.map(_.map(teams, '_id'), formio.util.idToString);
+              return resolve(user);
+            }).catch(() => resolve(user));
+          }
+          else {
+            resolve(user);
+          }
+        });
+      };
 
       var tokensPromise = provider.getTokens(req, oauthResponse.code, oauthResponse.state, oauthResponse.redirectURI);
       switch (self.settings.association) {
@@ -636,10 +675,14 @@ module.exports = router => {
 
                     const user = {
                       _id: provider.getUserId(data),
+                      project: req.currentProject._id.toString(),
                       data,
                       roles
                     };
 
+                    return getUserTeams(user);
+                  })
+                  .then((user) => {
                     const token = {
                       external: true,
                       user,
@@ -713,6 +756,10 @@ module.exports = router => {
         return res.status(400).send('OAuth Action is missing Button setting.');
       }
 
+      if (this.triggeredBy && this.triggeredBy !== this.settings.button) {
+        return next();
+      }
+
       var self = this;
       var provider = formio.oauth.providers[this.settings.provider];
 
@@ -749,6 +796,7 @@ module.exports = router => {
                     provider: provider.name,
                     clientId: oauthSettings.clientId,
                     authURI: oauthSettings.authURI || provider.authURI,
+                    redirectURI: self.settings.redirectURI,
                     state: state,
                     scope: oauthSettings.scope || provider.scope
                   };

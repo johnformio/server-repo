@@ -149,6 +149,7 @@ module.exports = (app, template, hook) => {
             if (err) {
               return done(err);
             }
+            console.log(res.body);
 
             const response = res.body;
             assert(Array.isArray(response));

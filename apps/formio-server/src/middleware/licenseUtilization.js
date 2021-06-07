@@ -1,9 +1,11 @@
 'use strict';
 
 /* eslint-disable no-console */
+/* eslint-disable max-depth */
 
 const _ = require('lodash');
 const {utilization, cachedUtilization, getProjectContext, getLicenseKey} = require('../util/utilization');
+const paginate = require('node-paginate-anything');
 
 function middleware(app) {
   const formio = app.formio ? app.formio.formio : app;
@@ -73,7 +75,6 @@ function middleware(app) {
               if (['stage', 'tenant'].includes(project.type)) {
                 if (remote) {
                   project.disabled = false;
-                  project.authoring = false;
                 }
                 else {
                   try {
@@ -127,10 +128,7 @@ function middleware(app) {
                     }
 
                     const result = await utilization(body, '');
-
-                    if (project.type === 'stage') {
-                      project.authoring = !result.live;
-                    }
+                    project.live = result.live;
                   }
                   catch (err) {
                     if (project.type === 'stage') {
@@ -143,6 +141,20 @@ function middleware(app) {
                 }
               }
             }));
+
+            let filteredProjects = res.resource.item.filter(project => !project.disabled);
+
+            if (req.originalLimit) {
+              if (Number(req.originalLimit) < filteredProjects.length) {
+                filteredProjects = _.slice(filteredProjects, 0, req.originalLimit);
+              }
+
+              const total = res.resource.item.length;
+              const range = res.resource.item.indexOf(_.last(filteredProjects)) + 1;
+              paginate(req, res, total, range);
+            }
+
+            res.resource.item = [...filteredProjects];
           }
           break;
         case 'GET /project/:projectId':
@@ -262,7 +274,7 @@ function middleware(app) {
           await utilization({
             ...getProjectContext(req),
             licenseKey: getLicenseKey(req),
-          }, '/disable');
+          }, '/delete');
           break;
 
         case 'GET /project/:projectId/manage':
@@ -353,7 +365,7 @@ function middleware(app) {
             formId: req.formId,
             projectId: req.projectId,
             licenseKey: getLicenseKey(req),
-          }, '/disable');
+          }, '/delete');
           break;
 
          //           d8                       88                               88                        88

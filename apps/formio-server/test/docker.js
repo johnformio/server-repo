@@ -107,6 +107,9 @@ describe('Initial Tests', function() {
                 else if (form.name === 'team') {
                   template.formio.teamResource = form;
                 }
+                else if (form.name == 'member') {
+                  template.formio.memberResource = form;
+                }
               });
 
               cb();
