@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.6-rc.1
+### Changed
+ - FIO-3212: Fixing the OpenID access token for Active Directory.
+ - FIO-3081: "The user aborted a request" issue
+ - FIO-2914: Allow custom component validation to work on API Server
+ - FIO-3040: Fixes an issue when wasn't handle the Webhook error and respond instead of spinning forever.
+ - FIO-3095: Fixes an issue with an abusing in-built functionality leading to complete victim account takeover. 
+
 ## 7.1.5
 ### Changes
  - No changes. Released 7.1.5-rc.1 as official release.
