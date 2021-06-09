@@ -13,13 +13,12 @@ module.exports = ({Formio}) => {
 
   fs.access(path.resolve(__dirname, customModulesPath), function(err) {
     if (err) {
-      console.log(err);
+      return Formio;
     }
-    else {
-      if (Formio && 'use' in Formio) {
-        Formio.use(require(path.resolve(__dirname, customModulesPath)));
-      }
+
+    if (Formio && 'use' in Formio) {
+      Formio.use(require(path.resolve(__dirname, customModulesPath)));
     }
+    return Formio;
   });
-  return Formio;
 };
