@@ -453,8 +453,10 @@ module.exports = function(options) {
     app.use((err, req, res, next) => {
       /* eslint-disable no-console */
       console.log('Uncaught exception:');
-      console.log(err);
-      console.log(err.stack);
+      if (err) {
+        console.log(err);
+        console.log(err.stack);
+      }
       /* eslint-enable no-console */
       res.status(400).send(typeof err === 'string' ? {message: err} : err);
     });
@@ -477,8 +479,10 @@ module.exports = function(options) {
   process.on('uncaughtException', function(err) {
     /* eslint-disable no-console */
     console.log('Uncaught exception:');
-    console.log(err);
-    console.log(err.stack);
+    if (err) {
+      console.log(err);
+      console.log(err.stack);
+    }
     /* eslint-enable no-console */
 
     // Give the loggers some time to log before exiting.
