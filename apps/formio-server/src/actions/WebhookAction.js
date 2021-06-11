@@ -441,18 +441,25 @@ module.exports = (router) => {
         setActionItemMessage('Transforming payload');
         if (settings.transform) {
           try {
-            const newPayload = (new VM({
+            let vm = new VM({
               timeout: 500,
               sandbox: _.cloneDeep({
                 externalId,
-                payload,
-                headers: options.headers,
-                config: req.currentProject && req.currentProject.hasOwnProperty('config') ? req.currentProject.config : {},
               }),
               eval: false,
               fixAsync: true
-            })).run(settings.transform);
+            });
+
+            const config = req.currentProject && req.currentProject.hasOwnProperty('config') ? req.currentProject.config : {};
+
+            vm.freeze(payload, 'payload');
+            vm.freeze(options.headers, 'headers');
+            vm.freeze(config, 'config');
+
+            const newPayload = vm.run(settings.transform);
             payload = newPayload;
+
+            vm = null;
           }
           catch (err) {
             setActionItemMessage('Webhook transform failed', err, 'error');

@@ -1424,15 +1424,20 @@ module.exports = function(app) {
           req.currentProject.settings.tokenParse
         ) {
           try {
-            const data = (new VM({
+            let vm = new VM({
               timeout: 500,
-              sandbox: _.cloneDeep({
-                token: decoded,
-                roles: req.currentProject.roles
-              }),
+              sandbox: {},
               eval: false,
               fixAsync: true
-            })).run(req.currentProject.settings.tokenParse);
+            });
+
+            vm.freeze(decoded, 'token');
+            vm.freeze(req.currentProject.roles, 'roles');
+
+            const data = vm.run(req.currentProject.settings.tokenParse);
+
+            vm = null;
+
             if (!data.hasOwnProperty('user')) {
               throw new Error('User not defined on data.');
             }

@@ -7,20 +7,25 @@ module.exports = app => (context, form) => {
   if (form && form.module) {
     if (typeof form.module === 'string') {
       try {
-        const formModule = (new VM({
+        let vm = new VM({
           timeout: 250,
           sandbox: _.cloneDeep({
-            moment,
-            _,
-            form,
             formModule: null
           }),
           fixAsync: true,
           eval: false,
-        })).run(`formModule = ${form.module}`);
+        });
+
+        vm.freeze(moment, 'moment');
+        vm.freeze(_, '_');
+        vm.freeze(form, 'form');
+
+        const formModule = vm.run(`formModule = ${form.module}`);
         if (formModule) {
           form.module = formModule;
         }
+
+        vm = null;
       }
       catch (err) {
         // eslint-disable-next-line no-console
