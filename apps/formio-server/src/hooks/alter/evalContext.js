@@ -9,16 +9,16 @@ module.exports = app => (context, form) => {
       try {
         let vm = new VM({
           timeout: 250,
-          sandbox: _.cloneDeep({
-            formModule: null
-          }),
+          sandbox: {
+            formModule: null,
+            form,
+          },
           fixAsync: true,
           eval: false,
         });
 
         vm.freeze(moment, 'moment');
         vm.freeze(_, '_');
-        vm.freeze(form, 'form');
 
         const formModule = vm.run(`formModule = ${form.module}`);
         if (formModule) {
