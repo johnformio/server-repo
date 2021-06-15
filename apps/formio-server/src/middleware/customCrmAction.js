@@ -11,12 +11,14 @@ module.exports = function(formio) {
 
     if (process.env.hasOwnProperty('CRM')) {
       const modReq = _.cloneDeep(req);
-
-      if (req.currentProject) {
+      if (req.currentProject && (req.currentProject.name || req.currentProject._id)) {
         modReq.body.name = req.currentProject.name;
         modReq.body._id = req.currentProject._id;
       }
-
+      if (actionName === 'upgradeproject' && (!modReq.body._id && modReq.body.project)) {
+        modReq.body._id = modReq.body.project;
+        delete modReq.body.project;
+      }
       const settings = {
         method: 'POST',
         url: process.env.CRM + actionName
