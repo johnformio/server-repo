@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.6-rc.2
+### Fixed
+ - FIO-3223: Fixes an issue with out of memory
+ - Fixes issues with crashes occuring in the error handler.
+ - FIO-2675: Fix wrong host and token fail on pdf submission with image
+
+### Changed
+ - Upgrade formio@2.2.2-rc.2
+ - Upgrade formio-workers@1.14.15
+
 ## 7.1.6-rc.1
 ### Changed
  - FIO-3212: Fixing the OpenID access token for Active Directory.
