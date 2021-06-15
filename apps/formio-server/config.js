@@ -179,6 +179,48 @@ config.sac = Boolean(getConfig('SAC', false));
 config.licenseServer = getConfig('LICENSE_SERVER', 'https://license.form.io');
 config.formio.defaultEmailSource= getConfig('DEFAULT_EMAIL_SOURCE', 'no-reply@example.com');
 
+const getMaxOldSpace = () => {
+  const nodeOptions = getConfig('NODE_OPTIONS', '');
+  const execArgv = process.execArgv || [];
+  const argv = process.argv || [];
+
+  const ENV_NAME = '--max_old_space_size=';
+
+  let space = '';
+  const regexp = /(?<=--max_old_space_size=)\d*/g;
+
+  try {
+    if (nodeOptions && nodeOptions.indexOf(ENV_NAME) !== -1) {
+      space = (nodeOptions.match(regexp) || [])[0];
+    }
+    else if (
+      execArgv
+      && _.isArray(execArgv)
+      && execArgv.some((arg) => arg.indexOf(ENV_NAME) !== -1)
+      ) {
+      const [spaceArg] = execArgv.filter((arg) => arg.indexOf(ENV_NAME) !== -1);
+      space = (spaceArg.match(regexp) || [])[0];
+    }
+    else if (
+      argv
+      && _.isArray(argv)
+      && argv.some((arg) => arg.indexOf(ENV_NAME) !== -1)
+      ) {
+      const [spaceArg] = argv.filter((arg) => arg.indexOf(ENV_NAME) !== -1);
+      space = (spaceArg.match(regexp) || [])[0];
+    }
+    else {
+      space = null;
+    }
+  }
+  // eslint-disable-next-line no-empty
+  catch (error) {}
+
+  return space;
+};
+
+config.formio.maxOldSpace = getMaxOldSpace();
+
 // Payeezy fields
 config.payeezy = {
   keyId: getConfig('PAYEEZY_KEY_ID'),
