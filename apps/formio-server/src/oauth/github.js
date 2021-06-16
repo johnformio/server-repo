@@ -139,7 +139,7 @@ module.exports = function(formio) {
 
     // Gets user ID from provider user response from getUser()
     getUserId(user) {
-      return user.id;
+      return Promise.resolve(user.id);
     },
 
     // This should never get called, since GitHub tokens don't expire

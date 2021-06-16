@@ -8,8 +8,7 @@ module.exports = function(formio) {
     providers: {
       openid: require('./openid')(formio),
       github: require('./github')(formio),
-      google: require('./google')(formio),
-      oauthM2M: require('./oauthM2M')(formio)
+      google: require('./google')(formio)
     },
 
     // Gets user token for a provider, and attempts to refresh it

@@ -179,6 +179,8 @@ config.sac = Boolean(getConfig('SAC', false));
 config.licenseServer = getConfig('LICENSE_SERVER', 'https://license.form.io');
 config.formio.defaultEmailSource= getConfig('DEFAULT_EMAIL_SOURCE', 'no-reply@example.com');
 
+config.enableOauthM2M = getConfig('OAUTH_M2M_ENABLED', false);
+
 // Payeezy fields
 config.payeezy = {
   keyId: getConfig('PAYEEZY_KEY_ID'),
