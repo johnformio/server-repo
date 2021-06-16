@@ -1958,6 +1958,20 @@ module.exports = function(app) {
           }
         });
       },
+
+       /**
+       * A hook to set Access-Control-Expose-Headers.
+       *
+       * @param headers {String}
+       * @return {String}
+       */
+      accessControlExposeHeaders(headers) {
+        if (formioServer.config.enableOauthM2M && headers && typeof headers === 'string') {
+          headers += ', x-m2m-token';
+        }
+
+        return headers;
+      },
     }
   };
 };

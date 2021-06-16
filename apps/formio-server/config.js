@@ -217,6 +217,8 @@ const getMaxOldSpace = () => {
 
 config.formio.maxOldSpace = getMaxOldSpace();
 
+config.enableOauthM2M = getConfig('OAUTH_M2M_ENABLED', false);
+
 // Payeezy fields
 config.payeezy = {
   keyId: getConfig('PAYEEZY_KEY_ID'),
