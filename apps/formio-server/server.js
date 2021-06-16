@@ -68,7 +68,7 @@ module.exports = function(options) {
       fs.readFile(`./portal/config.js`, 'utf8', (err, contents) => {
         res.send(
           contents.replace(
-            /var hostedPDFServer = '';|var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false; var oAuthM2MEnabled = false/gi,
+            /var hostedPDFServer = '';|var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false/gi,
             (matched) => {
               if (config.hostedPDFServer && matched.includes('var hostedPDFServer')) {
                 return `var hostedPDFServer = '${config.hostedPDFServer}';`;
