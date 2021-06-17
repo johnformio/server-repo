@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.7-rc.1
+### Changed
+ - FIO-3099: Implements oAuth2 Machine to Machine and OAUTH_M2M_ENABLED variable to turn on it. Adds variety for idPath in openId.
+ - Upgrade formio@2.2.3-rc.1
+ - Upgrade portal@7.2.5-rc.1
+
 ## 7.1.6-rc.2
 ### Fixed
  - FIO-3223: Fixes an issue with out of memory
