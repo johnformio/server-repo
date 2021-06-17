@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.7-rc.2
+### Fixed
+ - Fixed typeo in portal initialization code.
+
 ## 7.1.7-rc.1
 ### Changed
  - FIO-3099: Implements oAuth2 Machine to Machine and OAUTH_M2M_ENABLED variable to turn on it. Adds variety for idPath in openId.
