@@ -342,9 +342,9 @@ module.exports = router => {
         provider.getUser(tokens),
         Q.denodeify(formio.cache.loadFormByName.bind(formio.cache))(req, self.settings.resource)
       ])
-        .then(function(results) {
+        .then(async function(results) {
           userInfo = results[0];
-          userId = provider.getUserId(userInfo);
+          userId = await provider.getUserId(userInfo, req);
           resource = results[1];
           return auth.authenticateOAuth(resource, provider.name, userId);
         })
@@ -589,8 +589,8 @@ module.exports = router => {
               Q.ninvoke(formio.auth, 'currentUser', req, res)
             ]);
           })
-            .then(function(results) {
-              userId = provider.getUserId(results[0]);
+            .then(async function(results) {
+              userId = await provider.getUserId(results[0], req);
               currentUser = res.resource.item;
 
               if (!currentUser) {
@@ -657,7 +657,7 @@ module.exports = router => {
               const accessToken = _.find(tokens, {type: provider.name});
               return oauthUtil.settings(req, provider.name)
                 .then((settings) => provider.getUser(tokens, settings)
-                  .then((data) => {
+                  .then(async (data) => {
                     if (data.errorCode) {
                       throw new Error(data.errorSummary);
                     }
@@ -674,7 +674,7 @@ module.exports = router => {
                     });
 
                     const user = {
-                      _id: provider.getUserId(data),
+                      _id: await provider.getUserId(data, req),
                       project: req.currentProject._id.toString(),
                       data,
                       roles
@@ -702,7 +702,8 @@ module.exports = router => {
 
                     // Set the headers if they haven't been sent yet.
                     if (!res.headersSent) {
-                      res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
+                      const headers = formio.hook.alter('accessControlExposeHeaders', 'x-jwt-token');
+                      res.setHeader('Access-Control-Expose-Headers', headers);
                       res.setHeader('x-jwt-token', res.token);
                     }
                     res.send(user);

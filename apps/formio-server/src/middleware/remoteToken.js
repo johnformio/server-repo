@@ -30,7 +30,8 @@ module.exports = app => (req, res, next) => {
 
     // Set the headers if they haven't been sent yet.
     if (!res.headersSent) {
-      res.setHeader('Access-Control-Expose-Headers', 'x-remote-token');
+      const headers = app.formio.formio.hook.alter('accessControlExposeHeaders', 'x-jwt-token');
+      res.setHeader('Access-Control-Expose-Headers', headers);
       res.setHeader('x-remote-token', res.token);
     }
 
