@@ -52,7 +52,6 @@ module.exports = function(app) {
       init: require('./on/init')(app),
       formRequest: require('./on/formRequest')(app),
       validateEmail: require('./on/validateEmail')(app),
-      submissionCollection: require('./on/submissionCollection')(app),
     },
     alter: {
       formio: require('./alter/formio')(app),
