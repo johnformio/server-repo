@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Allow them to set the Minio port.
  - FIO-3006: API | JavaScript heap out of memory
  - FIO-2989: Fixes an issue when got an 400 error if a form has more then one oAuth actions.
+ - FIO-3369: Removed the submissionCollection hook which was messing up submission collection
 
 ## 7.2.0-rc.2
 ### Added
