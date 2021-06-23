@@ -1,6 +1,15 @@
 FROM        alpine:latest
 MAINTAINER  Form.io <support@form.io>
 
+
+ENV USERNAME=formiouser
+ENV UID=5000
+ENV GROUP=${USERNAME}
+ENV GID=${UID}
+
+RUN adduser -u ${UID} -g ${GROUP} -D ${USERNAME} &&\
+    addgroup ${USERNAME} ${GROUP}
+
 # Install the latest versions from edge
 RUN sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories &&\
     apk add --upgrade \
@@ -18,6 +27,8 @@ RUN sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories &&\
 
 COPY        ./build /src
 WORKDIR     /src
+
+USER ${USERNAME}
 
 EXPOSE      80
 CMD  ["node", "formio.js", "--max_old_space_size=4096"]
