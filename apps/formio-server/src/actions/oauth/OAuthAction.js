@@ -1,6 +1,7 @@
 'use strict';
 
 const util = require('formio/src/util/util');
+const formioUtil = require('../../util/util');
 const _ = require('lodash');
 const crypto = require('crypto');
 const Q = require('q');
@@ -428,6 +429,11 @@ module.exports = router => {
     }
 
     reauthenticateNewResource(req, res, provider) {
+      // Ensure we have a resource item saved before we get to this point.
+      if (!res.resource || !res.resource.item || !res.resource.item._id) {
+        return res.status(400).send('The OAuth Registration requires a Save Submission action added to the form actions.');
+      }
+
       var self = this;
       // New resource was created and we need to authenticate it again and assign it an externalId
       // Also confirm role is actually accessible
@@ -673,8 +679,9 @@ module.exports = router => {
                       }
                     });
 
+                    const userId = await provider.getUserId(data, req);
                     const user = {
-                      _id: await provider.getUserId(data, req),
+                      _id: formioUtil.toMongoId(userId),
                       project: req.currentProject._id.toString(),
                       data,
                       roles
