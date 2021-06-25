@@ -29,6 +29,14 @@ const Utils = {
     }
     return `${req.protocol}://${req.host}`;
   },
+  toMongoId(id) {
+    id = id || '';
+    let str = '';
+    for (let i = 0; i < id.length; i++) {
+      str += id[i].charCodeAt(0).toString(16);
+    }
+    return _.padEnd(str.substr(0, 24), 24, '0');
+  },
   ssoTokens(text) {
     const tokens = [];
     text.replace(Utils.tokenRegex, (match, $1, $2) => {

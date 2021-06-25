@@ -1,5 +1,6 @@
 'use strict';
 const debug = require('debug')('formio:saml');
+const util = require('../util/util');
 const router = require('express').Router();
 const _ = require('lodash');
 const SAML = require('passport-saml/lib/passport-saml/saml').SAML;
@@ -76,15 +77,6 @@ module.exports = (formioServer) => {
     });
   };
 
-  const toMongoId = function(id) {
-    id = id || '';
-    let str = '';
-    for (let i = 0; i < id.length; i++) {
-      str += id[i].charCodeAt(0).toString(16);
-    }
-    return _.padEnd(str.substr(0, 24), 24, '0');
-  };
-
   /**
    * Get a JWT token in exchange for a SAML request.
    *
@@ -147,7 +139,7 @@ module.exports = (formioServer) => {
     profileFields = profileFields ? _.map(profileFields.split(','), _.trim).join('|').replace(/[^A-z0-9_|-]/g, '') : '';
     const fieldsRegex = new RegExp(profileFields || '', 'i');
     const user = {
-      _id: toMongoId(userId),
+      _id: util.toMongoId(userId),
       project: project._id.toString(),
       data: profileFields ? _.pickBy(profile, (prop, key) => key.match(fieldsRegex)) : profile,
       roles
