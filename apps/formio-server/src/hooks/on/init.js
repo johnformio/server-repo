@@ -24,7 +24,6 @@ module.exports = app => (type, formio) => {
       app.use(require('../../middleware/aliasToken')(app));
       app.use(formio.middleware.tokenHandler);
       app.use(require('../../middleware/userProject')(app.formio.formio));
-      app.use(require('../../middleware/oauthM2MHandler')(app.formio));
       return true;
     case 'logout':
       app.get('/project/:projectId/logout', [
@@ -60,4 +59,3 @@ module.exports = app => (type, formio) => {
 
   return false;
 };
-
