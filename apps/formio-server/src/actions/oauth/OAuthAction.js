@@ -700,14 +700,16 @@ module.exports = router => {
                     res.token = formio.auth.getToken(token);
                     req['x-jwt-token'] = res.token;
 
-                    // Set the headers if they haven't been sent yet.
-                    if (!res.headersSent) {
-                      const headers = formio.hook.alter('accessControlExposeHeaders', 'x-jwt-token');
-                      res.setHeader('Access-Control-Expose-Headers', headers);
-                      res.setHeader('x-jwt-token', res.token);
-                    }
-                    res.send(user);
-                    return user;
+                    return formio.hook.alter('oAuthM2M', req, res, () => {
+                      // Set the headers if they haven't been sent yet.
+                      if (!res.headersSent) {
+                        const headers = formio.hook.alter('accessControlExposeHeaders', 'x-jwt-token');
+                        res.setHeader('Access-Control-Expose-Headers', headers);
+                        res.setHeader('x-jwt-token', res.token);
+                      }
+                      res.send(user);
+                      return user;
+                    });
                   }),
                 );
             })
