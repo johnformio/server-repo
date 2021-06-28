@@ -1987,7 +1987,7 @@ module.exports = function(app) {
        * @param next {Function}
        *   The callback function.
        */
-      oAuthM2M(req, res, cb) {
+      oAuthResponse(req, res, cb) {
         if (!formioServer.config.enableOauthM2M || !req.user || req.path.indexOf('logout') !== -1) {
           return cb();
         }
