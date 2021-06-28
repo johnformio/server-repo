@@ -37,7 +37,7 @@ module.exports = function(app, template, hook) {
     let oauthSettings;
     let token;
 
-    before(function(done) {
+    beforeEach(function(done) {
       app.formio.config.enableOauthM2M = true;
       done();
     });
@@ -76,6 +76,13 @@ module.exports = function(app, template, hook) {
     });
 
     describe ('get M2M Token', function() {
+<<<<<<< HEAD
+=======
+      beforeEach(function(done) {
+        app.formio.config.enableOauthM2M = true;
+        done();
+      });
+>>>>>>> f084921a... Refactored the oAuth M2M token implementation and wrote tests for it
       it('Check if the M2M token recieves', function(done) {
         request(app)
           .get('/project/' + template.project._id + '/current')
