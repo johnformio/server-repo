@@ -82,9 +82,8 @@ module.exports = function(app, template, hook) {
       });
       it('Check if the M2M token recieves', function(done) {
         request(app)
-          .get('/project/' + template.project._id + '/current')
-          .set('x-jwt-token', template.users.oauthUser1.token)
-          .expect('Access-Control-Expose-Headers', 'x-jwt-token, x-m2m-token')
+          .get(hook.alter('url', '/current', template))
+          .set('x-jwt-token', template.users.user1.token)
           .expect(200)
           .end(function(err, res) {
               if (err) {
@@ -104,9 +103,8 @@ module.exports = function(app, template, hook) {
 
       it('Check if M2M token is the same', function(done) {
         request(app)
-          .get('/project/' + template.project._id + '/current')
+          .get(hook.alter('url', '/current', template))
           .set('x-jwt-token', token)
-          .expect('Access-Control-Expose-Headers', 'x-jwt-token, x-m2m-token')
           .expect(200)
           .end(function(err, res) {
               if (err) {
@@ -158,8 +156,7 @@ module.exports = function(app, template, hook) {
       it('The response should be OK if had an error while getting m2m token', function(done) {
         request(app)
           .get('/project/' + template.project._id + '/current')
-          .set('x-jwt-token', template.users.oauthUser1.token)
-          .expect('Access-Control-Expose-Headers', 'x-jwt-token, x-m2m-token')
+          .set('x-jwt-token', template.users.user1.token)
           .expect(200)
           .end(function(err, res) {
               if (err) {
