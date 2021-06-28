@@ -69,7 +69,12 @@ module.exports = function(app, template, hook, eventEmitter) {
           authURL: 'https://mydomain.com',
           userInfoURI: 'https://openIdProvider.com/userInfo.com',
           tokenURI: 'https://openidprovider-token.com/token',
-        }
+        },
+        oauthM2M: {
+          clientId: 'TEST_CLIENT_ID',
+          clientSecret: 'TEST_CLIENT-SECRET',
+          tokenURI: 'https://m2mtoken.com/token',
+        },
       },
     };
 
@@ -1940,5 +1945,6 @@ module.exports = function(app, template, hook, eventEmitter) {
     });
 
     require('./oauth/github')(app, template, hook);
+    require('./oauth/m2mOAuthToken')(app, template, hook);
   });
 };
