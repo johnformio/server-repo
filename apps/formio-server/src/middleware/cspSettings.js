@@ -9,21 +9,28 @@ const helmet = require('helmet');
  */
 module.exports = function(router) {
   return function(req, res, next) {
-    const config = _.get(router, 'formio.config', {});
-    const domain = config.domain ? `*.${config.domain}` : '';
-
+    const hostParts = req.host.split('.');
+    let host = '';
+    if (hostParts[hostParts.length - 1].match(/^localhost(:[0-9]+)?$/)) {
+      host = '*';
+    }
+    else {
+      host = (hostParts.length > 1) ? hostParts.slice(-2).join('.') : req.host;
+    }
+    const sources = [
+      '\'self\'',
+      '\'unsafe-inline\'',
+      '\'unsafe-eval\'',
+      'fonts.googleapis.com',
+      'fonts.gstatic.com',
+      'blob:',
+      'data:',
+      '*.form.io',
+      host,
+      `*.${host}`
+    ];
     const directives = {
-      'default-src': [
-        '\'self\'',
-        '\'unsafe-inline\'',
-        '\'unsafe-eval\'',
-        'fonts.googleapis.com',
-        'fonts.gstatic.com',
-        'blob:',
-        'data:',
-        'cdn.form.io',
-        domain
-      ]
+      'default-src': sources
     };
 
     const createCSPMiddleware = (settings) => {
@@ -61,8 +68,9 @@ module.exports = function(router) {
         return acc;
       }, {...directives});
 
-      if (domain && cspSettings['default-src'].indexOf(domain) === -1) {
-        cspSettings['default-src'].push(domain);
+      if (host && cspSettings['default-src'].indexOf(host) === -1) {
+        cspSettings['default-src'].push(host);
+        cspSettings['default-src'].push(`*.${host}`);
       }
 
       const portalDomain = settings.portalDomain || '';
