@@ -101,11 +101,11 @@ module.exports = (app, template, hook) => {
 
   describe('Validate custom component', () => {
     it('Create custom component', (done)=>{
-      const Number = Formio.Components.components.number;
+      const TextField = Formio.Components.components.textfield;
 
-      class TestComponent extends Number {
+      class TestComponent extends TextField {
         static schema(...extend) {
-          return Number.schema({
+          return TextField.schema({
             type: 'testcomponent',
             label: 'TestComponent',
             key: 'testComponent'
