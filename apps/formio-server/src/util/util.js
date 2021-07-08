@@ -175,6 +175,15 @@ const Utils = {
       return next(null, formio.mongoose.model(collectionName, formio.schemas.submission, collectionName, init));
     });
   },
+  getComponentDataByPath: (path, data) => {
+    if (Array.isArray(path)) {
+      return path.reduce((acc, key) => {
+        return Utils.getComponentDataByPath(key, acc);
+      }, data);
+    }
+
+    return Array.isArray(data) ? data.map(item => item[path]) : data[path];
+  },
 };
 
 module.exports = Utils;
