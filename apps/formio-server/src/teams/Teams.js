@@ -336,13 +336,25 @@ const Teams = {
       }
     ]).exec();
 
-    const teams = [];
+    let teams = [];
+
+    if (user.sso && user.teams) {
+      const teamResource = await Teams.getTeamResource();
+      teams = await Teams.submissionModel().find({
+        _id: {$in: user.teams.map((id) => Teams.util().idToBson(id))},
+        project: teamResource.project,
+        form: teamResource._id,
+        deleted: {$eq: null},
+      }).lean().exec();
+    }
+
     const userTeams = _.get(user, 'metadata.teams', []);
     (membership || []).forEach((member) => {
       const memberTeam = _.get(member, 'data.team', null);
       if (
         memberTeam &&
         (
+          user.sso ||
           !accepted ||
           (memberTeam._id && userTeams.indexOf(memberTeam._id.toString()) !== -1) ||
           (memberTeam.owner && user._id && (user._id.toString() === memberTeam.owner.toString()))
@@ -351,7 +363,7 @@ const Teams = {
         teams.push(member.data.team);
       }
     });
-    return teams;
+    return _.uniqBy(teams, (team) => team._id.toString());
   },
 
   /**
@@ -495,6 +507,16 @@ const Teams = {
    */
   async getMember(user, team) {
     const memberResource = await Teams.getMemberResource();
+    if (user.sso && user.teams && user.teams.indexOf(team._id.toString()) !== -1) {
+      return {
+        project: memberResource.project,
+        form: memberResource._id,
+        data: {
+          email: user.data.email,
+          team: team
+        }
+      };
+    }
     return await Teams.submissionModel().findOne({
       project: memberResource.project,
       form: memberResource._id,

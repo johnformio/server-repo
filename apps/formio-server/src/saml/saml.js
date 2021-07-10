@@ -63,14 +63,19 @@ module.exports = (formioServer) => {
           if (!config) {
             return reject('Invalid SAML Configuration');
           }
-          const saml = new SAML(config);
-          return resolve({
-            saml: saml,
-            project: project,
-            projectRoles: roles,
-            roles: roleMap,
-            settings: settings
-          });
+          try {
+            const saml = new SAML(config);
+            return resolve({
+              saml: saml,
+              project: project,
+              projectRoles: roles,
+              roles: roleMap,
+              settings: settings
+            });
+          }
+          catch (err) {
+            return reject(err.message || err);
+          }
         });
       });
     });
@@ -97,14 +102,9 @@ module.exports = (formioServer) => {
     const rolesPath = settings.rolesPath || 'roles';
     const idPath = settings.idPath || 'id';
     const emailPath = settings.emailPath || 'email';
-    let userRoles = _.get(profile, rolesPath);
+    let userRoles = _.get(profile, rolesPath, []);
+    const roleTeams = _.cloneDeep(userRoles);
     const {rolesDelimiter} = settings;
-
-    //Default role by Azure ADFS (Azure don't send default roles)
-    if (!userRoles) {
-      userRoles = 'User';
-    }
-
     if (typeof userRoles === 'string') {
       if (rolesDelimiter) {
         userRoles = userRoles.split(rolesDelimiter);
@@ -148,6 +148,7 @@ module.exports = (formioServer) => {
     const fieldsRegex = new RegExp(profileFields || '', 'i');
     const user = {
       _id: toMongoId(userId),
+      sso: true,
       project: project._id.toString(),
       data: profileFields ? _.pickBy(profile, (prop, key) => key.match(fieldsRegex)) : profile,
       roles
@@ -174,7 +175,7 @@ module.exports = (formioServer) => {
     // the user object that will be read by the teams feature to determine which teams are allocated to this user.
     if (project.primary && config.ssoTeams) {
       // Load the teams by name.
-      formio.teams.getSSOTeams(user, userRoles).then((teams) => {
+      formio.teams.getSSOTeams(user, roleTeams).then((teams) => {
         teams = teams || [];
         user.teams = _.map(_.map(teams, '_id'), formio.util.idToString);
         debug(`Teams: ${JSON.stringify(user.teams)}`);
