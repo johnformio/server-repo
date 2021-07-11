@@ -1395,7 +1395,6 @@ module.exports = function(app) {
               .map('_id')
               .filter()
               .map(formioServer.formio.util.idToString)
-              .uniq()
               .value();
 
             next(null, user);
@@ -1419,6 +1418,7 @@ module.exports = function(app) {
         if (
           !process.env.FORMIO_HOSTED &&
           req.currentProject &&
+          (req.currentProject._id.toString() === projectId) &&
           req.currentProject.settings &&
           req.currentProject.settings.tokenParse
         ) {
