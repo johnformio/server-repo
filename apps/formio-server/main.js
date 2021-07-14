@@ -1,7 +1,4 @@
 'use strict';
-// Force load mailgun first before anything else
-// Mailgun doesn't play nice when it loads with pollution in global variables
-require('mailgun.js');
 
 require('./server')()
   .then(function(server) {
