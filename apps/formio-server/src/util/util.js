@@ -125,7 +125,7 @@ const Utils = {
     }
 
     // Disable for hosted projects
-    if (process.env.FORMIO_HOSTED) {
+    if (formio.config.hosted) {
       return next();
     }
 
