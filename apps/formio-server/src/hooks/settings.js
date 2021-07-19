@@ -281,7 +281,7 @@ module.exports = function(app) {
        */
       token(token, form, req) {
         // See https://tools.ietf.org/html/rfc7519
-        token.iss = formioServer.formio.config.apiHost;
+        token.iss = util.baseUrl(formioServer.formio, req);
         token.sub = token.user._id;
         token.jti = req.session._id;
 
@@ -1395,7 +1395,6 @@ module.exports = function(app) {
               .map('_id')
               .filter()
               .map(formioServer.formio.util.idToString)
-              .uniq()
               .value();
 
             next(null, user);
@@ -1419,6 +1418,7 @@ module.exports = function(app) {
         if (
           !process.env.FORMIO_HOSTED &&
           req.currentProject &&
+          (req.currentProject._id.toString() === projectId) &&
           req.currentProject.settings &&
           req.currentProject.settings.tokenParse
         ) {

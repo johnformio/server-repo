@@ -347,7 +347,7 @@ module.exports = router => {
           userInfo = results[0];
           userId = await provider.getUserId(userInfo, req);
           resource = results[1];
-          return auth.authenticateOAuth(resource, provider.name, userId);
+          return auth.authenticateOAuth(resource, provider.name, userId, req);
         })
         .then(function(result) {
           if (result) { // Authenticated existing resource
@@ -502,7 +502,7 @@ module.exports = router => {
 
           return submission.save()
             .then(function() {
-              return auth.authenticateOAuth(resource, provider.name, req.oauthDeferredAuth.id);
+              return auth.authenticateOAuth(resource, provider.name, req.oauthDeferredAuth.id, req);
             });
         })
         .then(function(result) {

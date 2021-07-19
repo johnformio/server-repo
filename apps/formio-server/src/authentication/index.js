@@ -1,6 +1,6 @@
 'use strict';
 const Q = require('q');
-
+const util = require('../util/util');
 module.exports = function(formio) {
   /**
    * Authenticate a user via OAuth. Resolves with null if no user found
@@ -12,7 +12,7 @@ module.exports = function(formio) {
    *
    * @returns {Promise}
    */
-  const authenticateOAuth = function(form, providerName, oauthId, next) {
+  const authenticateOAuth = function(form, providerName, oauthId, req, next) {
     if (!providerName) {
       return next(new Error('Missing provider'));
     }
@@ -61,7 +61,7 @@ module.exports = function(formio) {
             },
             source: `oauth:${providerName}`,
           };
-          token.iss = formio.config.apiHost;
+          token.iss = util.baseUrl(formio, req);
           token.sub = token.user._id;
           token.jti = session._id;
 
