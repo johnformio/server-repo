@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## 7.1.7-rc.4
 ### Changed
  - Upgrade portal@7.2.5-rc.3
- - Upgrade formio@2.2.3-rc.4
+ - Upgrade formio@2.2.3-rc.6
  - Upgrade formiojs@4.14.0-rc.14
  - Upgrade formio-workers@1.14.16
 
