@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.7-rc.4
+### Changed
+ - Upgrade portal@7.2.5-rc.3
+ - Upgrade formio@2.2.3-rc.4
+ - Upgrade formiojs@4.14.0-rc.14
+ - Upgrade formio-workers@1.14.16
+
+### Fixed
+ - Fixing problem where project apis will fail if license is invalid.
+ - FIO-3441: resolve vulnerabilities
+ - FIO-2557: Use standard method of getting the Base URL for a deployment.
+ - FIO-2885: Implements a non-root user for docker container
+ - FIO-3259: Adding tests for proper LDAP login functionality
+ - FIO-3370: Fixed OAuth Register and Login crashes, and also resolved owner issue with remote auth.
+ - FIO-1371: fix issue with failing offline license and jose version update
+
 ## 7.1.7-rc.3
 ### Changed
  - Upgrade portal@7.2.5-rc.2
@@ -34,7 +50,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-3081: "The user aborted a request" issue
  - FIO-2914: Allow custom component validation to work on API Server
  - FIO-3040: Fixes an issue when wasn't handle the Webhook error and respond instead of spinning forever.
- - FIO-3095: Fixes an issue with an abusing in-built functionality leading to complete victim account takeover. 
+ - FIO-3095: Fixes an issue with an abusing in-built functionality leading to complete victim account takeover.
  - Upgrade premium@1.16.3-rc.1
 
 ## 7.1.5
@@ -72,11 +88,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## 7.1.4-rc.1
 ### Fixed
  - FIO-2924: Fixes an issue when the server was crashing while changing a password using a remote. And fixes an issue when got Unauthorized using a server without primary project.
- - FIO-2846: Fixes an issue when got an error "Cannot read property '_id' of null" and the server was crashing while trying to create a form with revisions using x-admin-key.  
+ - FIO-2846: Fixes an issue when got an error "Cannot read property '_id' of null" and the server was crashing while trying to create a form with revisions using x-admin-key.
  - FIO-2823: Fixes an issue where a custom mongodb collection on a resource breaks the resource and the submission data cannot be accessed
 
 ### Changed
- - Upgrade formio@2.2.1-rc.1 
+ - Upgrade formio@2.2.1-rc.1
 
 ## 7.1.3
 ### Changed
@@ -120,7 +136,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-2790: Fixing issues with SAML team authentication.
 
 ### Changed
- - Upgrade portal@7.2.2-rc.2 
+ - Upgrade portal@7.2.2-rc.2
 
 ## 7.1.3-rc.2
 ### Fixed
@@ -275,7 +291,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## 7.1.0-rc.5
 ### Fixed
  - FIO-1277: Fixing the evaluations to use vm2 to add more security.
- - Upgrade formio@2.1.0-rc.8 
+ - Upgrade formio@2.1.0-rc.8
 
 ## 7.1.0-rc.4
 ### Fixed
@@ -295,15 +311,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FOR-2866: added hook for getting proper mongo collection
  - FIO-1196: Added SQLConector2 support.
  - FIO-841: Implements the Dev License.
- 
+
 ### Fixed
  - FIO-1282: Fixes an issue when the server was crashing if doesn't reach manager index.html
  - FOR-2709: Makes changing 'tags', 'controller', 'properties' and 'settings' form's properties cause creating a new revision if allowed
- - FIO-1138: Fixed possibility to update teams in protected mode. 
+ - FIO-1138: Fixed possibility to update teams in protected mode.
  - FIO-128: Fix saving custom properties in form revision.
  - FOR-2763: Changed the default template for creating new projects that include the only Administrator for Read All
  - FIO-1026: When creating a new stage or tenant, allow selecting which stage to copy from (instead of only live).
- 
+
 ### Changed
  - FIO-920: Adding email support for Teams.
 
@@ -323,7 +339,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Upgrade formiojs@4.12.7-rc.2
  - Upgrade portal@7.2.0-rc.2
  - Upgrade premium@1.15.4-rc.3
- 
+
 ## 7.1.0-rc.1
 ### Fixed
  - FIO-1000: Fix an error for import with empty template
