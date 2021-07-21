@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.7-rc.6
+### Fixed
+ - FIO-3116: Fixes an issue files inside containers and editgrids weren't attaching to an email.
+
 ## 7.1.7-rc.5
 ### Changed
  - Upgrade portal@7.2.5-rc.4
