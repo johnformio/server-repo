@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.7-rc.5
+### Changed
+ - Upgrade portal@7.2.5-rc.4
+ - Upgrade formio@2.2.3-rc.8
+ - Upgrade formiojs@4.14.0-rc.15
+ - Upgrade premium@1.16.4-rc.1
+
 ## 7.1.7-rc.4
 ### Changed
  - Upgrade portal@7.2.5-rc.3
