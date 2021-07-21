@@ -1,6 +1,7 @@
 'use strict';
 
 const util = require('formio/src/util/util');
+const formioUtil = require('../../util/util');
 const _ = require('lodash');
 const crypto = require('crypto');
 const Q = require('q');
@@ -346,7 +347,7 @@ module.exports = router => {
           userInfo = results[0];
           userId = await provider.getUserId(userInfo, req);
           resource = results[1];
-          return auth.authenticateOAuth(resource, provider.name, userId);
+          return auth.authenticateOAuth(resource, provider.name, userId, req);
         })
         .then(function(result) {
           if (result) { // Authenticated existing resource
@@ -428,6 +429,11 @@ module.exports = router => {
     }
 
     reauthenticateNewResource(req, res, provider) {
+      // Ensure we have a resource item saved before we get to this point.
+      if (!res.resource || !res.resource.item || !res.resource.item._id) {
+        return res.status(400).send('The OAuth Registration requires a Save Submission action added to the form actions.');
+      }
+
       var self = this;
       // New resource was created and we need to authenticate it again and assign it an externalId
       // Also confirm role is actually accessible
@@ -496,7 +502,7 @@ module.exports = router => {
 
           return submission.save()
             .then(function() {
-              return auth.authenticateOAuth(resource, provider.name, req.oauthDeferredAuth.id);
+              return auth.authenticateOAuth(resource, provider.name, req.oauthDeferredAuth.id, req);
             });
         })
         .then(function(result) {
@@ -673,8 +679,9 @@ module.exports = router => {
                       }
                     });
 
+                    const userId = await provider.getUserId(data, req);
                     const user = {
-                      _id: await provider.getUserId(data, req),
+                      _id: formioUtil.toMongoId(userId),
                       project: req.currentProject._id.toString(),
                       data,
                       roles

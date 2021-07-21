@@ -17,6 +17,26 @@ const Utils = {
       return `${encodeURIComponent(k)}=${encodeURIComponent(query[k])}`;
     }).join('&');
   },
+  toMongoId(id) {
+    id = id || '';
+    let str = '';
+    for (let i = 0; i < id.length; i++) {
+      str += id[i].charCodeAt(0).toString(16);
+    }
+    return _.padEnd(str.substr(0, 24), 24, '0');
+  },
+  baseUrl(formio, req) {
+    if (process.env.hasOwnProperty('BASE_URL')) {
+      return formio.config.apiHost;
+    }
+    if (req.headers && req.headers.host) {
+      return `${req.protocol}://${req.headers.host}`;
+    }
+    if (!req.protocol || !req.host) {
+      return formio.config.apiHost;
+    }
+    return `${req.protocol}://${req.host}`;
+  },
   ssoTokens(text) {
     const tokens = [];
     text.replace(Utils.tokenRegex, (match, $1, $2) => {

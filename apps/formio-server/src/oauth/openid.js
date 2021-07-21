@@ -115,10 +115,10 @@ module.exports = (formio) => {
         throw 'No response from OpenID Provider.';
       }
 
-      return {
+      return _.isObject(userInfo.name) ? {
         ...userInfo,
         ...userInfo.name,
-      };
+      } : userInfo;
     },
 
     // Gets user ID from provider user response from getUser()
