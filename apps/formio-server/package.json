@@ -66,6 +66,7 @@
     "opn": "^6.0.0",
     "passport-saml": "^2.0.5",
     "passport-saml-metadata": "^2.4.0",
+    "path-to-regexp": "^6.2.0",
     "q": "^1.5.1",
     "resourcejs": "^2.3.4",
     "semver": "^7.3.4",

@@ -6,6 +6,7 @@ const {
   createLicense,
   getLicense,
   setLicensePlan,
+  checkLastUtilizationTime,
 } = require('../util/utilization');
 const _ = require('lodash');
 const plans = require('../plans/plans');
@@ -155,6 +156,10 @@ module.exports = (formio) => async (req, res, next) => {
     }
   }
   catch (err) {
+    // check last successful utilization time
+    if (checkLastUtilizationTime(req)) {
+      return next();
+    }
     cache.del(projectId);
     return next();
   }
