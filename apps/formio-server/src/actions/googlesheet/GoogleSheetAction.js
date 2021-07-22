@@ -166,9 +166,23 @@ module.exports = (router) => {
         let request = null;
         if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
           const item = _.get(res, 'resource.item');
+
+          // Set method for the googledrive files to write a link
+          req.googleSheetAction = (file, defaultValue) => {
+            if (file && file.storage === 'googledrive' && file.originalUrl) {
+              return file.originalUrl;
+            }
+
+            return defaultValue;
+          };
+
           const data = new CSVExporter(req.currentForm, req, res)
             .getSubmissionData(item)
             .updatedSubmission;
+
+            // Remove a method for googledrive files
+            req.googleSheetAction = null;
+
           const rowId = this.getRowId(item, type);
 
           request = (rowId
