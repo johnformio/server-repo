@@ -1997,7 +1997,7 @@ module.exports = function(app) {
 
         return headers;
       },
-      
+
             /**
        * Check if the user authenticated with 2FA. If not, returns null.
        *
