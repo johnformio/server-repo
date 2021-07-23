@@ -4,9 +4,15 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## 7.1.7-rc.6
+## 7.1.7-rc.7
 ### Fixed
  - FIO-3116: Fixes an issue files inside containers and editgrids weren't attaching to an email.
+ - FIO-1566: add support for global pdf headers and footers
+
+### Changed
+ - Upgrade portal@7.2.5-rc.5
+ - Upgrade formio@2.2.3-rc.9
+ - Upgrade jose@3.14.3, aws-sdk@2.952.0, crypto-js@4.1.1, javascript-obfuscator@2.17.0
 
 ## 7.1.7-rc.5
 ### Changed
