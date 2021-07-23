@@ -156,6 +156,6 @@ module.exports = (formio) => async (req, res, next) => {
   }
   catch (err) {
     cache.del(projectId);
-    res.status(400).send(err);
+    return next();
   }
 };

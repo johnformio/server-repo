@@ -4,6 +4,7 @@ const Promise = require('bluebird');
 const fetch = require('formio/src/util/fetch');
 const {getLicenseKey} = require('./utilization');
 const {getPDFUrls} = require('./pdf');
+const util = require('./util');
 const PDF_SERVER = process.env.PDF_SERVER || process.env.FORMIO_FILES_SERVER;
 module.exports = (formioServer) => {
   const formio = formioServer.formio;
@@ -55,6 +56,7 @@ module.exports = (formioServer) => {
     const headers = {
       'x-license-key': getLicenseKey(req),
       'content-type': 'application/json',
+      'x-host': util.baseUrl(formio, req)
     };
 
     // Pass along the auth token to files server
@@ -63,7 +65,8 @@ module.exports = (formioServer) => {
         headers['x-jwt-token'] = formio.auth.getToken({
           form: req.token.form,
           user: req.token.user,
-          project: req.token.project
+          project: req.token.project,
+          jti: req.token.jti
         });
       }
       else {

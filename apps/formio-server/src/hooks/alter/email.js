@@ -68,10 +68,20 @@ module.exports = app => (mail, req, res, params, cb) => {
       return;
     }
 
-    const attachments = _.chain(params.components)
+    const attachments = _.chain(params.componentsWithPath || params.components)
       .filter(component => component.type === 'file')
-      .map(component => params.data[component.key])
-      .flatten()
+      .map(component => {
+        let {compPath} = component;
+
+        compPath = compPath || component.key;
+
+        if (compPath && compPath.indexOf('.') !== -1) {
+          compPath = compPath.split('.');
+        }
+
+        return util.getComponentDataByPath(compPath, params.data);
+      })
+      .flattenDeep()
       .compact()
       .map(file => ({
         filename: file.originalName,

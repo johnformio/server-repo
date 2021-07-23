@@ -163,6 +163,111 @@ module.exports = (app, template, hook) => {
           });
       });
     });
+
+    describe('LDAP Login', () => {
+      const helper2 = new template.Helper(template.formio.owner);
+      let project2;
+      it('Create an ldap test project', (done) => {
+        helper2
+          .project()
+          .plan('commercial')
+          .execute(() => {
+            helper2.getProject((err, response) => {
+              if (err) {
+                return done(err);
+              }
+
+              assert(typeof response === 'object');
+              project2 = response;
+              done();
+            });
+          });
+      });
+
+      it('Create ldap form and action', (done) => {
+        helper2
+        .form('ldap', [
+          {
+            input: true,
+            label: 'User Name',
+            key: 'username',
+            type: 'textfield',
+          },
+          {
+            input: true,
+            label: 'Password',
+            key: 'password',
+            type: 'password',
+          },
+        ],
+        {
+          submissionAccess: [
+            {
+              type: 'create_own',
+              roles: ['anonymous']
+            }
+          ]
+        })
+        .action('ldap', {
+          title: 'LDAP',
+          name: 'ldap',
+          priority: 3,
+          handler: ['before'],
+          method: ['create'],
+          settings: {
+            passthrough: false,
+            passwordField: 'password',
+            usernameField: 'username',
+            roles: [
+              {
+                property: '',
+                role: helper2.template.roles.authenticated._id,
+                value: ''
+              }
+            ]
+          },
+        })
+        .execute(done);
+      });
+
+      it('Add the ldap project settings', (done) => {
+        helper2
+          .settings({
+            cors: '*',
+            ldap: {
+              "url": "ldap://ldap.forumsys.com:389",
+              "bindDn": "cn=read-only-admin,dc=example,dc=com",
+              "bindCredentials": "password",
+              "searchBase": "dc=example,dc=com",
+              "searchFilter": "(uid={{username}})"
+            },
+          })
+          .execute(done);
+      });
+
+      it('Should allow you to login as an ldap user', (done) => {
+        request(app)
+          .post(`/project/${project2._id}/ldap`)
+          .send({
+            data: {
+              username: 'einstein',
+              password: 'password'
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+            assert.equal(res.body._id, 'uid=einstein,dc=example,dc=com');
+            assert.equal(res.body.roles.length, 1);
+            assert.equal(res.body.roles[0], helper2.template.roles.authenticated._id.toString());
+            assert.equal(res.body.data.email, 'einstein@ldap.forumsys.com');
+            done();
+          });
+      });
+    });
   });
 
   if (!docker)

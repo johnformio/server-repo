@@ -1,6 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
+const util = require('../../util/util');
 
 module.exports = (app) => async (params, req) => {
   const formioServer = app.formio;
@@ -20,10 +21,19 @@ module.exports = (app) => async (params, req) => {
   }
 
   // Attach file URLs
-  const urlPromises = _.chain(params.components)
+  const urlPromises = _.chain(params.componentsWithPath || params.components)
     .filter(component => component.type === 'file')
-    .map(component => params.data[component.key])
-    .flatten()
+    .map(component => {
+      let {compPath} = component;
+
+      compPath = compPath || component.key;
+
+      if (compPath && compPath.indexOf('.') !== -1) {
+        compPath = compPath.split('.');
+      }
+      return util.getComponentDataByPath(compPath, params.data);
+    })
+    .flattenDeep()
     .compact()
     .map(async file => {
       if (['s3', 'azure', 'dropbox'].includes(file.storage)) {

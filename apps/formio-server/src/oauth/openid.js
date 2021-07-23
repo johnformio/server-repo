@@ -28,6 +28,8 @@ module.exports = (formio) => {
 
     redirectURI: '',
 
+    idPath: '',
+
     // List of field data that can be autofilled from user info API request
     autofillFields: [],
 
@@ -79,7 +81,7 @@ module.exports = (formio) => {
             {
               type: this.name,
               userInfo: this.userInfoURI,
-              token: token.access_token,
+              token: token.access_token || token.id_token || token.token,
               exp: new Date(MAX_TIMESTAMP),
             }
           ];
@@ -113,15 +115,30 @@ module.exports = (formio) => {
         throw 'No response from OpenID Provider.';
       }
 
-      return {
+      return _.isObject(userInfo.name) ? {
         ...userInfo,
         ...userInfo.name,
-      };
+      } : userInfo;
     },
 
     // Gets user ID from provider user response from getUser()
-    getUserId(user) {
-      return user._id || user.sub;
+    async getUserId(user, req) {
+      let idPath = null;
+
+      try {
+        const settings = await  oauthUtil.settings(req, this.name) || {};
+        idPath = _.get(settings, 'idPath');
+      }
+      // eslint-disable-next-line no-empty
+      catch (error) {}
+
+      let id = null;
+
+      if (idPath) {
+        id = _.get(user, idPath);
+      }
+
+      return id || user._id || user.sub;
     },
 
     // OpenID tokens have no expiration date. If it is invalidated it means they have disabled the app.

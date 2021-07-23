@@ -39,5 +39,14 @@ module.exports = () => {
     }
   ];
 
+  // An admin with form.io domain email.
+  template.users.formioAdmin = {
+    token: '',
+    data: {
+      email: 'useradmin@form.io',
+      password: 'test123'
+    }
+  }
+
   return template;
 };

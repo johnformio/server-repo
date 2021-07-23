@@ -52,7 +52,6 @@ module.exports = function(app) {
       init: require('./on/init')(app),
       formRequest: require('./on/formRequest')(app),
       validateEmail: require('./on/validateEmail')(app),
-      submissionCollection: require('./on/submissionCollection')(app),
     },
     alter: {
       formio: require('./alter/formio')(app),
@@ -293,7 +292,7 @@ module.exports = function(app) {
         }
 
         // See https://tools.ietf.org/html/rfc7519
-        token.iss = formioServer.formio.config.apiHost;
+        token.iss = util.baseUrl(formioServer.formio, req);
         token.sub = token.user._id;
         token.jti = req.session._id;
 
@@ -1419,7 +1418,6 @@ module.exports = function(app) {
               .map('_id')
               .filter()
               .map(formioServer.formio.util.idToString)
-              .uniq()
               .value();
 
             next(null, user);
@@ -1443,6 +1441,7 @@ module.exports = function(app) {
         if (
           !process.env.FORMIO_HOSTED &&
           req.currentProject &&
+          (req.currentProject._id.toString() === projectId) &&
           req.currentProject.settings &&
           req.currentProject.settings.tokenParse
         ) {
@@ -1945,7 +1944,61 @@ module.exports = function(app) {
         return update;
       },
 
-      /**
+       /**
+       * A hook to check permissions to send emails from the form.io domain.
+       *
+       * @param mail {Object}
+       *   The mail object.
+       * @param form {Object}
+       *   The form object.
+       * @return {Promise}
+       */
+      checkEmailPermission(mail, form) {
+        return new Promise((resolve, reject) => {
+          let isAllowed = !(mail.from || '').match(/form\.io/gi);
+
+          if (!isAllowed) {
+            const ownerId = _.get(form, 'owner', '');
+            const submissionModel = formioServer.formio.resources.submission.model;
+
+            submissionModel.findOne({_id: ownerId.toString()}, (err, owner) => {
+              if (err) {
+                return reject(err);
+              }
+
+              const email = _.get(owner, 'data.email');
+
+              isAllowed = !!email && email.match(/form\.io/gi);
+
+              if (isAllowed) {
+                resolve(mail);
+              }
+              else {
+                reject('You are not allowed to send a message from the form.io domain');
+              }
+            });
+          }
+          else {
+            resolve(mail);
+          }
+        });
+      },
+
+       /**
+       * A hook to set Access-Control-Expose-Headers.
+       *
+       * @param headers {String}
+       * @return {String}
+       */
+      accessControlExposeHeaders(headers) {
+        if (formioServer.config.enableOauthM2M && headers && typeof headers === 'string') {
+          headers += ', x-m2m-token';
+        }
+
+        return headers;
+      },
+      
+            /**
        * Check if the user authenticated with 2FA. If not, returns null.
        *
        * @param user

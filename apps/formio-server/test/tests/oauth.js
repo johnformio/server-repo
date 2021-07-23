@@ -131,7 +131,7 @@ module.exports = function(app, template, hook, eventEmitter) {
         },
         getUserId: function(user) {
           assert.deepEqual(user, TEST_USER_1, 'OAuth Action should get ID from expected test user.');
-          return user.id;
+          return Promise.resolve(user.id);
         }
       };
 
@@ -157,7 +157,7 @@ module.exports = function(app, template, hook, eventEmitter) {
         },
         getUserId: function(user) {
           assert.deepEqual(user, TEST_USER_2, 'OAuth Action should get ID from expected test user.');
-          return user.id;
+          return Promise.resolve(user.id);
         },
         refreshTokens: function(req, res, user, next) {
           assert.equal(user._id.toString(), template.users.oauthUser2._id, 'Should refresh token for the right user');
@@ -1396,7 +1396,7 @@ module.exports = function(app, template, hook, eventEmitter) {
           },
           getUserId: function(user) {
             assert.deepEqual(user, TEST_USER_3, 'OAuth Action should get ID from expected test user.');
-            return user.id;
+            return Promise.resolve(user.id);
           }
         });
         var submission = {
@@ -1444,7 +1444,7 @@ module.exports = function(app, template, hook, eventEmitter) {
           },
           getUserId: function(user) {
             assert.deepEqual(user, TEST_USER_4, 'OAuth Action should get ID from expected test user.');
-            return user.id;
+            return Promise.resolve(user.id);
           }
         });
         var submission = {
@@ -1518,7 +1518,7 @@ module.exports = function(app, template, hook, eventEmitter) {
           },
           getUserId: function(user) {
             assert.deepEqual(user, TEST_USER_5, 'OAuth Action should get ID from expected test user.');
-            return user.id;
+            return Promise.resolve(user.id);
           }
         });
         var submission = {

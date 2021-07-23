@@ -77,7 +77,7 @@ module.exports = function(options) {
       fs.readFile(`./portal/config.js`, 'utf8', (err, contents) => {
         res.send(
           contents.replace(
-            /var hostedPDFServer = '';|var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;/gi,
+            /var hostedPDFServer = '';|var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false/gi,
             (matched) => {
               if (config.hostedPDFServer && matched.includes('var hostedPDFServer')) {
                 return `var hostedPDFServer = '${config.hostedPDFServer}';`;
@@ -96,6 +96,9 @@ module.exports = function(options) {
               }
               else if (config.sac && app.license.terms.options.sac && matched.includes('var sac')) {
                 return 'var sac = true;';
+              }
+              else if (config.enableOauthM2M && matched.includes('var oAuthM2MEnabled')) {
+                return 'var oAuthM2MEnabled = true;';
               }
               return matched;
             }
@@ -454,8 +457,10 @@ module.exports = function(options) {
     app.use((err, req, res, next) => {
       /* eslint-disable no-console */
       console.log('Uncaught exception:');
-      console.log(err);
-      console.log(err.stack);
+      if (err) {
+        console.log(err);
+        console.log(err.stack);
+      }
       /* eslint-enable no-console */
       res.status(400).send(typeof err === 'string' ? {message: err} : err);
     });
@@ -478,8 +483,10 @@ module.exports = function(options) {
   process.on('uncaughtException', function(err) {
     /* eslint-disable no-console */
     console.log('Uncaught exception:');
-    console.log(err);
-    console.log(err.stack);
+    if (err) {
+      console.log(err);
+      console.log(err.stack);
+    }
     /* eslint-enable no-console */
 
     // Give the loggers some time to log before exiting.
