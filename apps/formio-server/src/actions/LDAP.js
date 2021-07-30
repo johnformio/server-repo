@@ -266,139 +266,150 @@ module.exports = router => {
         debug('LDAP Auth instantiated');
 
         debug('Authenticating');
-        auth.authenticate(
-          _.get(req.submission.data, this.settings.usernameField),
-          _.get(req.submission.data, this.settings.passwordField),
-          (err, data) => {
-            // If they have the wrong ldap credentials, return that error.
-            if (err) {
-              err = err.hasOwnProperty('lde_message') ? err.lde_message : err.toString();
-            }
-            if (err && (['Invalid Credentials'].includes(err) || !this.settings.passthrough)) {
-              debug('Error occurred 1: ', err);
-              return res.status(401).send(err);
-            }
-
-            // If something goes wrong, skip auth and pass through to other login handlers.
-            if (err || !data) {
-              debug('No data returned');
-              return next();
-            }
-
-            let skipfirst = true;
-            // Map the dn to be properties on data so we can assign roles based on them.
-            data.dn.split(',').forEach(part => {
-              // The first item is already in the data as it is the identifier.
-              if (skipfirst) {
-                skipfirst = false;
-                return;
+        try {
+          auth.authenticate(
+            _.get(req.submission.data, this.settings.usernameField),
+            _.get(req.submission.data, this.settings.passwordField),
+            (err, data) => {
+              // If they have the wrong ldap credentials, return that error.
+              if (err) {
+                err = err.hasOwnProperty('lde_message') ? err.lde_message : err.toString();
               }
-              const pieces = part.split('=');
-              if (data.hasOwnProperty(pieces[0])) {
-                // If it already exists but isn't an array, make it an array.
-                if (!Array.isArray(data[pieces[0]])) {
-                  data[pieces[0]] = [data[pieces[0]]];
+              if (err && (['Invalid Credentials'].includes(err) || !this.settings.passthrough)) {
+                debug('Error occurred 1: ', err);
+                return res.status(401).send(err);
+              }
+
+              // If something goes wrong, skip auth and pass through to other login handlers.
+              if (err || !data) {
+                debug('No data returned');
+                return next();
+              }
+
+              // No longer need the ldap connection.
+              auth.close(() => {
+                let skipfirst = true;
+                // Map the dn to be properties on data so we can assign roles based on them.
+                data.dn.split(',').forEach(part => {
+                  // The first item is already in the data as it is the identifier.
+                  if (skipfirst) {
+                    skipfirst = false;
+                    return;
+                  }
+                  const pieces = part.split('=');
+                  if (data.hasOwnProperty(pieces[0])) {
+                    // If it already exists but isn't an array, make it an array.
+                    if (!Array.isArray(data[pieces[0]])) {
+                      data[pieces[0]] = [data[pieces[0]]];
+                    }
+                    data[pieces[0]].push(pieces[1]);
+                  }
+                  else {
+                    data[pieces[0]] = pieces[1];
+                  }
+                });
+                debug('User data', data);
+
+                // Assign roles based on settings.
+                const roles = [];
+                _.map(this.settings.roles, map => {
+                  if (!map.property ||
+                    _.get(data, map.property) === map.value ||
+                    _.includes(_.get(data, map.property), map.value)
+                  ) {
+                    roles.push(map.role);
+                  }
+                });
+                debug('Assigned Roles', roles);
+
+                const whiteList = [
+                  'dn',
+                  'cn',
+                  'givenName',
+                  'initials',
+                  'name',
+                  'fullName',
+                  'sn',
+                  'displayName',
+                  'description',
+                  'physicalDeliveryOfficeName',
+                  'telephoneNumber',
+                  'otherTelephone',
+                  'mail',
+                  'wWWHomePage',
+                  'url',
+                  'streetAddress',
+                  'postOfficeBox',
+                  'l',
+                  'st',
+                  'postalCode',
+                  'c', 'co', 'countryCode',
+                  'userPrincipalName',
+                  'sAMAccountName',
+                  'logonHours',
+                  'userWorkstations',
+                  'pwdLastSet',
+                  'accountExpires',
+                  'homePhone',
+                  'otherHomePhone',
+                  'pager',
+                  'otherPager',
+                  'mobile',
+                  'otherMobile',
+                  'facsimileTelephoneNumber',
+                  'otherFacsimileTelephoneNumber',
+                  'ipPhone',
+                  'otherIpPhone',
+                  'info',
+                  'title',
+                  'department',
+                  'company',
+                  'manager'
+                ];
+
+                debug('Deleting non-whitelisted fields');
+                // Remove all keys which aren't whitelisted.
+                Object.keys(data).forEach(key => {
+                  if (!whiteList.includes(key)) {
+                    delete data[key];
+                  }
+                });
+
+                if (data.mail && !data.email) {
+                  data.email = data.mail;
                 }
-                data[pieces[0]].push(pieces[1]);
-              }
-              else {
-                data[pieces[0]] = pieces[1];
-              }
-            });
-            debug('User data', data);
 
-            // Assign roles based on settings.
-            const roles = [];
-            _.map(this.settings.roles, map => {
-              if (!map.property ||
-                _.get(data, map.property) === map.value ||
-                _.includes(_.get(data, map.property), map.value)
-              ) {
-                roles.push(map.role);
-              }
-            });
-            debug('Assigned Roles', roles);
+                const user = {
+                  _id: data.uidNumber || data.uid || data.dn, // Try to use numbers but fall back to dn which is guaranteed.
+                  data,
+                  roles,
+                  project: req.currentProject._id.toString()
+                };
+                debug('Final user object', user);
 
-            const whiteList = [
-              'dn',
-              'cn',
-              'givenName',
-              'initials',
-              'name',
-              'fullName',
-              'sn',
-              'displayName',
-              'description',
-              'physicalDeliveryOfficeName',
-              'telephoneNumber',
-              'otherTelephone',
-              'mail',
-              'wWWHomePage',
-              'url',
-              'streetAddress',
-              'postOfficeBox',
-              'l',
-              'st',
-              'postalCode',
-              'c', 'co', 'countryCode',
-              'userPrincipalName',
-              'sAMAccountName',
-              'logonHours',
-              'userWorkstations',
-              'pwdLastSet',
-              'accountExpires',
-              'homePhone',
-              'otherHomePhone',
-              'pager',
-              'otherPager',
-              'mobile',
-              'otherMobile',
-              'facsimileTelephoneNumber',
-              'otherFacsimileTelephoneNumber',
-              'ipPhone',
-              'otherIpPhone',
-              'info',
-              'title',
-              'department',
-              'company',
-              'manager'
-            ];
+                const token = {
+                  external: true,
+                  user,
+                  form: {
+                    _id: req.currentForm._id.toString()
+                  },
+                  project: {
+                    _id: req.currentProject._id.toString()
+                  }
+                };
+                debug('Token payload', token);
 
-            debug('Deleting non-whitelisted fields');
-            // Remove all keys which aren't whitelisted.
-            Object.keys(data).forEach(key => {
-              if (!whiteList.includes(key)) {
-                delete data[key];
-              }
-            });
-
-            if (data.mail && !data.email) {
-              data.email = data.mail;
+                return this.processAuth(req, res, data, user, token);
+              });
             }
-
-            const user = {
-              _id: data.uidNumber || data.uid || data.dn, // Try to use numbers but fall back to dn which is guaranteed.
-              data,
-              roles,
-              project: req.currentProject._id.toString()
-            };
-            debug('Final user object', user);
-
-            const token = {
-              external: true,
-              user,
-              form: {
-                _id: req.currentForm._id.toString()
-              },
-              project: {
-                _id: req.currentProject._id.toString()
-              }
-            };
-            debug('Token payload', token);
-
-            return this.processAuth(req, res, data, user, token);
+          );
+        }
+        catch (err) {
+          if (err && (['Invalid Credentials'].includes(err) || !this.settings.passthrough)) {
+            debug('Error occurred 1: ', err);
+            return res.status(401).send(err);
           }
-        );
+        }
       });
     }
   }
