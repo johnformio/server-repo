@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.7-rc.9
+### Changed
+ - Upgrade portal@7.2.5-rc.7
+
 ## 7.1.7-rc.8
 ### Changed
  - FIO-3099: Refactored the oAuth M2M token implementation and wrote tests for it
