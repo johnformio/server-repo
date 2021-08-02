@@ -1,9 +1,9 @@
 'use strict';
 
 const _ = require('lodash');
-const debug = require('debug')('formio:ldap');
+const debug = require('debug')('formio:2fa');
 
-const LOG_EVENT = '2FA Reset Action';
+const LOG_EVENT = '2FA Recovery Login Action';
 
 module.exports = router => {
   const formio = router.formio;
@@ -18,15 +18,15 @@ module.exports = router => {
   const log = (...args) => logOutput(LOG_EVENT, ...args);
 
   /**
-   * TwoFaResetAction class.
-   *   This class is used to create the 2FA Reset action.
+   * TwoFaRecoveryLoginAction class.
+   *   This class is used to create the 2FA Recovery Login action.
    */
-  class TwoFaResetAction extends Action {
+  class TwoFaRecoveryLoginAction extends Action {
     static info(req, res, next) {
       next(null, hook.alter('actionInfo', {
-        name: 'twofareset',
-        title: '2FA Reset',
-        description: 'Provides 2FA Reset.',
+        name: 'twofarecoverylogin',
+        title: '2FA Recovery Login',
+        description: 'Provides 2FA Recovery Login.',
         priority: 2,
         defaults: {
           handler: ['before'],
@@ -70,7 +70,7 @@ module.exports = router => {
     }
 
     /**
-     * Reset 2FA with recovery code
+     * Login 2FA with recovery code
      *
      * Note: Requires req.body to contain an 2FA authorization code.
      *
@@ -85,35 +85,35 @@ module.exports = router => {
      */
 
     resolve(handler, method, req, res, next) {
-      debug('Starting 2FA Reset');
+      debug('Starting 2FA Recovery login');
       if (!hook.alter('resolve', true, this, handler, method, req, res)) {
         return next();
       }
 
       if (!req.token || !req.user) {
-        return res.status(400).send('2FA Reset Action is missing User.');
+        return res.status(400).send('2FA Recovery login Action is missing User.');
       }
 
       const is2FAEnabled = _.get(req.user, 'data.twoFactorAuthenticationEnabled', false);
 
       if (!is2FAEnabled) {
         return  res.status(400).send({
-          message: '2FA Reset is not enabled for current account.',
+          message: '2FA Recovery login is not enabled for current account.',
           twoFaEnabled: false
         });
       }
 
       if (!this.settings) {
         debug('Missed settings');
-        return res.status(400).send('Misconfigured 2FA Reset Action.');
+        return res.status(400).send('Misconfigured 2FA Recovery login Action.');
       }
 
       if (!this.settings.token) {
         debug('Token field setting missing');
-        return res.status(400).send('2FA Reset Action is missing Token Field setting.');
+        return res.status(400).send('2FA Recovery login Action is missing Token Field setting.');
       }
 
-      twoFa.resetTwoFa(
+      twoFa.loginWithRecoveryCode(
           req,
           res,
           _.get(req.submission.data, this.settings.token),
@@ -126,7 +126,7 @@ module.exports = router => {
         formio.auth.currentUser(req, res, (err) => {
           if (err) {
             log(req, ecode.auth.EAUTH, err);
-            debug('2FA Reset Action Current User Failed');
+            debug('2FA Recovery login Action Current User Failed');
             return res.status(401).send(err.message);
           }
 
@@ -136,12 +136,12 @@ module.exports = router => {
     }
   }
 
-  // Return the TwoFaResetAction.
+  // Return the TwoFaRecoveryLoginAction.
   // Disable editing handler and method settings
-  TwoFaResetAction.access = {
+  TwoFaRecoveryLoginAction.access = {
     handler: false,
     method: false
   };
 
-  return TwoFaResetAction;
+  return TwoFaRecoveryLoginAction;
 };

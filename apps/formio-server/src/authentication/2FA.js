@@ -4,15 +4,29 @@ const QRCode = require("qrcode");
 const _ = require("lodash");
 const bcrypt = require('bcrypt');
 
+const ERRORS = {
+  NO_HASH: '2FA didn\'t set.',
+  NO_USER: 'Missing User.',
+  UNAUTHORIZED: '2FA Unauthorized.',
+  NO_2FA: 'Missing 2FA.',
+  BAD_TOKEN: 'Bad 2FA token.',
+  UNAUTHORIZED_USER: 'Unauthorized user.',
+  ALREADY_ENABLED: '2FA has already been turned on.',
+  NOT_SET_2FA: '2FA hasn\'t been set yet.',
+  WRONG_TOKEN: 'Wrong 2FA Token provided.',
+  INCORRECT_RECOVERY: 'Recovery code was incorrect.'
+};
+
 module.exports = function(router) {
   /**
    * Create a 2FA code
    *
    * @returns {*}
    */
-  function getTwoFactorAuthenticationCode() {
+  function getTwoFactorAuthenticationCode(email = '') {
+    const sufix = email ? ` (${email})` : '';
     const secretCode = speakeasy.generateSecret({
-      name: router.config.twoFactorAuthAppName,
+      name: `${router.config.twoFactorAuthAppName}${sufix}`,
     });
     return {
       otpauthUrl: secretCode.otpauth_url,
@@ -46,9 +60,36 @@ module.exports = function(router) {
   async function generateTwoFactorAuthenticationCode(req, res, next) {
     const user = req.user;
     if (!user) {
-      return next("Missing User");
+      return next(ERRORS.NO_USER);
     }
-    const {otpauthUrl, base32} = getTwoFactorAuthenticationCode();
+
+    const {token} = req;
+
+    if (!token || !is2FAuthenticated(req)) {
+      return next(ERRORS.UNAUTHORIZED);
+    }
+
+    const twoFactorAuthenticationEnabled = _.get(
+      user,
+      "data.twoFactorAuthenticationEnabled",
+      false
+    );
+    const twoFactorAuthenticationRecoveryCodes = _.get(
+      user,
+      "data.twoFactorAuthenticationRecoveryCodes",
+      null
+    );
+
+    if (
+      twoFactorAuthenticationEnabled
+      && twoFactorAuthenticationRecoveryCodes
+      && Array.isArray(twoFactorAuthenticationRecoveryCodes)
+      ) {
+      return next(ERRORS.ALREADY_ENABLED);
+    }
+
+    const {otpauthUrl, base32} = getTwoFactorAuthenticationCode(user.data.email);
+
     try {
       await router.formio.mongoose.models.submission.updateOne(
         {
@@ -62,6 +103,12 @@ module.exports = function(router) {
           },
         }
       );
+
+      // Return a sectret key for tests
+      if (process.env.TEST_SUITE) {
+        return res.status(200).send(base32);
+      }
+
       respondWithQRCode(otpauthUrl, res, next);
     }
     catch (error) {
@@ -78,13 +125,14 @@ module.exports = function(router) {
    */
   async function representTwoFactorAuthenticationCode(req, res, next) {
     const user = req.user;
+
     if (!user) {
-      return next("Missing User");
+      return next(ERRORS.NO_USER);
     }
 
     const {token} = req;
-    if (!token || !token.isSecondFactorAuthenticated) {
-      return next('2FA Unauthorized');
+    if (!token || !is2FAuthenticated(req)) {
+      return next(ERRORS.UNAUTHORIZED);
     }
 
     const twoFactorAuthenticationCode = _.get(
@@ -94,7 +142,7 @@ module.exports = function(router) {
     );
 
     if (!twoFactorAuthenticationCode) {
-      return next("Missing 2FA");
+      return next(ERRORS.NO_2FA);
     }
 
     const otpauthUrl = `otpauth://totp/SecretKey?secret=${twoFactorAuthenticationCode}`;
@@ -111,13 +159,13 @@ module.exports = function(router) {
   async function turnOffTwoFactorAuthentication(req, res, next) {
     const {user} = req;
     if (!user) {
-      return next("Missing User");
+      return next(ERRORS.NO_USER);
     }
 
     const {token} = req;
 
-    if (!token || !token.isSecondFactorAuthenticated) {
-      return next('2FA Unauthorized');
+    if (!token || !is2FAuthenticated(req)) {
+      return next(ERRORS.UNAUTHORIZED);
     }
 
     try {
@@ -131,7 +179,7 @@ module.exports = function(router) {
           $set: {
             "data.twoFactorAuthenticationCode": "",
             "data.twoFactorAuthenticationEnabled": false,
-            "data.twoFactorAuthenticationRecoveryCode": "",
+            "data.twoFactorAuthenticationRecoveryCodes": [],
           },
         }
       );
@@ -182,10 +230,10 @@ module.exports = function(router) {
       if (isDataSource) {
         return res.status(200).send({
           success: false,
-          message: "Bad 2FA token",
+          message: ERRORS.BAD_TOKEN,
         });
       }
-      return next("Bad 2FA token");
+      return next(ERRORS.BAD_TOKEN);
     }
 
     const user = req.user;
@@ -193,10 +241,10 @@ module.exports = function(router) {
       if (isDataSource) {
         return res.status(200).send({
           success: false,
-          message: "Unauthorized user",
+          message: ERRORS.UNAUTHORIZED_USER,
         });
       }
-      return next("Unauthorized user");
+      return next(ERRORS.UNAUTHORIZED_USER);
     }
 
     const twoFactorAuthenticationEnabled = _.get(
@@ -204,20 +252,23 @@ module.exports = function(router) {
       "data.twoFactorAuthenticationEnabled",
       false
     );
-    const twoFactorAuthenticationRecoveryCode = _.get(
+    const twoFactorAuthenticationRecoveryCodes = _.get(
       user,
-      "data.twoFactorAuthenticationRecoveryCode",
+      "data.twoFactorAuthenticationRecoveryCodes",
       null
     );
 
-    if (twoFactorAuthenticationEnabled && twoFactorAuthenticationRecoveryCode) {
+    if (
+      twoFactorAuthenticationEnabled
+      && twoFactorAuthenticationRecoveryCodes
+      && Array.isArray(twoFactorAuthenticationRecoveryCodes)) {
       if (isDataSource) {
         return res.status(200).send({
           success: false,
-          message: "2FA has already been turned on.",
+          message: ERRORS.ALREADY_ENABLED,
         });
       }
-      return next("2FA has already been turned on.");
+      return next(ERRORS.ALREADY_ENABLED);
     }
 
     const twoFactorAuthenticationCode = _.get(
@@ -230,79 +281,94 @@ module.exports = function(router) {
       if (isDataSource) {
         return res.status(200).send({
           success: false,
-          message: "2FA hasn't been set yet.",
+          message: ERRORS.NOT_SET_2FA,
         });
       }
-      return next("2FA hasn't been set yet.");
+      return next(ERRORS.NOT_SET_2FA);
     }
     const isCodeValid = await verifyTwoFactorAuthenticationCode(
       twoFaCode,
       twoFactorAuthenticationCode
     );
+
     if (isCodeValid) {
-      const {base32: recoveryCode} = getTwoFactorAuthenticationCode();
-      router.formio.encrypt(recoveryCode, async function(err, hash) {
-        if (err) {
-          if (isDataSource) {
-            return res.status(200).send({
-              success: false,
-              message: err,
-            });
-          }
-          return next(err);
-        }
+      const recoveryCodes = [];
 
-        if (!hash) {
-          if (isDataSource) {
-            return res.status(200).send({
-              success: false,
-              message: "2FA didn't set",
-            });
-          }
-          return next("2FA didn't set");
-        }
+      for (let i = 0; i < 10; i++) {
+        const {base32: recoveryCode} = getTwoFactorAuthenticationCode();
+        recoveryCodes.push(recoveryCode);
+      }
 
-        try {
-          await router.formio.mongoose.models.submission.updateOne(
-            {
-              form: user.form,
-              _id: user._id,
-              deleted: {$eq: null},
-            },
-            {
-              $set: {
-                "data.twoFactorAuthenticationEnabled": true,
-                "data.twoFactorAuthenticationRecoveryCode": hash,
-              },
-            }
-          );
-
-          authenticate(req, res, user, (err) => {
+      const recoveryHashPromise = recoveryCodes.map((recCode) => {
+        return new Promise((resolve, reject) => {
+          router.formio.encrypt(recCode, (err, hash) => {
             if (err) {
-              throw new Error(err);
+              return reject();
             }
-            return res.status(200).send({success: true, recoveryCode});
+
+            if (!hash) {
+              return reject(ERRORS.NO_HASH);
+            }
+
+            resolve(hash);
+          });
+        });
+      });
+
+      try {
+        const recoveryHashCodes = await Promise.all(recoveryHashPromise);
+
+        await router.formio.mongoose.models.submission.updateOne(
+          {
+            form: user.form,
+            _id: user._id,
+            deleted: {$eq: null},
+          },
+          {
+            $set: {
+              "data.twoFactorAuthenticationEnabled": true,
+              "data.twoFactorAuthenticationRecoveryCodes": recoveryHashCodes,
+            },
+          }
+        );
+
+        authenticate(req, res, user, (err) => {
+          if (err) {
+            throw new Error(err);
+          }
+          return res.status(200).send({success: true, recoveryCodes});
+        });
+      }
+      catch (error) {
+        if (error === ERRORS.NO_HASH) {
+          // eslint-disable-next-line max-depth
+          if (isDataSource) {
+            return res.status(200).send({
+              success: false,
+              message: ERRORS.NO_HASH,
+            });
+          }
+          return next(ERRORS.NO_HASH);
+        }
+
+        if (isDataSource) {
+          return res.status(200).send({
+            success: false,
+            message: error,
           });
         }
-        catch (error) {
-          if (isDataSource) {
-            return res.status(200).send({
-              success: false,
-              message: error,
-            });
-          }
-          return next(error);
-        }
-      });
+
+        return next(error);
+      }
     }
     else {
       if (isDataSource) {
         return res.status(200).send({
           success: false,
-          message: "Wrong 2FA Token provided",
+          message: ERRORS.WRONG_TOKEN,
         });
       }
-      return next("Wrong 2FA Token provided");
+      return next(ERRORS.WRONG_TOKEN);
     }
   }
 
@@ -363,6 +429,7 @@ module.exports = function(router) {
         req.token = decoded;
         res.token = newToken;
         req['x-jwt-token'] = newToken;
+        res.setHeader('x-jwt-token', res.token);
         next();
       });
     });
@@ -379,12 +446,12 @@ module.exports = function(router) {
     twoFaCode = validateCode(twoFaCode);
 
     if (!twoFaCode) {
-      return next('Bad 2FA token');
+      return next(ERRORS.BAD_TOKEN);
     }
 
     const user = req.user;
     if (!user) {
-      return next('Unauthorized user');
+      return next(ERRORS.UNAUTHORIZED_USER);
     }
     const twoFactorAuthenticationCode = _.get(
       user,
@@ -393,7 +460,7 @@ module.exports = function(router) {
     );
 
     if (!twoFactorAuthenticationCode) {
-      return next('2FA hasn\'t been set yet.');
+      return next(ERRORS.NOT_SET_2FA);
     }
     const isCodeValid = await verifyTwoFactorAuthenticationCode(
       twoFaCode,
@@ -403,67 +470,65 @@ module.exports = function(router) {
       authenticate(req, res, user, next);
     }
     else {
-      return next('Bad 2FA token');
+      return next(ERRORS.BAD_TOKEN);
     }
   }
 
   /**
-   * Reset 2FA.
+   * Login with a recovery 2FA code.
    * @param req
    * @param res
    * @param recoveryCode {String}
    * @param next {Function}
    * @returns {*}
    */
-  async function resetTwoFa(req, res, recoveryCode, next) {
+  async function loginWithRecoveryCode(req, res, recoveryCode, next) {
     if (!recoveryCode) {
-      return next('Bad 2FA token');
+      return next(ERRORS.BAD_TOKEN);
     }
 
     const user = req.user;
     if (!user) {
-      return next('Unauthorized user');
+      return next(ERRORS.UNAUTHORIZED_USER);
     }
-    const hash = _.get(
+    const hashes = _.get(
       user,
-      "data.twoFactorAuthenticationRecoveryCode",
-      null
+      "data.twoFactorAuthenticationRecoveryCodes",
+      []
     );
 
-    if (!hash) {
-      return next('2FA hasn\'t been set yet.');
+    if (!hashes || !Array.isArray(hashes) || !hashes.length) {
+      return next(ERRORS.NOT_SET_2FA);
     }
 
-    bcrypt.compare(recoveryCode, hash, async (err, value) => {
-      if (err) {
-        return next(err);
+    try {
+      const comparePromis = hashes.map(hash => bcrypt.compare(recoveryCode, hash));
+
+      const compareResult = await Promise.all(comparePromis);
+
+      const newHashes = hashes.filter((hash, index) => !compareResult[index]);
+
+      if (newHashes.length === hashes.length) {
+        return next(ERRORS.INCORRECT_RECOVERY);
       }
 
-      if (!value) {
-        return next('Recovery code was incorrect.');
-      }
-
-      try {
-        await router.formio.mongoose.models.submission.updateOne(
-          {
-            form: user.form,
-            _id: user._id,
-            deleted: {$eq: null},
+      await router.formio.mongoose.models.submission.updateOne(
+        {
+          form: user.form,
+          _id: user._id,
+          deleted: {$eq: null},
+        },
+        {
+          $set: {
+            "data.twoFactorAuthenticationRecoveryCodes": newHashes,
           },
-          {
-            $set: {
-              "data.twoFactorAuthenticationEnabled": false,
-              "data.twoFactorAuthenticationRecoveryCode": "",
-              "data.twoFactorAuthenticationCode": "",
-            },
-          }
-        );
-        authenticate(req, res, user, next, true);
-      }
-      catch (error) {
-        return next(error);
-      }
-    });
+        }
+      );
+      authenticate(req, res, user, next);
+    }
+    catch (error) {
+      return next(error);
+    }
   }
 
   /**
@@ -482,14 +547,23 @@ module.exports = function(router) {
 
     return true;
   }
-  router.post("/2fa/generate", generateTwoFactorAuthenticationCode);
-  router.post("/2fa/represent", representTwoFactorAuthenticationCode);
-  router.post("/2fa/turn-on", turnOnTwoFactorAuthentication);
-  router.post("/2fa/turn-off", turnOffTwoFactorAuthentication);
+
+  function errorHandler(err, req, res, next) {
+    if (err) {
+      return res.status(400).send(err);
+    }
+    next();
+  }
+
+  router.post("/2fa/generate", generateTwoFactorAuthenticationCode, errorHandler);
+  router.post("/2fa/represent", representTwoFactorAuthenticationCode, errorHandler);
+  router.post("/2fa/turn-on", turnOnTwoFactorAuthentication, errorHandler);
+  router.post("/2fa/turn-off", turnOffTwoFactorAuthentication, errorHandler);
 
   return {
     is2FAuthenticated,
     secondFactorAuthentication,
-    resetTwoFa
+    loginWithRecoveryCode,
+    ERRORS
   };
 };

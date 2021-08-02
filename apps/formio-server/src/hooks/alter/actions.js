@@ -9,6 +9,6 @@ module.exports = (app) => (actions) => {
   actions.group = require('../../actions/GroupAction')(formioServer);
   actions.webhook = require('../../actions/WebhookAction')(formioServer);
   actions.twofalogin = require('../../actions/twoFa/twofalogin')(formioServer);
-  actions.twofareset = require('../../actions/twoFa/twofareset')(formioServer);
+  actions.twofarecoverylogin = require('../../actions/twoFa/twofarecoverylogin')(formioServer);
   return actions;
 };

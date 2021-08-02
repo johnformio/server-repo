@@ -134,7 +134,7 @@ module.exports = function(app) {
           'ldap',
           'sqlconnector',
           'twofalogin',
-          'twofareset',
+          'twofarecoverylogin',
         ];
         if (action.title && action.name && !action.premium && premium.includes(action.name)) {
           action.title += ' (Premium)';
@@ -198,7 +198,7 @@ module.exports = function(app) {
           return true;
         }
         const premium = [
-          'webhook', 'oauth', 'googlesheet', 'ldap', 'twofalogin', 'twofareset'
+          'webhook', 'oauth', 'googlesheet', 'ldap', 'twofalogin', 'twofarecoverylogin'
         ];
 
         // If the action does not have a name, or is not flagged as being premium, ignore it.
@@ -247,6 +247,22 @@ module.exports = function(app) {
         if (req.url.indexOf(`/project/${req.projectId}/manage`) === 0) {
           return true;
         }
+
+       if (req.headers['x-jwt-token'] && req.user) {
+          const whitelist2fa = ['/2fa/generate', '/2fa/represent', '/2fa/turn-on', '/2fa/turn-off'];
+          const url = req.url.split('?')[0];
+          const is2fa = _.some(whitelist2fa, (path) => {
+            if ((url === path) || (url === this.path(path, req))) {
+              return true;
+            }
+
+            return false;
+          });
+
+          if (is2fa) {
+            return true;
+          }
+       }
 
         if (req.method !== 'GET') {
           return false;
