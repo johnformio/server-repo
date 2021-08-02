@@ -8,6 +8,8 @@ const fs = require('fs');
 const log = require('debug')('formio:log');
 const util = require('../util/util');
 const {VM} = require('vm2');
+const {ClientCredentials} = require('simple-oauth2');
+const moment = require('moment');
 
 module.exports = function(app) {
   const formioServer = app.formio;
@@ -2059,7 +2061,93 @@ module.exports = function(app) {
             isTwoFactorAuthenticationRequired: true,
           });
         }
-      }
+      },
+
+       /**
+       * A hook to get a m2m oAuth token.
+       *
+      * @param req {Object}
+       *   The Express request Object.
+       * @param res {Object}
+       *   The Express response Object.
+       * @param next {Function}
+       *   The callback function.
+       */
+      oAuthResponse(req, res, cb) {
+        if (!formioServer.config.enableOauthM2M || !req.user || req.path.indexOf('logout') !== -1) {
+          return cb();
+        }
+
+        const m2m = _.get(req.userProject || req.currentProject || {}, 'settings.oauth.oauthM2M');
+
+        if (m2m) {
+          const m2mToken = _.get(req.token, 'm2mToken');
+
+          if (m2mToken && m2mToken.expires_at && moment.utc().isBefore(m2mToken.expires_at)) {
+            res.setHeader('x-m2m-token', m2mToken.access_token);
+
+            return cb();
+          }
+
+          const {
+            clientId,
+            clientSecret,
+            tokenURI
+          } = m2m;
+
+          if (!clientId || !clientSecret || !tokenURI) {
+            return cb();
+          }
+
+          const url = new URL(tokenURI);
+          const tokenHost = url.origin;
+          const tokenPath = url.pathname;
+          let provider = new ClientCredentials({
+            client: {
+              id: clientId,
+              secret: clientSecret,
+            },
+            auth: {
+              tokenHost,
+              tokenPath,
+            }
+          });
+
+          return provider.getToken()
+            .then(accessToken => accessToken.token)
+            .then((token) => {
+              if (!token) {
+                throw 'No response from OAuth Provider.';
+              }
+              if (token.error) {
+                throw token.error_description;
+              }
+
+              req.token = {
+                ...req.token,
+                m2mToken: {...token},
+              };
+
+              res.token = formioServer.formio.auth.getToken(req.token);
+              req['x-jwt-token'] = res.token;
+
+              if (!res.headersSent) {
+                const headers = this.accessControlExposeHeaders('x-jwt-token');
+                res.setHeader('Access-Control-Expose-Headers', headers);
+                res.setHeader('x-m2m-token', token.access_token);
+              }
+              provider = null;
+              cb();
+            })
+            .catch((err) => {
+              app.formio.formio.log('M2M Token error', err);
+              cb();
+            });
+        }
+        else {
+          return cb();
+        }
+      },
     }
   };
 };

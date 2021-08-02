@@ -76,7 +76,7 @@
     "serve-favicon": "^2.5.0",
     "simple-oauth2": "^4.2.0",
     "speakeasy": "^2.0.0",
-    "spreadsheet-column": "^1.1.1",
+    "spreadsheet-column": "https://github.com/formio/node-spreadsheet-column.git",
     "squel": "^5.13.0",
     "through": "^2.3.8",
     "tldjs": "^2.3.1",

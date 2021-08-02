@@ -31,6 +31,9 @@ module.exports = (app) => (middleware) => {
     return next();
   });
   middleware.unshift((req, res, next) => {
+    app.formio.formio.hook.alter('oAuthResponse', req, res, next);
+  });
+  middleware.unshift((req, res, next) => {
     // Check for a bearer token.
     const authorization = app.formio.formio.util.getHeader(req, 'authorization');
 
