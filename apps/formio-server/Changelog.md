@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.7-rc.10
+### Fixed
+ - FIO-3441: resolve vulnerabilities
+ - FIO-3259: Close ldap connection to resolve ldap auth crashes.
+
+### Changed
+ - Upgrade formiojs@4.14.0-rc.16
+ - Upgrade formio@2.2.3-rc.10
+ - Upgrade twilio@3.66.1, aws-sdk@2.959.0, javascript-obfuscator@2.18.1, eslint@7.32.0
+
 ## 7.1.7-rc.9
 ### Changed
  - Upgrade portal@7.2.5-rc.7
