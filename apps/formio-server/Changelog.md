@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.7-rc.11
+### Changed
+ - Upgrade formiojs@4.14.0-rc.17
+ - Upgrade formio@2.2.3-rc.11
+ - Upgrade portal@7.2.5-rc.8
+
 ## 7.1.7-rc.10
 ### Fixed
  - FIO-3441: resolve vulnerabilities
