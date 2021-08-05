@@ -31,4 +31,4 @@ WORKDIR     /src
 USER ${USERNAME}
 
 EXPOSE      80
-CMD  ["node", "formio.js", "--max_old_space_size=4096"]
+CMD  ["node", "formio.js", "--max_old_space_size=8192"]
