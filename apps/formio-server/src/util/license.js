@@ -178,6 +178,7 @@ async function submitUtilizationRequest(
     if (result && result.devLicense) {
       const regexUri = /^mongodb:\/\/((localhost)|(mongo)):\d+\/[a-z0-9_-]+/i;
       const regexReplica = /replicaSet/gi;
+      const regexTslSsl = /((tls)|(ssl))=true/gi;
 
       if (!regexUri.test(config.formio.mongo)) {
         console.log('Invalid MongoDB URI. With Development License you can use only a local database.');
@@ -186,6 +187,11 @@ async function submitUtilizationRequest(
 
       if (regexReplica.test(config.formio.mongo)) {
         console.log('Invalid MongoDB URI. With Development License you can not use Replica Sets.');
+        process.exit();
+      }
+
+      if (regexTslSsl.test(config.formio.mongo)) {
+        console.log('Invalid MongoDB URI. With Development License you can not use SSL or TLS connection.');
         process.exit();
       }
     }
