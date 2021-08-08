@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.1.8-rc.1
+### Fixed
+ - Increase max space size
+ - Upgrade formio@2.2.4-rc.1
+ - Upgrade formiojs@4.14.0-rc.18
+
 ## 7.1.7
 ### Changed
  - Upgrade formio@2.2.3
