@@ -51,22 +51,16 @@ module.exports = function(options) {
   // Create the app server.
   debug.startup('Creating application server');
 
-  if (config.enableSsl) {
-    if (config.sslKey && config.sslCert) {
-      const httpsOptions = {
-        key: config.sslKey,
-        cert: config.sslCert
-      };
-      app.server = require('https').createServer(httpsOptions, app);
-    }
-    else {
-      console.log('Ssl key or certificate not provided.');
-      process.exit();
-    }
+  if (config.sslKey && config.sslCert) {
+    app.server = require('https').createServer({
+      key: config.sslKey,
+      cert: config.sslCert
+    }, app);
   }
- else {
+  else {
     app.server = require('http').createServer(app);
   }
+
   app.listen = function() {
     return app.server.listen.apply(app.server, arguments);
   };
