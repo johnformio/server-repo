@@ -98,6 +98,7 @@ module.exports = (formioServer) => {
       method: 'POST',
       qs: {...req.query, project: req.params.projectId},
       headers: headers,
+      rejectUnauthorized: false,
       body: JSON.stringify({
         form,
         submission,
