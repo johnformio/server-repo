@@ -28,6 +28,7 @@ RUN sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories &&\
 COPY        ./build /src
 WORKDIR     /src
 
+RUN apk add libcap && setcap 'cap_net_bind_service=+ep' $(which node)
 USER ${USERNAME}
 
 EXPOSE      80
