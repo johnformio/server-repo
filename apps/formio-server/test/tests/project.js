@@ -556,6 +556,28 @@ module.exports = function(app, template, hook) {
         });
     });
 
+    it('Should not able to get a temporary authentication token without a valid token.', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/token')
+        .set('x-token', 'badtoken')
+        .expect(400)
+        .expect('No authentication token provided.')
+        .end(done);
+    });
+
+    it('Should be able to get a temporary authentication token with a valid token.', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/token')
+        .set('x-token', '123testing123testing')
+        .expect(200)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+          done();
+        });
+    });
+
     it('Should not allow you to report without a token', function(done) {
       request(app)
         .get('/project/' + template.project._id + '/report')
