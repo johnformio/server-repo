@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## 7.2.0-rc.3
 ### Fixed
  - FIO-1528: change default 'from' email address domain to use example in the deployment environment variable
  - FIO-2652 livestage => stage
@@ -20,6 +20,30 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-3006: API | JavaScript heap out of memory
  - FIO-2989: Fixes an issue when got an 400 error if a form has more then one oAuth actions.
  - FIO-3369: Removed the submissionCollection hook which was messing up submission collection
+ - FIO-1377: limiting the number of projects on the api server for an offline license 
+ - FIO-922: Google Analytics doesn't apply for deployed
+ - FIO-1442: Fixes an issue when export license file from new license resource it didn't export the license users.
+ - FIO-2563: Role Assignment Action not working
+ - Fixed an issue where project config is not available in builder mode when the user is not an admin or project owner…
+ - FOR-3302: Allow project settings to be read with an API Key.
+ - CRM actions fix 7.x
+ - Fixing the CSP settings to use the correct domains. 
+ - FIO-2921: Ensuring that a misconnection with the license server allows both the PDF server and API Server to continue to function
+ - FIO-3435: form definition downloading according query parameter
+ - FIO-885: database error handling
+ - FIO-3584: invitation pending status issue fix
+ - FOR:-2852: Implements a restriction for TLS/SSL to DB connection for the dev license
+ - FIO-3624: fixed problem on sending get request to /token endpoint using x-token header
+ - fixed remote token issue
+ - FIO-3644: Fixed issue where binding to port 80 gives error. 
+
+### Added
+ - FIO-1398: Implements Submission Server Licensing 
+ - FIO-1038: limiting default email usage provider
+ - FIO-3555, FIO-1538: Implements Two-Factor Authentication
+ - FIO-3131: Implements Google Drive as a storage
+ - FIO-3575: added CORS restrictions for dev license
+ - Allow self-signed certs for pdf download
 
 ## 7.2.0-rc.2
 ### Added
