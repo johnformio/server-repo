@@ -141,6 +141,8 @@ module.exports = function(app) {
           'googlesheet',
           'ldap',
           'sqlconnector',
+          'twofalogin',
+          'twofarecoverylogin',
         ];
         if (action.title && action.name && !action.premium && premium.includes(action.name)) {
           action.title += ' (Premium)';
@@ -204,7 +206,7 @@ module.exports = function(app) {
           return true;
         }
         const premium = [
-          'webhook', 'oauth', 'googlesheet', 'ldap'
+          'webhook', 'oauth', 'googlesheet', 'ldap', 'twofalogin', 'twofarecoverylogin'
         ];
 
         // If the action does not have a name, or is not flagged as being premium, ignore it.
@@ -258,6 +260,22 @@ module.exports = function(app) {
           return true;
         }
 
+       if (req.headers['x-jwt-token'] && req.user) {
+          const whitelist2fa = ['/2fa/generate', '/2fa/represent', '/2fa/turn-on', '/2fa/turn-off'];
+          const url = req.url.split('?')[0];
+          const is2fa = _.some(whitelist2fa, (path) => {
+            if ((url === path) || (url === this.path(path, req))) {
+              return true;
+            }
+
+            return false;
+          });
+
+          if (is2fa) {
+            return true;
+          }
+       }
+
         if (req.method !== 'GET') {
           return false;
         }
@@ -287,11 +305,20 @@ module.exports = function(app) {
        *   The initial formio user token.
        * @param form {Object}
        *   The initial formio user resource form.
+       * @param req
+       *   Request
        *
        * @returns {Object}
        *   The modified token.
        */
       token(token, form, req) {
+        const is2FaEnabled = _.get((req), 'user.data.twoFactorAuthenticationEnabled', false);
+        const code2Fa = _.get((req), 'user.data.twoFactorAuthenticationCode', null);
+        const {isSecondFactorAuthenticated} = token;
+        if (is2FaEnabled && code2Fa && !isSecondFactorAuthenticated) {
+          token.isSecondFactorAuthenticated = false;
+        }
+
         // See https://tools.ietf.org/html/rfc7519
         token.iss = util.baseUrl(formioServer.formio, req);
         token.sub = token.user._id;
@@ -484,6 +511,10 @@ module.exports = function(app) {
 
         // Ensure we have a projectOwner
         if (!req.projectOwner) {
+          return false;
+        }
+        // Return false if the user doesn't authenticated with 2FA
+        if (!formioServer.formio.twoFa.is2FAuthenticated(req)) {
           return false;
         }
 
@@ -702,7 +733,7 @@ module.exports = function(app) {
           const groups = (req.user && req.user.roles && access.roles) ? _.difference(req.user.roles, access.roles) : [];
 
           // Add user teams to the access.
-          if (req.user && req.user.teams && req.user.teams.length) {
+          if (req.user && req.user.teams && req.user.teams.length && formioServer.formio.twoFa.is2FAuthenticated(req)) {
             access.roles = access.roles.concat(req.user.teams);
           }
 
@@ -916,6 +947,14 @@ module.exports = function(app) {
         if (!entity && !req.projectId) {
           // No project but authenticated.
           if (req.token) {
+            if (_url === '/current' || _url === '/logout') {
+              return true;
+            }
+            //Return false if the user doesn't authenticated with 2FA
+            if (!formioServer.formio.twoFa.is2FAuthenticated(req)) {
+              return false;
+            }
+
             if (req.method === 'POST' && _url === '/project') {
               return req.userProject.primary;
             }
@@ -930,10 +969,6 @@ module.exports = function(app) {
 
             if (_url === '/payment-gateway') {
               return req.userProject.primary;
-            }
-
-            if (_url === '/current' || _url === '/logout') {
-              return true;
             }
 
             // This req is unauthorized/unknown.
@@ -953,7 +988,11 @@ module.exports = function(app) {
           return true;
         }
 
-        else if (req.projectId && req.token && req.url === `/project/${req.projectId}/report`) {
+        else if (req.projectId && req.token && formioServer.formio.twoFa.is2FAuthenticated(req) && req.url === `/project/${req.projectId}/report`) {
+          return true;
+        }
+
+        else if (req.projectId && req.token && req.user && !formioServer.formio.twoFa.is2FAuthenticated(req) && req.url === `/project/${req.projectId}/2fa/authenticate`) {
           return true;
         }
 
@@ -962,7 +1001,7 @@ module.exports = function(app) {
           return true;
         }
 
-        else if (req.token && access.project && access.project.owner) {
+        else if (req.token && formioServer.formio.twoFa.is2FAuthenticated(req) && access.project && access.project.owner) {
           const url = req.url.split('/');
 
           // Use submission permissions for access to file signing endpoints.
@@ -2002,6 +2041,53 @@ module.exports = function(app) {
         }
 
         return headers;
+      },
+
+            /**
+       * Check if the user authenticated with 2FA. If not, returns null.
+       *
+       * @param user
+       * @param req
+       * @returns {*}
+       */
+      twoFAuthenticatedUser(user, req) {
+        if (user && !formioServer.formio.twoFa.is2FAuthenticated(req)) {
+          return null;
+        }
+
+        return user;
+      },
+
+      /**
+       * Check if the user authenticated with 2FA. If not, returns an array with the default Role.
+       *
+       * @param roles
+       * @param defaultRole
+       * @param req
+       * @returns [Strilg]
+       */
+      userRoles(roles, defaultRole, req) {
+        if (!formioServer.formio.twoFa.is2FAuthenticated(req)) {
+          return [defaultRole];
+        }
+
+        return roles;
+      },
+
+      /**
+       * Check if the user authenticated with 2FA for Login Action.
+       *
+       * @param req
+       * @param res
+       * @returns {*}
+       */
+      currentUserLoginAction(req, res) {
+        const status = _.get(res,'resource.status', null);
+        if (!formioServer.formio.twoFa.is2FAuthenticated(req) && status === 200) {
+          _.set(res, 'resource.item', {
+            isTwoFactorAuthenticationRequired: true,
+          });
+        }
       },
 
        /**

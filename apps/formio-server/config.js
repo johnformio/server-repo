@@ -127,7 +127,11 @@ config.formio.reservedForms = [
   'tag',
   'upload',
   'config.json',
-  'portal-check'
+  'portal-check',
+  '2fa\/generate',
+  '2fa\/represent',
+  '2fa\/turn-off',
+  '2fa\/turn-on',
 ];
 /* eslint-enable no-useless-escape */
 // If it isn't allowed as a form, it isn't allowed as a project either.
@@ -178,6 +182,7 @@ config.portalSSOLogout = getConfig('PORTAL_SSO_LOGOUT', '');
 config.verboseHealth = getConfig('VERBOSE_HEALTH');
 config.vpat = Boolean(getConfig('VPAT', false));
 config.sac = Boolean(getConfig('SAC', false));
+config.twoFactorAuthAppName = getConfig('TWO_FACTOR_AUTHENTICATION_APP_NAME', 'Form.io');
 config.licenseServer = getConfig('LICENSE_SERVER', 'https://license.form.io');
 config.formio.defaultEmailSource= getConfig('DEFAULT_EMAIL_SOURCE', 'no-reply@example.com');
 
