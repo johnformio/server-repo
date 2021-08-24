@@ -425,9 +425,9 @@ const Teams = {
           email: member.data.email
         }
       };
-      if (_.get(member, 'metadata.accepted', false)) {
-        teamMember.status = 'accepted';
-      }
+
+      teamMember.status = _.get(member, 'metadata.accepted', false)? 'accepted': 'pending';
+
       if (member.data.admin) {
         team.data.admins.push(teamMember);
       }

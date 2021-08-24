@@ -302,8 +302,29 @@ module.exports = (app, template, hook) => {
       });
     });
 
+    it('Can access a revision by query parameter', done => {
+     helper.getFormRevisionByQueryParam(form, 'formRevision=3', (err, result) => {
+       if(err) {
+        return done(err)
+       }
+       assert.equal(result.components.length, 4);
+       assert.equal(result._vid, 3);
+       assert.equal(result._rid, form._id);
+       assert.equal(result.name, form.name);
+       assert(result.hasOwnProperty('machineName') === false);
+       done();
+     })
+    });
+
     it('Returns a 404 for a non-existent revision', done => {
       helper.getFormRevision(form, 4, (err, result) => {
+        assert.equal(result.status, 404);
+        done();
+      });
+    });
+
+    it('Can not access a non-existent revision by query parameter', done => {
+      helper.getFormRevisionByQueryParam(form, 'formRevision=4', (err, result) => {
         assert.equal(result.status, 404);
         done();
       });

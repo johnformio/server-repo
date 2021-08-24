@@ -44,7 +44,11 @@ module.exports = app => (type, formio) => {
       ]);
       return true;
     case 'getTempToken':
-      app.get('/token', formio.auth.tempToken);
+      app.get('/token',
+      [
+        require('../../middleware/apiKey')(app),
+        formio.auth.tempToken
+      ]);
       return false;
     case 'current':
       app.get('/current', formio.hook.alter('currentUser', [formio.auth.currentUser]));

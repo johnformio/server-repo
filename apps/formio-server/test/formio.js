@@ -590,6 +590,7 @@ describe('Initial Tests', function() {
         require('./tests/validate')(app, template, hook);
         require('./tests/misc')(app, template, hook);
         require('./tests/oauth')(app, template, hook, eventEmitter);
+        require('./tests/googleDrive')(app, template, hook);
         require('./tests/s3')(app, template, hook);
         require('./tests/dropbox')(app, template, hook);
         require('./tests/report')(app, template, hook);

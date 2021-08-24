@@ -9,11 +9,16 @@ module.exports = (formio) => async (req, res, next) => {
   }
   // Changing license key.
   if (!req.currentProject || req.currentProject.settings.licenseKey !== req.body.settings.licenseKey) {
-    const license = await getLicense(formio, req.body.settings.licenseKey);
-    if (!license) {
-      return res.status(400).send('License key not found');
+    try {
+      const license = await getLicense(formio, req.body.settings.licenseKey);
+      if (!license) {
+        return res.status(400).send('License key not found');
+      }
+      req.body.plan = license.data.plan;
     }
-    req.body.plan = license.data.plan;
+    catch (err) {
+      return next(err);
+    }
   }
 
   // See if the license can be utilized by this project.

@@ -83,6 +83,7 @@ module.exports = function(app) {
       fieldActions: require('./alter/fieldActions')(app),
       propertyActions: require('./alter/propertyActions')(app),
       configFormio: require('./alter/configFormio'),
+      loadRevision: require('./alter/loadRevision')(app),
       schemaIndex(index) {
         index.project = 1;
         return index;
