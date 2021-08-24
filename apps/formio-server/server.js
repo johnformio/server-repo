@@ -83,7 +83,7 @@ module.exports = function(options) {
   if (portalEnabled) {
     debug.startup('Mounting Portal Application');
     // Override config.js so we can set onPremise to true.
-    app.get('/config.js', (req, res) => {
+    app.get('/template/config.js', (req, res) => {
       fs.readFile(`./portal/config.js`, 'utf8', (err, contents) => {
         res.send(
           contents.replace(
