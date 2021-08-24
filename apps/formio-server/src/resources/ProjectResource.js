@@ -76,6 +76,10 @@ module.exports = (router, formioServer) => {
           if (_.intersection(writeAccess, roles).length !== 0) {
             role = 'write';
           }
+
+          if (req.method === 'GET') {
+            _.set(res, 'resource.item.addConfigToForms', _.get(project,'settings.addConfigToForms', false));
+          }
         }
         else {
           debug(err);
@@ -101,6 +105,10 @@ module.exports = (router, formioServer) => {
     else {
       if (req.method === 'PUT' || req.method === 'POST') {
         req.body = _.omit(req.body, 'settings');
+      }
+
+      if (req.method === 'GET') {
+        _.set(res, 'resource.item.addConfigToForms', _.get(res.req,'currentProject.settings.addConfigToForms', false));
       }
 
       formio.middleware.filterResourcejsResponse([
@@ -218,7 +226,11 @@ module.exports = (router, formioServer) => {
       formio.middleware.licenseUtilization,
       function(req, res, next) {
         // Always keep the licenseKey even if they don't send it.
-        if (req.body.settings && !_.get(req.body, 'settings.licenseKey') && _.get(req.currentProject, 'settings.licenseKey', false)) {
+        const licenseKey = _.get(req.body, 'settings.licenseKey');
+        if (licenseKey==='') {
+          delete req.body.settings.licenseKey;
+        }
+        if (req.body.settings && !licenseKey && _.get(req.currentProject, 'settings.licenseKey', false)) {
           _.set(req.body, 'settings.licenseKey', _.get(req.currentProject, 'settings.licenseKey'));
         }
         return next();

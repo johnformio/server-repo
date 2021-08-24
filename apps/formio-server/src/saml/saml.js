@@ -1,5 +1,6 @@
 'use strict';
 const debug = require('debug')('formio:saml');
+const util = require('../util/util');
 const router = require('express').Router();
 const _ = require('lodash');
 const SAML = require('passport-saml/lib/passport-saml/saml').SAML;
@@ -63,26 +64,22 @@ module.exports = (formioServer) => {
           if (!config) {
             return reject('Invalid SAML Configuration');
           }
-          const saml = new SAML(config);
-          return resolve({
-            saml: saml,
-            project: project,
-            projectRoles: roles,
-            roles: roleMap,
-            settings: settings
-          });
+          try {
+            const saml = new SAML(config);
+            return resolve({
+              saml: saml,
+              project: project,
+              projectRoles: roles,
+              roles: roleMap,
+              settings: settings
+            });
+          }
+          catch (err) {
+            return reject(err.message || err);
+          }
         });
       });
     });
-  };
-
-  const toMongoId = function(id) {
-    id = id || '';
-    let str = '';
-    for (let i = 0; i < id.length; i++) {
-      str += id[i].charCodeAt(0).toString(16);
-    }
-    return _.padEnd(str.substr(0, 24), 24, '0');
   };
 
   /**
@@ -97,14 +94,9 @@ module.exports = (formioServer) => {
     const rolesPath = settings.rolesPath || 'roles';
     const idPath = settings.idPath || 'id';
     const emailPath = settings.emailPath || 'email';
-    let userRoles = _.get(profile, rolesPath);
+    let userRoles = _.get(profile, rolesPath, []);
+    const roleTeams = _.cloneDeep(userRoles);
     const {rolesDelimiter} = settings;
-
-    //Default role by Azure ADFS (Azure don't send default roles)
-    if (!userRoles) {
-      userRoles = 'User';
-    }
-
     if (typeof userRoles === 'string') {
       if (rolesDelimiter) {
         userRoles = userRoles.split(rolesDelimiter);
@@ -126,9 +118,9 @@ module.exports = (formioServer) => {
     // Add an "Everyone" role.
     userRoles.push('Everyone');
 
-    const userId = _.get(profile, idPath);
     const email = _.get(profile, emailPath);
-    if (!userId || !email) {
+    const userId = _.get(profile, idPath, email);
+    if (!userId) {
       return next('No User ID or Email was found within your SAML profile.');
     }
 
@@ -147,7 +139,9 @@ module.exports = (formioServer) => {
     profileFields = profileFields ? _.map(profileFields.split(','), _.trim).join('|').replace(/[^A-z0-9_|-]/g, '') : '';
     const fieldsRegex = new RegExp(profileFields || '', 'i');
     const user = {
-      _id: toMongoId(userId),
+      _id: util.toMongoId(userId),
+      sso: true,
+      project: project._id.toString(),
       data: profileFields ? _.pickBy(profile, (prop, key) => key.match(fieldsRegex)) : profile,
       roles
     };
@@ -173,7 +167,7 @@ module.exports = (formioServer) => {
     // the user object that will be read by the teams feature to determine which teams are allocated to this user.
     if (project.primary && config.ssoTeams) {
       // Load the teams by name.
-      formio.teams.getSSOTeams(userRoles).then((teams) => {
+      formio.teams.getSSOTeams(user, roleTeams).then((teams) => {
         teams = teams || [];
         user.teams = _.map(_.map(teams, '_id'), formio.util.idToString);
         debug(`Teams: ${JSON.stringify(user.teams)}`);

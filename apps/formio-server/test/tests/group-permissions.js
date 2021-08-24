@@ -56,56 +56,117 @@ module.exports = (app, template, hook) => {
       let group = null;
       let submissions = [];
 
+      const splitRolesCases = {
+        anonymous: 'case for anonymous',
+        authenticated: 'case for authenticated'
+      }
+
       describe('Bootstrap', () => {
         it('Create the form', (done) => {
           form = {
-            title: 'form',
+            title: "form",
             name: chance.word(),
             path: chance.word(),
-            type: 'form',
+            type: "form",
             access: [],
             submissionAccess: [],
             components: [
               {
-                type: 'textfield',
-                key: 'foo',
-                label: 'foo',
+                type: "textfield",
+                key: "foo",
+                label: "foo",
                 input: true,
               },
               {
-                defaultPermission: 'read',
-                type: 'select',
-                dataSrc: 'url',
+                defaultPermission: "read",
+                type: "select",
+                dataSrc: "url",
                 data: {
-                  url: 'http://myfake.com/nothing',
+                  url: "http://myfake.com/nothing",
                 },
-                key: 'readPerm',
-                label: 'Read Field',
+                key: "readPerm",
+                label: "Read Field",
                 input: true,
               },
               {
-                defaultPermission: 'write',
-                type: 'select',
-                dataSrc: 'url',
+                defaultPermission: "write",
+                type: "select",
+                dataSrc: "url",
                 data: {
-                  url: 'http://myfake.com/nothing',
+                  url: "http://myfake.com/nothing",
                 },
-                key: 'writePerm',
-                label: 'Write Field',
+                key: "writePerm",
+                label: "Write Field",
                 input: true,
               },
               {
-                defaultPermission: 'admin',
-                type: 'select',
-                dataSrc: 'url',
+                defaultPermission: "admin",
+                type: "select",
+                dataSrc: "url",
                 data: {
-                  url: 'http://myfake.com/nothing',
+                  url: "http://myfake.com/nothing",
                 },
-                key: 'adminPerm',
-                label: 'Admin Field',
+                key: "adminPerm",
+                label: "Admin Field",
                 input: true,
               },
             ],
+            fieldMatchAccess: {
+              read: [
+                {
+                  formFieldPath: "data.foo",
+                  valueType: "string",
+                  value:  splitRolesCases.anonymous,
+                  operator: "$eq",
+                  roles: [template.roles.anonymous._id],
+                },
+              ],
+              create: [
+                {
+                  formFieldPath: "",
+                  valueType: "string",
+                  value: "",
+                  operator: "$eq",
+                  roles: [],
+                },
+              ],
+              update: [
+                {
+                  formFieldPath: "data.foo",
+                  valueType: "string",
+                  value:  splitRolesCases.authenticated,
+                  operator: "$eq",
+                  roles: [template.roles.authenticated._id],
+                },
+              ],
+              delete: [
+                {
+                  formFieldPath: "data.foo",
+                  valueType: "string",
+                  value:  splitRolesCases.authenticated,
+                  operator: "$eq",
+                  roles: [template.roles.authenticated._id],
+                },
+              ],
+              write: [
+                {
+                  formFieldPath: "",
+                  valueType: "string",
+                  value: "",
+                  operator: "$eq",
+                  roles: [],
+                },
+              ],
+              admin: [
+                {
+                  formFieldPath: "",
+                  valueType: "string",
+                  value: "",
+                  operator: "$eq",
+                  roles: [],
+                },
+              ],
+            },
           };
 
           request(app)
@@ -349,6 +410,29 @@ module.exports = (app, template, hook) => {
         });
 
         let submission;
+
+        const updateSubmission = (value, next) => {
+          request(app)
+          .put(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
+          .set('x-jwt-token', template.users.admin.token)
+          .send({
+            data: {
+              foo: value,
+            },
+          })
+          .end((err, res) => {
+            if (err) {
+              return next(err);
+            }
+
+            submission = res.body;
+
+            // Store the JWT for future API calls.
+            template.users.admin.token = res.headers['x-jwt-token'];
+            next();
+          });
+        };
+
         it('Create a submission', (done) => {
           request(app)
             .post(`/project/${template.project._id}/form/${form._id}/submission`)
@@ -393,7 +477,22 @@ module.exports = (app, template, hook) => {
               // Store the JWT for future API calls.
               template.users.user1.token = res.headers['x-jwt-token'];
 
-              done();
+              updateSubmission(splitRolesCases.anonymous, done);
+            });
+        });
+
+        it('A user with split roles access, should be able to read a submission', (done) => {
+          request(app)
+            .get(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              assert.deepEqual(res.body, submission);
+              updateSubmission(chance.word(), done);
             });
         });
 
@@ -413,7 +512,27 @@ module.exports = (app, template, hook) => {
               // Store the JWT for future API calls.
               template.users.user1.token = res.headers['x-jwt-token'];
 
-              done();
+              updateSubmission(splitRolesCases.authenticated, done);
+            });
+        });
+
+        it('A user with split roles access, should be able to read a submission through the index', (done) => {
+          request(app)
+            .get(`/project/${template.project._id}/form/${form._id}/submission`)
+            .set('x-jwt-token', template.users.user1.token)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              assert(Array.isArray(res.body), 'The result should be an array');
+              assert.equal(res.body.length, 1);
+
+              // Store the JWT for future API calls.
+              template.users.user1.token = res.headers['x-jwt-token'];
+
+              updateSubmission(chance.word(), done);
             });
         });
 
@@ -435,6 +554,31 @@ module.exports = (app, template, hook) => {
 
               assert.deepEqual(res.body, {});
               assert.equal(res.text, 'Unauthorized');
+
+              // Store the JWT for future API calls.
+              template.users.user1.token = res.headers['x-jwt-token'];
+
+              updateSubmission(splitRolesCases.authenticated, done);
+            });
+        });
+
+        it('A user with split role access, should be able to update a submission', (done) => {
+          const value = chance.word();
+          request(app)
+            .put(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
+            .set('x-jwt-token', template.users.user1.token)
+            .send({
+              data: {
+                foo: value,
+              },
+            })
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              assert.deepEqual(res.body.data.foo, value);
 
               // Store the JWT for future API calls.
               template.users.user1.token = res.headers['x-jwt-token'];
@@ -483,6 +627,25 @@ module.exports = (app, template, hook) => {
 
               // Store the JWT for future API calls.
               template.users.user1.token = res.headers['x-jwt-token'];
+
+              updateSubmission(splitRolesCases.authenticated, done);
+            });
+        });
+
+
+        it('A user with split roles access, should be able to delete a submission', (done) => {
+          request(app)
+            .delete(`/project/${template.project._id}/form/${form._id}/submission/${submission._id}`)
+            .set('x-jwt-token', template.users.user1.token)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+               // Store the JWT for future API calls.
+               template.users.user1.token = res.headers['x-jwt-token'];
 
               done();
             });

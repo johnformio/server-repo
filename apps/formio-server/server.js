@@ -15,7 +15,6 @@ const multipart = require('connect-multiparty');
 const os = require('os');
 const license = require('./src/util/license');
 const audit = require('./src/util/audit');
-const vm = require('vm');
 const cors = require('cors');
 const debug = {
   startup: require('debug')('formio:startup')
@@ -51,7 +50,17 @@ module.exports = function(options) {
 
   // Create the app server.
   debug.startup('Creating application server');
-  app.server = require('http').createServer(app);
+
+  if (config.sslKey && config.sslCert) {
+    app.server = require('https').createServer({
+      key: config.sslKey,
+      cert: config.sslCert
+    }, app);
+  }
+  else {
+    app.server = require('http').createServer(app);
+  }
+
   app.listen = function() {
     return app.server.listen.apply(app.server, arguments);
   };
@@ -78,7 +87,7 @@ module.exports = function(options) {
       fs.readFile(`./portal/config.js`, 'utf8', (err, contents) => {
         res.send(
           contents.replace(
-            /var hostedPDFServer = '';|var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;/gi,
+            /var hostedPDFServer = '';|var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false/gi,
             (matched) => {
               if (config.hostedPDFServer && matched.includes('var hostedPDFServer')) {
                 return `var hostedPDFServer = '${config.hostedPDFServer}';`;
@@ -98,9 +107,18 @@ module.exports = function(options) {
               else if (config.sac && app.license.terms.options.sac && matched.includes('var sac')) {
                 return 'var sac = true;';
               }
+              else if (config.enableOauthM2M && matched.includes('var oAuthM2MEnabled')) {
+                return 'var oAuthM2MEnabled = true;';
+              }
               return matched;
             }
           )
+          .replace(/https:\/\/license.form.io/gi, (matched) => {
+            if (config.licenseServer && config.licenseServer !== matched) {
+              return config.licenseServer;
+            }
+            return matched;
+          })
         );
       });
     });
@@ -147,6 +165,7 @@ module.exports = function(options) {
   debug.startup('Attaching middleware: OAuth Providers');
   app.formio.formio.oauth = require('./src/oauth/oauth')(app.formio.formio);
 
+  app.formio.formio.twoFa = require('./src/authentication/2FA')(app.formio);
   // Establish our url alias middleware.
   debug.startup('Attaching middleware: Alias Handler');
   app.use(require('./src/middleware/alias')(app.formio.formio));
@@ -199,17 +218,8 @@ module.exports = function(options) {
   debug.startup('Attaching middleware: Project & Roles Loader');
   app.use(require('./src/middleware/loadProjectContexts')(app.formio.formio));
 
-  // CORS Support
-  debug.startup('Attaching middleware: CORS');
-  var corsMiddleware = require('./src/middleware/corsOptions')(app);
-  var corsRoute = cors(corsMiddleware);
-  app.use(function(req, res, next) {
-    // If headers already sent, skip cors.
-    if (res.headersSent) {
-      return next();
-    }
-    corsRoute(req, res, next);
-  });
+  // Set the project query middleware for filtering disabled projects
+  app.use(require('./src/middleware/projectQueryLimits'));
 
   // Strict-Transport-Security middleware
   const hsts = _helmet.hsts({
@@ -229,7 +239,19 @@ module.exports = function(options) {
   }
 
    // Check project status
-   app.use(require('./src/middleware/projectUtilization')(app.formio.formio));
+  app.use(require('./src/middleware/projectUtilization')(app.formio.formio));
+
+   // CORS Support
+  debug.startup('Attaching middleware: CORS');
+  var corsMiddleware = require('./src/middleware/corsOptions')(app);
+  var corsRoute = cors(corsMiddleware);
+  app.use(function(req, res, next) {
+    // If headers already sent, skip cors.
+    if (res.headersSent) {
+      return next();
+    }
+    corsRoute(req, res, next);
+  });
 
   // Handle our API Keys.
   debug.startup('Attaching middleware: API Key Handler');
@@ -239,6 +261,7 @@ module.exports = function(options) {
   debug.startup('Attaching middleware: PDF Download');
 
   const downloadPDF = [
+    require('./src/middleware/apiKey')(app.formio.formio),
     require('./src/middleware/remoteToken')(app),
     app.formio.formio.middleware.alias,
     require('./src/middleware/aliasToken')(app),
@@ -252,6 +275,8 @@ module.exports = function(options) {
   app.get('/project/:projectId/form/:formId/submission/:submissionId/download', downloadPDF);
   app.get('/project/:projectId/:formAlias/submission/:submissionId/download/:fileId', downloadPDF);
   app.get('/project/:projectId/form/:formId/submission/:submissionId/download/:fileId', downloadPDF);
+
+  app.post('/project/:projectId/form/:formId/download', downloadPDF);
 
   debug.startup('Attaching middleware: PDF Upload');
   const uploadPDF = [
@@ -269,7 +294,8 @@ module.exports = function(options) {
   app.post('/project/:projectId/upload', uploadPDF);
 
   // Adding google analytics to our api.
-  if (config.gaTid) {
+  // Does not apply if deployed
+  if (config.gaTid && process.env.FORMIO_HOSTED) {
     debug.startup('Attaching middleware: Google Analytics');
     var ua = require('universal-analytics');
     app.use(function(req, res, next) {
@@ -442,8 +468,10 @@ module.exports = function(options) {
     app.use((err, req, res, next) => {
       /* eslint-disable no-console */
       console.log('Uncaught exception:');
-      console.log(err);
-      console.log(err.stack);
+      if (err) {
+        console.log(err);
+        console.log(err.stack);
+      }
       /* eslint-enable no-console */
       res.status(400).send(typeof err === 'string' ? {message: err} : err);
     });
@@ -466,8 +494,10 @@ module.exports = function(options) {
   process.on('uncaughtException', function(err) {
     /* eslint-disable no-console */
     console.log('Uncaught exception:');
-    console.log(err);
-    console.log(err.stack);
+    if (err) {
+      console.log(err);
+      console.log(err.stack);
+    }
     /* eslint-enable no-console */
 
     // Give the loggers some time to log before exiting.

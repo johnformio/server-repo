@@ -29,7 +29,7 @@ module.exports = function(app, formioServer) {
    * Ensure the user accessing this is authenticated.
    */
   const ensureAuthenticated = async (req, res, next) => {
-    if (!req.token || !req.token.user) {
+    if (!req.token || !req.token.user || !formioServer.formio.twoFa.is2FAuthenticated(req)) {
       return res.sendStatus(401);
     }
     const formioProject = await Teams.getFormioProject();
@@ -127,7 +127,11 @@ module.exports = function(app, formioServer) {
   app.put('/team/:teamId',
     ...initializeTeams,
     Teams.teamAccessHandler(true),
-    respondWith((req) => Teams.updateTeam(req.currentTeam, req.body.data.name))
+    respondWith((req) => Teams.updateTeam(
+      req.currentTeam,
+      _.get(req.body, 'data.name', ''),
+      _.get(req.body, 'metadata.ssoteam', false)
+    ))
   );
 
   // Delete a team.

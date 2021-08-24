@@ -4,15 +4,16 @@
 const _ = require('lodash');
 const Q = require('q');
 const debug = {
+  action: require('debug')('formio:action:sqlconnector'),
   generateQueries: require('debug')('formio:sqlconnector:generateQueries'),
   getConnectorActions: require('debug')('formio:sqlconnector:getConnectorActions'),
   actionsToRoutes: require('debug')('formio:sqlconnector:actionsToRoutes'),
   getExpressRoute: require('debug')('formio:sqlconnector:getExpressRoute'),
   verifyPlan: require('debug')('formio:sqlconnector:verifyPlan')
 };
-const squel = require('squel');
+const knex = require('knex');
 
-const primaryComparison = ' = {{ params.id }}';
+const primaryComparison = '{{ params.id }}';
 
 module.exports = (router) => {
   const formio = router.formio;
@@ -69,114 +70,136 @@ module.exports = (router) => {
     }
 
     const defaultSettings = {
-      autoQuoteTableNames: true,
-      autoQuoteFieldNames: true,
-      nameQuoteCharacter: isMysql() ? '`' : '"',
+      client: type
     };
 
-    // Make an instanced type of squel.
-    const _squel = squel.useFlavour(type);
+    // Make an instanced type of knex.
+    const _knex = knex(defaultSettings);
 
     method = method.toString().toLowerCase();
     const route = {
       endpoint: `/${path}`
     };
 
-    let _sql;
+    let _knx;
     switch (method) {
       case 'create':
-        route.method = 'POST';
-        _sql = _squel
-          .insert(defaultSettings)
-          .into(path.toString());
+        try {
+          route.method = 'POST';
 
-        debug.getExpressRoute('data:');
-        debug.getExpressRoute(data);
+          debug.getExpressRoute('data:');
+          debug.getExpressRoute(data);
 
-        for (const [column, value] of Object.entries(data)) {
-          _sql.set(column, `{{ data.${value} }}`);
-        }
+          const pairs = {};
+          for (const [column, value] of Object.entries(data)) {
+            pairs[column] = `{{ data.${value} }}`;
+          }
 
-        if (isPostgresql()) {
-          _sql.returning('*');
-          route.query = _sql.toString();
-        }
-        else {
-          // Get the primary insert string.
-          route.query = _sql.toString();
-
-          _sql = _squel
-            .select(defaultSettings)
-            .from(path.toString())
-            .where(`${primary}=${idFn[type]}`)
+          if (isPostgresql()) {
+            route.query = _knex(path.toString())
+            .insert(pairs)
+            .returning('*')
+            .toString();
+          }
+          else {
+            // Get the primary insert string.
+            route.query = _knex(path.toString())
+            .insert(pairs)
             .toString();
 
-          // Get the select string for the new record.
-          route.query += `; ${ _sql}`;
+            _knx = _knex(path.toString())
+            .select()
+            .whereRaw(`id = ${idFn[type]}`)
+            .toString();
+
+            // Get the select string for the new record.
+            route.query += `; ${ _knx}`;
+          }
+        }
+        catch (err) {
+          debug.action(err);
+          throw (err);
         }
 
         break;
       case 'index':
-        route.method = 'GET';
-        _sql = _squel
-          .select(defaultSettings)
-          .from(path.toString());
-
-        route.query = _sql.toString();
+        try {
+          route.method = 'GET';
+          route.query = _knex(path.toString())
+          .toString();
+        }
+        catch (err) {
+          debug.action(err);
+          throw (err);
+        }
         break;
       case 'read':
-        route.method = 'GET';
-        route.endpoint += '/:id';
-        _sql = _squel
-          .select(defaultSettings)
-          .from(path.toString())
-          .where(primary.toString() + primaryComparison);
-
-        route.query = _sql.toString();
+        try {
+          route.method = 'GET';
+          route.endpoint += '/:id';
+          route.query = _knex(path.toString())
+            .where(primary , primaryComparison)
+            .toString();
+      }
+      catch (err) {
+        debug.action(err);
+        throw (err);
+      }
         break;
       case 'update':
-        route.method = 'PUT';
-        route.endpoint += '/:id';
-        _sql = _squel
-          .update(defaultSettings)
-          .table(path.toString());
+        try {
+          route.method = 'PUT';
+          route.endpoint += '/:id';
 
-        debug.getExpressRoute('data:');
-        debug.getExpressRoute(data);
-        for (const [column, value] of Object.entries(data)) {
-          _sql.set(column, `{{ data.${value} }}`);
-        }
+          debug.getExpressRoute('data:');
+          debug.getExpressRoute(data);
 
-        _sql.where(primary.toString() + primaryComparison);
+          const pairs = {};
+          for (const [column, value] of Object.entries(data)) {
+            pairs[column] = `{{ data.${value} }}`;
+          }
 
-        if (isPostgresql()) {
-          _sql.returning('*');
-          route.query = _sql.toString();
-        }
-        else {
-          // Get the primary insert string.
-          route.query = _sql.toString();
-
-          _sql = _squel
-            .select(defaultSettings)
-            .from(path.toString())
-            .where(primary.toString() + primaryComparison)
+          if (isPostgresql()) {
+            route.query = _knex(path.toString())
+            .where(primary, primaryComparison)
+            .update(pairs)
+            .returning('*')
             .toString();
+          }
+          else {
+            // Get the primary insert string.
+            route.query = _knex(path.toString())
+              .where(primary, primaryComparison)
+              .update(pairs)
+              .toString();
 
-          // Get the select string for the updated record.
-          route.query += `; ${ _sql.toString()}`;
-        }
+            _knx = _knex(path.toString())
+              .where(primary, primaryComparison)
+              .toString();
 
+            // Get the select string for the updated record.
+            route.query += `; ${ _knx}`;
+          }
+      }
+      catch (err) {
+        debug.action(err);
+        throw (err);
+      }
         break;
       case 'delete':
-        route.method = 'DELETE';
-        route.endpoint += '/:id';
-        _sql = _squel
-          .delete(defaultSettings)
-          .from(path.toString())
-          .where(primary.toString() + primaryComparison);
+        try {
+          route.method = 'DELETE';
+          route.endpoint += '/:id';
 
-        route.query = _sql.toString();
+          route.query = _knex(path.toString())
+          .where(primary, primaryComparison)
+          .del()
+          .toString();
+          }
+          catch (err) {
+            debug.action(err);
+            throw (err);
+          }
         break;
     }
 

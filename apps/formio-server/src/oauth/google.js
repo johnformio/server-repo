@@ -58,7 +58,7 @@ module.exports = function(formio) {
           client_id: settings.clientId,
           client_secret: settings.clientSecret,
           grant_type: 'authorization_code',
-          code: code,
+          code: decodeURIComponent(code),
           redirect_uri: redirectURI
         }),
       });
@@ -117,7 +117,7 @@ module.exports = function(formio) {
 
     // Gets user ID from provider user response from getUser()
     getUserId(user) {
-      return user.id;
+      return Promise.resolve(user.id);
     },
 
     // Google tokens have no expiration date. If it is invalidated it means they have disabled the app.

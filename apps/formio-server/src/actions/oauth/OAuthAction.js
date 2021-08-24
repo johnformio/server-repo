@@ -1,6 +1,7 @@
 'use strict';
 
 const util = require('formio/src/util/util');
+const formioUtil = require('../../util/util');
 const _ = require('lodash');
 const crypto = require('crypto');
 const Q = require('q');
@@ -8,6 +9,7 @@ const chance = require('chance').Chance();
 
 module.exports = router => {
   const formio = router.formio;
+  const config = router.config;
   const {
     Action,
     hook
@@ -118,6 +120,7 @@ module.exports = router => {
                   dataSrc: 'url',
                   data: {url: resourceSrc},
                   valueProperty: 'name',
+                  authenticate: true,
                   multiple: false,
                   validate: {
                     required: true
@@ -221,6 +224,17 @@ module.exports = router => {
                   clearOnHide: true,
                   type: "datagrid",
                   customConditional: "show = ['remote'].indexOf(data.settings.association) !== -1;"
+                },
+                {
+                  type: 'textfield',
+                  input: true,
+                  label: 'OAuth Callback URL',
+                  key: 'redirectURI',
+                  placeholder: 'Enter Callback URL (Default window.location.origin of your app)',
+                  multiple: false,
+                  validate: {
+                    required: false
+                  }
                 }
               ];
 
@@ -329,11 +343,11 @@ module.exports = router => {
         provider.getUser(tokens),
         Q.denodeify(formio.cache.loadFormByName.bind(formio.cache))(req, self.settings.resource)
       ])
-        .then(function(results) {
+        .then(async function(results) {
           userInfo = results[0];
-          userId = provider.getUserId(userInfo);
+          userId = await provider.getUserId(userInfo, req);
           resource = results[1];
-          return auth.authenticateOAuth(resource, provider.name, userId);
+          return auth.authenticateOAuth(resource, provider.name, userId, req);
         })
         .then(function(result) {
           if (result) { // Authenticated existing resource
@@ -415,6 +429,11 @@ module.exports = router => {
     }
 
     reauthenticateNewResource(req, res, provider) {
+      // Ensure we have a resource item saved before we get to this point.
+      if (!res.resource || !res.resource.item || !res.resource.item._id) {
+        return res.status(400).send('The OAuth Registration requires a Save Submission action added to the form actions.');
+      }
+
       var self = this;
       // New resource was created and we need to authenticate it again and assign it an externalId
       // Also confirm role is actually accessible
@@ -483,7 +502,7 @@ module.exports = router => {
 
           return submission.save()
             .then(function() {
-              return auth.authenticateOAuth(resource, provider.name, req.oauthDeferredAuth.id);
+              return auth.authenticateOAuth(resource, provider.name, req.oauthDeferredAuth.id, req);
             });
         })
         .then(function(result) {
@@ -527,8 +546,34 @@ module.exports = router => {
         return res.status(400).send('No authorization code provided.');
       }
 
+      this.triggeredBy = oauthResponse.triggeredBy;
+
+      /*
+        Needs for the exclude oAuth Actions that not related to the triggered action.
+        Without this, we can face an error that the OAuth code has already been used.
+      */
+
+      if (this.triggeredBy && this.triggeredBy !== this.settings.button) {
+        return next();
+      }
+
       // Do not execute the form CRUD methods.
       req.skipResource = true;
+
+      var getUserTeams = function(user) {
+        return new Promise((resolve) => {
+          if (req.currentProject.primary && config.ssoTeams) {
+            formio.teams.getSSOTeams(user).then((teams) => {
+              teams = teams || [];
+              user.teams = _.map(_.map(teams, '_id'), formio.util.idToString);
+              return resolve(user);
+            }).catch(() => resolve(user));
+          }
+          else {
+            resolve(user);
+          }
+        });
+      };
 
       var tokensPromise = provider.getTokens(req, oauthResponse.code, oauthResponse.state, oauthResponse.redirectURI);
       switch (self.settings.association) {
@@ -550,8 +595,8 @@ module.exports = router => {
               Q.ninvoke(formio.auth, 'currentUser', req, res)
             ]);
           })
-            .then(function(results) {
-              userId = provider.getUserId(results[0]);
+            .then(async function(results) {
+              userId = await provider.getUserId(results[0], req);
               currentUser = res.resource.item;
 
               if (!currentUser) {
@@ -618,7 +663,7 @@ module.exports = router => {
               const accessToken = _.find(tokens, {type: provider.name});
               return oauthUtil.settings(req, provider.name)
                 .then((settings) => provider.getUser(tokens, settings)
-                  .then((data) => {
+                  .then(async (data) => {
                     if (data.errorCode) {
                       throw new Error(data.errorSummary);
                     }
@@ -634,12 +679,17 @@ module.exports = router => {
                       }
                     });
 
+                    const userId = await provider.getUserId(data, req);
                     const user = {
-                      _id: provider.getUserId(data),
+                      _id: formioUtil.toMongoId(userId),
+                      project: req.currentProject._id.toString(),
                       data,
                       roles
                     };
 
+                    return getUserTeams(user);
+                  })
+                  .then((user) => {
                     const token = {
                       external: true,
                       user,
@@ -657,13 +707,16 @@ module.exports = router => {
                     res.token = formio.auth.getToken(token);
                     req['x-jwt-token'] = res.token;
 
-                    // Set the headers if they haven't been sent yet.
-                    if (!res.headersSent) {
-                      res.setHeader('Access-Control-Expose-Headers', 'x-jwt-token');
-                      res.setHeader('x-jwt-token', res.token);
-                    }
-                    res.send(user);
-                    return user;
+                    return formio.hook.alter('oAuthResponse', req, res, () => {
+                      // Set the headers if they haven't been sent yet.
+                      if (!res.headersSent) {
+                        const headers = formio.hook.alter('accessControlExposeHeaders', 'x-jwt-token');
+                        res.setHeader('Access-Control-Expose-Headers', headers);
+                        res.setHeader('x-jwt-token', res.token);
+                      }
+                      res.send(user);
+                      return user;
+                    });
                   }),
                 );
             })
@@ -713,6 +766,10 @@ module.exports = router => {
         return res.status(400).send('OAuth Action is missing Button setting.');
       }
 
+      if (this.triggeredBy && this.triggeredBy !== this.settings.button) {
+        return next();
+      }
+
       var self = this;
       var provider = formio.oauth.providers[this.settings.provider];
 
@@ -749,6 +806,7 @@ module.exports = router => {
                     provider: provider.name,
                     clientId: oauthSettings.clientId,
                     authURI: oauthSettings.authURI || provider.authURI,
+                    redirectURI: self.settings.redirectURI,
                     state: state,
                     scope: oauthSettings.scope || provider.scope
                   };

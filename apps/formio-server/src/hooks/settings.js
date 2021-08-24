@@ -8,6 +8,8 @@ const fs = require('fs');
 const log = require('debug')('formio:log');
 const util = require('../util/util');
 const {VM} = require('vm2');
+const {ClientCredentials} = require('simple-oauth2');
+const moment = require('moment');
 
 module.exports = function(app) {
   const formioServer = app.formio;
@@ -52,7 +54,6 @@ module.exports = function(app) {
       init: require('./on/init')(app),
       formRequest: require('./on/formRequest')(app),
       validateEmail: require('./on/validateEmail')(app),
-      submissionCollection: require('./on/submissionCollection')(app),
     },
     alter: {
       formio: require('./alter/formio')(app),
@@ -112,6 +113,12 @@ module.exports = function(app) {
             return cb(err);
           }
 
+          if (form && form.name === 'license2' && exporter && exporter.addCustomTransformer) {
+            exporter.addCustomTransformer('user', (value) => {
+              return value.map(item => _.get(item, 'data.email', ''));
+            });
+          }
+
           if (!submissionModel) {
             return cb();
           }
@@ -134,6 +141,8 @@ module.exports = function(app) {
           'googlesheet',
           'ldap',
           'sqlconnector',
+          'twofalogin',
+          'twofarecoverylogin',
         ];
         if (action.title && action.name && !action.premium && premium.includes(action.name)) {
           action.title += ' (Premium)';
@@ -197,7 +206,7 @@ module.exports = function(app) {
           return true;
         }
         const premium = [
-          'webhook', 'oauth', 'googlesheet', 'ldap'
+          'webhook', 'oauth', 'googlesheet', 'ldap', 'twofalogin', 'twofarecoverylogin'
         ];
 
         // If the action does not have a name, or is not flagged as being premium, ignore it.
@@ -213,27 +222,34 @@ module.exports = function(app) {
 
       emailTransports(transports, settings, req, cb) {
         settings = settings || {};
-        // Limit basic and independent
+        // Limit independent
         if (req && req.primaryProject) {
-          if (req.primaryProject.plan === 'basic') {
-            transports = [{
-              transport: 'default',
-              title: 'Default (limit 100 per month)'
-            }];
-          }
           if (req.primaryProject.plan === 'independent') {
             transports = [{
               transport: 'default',
               title: 'Default (limit 1000 per month)'
             }];
           }
+          if (req.primaryProject.plan === 'commercial' || req.primaryProject.plan === 'trial') {
+            transports.push({
+              transport: 'default',
+              title: 'Default (limit 1000 per month)'
+            });
+           }
         }
         return cb(null, transports);
+      },
+      hasEmailAccess(req) {
+        const noEmailPlans = ['basic'];
+        return !(req.projectLicense && noEmailPlans.includes(req.projectLicense.terms.plan));
       },
       path(url, req) {
         return `/project/${req.projectId}${url}`;
       },
       skip(_default, req) {
+        if (req.isAdmin) {
+          return true;
+        }
         if (req.url.indexOf(`/project/${req.projectId}/saml/`) === 0) {
           return true;
         }
@@ -243,6 +259,22 @@ module.exports = function(app) {
         if (req.url.indexOf(`/project/${req.projectId}/manage`) === 0) {
           return true;
         }
+
+       if (req.headers['x-jwt-token'] && req.user) {
+          const whitelist2fa = ['/2fa/generate', '/2fa/represent', '/2fa/turn-on', '/2fa/turn-off'];
+          const url = req.url.split('?')[0];
+          const is2fa = _.some(whitelist2fa, (path) => {
+            if ((url === path) || (url === this.path(path, req))) {
+              return true;
+            }
+
+            return false;
+          });
+
+          if (is2fa) {
+            return true;
+          }
+       }
 
         if (req.method !== 'GET') {
           return false;
@@ -273,13 +305,22 @@ module.exports = function(app) {
        *   The initial formio user token.
        * @param form {Object}
        *   The initial formio user resource form.
+       * @param req
+       *   Request
        *
        * @returns {Object}
        *   The modified token.
        */
       token(token, form, req) {
+        const is2FaEnabled = _.get((req), 'user.data.twoFactorAuthenticationEnabled', false);
+        const code2Fa = _.get((req), 'user.data.twoFactorAuthenticationCode', null);
+        const {isSecondFactorAuthenticated} = token;
+        if (is2FaEnabled && code2Fa && !isSecondFactorAuthenticated) {
+          token.isSecondFactorAuthenticated = false;
+        }
+
         // See https://tools.ietf.org/html/rfc7519
-        token.iss = formioServer.formio.config.apiHost;
+        token.iss = util.baseUrl(formioServer.formio, req);
         token.sub = token.user._id;
         token.jti = req.session._id;
 
@@ -433,11 +474,16 @@ module.exports = function(app) {
 
         req.skipTokensInvalidation = true;
 
-        return formioServer.formio.mongoose.models.session.updateMany({
-          _id: {$ne: formioServer.formio.util.idToBson(req.session._id)},
+        const sessionQuery = {
           submission: formioServer.formio.util.idToBson(userId),
           logout: {$eq: null},
-        },
+        };
+
+        if (req.session && req.session._id) {
+          _.set(sessionQuery, '_id', {$ne: formioServer.formio.util.idToBson(req.session._id)});
+        }
+
+        return formioServer.formio.mongoose.models.session.updateMany(sessionQuery,
         {
           logout: Date.now(),
         })
@@ -465,6 +511,10 @@ module.exports = function(app) {
 
         // Ensure we have a projectOwner
         if (!req.projectOwner) {
+          return false;
+        }
+        // Return false if the user doesn't authenticated with 2FA
+        if (!formioServer.formio.twoFa.is2FAuthenticated(req)) {
           return false;
         }
 
@@ -627,6 +677,7 @@ module.exports = function(app) {
                 access.role.delete_all = access.role.delete_all || [];
 
                 const isFormCreation = req.method === 'POST' && req.url.endsWith('/form');
+                const isPdfUploading = req.method === 'POST' && req.url.endsWith('/upload');
 
                 teamAccess.forEach(function(permission) {
                   permission.roles = permission.roles || [];
@@ -639,7 +690,7 @@ module.exports = function(app) {
                         access.project.delete_all.push(id.toString());
                       case 'team_write':
                       case 'stage_write':
-                        if (isFormCreation || permission.type === 'team_admin') {
+                        if (isFormCreation || isPdfUploading || permission.type === 'team_admin') {
                           access.project.create_all.push(id.toString()); // This controls form creation.
                         }
                         access.form.create_all.push(id.toString());
@@ -682,7 +733,7 @@ module.exports = function(app) {
           const groups = (req.user && req.user.roles && access.roles) ? _.difference(req.user.roles, access.roles) : [];
 
           // Add user teams to the access.
-          if (req.user && req.user.teams && req.user.teams.length) {
+          if (req.user && req.user.teams && req.user.teams.length && formioServer.formio.twoFa.is2FAuthenticated(req)) {
             access.roles = access.roles.concat(req.user.teams);
           }
 
@@ -735,6 +786,23 @@ module.exports = function(app) {
           else {
             return callback(null);
           }
+        });
+        handlers.push((callback) => {
+          const permissionNames = ["create_all", "read_all", "update_all", "delete_all"];
+
+          // Set project "all" permissions to each instance.
+          permissionNames.forEach(name => {
+            if (access.form[name]) {
+              access.form[name] = _.uniq(access.form[name].concat(access.project[name]));
+            }
+            if (access.submission[name]) {
+              access.submission[name] = _.uniq(access.submission[name].concat(access.project[name]));
+            }
+            if (access.role[name]) {
+              access.role[name] = _.uniq(access.role[name].concat(access.project[name]));
+            }
+          });
+          return callback(null);
         });
         return handlers;
       },
@@ -879,6 +947,14 @@ module.exports = function(app) {
         if (!entity && !req.projectId) {
           // No project but authenticated.
           if (req.token) {
+            if (_url === '/current' || _url === '/logout') {
+              return true;
+            }
+            //Return false if the user doesn't authenticated with 2FA
+            if (!formioServer.formio.twoFa.is2FAuthenticated(req)) {
+              return false;
+            }
+
             if (req.method === 'POST' && _url === '/project') {
               return req.userProject.primary;
             }
@@ -893,10 +969,6 @@ module.exports = function(app) {
 
             if (_url === '/payment-gateway') {
               return req.userProject.primary;
-            }
-
-            if (_url === '/current' || _url === '/logout') {
-              return true;
             }
 
             // This req is unauthorized/unknown.
@@ -916,7 +988,11 @@ module.exports = function(app) {
           return true;
         }
 
-        else if (req.projectId && req.token && req.url === `/project/${req.projectId}/report`) {
+        else if (req.projectId && req.token && formioServer.formio.twoFa.is2FAuthenticated(req) && req.url === `/project/${req.projectId}/report`) {
+          return true;
+        }
+
+        else if (req.projectId && req.token && req.user && !formioServer.formio.twoFa.is2FAuthenticated(req) && req.url === `/project/${req.projectId}/2fa/authenticate`) {
           return true;
         }
 
@@ -925,7 +1001,7 @@ module.exports = function(app) {
           return true;
         }
 
-        else if (req.token && access.project && access.project.owner) {
+        else if (req.token && formioServer.formio.twoFa.is2FAuthenticated(req) && access.project && access.project.owner) {
           const url = req.url.split('/');
 
           // Use submission permissions for access to file signing endpoints.
@@ -1387,7 +1463,6 @@ module.exports = function(app) {
               .map('_id')
               .filter()
               .map(formioServer.formio.util.idToString)
-              .uniq()
               .value();
 
             next(null, user);
@@ -1411,16 +1486,17 @@ module.exports = function(app) {
         if (
           !process.env.FORMIO_HOSTED &&
           req.currentProject &&
+          (req.currentProject._id.toString() === projectId) &&
           req.currentProject.settings &&
           req.currentProject.settings.tokenParse
         ) {
           try {
             const data = (new VM({
               timeout: 500,
-              sandbox: {
+              sandbox: _.cloneDeep({
                 token: decoded,
                 roles: req.currentProject.roles
-              },
+              }),
               eval: false,
               fixAsync: true
             })).run(req.currentProject.settings.tokenParse);
@@ -1911,7 +1987,194 @@ module.exports = function(app) {
         }
 
         return update;
-      }
+      },
+
+       /**
+       * A hook to check permissions to send emails from the form.io domain.
+       *
+       * @param mail {Object}
+       *   The mail object.
+       * @param form {Object}
+       *   The form object.
+       * @return {Promise}
+       */
+      checkEmailPermission(mail, form) {
+        return new Promise((resolve, reject) => {
+          let isAllowed = !(mail.from || '').match(/form\.io/gi);
+
+          if (!isAllowed) {
+            const ownerId = _.get(form, 'owner', '');
+            const submissionModel = formioServer.formio.resources.submission.model;
+
+            submissionModel.findOne({_id: ownerId.toString()}, (err, owner) => {
+              if (err) {
+                return reject(err);
+              }
+
+              const email = _.get(owner, 'data.email');
+
+              isAllowed = !!email && email.match(/form\.io/gi);
+
+              if (isAllowed) {
+                resolve(mail);
+              }
+              else {
+                reject('You are not allowed to send a message from the form.io domain');
+              }
+            });
+          }
+          else {
+            resolve(mail);
+          }
+        });
+      },
+
+       /**
+       * A hook to set Access-Control-Expose-Headers.
+       *
+       * @param headers {String}
+       * @return {String}
+       */
+      accessControlExposeHeaders(headers) {
+        if (formioServer.config.enableOauthM2M && headers && typeof headers === 'string') {
+          headers += ', x-m2m-token';
+        }
+
+        return headers;
+      },
+
+            /**
+       * Check if the user authenticated with 2FA. If not, returns null.
+       *
+       * @param user
+       * @param req
+       * @returns {*}
+       */
+      twoFAuthenticatedUser(user, req) {
+        if (user && !formioServer.formio.twoFa.is2FAuthenticated(req)) {
+          return null;
+        }
+
+        return user;
+      },
+
+      /**
+       * Check if the user authenticated with 2FA. If not, returns an array with the default Role.
+       *
+       * @param roles
+       * @param defaultRole
+       * @param req
+       * @returns [Strilg]
+       */
+      userRoles(roles, defaultRole, req) {
+        if (!formioServer.formio.twoFa.is2FAuthenticated(req)) {
+          return [defaultRole];
+        }
+
+        return roles;
+      },
+
+      /**
+       * Check if the user authenticated with 2FA for Login Action.
+       *
+       * @param req
+       * @param res
+       * @returns {*}
+       */
+      currentUserLoginAction(req, res) {
+        const status = _.get(res,'resource.status', null);
+        if (!formioServer.formio.twoFa.is2FAuthenticated(req) && status === 200) {
+          _.set(res, 'resource.item', {
+            isTwoFactorAuthenticationRequired: true,
+          });
+        }
+      },
+
+       /**
+       * A hook to get a m2m oAuth token.
+       *
+      * @param req {Object}
+       *   The Express request Object.
+       * @param res {Object}
+       *   The Express response Object.
+       * @param next {Function}
+       *   The callback function.
+       */
+      oAuthResponse(req, res, cb) {
+        if (!formioServer.config.enableOauthM2M || !req.user || req.path.indexOf('logout') !== -1) {
+          return cb();
+        }
+
+        const m2m = _.get(req.userProject || req.currentProject || {}, 'settings.oauth.oauthM2M');
+
+        if (m2m) {
+          const m2mToken = _.get(req.token, 'm2mToken');
+
+          if (m2mToken && m2mToken.expires_at && moment.utc().isBefore(m2mToken.expires_at)) {
+            res.setHeader('x-m2m-token', m2mToken.access_token);
+
+            return cb();
+          }
+
+          const {
+            clientId,
+            clientSecret,
+            tokenURI
+          } = m2m;
+
+          if (!clientId || !clientSecret || !tokenURI) {
+            return cb();
+          }
+
+          const url = new URL(tokenURI);
+          const tokenHost = url.origin;
+          const tokenPath = url.pathname;
+          let provider = new ClientCredentials({
+            client: {
+              id: clientId,
+              secret: clientSecret,
+            },
+            auth: {
+              tokenHost,
+              tokenPath,
+            }
+          });
+
+          return provider.getToken()
+            .then(accessToken => accessToken.token)
+            .then((token) => {
+              if (!token) {
+                throw 'No response from OAuth Provider.';
+              }
+              if (token.error) {
+                throw token.error_description;
+              }
+
+              req.token = {
+                ...req.token,
+                m2mToken: {...token},
+              };
+
+              res.token = formioServer.formio.auth.getToken(req.token);
+              req['x-jwt-token'] = res.token;
+
+              if (!res.headersSent) {
+                const headers = this.accessControlExposeHeaders('x-jwt-token');
+                res.setHeader('Access-Control-Expose-Headers', headers);
+                res.setHeader('x-m2m-token', token.access_token);
+              }
+              provider = null;
+              cb();
+            })
+            .catch((err) => {
+              app.formio.formio.log('M2M Token error', err);
+              cb();
+            });
+        }
+        else {
+          return cb();
+        }
+      },
     }
   };
 };

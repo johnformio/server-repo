@@ -5,6 +5,11 @@ const jwt = require('jsonwebtoken');
 module.exports = app => (req, res, next) => {
   const token = app.formio.formio.util.getRequestValue(req, 'x-remote-token');
 
+  // Bypass check if apiKey was provided
+  if (req.isAdmin || req.token) {
+    return next();
+  }
+
   if (!token || !app.formio.config.remoteSecret) {
     return next();
   }
@@ -25,7 +30,8 @@ module.exports = app => (req, res, next) => {
 
     // Set the headers if they haven't been sent yet.
     if (!res.headersSent) {
-      res.setHeader('Access-Control-Expose-Headers', 'x-remote-token');
+      const headers = app.formio.formio.hook.alter('accessControlExposeHeaders', 'x-jwt-token');
+      res.setHeader('Access-Control-Expose-Headers', headers);
       res.setHeader('x-remote-token', res.token);
     }
 

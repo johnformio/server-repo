@@ -45,6 +45,11 @@ const getProjectContext = (req, isNew = false) => {
         name: req.currentProject && !isNew ? req.currentProject.name : req.body.name,
         remote: req.currentProject && !isNew ? !!req.currentProject.remote : false,
         projectType: req.currentProject && !isNew ? req.currentProject.type : req.body.type,
+        isDefaultAuthoring: (
+          req.currentProject && !isNew
+          ?  _.get(req.currentProject, 'config.defaultStageName', '')
+          :  _.get(req, 'body.config.defaultStageName', '')
+          ) === 'authoring',
       };
     case 'project':
     default:
@@ -61,7 +66,7 @@ const getProjectContext = (req, isNew = false) => {
 
 async function utilization(body, action = '', qs = {terms: 1}) {
   const hosted = process.env.FORMIO_HOSTED;
-  const onPremiseScopes = ['apiServer', 'pdfServer', 'project', 'tenant', 'stage', 'formManager', 'accessibility'];
+  const onPremiseScopes = ['apiServer', 'pdfServer', 'project', 'tenant', 'stage', 'formManager', 'accessibility', 'submissionServer'];
 
   // If on premise and not scoped for on premise, skip check.
   if (!hosted && !onPremiseScopes.includes(body.type)) {
@@ -84,7 +89,7 @@ async function utilization(body, action = '', qs = {terms: 1}) {
     method: 'post',
     headers: {'content-type': 'application/json'},
     body: JSON.stringify(body),
-    timeout: 5000,
+    timeout: 30000,
     qs,
     rejectUnauthorized: false,
   });
@@ -214,7 +219,7 @@ async function clearLicenseCache(licenseId) {
   await fetch(`${licenseServer}/license/${licenseId}/clear`, {
     method: 'post',
     headers: {'content-type': 'application/json'},
-    timeout: 5000,
+    timeout: 30000,
     rejectUnauthorized: false,
   })
     .then((response) => response.ok ? response.json() : null);

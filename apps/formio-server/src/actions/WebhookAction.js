@@ -300,7 +300,6 @@ module.exports = (router) => {
      * @param next
      *   The callback function to execute upon completion.
      */
-    /* eslint-disable max-statements */
     resolve(handler, method, req, res, next, setActionItemMessage) {
       const settings = this.settings || {};
 
@@ -444,12 +443,12 @@ module.exports = (router) => {
           try {
             const newPayload = (new VM({
               timeout: 500,
-              sandbox: {
+              sandbox: _.cloneDeep({
                 externalId,
                 payload,
                 headers: options.headers,
                 config: req.currentProject && req.currentProject.hasOwnProperty('config') ? req.currentProject.config : {},
-              },
+              }),
               eval: false,
               fixAsync: true
             })).run(settings.transform);
@@ -499,6 +498,9 @@ module.exports = (router) => {
                 return response.json().then((body) => handleError(body, response));
               }
             }
+          })
+          .catch((err) => {
+            handleError(err);
           });
       }
       catch (e) {

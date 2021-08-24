@@ -109,7 +109,13 @@ const Teams = {
     Teams.formioProject = await Teams.projectModel().findOne({
       name: 'formio'
     }).lean().exec();
-    debug.getFormioProject(`formio project: ${Teams.formioProject._id}`);
+
+    if (Teams.formioProject) {
+      debug.getFormioProject(`formio project: ${Teams.formioProject._id}`);
+    }
+    else {
+      debug.getFormioProject('formio project: Not Found');
+    }
     return Teams.formioProject;
   },
 
@@ -134,6 +140,11 @@ const Teams = {
       return Teams.memberResource;
     }
     const formio = await Teams.getFormioProject();
+
+    if (!formio) {
+      return null;
+    }
+
     Teams.memberResource = await Teams.formModel().findOne({name: 'member', project: formio._id}).lean().exec();
     debug.getMemberResource(`member resource: ${Teams.memberResource._id}`);
     return Teams.memberResource;
@@ -155,14 +166,23 @@ const Teams = {
   /**
    * Get the teams by name.
    */
-  async getSSOTeams(names) {
-    const teamResource = await Teams.getTeamResource();
-    return await Teams.submissionModel().find({
-      form: teamResource._id,
-      deleted: {$eq: null},
-      'data.name': {$in: names},
-      'metadata.ssoteam': true
-    }).lean().exec();
+  async getSSOTeams(user, names) {
+    // Legacy sso teams method.
+    if (names && names.length) {
+      const teamResource = await Teams.getTeamResource();
+      const teams = await Teams.submissionModel().find({
+        form: teamResource._id,
+        deleted: {$eq: null},
+        'data.name': {$in: names},
+        'metadata.ssoteam': true
+      }).lean().exec();
+      if (teams && teams.length) {
+        return teams;
+      }
+    }
+
+    // User new teams method.
+    return this.getTeams(user);
   },
 
   /**
@@ -270,7 +290,7 @@ const Teams = {
     const memberResource = await Teams.getMemberResource();
 
     // Only allow users who belong to the same project as the team member resource.
-    if (!user.project || (user.project.toString() !== memberResource.project.toString())) {
+    if (!memberResource || !user.project || (user.project.toString() !== memberResource.project.toString())) {
       return [];
     }
 
@@ -316,13 +336,25 @@ const Teams = {
       }
     ]).exec();
 
-    const teams = [];
+    let teams = [];
+
+    if (user.sso && user.teams) {
+      const teamResource = await Teams.getTeamResource();
+      teams = await Teams.submissionModel().find({
+        _id: {$in: user.teams.map((id) => Teams.util().idToBson(id))},
+        project: teamResource.project,
+        form: teamResource._id,
+        deleted: {$eq: null},
+      }).lean().exec();
+    }
+
     const userTeams = _.get(user, 'metadata.teams', []);
     (membership || []).forEach((member) => {
       const memberTeam = _.get(member, 'data.team', null);
       if (
         memberTeam &&
         (
+          user.sso ||
           !accepted ||
           (memberTeam._id && userTeams.indexOf(memberTeam._id.toString()) !== -1) ||
           (memberTeam.owner && user._id && (user._id.toString() === memberTeam.owner.toString()))
@@ -331,7 +363,7 @@ const Teams = {
         teams.push(member.data.team);
       }
     });
-    return teams;
+    return _.uniqBy(teams, (team) => team._id.toString());
   },
 
   /**
@@ -364,11 +396,14 @@ const Teams = {
    * @param team
    * @param name
    */
-  async updateTeam(team, name) {
+  async updateTeam(team, name, ssoTeam = false) {
     await Teams.submissionModel().updateOne({
       _id: team._id
     }, {
-      $set: {'data.name': name}
+      $set: {
+        'data.name': name,
+        'metadata.ssoteam': ssoTeam
+      }
     }).exec();
     return await Teams.getTeam(team._id.toString());
   },
@@ -472,6 +507,16 @@ const Teams = {
    */
   async getMember(user, team) {
     const memberResource = await Teams.getMemberResource();
+    if (user.sso && user.teams && user.teams.indexOf(team._id.toString()) !== -1) {
+      return {
+        project: memberResource.project,
+        form: memberResource._id,
+        data: {
+          email: user.data.email,
+          team: team
+        }
+      };
+    }
     return await Teams.submissionModel().findOne({
       project: memberResource.project,
       form: memberResource._id,

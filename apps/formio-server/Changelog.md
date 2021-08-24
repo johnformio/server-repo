@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+### Fixed
+ - FIO-1528: change default 'from' email address domain to use example in the deployment environment variable
+ - FIO-2652 livestage => stage
+ - FIO-1497: Fixes an issue when stages were loaded with disabled utilization and were limited by 10.
+ - FIO-1541: added token swap automation testing
+ - FIO-1565: Server | Form Manager | Revisions | Making changes to a Form with Revisions enabled the user is displayed as "anonymous". Want to show email of the user from FMG that made the change. 
+ - FIO-1536: Allow endpoint on API server to provide submission JSON to generate PDF
+ - FIO-1439: increased max body size
+ - FIO-1365: Fixes Authoring stage issues for master
+ - FIO-1475-master: Fixes an issue when after update the server DB schema to 3.3.8, the owners of old teams won't set as the admin.
+ - FIO-2672: added hook for database update (update all emails to be lower case)
+ - Allow them to set the Minio port.
+ - FIO-3006: API | JavaScript heap out of memory
+ - FIO-2989: Fixes an issue when got an 400 error if a form has more then one oAuth actions.
+ - FIO-3369: Removed the submissionCollection hook which was messing up submission collection
+
 ## 7.2.0-rc.2
 ### Added
  - Adding expiring action items.
@@ -17,7 +34,175 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Upgrade portal@7.3.0-rc.3
  - Upgrade formiojs@4.13.0-rc.10
 
-## 7.2.0-rc.1
+## 7.1.3-rc.3
+### Fixed
+ - FIO-2790: Fixing issues with SAML team authentication.
+
+### Changed
+ - Upgrade portal@7.2.2-rc.2 
+
+## 7.1.3-rc.2
+### Fixed
+ - FIO-2623, FIO-2605: Fixing anomalies with the x-token project API keys.
+
+## 7.1.3-rc.1
+### Changed
+ - Upgrade portal @ 7.2.2-rc.2
+ - Upgrade formiojs@4.13.1-rc.2
+ - Upgrade premium@1.16.1-rc.1
+
+### Changed
+ - FIO-977: Allow x-token to be used to download pdfs.
+ - FIO-2761: Fixes an issue when a user was created by an admin on the freshly deployed portal, he couldn't edit his profile.
+ - FIO 2459: Increase timeout for PDF server response
+
+## 7.1.2-rc.3
+### Changed
+ - Downgrade portal to 7.2.1-rc.1
+
+## 7.1.2-rc.2
+### Changed
+ - Upgrade formio@v2.2.0-rc.2
+
+## 7.1.2-rc.1
+### Changed
+ - FIO-2484: Implements tests for Split Role
+ - Upgrade formiojs@4.13.1-rc.1
+ - Upgrade portal@7.2.2-rc.1
+
+## 7.1.1
+### Changed
+ - Upgrade formio@2.1.1
+
+## 7.1.1-rc.2
+### Chagned
+ - Upgrade formio@2.1.1-rc.2
+
+### Fixed
+ - Changed update hook to add try/catch around expiring index creation.
+
+## 7.1.0
+### Changed
+ - Upgrade formiojs@4.13.0
+ - Upgrade formio@2.1.0
+ - Upgrade portal@7.2.0
+ - Upgrade premium@1.16.0
+
+## 7.1.0-rc.18
+### Fixed
+ - FIO-1452: added decoding of the authorization code
+
+### Changed
+ - Upgrade formiojs@4.13.0-rc.29
+ - Upgrade portal@7.2.0-rc.16
+
+## 7.1.0-rc.17
+### Changed
+ - Upgrade portal@7.2.0-rc.15
+
+## 7.1.0-rc.16
+### Changed
+ - Upgrade portal@7.2.0-rc.14
+ - Upgrade formiojs@4.13.0-rc.28
+ - Upgrade premium@1.16.0-rc.11
+
+## 7.1.0-rc.15
+### Changed
+ - Upgrade portal@7.2.0-rc.13
+ - Upgrade formiojs@4.13.0-rc.27
+ - Upgrade premium@1.16.0-rc.10
+ - Upgrade formio@2.1.0-rc.18
+
+## 7.1.0-rc.14
+### Changed
+ - Upgrade portal@7.2.0-rc.12
+ - Upgrade formiojs@4.13.0-rc.26
+ - Upgrade premium@1.16.0-rc.9
+ - Upgrade formio@2.1.0-rc.17
+ - Upgrade resourcejs@2.3.4
+
+## 7.1.0-rc.13
+### Fixed
+ - FIO-2652 livestage => stage
+ - FIO-1365: Fixes Authoring stage issues for master
+ - FIO-1439: increased max body size
+ - FIO-1536: Allow endpoint on API server to provide submission JSON to generate PDF
+ - FIO-1565: Server | Form Manager | Revisions | Making changes to a Form with Revisions enabled the user is displayed as "anonymous". Want to show email of the user from FMG that made the change.
+ - FIO-1497: Fixes an issue when stages were loaded with disabled utilization and were limited by 10
+## Changed
+ - Upgrade portal@7.2.0-rc.11
+ - Upgrade formiojs@4.13.0-rc.25
+ - Upgrade premium@1.16.0-rc.8
+ - Upgrade formio@2.1.0-rc.16
+
+## 7.1.0-rc.12
+### Changed
+ - Upgrade portal@7.2.0-rc.10
+
+## 7.1.0-rc.11
+### Changed
+ - Upgrade formiojs@4.13.0-rc.24
+ - Upgrade portal@7.2.0-rc.9
+
+## 7.1.0-rc.10
+### Changed
+ - Upgrade formiojs@4.13.0-rc.23
+ - Upgrade premium@1.16.0-rc.6
+ - Upgrade formio@2.1.0-rc.15
+ - Upgrade portal@7.2.0-rc.8
+
+### Fixed
+ - FIO-1546: clear license key typing issue fix
+ - FIO-153: Fixes an issue where "revision" is added to Nested Forms when update a Parent form
+ - FIO-2512-2518: Fixes security issues with the base image
+ - FIO-2459: Increase timeout for PDF-server response
+ - FIO-644: Fix pdf uploading with team_write permissions
+
+## 7.1.0-rc.9
+### Changed
+ - Upgrade formiojs@4.13.0-rc.22
+ - Upgrade portal@7.2.0-rc.7
+
+## 7.1.0-rc.8
+### Changed
+ - Upgrade formiojs@4.13.0-rc.20
+ - Upgrade portal@7.2.0-rc.6
+ - Upgrade formio@2.1.0-rc.14
+ - Upgrade premium@1.16.0-rc.4
+
+## 7.1.0-rc.7
+### Changed
+ - Upgrade formiojs@4.13.0-rc.19
+ - Upgrade portal@7.2.0-rc.5
+ - Upgrade formio@2.1.0-rc.13
+ - Upgrade premium@1.16.0-rc.3
+
+## 7.1.0-rc.6
+### Changed
+ - cloneDeep the vm sandbox.
+ - Upgrade formio@2.1.0-rc.10
+ - Upgrade formio-workers@1.14.13
+
+## 7.1.0-rc.5
+### Fixed
+ - FIO-1277: Fixing the evaluations to use vm2 to add more security.
+ - Upgrade formio@2.1.0-rc.8 
+
+## 7.1.0-rc.4
+### Fixed
+ - Upgrade formiojs@4.13.0-rc.11
+ - Upgrade portal@7.2.0-rc.4
+ - Upgrade formio@2.1.0-rc.8
+
+## 7.1.0-rc.3
+### Fixed
+ - Fixing issues where logging into some users would cause "Unauthorized" to show.
+
+### Changed
+ - FIO-1026: When creating a new stage or tenant, allow selecting which stage to copy from (instead of only live).
+
+## 7.1.0-rc.2
+>>>>>>> origin/7.1.x
 ### Added
  - FOR-2866: added hook for getting proper mongo collection
  - FIO-1196: Added SQLConector2 support.
@@ -37,6 +222,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
  - FIO-920: Adding email support for Teams.
 
+### Fixed
+ - FIO-1282: Fixes an issue when the server was crashing if doesn't reach manager index.html
+ - FOR-2709: Makes changing 'tags', 'controller', 'properties' and 'settings' form's properties cause creating a new revision if allowed
+ - FIO-1138: Fixed possibility to update teams in protected mode.
+ - FIO-128: Fix saving custom properties in form revision.
+ - FOR-2763: Changed the default template for creating new projects that include the only Administrator for Read All.
+
+### Changed
+ - FIO-920: Adding email support for Teams.
+ - Upgrade formio@2.0.0-rc.43
+ - Upgrade javascript-obfuscator@2.10.3, mongodb@3.6.4, passport-saml@2.0.5, twilio@3.55.1, sinon@9.2.4, aws-sdk@2.834.0, eslint@7.19.0
+
+### Changed
+ - Upgrade formiojs@4.12.7-rc.2
+ - Upgrade portal@7.2.0-rc.2
+ - Upgrade premium@1.15.4-rc.3
+ 
 ## 7.1.0-rc.1
 ### Fixed
  - FIO-1000: Fix an error for import with empty template
@@ -70,7 +272,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
  - Upgrade formio@2.0.0-rc.37
- - Upgrade minio@7.0.18, uuid@8.3.2, sinon@9.2.2, aws-sdk@2.820.0, helmet@4.3.1, javascript-obfuscator@2.10.1, passport-saml-metadata@2.4.0, twilio@3.54.1, 
+ - Upgrade minio@7.0.18, uuid@8.3.2, sinon@9.2.2, aws-sdk@2.820.0, helmet@4.3.1, javascript-obfuscator@2.10.1, passport-saml-metadata@2.4.0, twilio@3.54.1,
 eslint@7.17.0, passport-saml@2.0.2
 
 ## 7.0.0-rc.65
@@ -91,7 +293,7 @@ eslint@7.17.0, passport-saml@2.0.2
 ### Fixed
  - Issue where the server would crash if project=null was provided when saving the project settings.
  - Issue where the public project configurations would not get passed to formview pro and formmanager
- - FOR-2868: Adds the rejectUnauthorized flag to license utilization requests. 
+ - FOR-2868: Adds the rejectUnauthorized flag to license utilization requests.
  - FOR-2889: Everyone role is not saved on Access page
  - FIO-975: Added possibility to configure server config log.
 
@@ -113,7 +315,7 @@ eslint@7.17.0, passport-saml@2.0.2
  - Upgrade portal@7.1.17-rc.32
  - Upgrade formiojs@4.12.2
  - Upgrade premium@1.15.2
- - Upgrade formio@2.0.0-rc.35 
+ - Upgrade formio@2.0.0-rc.35
  - Upgrade semver@7.3.4, aws-sdk@2.804.0, twilio@3.53.0, eslint@7.15.0
 
 ### Fixed
@@ -222,7 +424,7 @@ eslint@7.17.0, passport-saml@2.0.2
  - Upgrade portal@7.1.17-rc.20
  - Upgrade formiojs@4.12.1-rc.16
  - Upgrade premium@1.15.1-rc.9
- 
+
 ### Changed
  - Upgrade formio@2.0.0-rc.24
  - Upgrade base image to use Node 14
@@ -305,10 +507,10 @@ eslint@7.17.0, passport-saml@2.0.2
  - New Licensing system
  - Stage Types (Authoring and Live)
  - Group Roles and improvements to Group Assignment handling.
- 
+
 ### Changed
  - Removed request.js and restler and replaced with node-fetch
- 
+
 ### Removed
  - Method Override header functionality
  - Jira Action
@@ -374,7 +576,7 @@ eslint@7.17.0, passport-saml@2.0.2
 
 ## 7.0.0-rc.25
 ### Fixed
- - Attach as PDF to work inline without the need for Save Submission. 
+ - Attach as PDF to work inline without the need for Save Submission.
 
 ## 7.0.0-rc.19
 ### Added
@@ -384,7 +586,7 @@ eslint@7.17.0, passport-saml@2.0.2
  - Fixes an issue related to externalIds in Webhooks.
  - FOR-2727: Change the message to upgrade
  - FOR-2699: added storageAccessHanler in init script
- 
+
 ### Changed
  - Upgrade formio@2.0.0-rc.10
  - Upgrade formiojs@4.12.0-rc.7
@@ -408,12 +610,12 @@ eslint@7.17.0, passport-saml@2.0.2
 
 ## 6.10.8-rc.1
 ## 6.10.7-rc.2
-### Changed 
+### Changed
  - Upgrade portal@7.0.38-rc.2
  - Upgrade formiojs@4.11.1-rc.3
 
 ## 6.10.7-rc.1
-### Changed 
+### Changed
  - Upgrade portal@7.0.38-rc.1
  - Upgrade formiojs@4.11.1-rc.1
 
@@ -422,11 +624,11 @@ eslint@7.17.0, passport-saml@2.0.2
  - Upgrade formio to 1.90.5 to fix mongo ssl connections.
 
 ## 6.10.6
-### Changed 
+### Changed
  - Upgrade formio to 1.90.2 to fix email crash on large emails.
 
 ## 6.10.5
-### Changed 
+### Changed
  - Upgrade formio to 1.90.1 to upgrade resourcejs to 2.3.1 to fix issue with limit and sort.
 
 ## 6.10.4
@@ -509,7 +711,7 @@ eslint@7.17.0, passport-saml@2.0.2
 ### Changed
  - Upgrade portal@7.0.22
  - Upgrade formiojs@4.10.3-rc.4
- 
+
 ## 6.10.1-rc.3
 ### Changed
  - Upgrade portal@7.0.21
@@ -518,7 +720,7 @@ eslint@7.17.0, passport-saml@2.0.2
 ## 6.10.1-rc.1
 ### Changed
  - Upgrade portal@7.0.20
- - Upgrade formiojs@4.10.3-rc.1	
+ - Upgrade formiojs@4.10.3-rc.1
 
 ## 6.10.0
 ### Changed
@@ -529,7 +731,7 @@ eslint@7.17.0, passport-saml@2.0.2
 ### Changed
  - Upgrade portal@7.0.16
  - Upgrade formiojs@4.10.0-rc.13
- 
+
 ## 6.10.0-rc.9
 ### Changed
  - Upgrade portal@7.0.15
@@ -544,7 +746,7 @@ eslint@7.17.0, passport-saml@2.0.2
  - Upgrade formio@1.85.0
  - Upgrade formio-workers@1.14.8
  - Generate form revision on import if revisions are enabled.
- 
+
 ### Fixed
  - FOR-2683: Fix (Payment): converted expMonth and expDate to String before concatenation
  - Fixed issues with group permission errors not being proper English.
@@ -563,10 +765,10 @@ eslint@7.17.0, passport-saml@2.0.2
 ## 6.10.0-rc.5
 ### Fixed
  - FJS-888 Unauthorized error when getting spec.json
- 
+
 ### Added
  - Added formSave hook on template import.
- 
+
 ### Changed
  - Upgrade formio-app@7.0.12
  - Upgrade formiojs@4.10.0-rc.6
@@ -621,7 +823,7 @@ eslint@7.17.0, passport-saml@2.0.2
 ## 6.9.35
 ### Added
  - Ability to add additional fields in template export
- 
+
 ### Fixed
  - Creating a form with revisions during import will create an initial revision.
 
@@ -733,7 +935,7 @@ eslint@7.17.0, passport-saml@2.0.2
 ### Changed
  - Upgrade portal to 7.0.0-rc.85
  - Upgrade formiojs@4.9.12
- 
+
 ### Fixed
  - Crash issues with Webhook action.
  - Ensure process runs as node user.
@@ -756,7 +958,7 @@ eslint@7.17.0, passport-saml@2.0.2
 
 ## 6.9.22
 ### Fixed
- - Ensure the DataSource header values are interpolated. 
+ - Ensure the DataSource header values are interpolated.
 
 ## 6.9.21
 ### Fixed
@@ -818,7 +1020,7 @@ eslint@7.17.0, passport-saml@2.0.2
 ## 6.9.11
 ### Changed
  - Upgrade portal to 7.0.0-rc.70
- 
+
 ### Fixed
  - Validate endpoint to work with aliases
  - Adding config and modules to form revision endpoints.
@@ -873,7 +1075,7 @@ eslint@7.17.0, passport-saml@2.0.2
 ## 6.9.0-rc.1
 ### Fixed
  - Issues with leaving teams.
- 
+
 ### Changed
  - Upgrade twilio@3.39.5, aws-sdk@2.623.0
  - Upgrade portal to 7.0.0-rc.61
@@ -910,7 +1112,7 @@ eslint@7.17.0, passport-saml@2.0.2
 ### Changed
  - Upgrade portal to 7.0.0-rc.58
  - Upgrade formio@1.65.0
- 
+
 ### Added
  - Added new endpont for the latest form revision
  - Action Logs access for team admins.
@@ -946,7 +1148,7 @@ eslint@7.17.0, passport-saml@2.0.2
 ### Changed
  - Upgraded portal to 7.0.0-rc.55
  - Upgrade formio.js to 4.9.0-beta.3
- 
+
 ### Fixed
  - Adding options to have SSO teams without enabling Portal SSO.
 
@@ -955,7 +1157,7 @@ eslint@7.17.0, passport-saml@2.0.2
  - Separated the SSO Teams function to be controlled by its own independent variables.
  - Upgraded twilio@3.39.4, aws-sdk@2.613.0, passport-saml@1.3.0
  - Now default REDIS_SERVICE to false unless they specify otherwise.
- 
+
 ## 6.8.0-rc.1
 ### Changed
  - Upgrade portal to 7.0.0-rc.54
@@ -977,9 +1179,9 @@ eslint@7.17.0, passport-saml@2.0.2
 ## 6.8.0-beta.24
 ### Changed
  - Upgrade app to use formiojs@4.8.0-rc.3
- 
+
 ### Fixed
- - FOR-2576: Jira connector basic auth change 
+ - FOR-2576: Jira connector basic auth change
  - FOR-2573: Added correct handling of tenant project plan.
  - Allow form settings to be loaded as part of revisions.
 
@@ -992,7 +1194,7 @@ eslint@7.17.0, passport-saml@2.0.2
  - Upgrade base image to node:12-alpine
  - Upgrade formio.js@4.8.0-rc.1
  - Upgrade formio/formio@1.63.0
- 
+
 ### Fixed
  - Upgraded formio@1.63.0 which resolves CSV export issue with wizards.
  - Build issues where pkg@4.4.1 broke our server.
@@ -1079,7 +1281,7 @@ eslint@7.17.0, passport-saml@2.0.2
 ## 6.8.0-beta.7
 ### Fixes
  - Fixes stages per tenant.
- 
+
 ### Changes
  - Added console that helps people disable REDIS.
  - Upgrade portal to version 7.0.0-rc.25. Fixes stages per tenant, upgrades formio.js@4.3.3
@@ -1096,14 +1298,14 @@ eslint@7.17.0, passport-saml@2.0.2
 ## 6.7.38
 ### Fixed
  - Crash when trying to log projects.
- 
+
 ### Changed
  - Upgrade formio@1.63.11
 
 ## 6.7.37
 ### Fixed
  - Problem where un-linking files that do not exist could make server crash.
- 
+
 ### Changed
  - Upgrade formio@1.63.10
  - Upgrade formiojs@4.8.1, twilio@3.39.3, aws-sdk@2.611.0
@@ -1115,7 +1317,7 @@ eslint@7.17.0, passport-saml@2.0.2
 ## 6.7.35
 ### Fixed
  - Validations for file components.
- 
+
 ### Added
  - BCC and CC support for Email Actions.
 
@@ -1150,17 +1352,17 @@ eslint@7.17.0, passport-saml@2.0.2
 ## 6.7.28
 ### Fixed
  - Update to not crash if no project is found.
-  
+
 ## 6.7.27
 ### Fixed
  - Hosted platform to not allow many cc auth checks.
 
 ## 6.7.25
 ### Fixed
- - FOR-2576: Jira connector basic auth change 
+ - FOR-2576: Jira connector basic auth change
  - FOR-2573: Added correct handling of tenant project plan.
  - Allow form settings to be loaded as part of revisions.
- 
+
 ### Changed
  - Upgrade Portal to 6.8.7
  - Upgrade mongodb@3.4.1, webpack@4.41.4, aws-sdk@2.594.0, twilio@3.39.1
@@ -1213,7 +1415,7 @@ eslint@7.17.0, passport-saml@2.0.2
 ## 6.7.15
 ### Fixed
  - Issues with OpenID authentication.
- 
+
 ### Changed
  - Upgrade formio@1.60.6
  - Upgrade request-promise-native@1.0.8, aws-sdk@2.564.0, formiojs@4.7.2, twilio@3.37.0
@@ -1228,7 +1430,7 @@ eslint@7.17.0, passport-saml@2.0.2
 ## 6.7.13
 ### Added
  - Ability to use the submission filter queries when exporting submissions as CSV.
- 
+
 ### Changed
  - Upgrade all minor dependencies.
 
@@ -1271,7 +1473,7 @@ eslint@7.17.0, passport-saml@2.0.2
  - Upgraded portal, which includes new formview pro, form manager, and tenant manager for deployed servers.
  - Upgraded formio/formio which includes batch email processing.
  - Upgraded formio/formio-workers to 1.14.0 which solves some email templating issues.
- 
+
 ### Fixed
  - Crash with the Google Sheets action when using PATCH method.
  - Crash with the Login Action when no settings are provided to the action.
@@ -1286,7 +1488,7 @@ eslint@7.17.0, passport-saml@2.0.2
 ## 6.7.4
 ### Added
  - Added configurable access endpoint configurations so that it can be turned off per-project or per-deployment.
- 
+
 ### Changed
  - Upgraded aws-sdk@2.524.0, twilio@3.34.0
 
@@ -1318,7 +1520,7 @@ eslint@7.17.0, passport-saml@2.0.2
 ## 6.6.0
 ### Changed
  - Update formio to 1.48.0
- 
+
 ## Added
  - Upload proxy for pdfs.
  - Setting Azure ADFS default role.
@@ -1377,7 +1579,7 @@ eslint@7.17.0, passport-saml@2.0.2
 ## 6.5.19
 ### Changed
  - Upgraded formiojs@3.20.14, minio@7.0.8, mongodb@3.2.4, twilio@3.30.3, aws-sdk@2.455.0, formio@1.46.0, passport-saml@1.1.0, webpack@4.31.0
- 
+
 ### Fixed
  - Project template exports to include the "properties" on each form component.
  - Problems with the PDF download which includes forms with nested form components assigned to specific form revisions.
@@ -1444,15 +1646,15 @@ eslint@7.17.0, passport-saml@2.0.2
  - Possible crash when generating submission pdfs.
 
 ## 6.5.6
-### Changed 
+### Changed
  - update formio-services to 6.5.6 to enable redis debugging.
 
 ## 6.5.5
 ### Fixed
  - form ?full=true not loading form revisions correctly for sub forms.
- 
+
 ### Added
- - context variable to email and webhook actions. 
+ - context variable to email and webhook actions.
 
 ## 6.5.4
 ### Fixed
@@ -1537,14 +1739,14 @@ eslint@7.17.0, passport-saml@2.0.2
 ## 6.2.6
 ### Fixed
  - Issues where the project access would duplicate anytime that a project deploy to a protected project would occur.
- 
+
 ### Changed
  - Upgrade aws-sdk@2.397.0
 
 ## 6.2.5
 ### Fixed
  - Problems with DocumentDB not working well with complex indexes with array values.
- 
+
 ### Changed
  - Upgraded aws-sdk@2.396.0, twilio@3.28.0
 
@@ -1556,7 +1758,7 @@ eslint@7.17.0, passport-saml@2.0.2
 ## 6.2.2
 ### Fixed
  - The Azure Storage to work with aliased form endpoints.
- 
+
 ### Changed
  - Upgraded formiojs@3.13.6, eslint@5.13.0
 
@@ -1570,7 +1772,7 @@ eslint@7.17.0, passport-saml@2.0.2
  - Possibility to access reCAPTCHA API Endpoint
  - Support import queries being ors
  - Add ability to parse tokens per project.
- 
+
 ### Fixed
  - Removed some 500 error codes from being sent by the server
  - Problem with reporting in Kinesis where the form is unable to be determined.
@@ -1583,7 +1785,7 @@ eslint@7.17.0, passport-saml@2.0.2
 ### Added
  - Ability to limit plans per project for forms, form requests and emails.
  - Portal app is now hosted from root of server.
- 
+
 ### Fixed
  - FOR-1977: Group permissions to allow for index queries into the group controlled records.
 
@@ -1613,7 +1815,7 @@ eslint@7.17.0, passport-saml@2.0.2
  - Upgrade formio@1.37.6 which fixes the following.
    - Fixed issues with Resource permissions where it would only work with a single resource added to a permission type.
    - Changed the install script to say "setup" instead of "install".
- 
+
 ### Changed
  - Upgraded chance@1.0.18, formio@1.37.6, formiojs@3.9.3, minio@7.0.2, aws-sdk@2.373.0, dotenv@6.2.0, ldapauth-fork@4.1.0, resourcejs@1.33.0, twilio@3.25.0, eslint@5.10.0, webpack@4.27.1
 

@@ -12,6 +12,11 @@ module.exports = (app, template, hook) => {
   let form;
 
   describe('Form Revisions', () => {
+    before((done) => {
+      process.env.ADMIN_KEY = process.env.ADMIN_KEY || 'examplekey';
+      done();
+    });
+
     it('Creates a test project and form', done => {
       helper
         .project()
@@ -83,6 +88,51 @@ module.exports = (app, template, hook) => {
           assert(typeof form === 'object');
           done();
         });
+    });
+
+    it('Form with revisions should being created with the admin key', (done) => {
+      const method = 'post';
+      let url = '';
+
+      if (helper.template.project && helper.template.project._id) {
+        url += `/project/${helper.template.project._id}`;
+      }
+
+      url += '/form';
+
+      const data = {
+        title: 'Form with Revisions by Admin',
+        name: 'formRevisionsAdmin',
+        path: 'formRevisionsAdmin',
+        type: 'form',
+        access: [],
+        revisions: 'original',
+        submissionAccess:[],
+        components: [
+          {
+            input: true,
+            tableView: true,
+            inputType: 'text',
+            label: 'fname',
+            key: 'fname',
+            persistent: true,
+            type: 'textfield'
+          },
+        ]
+      };
+
+      request(app)[method](url)
+      .set('x-admin-key', process.env.ADMIN_KEY)
+      .send(data)
+      .expect('Content-Type', /json/)
+      .expect(201)
+      .end((err, res) => {
+        if (err) {
+          return done(err);
+        }
+        helper.template.forms[data.name] = res.body;
+        done();
+      });
     });
 
     it('Sets a form to use revisions', done => {

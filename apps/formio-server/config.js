@@ -127,7 +127,11 @@ config.formio.reservedForms = [
   'tag',
   'upload',
   'config.json',
-  'portal-check'
+  'portal-check',
+  '2fa\/generate',
+  '2fa\/represent',
+  '2fa\/turn-off',
+  '2fa\/turn-on',
 ];
 /* eslint-enable no-useless-escape */
 // If it isn't allowed as a form, it isn't allowed as a project either.
@@ -159,6 +163,8 @@ config.formio.protocol = protocol;
 config.formio.baseUrl = domain + (port !== 80 ? `:${port}` : '');
 config.port = port;
 config.host = host;
+config.sslKey = getConfig('SSL_KEY', false);
+config.sslCert = getConfig('SSL_CERT', false);
 
 config.project = project;
 config.plan = plan;
@@ -176,6 +182,53 @@ config.portalSSOLogout = getConfig('PORTAL_SSO_LOGOUT', '');
 config.verboseHealth = getConfig('VERBOSE_HEALTH');
 config.vpat = Boolean(getConfig('VPAT', false));
 config.sac = Boolean(getConfig('SAC', false));
+config.twoFactorAuthAppName = getConfig('TWO_FACTOR_AUTHENTICATION_APP_NAME', 'Form.io');
+config.licenseServer = getConfig('LICENSE_SERVER', 'https://license.form.io');
+config.formio.defaultEmailSource= getConfig('DEFAULT_EMAIL_SOURCE', 'no-reply@example.com');
+
+config.enableOauthM2M = getConfig('OAUTH_M2M_ENABLED', false);
+
+const getMaxOldSpace = () => {
+  const nodeOptions = getConfig('NODE_OPTIONS', '');
+  const execArgv = process.execArgv || [];
+  const argv = process.argv || [];
+
+  const ENV_NAME = '--max_old_space_size=';
+
+  let space = '';
+  const regexp = /(?<=--max_old_space_size=)\d*/g;
+
+  try {
+    if (nodeOptions && nodeOptions.indexOf(ENV_NAME) !== -1) {
+      space = (nodeOptions.match(regexp) || [])[0];
+    }
+    else if (
+      execArgv
+      && _.isArray(execArgv)
+      && execArgv.some((arg) => arg.indexOf(ENV_NAME) !== -1)
+      ) {
+      const [spaceArg] = execArgv.filter((arg) => arg.indexOf(ENV_NAME) !== -1);
+      space = (spaceArg.match(regexp) || [])[0];
+    }
+    else if (
+      argv
+      && _.isArray(argv)
+      && argv.some((arg) => arg.indexOf(ENV_NAME) !== -1)
+      ) {
+      const [spaceArg] = argv.filter((arg) => arg.indexOf(ENV_NAME) !== -1);
+      space = (spaceArg.match(regexp) || [])[0];
+    }
+    else {
+      space = null;
+    }
+  }
+  // eslint-disable-next-line no-empty
+  catch (error) {}
+
+  return space;
+};
+
+config.formio.maxOldSpace = getMaxOldSpace();
 
 // Payeezy fields
 config.payeezy = {
@@ -298,7 +351,7 @@ sanitized = _.pick(sanitized, debugConfigVars);
 const debugFormioConfigVars = getConfig('DEBUG_CONFIG_FORMIO_VARS', 'domain,schema').split(',') || [];
 sanitized.formio = _.pick(_.clone(config.formio), debugFormioConfigVars);
 
-config.maxBodySize = getConfig('MAX_BODY_SIZE', '16mb');
+config.maxBodySize = getConfig('MAX_BODY_SIZE', '25mb');
 
 // Only output sanitized data.
 debug.config(sanitized);

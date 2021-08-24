@@ -106,23 +106,20 @@ module.exports = function(router, formioServer) {
         req.countQuery = req.countQuery.find({chunk: {$ne: true}});
 
         next();
-      },
-      formio.middleware.tagHandler
+      }
     ],
     afterIndex: [
+      formio.middleware.tagHandler,
       (req, res, next) => {
         // Remove tag contents to speed up index requests.
         if (!req.query.full) {
-          res.resource.item = _.map(res.resource.item, item => {
-            if (item.constructor.name === 'model') {
-              item = item.toObject();
-            }
-            delete item.template;
-            return item;
-          });
+          req.modelQuery.select({template: 0});
+          req.countQuery.select({template: 0});
         }
         next();
       },
+    ],
+    afterIndex: [
       formio.middleware.filterResourcejsResponse(hiddenFields)
     ]
   });

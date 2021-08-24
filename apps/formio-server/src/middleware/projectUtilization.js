@@ -115,6 +115,7 @@ module.exports = (formio) => async (req, res, next) => {
     // Don't block next middleware execution if we have project utilization in cache
     const cachedProjectUtilization = cache.get(projectId);
     if (cachedProjectUtilization) {
+      req.projectLicense = cachedProjectUtilization;
       /* eslint-disable-next-line callback-return */
       next();
     }
@@ -155,6 +156,6 @@ module.exports = (formio) => async (req, res, next) => {
   }
   catch (err) {
     cache.del(projectId);
-    res.status(400).send(err);
+    return next();
   }
 };
