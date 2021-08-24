@@ -454,31 +454,30 @@ module.exports = function(app, template, hook) {
         });
     });
 
-    it('Should allow you to turn off the public configurations.', function(done) {
-      var newSettings = {
-        cors: '*',
-        allowConfig: false,
-        keys: [
-          {
-            name: 'Test Key',
-            key: '123testing123testing'
-          },
-          {
-            name: 'Bad Key',
-            key: '123testing'
-          }
-        ],
-        email: {
-          smtp: {
-            host: 'example.com',
-            auth: {
-              user: 'test',
-              pass: 'test123'
-            }
+    var newSettings = {
+      cors: '*',
+      allowConfig: false,
+      keys: [
+        {
+          name: 'Test Key',
+          key: '123testing123testing'
+        },
+        {
+          name: 'Bad Key',
+          key: '123testing'
+        }
+      ],
+      email: {
+        smtp: {
+          host: 'example.com',
+          auth: {
+            user: 'test',
+            pass: 'test123'
           }
         }
-      };
-
+      }
+    };
+    it('Should allow you to turn off the public configurations.', function(done) {
       request(app)
         .put('/project/' + template.project._id)
         .set('x-jwt-token', template.formio.owner.token)
@@ -557,6 +556,20 @@ module.exports = function(app, template, hook) {
           }
           done();
         });
+    });
+
+    it('Should be able to read project settings with a valid token', (done) => {
+      request(app)
+      .get('/project/' + template.project._id)
+      .set('x-token', '123testing123testing')
+      .expect(200)
+      .end(function(err, res) {
+        if (err) {
+          return done(err);
+        }
+        assert.deepEqual(_.omit(res.body.settings, ['licenseKey']), newSettings);
+        done();
+      });
     });
 
     it('Should not allow you to report without a token', function(done) {
