@@ -4739,7 +4739,36 @@
                       "pull": 0
                     },
                     {
-                      "components": [],
+                      "components": [
+                        {
+                          "label": "Submission Environments",
+                          "mask": false,
+                          "spellcheck": true,
+                          "alwaysEnabled": false,
+                          "tableView": false,
+                          "defaultValue": "0",
+                          "delimiter": false,
+                          "requireDecimal": false,
+                          "inputFormat": "plain",
+                          "validate": {
+                            "unique": false,
+                            "multiple": false
+                          },
+                          "key": "submissionServers",
+                          "type": "number",
+                          "input": true,
+                          "hideOnChildrenHidden": false,
+                          "autofocus": false,
+                          "inputType": "number",
+                          "placeholder": "",
+                          "prefix": "",
+                          "suffix": "",
+                          "protected": false,
+                          "persistent": true,
+                          "hidden": false,
+                          "clearOnHide": true
+                        }
+                      ],
                       "width": 4,
                       "offset": 0,
                       "push": 0,
@@ -4802,7 +4831,7 @@
               "enableRowGroups": false,
               "hideLabel": true,
               "tableView": false,
-              "customDefaultValue": "value = [\n  {\n    name: 'Environment',\n    scope: [\n      'apiServer',\n      'pdfServer',\n      'project',\n      'tenant',\n      'stage',\n      'form',\n      'formRequest',\n      'formManager',\n      'email',\n      'pdf',\n      'pdfDownload',\n      'submissionRequest',\n    ]\n  }\n]",
+              "customDefaultValue": "value = [\n  {\n    name: 'Environment',\n    scope: [\n      'apiServer',\n      'pdfServer',\n      'project',\n      'tenant',\n      'stage',\n      'form',\n      'formRequest',\n      'formManager',\n      'email',\n      'pdf',\n      'pdfDownload',\n      'submissionRequest',\n      'submissionServer'\n    ]\n  }\n]",
               "validate": {
                 "unique": false,
                 "multiple": false
@@ -4891,7 +4920,7 @@
                     "values": [
                       {}
                     ],
-                    "custom": "values = [\n  'apiServer',\n  'pdfServer',\n  'project',\n  'tenant',\n  'stage',\n  'form',\n  'submissionRequest',\n  'formRequest',\n  'pdf',\n  'pdfDownload',\n  'formManager',\n]"
+                    "custom": "values = [\n  'apiServer',\n  'pdfServer',\n  'project',\n  'tenant',\n  'stage',\n  'form',\n  'submissionRequest',\n  'formRequest',\n  'pdf',\n  'pdfDownload',\n  'formManager',\n  'submissionServer'\n]"
                   },
                   "template": "<span>{{ item }}</span>",
                   "selectThreshold": 0.3,
