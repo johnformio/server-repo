@@ -113,6 +113,12 @@ module.exports = function(app) {
             return cb(err);
           }
 
+          if (form && form.name === 'license2' && exporter && exporter.addCustomTransformer) {
+            exporter.addCustomTransformer('user', (value) => {
+              return value.map(item => _.get(item, 'data.email', ''));
+            });
+          }
+
           if (!submissionModel) {
             return cb();
           }
