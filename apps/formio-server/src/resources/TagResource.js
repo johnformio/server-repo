@@ -106,10 +106,10 @@ module.exports = function(router, formioServer) {
         req.countQuery = req.countQuery.find({chunk: {$ne: true}});
 
         next();
-      }
+      },
+      formio.middleware.tagHandler
     ],
     afterIndex: [
-      formio.middleware.tagHandler,
       (req, res, next) => {
         // Remove tag contents to speed up index requests.
         if (!req.query.full) {
@@ -118,8 +118,6 @@ module.exports = function(router, formioServer) {
         }
         next();
       },
-    ],
-    afterIndex: [
       formio.middleware.filterResourcejsResponse(hiddenFields)
     ]
   });
