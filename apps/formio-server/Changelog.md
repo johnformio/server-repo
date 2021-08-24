@@ -34,12 +34,191 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Upgrade portal@7.3.0-rc.3
  - Upgrade formiojs@4.13.0-rc.10
 
+## 7.1.8-rc.1
+### Fixed
+ - Increase max space size
+ - Upgrade formio@2.2.4-rc.1
+ - Upgrade formiojs@4.14.0-rc.18
+
+## 7.1.7
+### Changed
+ - Upgrade formio@2.2.3
+ - Upgrade portal@7.2.5
+
+## 7.1.7-rc.11
+### Changed
+ - Upgrade formiojs@4.14.0-rc.17
+ - Upgrade formio@2.2.3-rc.11
+ - Upgrade portal@7.2.5-rc.8
+
+## 7.1.7-rc.10
+### Fixed
+ - FIO-3441: resolve vulnerabilities
+ - FIO-3259: Close ldap connection to resolve ldap auth crashes.
+
+### Changed
+ - Upgrade formiojs@4.14.0-rc.16
+ - Upgrade formio@2.2.3-rc.10
+ - Upgrade twilio@3.66.1, aws-sdk@2.959.0, javascript-obfuscator@2.18.1, eslint@7.32.0
+
+## 7.1.7-rc.9
+### Changed
+ - Upgrade portal@7.2.5-rc.7
+
+## 7.1.7-rc.8
+### Changed
+ - FIO-3099: Refactored the oAuth M2M token implementation and wrote tests for it
+
+## 7.1.7-rc.7
+### Fixed
+ - FIO-3116: Fixes an issue files inside containers and editgrids weren't attaching to an email.
+ - FIO-1566: add support for global pdf headers and footers
+
+### Changed
+ - Upgrade portal@7.2.5-rc.5
+ - Upgrade formio@2.2.3-rc.9
+ - Upgrade jose@3.14.3, aws-sdk@2.952.0, crypto-js@4.1.1, javascript-obfuscator@2.17.0
+
+## 7.1.7-rc.5
+### Changed
+ - Upgrade portal@7.2.5-rc.4
+ - Upgrade formio@2.2.3-rc.8
+ - Upgrade formiojs@4.14.0-rc.15
+ - Upgrade premium@1.16.4-rc.1
+
+## 7.1.7-rc.4
+### Changed
+ - Upgrade portal@7.2.5-rc.3
+ - Upgrade formio@2.2.3-rc.6
+ - Upgrade formiojs@4.14.0-rc.14
+ - Upgrade formio-workers@1.14.16
+
+### Fixed
+ - Fixing problem where project apis will fail if license is invalid.
+ - FIO-3441: resolve vulnerabilities
+ - FIO-2557: Use standard method of getting the Base URL for a deployment.
+ - FIO-2885: Implements a non-root user for docker container
+ - FIO-3259: Adding tests for proper LDAP login functionality
+ - FIO-3370: Fixed OAuth Register and Login crashes, and also resolved owner issue with remote auth.
+ - FIO-1371: fix issue with failing offline license and jose version update
+
+## 7.1.7-rc.3
+### Changed
+ - Upgrade portal@7.2.5-rc.2
+
+## 7.1.7-rc.2
+### Fixed
+ - Fixed typeo in portal initialization code.
+
+## 7.1.7-rc.1
+### Changed
+ - FIO-3099: Implements oAuth2 Machine to Machine and OAUTH_M2M_ENABLED variable to turn on it. Adds variety for idPath in openId.
+ - Upgrade formio@2.2.3-rc.1
+ - Upgrade portal@7.2.5-rc.1
+
+## 7.1.6-rc.2
+### Fixed
+ - FIO-3223: Fixes an issue with out of memory
+ - Fixes issues with crashes occuring in the error handler.
+ - FIO-2675: Fix wrong host and token fail on pdf submission with image
+
+### Changed
+ - Upgrade formio@2.2.2-rc.2
+ - Upgrade formio-workers@1.14.15
+
+## 7.1.6-rc.1
+### Changed
+ - FIO-3212: Fixing the OpenID access token for Active Directory.
+ - FIO-3081: "The user aborted a request" issue
+ - FIO-2914: Allow custom component validation to work on API Server
+ - FIO-3040: Fixes an issue when wasn't handle the Webhook error and respond instead of spinning forever.
+ - FIO-3095: Fixes an issue with an abusing in-built functionality leading to complete victim account takeover.
+ - Upgrade premium@1.16.3-rc.1
+
+## 7.1.5
+### Changes
+ - No changes. Released 7.1.5-rc.1 as official release.
+
+## 7.1.5-rc.1
+### Fixed
+ - FIO-3006: API | JavaScript heap out of memory
+ - FIO-2989: Fixes an issue when for the oAuth redirect URI as host that trigger conflicts with OpenID
+
+## 7.1.4
+### Changed
+ - Upgrade portal@7.2.3
+ - Upgrade formio@2.2.1
+ - Upgrade premium@1.16.2
+
+## 7.1.4-rc.4
+### Changed
+ - Upgrade portal@7.2.3-rc.4
+
+## 7.1.4-rc.3
+### Changed
+ - Upgrade portal@7.2.3-rc.3
+
+## 7.1.4-rc.2
+### Fixed
+ - Allow the minio port to be set in SSL mode.
+ - FIO-2672: added hook for database update (update all emails to be lower case)
+
+### Changed
+ - Upgrade formiojs@4.14.0-rc.6
+ - Upgrade formio@2.2.1-rc.2
+
+## 7.1.4-rc.1
+### Fixed
+ - FIO-2924: Fixes an issue when the server was crashing while changing a password using a remote. And fixes an issue when got Unauthorized using a server without primary project.
+ - FIO-2846: Fixes an issue when got an error "Cannot read property '_id' of null" and the server was crashing while trying to create a form with revisions using x-admin-key.
+ - FIO-2823: Fixes an issue where a custom mongodb collection on a resource breaks the resource and the submission data cannot be accessed
+
+### Changed
+ - Upgrade formio@2.2.1-rc.1
+
+## 7.1.3
+### Changed
+ - Upgrade portal@7.2.2
+ - Upgrade formiojs@4.13.1
+ - Upgrade premium@1.16.1
+
+## 7.1.3-rc.8
+### Changed
+ - Upgrade portal@7.2.2-rc.7
+ - FIO-2788: Oauth add Callback URL optional field
+
+## 7.1.3-rc.7
+### Changed
+ - Upgrade portal@7.2.2-rc.6
+ - Upgrade premium@1.16.1-rc.5
+
+## 7.1.3-rc.6
+### Changed
+ - Upgrade portal@7.2.2-rc.5
+ - Upgrade formiojs@4.13.1-rc.6
+ - Upgrade premium@1.16.1-rc.4
+
+### Fixed
+ - FIO-2672: creation index field issue fix
+ - FIO-2832: Fixing OpenID Connect to work with non-standard token paths.
+
+## 7.1.3-rc.5
+### Changed
+ - Upgrade portal@7.2.2-rc.4
+ - Upgrade formiojs@4.13.1-rc.6
+
+## 7.1.3-rc.4
+### Changed
+ - Upgrade portal@7.2.2-rc.3
+ - Upgrade formiojs@4.13.1-rc.5
+ - Upgrade premium@1.16.1-rc.2
+
 ## 7.1.3-rc.3
 ### Fixed
  - FIO-2790: Fixing issues with SAML team authentication.
 
 ### Changed
- - Upgrade portal@7.2.2-rc.2 
+ - Upgrade portal@7.2.2-rc.2
 
 ## 7.1.3-rc.2
 ### Fixed
@@ -55,6 +234,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-977: Allow x-token to be used to download pdfs.
  - FIO-2761: Fixes an issue when a user was created by an admin on the freshly deployed portal, he couldn't edit his profile.
  - FIO 2459: Increase timeout for PDF server response
+
+## 7.1.2
+### Changed
+ - Official release of 7.1.2-rc.4
+
+## 7.1.2-rc.4
+### Fixed
+ - FIO-2623, FIO-2605: Fixing anomalies with the x-token project API keys.
 
 ## 7.1.2-rc.3
 ### Changed
@@ -186,7 +373,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## 7.1.0-rc.5
 ### Fixed
  - FIO-1277: Fixing the evaluations to use vm2 to add more security.
- - Upgrade formio@2.1.0-rc.8 
+ - Upgrade formio@2.1.0-rc.8
 
 ## 7.1.0-rc.4
 ### Fixed
@@ -207,18 +394,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FOR-2866: added hook for getting proper mongo collection
  - FIO-1196: Added SQLConector2 support.
  - FIO-841: Implements the Dev License.
+<<<<<<< HEAD
  - Adding expiring action items.
  - FIO-889 and FIO-1368: Implements the CSP, Strict-Transport-Security and Referrer Policy. Implements the portal-check endpoint for CORS policy.  
+=======
+>>>>>>> origin/7.1.x
 
 ### Fixed
  - FIO-1246: fix server fail after submitting an editted password field value
  - FIO-1282: Fixes an issue when the server was crashing if doesn't reach manager index.html
  - FOR-2709: Makes changing 'tags', 'controller', 'properties' and 'settings' form's properties cause creating a new revision if allowed
- - FIO-1138: Fixed possibility to update teams in protected mode. 
+ - FIO-1138: Fixed possibility to update teams in protected mode.
  - FIO-128: Fix saving custom properties in form revision.
  - FOR-2763: Changed the default template for creating new projects that include the only Administrator for Read All
  - FIO-1026: When creating a new stage or tenant, allow selecting which stage to copy from (instead of only live).
- 
+
 ### Changed
  - FIO-920: Adding email support for Teams.
 
@@ -238,7 +428,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Upgrade formiojs@4.12.7-rc.2
  - Upgrade portal@7.2.0-rc.2
  - Upgrade premium@1.15.4-rc.3
- 
+
 ## 7.1.0-rc.1
 ### Fixed
  - FIO-1000: Fix an error for import with empty template

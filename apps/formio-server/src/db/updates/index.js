@@ -1,4 +1,3 @@
-
 module.exports = {
   '0.0.0': require('./0.0.0.js'),
   '3.0.1-rc.1': require('./3.0.1-rc.1.js'),

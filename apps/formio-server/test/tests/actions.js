@@ -264,8 +264,6 @@ module.exports = (app, template, hook) => {
             done();
           });
       });
-
-
     });
 
     describe('LDAP Login', () => {

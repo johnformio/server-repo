@@ -187,6 +187,7 @@ config.licenseServer = getConfig('LICENSE_SERVER', 'https://license.form.io');
 config.formio.defaultEmailSource= getConfig('DEFAULT_EMAIL_SOURCE', 'no-reply@example.com');
 
 config.enableOauthM2M = getConfig('OAUTH_M2M_ENABLED', false);
+config.formio.hosted = Boolean(getConfig('FORMIO_HOSTED'), false);
 
 const getMaxOldSpace = () => {
   const nodeOptions = getConfig('NODE_OPTIONS', '');
@@ -229,6 +230,8 @@ const getMaxOldSpace = () => {
 };
 
 config.formio.maxOldSpace = getMaxOldSpace();
+
+config.enableOauthM2M = getConfig('OAUTH_M2M_ENABLED', false);
 
 // Payeezy fields
 config.payeezy = {
