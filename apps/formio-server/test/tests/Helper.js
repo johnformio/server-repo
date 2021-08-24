@@ -97,6 +97,26 @@ module.exports = (app, Helper) => {
       });
   };
 
+  Helper.prototype.getFormRevisionByQueryParam = function(form, queryStr, done) {
+    let url = '';
+    if (this.template.project && this.template.project._id) {
+      url += '/project/' + this.template.project._id;
+    }
+    url += '/form/' + form._id + '?' + queryStr;
+
+    request(app)
+    .get(url)
+    .set('x-jwt-token', this.owner.token)
+    .expect('Content-Type', /json/)
+    .expect(200)
+    .end((err, res)=>{
+      if (err) {
+        return done(err, res);
+      }
+     done(null, res.body);
+    })
+  }
+
   Helper.prototype.getFormDraft = function(form, done) {
     let url = '';
     if (this.template.project && this.template.project._id) {
