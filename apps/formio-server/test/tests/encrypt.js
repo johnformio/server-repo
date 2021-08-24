@@ -5,7 +5,7 @@ const request = require('supertest');
 const assert = require('assert');
 const async = require('async');
 const _each = require('lodash/each');
-const ObjectID = require('mongodb').ObjectID;
+const ObjectID = require('mongodb').ObjectId;
 
 module.exports = function(app, template, hook) {
   let Helper = require('formio/test/helper')(app);

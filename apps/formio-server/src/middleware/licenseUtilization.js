@@ -4,7 +4,13 @@
 /* eslint-disable max-depth */
 
 const _ = require('lodash');
-const {utilization, cachedUtilization, getProjectContext, getLicenseKey} = require('../util/utilization');
+const {
+  utilization,
+  cachedUtilization,
+  getProjectContext,
+  getLicenseKey,
+  checkLastUtilizationTime
+} = require('../util/utilization');
 const paginate = require('node-paginate-anything');
 
 function middleware(app) {
@@ -415,10 +421,13 @@ function middleware(app) {
           throw new Error(`License utilization logic UNDEFINED for ${endpoint}`);
           // break
       }
-
       return next();
     }
     catch (e) {
+      // check last successful utilization time
+      if (checkLastUtilizationTime(req)) {
+        return next();
+      }
       return res.status(e.statusCode || 400).send(
         e.name === 'StatusCodeError' ? `[${e.statusCode}] ${e.error}` : e.message
       );

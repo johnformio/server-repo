@@ -1,4 +1,3 @@
-
 module.exports = {
   '0.0.0': require('./0.0.0.js'),
   '3.0.1-rc.1': require('./3.0.1-rc.1.js'),
@@ -24,5 +23,6 @@ module.exports = {
   '3.3.7': (db, config, tools, done) => {done()},
   '3.3.8': require('./3.3.8'),
   '3.3.9': require('./3.3.9'),
-  '3.3.10': require('./3.3.10')
+  '3.3.10': require('./3.3.10'),
+  '3.3.11': require('./3.3.11')
 };

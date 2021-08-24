@@ -6,7 +6,7 @@ module.exports = class Team extends Plan {
     return {
       ...super.data,
       forms: 50,
-      emails: 1000,
+      emails: 250,
       formRequests: 250000,
       submissionRequests: 250000,
       plan: 'team',

@@ -1,11 +1,13 @@
 'use strict';
 const fetch = require('formio/src/util/fetch');
 const _ = require('lodash');
+const {match} = require("path-to-regexp");
 const licenseServer = process.env.LICENSE_SERVER || 'https://license.form.io';
 const NodeCache = require('node-cache');
 const plans = require('../plans/plans');
 
 const cache = new NodeCache();
+let lastUtilizationTime = 0;
 
 // Cache response for 3 hours.
 const CACHE_TIME = process.env.CACHE_TIME || 3 * 60 * 60;
@@ -66,7 +68,7 @@ const getProjectContext = (req, isNew = false) => {
 
 async function utilization(body, action = '', qs = {terms: 1}) {
   const hosted = process.env.FORMIO_HOSTED;
-  const onPremiseScopes = ['apiServer', 'pdfServer', 'project', 'tenant', 'stage', 'formManager', 'accessibility'];
+  const onPremiseScopes = ['apiServer', 'pdfServer', 'project', 'tenant', 'stage', 'formManager', 'accessibility', 'submissionServer'];
 
   // If on premise and not scoped for on premise, skip check.
   if (!hosted && !onPremiseScopes.includes(body.type)) {
@@ -105,6 +107,8 @@ async function utilization(body, action = '', qs = {terms: 1}) {
   if (!hosted && utilization.hash !== md5(base64(body))) {
     throw new Error('Invalid response');
   }
+
+  lastUtilizationTime = Date.now();
 
   return utilization;
 }
@@ -225,6 +229,23 @@ async function clearLicenseCache(licenseId) {
     .then((response) => response.ok ? response.json() : null);
 }
 
+function checkLastUtilizationTime(req) {
+  const hosted = process.env.FORMIO_HOSTED;
+  if (!hosted) {
+    // allow all requests for 12 hours without a license
+    if (lastUtilizationTime + (1 * 60 * 1000) > Date.now()) {
+      return true;
+    }
+    // allow only read data and make submissions after 12 hours without a license
+    else if (req.method === 'GET' ||
+      ['/project/:projectId/form/:formId/submission', '/project/:projectId/form/:formId/submission/:submissionId']
+        .some((route) => match(route)(req.path))) {
+      return true;
+    }
+  }
+  return false;
+}
+
 module.exports = {
   utilization,
   cachedUtilization,
@@ -233,4 +254,5 @@ module.exports = {
   getLicenseKey,
   getLicense,
   setLicensePlan,
+  checkLastUtilizationTime
 };

@@ -82,6 +82,8 @@ module.exports = function(app, template, hook) {
     });
   };
 
+  let formId;
+
   describe('Projects', function() {
     var tempProject = {
       title: chance.word(),
@@ -95,6 +97,7 @@ module.exports = function(app, template, hook) {
       var mapActions = function(forms, cb) {
         for (var a = 0; a < forms.length || 0; a++) {
           let form = forms[a];
+          formId = form._id;
 
           request(app)
             .get('/project/' + template.project._id + '/form/' + form._id + '/action?limit=9999')
@@ -451,31 +454,30 @@ module.exports = function(app, template, hook) {
         });
     });
 
-    it('Should allow you to turn off the public configurations.', function(done) {
-      var newSettings = {
-        cors: '*',
-        allowConfig: false,
-        keys: [
-          {
-            name: 'Test Key',
-            key: '123testing123testing'
-          },
-          {
-            name: 'Bad Key',
-            key: '123testing'
-          }
-        ],
-        email: {
-          smtp: {
-            host: 'example.com',
-            auth: {
-              user: 'test',
-              pass: 'test123'
-            }
+    var newSettings = {
+      cors: '*',
+      allowConfig: false,
+      keys: [
+        {
+          name: 'Test Key',
+          key: '123testing123testing'
+        },
+        {
+          name: 'Bad Key',
+          key: '123testing'
+        }
+      ],
+      email: {
+        smtp: {
+          host: 'example.com',
+          auth: {
+            user: 'test',
+            pass: 'test123'
           }
         }
-      };
-
+      }
+    };
+    it('Should allow you to turn off the public configurations.', function(done) {
       request(app)
         .put('/project/' + template.project._id)
         .set('x-jwt-token', template.formio.owner.token)
@@ -576,6 +578,20 @@ module.exports = function(app, template, hook) {
           }
           done();
         });
+    });
+
+    it('Should be able to read project settings with a valid token', (done) => {
+      request(app)
+      .get('/project/' + template.project._id)
+      .set('x-token', '123testing123testing')
+      .expect(200)
+      .end(function(err, res) {
+        if (err) {
+          return done(err);
+        }
+        assert.deepEqual(_.omit(res.body.settings, ['licenseKey']), newSettings);
+        done();
+      });
     });
 
     it('Should not allow you to report without a token', function(done) {
@@ -1981,6 +1997,22 @@ module.exports = function(app, template, hook) {
           .end(done);
       });
 
+      it('A Project on the Basic plan will not be able to use the default email provider', function(done){
+        request(app)
+          .get('/project/' + template.project._id + '/form/' + formId + '/actions')
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res){
+            if (err) {
+             return done(err);
+            }
+            const emailAction = _.findIndex(res.body, action=> action.name === 'email')
+            assert.equal(emailAction, -1);
+            done();
+          })
+      })
+
       after(function(done) {
         deleteProjects(tempProjects, done);
       });
@@ -2488,6 +2520,22 @@ module.exports = function(app, template, hook) {
           .expect(402)
           .end(done);
       });
+
+      it('A Project on the Independent plan will be able to use the default email provider', function(done){
+        request(app)
+          .get('/project/' + template.project._id + '/form/' + formId + '/actions')
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res){
+            if (err) {
+             return done(err);
+            }
+            const emailAction = _.findIndex(res.body, action=> action.name === 'email')
+            assert.notEqual(emailAction, -1);
+            done();
+          })
+      })
     });
 
     describe('Team Plan', function() {
@@ -2789,7 +2837,22 @@ module.exports = function(app, template, hook) {
           .expect(402)
           .end(done);
       });
-
+      
+      it('A Project on the Team plan will be able to use the default email provider', function(done){
+        request(app)
+          .get('/project/' + template.project._id + '/form/' + formId + '/actions')
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res){
+            if (err) {
+             return done(err);
+            }
+            const emailAction = _.findIndex(res.body, action=> action.name === 'email')
+            assert.notEqual(emailAction, -1);
+            done();
+          })
+      })
     });
 
     describe('Commercial Plan', function() {
@@ -3091,6 +3154,23 @@ module.exports = function(app, template, hook) {
           .expect(201)
           .end(done);
       });
+
+      it('A Project on the Commercial plan will be able to use the default email provider', function(done){
+        request(app)
+          .get('/project/' + template.project._id + '/form/' + formId + '/actions')
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res){
+            if (err) {
+             return done(err);
+            }
+            const emailAction = _.findIndex(res.body, action=> action.name === 'email')
+            assert.notEqual(emailAction, -1);
+            done();
+          })
+
+      })
     });
 
     describe('Upgrading Plans', function() {

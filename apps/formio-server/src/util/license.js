@@ -145,6 +145,11 @@ IzaxfXn16qCWfwKGE+VXkSM7OAS5iunoyHr5QYL9bUh2+vKshM/pnhvoMfDXnIZR
         console.log('License is expired');
         process.exit();
       }
+      const numberOfProjects = await app.formio.formio.resources.project.model.estimatedDocumentCount({deleted: {$ne: null}});
+      if (payload.terms.projectsNumberLimit && numberOfProjects-1>payload.terms.projectsNumberLimit) {
+        console.log(`Exceeded the allowed number of projects. Max number of your projects is ${payload.terms.projectsNumberLimit}`);
+        process.exit();
+      }
       console.log('License key validated remotely');
       payload.remote = true;
       return payload;
@@ -178,6 +183,7 @@ async function submitUtilizationRequest(
     if (result && result.devLicense) {
       const regexUri = /^mongodb:\/\/((localhost)|(mongo)):\d+\/[a-z0-9_-]+/i;
       const regexReplica = /replicaSet/gi;
+      const regexTslSsl = /((tls)|(ssl))=true/gi;
 
       if (!regexUri.test(config.formio.mongo)) {
         console.log('Invalid MongoDB URI. With Development License you can use only a local database.');
@@ -186,6 +192,11 @@ async function submitUtilizationRequest(
 
       if (regexReplica.test(config.formio.mongo)) {
         console.log('Invalid MongoDB URI. With Development License you can not use Replica Sets.');
+        process.exit();
+      }
+
+      if (regexTslSsl.test(config.formio.mongo)) {
+        console.log('Invalid MongoDB URI. With Development License you can not use SSL or TLS connection.');
         process.exit();
       }
     }

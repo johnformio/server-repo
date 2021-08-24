@@ -8,7 +8,7 @@ module.exports = class Independent extends Plan {
       forms: 25,
       formRequests: 10000,
       submissionRequests: 10000,
-      emails: 1000,
+      emails: 100,
       plan: 'independent',
     };
   }

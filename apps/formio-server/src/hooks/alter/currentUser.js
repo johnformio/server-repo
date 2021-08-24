@@ -5,6 +5,14 @@ const fetch = require('formio/src/util/fetch');
 
 module.exports = (app) => (middleware) => {
   middleware.unshift((req, res, next) => {
+    if (!app.formio.formio.twoFa.is2FAuthenticated(req)) {
+      return res.status(200).send({
+        isTwoFactorAuthenticationRequired: true,
+      });
+    }
+    next();
+  });
+  middleware.unshift((req, res, next) => {
     // If this is an external token, return the user object directly.
     if (req.token && req.token.external) {
       if (!res.token || !req.token) {

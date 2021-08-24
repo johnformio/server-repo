@@ -1,5 +1,6 @@
 'use strict';
 
+const {Formio} = require('formiojs');
 const assert = require('assert');
 const request = require('supertest');
 
@@ -93,6 +94,105 @@ module.exports = (app, template, hook) => {
 
           assert.equal(res.body.name, 'ValidationError');
 
+          done();
+        });
+    });
+  });
+
+  describe('Validate custom component', () => {
+    it('Create custom component', (done)=>{
+      const TextField = Formio.Components.components.textfield;
+
+      class TestComponent extends TextField {
+        static schema(...extend) {
+          return TextField.schema({
+            type: 'testcomponent',
+            label: 'TestComponent',
+            key: 'testComponent'
+          }, ...extend);
+        }
+
+        constructor(component, options, data) {
+          super(component, options, data);
+        }
+
+        static get builderInfo() {
+          return {
+            title: 'Test Component',
+            icon: 'hashtag',
+            group: 'basic',
+            weight: 30,
+            schema: TestComponent.schema()
+          };
+        }
+
+        checkComponentValidity(data, dirty, row, options = {}) {
+          return this.validationValue !== 'blob';
+        }
+      }
+
+      Formio.use({
+        components: {
+          testcomponent: TestComponent
+        }
+      });
+      done();
+    });
+
+    it('Creates a form containing custom component', done => {
+      helper
+        .project()
+        .plan('trial')
+        .form('customComponentValidate', [
+          {
+            "input": true,
+            "key": "testComponent",
+            "tableView": false,
+            "label": "TestComponent",
+            "type": "testcomponent"
+          },
+        ])
+        .execute(() => {
+          validateUrl = `/project/${helper.template.project._id}/form/${helper.template.forms.customComponentValidate._id}/submission`;
+          done();
+        });
+    });
+
+    it('Should validate a custom component submission', (done) => {
+      request(app)
+        .post(validateUrl)
+        .set('x-jwt-token', helper.owner.token)
+        .send({
+          data: {
+            testComponent: 'notBlob'
+          }
+        })
+        .expect('Content-Type', /json/)
+        .expect(201)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+          assert.equal(res.body.data.testComponent, 'notBlob');
+          done();
+        });
+    });
+
+    it('Should return validation error', (done) => {
+      request(app)
+        .post(validateUrl)
+        .set('x-jwt-token', helper.owner.token)
+        .send({
+          data: {
+            testComponent: 'blob'
+          }
+        })
+        .expect('Content-Type', /json/)
+        .expect(400)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
           done();
         });
     });

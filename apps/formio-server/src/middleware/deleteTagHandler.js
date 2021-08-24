@@ -1,5 +1,6 @@
 'use strict';
 
+const Q = require('q');
 const debug = require('debug')('formio:middleware:deleteTagHandler');
 
 /**
@@ -26,13 +27,26 @@ module.exports = function(formio, formioServer) {
         return next();
       }
 
-      tag.deleted = Date.now();
-      tag.markModified('deleted');
-      tag.save(err => {
+      formioServer.formio.resources.tag.model.find({project: tag.project, tag: tag.tag}, function(err, tagChunks) {
         if (err) {
-          return next(err);
+          debug(err);
+          return next(err.message || err);
         }
-        return res.sendStatus(200);
+
+        const updatedChunks = tagChunks.map((tag)=>{
+          tag.deleted = Date.now();
+          tag.markModified('deleted');
+          return tag.save();
+        });
+
+        Q.all(updatedChunks)
+        .then(()=>{
+          return res.sendStatus(200);
+        })
+        .catch(err=>{
+          debug(err);
+          return next(err.message || err);
+        });
       });
     });
   };

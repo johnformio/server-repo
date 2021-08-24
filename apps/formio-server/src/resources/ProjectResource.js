@@ -43,7 +43,7 @@ module.exports = (router, formioServer) => {
 
   const projectSettings = (req, res, next) => {
     // Allow admin key
-    if (req.adminKey) {
+    if (req.adminKey || req.isAdmin) {
       decryptSettings(res);
       formioServer.formio.audit('PROJECT_SETTINGS', req);
       return next();
@@ -76,6 +76,10 @@ module.exports = (router, formioServer) => {
           if (_.intersection(writeAccess, roles).length !== 0) {
             role = 'write';
           }
+
+          if (req.method === 'GET') {
+            _.set(res, 'resource.item.addConfigToForms', _.get(project,'settings.addConfigToForms', false));
+          }
         }
         else {
           debug(err);
@@ -101,6 +105,10 @@ module.exports = (router, formioServer) => {
     else {
       if (req.method === 'PUT' || req.method === 'POST') {
         req.body = _.omit(req.body, 'settings');
+      }
+
+      if (req.method === 'GET') {
+        _.set(res, 'resource.item.addConfigToForms', _.get(res.req,'currentProject.settings.addConfigToForms', false));
       }
 
       formio.middleware.filterResourcejsResponse([

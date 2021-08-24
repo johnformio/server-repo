@@ -21,10 +21,14 @@ module.exports = function(router) {
             message: 'The tag must be unique.',
             validator(value) {
               return new Promise((resolve) => {
+                if (this.chunk) {
+                  return resolve(true);
+                }
                 const search = {
                   project: this.project,
                   tag: value,
-                  deleted: {$eq: null}
+                  deleted: {$eq: null},
+                  chunk: {$ne: true}
                 };
 
                 // Ignore the id if this is an update.
@@ -69,7 +73,10 @@ module.exports = function(router) {
       deleted: {
         type: Number,
         default: null
-      }
+      },
+      chunk: {
+        type: Boolean
+      },
     })
   });
   /* eslint-enable new-cap */
