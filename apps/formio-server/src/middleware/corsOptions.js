@@ -26,8 +26,16 @@ module.exports = function(router) {
     const fail = {
       origin: 'https://form.io'
     };
+    const dev = {
+      origin: [/http:\/\/localhost:/, /http:\/\/\w+.localhost:/]
+    };
 
-    // Disallow cors if they are attempting to use a token as querystring.
+     // When using a development license, restrict CORS to only allow "localhost".
+    if (_.get(router, 'license.devLicense', false)) {
+      return callback(null, dev);
+    }
+
+     // Disallow cors if they are attempting to use a token as querystring.
     if (!req.header('Origin') || req.header('Origin') === 'null') {
       return callback(null, fail);
     }
