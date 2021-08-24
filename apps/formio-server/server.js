@@ -165,6 +165,7 @@ module.exports = function(options) {
   debug.startup('Attaching middleware: OAuth Providers');
   app.formio.formio.oauth = require('./src/oauth/oauth')(app.formio.formio);
 
+  app.formio.formio.twoFa = require('./src/authentication/2FA')(app.formio);
   // Establish our url alias middleware.
   debug.startup('Attaching middleware: Alias Handler');
   app.use(require('./src/middleware/alias')(app.formio.formio));
@@ -293,7 +294,8 @@ module.exports = function(options) {
   app.post('/project/:projectId/upload', uploadPDF);
 
   // Adding google analytics to our api.
-  if (config.gaTid) {
+  // Does not apply if deployed
+  if (config.gaTid && process.env.FORMIO_HOSTED) {
     debug.startup('Attaching middleware: Google Analytics');
     var ua = require('universal-analytics');
     app.use(function(req, res, next) {
