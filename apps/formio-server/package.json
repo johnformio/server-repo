@@ -23,7 +23,7 @@
   "main": "./main.js",
   "version": "7.2.0-rc.2",
   "schema": "3.3.11",
-  "portalVersion": "7.3.0-rc.3",
+  "portalVersion": "7.3.0-rc.1",
   "dependencies": {
     "@formio/premium": "^1.17.0-rc.13",
     "@types/qrcode": "^1.4.1",
