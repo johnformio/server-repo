@@ -267,6 +267,9 @@ module.exports = (app, template, hook) => {
     });
 
     describe('LDAP Login', () => {
+      if (docker || customer) {
+        return;
+      }
       const helper2 = new template.Helper(template.formio.owner);
       let project2;
       it('Create an ldap test project', (done) => {
