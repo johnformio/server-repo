@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.2.0-rc.4
+### Changed
+ - Upgrade dependencies.
+
 ## 7.2.0-rc.3
 ### Fixed
  - FIO-1528: change default 'from' email address domain to use example in the deployment environment variable
