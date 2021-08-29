@@ -331,7 +331,6 @@ module.exports = function(formioServer) {
             debug.report('final pipeline', stages);
             model.aggregate(stages)
               .cursor()
-              .exec()
               .pipe(through(function(doc) {
                 if (doc && doc.form && doc.data) {
                   const formId = doc.form.toString();

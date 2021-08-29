@@ -74,7 +74,7 @@ module.exports = function(formio) {
         const licenseKey = getLicenseKey(req);
         await setLicensePlan(formio, licenseKey, req.body.plan, limits, addScopes);
 
-        return await formio.resources.project.model.update({
+        return await formio.resources.project.model.updateOne({
           _id: formio.util.idToBson(req.projectId)
         }, {
           plan: req.body.plan,
@@ -82,7 +82,7 @@ module.exports = function(formio) {
         });
       })
       .then(function(rawResponse) {
-        if (rawResponse.ok) {
+        if (rawResponse.modifiedCount) {
           return formio.payment.getUpgradeHistoryFormId(req.userProject._id);
         }
 
