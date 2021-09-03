@@ -11,6 +11,28 @@ module.exports = (formioServer) => {
   const encrypt = require('./encrypt')(formioServer);
   Promise.promisifyAll(formio.cache, {context: formio.cache});
   return async (req, project, form, submission) => {
+    // Download PDF from SignRequest
+    if (project.settings.signrequest && submission.data.signrequest) {
+      const {apiKey, apiUrl} = project.settings.signrequest;
+      const {document} = submission.data.signrequest;
+      const url = `${apiUrl}/api/v1/documents/${document.uuid}/`;
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          authorization: `Token ${apiKey}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        return fetch(data.pdf);
+      }
+
+      return Promise.resolve(response);
+    }
+
     // Swap in form components from earlier revision, if applicable
     if (form.revisions === 'original' && submission._fvid !== form._vid) {
       const result = await Promise.promisify(formio.resources.formrevision.model.findOne, {
