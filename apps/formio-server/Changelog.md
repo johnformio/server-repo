@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.2.0-rc.5
+### Changed
+ - Reverted portal back to 7.2.6.
+ - Upgrade chance@1.1.8, jose@3.15.5, mailgun.js@3.5.8, webpack@5.51.2, mocha@9.1.1, aws-sdk@2.982.0, googleapis@85.0.0
+
+### Added
+ - FIO-2860 SignRequest Integration
+
 ## 7.2.0-rc.4
 ### Changed
  - Upgrade dependencies.
