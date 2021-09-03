@@ -142,8 +142,7 @@ module.exports = function(app) {
           'googlesheet',
           'ldap',
           'sqlconnector',
-          'twofalogin',
-          'twofarecoverylogin',
+          'signrequest'
         ];
         if (action.title && action.name && !action.premium && premium.includes(action.name)) {
           action.title += ' (Premium)';
@@ -207,7 +206,7 @@ module.exports = function(app) {
           return true;
         }
         const premium = [
-          'webhook', 'oauth', 'googlesheet', 'ldap', 'twofalogin', 'twofarecoverylogin'
+          'webhook', 'oauth', 'googlesheet', 'ldap', 'signrequest', 'twofalogin', 'twofarecoverylogin'
         ];
 
         // If the action does not have a name, or is not flagged as being premium, ignore it.
