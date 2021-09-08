@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.3.0-rc.1
+### Changed
+ - Using Next portal.
+
 ## 7.2.0-rc.5
 ### Changed
  - Reverted portal back to 7.2.6.
