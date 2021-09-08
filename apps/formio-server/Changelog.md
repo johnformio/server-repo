@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 7.3.0-rc.3
+### Fixed
+ - Portal config
+
 ## 7.3.0-rc.2
 ### Changed
  - Upgrade formio@2.3.0-rc.6
@@ -30,7 +34,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-2652 livestage => stage
  - FIO-1497: Fixes an issue when stages were loaded with disabled utilization and were limited by 10.
  - FIO-1541: added token swap automation testing
- - FIO-1565: Server | Form Manager | Revisions | Making changes to a Form with Revisions enabled the user is displayed as "anonymous". Want to show email of the user from FMG that made the change. 
+ - FIO-1565: Server | Form Manager | Revisions | Making changes to a Form with Revisions enabled the user is displayed as "anonymous". Want to show email of the user from FMG that made the change.
  - FIO-1536: Allow endpoint on API server to provide submission JSON to generate PDF
  - FIO-1439: increased max body size
  - FIO-1365: Fixes Authoring stage issues for master
@@ -40,14 +44,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-3006: API | JavaScript heap out of memory
  - FIO-2989: Fixes an issue when got an 400 error if a form has more then one oAuth actions.
  - FIO-3369: Removed the submissionCollection hook which was messing up submission collection
- - FIO-1377: limiting the number of projects on the api server for an offline license 
+ - FIO-1377: limiting the number of projects on the api server for an offline license
  - FIO-922: Google Analytics doesn't apply for deployed
  - FIO-1442: Fixes an issue when export license file from new license resource it didn't export the license users.
  - FIO-2563: Role Assignment Action not working
  - Fixed an issue where project config is not available in builder mode when the user is not an admin or project owner…
  - FOR-3302: Allow project settings to be read with an API Key.
  - CRM actions fix 7.x
- - Fixing the CSP settings to use the correct domains. 
+ - Fixing the CSP settings to use the correct domains.
  - FIO-2921: Ensuring that a misconnection with the license server allows both the PDF server and API Server to continue to function
  - FIO-3435: form definition downloading according query parameter
  - FIO-885: database error handling
@@ -55,10 +59,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FOR:-2852: Implements a restriction for TLS/SSL to DB connection for the dev license
  - FIO-3624: fixed problem on sending get request to /token endpoint using x-token header
  - fixed remote token issue
- - FIO-3644: Fixed issue where binding to port 80 gives error. 
+ - FIO-3644: Fixed issue where binding to port 80 gives error.
 
 ### Added
- - FIO-1398: Implements Submission Server Licensing 
+ - FIO-1398: Implements Submission Server Licensing
  - FIO-1038: limiting default email usage provider
  - FIO-3555, FIO-1538: Implements Two-Factor Authentication
  - FIO-3131: Implements Google Drive as a storage
@@ -440,7 +444,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-841: Implements the Dev License.
 <<<<<<< HEAD
  - Adding expiring action items.
- - FIO-889 and FIO-1368: Implements the CSP, Strict-Transport-Security and Referrer Policy. Implements the portal-check endpoint for CORS policy.  
+ - FIO-889 and FIO-1368: Implements the CSP, Strict-Transport-Security and Referrer Policy. Implements the portal-check endpoint for CORS policy.
 =======
 >>>>>>> origin/7.1.x
 
