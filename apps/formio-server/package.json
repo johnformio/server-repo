@@ -21,9 +21,9 @@
   },
   "cache": "1550086650",
   "main": "./main.js",
-  "version": "7.3.0-rc.3",
+  "version": "7.3.0-rc.4",
   "schema": "3.3.10",
-  "portalVersion": "8.0.0-alpha.23",
+  "portalVersion": "8.0.0-alpha.24",
   "dependencies": {
     "@formio/premium": "^1.17.0-rc.15",
     "@types/qrcode": "^1.4.1",
