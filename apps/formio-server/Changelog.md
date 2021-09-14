@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+### Changed
+ - Upgrade aws-sdk@2.988.0, passport-saml-metadata@2.5.0
+
 ## 7.3.0-rc.6
 ### Upgrade
  - Upgrade portal@8.0.0-alpha.26
