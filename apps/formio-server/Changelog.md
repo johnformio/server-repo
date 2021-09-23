@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## Unreleased
 ### Changed
  - Upgrade aws-sdk@2.988.0, passport-saml-metadata@2.5.0
+ - FIO-3678: specifying path to email property of uset object open
 
 ## 7.3.0-rc.6
 ### Upgrade
