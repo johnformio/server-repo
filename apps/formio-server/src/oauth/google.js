@@ -120,6 +120,10 @@ module.exports = function(formio) {
       return Promise.resolve(user.id);
     },
 
+    getUserEmail(user, req) {
+      return Promise.resolve(user.email);
+    },
+
     // Google tokens have no expiration date. If it is invalidated it means they have disabled the app.
     refreshTokens(req, res, user, next) {
       return Q.reject(`Token has been invalidated, please reauthenticate with ${this.title}.`)

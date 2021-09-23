@@ -345,6 +345,7 @@ module.exports = router => {
       ])
         .then(async function(results) {
           userInfo = results[0];
+          userInfo.email = await provider.getUserEmail(userInfo, req);
           userId = await provider.getUserId(userInfo, req);
           resource = results[1];
           return auth.authenticateOAuth(resource, provider.name, userId, req);
@@ -680,6 +681,7 @@ module.exports = router => {
                     });
 
                     const userId = await provider.getUserId(data, req);
+                    data.email = await provider.getUserEmail(data, req);
                     const user = {
                       _id: formioUtil.toMongoId(userId),
                       project: req.currentProject._id.toString(),

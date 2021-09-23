@@ -142,6 +142,10 @@ module.exports = function(formio) {
       return Promise.resolve(user.id);
     },
 
+    getUserEmail(user, req) {
+      return Promise.resolve(user.email);
+    },
+
     // This should never get called, since GitHub tokens don't expire
     // Returns a promise, or you can provide the next callback arg
     refreshTokens(req, res, user, next) {

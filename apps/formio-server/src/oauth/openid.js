@@ -4,6 +4,7 @@ const Q = require('q');
 const _ = require('lodash');
 const URL = require('url').URL;
 const {AuthorizationCode} = require('simple-oauth2');
+const debug = require('debug')('formio:openid');
 
 const fetch = require('formio/src/util/fetch');
 
@@ -66,8 +67,9 @@ module.exports = (formio) => {
 
           return provider.getToken({
             code,
-            redirect_uri: redirectURI,
+            redirect_uri: redirectURI
           }).then(accessToken => accessToken.token);
+
           /* eslint-enable camelcase */
         })
         .then((token) => {
@@ -130,7 +132,9 @@ module.exports = (formio) => {
         idPath = _.get(settings, 'idPath');
       }
       // eslint-disable-next-line no-empty
-      catch (error) {}
+      catch (error) {
+        debug(error);
+      }
 
       let id = null;
 
@@ -139,6 +143,26 @@ module.exports = (formio) => {
       }
 
       return id || user._id || user.sub;
+    },
+
+    async getUserEmail(user, req) {
+      let emailPath = null;
+
+      try {
+        const settings = await  oauthUtil.settings(req, this.name) || {};
+        emailPath = _.get(settings, 'emailPath');
+      }
+      catch (error) {
+        debug(error);
+      }
+
+      let email = null;
+
+      if (emailPath) {
+        email = _.get(user, emailPath);
+      }
+
+      return email || user.email;
     },
 
     // OpenID tokens have no expiration date. If it is invalidated it means they have disabled the app.
