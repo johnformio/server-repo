@@ -26,6 +26,7 @@ module.exports = function(router) {
       'blob:',
       'data:',
       '*.form.io',
+      'pro.formview.io',
       host,
       `*.${host}`
     ];
