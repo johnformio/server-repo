@@ -10,6 +10,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Upgrade aws-sdk@2.988.0, passport-saml-metadata@2.5.0
  - FIO-3678: specifying path to email property of uset object open
 
+### Added
+ - Enable 2FA into the server.
+
+### Fixed
+ - FIO-3945: fixed adding teams to project with stages
+ - FIO-3775: Fixed deleting stage connected to on-premise environment issue
+ - FIO-3953: displaying custom logo issue fix
+ - FIO-3841: expanded set of submissions fields for interpolating into web hook URL
+ - FIO-3971: Fixed XSS issues with SAML callback
+ - FIO-3914 minify email when o auth and saml login
+ - FIO-3893 Fixes an issue with SQL Connector crash
+ - FIO-3952: PDF icon does not load form pro.formview.io
+
 ## 7.3.0-rc.6
 ### Upgrade
  - Upgrade portal@8.0.0-alpha.26
