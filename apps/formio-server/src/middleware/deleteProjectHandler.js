@@ -41,7 +41,7 @@ module.exports = function(formio) {
 
       if (
         (formio.util.idToString(req.user._id) === formio.util.idToString(project.owner)) ||
-        (req.remotePermission === 'team_admin')
+        (req.remotePermission === 'team_admin') || (req.remotePermission === 'owner')
       ) {
         return deleteProject(req, res, next);
       }

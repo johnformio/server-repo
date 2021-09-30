@@ -10,10 +10,11 @@ module.exports = function(formio) {
     }
     access.roles = _.map(access.roles, id => id.toString());
 
-    const found = false;
+    let found = false;
     project.access.forEach(projectAccess => {
       if (projectAccess.type === access.type) {
-        projectAccess.roles = access.roles;
+        found= true;
+        projectAccess.roles = [...access.roles];
       }
     });
     if (!found) {

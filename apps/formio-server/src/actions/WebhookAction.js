@@ -100,7 +100,7 @@ module.exports = (router) => {
                   validate: {
                     required: true
                   },
-                  description: 'The URL the request will be made to. You can interpolate the URL with <b>data.myfield</b> or <b>externalId</b> variables.'
+                  description: 'The URL the request will be made to. You can interpolate the URL with <b>data.myfield</b>, <b>externalId</b> or <b>submission</b> variables.'
                 },
 
               ],
@@ -421,6 +421,7 @@ module.exports = (router) => {
             ...res.resource.item.data, // Legacy support for interpolation.
             config: req.currentProject && req.currentProject.hasOwnProperty('config') ? req.currentProject.config : {},
             data: res.resource.item.data,
+            submission: (submission && submission.toObject) ? submission.toObject() : {},
             externalId
           };
           url = router.formio.util.FormioUtils.interpolate(url, params);
