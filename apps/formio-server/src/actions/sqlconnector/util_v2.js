@@ -117,10 +117,14 @@ module.exports = (router) => {
             // Get the primary insert string.
             param = _knx.toNative();
 
+            // Convert query back to non-native version, the native version will broke after when tries to replace bindings
+            // Related to: https://github.com/knex/knex/issues/3997
+            param.sql = _knx.sql;
+
             _knx = _knex(path.toString())
               .select()
               .table(path.toString())
-              .whereRaw(`id = ${idFn[type]}`)
+              .whereRaw(`${primary} = ${idFn[type]}`)
               .toString();
 
               if ( isMysql() ) {
@@ -156,8 +160,7 @@ module.exports = (router) => {
         try {
           route.method = 'GET';
           param = _knex(path.toString())
-          .toSQL()
-          .toNative();
+          .toSQL();
           route.query = [
             [
               param.sql,
@@ -177,8 +180,7 @@ module.exports = (router) => {
 
           param = _knex(path.toString())
             .where(primary , primaryComparison)
-            .toSQL()
-            .toNative();
+            .toSQL();
 
             route.query = [
               [
@@ -225,8 +227,7 @@ module.exports = (router) => {
             param = _knex(path.toString())
             .where(primary, primaryComparison)
             .update(pairs)
-            .toSQL()
-            .toNative();
+            .toSQL();
 
             route.query = [
               [
@@ -237,8 +238,7 @@ module.exports = (router) => {
 
             param = _knex(path.toString())
             .where(primary, primaryComparison)
-            .toSQL()
-            .toNative();
+            .toSQL();
 
             route.query.push([
               param.sql,
@@ -259,8 +259,7 @@ module.exports = (router) => {
           param = _knex(path.toString())
             .where(primary, primaryComparison)
             .del()
-            .toSQL()
-            .toNative();
+            .toSQL();
 
             route.query = [
               [
