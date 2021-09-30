@@ -5,6 +5,8 @@ const router = require('express').Router();
 const _ = require('lodash');
 const SAML = require('passport-saml/lib/passport-saml/saml').SAML;
 const {MetadataReader, toPassportConfig} = require('passport-saml-metadata');
+const {query, body} = require('express-validator');
+
 module.exports = (formioServer) => {
   const formio = formioServer.formio;
   const config = formioServer.config;
@@ -219,7 +221,11 @@ module.exports = (formioServer) => {
     });
   });
 
-  router.post('/acs', (req, res) => {
+  router.post('/acs',
+    // Sanitize inputs to prevent XSS Attacks
+    query('relay').trim().escape(),
+    body('RelayState').trim().escape(),
+    (req, res) => {
     // Get the relay.
     let relay = req.query.relay || req.body.RelayState;
     if (!relay) {
