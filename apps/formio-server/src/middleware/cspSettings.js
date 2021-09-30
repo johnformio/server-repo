@@ -31,7 +31,8 @@ module.exports = function(router) {
       `*.${host}`
     ];
     const directives = {
-      'default-src': sources
+      'default-src': sources,
+      'img-src' : ['\'self\'', 'https:']
     };
 
     const createCSPMiddleware = (settings) => {
