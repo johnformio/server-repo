@@ -142,7 +142,9 @@ module.exports = function(app) {
           'googlesheet',
           'ldap',
           'sqlconnector',
-          'signrequest'
+          'signrequest',
+          'twofalogin',
+          'twofarecoverylogin'
         ];
         if (action.title && action.name && !action.premium && premium.includes(action.name)) {
           action.title += ' (Premium)';
