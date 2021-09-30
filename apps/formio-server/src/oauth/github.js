@@ -143,7 +143,7 @@ module.exports = function(formio) {
     },
 
     getUserEmail(user, req) {
-      return Promise.resolve(user.email);
+      return Promise.resolve(user.email.toLowerCase());
     },
 
     // This should never get called, since GitHub tokens don't expire

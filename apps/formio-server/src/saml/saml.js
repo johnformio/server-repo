@@ -5,6 +5,8 @@ const router = require('express').Router();
 const _ = require('lodash');
 const SAML = require('passport-saml/lib/passport-saml/saml').SAML;
 const {MetadataReader, toPassportConfig} = require('passport-saml-metadata');
+const {query, body} = require('express-validator');
+
 module.exports = (formioServer) => {
   const formio = formioServer.formio;
   const config = formioServer.config;
@@ -118,7 +120,7 @@ module.exports = (formioServer) => {
     // Add an "Everyone" role.
     userRoles.push('Everyone');
 
-    const email = _.get(profile, emailPath);
+    const email = _.get(profile, emailPath).toLowerCase();
     const userId = _.get(profile, idPath, email);
     if (!userId) {
       return next('No User ID or Email was found within your SAML profile.');
@@ -219,7 +221,11 @@ module.exports = (formioServer) => {
     });
   });
 
-  router.post('/acs', (req, res) => {
+  router.post('/acs',
+    // Sanitize inputs to prevent XSS Attacks
+    query('relay').trim().escape(),
+    body('RelayState').trim().escape(),
+    (req, res) => {
     // Get the relay.
     let relay = req.query.relay || req.body.RelayState;
     if (!relay) {

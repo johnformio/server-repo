@@ -159,10 +159,10 @@ module.exports = (formio) => {
       let email = null;
 
       if (emailPath) {
-        email = _.get(user, emailPath);
+        email = _.get(user, emailPath).toLowerCase();
       }
 
-      return email || user.email;
+      return email || user.email.toLowerCase();
     },
 
     // OpenID tokens have no expiration date. If it is invalidated it means they have disabled the app.
