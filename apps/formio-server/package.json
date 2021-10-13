@@ -25,6 +25,7 @@
   "schema": "3.3.11",
   "portalVersion": "8.0.0-rc.1",
   "dependencies": {
+    "@braintree/sanitize-url": "^5.0.2",
     "@formio/premium": "^1.17.0-rc.15",
     "@types/qrcode": "^1.4.1",
     "@types/speakeasy": "^2.0.6",
@@ -44,7 +45,6 @@
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
     "express-cache-controller": "^1.1.0",
-    "express-validator": "^6.12.2",
     "formio": "^2.3.0-rc.6",
     "formio-workers": "^1.14.16",
     "formiojs": "^4.14.0-rc.27",
