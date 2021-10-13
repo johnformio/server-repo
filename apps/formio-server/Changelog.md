@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased - 7.3.0-rc.8]
+### Fixed
+ - FIO-3971: SAML ACS Proper URL Sanitization
+
 ## 7.3.0-rc.7
 ### Changed
  - Upgrade portal@8.0.0-rc.1
