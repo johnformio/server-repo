@@ -162,6 +162,7 @@ module.exports = function(server) {
               licenseKey: server.config.licenseKey,
               type: 'project',
               projectId: id,
+              readOnly: true
             })
               .then((licenseInfo) => {
                 const project = {
