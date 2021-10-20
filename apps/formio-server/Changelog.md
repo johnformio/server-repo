@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased - 7.3.0-rc.8]
 ### Fixed
  - FIO-3971: SAML ACS Proper URL Sanitization
+ - FIO-4105: Unable to create Tenants
+ - FIO-4040: Fixed CSP configuration to be general unless explicitely provided.
+ - FIO-4008: Moved webpack to dev dependencies
+ - FIO-3885 LIC | License Utilization is counting a project against the license limit when a bogus project endpoint is entered in url
 
 ## 7.3.0-rc.7
 ### Changed
