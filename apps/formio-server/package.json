@@ -87,15 +87,13 @@
     "universal-analytics": "^0.4.22",
     "uuid": "^8.3.2",
     "vm2": "^3.9.3",
-    "webpack": "^5.55.1",
-    "webpack-obfuscator": "^3.4.1",
     "xml2js": "^0.4.23",
     "xmldom": "^0.6.0"
   },
   "devDependencies": {
     "copy-webpack-plugin": "^9.0.1",
-    "eslint": "^7.32.0",
     "eslint-config-formio": "^1.1.2",
+    "eslint": "^7.32.0",
     "mocha": "^9.1.2",
     "mockery": "^2.1.0",
     "nock": "^13.1.3",
@@ -103,11 +101,13 @@
     "prepack": "^0.2.54",
     "sinon": "^11.1.2",
     "superagent-use": "^0.1.0",
-    "supertest": "^6.1.6",
     "supertest-capture-error": "^1.0.0",
+    "supertest": "^6.1.6",
     "uglify-es": "git+https://github.com/mishoo/UglifyJS2.git#harmony",
     "webpack-cli": "^4.8.0",
-    "webpack-node-externals": "^3.0.0"
+    "webpack-node-externals": "^3.0.0",
+    "webpack-obfuscator": "^3.4.1",
+    "webpack": "^5.55.1"
   },
   "pre-commit": [
     "lint"
