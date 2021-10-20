@@ -17,22 +17,9 @@ module.exports = function(router) {
     else {
       host = (hostParts.length > 1) ? hostParts.slice(-2).join('.') : req.host;
     }
-    const sources = [
-      '\'self\'',
-      '\'unsafe-inline\'',
-      '\'unsafe-eval\'',
-      'fonts.googleapis.com',
-      'fonts.gstatic.com',
-      'blob:',
-      'data:',
-      '*.form.io',
-      'pro.formview.io',
-      host,
-      `*.${host}`
-    ];
+
     const directives = {
-      'default-src': sources,
-      'img-src' : ['\'self\'', 'https:']
+      'default-src': ['*', '\'unsafe-inline\'', '\'unsafe-eval\'']
     };
 
     const createCSPMiddleware = (settings) => {
@@ -70,9 +57,8 @@ module.exports = function(router) {
         return acc;
       }, {...directives});
 
-      if (host && cspSettings['default-src'].indexOf(host) === -1) {
+      if (!cspSettings['default-src'].includes(host)) {
         cspSettings['default-src'].push(host);
-        cspSettings['default-src'].push(`*.${host}`);
       }
 
       const portalDomain = settings.portalDomain || '';
