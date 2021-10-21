@@ -9,17 +9,17 @@ const helmet = require('helmet');
  */
 module.exports = function(router) {
   return function(req, res, next) {
-    const hostParts = req.host.split('.');
+    const hostParts = req.hostname.split('.');
     let host = '';
     if (hostParts[hostParts.length - 1].match(/^localhost(:[0-9]+)?$/)) {
       host = '*';
     }
     else {
-      host = (hostParts.length > 1) ? hostParts.slice(-2).join('.') : req.host;
+      host = (hostParts.length > 1) ? hostParts.slice(-2).join('.') : req.hostname;
     }
 
     const directives = {
-      'default-src': ['*', '\'unsafe-inline\'', '\'unsafe-eval\'']
+      'default-src': ['*', 'data:', '\'unsafe-inline\'', '\'unsafe-eval\''],
     };
 
     const createCSPMiddleware = (settings) => {
