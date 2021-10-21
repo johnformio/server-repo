@@ -1209,7 +1209,7 @@ module.exports = function(app) {
               return done(err);
             }
             // If there is no form or formrevision already exists then skip it
-            if (!form || form._vid || formrevision) {
+            if (!form || form._vid || !form.revisions || formrevision) {
               return done(null, item);
             }
 

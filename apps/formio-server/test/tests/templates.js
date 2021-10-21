@@ -107,6 +107,10 @@ module.exports = function(app, template, hook) {
         assert.equal(form.hasOwnProperty('_id'), true);
         assert.equal(form.hasOwnProperty('machineName'), true);
 
+        if (form.hasOwnProperty('revisions') && !form.revisions) {
+          assert.equal(form._vid, 0);
+        }
+
         let machineName = form.machineName;
         let tempForm = _.omit(form, ['_id', '__v', 'created', 'deleted', 'modified', 'machineName', 'owner', '_vid', 'revisions']);
 
