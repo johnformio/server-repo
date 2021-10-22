@@ -8,7 +8,7 @@ module.exports = class Basic extends Plan {
       forms: 10,
       formRequests: 1000,
       submissionRequests: 1000,
-      emails: 100,
+      emails: 10,
       plan: 'basic',
     };
   }
