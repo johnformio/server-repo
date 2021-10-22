@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-4040: Fixed CSP configuration to be general unless explicitely provided.
  - FIO-4008: Moved webpack to dev dependencies
  - FIO-3885 LIC | License Utilization is counting a project against the license limit when a bogus project endpoint is entered in url
+ - FIO-3317: updated projects plans according to the formio pricing page
 
 ## 7.3.0-rc.7
 ### Changed
