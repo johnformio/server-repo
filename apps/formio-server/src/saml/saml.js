@@ -5,7 +5,7 @@ const router = require('express').Router();
 const _ = require('lodash');
 const SAML = require('passport-saml/lib/passport-saml/saml').SAML;
 const {MetadataReader, toPassportConfig} = require('passport-saml-metadata');
-const sanitizeUrl = require("@braintree/sanitize-url").sanitizeUrl;
+const xss = require("xss");
 
 module.exports = (formioServer) => {
   const formio = formioServer.formio;
@@ -223,15 +223,20 @@ module.exports = (formioServer) => {
 
   router.post('/acs',
     (req, res) => {
+    const sanitizeRelay =  xss(req.query.relay);
+    const sanitizeRelayState =  xss(req.body.RelayState);
+    if ((req.query.relay!==undefined && sanitizeRelay !== req.query.relay) || sanitizeRelayState !== req.body.RelayState) {
+      return res.status(400).send('SAML Validation failed!');
+    }
     // Get the relay.
-    let relay = req.query.relay || req.body.RelayState;
+    let relay = sanitizeRelay || sanitizeRelayState;
     if (!relay) {
       return res.status(400).send('No relay provided.');
     }
     getSAMLProviders(req).then((providers) => {
       providers.saml.validatePostResponse(req.body, (err, profile) => {
         if (err) {
-          return res.status(400).send(err.message || err);
+          return res.status(400).send('SAML Validation failed!');
         }
 
         // Get the saml token.
@@ -253,7 +258,7 @@ module.exports = (formioServer) => {
 
             relay += (relay.indexOf('?') === -1) ? '?' : '&';
             relay += `saml=${token.token}`;
-            return res.redirect(sanitizeUrl(relay)); // Sanitize inputs to prevent XSS Attacks
+            return res.redirect(relay);
           }
         );
       });
