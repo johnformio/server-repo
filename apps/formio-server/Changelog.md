@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased - 7.3.0-rc.8]
 ### Fixed
  - FIO-3971: SAML ACS Proper URL Sanitization
+ - FIO-4214: Fixing the SAML user roles to use the roles from the SAML profile, and parse them correctly.
  - FIO-4105: Unable to create Tenants
  - FIO-4040: Fixed CSP configuration to be general unless explicitely provided.
  - FIO-4008: Moved webpack to dev dependencies
