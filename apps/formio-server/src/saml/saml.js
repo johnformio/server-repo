@@ -97,7 +97,6 @@ module.exports = (formioServer) => {
     const idPath = settings.idPath || 'id';
     const emailPath = settings.emailPath || 'email';
     let userRoles = _.get(profile, rolesPath, []);
-    const roleTeams = _.cloneDeep(userRoles);
     const {rolesDelimiter} = settings;
     if (typeof userRoles === 'string') {
       if (rolesDelimiter) {
@@ -127,12 +126,10 @@ module.exports = (formioServer) => {
     }
 
     const roles = [];
-    const roleNames = [];
     _.map(roleMap, map => {
       const roleName = _.trim(map.role);
       if (_.includes(userRoles, roleName)) {
         roles.push(map.id);
-        roleNames.push(roleName);
       }
     });
 
@@ -169,7 +166,7 @@ module.exports = (formioServer) => {
     // the user object that will be read by the teams feature to determine which teams are allocated to this user.
     if (project.primary && config.ssoTeams) {
       // Load the teams by name.
-      formio.teams.getSSOTeams(user, roleTeams).then((teams) => {
+      formio.teams.getSSOTeams(user, userRoles).then((teams) => {
         teams = teams || [];
         user.teams = _.map(_.map(teams, '_id'), formio.util.idToString);
         debug(`Teams: ${JSON.stringify(user.teams)}`);
