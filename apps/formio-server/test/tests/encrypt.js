@@ -463,36 +463,17 @@ module.exports = function(app, template, hook) {
 
 
     it('Should upgrade the project to "commercial"', (done) => {
-      app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
-        if (err) return done(err);
-
-        app.formio.formio.resources.submission.model.findOne({
-          'data.licenseKeys.key': project.settings.licenseKey,
-        }, function(err, sub) {
-          if (err) return done(err);
-
-          if (sub) {
-            sub.data = {
-              ...sub.data,
-              plan: 'commercial',
-            };
+      request(app)
+        .post('/project/' + helper.template.project._id + '/upgrade')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send({plan: 'commercial'})
+        .expect(200)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
           }
-
-          sub.markModified('data');
-          sub.save(function(err) {
-            if (err) return done(err);
-
-            project.plan = 'commercial';
-            project.save(function(err) {
-              if (err) {
-                return done(err);
-              }
-
-              done();
-            });
-          });
+          done();
         });
-      });
     });
 
     it('Should let you load the individual submission and show unencrypted.', (done) => {

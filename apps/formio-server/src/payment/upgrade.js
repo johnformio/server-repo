@@ -2,7 +2,7 @@
 
 const Q = require('q');
 const debug = require('debug')('formio:payment:upgrade');
-const {getLicenseKey, setLicensePlan} = require('../util/utilization');
+const {getLicenseKey, setLicensePlan, clearCache} = require('../util/utilization');
 
 module.exports = function(formio) {
   const emailer = require('formio/src/util/email')(formio);
@@ -73,7 +73,9 @@ module.exports = function(formio) {
 
         const licenseKey = getLicenseKey(req);
         await setLicensePlan(formio, licenseKey, req.body.plan, limits, addScopes);
-
+        clearCache(`project:${req.projectId}`);
+        clearCache(`project:${req.projectId}:terms`);
+        clearCache(`project:${req.projectId}:terms:keys`);
         return await formio.resources.project.model.updateOne({
           _id: formio.util.idToBson(req.projectId)
         }, {

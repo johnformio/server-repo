@@ -1,6 +1,6 @@
 'use strict';
 
-const {utilization, getProjectContext, getLicense} = require('../util/utilization');
+const {utilizationSync, getProjectContext, getLicense} = require('../util/utilization');
 
 module.exports = (formio) => async (req, res, next) => {
   // If not sending license, skip.
@@ -21,15 +21,12 @@ module.exports = (formio) => async (req, res, next) => {
     }
   }
 
-  // See if the license can be utilized by this project.
-  try {
-    await utilization({
-      ...getProjectContext(req),
-      licenseKey: req.body.settings.licenseKey,
-    });
-  }
-  catch (err) {
-    return res.status(400).send(err.message);
+  const result = await utilizationSync(`project:${req.currentProject._id}`, {
+    ...getProjectContext(req),
+    licenseKey: req.body.settings.licenseKey,
+  });
+  if (result.error) {
+    return res.status(400).send(result.error.message);
   }
 
   return next();
