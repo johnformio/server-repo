@@ -3,7 +3,7 @@
 const config = require('../../config.js');
 const {utilizationSync} = require('../util/utilization');
 const crypto = require('crypto');
-const {default: compactVerify} = require('jose/jws/compact/verify');
+const {compactVerify} = require('jose');
 
 const terms = {};
 

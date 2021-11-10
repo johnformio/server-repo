@@ -3,7 +3,7 @@ const debug = require('debug')('formio:saml');
 const util = require('../util/util');
 const router = require('express').Router();
 const _ = require('lodash');
-const SAML = require('passport-saml/lib/passport-saml/saml').SAML;
+const SAML = require('passport-saml').SAML;
 const {MetadataReader, toPassportConfig} = require('passport-saml-metadata');
 const xss = require("xss");
 
