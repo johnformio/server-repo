@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-4008: Moved webpack to dev dependencies
  - FIO-3885 LIC | License Utilization is counting a project against the license limit when a bogus project endpoint is entered in url
  - FIO-3317: updated projects plans according to the formio pricing page
+ - Fixing major performance issues with server
 
 ## 7.3.0-rc.7
 ### Changed
