@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-3317: updated projects plans according to the formio pricing page
  - Fixing major performance issues with server
 
+### Added
+ - FIO-2860: Sign Request integration.
+
 ## 7.3.0-rc.7
 ### Changed
  - Upgrade portal@8.0.0-rc.1
