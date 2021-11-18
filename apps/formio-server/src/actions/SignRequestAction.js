@@ -25,22 +25,16 @@ module.exports = (router) => {
       SignRequestAction.checkApiSettings(req).then(() => {
         next(null, [
           {
-            type: 'email',
+            type: 'textfield',
             key: 'fromEmail',
             label: 'From Email',
-            tooltip: 'The signrequest emails will be sent from this address.',
+            description: 'The SignRequest emails will be sent from this address. You can use interpolation with <b>data.myfield</b> or <b>submission.myfield</b> variables.',
             input: true,
             validate: {
-              required: true
+              required: true,
+              custom: 'valid = /\\{\\{([\\s\\S]+?)\\}\\}/g.test(input) ? true : /^(([^<>()[\\]\\\\.,;:\\s@"]+(\\.[^<>()[\\]\\\\.,;:\\s@"]+)*)|(".+"))@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$/.test(input)',
+              customMessage: 'Must be a valid email'
             }
-          },
-          {
-            type: 'checkbox',
-            defaultValue: false,
-            key: 'noOwnerSignature',
-            label: 'My Signature Not Needed',
-            tooltip: 'The document won\'t be sent to you to sign.',
-            input: true,
           }
         ]);
       });
@@ -75,7 +69,7 @@ module.exports = (router) => {
     }
 
     async uploadAndCreateSignrequest(submission, fileUrl, eventsCallbackUrl, hostedUrl, signrequestConfig) {
-      const {from, signers, noOwnerSignature} = submission;
+      const {from, signers, who} = submission;
 
       const headers = {
         'content-type': 'application/json',
@@ -97,26 +91,11 @@ module.exports = (router) => {
       });
       const docUpload = await docUploadRes.json();
 
-      const signersArr = noOwnerSignature
-        ? signers
-        : [{
-            order: 0,
-            email: from.email,
-            'first_name': from.name,
-            'embed_url_user_id': uuidv4()
-          }, ...signers];
-      const whoSigns = noOwnerSignature && signersArr.length > 1
-          ? 'o'
-          : !noOwnerSignature && signersArr.length > 1
-          ? 'mo'
-          : 'm';
-
       const signrequestCreateBody = JSON.stringify({
         'from_email': from.email,
-        'from_email_name': from.name,
-        signers: signersArr,
+        signers,
         document: docUpload.url,
-        who: whoSigns,
+        who,
         'redirect_url': `${hostedUrl}/signrequest/confirmation.html`
       });
 
@@ -126,11 +105,16 @@ module.exports = (router) => {
         body: signrequestCreateBody
       });
       const signrequestCreate = await signrequestCreateRes.json();
-
       let embedUrl = null;
 
-      if (!noOwnerSignature && signrequestCreate.signers && signrequestCreate.signers.length) {
-        embedUrl = signrequestCreate.signers[0]['embed_url'];
+      if (signrequestCreate.signers && signrequestCreate.signers.length) {
+        signrequestCreate.signers.some(signer => {
+          if (signer.hasOwnProperty('embed_url')) {
+            embedUrl = signer['embed_url'];
+            return true;
+          }
+          return false;
+        });
       }
 
       return embedUrl;
@@ -163,24 +147,33 @@ module.exports = (router) => {
     resolve(handler, method, req, res, next) {
       const {settings, generateTempToken, uploadAndCreateSignrequest} = this;
       const hostedUrl = baseUrl(router.formio, req);
+      const {interpolate} =  router.formio.util.FormioUtils;
 
       const extractSignrequestData = (settings, form, submission) => {
-        const {fromEmail, fromName, noOwnerSignature} = settings;
+        const {fromEmail} = settings;
         const signatureComps = form.components.filter(comp => comp.type === 'signrequestsignature');
 
         if (!fromEmail || !signatureComps.length) {
           return;
         }
 
+        const email = interpolate(fromEmail, {data: submission});
         const signers = signatureComps.map(comp => submission[comp.key]);
+        let who = 'o';
+        signers.forEach((signer, idx) => Object.keys(signer).forEach(key => {
+          const value = interpolate(signer[key], {data: submission});
+          signer[key] = key === 'order' ? Number(value) : value;
+          if (signer.order === 0) {
+            who = idx ? 'mo' : 'm';
+            signer.email = email;
+            signer['embed_url_user_id'] = uuidv4();
+          }
+        }));
 
         return {
-          from: {
-            email: fromEmail,
-            name: fromName
-          },
+          from: {email},
           signers,
-          noOwnerSignature
+          who
         };
       };
 
