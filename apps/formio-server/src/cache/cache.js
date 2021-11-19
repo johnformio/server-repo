@@ -1,10 +1,9 @@
 'use strict';
 const util = require('../util/util');
-const {utilization} = require('../util/utilization');
+const {utilizationSync} = require('../util/utilization');
 const NodeCache = require('node-cache');
 const ncache = new NodeCache();
-
-const CACHE_TIME =  process.env.FORMIO_HOSTED ? 0 : process.env.CACHE_TIME || 3 * 60 * 60;
+const CACHE_TIME =  process.env.FORMIO_HOSTED ? 0 : process.env.CACHE_TIME || 15 * 60;
 
 const debug = {
   loadProject: require('debug')('formio:cache:loadProject'),
@@ -158,7 +157,7 @@ module.exports = function(server) {
               };
               return cb(null, cached);
             }
-            return utilization({
+            return utilizationSync(`project:${id}`, {
               licenseKey: server.config.licenseKey,
               type: 'project',
               projectId: id,

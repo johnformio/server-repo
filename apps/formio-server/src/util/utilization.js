@@ -5,15 +5,22 @@ const {match} = require("path-to-regexp");
 const licenseServer = process.env.LICENSE_SERVER || 'https://license.form.io';
 const NodeCache = require('node-cache');
 const plans = require('../plans/plans');
+const debug = require('debug')('formio:license');
 
-const cache = new NodeCache();
+const requestCache = new NodeCache();
+const requestCount = new NodeCache();
+const responseCache = new NodeCache();
 let lastUtilizationTime = 0;
 
-// Cache response for 3 hours.
-const CACHE_TIME = process.env.CACHE_TIME || 3 * 60 * 60;
+// Cache responses for 15 minutes
+const CACHE_TIME = process.env.CACHE_TIME || 15 * 60;
 
 const getLicenseKey = (req) => {
-  return _.get(req, 'primaryProject.settings.licenseKey', _.get(req, 'licenseKey', process.env.LICENSE_KEY));
+  if (req.licenseKey) {
+    return req.licenseKey;
+  }
+  req.licenseKey = _.get(req, 'primaryProject.settings.licenseKey', _.get(req, 'licenseKey', process.env.LICENSE_KEY));
+  return req.licenseKey;
 };
 
 function md5(str) {
@@ -49,9 +56,9 @@ const getProjectContext = (req, isNew = false) => {
         projectType: req.currentProject && !isNew ? req.currentProject.type : req.body.type,
         isDefaultAuthoring: (
           req.currentProject && !isNew
-          ?  _.get(req.currentProject, 'config.defaultStageName', '')
-          :  _.get(req, 'body.config.defaultStageName', '')
-          ) === 'authoring',
+            ? _.get(req.currentProject, 'config.defaultStageName', '')
+            : _.get(req, 'body.config.defaultStageName', '')
+        ) === 'authoring',
       };
     case 'project':
     default:
@@ -66,18 +73,55 @@ const getProjectContext = (req, isNew = false) => {
   }
 };
 
-async function utilization(body, action = '', qs = {terms: 1}) {
+async function utilizationSync(cacheKey, body, action = '') {
+  return await utilization(cacheKey, body, action, true, true);
+}
+
+function utilization(cacheKey, body, action = '', clear = false, sync = false) {
+  // Add the action to the cacheKey.
+  if (action) {
+    cacheKey += action.replace(/\//g, ':');
+  }
+
+  const qs = {terms: 1, keys: 1};
+
+  // Incremenet the number of requests since last request.
+  const numRequests = requestCount.get(cacheKey);
+  body.numRequests = numRequests ? (numRequests + 1) : 1;
+  requestCount.set(cacheKey, numRequests, CACHE_TIME);
+
+  // If they wish to clear, then do that here.
+  if (clear) {
+    clearCache(cacheKey);
+  }
+
+  // Set the response cache if provided.
+  const response = responseCache.get(cacheKey);
+  if (response) {
+    // If an error occurred last time, then delete here so it will try again.
+    if (response.error) {
+      responseCache.del(cacheKey);
+    }
+    return sync ? Promise.resolve(response) : response;
+  }
+
+  // If the request is currently being processed, then just return the promise.
+  let cachedRequest = requestCache.get(cacheKey);
+  if (cachedRequest) {
+    return sync ? cachedRequest : null;
+  }
+
   const hosted = process.env.FORMIO_HOSTED;
   const onPremiseScopes = ['apiServer', 'pdfServer', 'project', 'tenant', 'stage', 'formManager', 'accessibility', 'submissionServer'];
 
   // If on premise and not scoped for on premise, skip check.
   if (!hosted && !onPremiseScopes.includes(body.type)) {
-    return body;
+    return sync ? Promise.resolve(body) : body;
   }
 
   // Enable turning off req
   if (process.env.SKIP_FORM_LICENSING && ['formRequest', 'submissionRequest'].includes(body.type)) {
-    return body;
+    return sync ? Promise.resolve(body) : body;
   }
 
   if (!hosted) {
@@ -87,50 +131,47 @@ async function utilization(body, action = '', qs = {terms: 1}) {
     body.timestamp = Date.now() - 6000;
   }
 
-  const response = await fetch(`${licenseServer}/utilization${action}`, {
+  debug(`Licence Check: ${cacheKey}`);
+  cachedRequest = fetch(`${licenseServer}/utilization${action}`, {
     method: 'post',
     headers: {'content-type': 'application/json'},
     body: JSON.stringify(body),
     timeout: 30000,
     qs,
     rejectUnauthorized: false,
+  }).then(async (response) => {
+    responseCache.del(cacheKey);
+    requestCache.del(cacheKey);
+    if (!response.ok) {
+      return {error: new Error(await response.text())};
+    }
+
+    return await response.json();
+  }).then((utilization) => {
+    if (!utilization.error && !hosted && utilization.hash !== md5(base64(body))) {
+      utilization = {error: new Error('Invalid response')};
+    }
+    lastUtilizationTime = Date.now();
+    responseCache.set(cacheKey, utilization);
+    return utilization;
+  }).catch((err) => {
+    const response = {error: err};
+    responseCache.set(cacheKey, response);
+    requestCache.del(cacheKey);
+    return response;
   });
+  requestCache.set(cacheKey, cachedRequest, CACHE_TIME);
 
-  if (!response.ok) {
-    throw {
-      message: await response.text()
-    };
-  }
-
-  const utilization = await response.json();
-
-  if (!hosted && utilization.hash !== md5(base64(body))) {
-    throw new Error('Invalid response');
-  }
-
-  lastUtilizationTime = Date.now();
-
-  return utilization;
+  // Return the promise in case they need the response.
+  return sync ? cachedRequest : null;
 }
 
-async function cachedUtilization(cacheKey, body, action, qs = {terms: 1}) {
-  // If there is no cache, evaluate and set cache.
-  if (!cache.get(cacheKey)) {
-    await utilization(body, action, qs);
-    cache.set(cacheKey, true, CACHE_TIME);
-  }
-  else {
-    // A cached success exists so don't wait for a response. This will fire off another utilization request
-    // and set the cache for the next request.
-    utilization(body, action, qs)
-      .then(() => {
-        cache.set(cacheKey, true, CACHE_TIME);
-      })
-      .catch((err) => {
-        cache.del(cacheKey);
-      });
-  }
+function clearCache(cacheKey) {
+  responseCache.del(cacheKey);
+  requestCache.del(cacheKey);
+  requestCount.del(cacheKey);
 }
+
 async function getLicenseInfo(formio) {
   const project = await formio.resources.project.model.findOne({
     name: 'formio'
@@ -247,8 +288,9 @@ function checkLastUtilizationTime(req) {
 }
 
 module.exports = {
+  utilizationSync,
   utilization,
-  cachedUtilization,
+  clearCache,
   createLicense,
   getProjectContext,
   getLicenseKey,

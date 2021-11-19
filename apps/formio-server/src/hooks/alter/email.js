@@ -53,13 +53,16 @@ module.exports = app => (mail, req, res, params, cb) => {
 </table>`;
       }
 
-      return await utilization({
+      const result = utilization(`project:${req.projectId}:email`, {
         type: 'email',
         email: mail.to,
         formId: form._id.toString(),
         projectId: form.project.toString(),
         licenseKey: getLicenseKey(req),
       });
+      if (result && result.error) {
+        throw new Error(result.error.message);
+      }
     }
   };
 

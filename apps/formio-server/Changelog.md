@@ -4,14 +4,25 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased - 7.3.0-rc.8]
+## 7.3.0-rc.8
+### Changed
+ - Updated formio-app@7.3.0-rc.10
+ - Updated formiojs@4.14.0-rc.37
+ - Updated @formio/premium@1.17.0
+ - Updated formio@2.3.0
+
 ### Fixed
  - FIO-3971: SAML ACS Proper URL Sanitization
+ - FIO-4214: Fixing the SAML user roles to use the roles from the SAML profile, and parse them correctly.
  - FIO-4105: Unable to create Tenants
  - FIO-4040: Fixed CSP configuration to be general unless explicitely provided.
  - FIO-4008: Moved webpack to dev dependencies
  - FIO-3885 LIC | License Utilization is counting a project against the license limit when a bogus project endpoint is entered in url
  - FIO-3317: updated projects plans according to the formio pricing page
+ - Fixing major performance issues with server
+
+### Added
+ - FIO-2860: Sign Request integration.
 
 ## 7.3.0-rc.7
 ### Changed

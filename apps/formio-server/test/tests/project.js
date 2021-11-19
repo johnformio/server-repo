@@ -1422,23 +1422,6 @@ module.exports = function(app, template, hook) {
 
       var tempProjects = [];
     describe('Basic Plan', function() {
-      if (!docker)
-      before(function(done) {
-        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
-          if (err) return done(err);
-
-          project.plan = 'basic';
-          project.save(function(err) {
-            if (err) {
-              return done(err);
-            }
-
-            done();
-          });
-        });
-      });
-
-      if (docker)
       before(function(done) {
         request(app)
           .put('/project/' + template.project._id)
@@ -2223,23 +2206,6 @@ module.exports = function(app, template, hook) {
     });
 
     describe('Independent Plan', function() {
-      if (!docker)
-      before(function(done) {
-        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
-          if (err) return done(err);
-
-          project.plan = 'independent';
-          project.save(function(err) {
-            if (err) {
-              return done(err);
-            }
-
-            done();
-          });
-        });
-      });
-
-      if (docker)
       before(function(done) {
         request(app)
           .put('/project/' + template.project._id)
@@ -2539,23 +2505,6 @@ module.exports = function(app, template, hook) {
     });
 
     describe('Team Plan', function() {
-      if (!docker)
-      before(function(done) {
-        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
-          if (err) return done(err);
-
-          project.plan = 'team';
-          project.save(function(err) {
-            if (err) {
-              return done(err);
-            }
-
-            done();
-          });
-        });
-      });
-
-      if (docker)
       before(function(done) {
         request(app)
           .put('/project/' + template.project._id)
@@ -2856,23 +2805,6 @@ module.exports = function(app, template, hook) {
     });
 
     describe('Commercial Plan', function() {
-      if (!docker)
-      before(function(done) {
-        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
-          if (err) return done(err);
-
-          project.plan = 'commercial';
-          project.save(function(err) {
-            if (err) {
-              return done(err);
-            }
-
-            done();
-          });
-        });
-      });
-
-      if (docker)
       before(function(done) {
         request(app)
           .put('/project/' + template.project._id)
@@ -3174,42 +3106,6 @@ module.exports = function(app, template, hook) {
     });
 
     describe('Upgrading Plans', function() {
-      if (!docker) {
-        before(function(done) {
-          app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
-            if (err) return done(err);
-
-            app.formio.formio.resources.submission.model.findOne({
-              'data.licenseKeys.key': project.settings.licenseKey,
-            }, function(err, sub) {
-              if (err) return done(err);
-
-              if (sub) {
-                sub.data = {
-                  ...sub.data,
-                  plan: 'basic',
-                };
-              }
-
-              sub.markModified('data');
-              sub.save(function(err) {
-                if (err) return done(err);
-
-                project.plan = 'basic';
-                project.save(function(err) {
-                  if (err) {
-                    return done(err);
-                  }
-
-                  done();
-                });
-              });
-            });
-          });
-        });
-      }
-
-      if (docker)
       before(function(done) {
         request(app)
           .put('/project/' + template.project._id)

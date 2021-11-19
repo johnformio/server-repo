@@ -114,7 +114,7 @@ module.exports = app => routes => {
         return next();
       }
 
-      utilization({
+      const result = utilization(`project:${item.project}:formCreate`, {
         type: 'form',
         formId: item._id,
         title: item.title,
@@ -123,9 +123,11 @@ module.exports = app => routes => {
         formType: item.type,
         projectId: item.project,
         licenseKey: getLicenseKey(req),
-      })
-      .then(() => next())
-      .catch(next);
+      });
+      if (result && result.error) {
+        return next(result.error.message);
+      }
+      return next();
     }
   };
 
