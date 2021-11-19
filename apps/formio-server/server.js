@@ -84,8 +84,8 @@ module.exports = function(options) {
   if (portalEnabled) {
     debug.startup('Mounting Portal Application');
     // Override config.js so we can set onPremise to true.
-    app.get('/template/config.js', (req, res) => {
-      fs.readFile(`./portal/template/config.js`, 'utf8', (err, contents) => {
+    app.get('/config.js', (req, res) => {
+      fs.readFile(`./portal/config.js`, 'utf8', (err, contents) => {
         res.send(
           contents.replace(
             /var hostedPDFServer = '';|var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false/gi,
