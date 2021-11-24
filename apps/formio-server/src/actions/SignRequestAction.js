@@ -159,16 +159,18 @@ module.exports = (router) => {
 
         const email = interpolate(fromEmail, {data: submission});
         const signers = signatureComps.map(comp => submission[comp.key]);
-        let who = 'o';
-        signers.forEach((signer, idx) => Object.keys(signer).forEach(key => {
+        let isOwnerSigning = false;
+        signers.forEach(signer => Object.keys(signer).forEach(key => {
           const value = interpolate(signer[key], {data: submission});
           signer[key] = key === 'order' ? Number(value) : value;
           if (signer.order === 0) {
-            who = idx ? 'mo' : 'm';
+            isOwnerSigning = true;
             signer.email = email;
             signer['embed_url_user_id'] = uuidv4();
           }
         }));
+
+        const who = !isOwnerSigning ? 'o' : signers.length > 1 ? 'mo' : 'm';
 
         return {
           from: {email},
