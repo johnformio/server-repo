@@ -11,6 +11,8 @@ module.exports = (formioServer) => async (req, res, next) => {
       .catch((err) => res.status(400).send(err.message || err))
       .then(async (response) => {
         if (response.ok) {
+          res.append('Content-Type', response.headers.get('content-type'));
+          res.append('Content-Length', response.headers.get('content-length'));
           return response.body.pipe(res);
         }
         else {
