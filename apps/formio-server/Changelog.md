@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 7.3.0-rc.11]
+## 7.3.0-rc.11
+### Changed
+ - Updated formio-app@7.3.0-rc.12
+ - Updated formiojs@4.14.0-rc.38
+ - Updated @formio/premium@1.17.1-rc.1
+ - Updated formio@2.3.1-rc.1
+
 ### Fixed
  - Sign request fixes.
 
