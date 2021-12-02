@@ -27,10 +27,10 @@ module.exports = (formioServer) => {
       if (response.ok) {
         const data = await response.json();
 
-        return fetch(data.pdf);
+        if (data.pdf) {
+          return fetch(data.pdf);
+        }
       }
-
-      return Promise.resolve(response);
     }
 
     // Swap in form components from earlier revision, if applicable
