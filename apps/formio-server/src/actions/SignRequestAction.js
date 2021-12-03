@@ -16,7 +16,7 @@ module.exports = (router) => {
         priority: 6,
         defaults: {
           handler: ['after'],
-          method: ['create', 'update', 'delete']
+          method: ['create', 'update']
         }
       }));
     }
@@ -145,6 +145,10 @@ module.exports = (router) => {
      *   The callback function to execute upon completion.
      */
     resolve(handler, method, req, res, next) {
+      if (method === 'delete') {
+        return next();
+      }
+
       const {settings, generateTempToken, uploadAndCreateSignrequest} = this;
       const hostedUrl = baseUrl(router.formio, req);
       const {interpolate} =  router.formio.util.FormioUtils;
