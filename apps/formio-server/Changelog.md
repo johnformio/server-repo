@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased: 7.3.1-rc.1]
 ### Fixed
  - FIO-4348: fix signrequest action triggered on deleting submission
+ - FIO-4331: add check for no link to pdf file before it's signed
 
 ## 7.3.0
 ### Changed
