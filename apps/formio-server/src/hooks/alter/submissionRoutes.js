@@ -65,7 +65,24 @@ module.exports = app => routes => {
       if (_.get(req, 'body.state', 'submitted') === 'draft' || req.isAdmin && req.query.noValidate) {
         req.noValidate = true;
       }
-      next();
+      if (req.method.toUpperCase() === 'PATCH') {
+        app.formio.formio.mongoose.models.submission.findOne({_id: req.params.submissionId, deleted: null}, (err, submission)=>{
+          if (err) {
+            return next(err);
+          }
+
+          if (submission && submission.state === 'draft') {
+            req.noValidate = true;
+            return next();
+          }
+          else {
+            return next();
+          }
+        });
+      }
+      else {
+        return next();
+      }
     });
   });
 

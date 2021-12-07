@@ -113,6 +113,37 @@ module.exports = (app, template, hook) => {
       });
     });
 
+    it('Allows patch without validation when in draft', done => {
+      helper.patchSubmission(submission,
+        [{
+          "op": "remove",
+          "path": "/data/fname",
+          }]
+      , (err, result) => {
+        assert.equal(result.state, 'draft');
+        assert(result.hasOwnProperty('_id'));
+        assert.deepEqual(result.data, {});
+        submission = helper.getLastSubmission();
+        done();
+      });
+    });
+
+    it('Allows patch when in draft', done => {
+      helper.patchSubmission(submission,
+        [{
+          "op": "add",
+          "path": "/data/fname",
+          "value": "Test"
+          }]
+      , (err, result) => {
+        assert.equal(result.state, 'draft');
+        assert(result.hasOwnProperty('_id'));
+        assert.deepEqual(result.data, {fname: 'Test'});
+        submission = helper.getLastSubmission();
+        done();
+      });
+    });
+
     it('Throws an error when updating a submission from draft to submitted if validation fails', done => {
       submission.state = 'submitted';
       helper.updateSubmission(submission, helper.owner, [/application\/json/, 400], (err, result) => {
@@ -129,6 +160,34 @@ module.exports = (app, template, hook) => {
         assert.equal(result.state, 'submitted');
         assert(result.hasOwnProperty('_id'));
         assert.deepEqual(result.data, {fname: 'Test', lname: 'Last'});
+        done();
+      });
+    });
+
+    it('Allows patch submission', done => {
+      helper.patchSubmission(submission,
+        [{
+          "op": "replace",
+          "path": "/data/fname",
+          "value": "Test1"
+          }]
+      , (err, result) => {
+        assert.equal(result.state, 'submitted');
+        assert(result.hasOwnProperty('_id'));
+        assert.deepEqual(result.data, {fname: 'Test1', lname: 'Last'});
+        done();
+      });
+    });
+
+    it('Patch submission with validation when submitted', done => {
+      helper.patchSubmission(submission,
+        [{
+          "op": "remove",
+          "path": "/data/fname",
+          }],
+      helper.owner, [/application\/json/, 400],
+      (err, result) => {
+        assert.equal(result.name, 'ValidationError');
         done();
       });
     });

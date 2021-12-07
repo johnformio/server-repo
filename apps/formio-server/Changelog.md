@@ -522,11 +522,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FOR-2866: added hook for getting proper mongo collection
  - FIO-1196: Added SQLConector2 support.
  - FIO-841: Implements the Dev License.
-<<<<<<< HEAD
- - Adding expiring action items.
- - FIO-889 and FIO-1368: Implements the CSP, Strict-Transport-Security and Referrer Policy. Implements the portal-check endpoint for CORS policy.
-=======
->>>>>>> origin/7.1.x
 
 ### Fixed
  - FIO-1246: fix server fail after submitting an editted password field value

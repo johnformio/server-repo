@@ -190,7 +190,7 @@ function middleware(app) {
           utilization(`project:${req.projectId}`, {
             ...getProjectContext(req),
             licenseKey: getLicenseKey(req),
-          }, '/delete');
+          }, '/delete', {terms: 1}, true);
           break;
 
         case 'GET /project/:projectId/manage':
