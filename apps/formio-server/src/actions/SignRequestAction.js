@@ -151,18 +151,23 @@ module.exports = (router) => {
 
       const {settings, generateTempToken, uploadAndCreateSignrequest} = this;
       const hostedUrl = baseUrl(router.formio, req);
-      const {interpolate} =  router.formio.util.FormioUtils;
+      const {interpolate, eachComponent} =  router.formio.util.FormioUtils;
 
       const extractSignrequestData = (settings, form, submission) => {
         const {fromEmail} = settings;
-        const signatureComps = form.components.filter(comp => comp.type === 'signrequestsignature');
+        const signatureCompsKeys = [];
+        eachComponent(form.components, comp => {
+          if (comp.type === 'signrequestsignature') {
+            signatureCompsKeys.push(comp.key);
+          }
+        });
 
-        if (!fromEmail || !signatureComps.length) {
+        if (!fromEmail || !signatureCompsKeys.length) {
           return;
         }
 
         const email = interpolate(fromEmail, {data: submission});
-        const signers = signatureComps.map(comp => submission[comp.key]);
+        const signers = signatureCompsKeys.map(key => submission[key]);
         let isOwnerSigning = false;
         signers.forEach(signer => Object.keys(signer).forEach(key => {
           const value = interpolate(signer[key], {data: submission});
