@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased: 7.4.0-rc.1]
+### Changed
+ - Adding PDF Auto Conversion features.
+
 ## [Unreleased: 7.3.1-rc.1]
 ### Fixed
  - FIO-4348: fix signrequest action triggered on deleting submission
