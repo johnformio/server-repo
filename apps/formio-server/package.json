@@ -23,7 +23,7 @@
   "main": "./main.js",
   "version": "7.3.0",
   "schema": "3.3.11",
-  "portalVersion": "7.3.0",
+  "portalVersion": "7.4.0-rc.0",
   "dependencies": {
     "@braintree/sanitize-url": "^5.0.2",
     "@formio/premium": "^1.17.1",
