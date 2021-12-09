@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-4331: add check for no link to pdf file before it's signed
  - FIO-4350: fix finding signrequest components keys for wizard
  - FIO-4088: patch on draft submissions
+ - FIO-4234: S3 files with Policy Expiration are getting AccessDenied
 
 ## 7.3.0
 ### Changed
