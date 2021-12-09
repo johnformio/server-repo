@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 7.4.0-rc.1]
+## 7.4.0-rc.1
+### Changed
+ - Updated formio-app@7.4.0-rc.1
+ - Updated formiojs@4.14.1-rc.4
+ - Updated @formio/premium@1.17.2-rc.1
+ - Updated formio@2.3.2-rc.2
+
 ### Changed
  - Adding PDF Auto Conversion features.
 
