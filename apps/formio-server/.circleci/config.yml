@@ -62,16 +62,16 @@ jobs:
   test:
     environment:
       MONGO: "mongodb://localhost:27017/formio"
-      REDIS_ADDR: localhost
-      REDIS_PORT: 6379
     docker:
       - image: cimg/node:14.18.1
-      - image: mongo:3.4.16
-      - image: redis:4.0.11
+      - image: circleci/mongo:4.4
     steps:
       - checkout
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
+      - run:
+          name: Waiting for Mongo
+          command: dockerize -wait tcp://localhost:27017 -timeout 1m
       - run:
           name: Setup hostnames
           command: |
