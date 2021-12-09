@@ -58,7 +58,8 @@ const getUrl = function(options = {}) {
     else {
       aws.getSignedUrl('getObject', {
         Bucket: options.bucket,
-        Key: options.key
+        Key: options.key,
+        Expires: +options.settings.expiration,
       }, (err, result) => err ? reject(err) : resolve(result));
     }
   });
