@@ -2,7 +2,7 @@
 
 const fetch = require('formio/src/util/fetch');
 const _ = require('lodash');
-const {VM} = require('vm2');
+const {NodeVM, VMScript} = require('vm2');
 
 const util = require('./util');
 
@@ -441,8 +441,9 @@ module.exports = (router) => {
         // Allow user scripts to transform the payload.
         setActionItemMessage('Transforming payload');
         if (settings.transform) {
+          const script = new VMScript(`${settings.transform} \n module.exports = payload;`);
           try {
-            const newPayload = (new VM({
+            payload = (new NodeVM({
               timeout: 500,
               sandbox: _.cloneDeep({
                 externalId,
@@ -452,8 +453,7 @@ module.exports = (router) => {
               }),
               eval: false,
               fixAsync: true
-            })).run(settings.transform);
-            payload = newPayload;
+            })).run(script);
           }
           catch (err) {
             setActionItemMessage('Webhook transform failed', err, 'error');
