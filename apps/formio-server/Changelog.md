@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-4353: fixed project counting during offline license check
  - FIO-4335: Fixes reaching signrequest confirmation page and inserts dynamic copyright year on it
  - FIO-4338: Adds interpolation to signrequest component settings from submission variable
+ - FIO-4339: Fixes invalid pdf file download url in signrequest action when updating the submission
 
 ## 7.4.0-rc.1
 ### Changed
