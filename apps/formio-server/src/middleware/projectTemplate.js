@@ -35,14 +35,7 @@ module.exports = function(formio) {
         _project = project;
       }
 
-      // Set the project on the template.
-      const projectKeys = ['_id', 'title', 'name', 'description', 'machineName'];
-      template = _.assign({}, template, _.pick(_project, projectKeys));
-
-      const alters = hook.alter('templateAlters', {});
-
-      // Import the template within formio.
-      formio.template.import.template(template, alters, function(err, template) {
+      const done = (err, template) => {
         if (err) {
           debug(err);
           return res.status(400).send(err);
@@ -57,7 +50,30 @@ module.exports = function(formio) {
 
           return next();
         });
-      });
+      };
+
+      const importTemplateToProject = (template, project, alters) => {
+        // Set the project on the template.
+        const projectKeys = ['_id', 'title', 'name', 'description', 'machineName'];
+        template = _.assign({}, template, _.pick(project, projectKeys));
+        // Import the template within formio.
+        formio.template.import.template(template, alters, done);
+      };
+
+      const alters = hook.alter('templateAlters', {});
+      const components = Object.values(template.forms).concat(Object.values(template.resources));
+      const missingComponents = formio.template.import.check(components, template);
+
+      if (missingComponents.length !== 0 ) {
+        formio.template.import.findProjectId(template)
+        .then((projectId)=>{
+          formio.template.import.tryToLoadComponents(missingComponents, template, projectId);
+          importTemplateToProject(template, _project, alters);
+        });
+      }
+      else {
+        importTemplateToProject(template, _project, alters);
+      }
     };
 
     // Allow external templates.
