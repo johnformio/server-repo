@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-1453: added template check before creating project by it
  - FIO-4365: fixed an issue where team owner displays as an admin
  - FIO-4216: 'Resource not found' when get submission form submission collection
+ - FIO-4353: fixed project counting during offline license check
 
 ## 7.4.0-rc.1
 ### Changed
