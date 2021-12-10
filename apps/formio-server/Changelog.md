@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased: 7.4.0-rc.2]
 ### Fixed
  - FIO-3468: transform payload miss data
+ - FIO-1453: added template check before creating project by it
 
 ## 7.4.0-rc.1
 ### Changed
