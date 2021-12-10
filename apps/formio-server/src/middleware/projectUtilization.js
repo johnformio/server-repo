@@ -12,7 +12,8 @@ const _ = require('lodash');
 const plans = require('../plans/plans');
 const license = require('../util/license');
 
-module.exports = (formio) => (req, res, next) => {
+module.exports = (app) => (req, res, next) => {
+  const formio = app.formio.formio;
   // If this isn't for a project, don't check.
   if (!req.currentProject) {
     return next();
@@ -20,6 +21,10 @@ module.exports = (formio) => (req, res, next) => {
 
   // Always allow access to the formio base project.
   if (req.primaryProject.name === 'formio') {
+    return next();
+  }
+
+  if (app.license.remote) {
     return next();
   }
 

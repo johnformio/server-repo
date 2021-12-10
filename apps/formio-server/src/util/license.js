@@ -145,9 +145,9 @@ IzaxfXn16qCWfwKGE+VXkSM7OAS5iunoyHr5QYL9bUh2+vKshM/pnhvoMfDXnIZR
         console.log('License is expired');
         process.exit();
       }
-      const numberOfProjects = await app.formio.formio.resources.project.model.estimatedDocumentCount({deleted: {$ne: null}});
+      const numberOfProjects = await app.formio.formio.resources.project.model.count({deleted: {'$eq': null}, project: null});
       if (payload.terms.projectsNumberLimit && numberOfProjects - 1 > payload.terms.projectsNumberLimit) {
-        console.log(`Exceeded the allowed number of projects. Max number of your projects is ${payload.terms.projectsNumberLimit}`);
+        console.log(`Exceeded the allowed number of projects. Max number of your projects is ${payload.terms.projectsNumberLimit}. You have ${numberOfProjects - 1} projects.`);
         process.exit();
       }
       console.log('License key validated remotely');

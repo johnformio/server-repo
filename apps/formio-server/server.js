@@ -242,7 +242,7 @@ module.exports = function(options) {
   }
 
    // Check project status
-  app.use(require('./src/middleware/projectUtilization')(app.formio.formio));
+  app.use(require('./src/middleware/projectUtilization')(app));
 
    // CORS Support
   debug.startup('Attaching middleware: CORS');
