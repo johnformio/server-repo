@@ -211,7 +211,7 @@ module.exports = (router) => {
           return res.status(400).send('SignRequest bad submission.');
         }
 
-        const allowUrl = `${req.baseUrl}${req.url}/${submissionId}`;
+        const allowUrl = method === 'update' ? `${req.baseUrl}${req.path}` : `${req.baseUrl}${req.path}/${submissionId}`;
         req.token.longExpire = true;
 
         const fileToken = await generateTempToken(req, res, `${allowUrl}/download`, 'get');
