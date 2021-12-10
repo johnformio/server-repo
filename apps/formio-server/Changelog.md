@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
  - FIO-3468: transform payload miss data
  - FIO-1453: added template check before creating project by it
+ - FIO-4365: fixed an issue where team owner displays as an admin
 
 ## 7.4.0-rc.1
 ### Changed
