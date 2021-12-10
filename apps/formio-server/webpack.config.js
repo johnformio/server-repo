@@ -31,6 +31,10 @@ module.exports = {
         {
           from:'./package-lock.json',
           to:'.'
+        },
+        {
+          from:'./public',
+          to: './public'
         }
       ]
     }),

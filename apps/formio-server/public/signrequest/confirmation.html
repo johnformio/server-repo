@@ -57,7 +57,7 @@
             <li> <a href="https://www.form.io/contact"> Contact Us </a> </li>
           </ul>
           <div class="thank-you-copy">
-            <p>Copyright © Form.io LLC 2021. All rights reserved</p>
+            <p>Copyright © Form.io LLC <span id="copyright"></span>. All rights reserved</p>
           </div>
         </div>
 
@@ -65,5 +65,11 @@
 
     </div>
   </section>
+  <script>
+    var copyright = document.getElementById('copyright');
+    if (copyright) {
+      copyright.textContent = new Date().getFullYear().toString();
+    }
+  </script>
 </body>
 </html>
