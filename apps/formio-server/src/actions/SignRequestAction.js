@@ -166,11 +166,12 @@ module.exports = (router) => {
           return;
         }
 
-        const email = interpolate(fromEmail, {data: submission});
+        const data = {data: submission, submission};
+        const email = interpolate(fromEmail, data);
         const signers = signatureCompsKeys.map(key => submission[key]);
         let isOwnerSigning = false;
         signers.forEach(signer => Object.keys(signer).forEach(key => {
-          const value = interpolate(signer[key], {data: submission});
+          const value = interpolate(signer[key], data);
           signer[key] = key === 'order' ? Number(value) : value;
           if (signer.order === 0) {
             isOwnerSigning = true;
