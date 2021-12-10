@@ -246,7 +246,8 @@ const Teams = {
       req.body = {
         data: {
           email: req.user.data.email,
-          admin: true
+          admin: true,
+          userId: req.user._id
         }
       };
       const member = await Teams.teamMembershipHandler('post', '')(req, res);
