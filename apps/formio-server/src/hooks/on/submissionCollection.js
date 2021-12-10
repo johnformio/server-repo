@@ -18,13 +18,14 @@ module.exports = app => (req) => {
     const collection = form.settings.collection;
     submissionModel = app.formio.formio.mongoose.model(
       `${projectName}_${collection}`,
-      app.formio.formio.mongoose.modelSchemas.submission,
-      `${projectName}_${collection}`
+      app.formio.formio.mongoose.models.submission.schema,
     );
   });
   if (submissionModel) {
     req.countQuery = submissionModel;
     req.modelQuery = submissionModel;
+    req.submissionModel = submissionModel;
+    req.model = submissionModel;
   }
 
   return submissionModel;
