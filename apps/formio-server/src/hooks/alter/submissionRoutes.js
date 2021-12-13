@@ -71,7 +71,7 @@ module.exports = app => routes => {
             return next(err);
           }
 
-          if (submission && submission.state === 'draft') {
+          if (submission && submission.state === 'draft' && !req.body.find(update=>update.path.includes('/submit') || update.path === '/state')) {
             req.noValidate = true;
             return next();
           }
