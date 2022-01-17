@@ -70,6 +70,12 @@ module.exports = function(options) {
   // Secure html pages with the proper headers.
   debug.startup('Attaching middleware: Helmet');
   app.use((req, res, next) => {
+    const sendStatus = res.sendStatus;
+    res.sendStatus = function(...args) {
+      if (!res.headersSent) {
+        return sendStatus.call(this, ...args);
+      }
+    };
     if (
       (req.url === '/' && portalEnabled) ||
       req.url.endsWith('.html') ||
