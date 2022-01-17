@@ -281,92 +281,92 @@ module.exports = function(options) {
 
   app.post('/project/:projectId/form/:formId/download', downloadPDF);
 
-  app.post('/project/:projectId/form/:formId/submission/:submissionId/signrequest',
-    (req, res, next) => {
-      const {signrequest} = req.currentProject.settings;
-      const {event_time: eventTime, event_type: eventType, event_hash: eventHash} = req.body;
+  // app.post('/project/:projectId/form/:formId/submission/:submissionId/signrequest',
+  //   (req, res, next) => {
+  //     const {signrequest} = req.currentProject.settings;
+  //     const {event_time: eventTime, event_type: eventType, event_hash: eventHash} = req.body;
 
-      if (!signrequest || !signrequest.apiKey || !eventTime || !eventType || !eventHash) {
-        return res.sendStatus(400);
-      }
+  //     if (!signrequest || !signrequest.apiKey || !eventTime || !eventType || !eventHash) {
+  //       return res.sendStatus(400);
+  //     }
 
-      /* eslint-disable new-cap */
-      const calculatedHash = CryptoJS.HmacSHA256(`${eventTime}${eventType}`, signrequest.apiKey).toString();
+  //     /* eslint-disable new-cap */
+  //     const calculatedHash = CryptoJS.HmacSHA256(`${eventTime}${eventType}`, signrequest.apiKey).toString();
 
-      if (eventHash !== calculatedHash) {
-        return res.sendStatus(403);
-      }
+  //     if (eventHash !== calculatedHash) {
+  //       return res.sendStatus(403);
+  //     }
 
-      next();
-    },
-    async (req, res, next) => {
-      const {submissionId} = req.params;
-      const event = req.body['event_type'];
-      let updates = null;
-      let status = 200;
+  //     next();
+  //   },
+  //   async (req, res, next) => {
+  //     const {submissionId} = req.params;
+  //     const event = req.body['event_type'];
+  //     let updates = null;
+  //     let status = 200;
 
-      switch (event) {
-        case 'converted': {
-          const {document} = req.body;
+  //     switch (event) {
+  //       case 'converted': {
+  //         const {document} = req.body;
 
-          updates = {
-            $set: {
-              'data.signrequest.document': {
-                uuid: document.uuid,
-                name: document.name,
-                status: document.status
-              }
-            }
-          };
-        }
-        break;
-        case 'signer_signed': {
-          const {document, signer} = req.body;
+  //         updates = {
+  //           $set: {
+  //             'data.signrequest.document': {
+  //               uuid: document.uuid,
+  //               name: document.name,
+  //               status: document.status
+  //             }
+  //           }
+  //         };
+  //       }
+  //       break;
+  //       case 'signer_signed': {
+  //         const {document, signer} = req.body;
 
-          updates = {
-            $set: {
-              'data.signrequest.document.status': document.status
-            },
-            $addToSet: {
-              'data.signrequest.signers': {
-                email: signer.email,
-                name: `${signer['first_name']} ${signer['last_name']}`,
-                signingDate: signer['signed_on']
-              }
-            }
-          };
-        }
-        break;
-        case 'signed': {
-          const {document} = req.body;
+  //         updates = {
+  //           $set: {
+  //             'data.signrequest.document.status': document.status
+  //           },
+  //           $addToSet: {
+  //             'data.signrequest.signers': {
+  //               email: signer.email,
+  //               name: `${signer['first_name']} ${signer['last_name']}`,
+  //               signingDate: signer['signed_on']
+  //             }
+  //           }
+  //         };
+  //       }
+  //       break;
+  //       case 'signed': {
+  //         const {document} = req.body;
 
-          updates = {
-            $set: {
-              'data.signrequest.document.status': document.status
-            }
-          };
-        }
-      }
+  //         updates = {
+  //           $set: {
+  //             'data.signrequest.document.status': document.status
+  //           }
+  //         };
+  //       }
+  //     }
 
-      if (updates) {
-        await new Promise((resolve) => {
-          const cb = (err, res) => {
-            if (err) {
-              status = 500;
-            }
-            resolve();
-          };
+  //     if (updates) {
+  //       await new Promise((resolve) => {
+  //         const cb = (err, res) => {
+  //           if (err) {
+  //             status = 500;
+  //           }
+  //           resolve();
+  //         };
 
-          app.formio.formio.resources.submission.model.findByIdAndUpdate(
-            submissionId,
-            updates
-          , cb);
-        });
-      }
+  //         app.formio.formio.resources.submission.model.findByIdAndUpdate(
+  //           submissionId,
+  //           updates
+  //         , cb);
+  //       });
+  //     }
 
-      res.sendStatus(status);
-    }
-  );
+  //     res.sendStatus(status);
+  //   }
+  // );
 
   debug.startup('Attaching middleware: PDF Upload');
   const uploadPDF = [
