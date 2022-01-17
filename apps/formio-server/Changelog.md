@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased: 7.4.0-rc.2]
 ### Fixed
+ - FIO-4473: Fixed server to work with latest saml library.
  - FIO-4437: disable SignRequest 
  - FIO-3468: transform payload miss data
  - FIO-1453: added template check before creating project by it
