@@ -3,7 +3,7 @@ const debug = require('debug')('formio:saml');
 const util = require('../util/util');
 const router = require('express').Router();
 const _ = require('lodash');
-const SAML = require('passport-saml').SAML;
+const {SAML} = require('node-saml');
 const {MetadataReader, toPassportConfig} = require('passport-saml-metadata');
 const xss = require("xss");
 
@@ -201,17 +201,14 @@ module.exports = (formioServer) => {
   // Access URL for implementing SP-init SSO
   router.get('/sso', (req, res) => {
     getSAMLProviders(req).then((providers) => {
-      providers.saml.getAuthorizeUrl(req, {additionalParams: {
-        RelayState: req.query.relay
-      }}, (err, redirect) => {
-        if (err) {
-          return res.status(400).send(err.message || err);
-        }
+      providers.saml.getAuthorizeUrlAsync(req.query.relay).then((redirect) => {
         if (providers.settings.query) {
           redirect = `${redirect}&${providers.settings.query}`;
         }
         debug(`Redirect: ${redirect}`);
         return res.redirect(redirect);
+      }).catch((err) => {
+        return res.status(400).send(err.message || err);
       });
     }).catch((err) => {
       return res.status(400).send(err.message || err);
@@ -231,11 +228,7 @@ module.exports = (formioServer) => {
       return res.status(400).send('No relay provided.');
     }
     getSAMLProviders(req).then((providers) => {
-      providers.saml.validatePostResponse(req.body, (err, profile) => {
-        if (err) {
-          return res.status(400).send('SAML Validation failed!');
-        }
-
+      providers.saml.validatePostResponseAsync(req.body).then(({profile}) => {
         // Get the saml token.
         getToken(
           profile,
@@ -258,6 +251,8 @@ module.exports = (formioServer) => {
             return res.redirect(relay);
           }
         );
+      }).catch((err) => {
+        return res.status(400).send(err.message || err);
       });
     }).catch((err) => {
       return res.status(400).send(err.message || err);
