@@ -10,6 +10,8 @@ module.exports = function(router) {
   return function(req, callback) {
     let whitelist = [
       'https://form.io',
+      'https://api.form.io',
+      'https://cdn.form.io',
       'https://test-form.io',
       'https://develop-form.io',
       'https://portal.form.io',
@@ -26,13 +28,12 @@ module.exports = function(router) {
     const fail = {
       origin: 'https://form.io'
     };
-    const dev = {
-      origin: [/http:\/\/localhost:/, /http:\/\/\w+.localhost:/]
-    };
 
      // When using a development license, restrict CORS to only allow "localhost".
     if (_.get(router, 'license.devLicense', false)) {
-      return callback(null, dev);
+      return callback(null, {
+        origin: [/http:\/\/localhost:/, /http:\/\/\w+.localhost:/]
+      });
     }
 
      // Disallow cors if they are attempting to use a token as querystring.

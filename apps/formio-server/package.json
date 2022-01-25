@@ -50,7 +50,7 @@
     "formio-workers": "^1.16.0",
     "formiojs": "^4.14.1-rc.4",
     "googleapis": "^91.0.0",
-    "helmet": "^4.6.0",
+    "helmet": "^5.0.2",
     "is-url": "^1.2.4",
     "jira-connector": "^3.0.2",
     "jose": "^4.2.1",
