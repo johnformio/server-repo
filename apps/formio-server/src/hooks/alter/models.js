@@ -18,6 +18,10 @@ module.exports = app => models => {
       enum: ['', 'current', 'original'],
       default: ''
     },
+    submissionRevisions: {
+      type: String,
+      default: ''
+    },
     _vid: {
       type: Number,
       description: 'The version id of the form.',
@@ -41,19 +45,17 @@ module.exports = app => models => {
   });
 
   models.submission.schema.add({
-    _vid: {
-      type: Number,
-      description: 'The version id of the submission.',
-      index: true,
-      required: true,
-      default: 0
-    },
     _fvid: {
       type: Number,
       description: 'The version id of the form when the submission was made.',
       index: true,
       required: true,
       default: 0
+    },
+    _frid: {
+      type: app.formio.formio.mongoose.Schema.Types.ObjectId,
+      description: 'The id of the form revision when the submission was made.',
+      index: true
     },
     project: {
       type: app.formio.formio.mongoose.Schema.Types.ObjectId,

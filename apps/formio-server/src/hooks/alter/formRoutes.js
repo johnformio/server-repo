@@ -3,58 +3,11 @@
 const _ = require('lodash');
 const util = require('../../util/util');
 const {utilization, getLicenseKey} = require('../../util/utilization');
+const FormRevision = require('../../revisions/FormRevision');
 
 module.exports = app => routes => {
   const loadFormAlter = require('../../hooks/alter/loadForm')(app).alter;
-  const incrementVersion = function(item) {
-    item.set('_vid', item.get('_vid') + 1);
-  };
-
-  const createVersion = function(item, user, note, done) {
-    const formRevision = app.formio.formio.mongoose.models.formrevision;
-
-    const body = item.toObject();
-    body._rid = body._id;
-
-    if (user) {
-      body._vuser = _.get(user, "data.name") || _.get(user, "data.email", user._id);
-    }
-
-    body._vnote = note || '';
-    delete body._id;
-    delete body.__v;
-
-    formRevision.findOne({
-      _rid: body._rid,
-      _vid: 'draft'
-    }).exec((err, result) => {
-      if (err) {
-        return done(err);
-      }
-      // If a draft exists, overwrite it.
-      if (result) {
-        result.set(body);
-        return result.save(done);
-      }
-      // Otherwise create a new entry.
-      formRevision.create(body, done);
-    });
-  };
-
-  const revisionPlans = ['trial', 'commercial'];
-
-  const shouldCreateNewRevision = (req, item, form) => {
-    const trackedProperties = ['components', 'settings', 'tags', 'properties', 'controller'];
-    const currentFormTrackedProperties = _.pick(form, trackedProperties);
-    const updatedFormTrackedProperties = _.pick(req.body, trackedProperties);
-    const isFormChanged = !_.isEqual(currentFormTrackedProperties, updatedFormTrackedProperties);
-    const areRevisionsAllowed = item.revisions && revisionPlans.includes(req.primaryProject.plan);
-    return (
-      req.isDraft ||
-      item.revisions && !form.revisions ||
-      (areRevisionsAllowed && isFormChanged)
-    );
-  };
+  const formRevision = new FormRevision(app);
 
   const getRequestUser = (req) => {
     const user = req.user || (req.adminKey ? {data: {name: 'admin'}} : null);
@@ -65,16 +18,19 @@ module.exports = app => routes => {
     before(req, res, item, next) {
       app.formio.formio.util.markModifiedParameters(item, ['components', 'properties']);
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
-        if (shouldCreateNewRevision(req, item, form)) {
-          incrementVersion(item);
+        if (formRevision.shouldCreateNewRevision(req, item, form)) {
+          formRevision.incrementVersion(item);
         }
         next();
       });
     },
     after(req, res, item, next) {
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
-        if (shouldCreateNewRevision(req, item, form)) {
-          return createVersion(item, getRequestUser(req), req.body._vnote, next);
+        if (formRevision.shouldCreateNewRevision(req, item, form)) {
+          return formRevision.createVersion(item, getRequestUser(req), req.body._vnote, (err, revision) => {
+            revision.revisionId = revision._id;
+            revision.save(next);
+          });
         }
         next();
       });
@@ -85,16 +41,19 @@ module.exports = app => routes => {
     before(req, res, item, next) {
       app.formio.formio.util.markModifiedParameters(item, ['components', 'properties']);
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
-        if (shouldCreateNewRevision(req, item, form)) {
-          incrementVersion(item);
+        if (formRevision.shouldCreateNewRevision(req, item, form)) {
+          formRevision.incrementVersion(item);
         }
         return next();
       });
     },
     after(req, res, item, next) {
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
-        if (shouldCreateNewRevision(req, item, form)) {
-          return createVersion(item, getRequestUser(req), '', next);
+        if (formRevision.shouldCreateNewRevision(req, item, form)) {
+          return formRevision.createVersion(item, getRequestUser(req), '', (err, revision) => {
+            revision.revisionId = revision._id;
+            revision.save(next);
+          });
         }
         next();
       });
@@ -105,9 +64,12 @@ module.exports = app => routes => {
     after(req, res, item, next) {
       if (
         item.revisions &&
-        revisionPlans.includes(req.primaryProject.plan)
+        formRevision.checkRevisionPlane(req.primaryProject.plan)
       ) {
-        return createVersion(item, getRequestUser(req), req.body._vnote, next);
+        return formRevision.createVersion(item, getRequestUser(req), req.body._vnote, (err, revision) => {
+          revision.revisionId = revision._id;
+          revision.save(next);
+        });
       }
 
       if (!item) {
@@ -195,7 +157,7 @@ module.exports = app => routes => {
     // Don't allow editing drafts if not on enterprise plan.
     if (
       ['PUT'].includes(req.method) &&
-      !revisionPlans.includes(req.primaryProject.plan) &&
+      !formRevision.checkRevisionPlane(req.primaryProject.plan) &&
       req.url.endsWith('/draft')
     ) {
       return res.status(402).send('Payment Required. Project must be on an Enterprise plan.');

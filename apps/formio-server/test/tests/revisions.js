@@ -8,8 +8,9 @@ var async = require('async');
 var util = require('formio/src/util/util');
 
 module.exports = (app, template, hook) => {
-  let helper = new template.Helper(template.formio.owner);
+  const helper = new template.Helper(template.formio.owner);
   let form;
+  let revisionId;
 
   describe('Form Revisions', () => {
     before((done) => {
@@ -150,6 +151,7 @@ module.exports = (app, template, hook) => {
           assert.equal(result[0]._rid, form._id);
           assert.equal(result[0].name, form.name);
           assert(result[0].hasOwnProperty('machineName') === false);
+          assert.equal(result[0].revisionId, result[0]._id);
           done();
         });
       });
@@ -202,6 +204,7 @@ module.exports = (app, template, hook) => {
           assert.equal(result[1]._rid, form._id);
           assert.equal(result[1].name, form.name);
           assert(result[1].hasOwnProperty('machineName') === false);
+          assert.equal(result[0].revisionId, result[0]._id);
           done();
         });
       });
@@ -249,16 +252,20 @@ module.exports = (app, template, hook) => {
           assert.equal(result[0]._rid, form._id);
           assert.equal(result[0].name, form.name);
           assert(result[0].hasOwnProperty('machineName') === false);
+          assert.equal(result[0].revisionId, result[0]._id);
           assert.equal(result[1].components.length, 3);
           assert.equal(result[1]._vid, 2);
           assert.equal(result[1]._rid, form._id);
           assert.equal(result[1].name, form.name);
+          assert.equal(result[1].revisionId, result[1]._id);
           assert(result[1].hasOwnProperty('machineName') === false);
           assert.equal(result[2].components.length, 4);
           assert.equal(result[2]._vid, 3);
           assert.equal(result[2]._rid, form._id);
           assert.equal(result[2].name, form.name);
+          assert.equal(result[2].revisionId, result[2]._id);
           assert(result[2].hasOwnProperty('machineName') === false);
+          revisionId = result[2].revisionId;
           done();
         });
       });
@@ -276,16 +283,19 @@ module.exports = (app, template, hook) => {
           assert.equal(result[0]._rid, form._id);
           assert.equal(result[0].name, form.name);
           assert(result[0].hasOwnProperty('machineName') === false);
+          assert.equal(result[0].revisionId, result[0]._id);
           assert.equal(result[1].components.length, 3);
           assert.equal(result[1]._vid, 2);
           assert.equal(result[1]._rid, form._id);
           assert.equal(result[1].name, form.name);
+          assert.equal(result[1].revisionId, result[1]._id);
           assert(result[1].hasOwnProperty('machineName') === false);
           assert.equal(result[2].components.length, 4);
           assert.equal(result[2]._vid, 3);
           assert.equal(result[2]._rid, form._id);
           assert.equal(result[2].name, form.name);
           assert(result[2].hasOwnProperty('machineName') === false);
+          assert.equal(result[2].revisionId, result[2]._id);
           done();
         });
       });
@@ -302,10 +312,21 @@ module.exports = (app, template, hook) => {
       });
     });
 
+    it('Can access a revision by revisionId', done => {
+      helper.getFormRevision(form, revisionId, (err, result) => {
+        assert.equal(result.components.length, 4);
+        assert.equal(result._vid, 3);
+        assert.equal(result._rid, form._id);
+        assert.equal(result.name, form.name);
+        assert(result.hasOwnProperty('machineName') === false);
+        done();
+      });
+    });
+
     it('Can access a revision by query parameter', done => {
      helper.getFormRevisionByQueryParam(form, 'formRevision=3', (err, result) => {
-       if(err) {
-        return done(err)
+       if (err) {
+        return done(err);
        }
        assert.equal(result.components.length, 4);
        assert.equal(result._vid, 3);
@@ -313,8 +334,22 @@ module.exports = (app, template, hook) => {
        assert.equal(result.name, form.name);
        assert(result.hasOwnProperty('machineName') === false);
        done();
-     })
+     });
     });
+
+    it('Can access a revision by query parameter', done => {
+      helper.getFormRevisionByQueryParam(form, `formRevision=${revisionId}`, (err, result) => {
+        if (err) {
+         return done(err);
+        }
+        assert.equal(result.components.length, 4);
+        assert.equal(result._vid, 3);
+        assert.equal(result._rid, form._id);
+        assert.equal(result.name, form.name);
+        assert(result.hasOwnProperty('machineName') === false);
+        done();
+      });
+     });
 
     it('Returns a 404 for a non-existent revision', done => {
       helper.getFormRevision(form, 4, (err, result) => {
@@ -323,8 +358,22 @@ module.exports = (app, template, hook) => {
       });
     });
 
+    it('Returns a 404 for a non-existent revision', done => {
+      helper.getFormRevision(form, form._id, (err, result) => {
+        assert.equal(result.status, 404);
+        done();
+      });
+    });
+
     it('Can not access a non-existent revision by query parameter', done => {
       helper.getFormRevisionByQueryParam(form, 'formRevision=4', (err, result) => {
+        assert.equal(result.status, 404);
+        done();
+      });
+    });
+
+    it('Can not access a non-existent revision by query parameter', done => {
+      helper.getFormRevisionByQueryParam(form, `formRevision=${form._id}`, (err, result) => {
         assert.equal(result.status, 404);
         done();
       });
@@ -438,21 +487,25 @@ module.exports = (app, template, hook) => {
           assert.equal(result[0]._rid, form._id);
           assert.equal(result[0].name, form.name);
           assert(result[0].hasOwnProperty('machineName') === false);
+          assert.equal(result[0].revisionId, result[0]._id);
           assert.equal(result[1].components.length, 3);
           assert.equal(result[1]._vid, 2);
           assert.equal(result[1]._rid, form._id);
           assert.equal(result[1].name, form.name);
           assert(result[1].hasOwnProperty('machineName') === false);
+          assert.equal(result[1].revisionId, result[1]._id);
           assert.equal(result[2].components.length, 4);
           assert.equal(result[2]._vid, 3);
           assert.equal(result[2]._rid, form._id);
           assert.equal(result[2].name, form.name);
           assert(result[2].hasOwnProperty('machineName') === false);
+          assert.equal(result[2].revisionId, result[2]._id);
           assert.equal(result[3].components.length, 4);
           assert.equal(result[3]._vid, 4);
           assert.equal(result[3]._rid, form._id);
           assert.equal(result[3].name, form.name);
           assert(result[3].hasOwnProperty('machineName') === false);
+          assert.equal(result[3].revisionId, result[3]._id);
           done();
         });
       });
@@ -516,26 +569,31 @@ module.exports = (app, template, hook) => {
           assert.equal(result[0]._rid, form._id);
           assert.equal(result[0].name, form.name);
           assert(result[0].hasOwnProperty('machineName') === false);
+          assert.equal(result[0].revisionId, result[0]._id);
           assert.equal(result[1].components.length, 3);
           assert.equal(result[1]._vid, 2);
           assert.equal(result[1]._rid, form._id);
           assert.equal(result[1].name, form.name);
           assert(result[1].hasOwnProperty('machineName') === false);
+          assert.equal(result[1].revisionId, result[1]._id);
           assert.equal(result[2].components.length, 4);
           assert.equal(result[2]._vid, 3);
           assert.equal(result[2]._rid, form._id);
           assert.equal(result[2].name, form.name);
           assert(result[2].hasOwnProperty('machineName') === false);
+          assert.equal(result[2].revisionId, result[2]._id);
           assert.equal(result[3].components.length, 4);
           assert.equal(result[3]._vid, 4);
           assert.equal(result[3]._rid, form._id);
           assert.equal(result[3].name, form.name);
           assert(result[3].hasOwnProperty('machineName') === false);
+          assert.equal(result[3].revisionId, result[3]._id);
           assert.equal(result[4].components.length, 4);
           assert.equal(result[4]._vid, 5);
           assert.equal(result[4]._rid, form._id);
           assert.equal(result[4].name, form.name);
           assert(result[4].hasOwnProperty('machineName') === false);
+          assert.equal(result[4].revisionId, result[4]._id);
           done();
         });
       });
@@ -592,6 +650,25 @@ module.exports = (app, template, hook) => {
       });
     });
 
+    it('Validates a submission against revision id', done => {
+      helper.createSubmission('revisionForm', {
+        data: {},
+        _fvid: revisionId
+      }, helper.owner, [/application\/json/, 400], (err, result) => {
+        assert.equal(result.name, 'ValidationError');
+        assert.equal(result.details.length, 4);
+        assert.equal(result.details[0].message, 'fname is required');
+        assert.equal(result.details[0].context.validator, 'required');
+        assert.equal(result.details[1].message, 'lname is required');
+        assert.equal(result.details[1].context.validator, 'required');
+        assert.equal(result.details[2].message, 'mname is required');
+        assert.equal(result.details[2].context.validator, 'required');
+        assert.equal(result.details[3].message, 'pname is required');
+        assert.equal(result.details[3].context.validator, 'required');
+        done();
+      });
+    });
+
 
     it('Submits to form version 2', done => {
       const data = {
@@ -631,26 +708,31 @@ module.exports = (app, template, hook) => {
               assert.equal(result[0]._rid, form._id);
               assert.equal(result[0].name, form.name);
               assert(result[0].hasOwnProperty('machineName') === false);
+              assert.equal(result[0].revisionId, result[0]._id);
               assert.equal(result[1].components.length, 3);
               assert.equal(result[1]._vid, 2);
               assert.equal(result[1]._rid, form._id);
               assert.equal(result[1].name, form.name);
               assert(result[1].hasOwnProperty('machineName') === false);
+              assert.equal(result[1].revisionId, result[1]._id);
               assert.equal(result[2].components.length, 4);
               assert.equal(result[2]._vid, 3);
               assert.equal(result[2]._rid, form._id);
               assert.equal(result[2].name, form.name);
               assert(result[2].hasOwnProperty('machineName') === false);
+              assert.equal(result[2].revisionId, result[2]._id);
               assert.equal(result[3].components.length, 4);
               assert.equal(result[3]._vid, 4);
               assert.equal(result[3]._rid, form._id);
               assert.equal(result[3].name, form.name);
               assert(result[3].hasOwnProperty('machineName') === false);
+              assert.equal(result[3].revisionId, result[3]._id);
               assert.equal(result[4].components.length, 4);
               assert.equal(result[4]._vid, 5);
               assert.equal(result[4]._rid, form._id);
               assert.equal(result[4].name, form.name);
               assert(result[4].hasOwnProperty('machineName') === false);
+              assert.equal(result[4].revisionId, result[4]._id);
               done();
             });
           });
@@ -681,26 +763,31 @@ module.exports = (app, template, hook) => {
               assert.equal(result[0]._rid, form._id);
               assert.equal(result[0].name, form.name);
               assert(result[0].hasOwnProperty('machineName') === false);
+              assert.equal(result[0].revisionId, result[0]._id);
               assert.equal(result[1].components.length, 3);
               assert.equal(result[1]._vid, 2);
               assert.equal(result[1]._rid, form._id);
               assert.equal(result[1].name, form.name);
               assert(result[1].hasOwnProperty('machineName') === false);
+              assert.equal(result[1].revisionId, result[1]._id);
               assert.equal(result[2].components.length, 4);
               assert.equal(result[2]._vid, 3);
               assert.equal(result[2]._rid, form._id);
               assert.equal(result[2].name, form.name);
               assert(result[2].hasOwnProperty('machineName') === false);
+              assert.equal(result[2].revisionId, result[2]._id);
               assert.equal(result[3].components.length, 4);
               assert.equal(result[3]._vid, 4);
               assert.equal(result[3]._rid, form._id);
               assert.equal(result[3].name, form.name);
               assert(result[3].hasOwnProperty('machineName') === false);
+              assert.equal(result[3].revisionId, result[3]._id);
               assert.equal(result[4].components.length, 4);
               assert.equal(result[4]._vid, 5);
               assert.equal(result[4]._rid, form._id);
               assert.equal(result[4].name, form.name);
               assert(result[4].hasOwnProperty('machineName') === false);
+              assert.equal(result[4].revisionId, result[4]._id);
               done();
             });
           });
@@ -731,26 +818,31 @@ module.exports = (app, template, hook) => {
               assert.equal(result[0]._rid, form._id);
               assert.equal(result[0].name, form.name);
               assert(result[0].hasOwnProperty('machineName') === false);
+              assert.equal(result[0].revisionId, result[0]._id);
               assert.equal(result[1].components.length, 3);
               assert.equal(result[1]._vid, 2);
               assert.equal(result[1]._rid, form._id);
               assert.equal(result[1].name, form.name);
               assert(result[1].hasOwnProperty('machineName') === false);
+              assert.equal(result[1].revisionId, result[1]._id);
               assert.equal(result[2].components.length, 4);
               assert.equal(result[2]._vid, 3);
               assert.equal(result[2]._rid, form._id);
               assert.equal(result[2].name, form.name);
               assert(result[2].hasOwnProperty('machineName') === false);
+              assert.equal(result[2].revisionId, result[2]._id);
               assert.equal(result[3].components.length, 4);
               assert.equal(result[3]._vid, 4);
               assert.equal(result[3]._rid, form._id);
               assert.equal(result[3].name, form.name);
               assert(result[3].hasOwnProperty('machineName') === false);
+              assert.equal(result[3].revisionId, result[3]._id);
               assert.equal(result[4].components.length, 4);
               assert.equal(result[4]._vid, 5);
               assert.equal(result[4]._rid, form._id);
               assert.equal(result[4].name, form.name);
               assert(result[4].hasOwnProperty('machineName') === false);
+              assert.equal(result[4].revisionId, result[4]._id);
               done();
             });
           });
@@ -781,31 +873,37 @@ module.exports = (app, template, hook) => {
               assert.equal(result[0]._rid, form._id);
               assert.equal(result[0].name, form.name);
               assert(result[0].hasOwnProperty('machineName') === false);
+              assert.equal(result[0].revisionId, result[0]._id);
               assert.equal(result[1].components.length, 3);
               assert.equal(result[1]._vid, 2);
               assert.equal(result[1]._rid, form._id);
               assert.equal(result[1].name, form.name);
               assert(result[1].hasOwnProperty('machineName') === false);
+              assert.equal(result[1].revisionId, result[1]._id);
               assert.equal(result[2].components.length, 4);
               assert.equal(result[2]._vid, 3);
               assert.equal(result[2]._rid, form._id);
               assert.equal(result[2].name, form.name);
               assert(result[2].hasOwnProperty('machineName') === false);
+              assert.equal(result[2].revisionId, result[2]._id);
               assert.equal(result[3].components.length, 4);
               assert.equal(result[3]._vid, 4);
               assert.equal(result[3]._rid, form._id);
               assert.equal(result[3].name, form.name);
               assert(result[3].hasOwnProperty('machineName') === false);
+              assert.equal(result[3].revisionId, result[3]._id);
               assert.equal(result[4].components.length, 4);
               assert.equal(result[4]._vid, 5);
               assert.equal(result[4]._rid, form._id);
               assert.equal(result[4].name, form.name);
               assert(result[4].hasOwnProperty('machineName') === false);
+              assert.equal(result[4].revisionId, result[4]._id);
               assert.equal(result[5].components.length, 4);
               assert.equal(result[5]._vid, 6);
               assert.equal(result[5]._rid, form._id);
               assert.equal(result[5].name, form.name);
               assert(result[5].hasOwnProperty('machineName') === false);
+              assert.equal(result[5].revisionId, result[5]._id);
               done();
             });
           });
@@ -862,34 +960,298 @@ module.exports = (app, template, hook) => {
           assert.equal(result[0]._rid, form._id);
           assert.equal(result[0].name, form.name);
           assert(result[0].hasOwnProperty('machineName') === false);
+          assert.equal(result[0].revisionId, result[0]._id);
           assert.equal(result[1].components.length, 3);
           assert.equal(result[1]._vid, 2);
           assert.equal(result[1]._rid, form._id);
           assert.equal(result[1].name, form.name);
           assert(result[1].hasOwnProperty('machineName') === false);
+          assert.equal(result[1].revisionId, result[1]._id);
           assert.equal(result[2].components.length, 4);
           assert.equal(result[2]._vid, 3);
           assert.equal(result[2]._rid, form._id);
           assert.equal(result[2].name, form.name);
           assert(result[2].hasOwnProperty('machineName') === false);
+          assert.equal(result[2].revisionId, result[2]._id);
           assert.equal(result[3].components.length, 4);
           assert.equal(result[3]._vid, 4);
           assert.equal(result[3]._rid, form._id);
           assert.equal(result[3].name, form.name);
           assert(result[3].hasOwnProperty('machineName') === false);
+          assert.equal(result[3].revisionId, result[3]._id);
           assert.equal(result[4].components.length, 4);
           assert.equal(result[4]._vid, 5);
           assert.equal(result[4]._rid, form._id);
           assert.equal(result[4].name, form.name);
           assert(result[4].hasOwnProperty('machineName') === false);
+          assert.equal(result[4].revisionId, result[4]._id);
           assert.equal(result[5].components.length, 4);
           assert.equal(result[5]._vid, 6);
           assert.equal(result[5]._rid, form._id);
           assert.equal(result[5].name, form.name);
           assert(result[5].hasOwnProperty('machineName') === false);
+          assert.equal(result[5].revisionId, result[5]._id);
           done();
         });
       });
     });
   });
+
+  describe('Submission Revisions', () => {
+   // const helper = new template.Helper(template.formio.owner);
+    let form;
+    let submission;
+    const data = {
+      fname: 'joe',
+      lname: 'test'
+    };
+    let submissionRevisions;
+
+    before((done) => {
+      process.env.ADMIN_KEY = process.env.ADMIN_KEY || 'examplekey';
+      done();
+    });
+
+    it('Creates a test project and form', done => {
+      helper
+        .project()
+        .plan('trial')
+        .form('submissionRevisionForm', [
+          {
+            input: true,
+            tableView: true,
+            inputType: 'text',
+            inputMask: '',
+            label: 'fname',
+            key: 'fname',
+            placeholder: '',
+            prefix: '',
+            suffix: '',
+            multiple: false,
+            defaultValue: '',
+            protected: false,
+            unique: false,
+            persistent: true,
+            validate: {
+              required: true,
+              minLength: '',
+              maxLength: '',
+              pattern: '',
+              custom: '',
+              customPrivate: false
+            },
+            conditional: {
+              show: '',
+              when: null,
+              eq: ''
+            },
+            type: 'textfield'
+          },
+          {
+            input: true,
+            tableView: true,
+            inputType: 'text',
+            inputMask: '',
+            label: 'lname',
+            key: 'lname',
+            placeholder: '',
+            prefix: '',
+            suffix: '',
+            multiple: false,
+            defaultValue: '',
+            protected: false,
+            unique: false,
+            persistent: true,
+            validate: {
+              required: true,
+              minLength: '',
+              maxLength: '',
+              pattern: '',
+              custom: '',
+              customPrivate: false
+            },
+            conditional: {
+              show: '',
+              when: null,
+              eq: ''
+            },
+            type: 'textfield'
+          }
+        ])
+        .execute(function() {
+          form = helper.getForm('submissionRevisionForm');
+          assert(typeof form === 'object');
+          done();
+        });
+    });
+
+    it('Sets a form to use submission revisions', done => {
+      form.submissionRevisions = true;
+      form.components.push();
+      helper.updateForm(form, (err, result) => {
+        assert.equal(result.submissionRevisions, 'true');
+        done();
+      });
+    });
+
+    it('Does not Create submission with wrong data', done => {
+      helper.createSubmission('submissionRevisionForm', {
+        data: {},
+      }, helper.owner, [/application\/json/, 400], (err, result) => {
+        assert.equal(result.name, 'ValidationError');
+        done();
+      });
+    });
+
+    it('Create submission with enabled revisions', done => {
+      helper.createSubmission('submissionRevisionForm', {
+        data,
+      },
+      (err, result) => {
+        if (err) {
+          done(err);
+        }
+        submission = result;
+        assert.deepEqual(submission.data, data);
+        helper.getSubmissionRevisions(form, submission,
+        (err, revisions) => {
+          if (err) {
+            done(err);
+          }
+
+          assert.equal(revisions.length, 1);
+          assert.equal(revisions[0]._rid, submission._id);
+          assert.equal(revisions[0]._vuser, helper.owner.data.email);
+          assert.deepEqual(revisions[0].data, data);
+          assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'replace', path: '/data/lname', value: 'test'});
+          assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'replace', path: '/data/fname', value: 'joe'});
+          submissionRevisions = revisions;
+
+          done();
+        });
+      });
+  });
+
+  it('Does not Create a new revision without update data', done => {
+    helper.updateSubmission(submission,
+    (err, result) => {
+      if (err) {
+        done(err);
+      }
+      helper.getSubmissionRevisions(form, submission, (err, revisions) => {
+        if (err) {
+          done(err);
+        }
+
+        assert.equal(revisions.length, 1);
+        assert.equal(revisions[0]._rid, submission._id);
+        assert.equal(revisions[0]._vuser, helper.owner.data.email);
+        assert.deepEqual(revisions[0].data, data);
+        assert.equal(revisions[0].metadata.jsonPatch.length, 2);
+        assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'replace', path: '/data/lname', value: 'test'});
+        assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'replace', path: '/data/fname', value: 'joe'});
+
+        done();
+      });
+    });
+  });
+
+  it('Create a new revision when update data', done => {
+    submission.data.fname = 'Joe';
+    submission._vnote = 'vnote';
+    helper.updateSubmission(submission,
+    (err, result) => {
+      if (err) {
+        done(err);
+      }
+      helper.getSubmissionRevisions(form, submission, (err, revisions) => {
+        if (err) {
+          done(err);
+        }
+
+        assert.equal(revisions.length, 2);
+        assert.equal(revisions[0]._rid, submission._id);
+        assert.equal(revisions[0]._vuser, helper.owner.data.email);
+        assert.deepEqual(revisions[0].data, data);
+        assert.equal(revisions[0].metadata.jsonPatch.length, 2);
+        assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'replace', path: '/data/lname', value: 'test'});
+        assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'replace', path: '/data/fname', value: 'joe'});
+
+        assert.equal(revisions[1]._rid, submission._id);
+        assert.equal(revisions[1]._vuser, helper.owner.data.email);
+        assert.deepEqual(revisions[1].data, {fname: 'Joe', lname: data.lname});
+        assert.equal(revisions[1].metadata.jsonPatch.length, 1);
+        assert.deepEqual(revisions[1].metadata.jsonPatch[0], {op: 'replace', path: '/data/fname', value: 'Joe'});
+        assert.deepEqual(revisions[1].metadata.previousData, data);
+        assert.equal(revisions[1]._vnote, 'vnote');
+
+        submissionRevisions = revisions;
+
+        done();
+      });
+    });
+  });
+
+  it('Get submission revision by Id', done => {
+    helper.getSubmissionRevision(form, submission, submissionRevisions[1]._id, (err, result) => {
+      if (err) {
+        done(err);
+      }
+
+      assert.equal(result._rid, submission._id);
+      assert.equal(result._vuser, helper.owner.data.email);
+      assert.deepEqual(result.data, {fname: 'Joe', lname: data.lname});
+      assert.equal(result.metadata.jsonPatch.length, 1);
+      assert.deepEqual(result.metadata.jsonPatch[0], {op: 'replace', path: '/data/fname', value: 'Joe'});
+      assert.deepEqual(result.metadata.previousData, data);
+      assert.equal(result._vnote, 'vnote');
+
+      done();
+    });
+  });
+
+  it('Get submission change log', done => {
+    helper.getSubmissionChangeLog(form, submission, (err, results) => {
+      if (err) {
+        done(err);
+      }
+
+      assert.equal(results.length, 2);
+
+      const revision0 = results.find((revision)=> revision._id === submissionRevisions[0]._id);
+      const revision1 = results.find((revision)=> revision._id === submissionRevisions[1]._id);
+
+      assert.equal(revision0._vuser, submissionRevisions[0]._vuser);
+      assert.deepEqual(revision0.data, submissionRevisions[0].data);
+      assert.equal(revision0.metadata.jsonPatch.length, submissionRevisions[0].metadata.jsonPatch.length);
+      assert.deepEqual(revision0.metadata.jsonPatch[0], submissionRevisions[0].metadata.jsonPatch[0]);
+      assert.deepEqual(revision0.metadata.jsonPatch[1], submissionRevisions[0].metadata.jsonPatch[1]);
+
+      assert.equal(revision1._vuser, submissionRevisions[1]._vuser);
+      assert.deepEqual(revision1.data, submissionRevisions[1].data);
+      assert.equal(revision1.metadata.jsonPatch.length, submissionRevisions[1].metadata.jsonPatch.length);
+      assert.deepEqual(revision1.metadata.jsonPatch[0], submissionRevisions[1].metadata.jsonPatch[0]);
+      assert.deepEqual(revision1.metadata.previousData, submissionRevisions[1].metadata.previousData);
+
+      done();
+    });
+  });
+
+  it('Get submission revision change log', done => {
+    helper.getSubmissionRevisionChangeLog(form, submission, submissionRevisions[1]._id, (err, result) => {
+      if (err) {
+        done(err);
+      }
+
+      assert.equal(result._id, submissionRevisions[1]._id);
+      assert.equal(result._vuser, submissionRevisions[1]._vuser);
+      assert.deepEqual(result.data, submissionRevisions[1].data);
+      assert.equal(result.metadata.jsonPatch.length, submissionRevisions[1].metadata.jsonPatch.length);
+      assert.deepEqual(result.metadata.jsonPatch[0], submissionRevisions[1].metadata.jsonPatch[0]);
+      assert.deepEqual(result.metadata.previousData, submissionRevisions[1].metadata.previousData);
+
+      done();
+    });
+  });
+});
 };

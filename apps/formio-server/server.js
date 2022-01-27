@@ -251,10 +251,32 @@ module.exports = function(options) {
     require('./src/middleware/download')(app.formio)
   ];
 
+  const changeLog = [
+    require('./src/middleware/apiKey')(app.formio.formio),
+    require('./src/middleware/remoteToken')(app),
+    app.formio.formio.middleware.alias,
+    require('./src/middleware/aliasToken')(app),
+    app.formio.formio.middleware.tokenHandler,
+    app.formio.formio.middleware.params,
+    app.formio.formio.middleware.permissionHandler,
+    require('./src/middleware/submissionChangeLog')(app),
+  ];
+
+  app.get('/project/:projectId/form/:formId/submission/:submissionId/download/changelog',
+  ...changeLog,
+  require('./src/middleware/download')(app.formio)
+  );
+
   app.get('/project/:projectId/:formAlias/submission/:submissionId/download', downloadPDF);
   app.get('/project/:projectId/form/:formId/submission/:submissionId/download', downloadPDF);
   app.get('/project/:projectId/:formAlias/submission/:submissionId/download/:fileId', downloadPDF);
   app.get('/project/:projectId/form/:formId/submission/:submissionId/download/:fileId', downloadPDF);
+
+  app.get('/project/:projectId/form/:formId/submission/:submissionId/changelog',
+  ...changeLog,
+  (req, res, next) => {
+     res.send(req.changelog);
+  });
 
   app.post('/project/:projectId/form/:formId/download', downloadPDF);
 

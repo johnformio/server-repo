@@ -30,6 +30,11 @@ module.exports = (router, models) => {
       type: String,
       description: 'The user who created the version',
       default: 'anonymous'
+    },
+    revisionId: {
+      type: formio.mongoose.Schema.Types.ObjectId,
+      description: 'Revision unique id.',
+      index: true
     }
   });
 

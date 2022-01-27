@@ -1,8 +1,10 @@
 'use strict';
 
 const _ = require('lodash');
+const SubmissionRevision = require('../../revisions/SubmissionRevision');
 
 module.exports = app => routes => {
+  const submissionRevision = new SubmissionRevision(app);
   const licenseUtilizationMiddleware = require('../../middleware/licenseUtilization').middleware(app);
 
   const filterExternalTokens = app.formio.formio.middleware.filterResourcejsResponse(['externalTokens']);
@@ -26,9 +28,15 @@ module.exports = app => routes => {
     }
   };
 
+  const deleteRevisions = function(req, res, next) {
+    submissionRevision.delete(req.params.submissionId, next);
+  };
+
   _.each(['afterGet', 'afterIndex', 'afterPost', 'afterPut', 'afterDelete'], function(handler) {
     routes[handler].push(conditionalFilter);
   });
+
+  routes.afterDelete.push(deleteRevisions);
 
   // Add a submission model set before the index.
   routes.beforeIndex.unshift((req, res, next) => app.formio.formio.cache.setSubmissionModel(
@@ -84,12 +92,85 @@ module.exports = app => routes => {
         return next();
       }
     });
-  });
+});
 
   // Add license utilization middleware
   _.each(['beforePost', 'beforePut', 'beforeIndex', 'beforeGet'], handler => {
     routes[handler].unshift(licenseUtilizationMiddleware);
   });
+
+  routes.hooks.post = {
+    after(req, res, item, next) {
+      app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
+        if (err) {
+          return next(err);
+        }
+        if (submissionRevision.shouldCreateNewRevision(req, item, null, form)) {
+          return submissionRevision.createVersion(item, req.user, req.body._vnote, (err, revision) => {
+            if (err) {
+              return next(err);
+            }
+            return next();
+          });
+        }
+        next();
+    });
+  }
+  };
+
+  routes.hooks.put = {
+    after(req, res, item, next) {
+      app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
+        if (err) {
+          return next(err);
+        }
+        app.formio.formio.cache.loadSubmission(
+          req,
+          req.body.form,
+          req.body._id, (err, loadSubmission)=>{
+            if (err) {
+              return next(err);
+            }
+            if (submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form)) {
+              return submissionRevision.createVersion(item, req.user, req.body._vnote, (err, revision) => {
+                if (err) {
+                  return next(err);
+                }
+                return next();
+              });
+            }
+          next();
+        });
+    });
+    }
+  };
+
+  routes.hooks.patch = {
+    after(req, res, item, next) {
+      app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
+        if (err) {
+          return next(err);
+        }
+        app.formio.formio.cache.loadSubmission(
+          req,
+          req.body.form,
+          req.body._id, (err, loadSubmission)=>{
+            if (err) {
+              return next(err);
+            }
+            if (submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form)) {
+              return submissionRevision.createVersion(item, null, req.body._vnote, (err, revision) => {
+                if (err) {
+                  return next(err);
+                }
+                return next();
+              });
+            }
+          next();
+        });
+    });
+    }
+  };
 
   return routes;
 };

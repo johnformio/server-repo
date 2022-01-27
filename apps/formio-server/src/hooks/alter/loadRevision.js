@@ -1,12 +1,14 @@
 'use strict';
 
-module.exports = app => (form, revision, done) => {
-  const formRevision = app.formio.formio.mongoose.models.formrevision;
+module.exports = app => (instance, revision, type, done) => {
+  const instanceRevision = app.formio.formio.mongoose.models[`${type}revision`];
 
-  formRevision.findOne({
-    _rid: form._id,
+  const findRevision = revision.length === 24 ? instanceRevision.findOne({_id: revision}) : instanceRevision.findOne({
+    _rid: instance._id,
     _vid: parseInt(revision, 10)
-  }).lean().exec((err, result) => {
+  });
+
+  findRevision.lean().exec((err, result) => {
     if (err) {
       return done(null, err);
     }

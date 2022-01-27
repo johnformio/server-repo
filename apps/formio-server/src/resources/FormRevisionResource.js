@@ -16,11 +16,18 @@ module.exports = function(router, formioServer) {
       },
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       formio.middleware.bootstrapEntityOwner,
-      formio.middleware.formHandler,
+      (req, res, next) => {
+        if (req.params['vId'] && req.params['vId'].length === 24) {
+          return next();
+        }
+        else {
+          return formio.middleware.formHandler(req, res, next);
+        }
+      },
       formio.middleware.formActionHandler('before'),
       (req, res, next) => {
         // Always add the resourceId to all queries.
-        req.query['_rid'] =  req.params['formId'];
+          req.query['_rid'] =  req.params['formId'];
         next();
       }
     ],
@@ -33,6 +40,12 @@ module.exports = function(router, formioServer) {
     hooks: {
       get: {
         before: (req, res, search, next) => {
+          if (req.params['vId'] && req.params['vId'].length === 24) {
+            search.revisionId = req.params['vId'];
+            delete search['_id'];
+            return next();
+          }
+          else {
           search['_rid'] = req.params['formId'];
           // Add vid if set.
           if (req.params['vId']) {
@@ -43,7 +56,8 @@ module.exports = function(router, formioServer) {
               req.modelQuery.sort('-_vid').limit(1);
             }
           }
-          next();
+          return next();
+          }
         }
       }
     }

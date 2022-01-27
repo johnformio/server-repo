@@ -5,6 +5,8 @@ const fetch = require('formio/src/util/fetch');
 const {getLicenseKey} = require('./utilization');
 const {getPDFUrls} = require('./pdf');
 const util = require('./util');
+const processChangeLogData = require('./processChangeLogData');
+
 const PDF_SERVER = process.env.PDF_SERVER || process.env.FORMIO_FILES_SERVER;
 module.exports = (formioServer) => {
   const formio = formioServer.formio;
@@ -34,18 +36,30 @@ module.exports = (formioServer) => {
     // }
 
     // Swap in form components from earlier revision, if applicable
-    if (form.revisions === 'original' && submission._fvid !== form._vid) {
-      const result = await Promise.promisify(formio.resources.formrevision.model.findOne, {
-        context: formio.resources.formrevision.model
-      })({
-        project: project._id,
-        _rid: formio.util.idToBson(form._id),
-        _vid: parseInt(submission._fvid),
-      });
-
-      if (result) {
-        form.components = result.toObject().components;
-        form.settings = result.toObject().settings;
+    if (form.revisions === 'original') {
+      const submissionFormRevisionId = submission._frid ? submission._frid.toString() : submission._fvid;
+      if (submissionFormRevisionId !== form._vid) {
+        let result;
+        if (submissionFormRevisionId.length === 24) {
+          result = await Promise.promisify(formio.resources.formrevision.model.findOne, {
+            context: formio.resources.formrevision.model
+          })({
+            _id: formio.util.idToBson(submissionFormRevisionId),
+          });
+        }
+        else {
+          result = await Promise.promisify(formio.resources.formrevision.model.findOne, {
+            context: formio.resources.formrevision.model
+          })({
+            project: project._id,
+            _rid: formio.util.idToBson(form._id),
+            _vid: parseInt(submissionFormRevisionId),
+          });
+        }
+        if (result) {
+          form.components = result.toObject().components;
+          form.settings = result.toObject().settings;
+        }
       }
     }
 
@@ -72,6 +86,10 @@ module.exports = (formioServer) => {
     if (req.query.from) {
       pdfUrls.local = req.query.from;
       delete req.query.from;
+    }
+
+    if (req.changelog && req.changelog.length > 0) {
+      processChangeLogData(req.changelog, form, submission);
     }
 
     // Create the headers object

@@ -159,6 +159,90 @@ module.exports = (app, Helper) => {
       });
   };
 
+  Helper.prototype.getSubmissionRevisions = function(form, submission, done) {
+    let url = '';
+    if (this.template.project && this.template.project._id) {
+      url += `/project/${this.template.project._id}`;
+    }
+    url += `/form/${form._id}/submission/${submission._id}/v`;
+
+    request(app).get(url)
+      .send()
+      .set('x-jwt-token', this.owner.token)
+      .expect('Content-Type', /json/)
+      .expect(200)
+      .end((err, res) => {
+        if (err) {
+          return done(err, res);
+        }
+        this.owner.token = res.headers['x-jwt-token'];
+        done(null, res.body);
+      });
+  };
+
+  Helper.prototype.getSubmissionRevision = function(form, submission, revId, done) {
+    let url = '';
+    if (this.template.project && this.template.project._id) {
+      url += `/project/${this.template.project._id}`;
+    }
+    url += `/form/${form._id}/submission/${submission._id}?submissionRevision=${revId}`;
+
+    request(app).get(url)
+      .send()
+      .set('x-jwt-token', this.owner.token)
+      .expect('Content-Type', /json/)
+      .expect(200)
+      .end((err, res) => {
+        if (err) {
+          return done(err, res);
+        }
+        this.owner.token = res.headers['x-jwt-token'];
+        done(null, res.body);
+      });
+  };
+
+  Helper.prototype.getSubmissionRevisionChangeLog = function(form, submission, revId, done) {
+    let url = '';
+    if (this.template.project && this.template.project._id) {
+      url += `/project/${this.template.project._id}`;
+    }
+    url += `/form/${form._id}/submission/${submission._id}/changelog?submissionRevision=${revId}`;
+
+    request(app).get(url)
+      .send()
+      .set('x-jwt-token', this.owner.token)
+      .expect('Content-Type', /json/)
+      .expect(200)
+      .end((err, res) => {
+        if (err) {
+          return done(err, res);
+        }
+        this.owner.token = res.headers['x-jwt-token'];
+        done(null, res.body);
+      });
+  };
+
+  Helper.prototype.getSubmissionChangeLog = function(form, submission, done) {
+    let url = '';
+    if (this.template.project && this.template.project._id) {
+      url += `/project/${this.template.project._id}`;
+    }
+    url += `/form/${form._id}/submission/${submission._id}/changelog`;
+
+    request(app).get(url)
+      .send()
+      .set('x-jwt-token', this.owner.token)
+      .expect('Content-Type', /json/)
+      .expect(200)
+      .end((err, res) => {
+        if (err) {
+          return done(err, res);
+        }
+        this.owner.token = res.headers['x-jwt-token'];
+        done(null, res.body);
+      });
+  };
+
   if (!docker && !customer)
   Helper.prototype.settings = function(settings) {
     this.series.push(async.apply(this.setProjectSettings.bind(this), settings));
