@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased: 7.4.0-rc.2]
+### Added
+ - FIO-4359: Submission revisions
+
 ### Fixed
  - FIO-4487: Server crash when passed an invalid submission id during PATCH request
  - FIO-4473: Fixed server to work with latest saml library.
