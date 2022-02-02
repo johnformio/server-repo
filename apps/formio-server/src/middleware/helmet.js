@@ -16,7 +16,11 @@ module.exports = (router) => {
             helmetOverrides.crossOriginEmbedderPolicy = false;
 
             // Strict-Transport-Security middleware
-            helmetOverrides.hsts = {preload: true};
+            helmetOverrides.hsts = {
+                includeSubDomains: true,
+                preload: true,
+                maxAge: 15552000
+            };
 
             // Referer-Policy middleware
             helmetOverrides.referrerPolicy = {
@@ -41,13 +45,16 @@ module.exports = (router) => {
             }
 
             const defaultCSP = {
-                'default-src': ["'self'"],
-                'frame-src': ["'self'", 'https://*', 'blob:', 'data:'],
-                'img-src': ['*', 'data:'],
+                'upgrade-insecure-requests': null,
+                'default-src': ['*'],
+                'frame-src': ['*'],
+                'child-src': ['*'],
+                'img-src': ['*', 'blob:', 'data:'],
+                'media-src': ['*'],
                 'script-src': ['*', "'unsafe-inline'", "'unsafe-eval'"],
                 'style-src': ['*', "'unsafe-inline'"],
                 'font-src': ['*', 'blob:', 'data:'],
-                'connect-src': ["'self'", 'maps.googleapis.com']
+                'connect-src': ['*']
             };
 
             if (!req.projectId ||

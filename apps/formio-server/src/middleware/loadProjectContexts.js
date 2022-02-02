@@ -6,7 +6,7 @@ module.exports = (formio) => (req, res, next) => {
   if (req.params.projectId) {
     projectId = req.params.projectId;
   }
-  if (!projectId && req.body.project) {
+  if (!projectId && req.body && req.body.project) {
     projectId = req.body.project;
   }
   if (!projectId) {
