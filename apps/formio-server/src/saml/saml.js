@@ -67,6 +67,10 @@ module.exports = (formioServer) => {
             return reject('Invalid SAML Configuration');
           }
           try {
+            // Fix "authnContext" configuration option which changed in recent versions from a string to an array.
+            if (config.authnContext && !_.isArray(config.authnContext)) {
+              config.authnContext = [config.authnContext];
+            }
             const saml = new SAML(config);
             return resolve({
               saml: saml,
