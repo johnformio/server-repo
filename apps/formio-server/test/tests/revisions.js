@@ -1086,7 +1086,7 @@ module.exports = (app, template, hook) => {
     });
 
     it('Sets a form to use submission revisions', done => {
-      form.submissionRevisions = true;
+      form.submissionRevisions = 'true';
       form.components.push();
       helper.updateForm(form, (err, result) => {
         assert.equal(result.submissionRevisions, 'true');

@@ -36,19 +36,28 @@ module.exports = class FormRevision extends Revision {
 
     const loadItemData = loadItem && loadItem.data ? rewriteDateDeep(loadItem.data, rewriteDate) : rewriteDateDeep(req.body.data, rewriteStructure);
     const reqDate = rewriteDateDeep(req.body.data, rewriteDate);
-    const patch = jsonPatch.compare(loadItemData, reqDate)
+    try {
+      const patch = jsonPatch.compare(loadItemData, reqDate)
       .map((operation) => {
         operation.path = `/data${operation.path}`;
         return operation;
       });
-    if (patch.length === 0) {
+      if (patch.length === 0) {
+        return false;
+      }
+
+      if (Revision.prototype.shouldCreateNewRevision.call(this, req, item, loadItem, form)) {
+        if (loadItem && loadItem.data) {
+          _.set(req.body.metadata, 'previousData', loadItem.data);
+        }
+        _.set(req.body.metadata, 'jsonPatch', patch);
+        return true;
+      }
       return false;
     }
-    if (loadItem && loadItem.data) {
-      _.set(req.body.metadata, 'previousData', loadItem.data);
+    catch (e) {
+      //
     }
-    _.set(req.body.metadata, 'jsonPatch', patch);
-    return Revision.prototype.shouldCreateNewRevision.call(this, req, item, loadItem, form);
   }
 
   createVersion(item, user, note, done) {
