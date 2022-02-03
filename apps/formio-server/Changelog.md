@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
  - FIO-4596: Fix issues with SAML and the 'authnContext' configuration.
  - FIO-4582: Fixed issues with CSP rejecting http requests from other domains.
+ - FIO-4359: Submission revision issue fix
 
 ## 7.4.0-rc.2
 ### Changed
