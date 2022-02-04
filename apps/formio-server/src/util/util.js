@@ -129,6 +129,11 @@ const Utils = {
       return next();
     }
 
+    // Return if the submission model is already established.
+    if (req.submissionModel) {
+      return next(null, req.submissionModel);
+    }
+
     // Load the project in context.
     formio.cache.loadCurrentProject(req, (err, project) => {
       if (err) {
@@ -171,8 +176,11 @@ const Utils = {
         return next(`${collectionName} is a reserved collection name.`);
       }
 
+      // Set the submission model.
+      req.submissionModel = formio.mongoose.model(collectionName, formio.schemas.submission, collectionName, init);
+
       // Establish a model using the schema.
-      return next(null, formio.mongoose.model(collectionName, formio.schemas.submission, collectionName, init));
+      return next(null, req.submissionModel);
     });
   },
   getComponentDataByPath: (path, data) => {

@@ -339,6 +339,7 @@ describe('Initial Tests', function() {
             plan: 'commercial',
             template: formioProject
           })
+          .expect(201)
           .end(function(err, res) {
             if (err) {
               return done(err);
