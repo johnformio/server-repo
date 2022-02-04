@@ -4,7 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 7.4.0-rc.4]
+## 7.4.0-rc.4
+### Changed
+ - Updated formio-app@7.4.0-rc.4
+ - Updated formiojs@4.15.0-rc.3
+ - Updated formio@2.5.0-rc.3
+
 ### Fixed
  - FIO-4216: Fixed issues where submission collections were not getting established correctly.
 
