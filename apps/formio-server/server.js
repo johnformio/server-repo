@@ -2,7 +2,7 @@
 
 require('dotenv').config();
 const express = require('express');
-const _helmet = require('helmet');
+const helmet = require('helmet');
 const _ = require('lodash');
 const bodyParser = require('body-parser');
 const favicon = require('serve-favicon');
@@ -21,13 +21,6 @@ const debug = {
 };
 const RequestCache = require('./src/util/requestCache');
 const CryptoJS = require('crypto-js');
-
-const helmet = _helmet({
-  hsts: {
-    preload: true,
-  },
-  contentSecurityPolicy: false,
-});
 
 module.exports = function(options) {
   options = options || {};
@@ -68,20 +61,6 @@ module.exports = function(options) {
 
   app.portalEnabled = (process.env.PRIMARY && process.env.PRIMARY !==  'false') || (process.env.PORTAL_ENABLED && process.env.PORTAL_ENABLED !==  'false');
 
-  // Secure html pages with the proper headers.
-  debug.startup('Attaching middleware: Helmet');
-  app.use((req, res, next) => {
-    if (
-      (req.url === '/' && app.portalEnabled) ||
-      req.url.endsWith('.html') ||
-      req.url.endsWith('/manage') ||
-      req.url.endsWith('/manage/view')
-    ) {
-      return helmet(req, res, next);
-    }
-    return next();
-  });
-
   // Initialization middleware.
   app.use((req, res, next) => {
     const sendStatus = res.sendStatus;
@@ -94,7 +73,7 @@ module.exports = function(options) {
   });
 
   // Use helmet to add CSP to application code.
-  // app.use(require('./src/middleware/helmet')(app));
+  app.use(require('./src/middleware/helmet')(app));
 
   if (app.portalEnabled) {
     debug.startup('Mounting Portal Application');
@@ -238,23 +217,6 @@ module.exports = function(options) {
 
   // Set the project query middleware for filtering disabled projects
   app.use(require('./src/middleware/projectQueryLimits'));
-
-  // Strict-Transport-Security middleware
-  const hsts = _helmet.hsts({
-    preload: true,
-  });
-
-  // Referer-Policy middleware
-  const referrerPolicy = _helmet.referrerPolicy({
-    policy: ['origin', 'same-origin'],
-  });
-
-  const cspSettings = require('./src/middleware/cspSettings')(app);
-
-  if (app.portalEnabled) {
-    debug.startup('Attaching middleware: Helmet\'s middlewares');
-    app.use(cspSettings, hsts, referrerPolicy);
-  }
 
    // Check project status
   app.use(require('./src/middleware/projectUtilization')(app));
