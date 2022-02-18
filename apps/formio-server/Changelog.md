@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased: 7.4.0-rc.5]
 ### Fixed
  - FIO-4692: Fixed issues with CSP errors when form building.
+ - FIO-4692: Fixed issues with PDF subdomain communications.
 
 ## 7.4.0-rc.4
 ### Changed
