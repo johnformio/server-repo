@@ -73,7 +73,7 @@ module.exports = function(options) {
   });
 
   // Use helmet to add CSP to application code.
-  app.use(require('./src/middleware/helmet')(app));
+  app.use(...require('./src/middleware/helmet')(app));
 
   if (app.portalEnabled) {
     debug.startup('Mounting Portal Application');
