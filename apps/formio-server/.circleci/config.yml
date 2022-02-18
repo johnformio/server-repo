@@ -44,7 +44,9 @@ jobs:
     - checkout
     - run:
         name: Install awscli
-        command: sudo apt-get install -y awscli
+        command: |
+          sudo apt-get update
+          sudo apt install -y awscli
     - attach_workspace:
         at:
           .
@@ -104,7 +106,11 @@ jobs:
       - run: docker cp tmpcontainer:/src/node_modules build/
       - run: docker rm -f tmpcontainer
       - run: docker build --no-cache -t $IMAGE_PATH -f deployment/docker/Dockerfile .
-      - run: sudo apt-get install -y awscli
+      - run:
+          name: Install awscli
+          command: |
+            sudo apt-get update
+            sudo apt install -y awscli
       - run:
           name: deploy
           command: |

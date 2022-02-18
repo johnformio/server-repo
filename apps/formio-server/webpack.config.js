@@ -44,7 +44,7 @@ module.exports = {
       controlFlowFlattening: false,
       deadCodeInjection: false,
       debugProtection: false,
-      debugProtectionInterval: false,
+      debugProtectionInterval: 0,
       disableConsoleOutput: false,
       identifierNamesGenerator: 'hexadecimal',
       log: false,
