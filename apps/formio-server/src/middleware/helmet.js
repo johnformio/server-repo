@@ -11,9 +11,13 @@ module.exports = (router) => {
             req.url.endsWith('/manage/view') ||
             req.url.endsWith('/manage/view/')
         ) {
-            // Do not add opener or embedder policies.
+            // Do not add opener, embedder, or resource policies.
             helmetOverrides.crossOriginOpenerPolicy = false;
             helmetOverrides.crossOriginEmbedderPolicy = false;
+            helmetOverrides.crossOriginResourcePolicy = false;
+
+            // Explicitely set the origin agent cluster to false to allow subdomain iframe communication.
+            res.setHeader('Origin-Agent-Cluster', '?0');
 
             // Strict-Transport-Security middleware
             helmetOverrides.hsts = {
