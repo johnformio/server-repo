@@ -345,7 +345,7 @@ module.exports = function(app, template, hook) {
             host: 'example.com',
             auth: {
               user: 'test',
-              pass: 'test123'
+              pass: 'test1234567890'
             }
           }
         }
@@ -472,7 +472,7 @@ module.exports = function(app, template, hook) {
           host: 'example.com',
           auth: {
             user: 'test',
-            pass: 'test123'
+            pass: 'test1234567890'
           }
         }
       }

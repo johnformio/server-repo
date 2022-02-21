@@ -63,7 +63,7 @@ module.exports = function(app, template, hook) {
             var response = res.body;
 
             // Update our testProject.owners data.
-            var tempPassword = 'test123';
+            var tempPassword = 'test1234567890';
             template.formio.user1 = response;
             template.formio.user1.data.password = tempPassword;
 
@@ -94,7 +94,7 @@ module.exports = function(app, template, hook) {
             var response = res.body;
 
             // Update our testProject.owners data.
-            var tempPassword = 'test123';
+            var tempPassword = 'test1234567890';
             template.formio.user3 = response;
             template.formio.user3.data.password = tempPassword;
 

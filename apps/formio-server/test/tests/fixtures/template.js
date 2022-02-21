@@ -44,7 +44,7 @@ module.exports = () => {
     token: '',
     data: {
       email: 'useradmin@form.io',
-      password: 'test123'
+      password: 'test1234567890'
     }
   }
 
