@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## 7.3.1-rc.1
+## [Unreleased: 7.4.0-rc.5]
 ### Changed
  - Updated formio-app@7.4.0-rc.7
 
@@ -75,7 +75,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
  - Adding PDF Auto Conversion features.
 
-## [Unreleased: 7.3.1-rc.1]
+## 7.3.1-rc.1
 ### Fixed
  - FIO-4348: fix signrequest action triggered on deleting submission
  - FIO-4331: add check for no link to pdf file before it's signed
