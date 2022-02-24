@@ -21,9 +21,9 @@
   },
   "cache": "1550086650",
   "main": "./main.js",
-  "version": "7.4.0-rc.6",
+  "version": "7.3.1-rc.1",
   "schema": "3.3.11",
-  "portalVersion": "7.4.0-rc.6",
+  "portalVersion": "7.4.0-rc.7",
   "dependencies": {
     "@braintree/sanitize-url": "^5.0.2",
     "@formio/premium": "^1.19.0-rc.1",
