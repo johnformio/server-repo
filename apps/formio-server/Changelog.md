@@ -4,7 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 7.4.0-rc.8]
+## 7.4.0-rc.8
+### Changed
+ - Updated formio-app@7.4.0-rc.9
+ - Updated formiojs@4.15.0-rc.6
+ - Updated formio@2.5.0-rc.6
+
 ### Fixed
  - FIO-4668: Added ability to render signature and sketchpad components
 
