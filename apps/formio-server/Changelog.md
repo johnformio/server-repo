@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased: 7.4.0-rc.8]
+### Fixed
+ - FIO-4668: Added ability to render signature and sketchpad components
+
 ## 7.4.0-rc.7
 ### Changed
  - New version.
