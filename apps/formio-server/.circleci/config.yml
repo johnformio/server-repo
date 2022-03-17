@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-  snyk: snyk/snyk@1.1.1
+  snyk: snyk/snyk@1.1.2
 jobs:
   build:
     docker:
@@ -130,6 +130,7 @@ jobs:
           organization: ${SNYK_CICD_ORGANIZATION}
           project: ${IMAGE_PATH}:${CIRCLE_TAG}
           token-variable: SNYK_TOKEN
+          additional-arguments: --container ${IMAGE_PATH}:${CIRCLE_TAG} --app-vulns
 
   deploy_npm:
     docker:
