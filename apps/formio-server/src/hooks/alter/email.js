@@ -108,24 +108,11 @@ module.exports = app => (mail, req, res, params, cb) => {
         formio.cache.loadCurrentForm(req, (err, form) => resolve(form));
       });
       const submission = _.get(res.resource, 'item', req.body);
-
-      // If they have provided BASE_URL and the submission object was created, then use the URL method of email attachments.
-      if (config.baseUrl && submission._id) {
-        let url = `/project/${req.projectId}/form/${req.formId}/submission/${submission._id}/download`;
-        const expireTime = 3600;
-        const token = await new Promise((resolve) => {
-          formioServer.formio.auth.getTempToken(req, res, `GET:${url}`, expireTime, true, (err, token) => resolve(token));
-        });
-        url += `?token=${token.key}`;
-        attachment = {path: `${config.baseUrl}${url}`};
-      }
-      else {
-        const downloadPDF = require('../../util/downloadPDF')(formioServer);
-        const response = await downloadPDF(req, project, form, submission);
-        const pdfStream = new PassThrough();
-        response.body.pipe(pdfStream);
-        attachment = {content: pdfStream};
-      }
+      const downloadPDF = require('../../util/downloadPDF')(formioServer);
+      const response = await downloadPDF(req, project, form, submission);
+      const pdfStream = new PassThrough();
+      response.body.pipe(pdfStream);
+      attachment = {content: pdfStream};
 
       // Get the file name settings.
       let fileName = params.settings.pdfName || '{{ form.name }}-{{ submission._id }}';
