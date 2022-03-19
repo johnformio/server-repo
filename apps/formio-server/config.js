@@ -150,9 +150,9 @@ var formioHost = `${protocol}://${project}.${domain}`;
 config.gaTid = getConfig('GOOGLE_ANALYTICS_TID', '');
 
 if (port !== 80) {
-  host += `:${port}`;
-  apiHost += `:${port}`;
-  formioHost += `:${port}`;
+  host += (host.indexOf(':') === -1) ? `:${port}` : '';
+  apiHost += (apiHost.indexOf(':') === -1) ? `:${port}` : '';
+  formioHost += (formioHost.indexOf(':') === -1) ? `:${port}` : '';
 }
 
 // Configure app server settings.
