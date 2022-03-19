@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased: 7.4.0-rc.9]
 ### Fixed
  - Ensuring the host, apiHost, and formioHost do not include ports twice.
+ - Ensure we always attach bin pdf docs.
 
 ## 7.4.0-rc.8
 ### Changed
