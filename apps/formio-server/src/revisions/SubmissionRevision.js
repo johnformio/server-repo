@@ -13,8 +13,22 @@ module.exports = class FormRevision extends Revision {
   }
 
   shouldCreateNewRevision(req, item, loadItem, form) {
-    const rewriteDate = (obj) => _.mapValues(obj, component => component && component.constructor && component.constructor.name === 'Date'? component.toUTCString() : component);
-    const rewriteStructure = (obj) => _.mapValues(obj, component => undefined);
+    const rewriteDate = (item) => {
+      if (typeof item === 'object' && !Array.isArray(item)) {
+        return _.mapValues(item, component => component && component.constructor && component.constructor.name === 'Date'? component.toUTCString() : component);
+      }
+      else {
+        return item;
+      }
+    };
+    const rewriteStructure = (item) => {
+      if (typeof item === 'object' && !Array.isArray(item)) {
+      return _.mapValues(item, component => undefined);
+      }
+      else {
+        return undefined;
+      }
+    };
     const rewriteDateDeep = (data, fn) => {
       const result = {};
       _.forIn(data, (value, key) => {
@@ -23,9 +37,11 @@ module.exports = class FormRevision extends Revision {
         }
         else {
           if (Array.isArray(value)) {
-            value = value.map(item=>fn(item));
+            Object.assign(result, {[key] : value.map(item=>fn(item))});
           }
-          Object.assign(result, fn({[key] : value}));
+          else {
+            Object.assign(result, fn({[key] : value}));
+          }
         }
       });
       return result;

@@ -2,146 +2,166 @@
 const _ = require('lodash');
 
 const setRowCount = (rowNumber) => {
-const cteateFormRow = (form, fieldPath, tableTemplate, components, index, revisionIndex, rowNumber) => {
-    const pathArr = fieldPath.split('/');
-    const key = pathArr.length>1 ? pathArr[pathArr.length - 1] : fieldPath;
+const addComponentToTable = (component, tableTemplate, components, index, revisionIndex, isInitialSubmission) => {
+  let valueComponent;
+  if (revisionIndex === 0 && !component.label.endsWith('&Delta;') && !isInitialSubmission) {
+   component.label = `${component.label} &Delta;`;
+  }
+  if (!['signature', 'sketchpad', 'datetime', 'time', 'currency', 'select', 'radio'].includes(component.type)) {
+    valueComponent = {
+      "autoExpand": false,
+      "tableView": true,
+      "key": `fieldPath${rowNumber}`,
+      "type": "textarea",
+      "input": true
+    };
+  }
+  else {
+   valueComponent = component;
+  }
 
-    // eslint-disable-next-line no-undef
-    FormioUtils.findComponent(form.components, key, null, (component) => {
-      let valueComponent;
-      if (component) {
-        if (revisionIndex === 0 && !component.label.endsWith('&Delta;')) {
-          component.label = `${component.label} &Delta;`;
-        }
-        if (component.type !== 'signature' && component.type !== 'sketchpad') {
-          valueComponent = {
-            "autoExpand": false,
-            "tableView": true,
-            "key": `fieldPath${rowNumber}`,
-            "type": "textarea",
-            "input": true
-          };
-        }
-        else {
-          valueComponent = component;
-        }
-
-      const rowTemplate = [
+  const rowTemplate = [
+    {
+        "components": [
+            {
+                "label": "Field Path",
+                "autoExpand": false,
+                "tableView": true,
+                "key": `fieldPath${rowNumber}`,
+                "type": "textarea",
+                "input": true,
+            }
+        ]
+    },
+    {
+        "components": [
           {
-              "components": [
-                  {
-                      "label": "Field Path",
-                      "autoExpand": false,
-                      "tableView": true,
-                      "key": `fieldPath${rowNumber}`,
-                      "type": "textarea",
-                      "input": true,
-                  }
-              ]
-          },
-          {
-              "components": [
-                {
-                  ...valueComponent,
-                  "key": `previousValue${rowNumber}`,
-                  "label": "Previous Value",
-                }
-              ]
-          },
-          {
-              "components": [
-                {
-                  ...valueComponent,
-                  "key": `entityValue${rowNumber}`,
-                  "label": "Entity Value",
-                }
-              ]
+            ...valueComponent,
+            "key": `previousValue${rowNumber}`,
+            "label": "Previous Value",
           }
+        ]
+    },
+    {
+        "components": [
+          {
+            ...valueComponent,
+            "key": `entityValue${rowNumber}`,
+            "label": "Entity Value",
+          }
+        ]
+    }
+  ];
+
+  tableTemplate.rows.push(rowTemplate);
+  tableTemplate.numRows = tableTemplate.rows.length;
+
+  if (index === 0) {
+    const outerTemplate =[
+      {
+        "components":
+        [{
+            "label": "Revision Id",
+            "labelPosition": "left-left",
+            "labelWidth": 10,
+            "labelMargin": 3,
+            "tableView": true,
+            "key": `revisionId${rowNumber}`,
+            "type": "textfield",
+            "input": true
+        },
+        {
+          "label": "Date / Time",
+          "labelPosition": "left-left",
+          "labelWidth": 10,
+          "labelMargin": 3,
+          "tableView": false,
+          "enableMinDateInput": false,
+          "datePicker": {
+              "disableWeekends": false,
+              "disableWeekdays": false
+          },
+          "enableMaxDateInput": false,
+          "key": `dateTime${rowNumber}`,
+          "type": "datetime",
+          "input": true,
+          "widget": {
+              "type": "calendar",
+              "displayInTimezone": "viewer",
+              "locale": "en",
+              "useLocaleSettings": false,
+              "allowInput": true,
+              "mode": "single",
+              "enableTime": true,
+              "noCalendar": false,
+              "format": "yyyy-MM-dd hh:mm a",
+              "hourIncrement": 1,
+              "minuteIncrement": 1,
+              "time_24hr": false,
+              "minDate": null,
+              "disableWeekends": false,
+              "disableWeekdays": false,
+              "maxDate": null
+          }
+        },
+        {
+          "label": "User Id",
+          "labelPosition": "left-left",
+          "labelWidth": 10,
+          "labelMargin": 3,
+          "tableView": true,
+          "key": `userId${rowNumber}`,
+          "type": "textfield",
+          "input": true
+        },
+        {
+          "label": "Reason",
+          "labelPosition": "left-left",
+          "labelWidth": 10,
+          "labelMargin": 3,
+          "tableView": true,
+          "key": `reason${rowNumber}`,
+          "type": "textarea",
+          "input": true
+        },
+        tableTemplate
+      ]
+      },
       ];
 
-      tableTemplate.rows.push(rowTemplate);
-      tableTemplate.numRows = tableTemplate.rows.length;
+    components[0].rows.push(outerTemplate);
+    components[0].numRows = components[0].rows.length;
+  }
+};
 
-      if (index === 0 && rowNumber===revisionIndex) {
-        const outerTemplate =[
-          {
-            "components":
-            [{
-               "label": "Revision Id",
-               "labelPosition": "left-left",
-               "labelWidth": 10,
-               "labelMargin": 3,
-               "tableView": true,
-               "key": `revisionId${rowNumber}`,
-               "type": "textfield",
-               "input": true
-           },
-           {
-             "label": "Date / Time",
-             "labelPosition": "left-left",
-             "labelWidth": 10,
-             "labelMargin": 3,
-             "tableView": false,
-             "enableMinDateInput": false,
-             "datePicker": {
-                 "disableWeekends": false,
-                 "disableWeekdays": false
-             },
-             "enableMaxDateInput": false,
-             "key": `dateTime${rowNumber}`,
-             "type": "datetime",
-             "input": true,
-             "widget": {
-                 "type": "calendar",
-                 "displayInTimezone": "viewer",
-                 "locale": "en",
-                 "useLocaleSettings": false,
-                 "allowInput": true,
-                 "mode": "single",
-                 "enableTime": true,
-                 "noCalendar": false,
-                 "format": "yyyy-MM-dd hh:mm a",
-                 "hourIncrement": 1,
-                 "minuteIncrement": 1,
-                 "time_24hr": false,
-                 "minDate": null,
-                 "disableWeekends": false,
-                 "disableWeekdays": false,
-                 "maxDate": null
-             }
-           },
-           {
-             "label": "User Id",
-             "labelPosition": "left-left",
-             "labelWidth": 10,
-             "labelMargin": 3,
-             "tableView": true,
-             "key": `userId${rowNumber}`,
-             "type": "textfield",
-             "input": true
-           },
-           {
-             "label": "Reason",
-             "labelPosition": "left-left",
-             "labelWidth": 10,
-             "labelMargin": 3,
-             "tableView": true,
-             "key": `reason${rowNumber}`,
-             "type": "textarea",
-             "input": true
-           },
-           tableTemplate
-         ]
-         },
-         ];
+const cteateFormRow = (form, fieldPath, tableTemplate, components, index, revisionIndex, isInitialSubmission) => {
+  const pathArr = fieldPath.split('/');
 
-         components[0].rows.push(
-          outerTemplate
-        );
-        components[0].numRows = components[0].rows.length;
-      }
-      }
-    });
+  pathArr.reduce((prev, current)=> {
+     let formComponent;
+     if (Array.isArray(prev)) {
+      formComponent = prev.find(component=>component.key && component.key === current) || prev;
+     }
+     else if (prev && prev.key && prev.key === current) {
+      formComponent = prev;
+     }
+     else {
+       return;
+     }
+
+     if (formComponent && formComponent.key === current) {
+       if (formComponent.components) {
+        return formComponent.components;
+       }
+       else {
+        addComponentToTable(formComponent, tableTemplate, components, index, revisionIndex, isInitialSubmission);
+       }
+     }
+     else {
+       return formComponent;
+     }
+       return;
+    }, form.components);
 };
 
 const updatePath = (path, formComponents) => {
@@ -152,7 +172,7 @@ const updatePath = (path, formComponents) => {
     // eslint-disable-next-line no-undef
     const element = FormioUtils.getComponent(formComponents, key);
     if (element && element.label) {
-      if (element.components) {
+      if (element.components || element.values) {
         prevElement = element;
       }
       return normalizeLabel(element.label);
@@ -160,8 +180,11 @@ const updatePath = (path, formComponents) => {
     else {
       if (prevElement) {
         // eslint-disable-next-line no-undef
-        const innerElement = FormioUtils.getComponent(prevElement.components, key);
+        const innerElement = prevElement.components ? FormioUtils.getComponent(prevElement.components, key) : prevElement.values.find(element=>element.value === key);
         return normalizeLabel(innerElement && innerElement.label ? innerElement.label : key);
+      }
+      else {
+        return key;
       }
     }
   });
@@ -177,14 +200,14 @@ const createSubmissionRow = (entityValue, previousValue, fieldPath, changes, rev
   [`dateTime${rowNumber}`]: revision.modified,
   [`userId${rowNumber}`]: revision._vuser,
   [`reason${rowNumber}`]: revision.metadata.previousData? revision._vnote: 'Initial submission',
-  [`entityValue${rowNumber}`]: entityValue.constructor && entityValue.constructor.name !== 'Date' ? entityValue.toString() : entityValue.toUTCString(),
-  [`previousValue${rowNumber}`]: previousValue.constructor && previousValue.constructor.name !== 'Date' ? previousValue.toString() : previousValue.toUTCString(),
-  [`fieldPath${rowNumber}`]: updatePath(fieldPath, form.components)
+  [`entityValue${rowNumber}`]: entityValue.toString(),
+  [`previousValue${rowNumber}`]: previousValue.toString(),
+  [`fieldPath${rowNumber}`]:updatePath(fieldPath, form.components)
 });
 };
 
-const createRow = (entityValue, previousValue, fieldPath, form, changes, tableTemplate, revision, components, index, revisionIndex) => {
-  cteateFormRow(form, fieldPath, tableTemplate, components, index, revisionIndex, rowNumber);
+const createRow = (entityValue, previousValue, fieldPath, form, changes, tableTemplate, revision, components, index, revisionIndex, isInitialSubmission) => {
+  cteateFormRow(form, fieldPath, tableTemplate, components, index, revisionIndex, isInitialSubmission);
   createSubmissionRow(entityValue, previousValue, fieldPath, changes, revision, form);
   rowNumber = rowNumber + 1;
 };
@@ -245,14 +268,16 @@ module.exports = (changelog, form, submission) => {
                   tableTemplate,
                   revision,
                   components,
-                  index,
-                  revisionIndex
+                  valIndex,
+                  revisionIndex,
+                  !revision.metadata.previousData
                   )
                 );
             }
           });
         }
         else if (change.value && typeof change.value === 'object' && change.value.constructor.name !== 'Date') {
+          let i = index;
           _.forIn(change.value, (val, key) => {
               createRow(
                 val,
@@ -263,8 +288,10 @@ module.exports = (changelog, form, submission) => {
                 tableTemplate,
                 revision,
                 components,
-                index,
-                revisionIndex);
+                i,
+                revisionIndex,
+                !revision.metadata.previousData);
+                i++;
           });
         }
         else {
@@ -281,7 +308,8 @@ module.exports = (changelog, form, submission) => {
               revision,
               components,
               index,
-              revisionIndex)
+              revisionIndex,
+              !revision.metadata.previousData)
           );
           }
           else {
@@ -295,7 +323,8 @@ module.exports = (changelog, form, submission) => {
                 revision,
                 components,
                 index,
-                revisionIndex);
+                revisionIndex,
+                !revision.metadata.previousData);
           }
         }
       });
