@@ -3,10 +3,8 @@
 const jwt = require('jsonwebtoken');
 const util = require('../../util/util');
 const async = require('async');
-const config = require('../../../config');
 const {utilization, getLicenseKey} = require('../../util/utilization');
 const _ = require('lodash');
-const PassThrough = require('stream').PassThrough;
 
 module.exports = app => (mail, req, res, params, cb) => {
   const formioServer = app.formio;
@@ -110,9 +108,11 @@ module.exports = app => (mail, req, res, params, cb) => {
       const submission = _.get(res.resource, 'item', req.body);
       const downloadPDF = require('../../util/downloadPDF')(formioServer);
       const response = await downloadPDF(req, project, form, submission);
-      const pdfStream = new PassThrough();
-      response.body.pipe(pdfStream);
-      attachment = {content: pdfStream};
+      const responseBuffer = await response.buffer();
+      const base64 = responseBuffer.toString('base64');
+      attachment = {
+        path: `data:application/pdf;base64,${base64}`
+      };
 
       // Get the file name settings.
       let fileName = params.settings.pdfName || '{{ form.name }}-{{ submission._id }}';
