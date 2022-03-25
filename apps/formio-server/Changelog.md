@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased: 7.4.0-rc.10]
 ### Fixed
  - FIO-4781: Fixing email pdf attachments.
+ - FIO-4781: Fixed issues with query strings passed to pdf server.
 
 ## 7.4.0-rc.9
 ### Changed
