@@ -111,10 +111,9 @@ module.exports = (formioServer) => {
     }
 
     const globalPdfSettings = _.get(project, 'settings.pdf', {});
-
-    return fetch(url, {
+    const qs = new URLSearchParams({...req.query, project: req.params.projectId || req.currentProject._id.toString()});
+    return fetch(`${url}?${qs}`, {
       method: 'POST',
-      qs: {...req.query, project: req.params.projectId || req.currentProject._id.toString()},
       headers: headers,
       rejectUnauthorized: false,
       body: JSON.stringify({
