@@ -4,7 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 7.4.0-rc.10]
+## 7.4.0-rc.10
+### Changed
+ - Updated formio-app@7.4.0-rc.11
+ - Updated formiojs@4.15.0-rc.7
+ - Updated formio@2.5.0-rc.8
+
 ### Fixed
  - FIO-4781: Fixing email pdf attachments.
  - FIO-4781: Fixed issues with query strings passed to pdf server.
