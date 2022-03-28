@@ -1123,8 +1123,8 @@ module.exports = (app, template, hook) => {
           assert.equal(revisions[0]._rid, submission._id);
           assert.equal(revisions[0]._vuser, helper.owner.data.email);
           assert.deepEqual(revisions[0].data, data);
-          assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'replace', path: '/data/lname', value: 'test'});
-          assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'replace', path: '/data/fname', value: 'joe'});
+          assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'add', path: '/data/fname', value: 'joe'});
+          assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'add', path: '/data/lname', value: 'test'});
           submissionRevisions = revisions;
 
           done();
@@ -1148,8 +1148,8 @@ module.exports = (app, template, hook) => {
         assert.equal(revisions[0]._vuser, helper.owner.data.email);
         assert.deepEqual(revisions[0].data, data);
         assert.equal(revisions[0].metadata.jsonPatch.length, 2);
-        assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'replace', path: '/data/lname', value: 'test'});
-        assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'replace', path: '/data/fname', value: 'joe'});
+        assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'add', path: '/data/fname', value: 'joe'});
+        assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'add', path: '/data/lname', value: 'test'});
 
         done();
       });
@@ -1174,8 +1174,8 @@ module.exports = (app, template, hook) => {
         assert.equal(revisions[0]._vuser, helper.owner.data.email);
         assert.deepEqual(revisions[0].data, data);
         assert.equal(revisions[0].metadata.jsonPatch.length, 2);
-        assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'replace', path: '/data/lname', value: 'test'});
-        assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'replace', path: '/data/fname', value: 'joe'});
+        assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'add', path: '/data/lname', value: 'test'});
+        assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'add', path: '/data/fname', value: 'joe'});
 
         assert.equal(revisions[1]._rid, submission._id);
         assert.equal(revisions[1]._vuser, helper.owner.data.email);

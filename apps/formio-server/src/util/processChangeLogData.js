@@ -1,13 +1,17 @@
 'use strict';
 const _ = require('lodash');
+const jsonPatch = require('fast-json-patch');
+
+const complexComponents = [];
+let currentRevisionId = '';
 
 const setRowCount = (rowNumber) => {
-const addComponentToTable = (component, tableTemplate, components, index, revisionIndex, isInitialSubmission) => {
+const addComponentToTable = (component, tableTemplate, components, revisionIndex, isInitialSubmission, revisionId) => {
   let valueComponent;
   if (revisionIndex === 0 && !component.label.endsWith('&Delta;') && !isInitialSubmission) {
    component.label = `${component.label} &Delta;`;
   }
-  if (!['signature', 'sketchpad', 'datetime', 'time', 'currency', 'select', 'radio'].includes(component.type)) {
+  if (!['signature', 'sketchpad', 'datetime', 'time', 'currency', 'select', 'radio', 'address', 'survey'].includes(component.type) && !component.multiple) {
     valueComponent = {
       "autoExpand": false,
       "tableView": true,
@@ -56,7 +60,8 @@ const addComponentToTable = (component, tableTemplate, components, index, revisi
   tableTemplate.rows.push(rowTemplate);
   tableTemplate.numRows = tableTemplate.rows.length;
 
-  if (index === 0) {
+  if (currentRevisionId !== revisionId) {
+    currentRevisionId = revisionId;
     const outerTemplate =[
       {
         "components":
@@ -134,36 +139,6 @@ const addComponentToTable = (component, tableTemplate, components, index, revisi
   }
 };
 
-const cteateFormRow = (form, fieldPath, tableTemplate, components, index, revisionIndex, isInitialSubmission) => {
-  const pathArr = fieldPath.split('/');
-
-  pathArr.reduce((prev, current)=> {
-     let formComponent;
-     if (Array.isArray(prev)) {
-      formComponent = prev.find(component=>component.key && component.key === current) || prev;
-     }
-     else if (prev && prev.key && prev.key === current) {
-      formComponent = prev;
-     }
-     else {
-       return;
-     }
-
-     if (formComponent && formComponent.key === current) {
-       if (formComponent.components) {
-        return formComponent.components;
-       }
-       else {
-        addComponentToTable(formComponent, tableTemplate, components, index, revisionIndex, isInitialSubmission);
-       }
-     }
-     else {
-       return formComponent;
-     }
-       return;
-    }, form.components);
-};
-
 const updatePath = (path, formComponents) => {
   const pathArr = path.split('/');
   const normalizeLabel = (str) => str.endsWith('&Delta;') ? str.slice(0, str.length-7) : str;
@@ -200,15 +175,75 @@ const createSubmissionRow = (entityValue, previousValue, fieldPath, changes, rev
   [`dateTime${rowNumber}`]: revision.modified,
   [`userId${rowNumber}`]: revision._vuser,
   [`reason${rowNumber}`]: revision.metadata.previousData? revision._vnote: 'Initial submission',
-  [`entityValue${rowNumber}`]: entityValue.toString(),
-  [`previousValue${rowNumber}`]: previousValue.toString(),
+  [`entityValue${rowNumber}`]: typeof entityValue === 'object' ? entityValue : entityValue.toString(),
+  [`previousValue${rowNumber}`]: typeof previousValue === 'object' ? previousValue : previousValue.toString(),
   [`fieldPath${rowNumber}`]:updatePath(fieldPath, form.components)
 });
 };
 
-const createRow = (entityValue, previousValue, fieldPath, form, changes, tableTemplate, revision, components, index, revisionIndex, isInitialSubmission) => {
-  cteateFormRow(form, fieldPath, tableTemplate, components, index, revisionIndex, isInitialSubmission);
-  createSubmissionRow(entityValue, previousValue, fieldPath, changes, revision, form);
+const createFormRow = (form, fieldPath, tableTemplate, components, revisionIndex, revision, entityValue, previousValue, changes) => {
+  const pathArr = fieldPath.split('/');
+  let currentPath = '/data';
+  const isInitialSubmission = !revision.metadata.previousData;
+
+  pathArr.reduce((prev, current)=> {
+     let formComponent;
+     currentPath = `${currentPath}/${current}`;
+     if (Array.isArray(prev)) {
+      formComponent = prev.find(component=>component.key && component.key === current) || prev;
+     }
+     else if (prev && prev.key && prev.key === current) {
+      formComponent = prev;
+     }
+     else {
+       return;
+     }
+
+     if (formComponent && formComponent.key === current) {
+       if (['address', 'datetime', 'sketchpad', 'survey'].includes(formComponent.type)) {
+         if (!complexComponents.find(component => component.key === formComponent.key && component.path === currentPath)) {
+           complexComponents.push({key: formComponent.key, path: currentPath});
+           addComponentToTable(formComponent, tableTemplate, components, revisionIndex, isInitialSubmission, revision._id.toString());
+              const componentJsonPatch = [];
+              revision.metadata.jsonPatch = revision.metadata.jsonPatch.reduce((prev, current)=>{
+                if (current.path.startsWith(currentPath)) {
+                  componentJsonPatch.push(current);
+                }
+                else {
+                  prev.push(current);
+                }
+                return prev;
+              }, []);
+              let prev;
+              if (revision.metadata.previousData) {
+                prev = {data: revision.metadata.previousData};
+              }
+              else {
+               prev = {data: {}};
+              }
+              const current = jsonPatch.applyPatch(prev, componentJsonPatch, false, false).newDocument;
+              createSubmissionRow(current.data[formComponent.key], prev.data[formComponent.key], currentPath, changes, revision, form);
+         }
+         return;
+       }
+
+       if (formComponent.components) {
+        return formComponent.components;
+       }
+       else {
+        addComponentToTable(formComponent, tableTemplate, components, revisionIndex, isInitialSubmission, revision._id.toString());
+        createSubmissionRow(entityValue, previousValue, fieldPath, changes, revision, form);
+       }
+     }
+     else {
+       return formComponent;
+     }
+       return;
+    }, form.components);
+};
+
+const createRow = (entityValue, previousValue, fieldPath, form, changes, tableTemplate, revision, components, revisionIndex) => {
+  createFormRow(form, fieldPath, tableTemplate, components, revisionIndex, revision, entityValue, previousValue, changes);
   rowNumber = rowNumber + 1;
 };
 
@@ -222,6 +257,7 @@ module.exports = (changelog, form, submission) => {
     const changeLogForm = [];
 
     const revisionData = changelog.map((revision, revisionIndex) => {
+      complexComponents.length = 0;
        const components = [
         {
           label: 'Outer Table',
@@ -247,37 +283,51 @@ module.exports = (changelog, form, submission) => {
         bordered: true,
         rows: []
       };
+
       revision.metadata.jsonPatch.forEach((change, index) => {
         if (Array.isArray(change.value)) {
           change.value.forEach((val, valIndex) => {
-            if (val.value && val.path) {
-              Object.assign(changes, {
-                entityValue: val.value,
-                previousValue: _.get(revision.metadata.previousData, `${val.path.slice(6).replace(/\//g, '.')}`),
-                fieldPath: val.path.slice(6)
+            if (typeof val === 'object') {
+              if (val.value && val.path) {
+                Object.assign(changes, {
+                  entityValue: val.value,
+                  previousValue: _.get(revision.metadata.previousData, `${val.path.slice(6).replace(/\//g, '.')}`),
+                  fieldPath: val.path.slice(6)
+                });
+              }
+              else {
+                Object.keys(val).forEach((entry) =>{
+                  createRow(
+                    val[entry],
+                    _.get(revision.metadata.perviousData,`${change.path.slice(6).replace(/\//g, '.')}[${valIndex}]${entry}`),
+                    `${change.path.slice(6)}/${valIndex}/${entry}`,
+                    form,
+                    changes,
+                    tableTemplate,
+                    revision,
+                    components,
+                    revisionIndex,
+                    !revision.metadata.previousData,
+                    );
               });
+              }
             }
-            else {
-              Object.keys(val).forEach((entry, index) =>
-                createRow(
-                  val[entry],
-                  _.get(revision.metadata.perviousData,`${change.path.slice(6).replace(/\//g, '.')}[${valIndex}]${entry}`),
-                  `${change.path.slice(6)}/${valIndex}/${entry}`,
-                  form,
-                  changes,
-                  tableTemplate,
-                  revision,
-                  components,
-                  valIndex,
-                  revisionIndex,
-                  !revision.metadata.previousData
-                  )
-                );
+        else {
+              return createRow(
+                change.op === "remove" ? '' : val,
+                _.get(revision.metadata.perviousData),
+                `${change.path.slice(6)}/${valIndex}`,
+                form,
+                changes,
+                tableTemplate,
+                revision,
+                components,
+                revisionIndex,
+                !revision.metadata.previousData);
             }
           });
         }
-        else if (change.value && typeof change.value === 'object' && change.value.constructor.name !== 'Date') {
-          let i = index;
+        else if (change.value && typeof change.value === 'object') {
           _.forIn(change.value, (val, key) => {
               createRow(
                 val,
@@ -288,26 +338,23 @@ module.exports = (changelog, form, submission) => {
                 tableTemplate,
                 revision,
                 components,
-                i,
                 revisionIndex,
                 !revision.metadata.previousData);
-                i++;
           });
         }
         else {
           const previousValue = _.get(revision.metadata.previousData, change.path.slice(6).replace(/\//g, '.'));
-          if (previousValue && typeof previousValue === 'object' && !Array.isArray(previousValue) && previousValue.constructor.name !== 'Date') {
+          if (previousValue && typeof previousValue === 'object' && !Array.isArray(previousValue)) {
           _.forIn(previousValue, (val, key) =>
             createRow(
               change.op === "remove" ? '' : val,
               _.get(revision.metadata.previousData, `${change.path.slice(6).replace(/\//g, '.')}.${key}`),
-              change.path.slice(6),
+              `${change.path.slice(6)}/${change.op === "remove" ? key : '' }`,
               form,
               changes,
               tableTemplate,
               revision,
               components,
-              index,
               revisionIndex,
               !revision.metadata.previousData)
           );
@@ -322,7 +369,6 @@ module.exports = (changelog, form, submission) => {
                 tableTemplate,
                 revision,
                 components,
-                index,
                 revisionIndex,
                 !revision.metadata.previousData);
           }

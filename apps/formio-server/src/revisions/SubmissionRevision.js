@@ -21,14 +21,6 @@ module.exports = class FormRevision extends Revision {
         return item;
       }
     };
-    const rewriteStructure = (item) => {
-      if (typeof item === 'object' && !Array.isArray(item)) {
-      return _.mapValues(item, component => undefined);
-      }
-      else {
-        return undefined;
-      }
-    };
     const rewriteDateDeep = (data, fn) => {
       const result = {};
       _.forIn(data, (value, key) => {
@@ -50,7 +42,8 @@ module.exports = class FormRevision extends Revision {
       return false;
     }
 
-    const loadItemData = loadItem && loadItem.data ? rewriteDateDeep(loadItem.data, rewriteDate) : rewriteDateDeep(req.body.data, rewriteStructure);
+  const loadItemData = loadItem && loadItem.data ? rewriteDateDeep(loadItem.data, rewriteDate) : {};
+
     const reqDate = rewriteDateDeep(req.body.data, rewriteDate);
     try {
       const patch = jsonPatch.compare(loadItemData, reqDate)
