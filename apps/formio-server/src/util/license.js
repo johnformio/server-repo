@@ -1,7 +1,7 @@
 'use strict';
 
 const config = require('../../config.js');
-const {utilizationSync} = require('../util/utilization');
+const {utilizationSync, getNumberOfExistingProjects} = require('../util/utilization');
 const crypto = require('crypto');
 const {compactVerify} = require('jose');
 
@@ -142,13 +142,11 @@ IzaxfXn16qCWfwKGE+VXkSM7OAS5iunoyHr5QYL9bUh2+vKshM/pnhvoMfDXnIZR
       payload = JSON.parse(payload.toString());
       // eslint-disable-next-line no-console
       if (payload.exp < Date.now()) {
-        console.log('License is expired');
-        process.exit();
+        console.log('License is expired.');
       }
-      const numberOfProjects = await app.formio.formio.resources.project.model.count({deleted: {'$eq': null}, project: null});
-      if (payload.terms.projectsNumberLimit && numberOfProjects - 1 > payload.terms.projectsNumberLimit) {
-        console.log(`Exceeded the allowed number of projects. Max number of your projects is ${payload.terms.projectsNumberLimit}. You have ${numberOfProjects - 1} projects.`);
-        process.exit();
+      const numberOfProjects = await getNumberOfExistingProjects(app.formio.formio);
+      if (payload.terms.projectsNumberLimit && numberOfProjects > payload.terms.projectsNumberLimit) {
+        console.log(`Exceeded the allowed number of projects. Max number of your projects is ${payload.terms.projectsNumberLimit}. You have ${numberOfProjects} projects.`);
       }
       console.log('License key validated remotely');
       payload.remote = true;
@@ -186,7 +184,7 @@ async function submitUtilizationRequest(
     console.log(`Error while validating license key: ${err.message}`);
 
     // If it's a server error, retry
-    if (!err.statusCode || err.statusCode >= 500) {
+    if (!err.statusCode || err.statusCode >= 500 || err.statusCode !== 403) {
       // (unless we've hit the max number of attempts)
       if (attempts >= MAX_ATTEMPTS) {
         // eslint-disable-next-line no-console
@@ -195,6 +193,7 @@ async function submitUtilizationRequest(
       }
 
       console.log(`Retrying in ${INTERVAL / 1000}s...`);
+
       return require('bluebird').delay(INTERVAL).then(
         () => submitUtilizationRequest(payload, attempts + 1, MAX_ATTEMPTS)
       );
@@ -202,7 +201,7 @@ async function submitUtilizationRequest(
     // Otherwise, print an error and exit
     else {
       // eslint-disable-next-line no-console
-      console.log('Invalid license key');
+      console.log(err.message || 'Invalid license key');
       process.exit();
     }
   }

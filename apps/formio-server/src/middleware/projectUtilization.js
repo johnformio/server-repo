@@ -24,7 +24,7 @@ module.exports = (app) => (req, res, next) => {
     return next();
   }
 
-  if (app.license.remote) {
+  if (_.get(app, 'license.remote', false)) {
     return next();
   }
 

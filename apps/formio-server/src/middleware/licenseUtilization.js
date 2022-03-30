@@ -11,7 +11,8 @@ const {
   getProjectContext,
   getLicenseKey,
   checkLastUtilizationTime,
-  setLicensePlan
+  setLicensePlan,
+  remoteUtilization
 } = require('../util/utilization');
 
 function middleware(app) {
@@ -47,7 +48,9 @@ function middleware(app) {
     const remote = _.get(app, 'license.remote', false);
 
     // Skip license utilization checks for remote non get project.
-    if (remote && endpoint !== 'GET /project/:projectId') {
+    const exceptionEndpoint = ['GET /project/:projectId', 'PUT /project/:projectId', 'POST /project', 'POST /form','PUT /form/:formId', 'PUT /form/:formId/draft', 'PATCH /form/:formId'];
+
+    if (remote && !exceptionEndpoint.includes(endpoint)) {
       return next();
     }
 
@@ -137,10 +140,16 @@ function middleware(app) {
             break;
           }
 
-          result = await utilizationSync(`project:create`, {
-            ...getProjectContext(req, true),
-            licenseKey: getLicenseKey(req),
-          });
+          if (remote) {
+            result = await remoteUtilization(app, {strict: true});
+          }
+          else {
+            result = await utilizationSync(`project:create`, {
+              ...getProjectContext(req, true),
+              licenseKey: getLicenseKey(req),
+            });
+          }
+
           break;
 
         // Allow projects to be updated so that a new license key can be added.
@@ -159,10 +168,15 @@ function middleware(app) {
             });
           }
           else {
-            result = utilization(`project:${req.projectId}`, {
-              ...getProjectContext(req),
-              licenseKey: getLicenseKey(req),
-            });
+            if (remote) {
+              result = await remoteUtilization(app);
+            }
+            else {
+              result = utilization(`project:${req.projectId}`, {
+                ...getProjectContext(req),
+                licenseKey: getLicenseKey(req),
+              });
+            }
           }
           if (result) {
             if (res.resource && res.resource.item) {
@@ -226,12 +240,18 @@ function middleware(app) {
             res.status(400).send('Cannot add forms to formio project. Please create a new project for your forms.');
             break;
           }
-          utilization(`project:${req.projectId}:formCreate`, {
-            type: 'form',
-            formId: 'new',
-            projectId: req.projectId,
-            licenseKey: getLicenseKey(req),
-          });
+          if (remote) {
+            result = await remoteUtilization(app);
+          }
+          else {
+            utilization(`project:${req.projectId}:formCreate`, {
+              type: 'form',
+              formId: 'new',
+              projectId: req.projectId,
+              licenseKey: getLicenseKey(req),
+            });
+          }
+
           break;
 
         // Require a formRequest utilization when grabbing a form
@@ -253,16 +273,21 @@ function middleware(app) {
         case 'PUT /form/:formId':
         case 'PUT /form/:formId/draft':
         case 'PATCH /form/:formId':
-          utilization(`project:${req.projectId}:form:${req.formId}:formUpdate`, {
-            type: 'form',
-            formId: req.formId,
-            title: currentForm.title,
-            name: currentForm.name,
-            path: currentForm.path,
-            formType: currentForm.type,
-            projectId: req.projectId,
-            licenseKey: getLicenseKey(req),
-          });
+          if (remote) {
+            result = await remoteUtilization(app);
+          }
+          else {
+            utilization(`project:${req.projectId}:form:${req.formId}:formUpdate`, {
+              type: 'form',
+              formId: req.formId,
+              title: currentForm.title,
+              name: currentForm.name,
+              path: currentForm.path,
+              formType: currentForm.type,
+              projectId: req.projectId,
+              licenseKey: getLicenseKey(req),
+            });
+          }
           break;
 
         // Disable form utilization when deleting a form.

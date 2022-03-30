@@ -143,7 +143,9 @@ function utilization(cacheKey, body, action = '', clear = false, sync = false) {
     responseCache.del(cacheKey);
     requestCache.del(cacheKey);
     if (!response.ok) {
-      return {error: new Error(await response.text())};
+      const error = new Error(await response.text());
+      error.statusCode = response.status;
+      return {error};
     }
 
     return await response.json();
@@ -287,6 +289,31 @@ function checkLastUtilizationTime(req) {
   return false;
 }
 
+async function getNumberOfExistingProjects(formio) {
+  return await formio.resources.project.model.count({deleted: {'$eq': null}, project: null}) - 1;
+}
+
+function getRemoteLicenseData(app) {
+  return ({
+    terms: _.get(app, 'license.terms', false),
+    exp: _.get(app, 'license.exp', false),
+  });
+}
+
+async function remoteUtilization(app, flag) {
+  const licenseData = getRemoteLicenseData(app);
+  const numberOfProjects = await getNumberOfExistingProjects(app.formio.formio);
+  if (flag && flag.strict && licenseData.terms.projectsNumberLimit && numberOfProjects >= licenseData.terms.projectsNumberLimit) {
+    return {error: new Error(`Exceeded the allowed number of projects. Max number of your projects is ${licenseData.terms.projectsNumberLimit}. You have ${numberOfProjects} projects.`)};
+  }
+ else if (licenseData.terms.projectsNumberLimit && numberOfProjects > licenseData.terms.projectsNumberLimit) {
+    return {error: new Error(`Exceeded the allowed number of projects. Max number of your projects is ${licenseData.terms.projectsNumberLimit}. You have ${numberOfProjects} projects.`)};
+  }
+  if (licenseData.exp && licenseData.exp <= Date.now()) {
+    return {error: new Error('License is expired.')};
+  }
+}
+
 module.exports = {
   utilizationSync,
   utilization,
@@ -296,5 +323,7 @@ module.exports = {
   getLicenseKey,
   getLicense,
   setLicensePlan,
-  checkLastUtilizationTime
+  checkLastUtilizationTime,
+  getNumberOfExistingProjects,
+  remoteUtilization,
 };
