@@ -123,6 +123,17 @@ jobs:
               fi
               ./deployment/scripts/createVersion.sh $CIRCLE_TAG
             fi
+      - run:
+          name: push_ecr
+          command: |
+            if [[ $CIRCLE_TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip awscliv2.zip
+              sudo ./aws/install
+              docker login -u AWS -p $(aws ecr-public get-login-password --region us-east-1) public.ecr.aws/formio
+              docker tag $IMAGE_PATH public.ecr.aws/$IMAGE_PATH:$CIRCLE_TAG
+              docker push public.ecr.aws/$IMAGE_PATH:$CIRCLE_TAG
+            fi
       - snyk/scan:
           docker-image-name: $IMAGE_PATH
           fail-on-issues: false
