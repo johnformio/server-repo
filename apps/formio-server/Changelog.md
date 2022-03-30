@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-4642: changed not-boot to read-only mode for offline license, add… 
  - FIO-4645: updated license validation errors processing
 
+### Added
+ - ECR Deployments.
+
 ## 7.4.0-rc.10
 ### Changed
  - Updated formio-app@7.4.0-rc.11
