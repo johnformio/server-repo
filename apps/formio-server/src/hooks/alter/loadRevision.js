@@ -10,8 +10,8 @@ module.exports = app => (instance, revision, type, done) => {
 
   findRevision.lean().exec((err, result) => {
     if (err) {
-      return done(null, err);
+      return done(err);
     }
-    done(result, null);
+    done(null, result);
   });
 };
