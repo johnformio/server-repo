@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FOR-2705: fixed issue when adding 'formio' to subdomain
  - FIO-1304: moving encrypted fields and submission collection for sac license only
  - FIO-3042: Add configuration to allow only primary admin has write access
+ - FIO-3585: fixed an issue where wrong number of users display in teams when users reject invitation
 
 ### Added
  - ECR Deployments.
