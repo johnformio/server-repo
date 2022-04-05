@@ -17,91 +17,153 @@ module.exports = function(app, template, hook) {
   var ignoreFields = ['config', 'disabled'];
   let teamProject = null;
   describe('Teams', function() {
+
+    // For verify email
+    const getVerificationToken = function () {
+      return new Promise((resolve) => {
+        const event = template.hooks.getEmitter();
+        event.once('newMail', (email) => {
+          const regex = /(?<=token=)[^"]+/i;
+          let token = email.html.match(regex);
+          token = token ? token[0] : token;
+          resolve(token);
+        });
+      });
+    }
+
+    const verifyUser = function(user, done) {
+      return new Promise((resolve) => {
+        request(app)
+        .put('/project/' + template.formio.project._id + '/form/' + template.formio.userResource._id + '/submission/' + user._id)
+        .set('x-jwt-token', user.token)
+        .send({
+          data: {
+            'name': user.data.name,
+            'email': user.data.email,
+            'password': user.data.password
+          }
+        })
+        .expect(200)
+        .expect('Content-Type', /json/)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          // Update our testProject.owners data.
+          const response = res.body;
+          const tempPassword = user.data.password;
+          user = response;
+          user.data.password = tempPassword;
+
+          // Store the JWT for future API calls.
+          user.token = res.headers['x-jwt-token'];
+          resolve(user);
+        });
+      });
+    };
+
     describe('Single Team Tests', function() {
       it('Should register a new Form.io user', (done) => {
         let tempPassword = chance.word({ length: 8 });
+        template.formio.teamAdmin = {
+          data: {
+            name: chance.word(),
+            email: chance.email(),
+          }
+        }
+        getVerificationToken()
+          .then((token) => {
+            template.formio.teamAdmin.token = token;
+            return verifyUser(template.formio.teamAdmin, done);
+          })
+          .then((user) => {
+            template.formio.teamAdmin = _.cloneDeep(user);
+            done();
+          });
+
         request(app)
           .post('/project/' + template.formio.project._id + '/form/' + template.formio.formRegister._id + '/submission')
-          .send({
-            data: {
-              name: chance.word(),
-              email: chance.email(),
-              password: tempPassword
-            }
-          })
-          .expect(200)
+          .send(template.formio.teamAdmin)
+          .expect(201)
           .expect('Content-Type', /json/)
           .end(function(err, res) {
             if (err) {
               return done(err);
             }
 
-            template.formio.teamAdmin = res.body;
+            const response = res.body;
+            template.formio.teamAdmin = response;
             template.formio.teamAdmin.data.password = tempPassword;
-            template.formio.teamAdmin.token = res.headers['x-jwt-token'];
-            done();
           });
       });
 
       it('Register another Formio User', function(done) {
+        let tempPassword = 'test1234';
+        template.formio.user1 = {
+          data: {
+            'name': chance.word({ length: 10 }),
+            'email': chance.email(),
+          }
+        }
+        getVerificationToken()
+          .then((token) => {
+            template.formio.user1.token = token;
+            return verifyUser(template.formio.user1, done);
+          })
+          .then((user) => {
+            template.formio.user1 = _.cloneDeep(user);
+            done();
+          });
+
         request(app)
           .post('/project/' + template.formio.project._id + '/form/' + template.formio.formRegister._id + '/submission')
-          .send({
-            data: {
-              'name': chance.word({ length: 10 }),
-              'email': chance.email(),
-              'password': 'test12345678'
-            }
-          })
-          .expect(200)
+          .send(template.formio.user1)
+          .expect(201)
           .expect('Content-Type', /json/)
           .end(function(err, res) {
             if (err) {
               return done(err);
             }
 
-            var response = res.body;
-
-            // Update our testProject.owners data.
-            var tempPassword = 'test1234567890';
+            const response = res.body;
             template.formio.user1 = response;
             template.formio.user1.data.password = tempPassword;
-
-            // Store the JWT for future API calls.
-            template.formio.user1.token = res.headers['x-jwt-token'];
-
-            done();
           });
       });
 
       it('Register another Formio User 3 not on a team', function(done) {
+        let tempPassword = 'test1234';
+        template.formio.user3 = {
+          data: {
+            'name': chance.word({ length: 10 }),
+            'email': chance.email(),
+          }
+        }
+
+        getVerificationToken()
+          .then((token) => {
+            template.formio.user3.token = token;
+            return verifyUser(template.formio.user3, done);
+          })
+          .then((user) => {
+            template.formio.user3 = _.cloneDeep(user);
+            done();
+          });
+
         request(app)
           .post('/project/' + template.formio.project._id + '/form/' + template.formio.formRegister._id + '/submission')
-          .send({
-            data: {
-              'name': chance.word({ length: 10 }),
-              'email': chance.email(),
-              'password': 'test12345678'
-            }
-          })
-          .expect(200)
+          .send(template.formio.user3)
+          .expect(201)
           .expect('Content-Type', /json/)
           .end(function(err, res) {
             if (err) {
               return done(err);
             }
 
-            var response = res.body;
-
-            // Update our testProject.owners data.
-            var tempPassword = 'test1234567890';
+            const response = res.body;
             template.formio.user3 = response;
             template.formio.user3.data.password = tempPassword;
-
-            // Store the JWT for future API calls.
-            template.formio.user3.token = res.headers['x-jwt-token'];
-
-            done();
           });
       });
 

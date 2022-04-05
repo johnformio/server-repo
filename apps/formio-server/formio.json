@@ -237,52 +237,6 @@
           }
         },
         {
-          "source": "553db94e72f702e714dd9779",
-          "input": true,
-          "inputType": "password",
-          "label": "",
-          "key": "password",
-          "placeholder": "Password",
-          "prefix": "",
-          "suffix": "",
-          "protected": true,
-          "persistent": true,
-          "type": "password",
-          "lockKey": true,
-          "validate": {
-            "required": true,
-            "minLength": 8
-          },
-          "tableView": false,
-          "conditional": {
-            "show": null,
-            "when": null,
-            "eq": ""
-          }
-        },
-        {
-          "input": true,
-          "inputType": "password",
-          "label": "",
-          "key": "verifyPassword",
-          "placeholder": "Verify Password",
-          "prefix": "",
-          "suffix": "",
-          "protected": true,
-          "persistent": false,
-          "type": "password",
-          "validate": {
-            "required": true,
-            "custom": "valid = (input == '{{ password }}') ? true : 'Passwords must match.';"
-          },
-          "tableView": false,
-          "conditional": {
-            "show": null,
-            "when": null,
-            "eq": ""
-          }
-        },
-        {
           "conditional": {
             "eq": "",
             "when": null,
@@ -928,6 +882,144 @@
           "suffix": "",
           "defaultValue": "",
           "protected": false,
+          "unique": false,
+          "persistent": true,
+          "type": "email",
+          "conditional": {
+            "show": false,
+            "when": null,
+            "eq": ""
+          },
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "input": true,
+          "tableView": false,
+          "inputType": "password",
+          "label": "Password",
+          "key": "password",
+          "placeholder": "Enter your new password",
+          "prefix": "",
+          "suffix": "",
+          "protected": true,
+          "persistent": true,
+          "type": "password",
+          "conditional": {
+            "show": false,
+            "when": null,
+            "eq": ""
+          },
+          "validate": {
+            "required": true,
+            "minLength": 8
+          }
+        },
+        {
+          "input": true,
+          "tableView": false,
+          "inputType": "password",
+          "label": "Verify Password",
+          "key": "verifyPassword",
+          "placeholder": "Enter your password again",
+          "prefix": "",
+          "suffix": "",
+          "protected": true,
+          "persistent": true,
+          "type": "password",
+          "conditional": {
+            "show": false,
+            "when": null,
+            "eq": ""
+          },
+          "validate": {
+            "required": true,
+            "custom": "valid = (input == '{{ password }}') ? true : 'Passwords must match.';"
+          }
+        },
+        {
+          "input": true,
+          "label": "Submit",
+          "tableView": false,
+          "key": "submit",
+          "size": "md",
+          "leftIcon": "",
+          "rightIcon": "",
+          "block": false,
+          "action": "submit",
+          "disableOnInvalid": true,
+          "theme": "primary",
+          "type": "button"
+        }
+      ],
+      "access": [
+        {
+          "type": "read_all",
+          "roles": [
+            "administrator",
+            "authenticated",
+            "anonymous"
+          ]
+        }
+      ],
+      "submissionAccess": [
+        {
+          "type": "create_all",
+          "roles": []
+        },
+        {
+          "type": "read_all",
+          "roles": []
+        },
+        {
+          "type": "update_all",
+          "roles": []
+        },
+        {
+          "type": "delete_all",
+          "roles": []
+        },
+        {
+          "type": "create_own",
+          "roles": [
+            "anonymous"
+          ]
+        },
+        {
+          "type": "read_own",
+          "roles": []
+        },
+        {
+          "type": "update_own",
+          "roles": []
+        },
+        {
+          "type": "delete_own",
+          "roles": []
+        }
+      ]
+    },
+    "verifyAccount": {
+      "title": "Verify Account",
+      "type": "form",
+      "name": "verifyAccount",
+      "path": "verifyaccount",
+      "display": "form",
+      "tags": [],
+      "components": [
+        {
+          "input": true,
+          "tableView": true,
+          "inputType": "email",
+          "label": "Email",
+          "key": "email",
+          "placeholder": "Enter your user email",
+          "prefix": "",
+          "suffix": "",
+          "defaultValue": "",
+          "protected": false,
+          "disabled": true,
           "unique": false,
           "persistent": true,
           "type": "email",
@@ -3339,25 +3431,6 @@
         "before"
       ]
     },
-    "userRegistrationForm:login": {
-      "title": "Login",
-      "name": "login",
-      "form": "userRegistrationForm",
-      "settings": {
-        "resources": [
-          "user"
-        ],
-        "username": "email",
-        "password": "password"
-      },
-      "priority": 2,
-      "method": [
-        "create"
-      ],
-      "handler": [
-        "before"
-      ]
-    },
     "userRegistrationForm:save": {
       "title": "Save Submission",
       "name": "save",
@@ -3393,6 +3466,59 @@
       ],
       "handler": [
         "after"
+      ]
+    },
+    "userRegistrationForm:email": {
+      "title": "Email",
+      "name": "email",
+      "form": "userRegistrationForm",
+      "condition": {
+        "field": {},
+        "eq": "",
+        "value": "",
+        "custom": ""
+      },
+      "settings": {
+        "transport": "sendgrid",
+        "from": "no-reply@form.io",
+        "emails": [
+          "{{data.email}}"
+        ],
+        "sendEach": false,
+        "subject": "Email Verification for {{data.email}}.",
+        "template": "",
+        "message": "You just have been registered in Form.io. <p>Please <a href=\"{{req.body.metadata.origin}}/#/verify?token=[[token(data.email=user)]]\">confirm your email</a></p>",
+        "attachFiles": false,
+        "attachPDF": false
+      },
+      "priority": 0,
+      "method": [
+        "create"
+      ],
+      "handler": [
+        "after"
+      ]
+    },
+    "verifyAccount:save": {
+      "title": "Save Submission",
+      "name": "save",
+      "form": "verifyAccount",
+      "condition": {
+        "field": {},
+        "eq": "",
+        "value": "",
+        "custom": ""
+      },
+      "settings": {
+        "resource": ""
+      },
+      "priority": 10,
+      "method": [
+        "create",
+        "update"
+      ],
+      "handler": [
+        "before"
       ]
     },
     "team:save": {

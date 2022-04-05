@@ -329,6 +329,8 @@ describe('Initial Tests', function() {
         emptyDatabase(done);
       });
 
+      formioProject.actions['userRegistrationForm:email'].settings.transport = 'test';
+
       it('Installs the form.io project', function(done) {
         request(app)
           .post('/project')
@@ -421,6 +423,9 @@ describe('Initial Tests', function() {
                 else if (form.name === 'team') {
                   template.formio.teamResource = form;
                 }
+                else if (form.name === 'verifyAccount') {
+                  template.formio.verifyForm = form;
+                }
                 else if (form.name == 'member') {
                   template.formio.memberResource = form;
                 }
@@ -458,16 +463,26 @@ describe('Initial Tests', function() {
       });
 
       it('Should be able to register a new user for Form.io', function(done) {
+        const event = template.hooks.getEmitter();
+        event.once('newMail', (email) => {
+          var regex = /(?<=token=)[^"]+/i;
+          var token = email.html.match(regex);
+          token = token ? token[0] : token;
+
+          template.formio.owner.token = token;
+
+          done()
+        });
+
         request(app)
           .post('/project/' + template.formio.project._id + '/form/' + template.formio.formRegister._id + '/submission')
           .send({
             data: {
               'name': template.formio.owner.data.name,
               'email': template.formio.owner.data.email,
-              'password': template.formio.owner.data.password
             }
           })
-          .expect(200)
+          .expect(201)
           .expect('Content-Type', /json/)
           .end(function(err, res) {
             if (err) {
@@ -483,12 +498,54 @@ describe('Initial Tests', function() {
             assert.equal(response.data.name, template.formio.owner.data.name);
             assert(response.data.hasOwnProperty('email'), 'The submission `data` should contain the `email`.');
             assert.equal(response.data.email, template.formio.owner.data.email);
+            assert(!res.headers.hasOwnProperty('x-jwt-token'), 'The response shouldnt contain a `x-jwt-token` header.');
+
+            var tempPassword = template.formio.owner.data.password;
+            var tempToken = template.formio.owner.token;
+            template.formio.owner = response;
+            template.formio.owner.data.password = tempPassword;
+            template.formio.owner.token = tempToken;
+          });
+      });
+
+      it('A user can access the verify form', function(done) {
+        request(app)
+          .get('/project/' + template.formio.project._id + '/form/' + template.formio.verifyForm._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send()
+          .expect(200)
+          .expect('Content-Type', /json/)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            done();
+          });
+      });
+
+      it('User should be able to verify his email', function(done) {
+        request(app)
+          .put('/project/' + template.formio.project._id + '/form/' + template.formio.userResource._id + '/submission/' + template.formio.owner._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            data: {
+              'name': template.formio.owner.data.name,
+              'email': template.formio.owner.data.email,
+              'password': template.formio.owner.data.password
+            }
+          })
+          .expect(200)
+          .expect('Content-Type', /json/)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            var response = res.body;
             assert(!response.data.hasOwnProperty('password'), 'The submission `data` should not contain the `password`.');
             assert(response.hasOwnProperty('form'), 'The response should contain the resource `form`.');
             assert.equal(response.form, template.formio.userResource._id);
-            assert(res.headers.hasOwnProperty('x-jwt-token'), 'The response should contain a `x-jwt-token` header.');
-
-            // Update our testProject.owners data.
+            assert(res.headers.hasOwnProperty('x-jwt-token'), 'The response shouldnt contain a `x-jwt-token` header.');
+              // Update our testProject.owners data.
             var tempPassword = template.formio.owner.data.password;
             template.formio.owner = response;
             template.formio.owner.data.password = tempPassword;

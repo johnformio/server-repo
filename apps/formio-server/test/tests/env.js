@@ -66,6 +66,51 @@ module.exports = function(app, template, hook) {
       ]
     };
 
+    // For verify email
+    const getVerificationToken = function () {
+      return new Promise((resolve) => {
+        const event = template.hooks.getEmitter();
+        event.once('newMail', (email) => {
+          const regex = /(?<=token=)[^"]+/i;
+          let token = email.html.match(regex);
+          token = token ? token[0] : token;
+          resolve(token);
+        });
+      });
+    }
+
+    const verifyUser = function(user, done) {
+      return new Promise((resolve) => {
+        request(app)
+        .put('/project/' + template.formio.project._id + '/form/' + template.formio.userResource._id + '/submission/' + user._id)
+        .set('x-jwt-token', user.token)
+        .send({
+          data: {
+            'name': user.data.name,
+            'email': user.data.email,
+            'password': user.data.password
+          }
+        })
+        .expect(200)
+        .expect('Content-Type', /json/)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          // Update our testProject.owners data.
+          const response = res.body;
+          const tempPassword = user.data.password;
+          user = response;
+          user.data.password = tempPassword;
+
+          // Store the JWT for future API calls.
+          user.token = res.headers['x-jwt-token'];
+          resolve(user);
+        });
+      });
+    };
+
     template.env = {
       owner: null,
       project: null,
@@ -75,16 +120,54 @@ module.exports = function(app, template, hook) {
 
     it(`Register project owner`, function(done) {
       let tempPassword = chance.word({ length: 8 });
-      request(app)
-        .post('/project/' + template.formio.project._id + '/form/' + template.formio.formRegister._id + '/submission')
+      template.env.owner = {
+        data: {
+          'name': chance.word({ length: 10 }),
+          'email': chance.email(),
+        }
+      }
+
+      const postPayment = (err) => {
+        if (err) {
+          return done(err);
+        }
+
+        request(app)
+        .post('/payment-gateway')
+        .set('x-jwt-token', template.env.owner.token)
         .send({
           data: {
-            'name': chance.word({ length: 10 }),
-            'email': chance.email(),
-            'password': tempPassword
+            ccNumber: '4012000033330026',
+            ccType: 'visa',
+            ccExpiryMonth: '12',
+            ccExpiryYear: '2030',
+            cardholderName: 'FORMIO Test Account',
+            securityCode: '123'
           }
         })
         .expect(200)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+          done();
+        });
+      }
+
+      getVerificationToken()
+          .then((token) => {
+            template.env.owner.token = token;
+            return verifyUser(template.env.owner, postPayment);
+          })
+          .then((user) => {
+            template.env.owner = _.cloneDeep(user);
+            postPayment();
+          });
+
+      request(app)
+        .post('/project/' + template.formio.project._id + '/form/' + template.formio.formRegister._id + '/submission')
+        .send(template.env.owner)
+        .expect(201)
         .expect('Content-Type', /json/)
         .end(function(err, res) {
           if (err) {
@@ -94,42 +177,107 @@ module.exports = function(app, template, hook) {
           var response = res.body;
           template.env.owner = response;
           template.env.owner.data.password = tempPassword;
-          template.env.owner.token = res.headers['x-jwt-token'];
-          request(app)
-            .post('/payment-gateway')
-            .set('x-jwt-token', template.env.owner.token)
-            .send({
-              data: {
-                ccNumber: '4012000033330026',
-                ccType: 'visa',
-                ccExpiryMonth: '12',
-                ccExpiryYear: '2030',
-                cardholderName: 'FORMIO Test Account',
-                securityCode: '123'
-              }
-            })
-            .expect(200)
-            .end(function(err, res) {
-              if (err) {
-                return done(err);
-              }
-              done();
-            });
           });
     });
 
     const registerUser = (i, team, done) => {
       let tempPassword = chance.word({ length: 8 });
-      request(app)
-        .post('/project/' + template.formio.project._id + '/form/' + template.formio.formRegister._id + '/submission')
+      template.env.users[`user${i}`] = {
+        data: {
+          'name': chance.word({ length: 10 }),
+          'email': chance.email(),
+          'password': tempPassword
+        }
+      };
+
+      const createTeam = (err) => {
+        if (err) {
+          return done(err);
+        }
+
+        if (!team) {
+          return done();
+        }
+
+        // Create a team.
+        request(app)
+        .post('/team')
+        .set('x-jwt-token', template.env.owner.token)
         .send({
           data: {
-            'name': chance.word({ length: 10 }),
-            'email': chance.email(),
-            'password': tempPassword
+            name: chance.word()
           }
         })
-        .expect(200)
+        .expect('Content-Type', /json/)
+        .expect(201)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          // Store the JWT for future API calls.
+          template.env.owner.token = res.headers['x-jwt-token'];
+          template.env.teams[`team${i}`] = res.body;
+
+          // Create a team member.
+          request(app)
+            .post('/team/' + template.env.teams[`team${i}`]._id + '/member')
+            .set('x-jwt-token', template.env.owner.token)
+            .send({
+              data: {
+                userId: template.env.users[`user${i}`]._id,
+                email: template.env.users[`user${i}`].data.email,
+                admin: true
+              }
+            })
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              // Store the JWT for future API calls.
+              template.env.owner.token = res.headers['x-jwt-token'];
+
+              // User accepts team.
+              if (!template.env.users[`user${i}`].metadata) {
+                template.env.users[`user${i}`].metadata = {teams: []};
+              }
+              if (!template.env.users[`user${i}`].metadata.teams) {
+                template.env.users[`user${i}`].metadata = {teams: []};
+              }
+              template.env.users[`user${i}`].metadata.teams.push(template.env.teams[`team${i}`]._id.toString());
+              request(app)
+                .put('/project/' + template.formio.project._id + '/form/' + template.formio.userResource._id + '/submission/' + template.env.users[`user${i}`]._id)
+                .set('x-jwt-token', template.env.users[`user${i}`].token)
+                .send(template.env.users[`user${i}`])
+                .expect(200)
+                .end(function(err, res) {
+                  if (err) {
+                    return done(err);
+                  }
+                  template.env.users[`user${i}`].token = res.headers['x-jwt-token'];
+                  done();
+                });
+            });
+        });
+      }
+
+      getVerificationToken()
+          .then((token) => {
+            template.env.users[`user${i}`].token = token;
+            return verifyUser(template.env.users[`user${i}`], createTeam);
+          })
+          .then((user) => {
+            template.env.users[`user${i}`] = _.cloneDeep(user);
+            createTeam();
+          });
+
+      request(app)
+        .post('/project/' + template.formio.project._id + '/form/' + template.formio.formRegister._id + '/submission')
+        .send(template.env.users[`user${i}`])
+        .expect(201)
         .expect('Content-Type', /json/)
         .end(function(err, res) {
           if (err) {
@@ -139,74 +287,7 @@ module.exports = function(app, template, hook) {
           var response = res.body;
           template.env.users[`user${i}`] = response;
           template.env.users[`user${i}`].data.password = tempPassword;
-          template.env.users[`user${i}`].token = res.headers['x-jwt-token'];
-          if (!team) {
-            return done();
-          }
 
-          // Create a team.
-          request(app)
-          .post('/team')
-          .set('x-jwt-token', template.env.owner.token)
-          .send({
-            data: {
-              name: chance.word()
-            }
-          })
-          .expect('Content-Type', /json/)
-          .expect(201)
-          .end(function(err, res) {
-            if (err) {
-              return done(err);
-            }
-
-            // Store the JWT for future API calls.
-            template.env.owner.token = res.headers['x-jwt-token'];
-            template.env.teams[`team${i}`] = res.body;
-
-            // Create a team member.
-            request(app)
-              .post('/team/' + template.env.teams[`team${i}`]._id + '/member')
-              .set('x-jwt-token', template.env.owner.token)
-              .send({
-                data: {
-                  userId: template.env.users[`user${i}`]._id,
-                  email: template.env.users[`user${i}`].data.email,
-                  admin: true
-                }
-              })
-              .expect('Content-Type', /json/)
-              .expect(200)
-              .end(function(err, res) {
-                if (err) {
-                  return done(err);
-                }
-
-                // Store the JWT for future API calls.
-                template.env.owner.token = res.headers['x-jwt-token'];
-
-                // User accepts team.
-                if (!template.env.users[`user${i}`].metadata) {
-                  template.env.users[`user${i}`].metadata = {teams: []};
-                }
-                if (!template.env.users[`user${i}`].metadata.teams) {
-                  template.env.users[`user${i}`].metadata = {teams: []};
-                }
-                template.env.users[`user${i}`].metadata.teams.push(template.env.teams[`team${i}`]._id.toString());
-                request(app)
-                  .put('/project/' + template.formio.project._id + '/form/' + template.formio.userResource._id + '/submission/' + template.env.users[`user${i}`]._id)
-                  .set('x-jwt-token', template.env.users[`user${i}`].token)
-                  .send(template.env.users[`user${i}`])
-                  .expect(200)
-                  .end(function(err, res) {
-                    if (err) {
-                      return done(err);
-                    }
-                    template.env.users[`user${i}`].token = res.headers['x-jwt-token'];
-                    done();
-                  });
-              });
-          });
         });
     };
 
@@ -297,6 +378,50 @@ module.exports = function(app, template, hook) {
 
               done();
             });
+        });
+    });
+
+    it('Register another Formio User not on a team', function(done) {
+
+      let tempUser = {
+        'name': chance.word({ length: 10 }),
+        'email': chance.email(),
+        'password': 'test1234'
+      };
+
+      getVerificationToken()
+          .then((token) => {
+            tempUser.token = token;
+            return verifyUser(tempUser, done);
+          })
+          .then((user) => {
+            template.formio.user2 = _.cloneDeep(user);
+            done();
+          });
+
+
+      request(app)
+        .post('/project/' + template.formio.project._id + '/form/' + template.formio.formRegister._id + '/submission')
+        .send({
+          data: {
+            'name': chance.word({ length: 10 }),
+            'email': chance.email(),
+            'password': 'test1234'
+          }
+        })
+        .expect(201)
+        .expect('Content-Type', /json/)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          var response = res.body;
+
+          // Update our testProject.owners data.
+          var tempPassword = 'test123';
+          tempUser = response;
+          tempUser.data.password = tempPassword;
         });
     });
 

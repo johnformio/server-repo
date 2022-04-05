@@ -18,11 +18,31 @@ module.exports = function(app, template, hook) {
       };
 
       // Create the admin user.
-      const adminUserRes = await request(app)
+      const adminUserResFirst = await request(app)
         .post(`/project/${template.formio.formLogin.project}/user/register/submission`)
         .send({
           data: stuff.admin.data,
         });
+
+        stuff.admin.token = await new Promise((resolve) => {
+        const event = template.hooks.getEmitter();
+        event.once('newMail', (email) => {
+          var regex = /(?<=token=)[^"]+/i;
+          var token = email.html.match(regex);
+          token = token ? token[0] : token;
+          resolve(token);
+        });
+      })
+
+      assert.equal(adminUserResFirst.status, 201);
+      stuff.admin.user = adminUserResFirst.body;
+      // Verify account
+      const adminUserRes = await request(app)
+          .put(`/project/${template.formio.formLogin.project}/user/submission/${stuff.admin.user._id}`)
+          .set('x-jwt-token',  stuff.admin.token)
+          .send({
+            data: stuff.admin.data,
+          });
 
       assert.equal(adminUserRes.status, 200);
       stuff.admin.user = adminUserRes.body;
