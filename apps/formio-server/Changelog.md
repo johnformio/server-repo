@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
  - FIO-4642: changed not-boot to read-only mode for offline license, add… 
  - FIO-4645: updated license validation errors processing
+ - FOR-2705: fixed issue when adding 'formio' to subdomain
 
 ### Added
  - ECR Deployments.
