@@ -4243,6 +4243,62 @@
       ],
       "submissionAccess": []
     },
+    "language": {
+      "title": "Language",
+      "type": "resource",
+      "name": "language",
+      "path": "language",
+      "tags": [],
+      "components": [
+        {
+            "label":"Language",
+            "tableView" :true,
+            "key":"language",
+            "type":"textfield",
+            "input":true,
+            "unique": true
+        },
+        {
+            "label":"Language key",
+            "tableView":true,
+            "key":"languageKey",
+            "type":"textfield",
+            "input":true,
+            "unique": true
+        },
+        {
+            "label":"Translations",
+            "tableView":false,
+            "key":"translations",
+            "type":"datamap",
+            "input":true,
+            "valueComponent": {
+                "label":"Translation",
+                "tableView":true,
+                "key":"key",
+                "type":"textfield",
+                "input":true
+            }
+        },
+        {
+            "type":"button",
+            "label":"Submit",
+            "key":"submit",
+            "disableOnInvalid":true,
+            "input":true,
+            "tableView":false
+        }
+    ],
+    "access": [
+        {
+          "type": "read_all",
+          "roles": [
+            "authenticated"
+          ]
+        }
+    ],
+    "submissionAccess": []
+    },
     "member": {
       "title": "Team Member",
       "type": "resource",
