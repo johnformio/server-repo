@@ -146,7 +146,8 @@ module.exports = (formioServer) => {
       if (
         req.handlerName &&
         req.flattenedComponents &&
-        Encryptor.hasEncryptedComponents(req)
+        Encryptor.hasEncryptedComponents(req) &&
+        req.projectLicense.terms.options.sac
       ) {
         if (Encryptor.encryptHandler(req.handlerName)) {
           Encryptor.encryptDecrypt(req, req.body, 'encrypt', next);
