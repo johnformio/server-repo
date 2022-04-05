@@ -82,7 +82,7 @@ module.exports = function(options) {
       fs.readFile(`./portal/config.js`, 'utf8', (err, contents) => {
         res.send(
           contents.replace(
-            /var hostedPDFServer = '';|var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false/gi,
+            /var hostedPDFServer = '';|var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false|var whitelabel = false;/gi,
             (matched) => {
               if (config.hostedPDFServer && matched.includes('var hostedPDFServer')) {
                 return `var hostedPDFServer = '${config.hostedPDFServer}';`;
@@ -101,6 +101,9 @@ module.exports = function(options) {
               }
               else if (config.sac && app.license.terms.options.sac && matched.includes('var sac')) {
                 return 'var sac = true;';
+              }
+              else if (config.whitelabel && app.license.terms.options.whitelabel &&  matched.includes('var whitelabel')) {
+                return `var whitelabel = true;`;
               }
               else if (config.enableOauthM2M && matched.includes('var oAuthM2MEnabled')) {
                 return 'var oAuthM2MEnabled = true;';

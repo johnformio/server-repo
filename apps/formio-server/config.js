@@ -193,6 +193,7 @@ config.formio.defaultEmailSource= getConfig('DEFAULT_EMAIL_SOURCE', 'no-reply@ex
 config.enableOauthM2M = getConfig('OAUTH_M2M_ENABLED', false);
 config.formio.hosted = Boolean(getConfig('FORMIO_HOSTED'), false);
 
+config.whitelabel = Boolean(getConfig('WHITELABEL'), false);
 config.onlyPrimaryWriteAccess = Boolean(getConfig('ONLY_PRIMARY_WRITE_ACCESS', false));
 
 const getMaxOldSpace = () => {
