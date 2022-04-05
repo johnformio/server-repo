@@ -161,6 +161,7 @@ module.exports = (router, formioServer) => {
     formio.mongoose.model('project'),
   ).rest({
     beforeGet: [
+      require('../middleware/checkPrimaryAccess'),
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       (req, res, next) => {
         // Use project cache for performance reasons.
@@ -177,6 +178,7 @@ module.exports = (router, formioServer) => {
       (req, res, next) => res.sendStatus(405),
     ],
     beforePost: [
+      require('../middleware/checkPrimaryAccess'),
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       formio.middleware.licenseValid,
       require('../middleware/fetchTemplate'),

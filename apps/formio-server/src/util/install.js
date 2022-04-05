@@ -42,11 +42,11 @@ module.exports = (app, config, next) => {
         }, (err, project) => {
           formio.resources.role.model.findOne({
             project: project._id,
-            title: 'Authenticated'
-          }, (err, authenticated) => {
+            title: 'Administrator'
+          }, (err, administrator) => {
             formio.resources.form.model.findOne({
               project: project._id,
-              name: 'user'
+              name: 'admin'
             }, (err, form) => {
               log('Creating Super Admin acount');
               const email = process.env.ADMIN_EMAIL || 'admin@example.com';
@@ -62,7 +62,7 @@ module.exports = (app, config, next) => {
                     password: hash
                   },
                   roles: [
-                    authenticated._id
+                    administrator._id
                   ]
                 }, (err, user) => {
                   log(` > Super Admin account created for ${  email  }/${  password}`);

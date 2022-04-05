@@ -5,6 +5,13 @@ const fetch = require('formio/src/util/fetch');
 
 module.exports = (app) => (middleware) => {
   middleware.unshift((req, res, next) => {
+    app.formio.formio.hook.alter('getPrimaryProjectAdminRole', req, res, (err, role) => {
+      req.isAdmin = req.user && req.user.roles && req.user.roles.includes(role);
+
+      next();
+    });
+  });
+  middleware.unshift((req, res, next) => {
     if (!app.formio.formio.twoFa.is2FAuthenticated(req)) {
       return res.status(200).send({
         isTwoFactorAuthenticationRequired: true,

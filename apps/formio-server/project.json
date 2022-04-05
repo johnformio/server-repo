@@ -1085,13 +1085,45 @@
         "before"
       ]
     },
+    "admin:role": {
+      "title": "Role Assignment",
+      "name": "role",
+      "form": "admin",
+      "settings": {
+        "association": "new",
+        "type": "add",
+        "role": "administrator"
+      },
+      "priority": 1,
+      "method": [
+        "create"
+      ],
+      "handler": [
+        "after"
+      ]
+    },
+    "admin:save": {
+      "title": "Save Submission",
+      "name": "save",
+      "form": "admin",
+      "settings": {},
+      "priority": 10,
+      "method": [
+        "create",
+        "update"
+      ],
+      "handler": [
+        "before"
+      ]
+    },
     "userLoginForm:login": {
       "title": "Login",
       "name": "login",
       "form": "userLoginForm",
       "settings": {
         "resources": [
-          "user"
+          "user",
+          "admin"
         ],
         "username": "email",
         "password": "password"
@@ -1212,6 +1244,165 @@
       "type": "resource",
       "name": "user",
       "path": "user",
+      "display": "form",
+      "tags": [],
+      "components": [
+        {
+          "lockKey": true,
+          "persistent": true,
+          "unique": false,
+          "protected": false,
+          "input": true,
+          "inputType": "text",
+          "inputMask": "",
+          "label": "Name",
+          "key": "fullName",
+          "placeholder": "Enter your full name",
+          "prefix": "",
+          "suffix": "",
+          "multiple": false,
+          "defaultValue": "",
+          "validate": {
+            "required": false,
+            "minLength": "",
+            "maxLength": "",
+            "pattern": "",
+            "custom": ""
+          },
+          "type": "textfield",
+          "tableView": true,
+          "conditional": {
+            "show": null,
+            "when": null,
+            "eq": ""
+          }
+        },
+        {
+          "persistent": true,
+          "unique": true,
+          "input": true,
+          "inputType": "email",
+          "label": "Email",
+          "key": "email",
+          "placeholder": "Enter your email address",
+          "prefix": "",
+          "suffix": "",
+          "defaultValue": "",
+          "type": "email",
+          "protected": false,
+          "tableView": true,
+          "kickbox": {
+            "enabled": false
+          },
+          "tags": [],
+          "conditional": {
+            "show": "",
+            "when": null,
+            "eq": ""
+          },
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "persistent": true,
+          "protected": true,
+          "input": true,
+          "inputType": "password",
+          "label": "Password",
+          "key": "password",
+          "placeholder": "Enter your password",
+          "prefix": "",
+          "suffix": "",
+          "type": "password",
+          "tableView": false,
+          "validate": {
+            "minLength": 8
+          }
+        },
+        {
+          "label": "Two-Factor Authentication Code",
+          "hidden": true,
+          "tableView": true,
+          "protected": true,
+          "key": "twoFactorAuthenticationCode",
+          "type": "textfield",
+          "input": true
+        },
+        {
+          "label": "Two-Factor Authentication Recovery Codes",
+          "hidden": true,
+          "tableView": true,
+          "multiple": true,
+          "protected": true,
+          "key": "twoFactorAuthenticationRecoveryCodes",
+          "type": "textfield",
+          "input": true
+        },
+        {
+          "label": "Two-Factor Authentication Enabled",
+          "hidden": true,
+          "tableView": false,
+          "defaultValue": false,
+          "redrawOn": "data",
+          "clearOnHide": false,
+          "key": "twoFactorAuthenticationEnabled",
+          "type": "checkbox",
+          "input": true
+        },
+        {
+          "theme": "primary",
+          "disableOnInvalid": true,
+          "action": "submit",
+          "block": false,
+          "rightIcon": "",
+          "leftIcon": "",
+          "size": "md",
+          "key": "submit",
+          "label": "Submit",
+          "input": true,
+          "type": "button",
+          "tableView": false
+        }
+      ],
+      "access": [
+        {
+          "type": "read_all",
+          "roles": [
+            "authenticated",
+            "anonymous"
+          ]
+        }
+      ],
+      "submissionAccess": [
+        {
+          "type": "read_own",
+          "roles": [
+            "authenticated"
+          ]
+        },
+        {
+          "type": "update_own",
+          "roles": [
+            "authenticated"
+          ]
+        },
+        {
+          "type": "delete_own",
+          "roles": [
+            "authenticated"
+          ]
+        },
+        {
+          "type": "self"
+        }
+      ]
+    },
+    "admin": {
+      "title": "Admin",
+      "type": "resource",
+      "name": "admin",
+      "path": "admin",
       "display": "form",
       "tags": [],
       "components": [

@@ -725,10 +725,60 @@ module.exports = function(app) {
           });
         };
 
+        const getPrimaryProjectAdminRole = function(callback) {
+          /* eslint-disable camelcase, max-statements, no-fallthrough */
+          const getRoles = (project) => {
+            formioServer.formio.resources.role.model.find(
+              {
+                deleted: {$eq: null},
+                project: project._id,
+              }, function(err, roles) {
+                if (err) {
+                  return callback(err);
+                }
+
+                if (roles && roles.length) {
+                  roles.forEach((role) => {
+                    if (role.admin) {
+                      const roleId = role._id.toString();
+                      access.primaryAdminRole = roleId;
+                    }
+                  });
+                }
+
+                return callback(null);
+              });
+          };
+          if (req.userProject && req.userProject.primary) {
+           getRoles(req.userProject);
+          }
+          else if (req.user && req.token) {
+            const projectId = req.token.project ? req.token.project._id : req.token.form.project;
+
+            formioServer.formio.cache.loadProject(req, projectId, function(err, project) {
+              if (err) {
+                return callback(err);
+              }
+
+              if (project && project.primary) {
+                getRoles(project);
+              }
+              else {
+                return callback(null);
+              }
+            });
+          }
+          else {
+            return callback(null);
+          }
+          /* eslint-enable camelcase, max-statements, no-fallthrough */
+        };
+
         // Get the permissions for an Project with the given ObjectId.
         handlers.unshift(
           getProjectAccess,
-          getTeamAccess
+          getTeamAccess,
+          getPrimaryProjectAdminRole
         );
         handlers.push((callback) => {
           // The groups should be the difference between the user roles and access.roles.
@@ -971,6 +1021,10 @@ module.exports = function(app) {
 
             if (_url === '/payment-gateway') {
               return req.userProject.primary;
+            }
+
+            if (req.method === 'POST' && _url === '/team') {
+              return true;
             }
 
             // This req is unauthorized/unknown.
@@ -2177,6 +2231,58 @@ module.exports = function(app) {
           return cb();
         }
       },
+
+      getPrimaryProjectAdminRole(req, res, cb) {
+        /* eslint-disable camelcase, max-statements, no-fallthrough */
+        const getRoles = (project) => {
+          formioServer.formio.resources.role.model.find(
+            {
+              deleted: {$eq: null},
+              project: project._id,
+            }, function(err, roles) {
+              if (err) {
+                return cb(err);
+              }
+
+              let primaryAdminRole;
+
+              if (roles && roles.length) {
+                roles.forEach((role) => {
+                  if (role.admin) {
+                    const roleId = role._id.toString();
+                    primaryAdminRole = roleId;
+                  }
+                });
+              }
+
+              cb(null, primaryAdminRole);
+            });
+        };
+
+        if (req.userProject && req.userProject.primary) {
+         getRoles(req.userProject);
+        }
+        else if (req.user && req.token) {
+          const projectId = req.token.project ? req.token.project._id : req.token.form.project;
+
+          formioServer.formio.cache.loadProject(req, projectId, function(err, project) {
+            if (err) {
+              return cb(err);
+            }
+
+            if (project && project.primary) {
+              getRoles(project);
+            }
+            else {
+              return cb(null);
+            }
+          });
+        }
+        else {
+          return cb(null);
+        }
+        /* eslint-enable camelcase, max-statements, no-fallthrough */
+      }
     }
   };
 };

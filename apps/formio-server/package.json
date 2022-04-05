@@ -22,7 +22,7 @@
   "cache": "1550086650",
   "main": "./main.js",
   "version": "7.4.0-rc.10",
-  "schema": "3.3.11",
+  "schema": "3.3.12",
   "portalVersion": "7.4.0-rc.11",
   "dependencies": {
     "@braintree/sanitize-url": "^5.0.2",

@@ -109,9 +109,12 @@ module.exports = function(app, formioServer) {
   /**
    * Create a team.
    */
-  app.post('/team',
-    ...initializeTeams,
-    Teams.createTeam
+  app.post('/team', [
+      ...initializeTeams,
+      formioServer.formio.middleware.permissionHandler,
+      require('../middleware/checkPrimaryAccess'),
+      Teams.createTeam
+    ]
   );
 
   /**

@@ -1,9 +1,9 @@
 'use strict';
 
 const _ = require('lodash');
+const config = require('../../../config');
 const util = require('../../util/util');
 const SubmissionRevision = require('../../revisions/SubmissionRevision');
-
 module.exports = app => routes => {
   const submissionRevision = new SubmissionRevision(app);
   const licenseUtilizationMiddleware = require('../../middleware/licenseUtilization').middleware(app);
@@ -29,6 +29,15 @@ module.exports = app => routes => {
     }
   };
 
+  const addAdminAccess = function(req, res, next) {
+    if ((req.url.split('?')[0] === '/current' || req.originalUrl.startsWith('/user/login')) && res.resource && res.resource.item) {
+      res.resource.item.isAdmin = req.isAdmin;
+      res.resource.item.onlyPrimaryWriteAccess = !!config.onlyPrimaryWriteAccess;
+    }
+
+    next();
+  };
+
   const deleteRevisions = function(req, res, next) {
     submissionRevision.delete(req.params.submissionId, next);
   };
@@ -37,6 +46,7 @@ module.exports = app => routes => {
     routes[handler].push(conditionalFilter);
   });
 
+  routes.afterGet.push(addAdminAccess);
   routes.afterDelete.push(deleteRevisions);
 
   // Add a submission model set before the index.
