@@ -145,6 +145,7 @@ var port = getConfig('PORT', 80);
 var host = `${protocol}://${domain}`;
 var apiHost = getConfig('BASE_URL', (`${protocol}://api.${domain}`));
 var formioHost = `${protocol}://${project}.${domain}`;
+var projectPathType = getConfig('PROJECT_PATH_TYPE', 'Subdirectories');
 
 // Setup Google Analytics.
 config.gaTid = getConfig('GOOGLE_ANALYTICS_TID', '');
@@ -165,6 +166,7 @@ config.formio.protocol = protocol;
 config.formio.baseUrl = domain + (port !== 80 ? `:${port}` : '');
 config.port = port;
 config.host = host;
+config.projectPathType = projectPathType;
 config.sslKey = getConfig('SSL_KEY', false);
 config.sslCert = getConfig('SSL_CERT', false);
 
