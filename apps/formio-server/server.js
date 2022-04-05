@@ -203,6 +203,7 @@ module.exports = function(options) {
 
   // Status response.
   debug.startup('Attaching middleware: Status');
+  console.log(`Server version: ${packageJson.version}`);
   app.get('/status', [
     cors(),
     (req, res) => {
