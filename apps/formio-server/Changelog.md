@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-3821: Add License Configuration to whitelabel
  - FIO-3557: Added guard to check for sac flag on project license when encrypting fields
  - FIO-4397: added Language resource in the portal base
+ - FIO-3435: Fixed the order for the load revisions
 
 ### Added
  - ECR Deployments.
