@@ -80,8 +80,41 @@ module.exports = class FormRevision extends Revision {
     body._vnote = note || '';
     delete body._id;
     delete body.__v;
-
+    item.containRevisions = true;
+    item.save();
     return this.revisionModel.create(body, done);
  }
+
+ updateRevisionsSet(formId, user, done) {
+  this.app.formio.formio.mongoose.models.submission.find({
+    form: formId,
+    containRevisions:{$ne: true},
+    deleted: {$eq: null}
+  })
+  .then((submissions) => {
+    submissions.forEach(submission => {
+      this.revisionModel.find({
+        _rid: submission._id,
+        deleted: {$eq: null}
+      })
+      .then((revisions)=>{
+        const prevRevisionData = revisions.length > 0 ? revisions.reduce((prev, current) => (prev.created > current.created) ? prev : current).data : {};
+        const patch = jsonPatch.compare(prevRevisionData, submission.data)
+        .map((operation) => {
+          operation.path = `/data${operation.path}`;
+          return operation;
+        });
+        if (patch.length > 0) {
+          _.set(submission.metadata, 'jsonPatch', patch);
+          if (!_.isEmpty(prevRevisionData)) {
+             _.set(submission.metadata, 'previousData', prevRevisionData);
+          }
+          this.createVersion(submission, user);
+        }
+      });
+    });
+    done();
+  });
+}
 };
 

@@ -68,6 +68,9 @@ module.exports = app => models => {
       description: 'The current state of the submission',
       index: true,
       default: 'submitted'
+    },
+    containRevisions: {
+      type: Boolean
     }
   });
 

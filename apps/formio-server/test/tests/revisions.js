@@ -669,7 +669,6 @@ module.exports = (app, template, hook) => {
       });
     });
 
-
     it('Submits to form version 2', done => {
       const data = {
         fname: 'joe',
@@ -1000,7 +999,9 @@ module.exports = (app, template, hook) => {
   describe('Submission Revisions', () => {
    // const helper = new template.Helper(template.formio.owner);
     let form;
+    let formWithInitiallyDisabledRevision;
     let submission;
+    let submissionWithInitiallyDisabledRevision;
     const data = {
       fname: 'joe',
       lname: 'test'
@@ -1078,10 +1079,172 @@ module.exports = (app, template, hook) => {
             type: 'textfield'
           }
         ])
+        .form('submissionRevisionUpdateForm', [
+          {
+            input: true,
+            tableView: true,
+            inputType: 'text',
+            inputMask: '',
+            label: 'fname',
+            key: 'fname',
+            placeholder: '',
+            prefix: '',
+            suffix: '',
+            multiple: false,
+            defaultValue: '',
+            protected: false,
+            unique: false,
+            persistent: true,
+            validate: {
+              required: true,
+              minLength: '',
+              maxLength: '',
+              pattern: '',
+              custom: '',
+              customPrivate: false
+            },
+            conditional: {
+              show: '',
+              when: null,
+              eq: ''
+            },
+            type: 'textfield'
+          },
+          {
+            input: true,
+            tableView: true,
+            inputType: 'text',
+            inputMask: '',
+            label: 'lname',
+            key: 'lname',
+            placeholder: '',
+            prefix: '',
+            suffix: '',
+            multiple: false,
+            defaultValue: '',
+            protected: false,
+            unique: false,
+            persistent: true,
+            validate: {
+              required: true,
+              minLength: '',
+              maxLength: '',
+              pattern: '',
+              custom: '',
+              customPrivate: false
+            },
+            conditional: {
+              show: '',
+              when: null,
+              eq: ''
+            },
+            type: 'textfield'
+          }
+        ])
         .execute(function() {
           form = helper.getForm('submissionRevisionForm');
+          formWithInitiallyDisabledRevision = helper.getForm('submissionRevisionUpdateForm');
           assert(typeof form === 'object');
+          assert(typeof formWithInitiallyDisabledRevision === 'object');
           done();
+        });
+    });
+
+    it('Create submission with disabled revisions', done => {
+      helper.createSubmission('submissionRevisionUpdateForm', {
+        data,
+      },
+      (err, result) => {
+        if (err) {
+          done(err);
+        }
+        submissionWithInitiallyDisabledRevision = result;
+        assert.deepEqual(submissionWithInitiallyDisabledRevision.data, data);
+        assert.deepEqual(submissionWithInitiallyDisabledRevision.containRevisions, undefined);
+        helper.getSubmissionRevisions(formWithInitiallyDisabledRevision, submissionWithInitiallyDisabledRevision,
+        (err, revisions) => {
+          if (err) {
+            done(err);
+          }
+          assert.equal(revisions.length, 0);
+          done();
+        });
+      });
+    });
+
+    it('Sets a form with submissions to use submission revisions', done => {
+      formWithInitiallyDisabledRevision.submissionRevisions = 'true';
+      formWithInitiallyDisabledRevision.components.push();
+      helper.updateForm(formWithInitiallyDisabledRevision, (err, result) => {
+        assert.equal(result.submissionRevisions, 'true');
+        helper.getSubmissionRevisions(formWithInitiallyDisabledRevision, submissionWithInitiallyDisabledRevision,
+          (err, revisions) => {
+            if (err) {
+              done(err);
+            }
+
+            assert.equal(revisions.length, 1);
+            assert.equal(revisions[0]._rid, submissionWithInitiallyDisabledRevision._id);
+            assert.equal(revisions[0]._vuser, helper.owner.data.email);
+            assert.deepEqual(revisions[0].data, data);
+            assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'add', path: '/data/fname', value: 'joe'});
+            assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'add', path: '/data/lname', value: 'test'});
+            helper.getSubmission('submissionRevisionUpdateForm', submissionWithInitiallyDisabledRevision._id,
+              (err, result) => {
+                if (err) {
+                  done(err);
+                }
+                submissionWithInitiallyDisabledRevision = result;
+                assert.deepEqual(submissionWithInitiallyDisabledRevision.containRevisions, true);
+                done();
+              });
+          });
+      });
+    });
+
+    it('Disable submission revisions on form', done => {
+      formWithInitiallyDisabledRevision.submissionRevisions = 'false';
+      formWithInitiallyDisabledRevision.components.push();
+      helper.updateForm(formWithInitiallyDisabledRevision, (err, result) => {
+        assert.equal(result.submissionRevisions, 'false');
+        done();
+      });
+    });
+
+    it('Update submission with disabled revisions', done => {
+      const nawData = {
+        fname: 'joe1',
+        lname: 'test1'
+      };
+      submissionWithInitiallyDisabledRevision.data = nawData;
+      helper.updateSubmission( submissionWithInitiallyDisabledRevision,
+        (err, result) => {
+          if (err) {
+            done(err);
+          }
+          submissionWithInitiallyDisabledRevision = result;
+          assert.deepEqual(submissionWithInitiallyDisabledRevision.data, nawData);
+          assert.deepEqual(submissionWithInitiallyDisabledRevision.containRevisions, true);
+          helper.getSubmissionRevisions(formWithInitiallyDisabledRevision, submissionWithInitiallyDisabledRevision,
+          (err, revisions) => {
+            if (err) {
+              done(err);
+            }
+            assert.equal(revisions.length, 2);
+            assert.equal(revisions[0]._rid, submissionWithInitiallyDisabledRevision._id);
+            assert.equal(revisions[0]._vuser, helper.owner.data.email);
+            assert.deepEqual(revisions[0].data, data);
+            assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'add', path: '/data/fname', value: 'joe'});
+            assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'add', path: '/data/lname', value: 'test'});
+
+            assert.equal(revisions[1]._rid, submissionWithInitiallyDisabledRevision._id);
+            assert.equal(revisions[1]._vuser, helper.owner.data.email);
+            assert.deepEqual(revisions[1].data, nawData);
+            assert.deepEqual(revisions[1].metadata.jsonPatch[1], {op: 'replace', path: '/data/fname', value: 'joe1'});
+            assert.deepEqual(revisions[1].metadata.jsonPatch[0], {op: 'replace', path: '/data/lname', value: 'test1'});
+
+            done();
+          });
         });
     });
 
@@ -1113,6 +1276,7 @@ module.exports = (app, template, hook) => {
         }
         submission = result;
         assert.deepEqual(submission.data, data);
+        assert.deepEqual(submission.containRevisions, true);
         helper.getSubmissionRevisions(form, submission,
         (err, revisions) => {
           if (err) {
@@ -1255,3 +1419,4 @@ module.exports = (app, template, hook) => {
   });
 });
 };
+

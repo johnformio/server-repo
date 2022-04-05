@@ -4,6 +4,7 @@ const _ = require('lodash');
 const util = require('../../util/util');
 const {utilization, getLicenseKey} = require('../../util/utilization');
 const FormRevision = require('../../revisions/FormRevision');
+const SubmissionRevision = require('../../revisions/SubmissionRevision');
 
 module.exports = app => routes => {
   const loadFormAlter = require('../../hooks/alter/loadForm')(app).alter;
@@ -31,6 +32,10 @@ module.exports = app => routes => {
             revision.revisionId = revision._id;
             revision.save(next);
           });
+        }
+        if (req.body.submissionRevisions !== form.submissionRevisions && req.body.submissionRevisions === 'true') {
+          const submissionRevision = new SubmissionRevision(app);
+          return submissionRevision.updateRevisionsSet(form._id, req.user, next);
         }
         next();
       });

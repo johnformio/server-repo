@@ -155,6 +155,12 @@ module.exports = app => routes => {
                 return next();
               });
             }
+            else {
+              if (item.containRevisions) {
+                item.containRevisions = false;
+                item.save();
+              }
+            }
           next();
         });
     });
@@ -181,6 +187,12 @@ module.exports = app => routes => {
                 }
                 return next();
               });
+            }
+            else {
+              if (item.containRevisions) {
+                item.containRevisions = false;
+                item.save();
+              }
             }
           next();
         });

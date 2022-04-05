@@ -177,36 +177,48 @@ const createSubmissionRow = (entityValue, previousValue, fieldPath, changes, rev
   [`reason${rowNumber}`]: revision.metadata.previousData? revision._vnote: 'Initial submission',
   [`entityValue${rowNumber}`]: typeof entityValue === 'object' ? entityValue : entityValue.toString(),
   [`previousValue${rowNumber}`]: typeof previousValue === 'object' ? previousValue : previousValue.toString(),
-  [`fieldPath${rowNumber}`]:updatePath(fieldPath, form.components)
+  [`fieldPath${rowNumber}`]: updatePath(fieldPath, form.components)
 });
 };
 
 const createFormRow = (form, fieldPath, tableTemplate, components, revisionIndex, revision, entityValue, previousValue, changes) => {
   const pathArr = fieldPath.split('/');
   let currentPath = '/data';
+  let formPath;
   const isInitialSubmission = !revision.metadata.previousData;
 
   pathArr.reduce((prev, current)=> {
-     let formComponent;
-     currentPath = `${currentPath}/${current}`;
-     if (Array.isArray(prev)) {
-      formComponent = prev.find(component=>component.key && component.key === current) || prev;
-     }
-     else if (prev && prev.key && prev.key === current) {
-      formComponent = prev;
-     }
-     else {
-       return;
-     }
+    let formComponent;
+    currentPath = `${currentPath}/${current}`;
+    if (formPath) {
+      formPath = `${formPath}/${current}`;
+    }
+    // eslint-disable-next-line no-undef
+    formComponent = FormioUtils.getComponent(prev, current);
 
-     if (formComponent && formComponent.key === current) {
-       if (['address', 'datetime', 'sketchpad', 'survey'].includes(formComponent.type)) {
-         if (!complexComponents.find(component => component.key === formComponent.key && component.path === currentPath)) {
-           complexComponents.push({key: formComponent.key, path: currentPath});
-           addComponentToTable(formComponent, tableTemplate, components, revisionIndex, isInitialSubmission, revision._id.toString());
+    if (!formComponent) {
+      if (Array.isArray(prev)) {
+        formComponent = prev.find(component=>component.key && component.key === current) || prev;
+      }
+      else if (prev && prev.key && prev.key === current) {
+        formComponent = prev;
+      }
+      else {
+          return;
+        }
+    }
+
+    if (formComponent && formComponent.key === current) {
+      if (formComponent.type === 'form') {
+        formPath = '/';
+      }
+      if (['address', 'datetime', 'sketchpad', 'survey'].includes(formComponent.type)) {
+        if (!complexComponents.find(component => component.key === formComponent.key && component.path === currentPath)) {
+          complexComponents.push({key: formComponent.key, path: currentPath});
+          addComponentToTable(formComponent, tableTemplate, components, revisionIndex, isInitialSubmission, revision._id.toString());
               const componentJsonPatch = [];
               revision.metadata.jsonPatch = revision.metadata.jsonPatch.reduce((prev, current)=>{
-                if (current.path.startsWith(currentPath)) {
+                if (current.path.startsWith(formPath? currentPath.slice(0, currentPath.length - formPath.length): currentPath)) {
                   componentJsonPatch.push(current);
                 }
                 else {
@@ -222,7 +234,9 @@ const createFormRow = (form, fieldPath, tableTemplate, components, revisionIndex
                prev = {data: {}};
               }
               const current = jsonPatch.applyPatch(prev, componentJsonPatch, false, false).newDocument;
-              createSubmissionRow(current.data[formComponent.key], prev.data[formComponent.key], currentPath, changes, revision, form);
+              const currentData = _.get(current, formPath ? currentPath.slice(1, currentPath.length).split('/') : `data.${formComponent.key}`);
+              const prevData = _.get(prev, formPath ? currentPath.slice(1, currentPath.length).split('/') : `data.${formComponent.key}`);
+              createSubmissionRow(currentData, prevData, currentPath.slice(6), changes, revision, form);
          }
          return;
        }
@@ -309,10 +323,10 @@ module.exports = (changelog, form, submission) => {
                     revisionIndex,
                     !revision.metadata.previousData,
                     );
-              });
+                });
               }
             }
-        else {
+            else {
               return createRow(
                 change.op === "remove" ? '' : val,
                 _.get(revision.metadata.perviousData),
@@ -329,6 +343,22 @@ module.exports = (changelog, form, submission) => {
         }
         else if (change.value && typeof change.value === 'object') {
           _.forIn(change.value, (val, key) => {
+            if (typeof val === 'object') {
+              _.forIn(val, (elem, elemKey) => {
+                createRow(
+                  elem,
+                  revision.data[change.path],
+                  `${change.path.slice(6)}/${key}/${elemKey}`,
+                  form,
+                  changes,
+                  tableTemplate,
+                  revision,
+                  components,
+                  revisionIndex,
+                  !revision.metadata.previousData);
+              });
+            }
+            else {
               createRow(
                 val,
                 revision.data[change.path],
@@ -340,6 +370,7 @@ module.exports = (changelog, form, submission) => {
                 components,
                 revisionIndex,
                 !revision.metadata.previousData);
+              }
           });
         }
         else {
