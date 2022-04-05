@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-4397: added Language resource in the portal base
  - FIO-3435: Fixed the order for the load revisions
  - FIO-4683: Added version to startup logs
+ - FIO-4811: added updating the list of revisions when enable/disable submission revisions
 
 ### Added
  - ECR Deployments.
