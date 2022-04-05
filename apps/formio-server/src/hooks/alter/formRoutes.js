@@ -115,18 +115,38 @@ module.exports = app => routes => {
         }
       }
 
+      const hasSacLicense = _.get(app, 'license.terms.options.sac', false);
+      let isAllowed = true;
+
+      if ( _.get(req, 'body.settings.collection', false) && !hasSacLicense) {
+        isAllowed = false;
+        return res.status(403).send('Security and compliance license is required to use Submissions Collection');
+      }
       // Set the indexes.
       app.formio.formio.util.eachComponent(req.body.components, (component, path) => {
         if (component.dbIndex) {
-          const index = {};
-          index[`data.${path}`] = 1;
-          submissionModel.collection.createIndex(index, {
-            background: true
-          });
+          if (hasSacLicense) {
+            const index = {};
+            index[`data.${path}`] = 1;
+            submissionModel.collection.createIndex(index, {
+              background: true
+            });
+          }
+          else {
+            isAllowed = false;
+          return res.status(403).send('Security and compliance license is required to use the index');
+          }
+        }
+
+        if (component.encrypted && !hasSacLicense) {
+          isAllowed = false;
+          return res.status(403).send('Security and compliance license is required to use the encryption');
         }
       });
 
-      return next();
+      if (isAllowed) {
+        return next();
+      }
     });
   });
 

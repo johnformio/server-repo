@@ -641,6 +641,7 @@ describe('Initial Tests', function() {
         require('formio/test/roles')(app, template, hook);
         require('formio/test/form')(app, template, hook);
         require('formio/test/resource')(app, template, hook);
+        require('./tests/sacLicense')(app, template, hook);
         require('formio/test/nested')(app, template, hook);
         require('formio/test/actions')(app, template, hook);
         require('formio/test/submission')(app, template, hook);
