@@ -691,7 +691,7 @@ const Teams = {
    * @param team
    * @param user
    */
-  async removeTeamFromUser(team, user) {
+  async removeTeamFromUser(team, user, accepted) {
     if (!user) {
       return;
     }
@@ -706,6 +706,9 @@ const Teams = {
       $set: {'metadata.teams': _.uniq(userTeams)}
     }).exec();
 
+    if (!accepted) {
+      return;
+    }
     // Update the member count.
     return await Teams.submissionModel().updateOne({
       _id: Teams.util().idToBson(team._id)
@@ -726,7 +729,7 @@ const Teams = {
       return;
     }
     const user = await Teams.getMemberUser(member);
-    return await Teams.removeTeamFromUser(team, user);
+    return await Teams.removeTeamFromUser(team, user, _.get(member, 'metadata.accepted', false));
   },
 
   /**
