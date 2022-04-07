@@ -141,7 +141,7 @@ function middleware(app) {
           }
 
           if (remote) {
-            result = await remoteUtilization(app, {strict: true});
+            result = req.body.project ? await remoteUtilization(app) : await remoteUtilization(app, {strict: true});
           }
           else {
             result = await utilizationSync(`project:create`, {
