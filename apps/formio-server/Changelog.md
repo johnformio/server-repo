@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-3435: Fixed the order for the load revisions
  - FIO-4683: Added version to startup logs
  - FIO-4811: added updating the list of revisions when enable/disable submission revisions
+ - FIO-4899: fixed new stages creating when project limit is reached
 
 ### Added
  - ECR Deployments.
