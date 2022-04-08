@@ -48,7 +48,7 @@ function middleware(app) {
     const remote = _.get(app, 'license.remote', false);
 
     // Skip license utilization checks for remote non get project.
-    const exceptionEndpoint = ['GET /project/:projectId', 'PUT /project/:projectId', 'POST /project', 'POST /form','PUT /form/:formId', 'PUT /form/:formId/draft', 'PATCH /form/:formId'];
+    const exceptionEndpoint = ['GET /project/:projectId', 'PUT /project/:projectId', 'POST /project', 'POST /form','PUT /form/:formId', 'PUT /form/:formId/draft', 'PATCH /form/:formId', 'POST /project/:projectId/import', 'POST /project/:projectId/tag', 'POST /project/:projectId/deploy', 'DELETE /project/:projectId/tag/:tagId'];
 
     if (remote && !exceptionEndpoint.includes(endpoint)) {
       return next();
@@ -222,6 +222,27 @@ function middleware(app) {
         case 'POST /project/:projectId/import':
           if (_.get(req, 'primaryProject.name') === 'formio' && !process.env.FORMIO_HOSTED) {
             res.status(400).send('Cannot import to formio project. Please create a new project for your forms.');
+          }
+          if (remote) {
+            result = await remoteUtilization(app);
+          }
+          break;
+
+        case 'POST /project/:projectId/tag':
+          if (remote) {
+            result = await remoteUtilization(app);
+          }
+          break;
+
+        case 'POST /project/:projectId/deploy':
+          if (remote) {
+            result = await remoteUtilization(app);
+          }
+          break;
+
+        case 'DELETE /project/:projectId/tag/:tagId':
+          if (remote) {
+            result = await remoteUtilization(app);
           }
           break;
 
