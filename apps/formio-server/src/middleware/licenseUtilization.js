@@ -170,6 +170,10 @@ function middleware(app) {
           else {
             if (remote) {
               result = await remoteUtilization(app);
+              if (result.error) {
+                delete req.body.settings;
+                result = {};
+              }
             }
             else {
               result = utilization(`project:${req.projectId}`, {
