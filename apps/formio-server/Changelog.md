@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-4811: added updating the list of revisions when enable/disable submission revisions
  - FIO-4899: fixed new stages creating when project limit is reached
  - FIO-4353: allowed to disable protected mode
+ - FIO-4890: enable of create/deploy/delete tags and import project JSON for remote license read-only mode
 
 ### Added
  - ECR Deployments.
