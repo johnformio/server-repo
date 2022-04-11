@@ -11,12 +11,22 @@ module.exports = {
   validate: validateWithGracefulDegradation,
   generateMiddleware: app => (req, res, next) => {
     if (app.restrictMethods) {
-      if (['PUT', 'PATCH', 'DELETE'].includes(req.method)) {
-        return res.status(503 /* Service Unavailable */).send('Server is in restricted method mode');
-      }
+      if (['PUT', 'PATCH', 'POST'].includes(req.method)) {
+        if (
+          req.path.match(/form/)  &&
+          !req.path.match(/submission/)||
+          req.path.match(/import/) ||
+          req.path.match(/tag/) ||
+          req.path.match(/deploy/) ||
+          req.path.match(/project/) && req.method === 'POST'
+          ) {
+          return res.status(503 /* Service Unavailable */).send('Server is in restricted method mode');
+        }
+        return next();
     }
-
-    next();
+      return next();
+  }
+    return next();
   },
   terms
 };
@@ -142,13 +152,39 @@ IzaxfXn16qCWfwKGE+VXkSM7OAS5iunoyHr5QYL9bUh2+vKshM/pnhvoMfDXnIZR
       payload = JSON.parse(payload.toString());
       // eslint-disable-next-line no-console
       if (payload.exp < Date.now()) {
-        console.log('License is expired.');
+        console.log(`
+
+        License is expired.
+
+        !!!!!!!!!!!!!!!
+        !   WARNING   !
+        !-------------!
+        ! RESTRICTED  !
+        ! MODE ACTIVE !
+        !!!!!!!!!!!!!!!
+
+      `);
+        app.restrictMethods = true;
       }
       const numberOfProjects = await getNumberOfExistingProjects(app.formio.formio);
       if (payload.terms.projectsNumberLimit && numberOfProjects > payload.terms.projectsNumberLimit) {
-        console.log(`Exceeded the allowed number of projects. Max number of your projects is ${payload.terms.projectsNumberLimit}. You have ${numberOfProjects} projects.`);
+        console.log(`
+
+        Exceeded the allowed number of projects. Max number of your projects is ${payload.terms.projectsNumberLimit}. You have ${numberOfProjects} projects.
+
+        !!!!!!!!!!!!!!!
+        !   WARNING   !
+        !-------------!
+        ! RESTRICTED  !
+        ! MODE ACTIVE !
+        !!!!!!!!!!!!!!!
+
+        `);
+        app.restrictMethods = true;
       }
-      console.log('License key validated remotely');
+      if (!app.restrictMethods) {
+        console.log('License key validated remotely');
+      }
       payload.remote = true;
       return payload;
     }

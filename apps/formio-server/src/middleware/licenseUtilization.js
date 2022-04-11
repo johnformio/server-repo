@@ -48,9 +48,7 @@ function middleware(app) {
     const remote = _.get(app, 'license.remote', false);
 
     // Skip license utilization checks for remote non get project.
-    const exceptionEndpoint = ['GET /project/:projectId', 'PUT /project/:projectId', 'POST /project', 'POST /form','PUT /form/:formId', 'PUT /form/:formId/draft', 'PATCH /form/:formId', 'POST /project/:projectId/import', 'POST /project/:projectId/tag', 'POST /project/:projectId/deploy', 'DELETE /project/:projectId/tag/:tagId'];
-
-    if (remote && !exceptionEndpoint.includes(endpoint)) {
+    if (remote && endpoint !== 'GET /project/:projectId' && endpoint !== 'POST /project') {
       return next();
     }
 
@@ -168,19 +166,10 @@ function middleware(app) {
             });
           }
           else {
-            if (remote) {
-              result = await remoteUtilization(app);
-              if (result.error) {
-                delete req.body.settings;
-                result = {};
-              }
-            }
-            else {
               result = utilization(`project:${req.projectId}`, {
                 ...getProjectContext(req),
                 licenseKey: getLicenseKey(req),
               });
-            }
           }
           if (result) {
             if (res.resource && res.resource.item) {
@@ -223,27 +212,6 @@ function middleware(app) {
           if (_.get(req, 'primaryProject.name') === 'formio' && !process.env.FORMIO_HOSTED) {
             res.status(400).send('Cannot import to formio project. Please create a new project for your forms.');
           }
-          if (remote) {
-            result = await remoteUtilization(app);
-          }
-          break;
-
-        case 'POST /project/:projectId/tag':
-          if (remote) {
-            result = await remoteUtilization(app);
-          }
-          break;
-
-        case 'POST /project/:projectId/deploy':
-          if (remote) {
-            result = await remoteUtilization(app);
-          }
-          break;
-
-        case 'DELETE /project/:projectId/tag/:tagId':
-          if (remote) {
-            result = await remoteUtilization(app);
-          }
           break;
 
         //           d8   ad88
@@ -265,17 +233,13 @@ function middleware(app) {
             res.status(400).send('Cannot add forms to formio project. Please create a new project for your forms.');
             break;
           }
-          if (remote) {
-            result = await remoteUtilization(app);
-          }
-          else {
+
             utilization(`project:${req.projectId}:formCreate`, {
               type: 'form',
               formId: 'new',
               projectId: req.projectId,
               licenseKey: getLicenseKey(req),
             });
-          }
 
           break;
 
@@ -298,10 +262,6 @@ function middleware(app) {
         case 'PUT /form/:formId':
         case 'PUT /form/:formId/draft':
         case 'PATCH /form/:formId':
-          if (remote) {
-            result = await remoteUtilization(app);
-          }
-          else {
             utilization(`project:${req.projectId}:form:${req.formId}:formUpdate`, {
               type: 'form',
               formId: req.formId,
@@ -312,7 +272,6 @@ function middleware(app) {
               projectId: req.projectId,
               licenseKey: getLicenseKey(req),
             });
-          }
           break;
 
         // Disable form utilization when deleting a form.

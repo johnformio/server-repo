@@ -36,7 +36,6 @@ module.exports = function(router, formioServer) {
     ],
     beforePost: [
       formio.middleware.restrictToPlans(['commercial', 'trial']),
-      formio.middleware.licenseUtilization,
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       formio.middleware.tagHandler,
       function(req, res, next) {
@@ -94,7 +93,6 @@ module.exports = function(router, formioServer) {
       }
     ],
     beforeDelete: [
-      formio.middleware.licenseUtilization,
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       formio.middleware.deleteTagHandler
     ],
@@ -147,7 +145,6 @@ module.exports = function(router, formioServer) {
   router.post(
     '/project/:projectId/deploy',
     formio.middleware.restrictToPlans(['commercial', 'trial']),
-    formio.middleware.licenseUtilization,
     function(req, res, next) {
       formio.mongoose.model('project').findOne({
         _id: req.projectId,
