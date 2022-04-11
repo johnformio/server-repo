@@ -16,7 +16,6 @@ module.exports = (formioServer) => async (req, res, next) => {
     }
 
     downloadPDF(req, project, form, submission)
-      .catch((err) => res.status(400).send(err.message || err))
       .then(async (response) => {
         if (response.ok) {
           res.append('Content-Type', response.headers.get('content-type'));
@@ -26,7 +25,8 @@ module.exports = (formioServer) => async (req, res, next) => {
         else {
           return res.status(response.status).send(await response.text());
         }
-      });
+      })
+      .catch((err) => res.status(400).send(err.message || err));
   }
   catch (err) {
     return next(err);
