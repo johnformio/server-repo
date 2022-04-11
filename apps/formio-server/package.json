@@ -25,7 +25,7 @@
   "schema": "3.3.13",
   "portalVersion": "8.0.0-rc.4",
   "dependencies": {
-    "@braintree/sanitize-url": "^5.0.2",
+    "@braintree/sanitize-url": "^6.0.0",
     "@formio/premium": "^1.19.0-rc.1",
     "@types/qrcode": "^1.4.1",
     "@types/speakeasy": "^2.0.6",
