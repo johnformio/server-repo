@@ -24,7 +24,6 @@ module.exports = function(formio) {
   // Handle the request.
   return function(req, res, next) {
     // Determine if this is a local domain or not.
-    const projectPathType = config.projectPathType;
     let local = false;
 
     // Ignore the subdomain if they provide the config.
@@ -63,15 +62,12 @@ module.exports = function(formio) {
         projectName = hostname.split('.')[0];
       }
     }
-
-    switch (projectPathType) {
-      case 'Subdomains': projectName = null;
-        break;
-      case 'Subdirectories': projectName = subdomain.split('.').length > 1
+    // Use the given address to trim the Project name from the subdomain.
+    else if (subdomain) {
+      // Trim the subdomain to the left-most portion for the Project name.
+      projectName = subdomain.split('.').length > 1
         ? projectName = subdomain.split('.')[0]
         : subdomain;
-        break;
-      default: projectName = projectName || null;
     }
 
     // Quick confirmation that we have an projectName.
