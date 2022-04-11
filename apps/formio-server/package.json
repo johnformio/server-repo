@@ -69,7 +69,7 @@
     "node-fetch": "^2.6.7",
     "node-paginate-anything": "^1.0.0",
     "node-saml": "^4.0.0-beta.2",
-    "on-finished": "^2.3.0",
+    "on-finished": "^2.4.0",
     "opn": "^6.0.0",
     "passport-saml-metadata": "^2.5.0",
     "path-to-regexp": "^6.2.0",
