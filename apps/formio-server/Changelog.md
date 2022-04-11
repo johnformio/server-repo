@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-4890: enable of create/deploy/delete tags and import project JSON for remote license read-only mode
  - FIO-4633: fixed error handling
  - Adding recommended index to tag collection.
+ - FIO-4353: fixed restricted mode and added it to remote license
 
 ### Added
  - ECR Deployments.
