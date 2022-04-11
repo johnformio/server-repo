@@ -81,5 +81,12 @@ module.exports = function(router) {
   });
   /* eslint-enable new-cap */
 
+  // Add recommended index.
+  model.schema.index({
+    project: 1,
+    deleted: 1,
+    created: -1
+  });
+
   return model;
 };
