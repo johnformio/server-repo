@@ -33,7 +33,7 @@
     "acorn": "^8.5.0",
     "adal-node": "^0.2.3",
     "async": "^3.2.2",
-    "aws-sdk": "^2.1077.0",
+    "aws-sdk": "^2.1078.0",
     "azure-storage": "^2.10.5",
     "bcrypt": "^5.0.1",
     "bluebird": "^3.7.2",
