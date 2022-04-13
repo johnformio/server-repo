@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-4633: fixed error handling
  - Adding recommended index to tag collection.
  - FIO-4353: fixed restricted mode and added it to remote license
+ - FIO-4843: fixed getting actual data for submission with draft status
 
 ### Added
  - ECR Deployments.
