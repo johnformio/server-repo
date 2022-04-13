@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 7.5.0-rc.1]
+## [Unreleased: 8.0.0-rc.1]
 ### Fixed
  - FIO-4642: changed not-boot to read-only mode for offline license, add… 
  - FIO-4645: updated license validation errors processing
