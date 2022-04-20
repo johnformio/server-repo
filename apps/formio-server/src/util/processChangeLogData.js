@@ -276,6 +276,7 @@ module.exports = (changelog, form, submission) => {
         {
           label: 'Outer Table',
           numRows: 1,
+          numCols: 1,
           cellAlignment: 'left',
           key: 'changeOuterLogTable',
           type: 'table',
