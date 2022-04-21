@@ -11,7 +11,7 @@ const addComponentToTable = (component, tableTemplate, components, revisionIndex
   if (revisionIndex === 0 && !component.label.endsWith('&Delta;') && !isInitialSubmission) {
    component.label = `${component.label} &Delta;`;
   }
-  if (!['signature', 'sketchpad', 'datetime', 'time', 'currency', 'select', 'radio', 'address', 'survey'].includes(component.type) && !component.multiple) {
+  if (!['signature', 'sketchpad', 'datetime', 'time', 'currency', 'select', 'radio', 'address', 'survey'].includes(component.type) && !component.multiple || component.type==='file') {
     valueComponent = {
       "autoExpand": false,
       "tableView": true,
@@ -212,6 +212,27 @@ const createFormRow = (form, fieldPath, tableTemplate, components, revisionIndex
       if (formComponent.type === 'form') {
         formPath = '/';
       }
+
+      if (formComponent.type === 'file') {
+        if (fieldPath.endsWith('/file')) {
+         entityValue.forEach((value, i)=>{
+            addComponentToTable(formComponent, tableTemplate, components, revisionIndex, isInitialSubmission, revision._id.toString());
+            createSubmissionRow(value.hash, previousValue, `${fieldPath}/${ i } /hash` , changes, revision, form);
+            rowNumber= rowNumber + 1;
+          });
+          return;
+        }
+        else if (fieldPath.match(/file\/[0-9]$/)) {
+             addComponentToTable(formComponent, tableTemplate, components, revisionIndex, isInitialSubmission, revision._id.toString());
+             createSubmissionRow(entityValue.hash, previousValue, `${fieldPath} /hash` , changes, revision, form);
+             rowNumber= rowNumber + 1;
+           return;
+         }
+         else if (!fieldPath.endsWith('/hash')) {
+          return;
+        }
+      }
+
       if (['address', 'datetime', 'sketchpad', 'survey'].includes(formComponent.type)) {
         if (!complexComponents.find(component => component.key === formComponent.key && component.path === currentPath)) {
           complexComponents.push({key: formComponent.key, path: currentPath});
