@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-4843: fixed getting actual data for submission with draft status
  - FIO-4681: removed extra columns in submission revisions change log table
  - FIO-3557: sac env variable removed
+ - FIO-4836: file component submission revision
 
 ### Added
  - ECR Deployments.
