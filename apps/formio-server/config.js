@@ -183,7 +183,6 @@ config.ssoTeams = Boolean(getConfig('SSO_TEAMS', false) || config.portalSSO);
 config.portalSSOLogout = getConfig('PORTAL_SSO_LOGOUT', '');
 config.verboseHealth = getConfig('VERBOSE_HEALTH');
 config.vpat = Boolean(getConfig('VPAT', false));
-config.sac = Boolean(getConfig('SAC', false));
 config.twoFactorAuthAppName = getConfig('TWO_FACTOR_AUTHENTICATION_APP_NAME', 'Form.io');
 config.licenseServer = getConfig('LICENSE_SERVER', 'https://license.form.io');
 config.formio.defaultEmailSource= getConfig('DEFAULT_EMAIL_SOURCE', 'no-reply@example.com');
