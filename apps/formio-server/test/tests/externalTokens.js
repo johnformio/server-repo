@@ -309,7 +309,8 @@ module.exports = (app, template, hook) => {
             if (err) {
               return done(err);
             }
-            assert.equal(2, res.body.length);
+
+            assert.equal(1, res.body.length);
             assert.equal(submission._id, res.body[0]._id);
 
             done();
