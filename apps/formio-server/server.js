@@ -99,7 +99,7 @@ module.exports = function(options) {
               else if (!process.env.FORMIO_HOSTED && matched.includes('var onPremise')) {
                 return 'var onPremise = true;';
               }
-              else if (app.license.terms.options.sac && matched.includes('var sac')) {
+              else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.sac && matched.includes('var sac')) {
                 return 'var sac = true;';
               }
               else if (config.whitelabel && app.license.terms.options.whitelabel &&  matched.includes('var whitelabel')) {
