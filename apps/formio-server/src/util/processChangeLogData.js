@@ -11,7 +11,7 @@ const addComponentToTable = (component, tableTemplate, components, revisionIndex
   if (revisionIndex === 0 && !component.label.endsWith('&Delta;') && !isInitialSubmission) {
    component.label = `${component.label} &Delta;`;
   }
-  if (!['signature', 'sketchpad', 'datetime', 'time', 'currency', 'select', 'radio', 'address', 'survey'].includes(component.type) && !component.multiple || component.type==='file') {
+  if (!['signature', 'sketchpad', 'datetime', 'time', 'currency', 'select', 'radio', 'address', 'survey', 'tagpad'].includes(component.type) && !component.multiple || component.type==='file') {
     valueComponent = {
       "autoExpand": false,
       "tableView": true,
@@ -233,7 +233,7 @@ const createFormRow = (form, fieldPath, tableTemplate, components, revisionIndex
         }
       }
 
-      if (['address', 'datetime', 'sketchpad', 'survey'].includes(formComponent.type)) {
+      if (['address', 'datetime', 'sketchpad', 'survey', 'tagpad'].includes(formComponent.type)) {
         if (!complexComponents.find(component => component.key === formComponent.key && component.path === currentPath)) {
           complexComponents.push({key: formComponent.key, path: currentPath});
           addComponentToTable(formComponent, tableTemplate, components, revisionIndex, isInitialSubmission, revision._id.toString());
@@ -252,7 +252,9 @@ const createFormRow = (form, fieldPath, tableTemplate, components, revisionIndex
                 prev = {data: revision.metadata.previousData};
               }
               else {
-               prev = {data: {}};
+                prev = formComponent.type === 'tagpad'?
+                {data: {[formComponent.key]: []}}
+                : {data: {}};
               }
               const current = jsonPatch.applyPatch(prev, componentJsonPatch, false, false).newDocument;
               const currentData = _.get(current, formPath ? currentPath.slice(1, currentPath.length).split('/') : `data.${formComponent.key}`);
