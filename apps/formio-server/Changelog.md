@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-4923: Resolved issue with sendgrid not sending emails with pdf attachments
  - Added reverse compatibility for sac license
  - FIO-4849: fixed tagpad component displaying in changelog
+ - FIO-5008: show delta symbol for all changes that were made
 
 ### Added
  - ECR Deployments.
