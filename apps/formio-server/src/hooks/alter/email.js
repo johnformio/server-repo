@@ -110,9 +110,14 @@ module.exports = app => (mail, req, res, params, cb) => {
       const response = await downloadPDF(req, project, form, submission);
       const responseBuffer = await response.buffer();
       const base64 = responseBuffer.toString('base64');
-      attachment = {
-        path: `data:application/pdf;base64,${base64}`
-      };
+      if (mail.transport === 'sendgrid') {
+        attachment = {content: `${base64}`};
+      }
+      else {
+        attachment = {
+          path: `data:application/pdf;base64,${base64}`
+        };
+      }
 
       // Get the file name settings.
       let fileName = params.settings.pdfName || '{{ form.name }}-{{ submission._id }}';
