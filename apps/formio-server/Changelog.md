@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-4681: removed extra columns in submission revisions change log table
  - FIO-3557: sac env variable removed
  - FIO-4836: file component submission revision
+ - FIO-4923: Resolved issue with sendgrid not sending emails with pdf attachments
 
 ### Added
  - ECR Deployments.
