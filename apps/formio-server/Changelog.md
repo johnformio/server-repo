@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-4836: file component submission revision
  - FIO-4923: Resolved issue with sendgrid not sending emails with pdf attachments
  - Added reverse compatibility for sac license
+ - FIO-4849: fixed tagpad component displaying in changelog
 
 ### Added
  - ECR Deployments.
