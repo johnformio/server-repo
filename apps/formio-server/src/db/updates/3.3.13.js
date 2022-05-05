@@ -17,6 +17,16 @@ const _ = require('lodash');
     const projects = db.collection('projects');
     const forms = db.collection('forms');
     const actions = db.collection('actions');
+    const roles = db.collection('roles');
+
+    const setRoles = (roles) => {
+        return roles.reduce((acc, role) => {
+          if (role){
+            acc.push(role._id);
+          }
+          return acc;
+        }, []);
+      };
 
     const project = await projects.findOne({
         primary: true
@@ -26,6 +36,24 @@ const _ = require('lodash');
         console.log('No primary project found.');
         return;
     }
+
+    // Get the anonymous role.
+    const anonymousRole = await roles.findOne({
+        project: project._id,
+        default: true
+    });
+
+    // Get the authenticated role.
+    const authenticatedRole = await roles.findOne({
+        project: project._id,
+        title: "Authenticated"
+    });
+
+    // Get the administrator role.
+    const administratorRole = await roles.findOne({
+        project: project._id,
+        title: "Administrator"
+    });
 
     const addLanguageResource = async function () {
         try {
@@ -60,6 +88,9 @@ const _ = require('lodash');
                         "type" : "textfield",
                         "input" : true,
                         "unique": true,
+                        "validate": {
+                            "required": true
+                        }
                     },
                     {
                         "label" : "Language key",
@@ -67,7 +98,10 @@ const _ = require('lodash');
                         "key" : "languageKey",
                         "type" : "textfield",
                         "input" : true,
-                        "unique": true
+                        "unique": true,
+                        "validate": {
+                            "required": true
+                        }
                     },
                     {
                         "label" : "Translations",
@@ -92,15 +126,18 @@ const _ = require('lodash');
                         "tableView" : false
                     }
                 ],
-                "access" : [
+                access: [
                     {
-                        "type" : "read_all",
-                        "roles" : [
-                            "authenticated"
-                        ]
+                      roles: setRoles([administratorRole, authenticatedRole, anonymousRole]),
+                      type: 'read_all',
                     }
                 ],
-                "submissionAccess": [],
+                submissionAccess: [
+                    {
+                      roles: setRoles([administratorRole, authenticatedRole, anonymousRole]),
+                      type: 'read_all',
+                    }
+                ],
                 "machineName" : "formio:language",
                 "project": project._id,
                 "created": new Date(),

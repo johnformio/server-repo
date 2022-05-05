@@ -4256,7 +4256,10 @@
             "key":"language",
             "type":"textfield",
             "input":true,
-            "unique": true
+            "unique": true,
+            "validate": {
+              "required": true
+            }
         },
         {
             "label":"Language key",
@@ -4264,7 +4267,10 @@
             "key":"languageKey",
             "type":"textfield",
             "input":true,
-            "unique": true
+            "unique": true,
+            "validate": {
+              "required": true
+            }
         },
         {
             "label":"Translations",
@@ -4288,16 +4294,27 @@
             "input":true,
             "tableView":false
         }
-    ],
-    "access": [
+      ],
+      "access": [
         {
           "type": "read_all",
           "roles": [
-            "authenticated"
+            "administrator",
+            "authenticated",
+            "anonymous"
           ]
         }
-    ],
-    "submissionAccess": []
+      ],
+      "submissionAccess": [
+        {
+          "type": "read_all",
+          "roles": [
+            "administrator",
+            "authenticated",
+            "anonymous"
+          ]
+        }
+      ]
     },
     "member": {
       "title": "Team Member",
