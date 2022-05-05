@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Added reverse compatibility for sac license
  - FIO-4849: fixed tagpad component displaying in changelog
  - FIO-5008: show delta symbol for all changes that were made
+ - FIO-5052: added permissions to view all submissions and required condition for text fields
 
 ### Added
  - ECR Deployments.
