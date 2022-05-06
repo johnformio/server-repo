@@ -63,7 +63,38 @@ const _ = require('lodash');
             });
 
             if (languageResource) {
-                console.log('Skipping language resource.');
+                const components = _.cloneDeep(languageResource.components);
+                if (!components.some(({key}) => ['validate'].includes(key))) {
+                  const updatedComponents = components.map((item) => {
+                      if (item.key === 'language' || item.key === 'languageKey') {
+                          return {...item, validate: {required: true}};
+                      }
+                      return item;
+                  });
+
+                  console.log('Updating language resource.');
+                  await forms.updateOne(
+                    {
+                      _id: languageResource._id,
+                    },
+                    {
+                      $set: {
+                        components: updatedComponents,
+                        access: [
+                            {
+                              roles: setRoles([administratorRole, authenticatedRole, anonymousRole]),
+                              type: 'read_all',
+                            }
+                        ],
+                        submissionAccess: [
+                            {
+                              roles: setRoles([administratorRole, authenticatedRole, anonymousRole]),
+                              type: 'read_all',
+                            }
+                        ]
+                      },
+                    });
+                }
                 return;
             }
 
