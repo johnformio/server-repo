@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-5008: show delta symbol for all changes that were made
  - FIO-5052: added permissions to view all submissions and required condition for text fields
  - FIO-5011: added Language resource when creating a new DB
+ - FIO-4772: Fixed issues with remote license attempting to load a license from the server and receiving invalid responses.
 
 ### Added
  - ECR Deployments.
