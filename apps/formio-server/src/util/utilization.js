@@ -10,6 +10,7 @@ const debug = require('debug')('formio:license');
 const requestCache = new NodeCache();
 const requestCount = new NodeCache();
 const responseCache = new NodeCache();
+const licenseConfig = {remote: false};
 let lastUtilizationTime = 0;
 
 // Cache responses for 15 minutes
@@ -78,6 +79,9 @@ async function utilizationSync(cacheKey, body, action = '') {
 }
 
 function utilization(cacheKey, body, action = '', clear = false, sync = false) {
+  if (licenseConfig.remote) {
+    return sync ? Promise.resolve(null) : null;
+  }
   // Add the action to the cacheKey.
   if (action) {
     cacheKey += action.replace(/\//g, ':');
@@ -263,6 +267,9 @@ async function setLicensePlan(formio, licenseKey, planName, additional = {}, add
 }
 
 async function clearLicenseCache(licenseId) {
+  if (licenseConfig.remote) {
+    return Promise.resolve();
+  }
   await fetch(`${licenseServer}/license/${licenseId}/clear`, {
     method: 'post',
     headers: {'content-type': 'application/json'},
@@ -315,6 +322,7 @@ async function remoteUtilization(app, flag) {
 }
 
 module.exports = {
+  licenseConfig,
   utilizationSync,
   utilization,
   clearCache,

@@ -120,7 +120,7 @@ module.exports = (formioServer) => {
           // Handle array-based components.
           if (parent && Encryptor.arrayBasedComponent(parent)) {
             _.get(submission.data, pathParts.join('.')).forEach((row) => {
-              row[component.key] = Encryptor.getValue(project, operation, row[component.key], req.primaryProject.plan);
+              row[component.key] = Encryptor.getValue(project, operation, row[component.key], req.primaryProject ? req.primaryProject.plan : '');
             });
           }
           else if (_.has(submission.data, path)) {

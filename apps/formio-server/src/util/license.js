@@ -1,7 +1,7 @@
 'use strict';
 
 const config = require('../../config.js');
-const {utilizationSync, getNumberOfExistingProjects} = require('../util/utilization');
+const {utilizationSync, getNumberOfExistingProjects, licenseConfig} = require('../util/utilization');
 const crypto = require('crypto');
 const {compactVerify} = require('jose');
 
@@ -184,6 +184,7 @@ IzaxfXn16qCWfwKGE+VXkSM7OAS5iunoyHr5QYL9bUh2+vKshM/pnhvoMfDXnIZR
       }
       if (!app.restrictMethods) {
         console.log('License key validated remotely');
+        licenseConfig.remote = true;
       }
       payload.remote = true;
       return payload;

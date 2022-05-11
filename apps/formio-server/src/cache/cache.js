@@ -164,6 +164,9 @@ module.exports = function(server) {
               readOnly: true
             })
               .then((licenseInfo) => {
+                if (!licenseInfo) {
+                  return cb(null, req.currentProject);
+                }
                 const project = {
                   _id: licenseInfo.projectId,
                   plan: licenseInfo.terms.plan,

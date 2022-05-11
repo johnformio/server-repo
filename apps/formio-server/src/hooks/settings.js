@@ -577,17 +577,11 @@ module.exports = function(app) {
             }
 
             formioServer.formio.cache.loadPrimaryProject(req, function(err, primaryProject) {
-              // Add the current project to the req.
-              try {
-                req.primaryProject = primaryProject.toObject();
-              }
-              catch (err) {
-                req.primaryProject = primaryProject;
-              }
+              req.primaryProject = primaryProject ? primaryProject.toObject() : project;
 
               // Store the Project Owners UserId, because they will have all permissions.
-              if (primaryProject.owner) {
-                access.project.owner = primaryProject.owner.toString();
+              if (req.primaryProject && req.primaryProject.owner) {
+                access.project.owner = req.primaryProject.owner.toString();
 
                 // Add the UserId of the Project Owner for the ownerFilter middleware.
                 req.projectOwner = access.project.owner;
