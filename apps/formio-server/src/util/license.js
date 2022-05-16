@@ -133,6 +133,7 @@ async function performValidationRound(app) {
   }
 
   if (config.licenseRemote) {
+    licenseConfig.remote = true;
     try {
       const pubkey = crypto.createPublicKey(`-----BEGIN PUBLIC KEY-----
 MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAyESFs0sS16TAOSiLE/XQ
@@ -184,7 +185,6 @@ IzaxfXn16qCWfwKGE+VXkSM7OAS5iunoyHr5QYL9bUh2+vKshM/pnhvoMfDXnIZR
       }
       if (!app.restrictMethods) {
         console.log('License key validated remotely');
-        licenseConfig.remote = true;
       }
       payload.remote = true;
       return payload;
