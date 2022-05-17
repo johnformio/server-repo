@@ -1164,6 +1164,20 @@
         "before"
       ]
     },
+    "language:save": {
+      "title": "Save Submission",
+      "name": "save",
+      "form": "language",
+      "settings": {},
+      "priority": 10,
+      "method": [
+        "create",
+        "update"
+      ],
+      "handler": [
+        "before"
+      ]
+    },
     "resetPassword:resetpass": {
       "title": "Reset Password",
       "name": "resetpass",
