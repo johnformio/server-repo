@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-5011: added Language resource when creating a new DB
  - FIO-4772: Fixed issues with remote license attempting to load a license from the server and receiving invalid responses.
  - FIO-4974: allowed to process all types of requests without a body for the webhook action
+ - FIO-5011: language resource needs to be included in the portal base project
 
 ### Added
  - ECR Deployments.
