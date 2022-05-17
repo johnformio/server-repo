@@ -483,7 +483,7 @@ module.exports = (router) => {
         // Make the request.
         fetch(url, options)
           .then((response) => {
-            if (!response.bodyUsed && reqMethod === 'delete') {
+            if (!response.bodyUsed) {
               if (response.ok) {
                 return handleSuccess({}, response);
               }
