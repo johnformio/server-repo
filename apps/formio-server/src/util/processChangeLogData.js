@@ -11,7 +11,12 @@ const addComponentToTable = (component, tableTemplate, components, revisionIndex
   if (!component.label.endsWith('&Delta;') && !isInitialSubmission) {
    component.label = `${component.label} &Delta;`;
   }
-  if (!['signature', 'sketchpad', 'datetime', 'time', 'currency', 'select', 'radio', 'address', 'survey', 'tagpad'].includes(component.type) && !component.multiple || component.type==='file') {
+  if (
+    !['signature', 'sketchpad', 'datetime', 'time', 'currency', 'select', 'radio', 'address', 'survey', 'tagpad'].includes(component.type)
+    && !component.multiple
+    || component.type==='file'
+    || (component.type === 'select' && component.dataSrc === 'resource')
+    ) {
     valueComponent = {
       "autoExpand": false,
       "tableView": true,
