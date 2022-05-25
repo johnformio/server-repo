@@ -238,12 +238,13 @@ const createFormRow = (form, fieldPath, tableTemplate, components, revisionIndex
         }
       }
 
-      if (['address', 'datetime', 'sketchpad', 'survey', 'tagpad'].includes(formComponent.type)) {
+      if (['address', 'datetime', 'sketchpad', 'survey', 'tagpad' , 'select'].includes(formComponent.type)
+          && formComponent.dataSrc !== 'resource') {
         if (!complexComponents.find(component => component.key === formComponent.key && component.path === currentPath)) {
           complexComponents.push({key: formComponent.key, path: currentPath});
           addComponentToTable(formComponent, tableTemplate, components, revisionIndex, isInitialSubmission, revision._id.toString());
               const componentJsonPatch = [];
-              revision.metadata.jsonPatch = revision.metadata.jsonPatch.reduce((prev, current)=>{
+              revision.metadata.jsonPatch.reduce((prev, current)=>{
                 if (current.path.startsWith(formPath? currentPath.slice(0, currentPath.length - formPath.length): currentPath)) {
                   componentJsonPatch.push(current);
                 }
