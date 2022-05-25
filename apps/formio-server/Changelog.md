@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-4974: allowed to process all types of requests without a body for the webhook action
  - FIO-5011: language resource needs to be included in the portal base project
  - FIO-5075: fix select data displaying in change log
+ - FIO-5095: removed date rewrite from submission revisions.
 
 ### Added
  - ECR Deployments.
