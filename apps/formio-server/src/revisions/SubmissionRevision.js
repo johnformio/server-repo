@@ -13,38 +13,12 @@ module.exports = class FormRevision extends Revision {
   }
 
   shouldCreateNewRevision(req, item, loadItem, form) {
-    const rewriteDate = (item) => {
-      if (typeof item === 'object' && !Array.isArray(item)) {
-        return _.mapValues(item, component => component && component.constructor && component.constructor.name === 'Date'? component.toUTCString() : component);
-      }
-      else {
-        return item;
-      }
-    };
-    const rewriteDateDeep = (data, fn) => {
-      const result = {};
-      _.forIn(data, (value, key) => {
-        if (value && typeof value === 'object' && !Array.isArray(value) && value.constructor.name !== 'Date') {
-          Object.assign(result, {[key]: rewriteDateDeep(value, fn)});
-        }
-        else {
-          if (Array.isArray(value)) {
-            Object.assign(result, {[key] : value.map(item=>fn(item))});
-          }
-          else {
-            Object.assign(result, fn({[key] : value}));
-          }
-        }
-      });
-      return result;
-    };
     if (item.state === 'draft') {
       return false;
     }
 
-  const loadItemData = loadItem && loadItem.data ? rewriteDateDeep(loadItem.data, rewriteDate) : {};
-
-    const reqDate = rewriteDateDeep(req.body.data, rewriteDate);
+    const loadItemData = loadItem && loadItem.data ? loadItem.data : {};
+    const reqDate = req.body.data;
     try {
       const patch = jsonPatch.compare(loadItemData, reqDate)
       .map((operation) => {
