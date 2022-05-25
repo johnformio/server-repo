@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-5011: language resource needs to be included in the portal base project
  - FIO-5075: fix select data displaying in change log
  - FIO-5095: removed date rewrite from submission revisions.
+ - FIO-5077: fixed displaying select in submission revisions change log
 
 ### Added
  - ECR Deployments.
