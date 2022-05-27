@@ -32,9 +32,9 @@ module.exports = app => (mail, req, res, params, cb) => {
         return;
       }
       // Restrict basic and independent plans.
-      if (req && req.primaryProject && ['basic', 'independent'].includes(req.primaryProject.plan)) {
-        const transport = mail.msgTransport || 'default';
-        if (transport !== 'default' && transport !== 'test') {
+      const transport = mail.msgTransport || 'default';
+      if (transport !== 'test' && req && req.primaryProject && ['basic', 'independent'].includes(req.primaryProject.plan)) {
+        if (transport !== 'default') {
           throw new Error('Plan limited to default transport only.');
         }
 
