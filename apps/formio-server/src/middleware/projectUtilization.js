@@ -83,7 +83,7 @@ module.exports = (app) => (req, res, next) => {
       // Check if trial license is expired.
       else if (primaryPlan === 'trial') {
         const license = await getLicense(formio, licenseKey);
-        if (license.data.plan === 'trial' && license.data.endDate) {
+        if (license && license.data.plan === 'trial' && license.data.endDate) {
           if (new Date(license.data.endDate) < new Date()) {
             setLicensePlan(formio, licenseKey, process.env.PROJECT_PLAN);
           }
