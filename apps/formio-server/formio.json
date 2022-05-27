@@ -3480,7 +3480,7 @@
       },
       "settings": {
         "transport": "sendgrid",
-        "from": "no-reply@form.io",
+        "from": "no-reply@example.com",
         "emails": [
           "{{data.email}}"
         ],

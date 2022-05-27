@@ -2037,6 +2037,9 @@ module.exports = function(app) {
 
           if (!isAllowed) {
             const ownerId = _.get(form, 'owner', '');
+            if (!ownerId) {
+              return reject('You are not allowed to send a message from the form.io domain');
+            }
             const submissionModel = formioServer.formio.resources.submission.model;
 
             submissionModel.findOne({_id: ownerId.toString()}, (err, owner) => {
