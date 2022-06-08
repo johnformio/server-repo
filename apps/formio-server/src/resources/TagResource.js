@@ -66,11 +66,13 @@ module.exports = function(router, formioServer) {
         template.forms = req.body.template.forms;
         template.resources = req.body.template.resources;
         template.actions = req.body.template.actions;
+        template.revisions = req.body.template.revisions;
         req.templateData = template;
 
         delete req.body.template.forms;
         delete req.body.template.resources;
         delete req.body.template.actions;
+        delete req.body.template.revisions;
         next();
       }
     ],

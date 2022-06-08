@@ -2262,7 +2262,11 @@ module.exports = function(app) {
           return cb(null);
         }
         /* eslint-enable camelcase, max-statements, no-fallthrough */
-      }
+      },
+
+      formRevisionModel() {
+        return formioServer.formio.mongoose.models.formrevision;
+      },
     }
   };
 };

@@ -19,7 +19,7 @@ module.exports = function(app, template, hook) {
 
     describe('Setup', () => {
       it('Create a project', done => {
-        let primaryProject = {
+        const primaryProject = {
           title: chance.word(),
           description: chance.sentence(),
           name: chance.word(),
@@ -48,7 +48,7 @@ module.exports = function(app, template, hook) {
 
       it('Set to team plan', done => {
         request(app)
-          .post('/project/' + project._id + '/upgrade')
+          .post(`/project/${  project._id  }/upgrade`)
           .set('x-jwt-token', template.env.owner.token)
           .send({plan: 'commercial'})
           .expect(200)
@@ -56,10 +56,10 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project Owner should be able to add one of their teams to have access with the team_admin permission', done => {
-        let teamAccess = {type: 'team_admin', roles: [template.env.teams.team1._id]};
+        const teamAccess = {type: 'team_admin', roles: [template.env.teams.team1._id]};
 
         request(app)
-          .get('/project/' + project._id)
+          .get(`/project/${  project._id}`)
           .set('x-jwt-token', template.env.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
@@ -69,15 +69,15 @@ module.exports = function(app, template, hook) {
             }
 
             // Update the users project access with the new team.
-            let oldResponse = res.body;
+            const oldResponse = res.body;
 
             // Store the JWT for future API calls.
             template.env.owner.token = res.headers['x-jwt-token'];
 
             request(app)
-              .put('/project/' + project._id)
+              .put(`/project/${  project._id}`)
               .set('x-jwt-token', template.env.owner.token)
-              .send({ access: oldResponse.access.concat(teamAccess) })
+              .send({access: oldResponse.access.concat(teamAccess)})
               .expect('Content-Type', /json/)
               .expect(200)
               .end((err, res) => {
@@ -86,7 +86,7 @@ module.exports = function(app, template, hook) {
                 }
 
                 let found = false;
-                let response = res.body;
+                const response = res.body;
                 response.access.forEach(element => {
                   if (element.type === 'team_admin') {
                     found = true;
@@ -110,7 +110,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Form.io user can create an environment', done => {
-        let myProject = {
+        const myProject = {
           title: chance.word(),
           description: chance.sentence(),
           name: chance.word(),
@@ -142,8 +142,8 @@ module.exports = function(app, template, hook) {
 
       it('A Project Owner should be able to tag an environment', done => {
         request(app)
-          .post('/project/' + project._id + '/tag')
-          .send({ tag: '0.0.1' })
+          .post(`/project/${  project._id  }/tag`)
+          .send({tag: '0.0.1'})
           .set('x-jwt-token', template.env.owner.token)
           .expect('Content-Type', /json/)
           .expect(201)
@@ -163,8 +163,8 @@ module.exports = function(app, template, hook) {
 
       it('Cannot use duplicate tag names', done => {
         request(app)
-          .post('/project/' + project._id + '/tag')
-          .send({ tag: '0.0.1' })
+          .post(`/project/${  project._id  }/tag`)
+          .send({tag: '0.0.1'})
           .set('x-jwt-token', template.env.owner.token)
           .expect('Content-Type', /json/)
           .expect(400)
@@ -173,8 +173,8 @@ module.exports = function(app, template, hook) {
 
       it('A Team Member with team_admin should be able to tag an environment', done => {
         request(app)
-          .post('/project/' + project._id + '/tag')
-          .send({ tag: '0.0.2' })
+          .post(`/project/${  project._id  }/tag`)
+          .send({tag: '0.0.2'})
           .set('x-jwt-token', template.env.users.user1.token)
           .expect(201)
           .expect('Content-Type', /json/)
@@ -196,8 +196,8 @@ module.exports = function(app, template, hook) {
 
       it('A Non Team member should not be able to tag an environment', done => {
         request(app)
-          .post('/project/' + project._id + '/tag')
-          .send({ tag: '0.0.3' })
+          .post(`/project/${  project._id  }/tag`)
+          .send({tag: '0.0.3'})
           .set('x-jwt-token', template.env.users.user2.token)
           .expect(401)
           .end(done);
@@ -205,15 +205,15 @@ module.exports = function(app, template, hook) {
 
       it('Anonymous should not be able to tag an environment', done => {
         request(app)
-          .post('/project/' + project._id + '/tag')
-          .send({ tag: '0.0.4' })
+          .post(`/project/${  project._id  }/tag`)
+          .send({tag: '0.0.4'})
           .expect(401)
           .end(done);
       });
 
       it('A Project Owner should not be able to update a tag', done => {
         request(app)
-          .put('/project/' + project._id + '/tag/' + tag._id)
+          .put(`/project/${  project._id  }/tag/${  tag._id}`)
           .send(tag)
           .set('x-jwt-token', template.env.owner.token)
           .expect(400)
@@ -222,7 +222,7 @@ module.exports = function(app, template, hook) {
 
       it('A Team Member with team_admin should not be able to update a tag', done => {
         request(app)
-          .put('/project/' + project._id + '/tag/' + tag2._id)
+          .put(`/project/${  project._id  }/tag/${  tag2._id}`)
           .send(tag2)
           .set('x-jwt-token', template.env.users.user1.token)
           .expect(400)
@@ -231,7 +231,7 @@ module.exports = function(app, template, hook) {
 
       it('A Non Team member should not be able to update a tag', done => {
         request(app)
-          .put('/project/' + project._id + '/tag/' + tag._id)
+          .put(`/project/${  project._id  }/tag/${  tag._id}`)
           .send(tag)
           .set('x-jwt-token', template.env.users.user2.token)
           .expect(401)
@@ -240,7 +240,7 @@ module.exports = function(app, template, hook) {
 
       it('Anonymous should not be able to update a tag', done => {
         request(app)
-          .put('/project/' + project._id + '/tag/' + tag._id)
+          .put(`/project/${  project._id  }/tag/${  tag._id}`)
           .send(tag)
           .expect(401)
           .end(done);
@@ -248,7 +248,7 @@ module.exports = function(app, template, hook) {
 
       it('A Project Owner should be able to read a tag', done => {
         request(app)
-          .get('/project/' + project._id + '/tag/' + tag._id)
+          .get(`/project/${  project._id  }/tag/${  tag._id}`)
           .send()
           .set('x-jwt-token', template.env.owner.token)
           .expect('Content-Type', /json/)
@@ -269,7 +269,7 @@ module.exports = function(app, template, hook) {
 
       it('A Team Member with team_admin should be able to read a tag', done => {
         request(app)
-          .get('/project/' + project._id + '/tag/' + tag._id)
+          .get(`/project/${  project._id  }/tag/${  tag._id}`)
           .send()
           .set('x-jwt-token', template.env.users.user1.token)
           .expect('Content-Type', /json/)
@@ -290,7 +290,7 @@ module.exports = function(app, template, hook) {
 
       it('A Non Team Member should not be able to read a tag', done => {
         request(app)
-          .get('/project/' + project._id + '/tag/' + tag._id)
+          .get(`/project/${  project._id  }/tag/${  tag._id}`)
           .send()
           .set('x-jwt-token', template.env.users.user2.token)
           .expect(401)
@@ -299,7 +299,7 @@ module.exports = function(app, template, hook) {
 
       it('Anonymous should not be able to read a tag', done => {
         request(app)
-          .get('/project/' + project._id + '/tag/' + tag._id)
+          .get(`/project/${  project._id  }/tag/${  tag._id}`)
           .send()
           .expect(401)
           .end(done);
@@ -307,7 +307,7 @@ module.exports = function(app, template, hook) {
 
       it('A Project Owner should be able to read the tag index', done => {
         request(app)
-          .get('/project/' + project._id + '/tag')
+          .get(`/project/${  project._id  }/tag`)
           .send()
           .set('x-jwt-token', template.env.owner.token)
           .expect('Content-Type', /json/)
@@ -328,7 +328,7 @@ module.exports = function(app, template, hook) {
 
       it('A Team Member with team_admin should be able to read the tag index', done => {
         request(app)
-          .get('/project/' + project._id + '/tag')
+          .get(`/project/${  project._id  }/tag`)
           .send()
           .set('x-jwt-token', template.env.users.user1.token)
           .expect('Content-Type', /json/)
@@ -349,7 +349,7 @@ module.exports = function(app, template, hook) {
 
       it('A Non Team Member should not be able to read the tag index', done => {
         request(app)
-          .get('/project/' + project._id + '/tag')
+          .get(`/project/${  project._id  }/tag`)
           .send()
           .set('x-jwt-token', template.env.users.user2.token)
           .expect(401)
@@ -358,7 +358,7 @@ module.exports = function(app, template, hook) {
 
       it('Anonymous should not be able to read the tag index', done => {
         request(app)
-          .get('/project/' + project._id + '/tag')
+          .get(`/project/${  project._id  }/tag`)
           .send()
           .expect(401)
           .end(done);
@@ -366,7 +366,7 @@ module.exports = function(app, template, hook) {
 
       it('A Project owner should be able to access the current tag', done => {
         request(app)
-          .get('/project/' + project._id + '/tag/current')
+          .get(`/project/${  project._id  }/tag/current`)
           .set('x-jwt-token', template.env.owner.token)
           .send()
           .expect(200)
@@ -375,7 +375,7 @@ module.exports = function(app, template, hook) {
               done(err);
             }
 
-            assert.deepEqual(res.body, { tag: '0.0.2'});
+            assert.deepEqual(res.body, {tag: '0.0.2'});
 
             done();
           });
@@ -383,7 +383,7 @@ module.exports = function(app, template, hook) {
 
       it('A Team Member with team_admin should be able to access the current tag', done => {
         request(app)
-          .get('/project/' + project._id + '/tag/current')
+          .get(`/project/${  project._id  }/tag/current`)
           .set('x-jwt-token', template.env.users.user1.token)
           .send()
           .expect(200)
@@ -392,7 +392,7 @@ module.exports = function(app, template, hook) {
               done(err);
             }
 
-            assert.deepEqual(res.body, { tag: '0.0.2'});
+            assert.deepEqual(res.body, {tag: '0.0.2'});
 
             done();
           });
@@ -400,7 +400,7 @@ module.exports = function(app, template, hook) {
 
       it('A Non Team Member should be able to access the current tag', done => {
         request(app)
-          .get('/project/' + project._id + '/tag/current')
+          .get(`/project/${  project._id  }/tag/current`)
           .set('x-jwt-token', template.env.users.user2.token)
           .send()
           .expect(200)
@@ -409,7 +409,7 @@ module.exports = function(app, template, hook) {
               done(err);
             }
 
-            assert.deepEqual(res.body, { tag: '0.0.2'});
+            assert.deepEqual(res.body, {tag: '0.0.2'});
 
             done();
           });
@@ -417,7 +417,7 @@ module.exports = function(app, template, hook) {
 
       it('Anonymous should be able to access the current tag', done => {
         request(app)
-          .get('/project/' + project._id + '/tag/current')
+          .get(`/project/${  project._id  }/tag/current`)
           .send()
           .expect(200)
           .end((err, res) => {
@@ -425,7 +425,7 @@ module.exports = function(app, template, hook) {
               done(err);
             }
 
-            assert.deepEqual(res.body, { tag: '0.0.2'});
+            assert.deepEqual(res.body, {tag: '0.0.2'});
 
             done();
           });
@@ -433,7 +433,7 @@ module.exports = function(app, template, hook) {
 
       it('A Project owner should be able to deploy the tag', done => {
         request(app)
-          .post('/project/' + project._id + '/deploy')
+          .post(`/project/${  project._id  }/deploy`)
           .set('x-jwt-token', template.env.owner.token)
           .send({
             type: 'tag',
@@ -447,7 +447,7 @@ module.exports = function(app, template, hook) {
 
             // Check that the project version was updated.
             request(app)
-              .get('/project/' + project._id + '/tag/current')
+              .get(`/project/${  project._id  }/tag/current`)
               .send()
               .end((err, res) => {
                 if (err) {
@@ -462,7 +462,7 @@ module.exports = function(app, template, hook) {
 
       it('Deploying unknown tag throws error', done => {
         request(app)
-          .post('/project/' + project._id + '/deploy')
+          .post(`/project/${  project._id  }/deploy`)
           .set('x-jwt-token', template.env.owner.token)
           .send({
             type: 'tag',
@@ -474,7 +474,7 @@ module.exports = function(app, template, hook) {
 
       it('A Team Member with team_admin should be able to deploy the tag', done => {
         request(app)
-          .post('/project/' + project._id + '/deploy')
+          .post(`/project/${  project._id  }/deploy`)
           .set('x-jwt-token', template.env.users.user1.token)
           .send({
             type: 'tag',
@@ -488,7 +488,7 @@ module.exports = function(app, template, hook) {
 
             // Check that the project version was updated.
             request(app)
-              .get('/project/' + project._id + '/tag/current')
+              .get(`/project/${  project._id  }/tag/current`)
               .send()
               .end((err, res) => {
                 assert.equal(res.body.tag, '0.0.2');
@@ -500,7 +500,7 @@ module.exports = function(app, template, hook) {
 
       it('A Non Team Member should not be able to deploy the tag', done => {
         request(app)
-          .post('/project/' + project._id + '/deploy')
+          .post(`/project/${  project._id  }/deploy`)
           .set('x-jwt-token', template.env.users.user2.token)
           .send({
             type: 'tag',
@@ -512,7 +512,7 @@ module.exports = function(app, template, hook) {
 
       it('Anonymous should not be able to deploy the tag', done => {
         request(app)
-          .post('/project/' + project._id + '/deploy')
+          .post(`/project/${  project._id  }/deploy`)
           .send({
             type: 'tag',
             tag: '0.0.0'
@@ -523,7 +523,7 @@ module.exports = function(app, template, hook) {
 
       it('A Non Team member should not be able to delete a tag', done => {
         request(app)
-          .delete('/project/' + project._id + '/tag/' + tag2._id)
+          .delete(`/project/${  project._id  }/tag/${  tag2._id}`)
           .send()
           .set('x-jwt-token', template.env.users.user2.token)
           .expect(401)
@@ -532,7 +532,7 @@ module.exports = function(app, template, hook) {
 
       it('Anonymous should not be able to delete a tag', done => {
         request(app)
-          .delete('/project/' + project._id + '/tag/' + tag2._id)
+          .delete(`/project/${  project._id  }/tag/${  tag2._id}`)
           .send()
           .set('x-jwt-token', template.env.users.user2.token)
           .expect(401)
@@ -541,7 +541,7 @@ module.exports = function(app, template, hook) {
 
       it('A Project owner should be able to delete a tag', done => {
         request(app)
-          .delete('/project/' + project._id + '/tag/' + tag2._id)
+          .delete(`/project/${  project._id  }/tag/${  tag2._id}`)
           .send()
           .set('x-jwt-token', template.env.owner.token)
           .expect(200)
@@ -550,7 +550,7 @@ module.exports = function(app, template, hook) {
 
       it('A Team member with team_admin should be able to delete a tag', done => {
         request(app)
-          .delete('/project/' + project._id + '/tag/' + tag._id)
+          .delete(`/project/${  project._id  }/tag/${  tag._id}`)
           .send()
           .set('x-jwt-token', template.env.users.user1.token)
           .expect(200)
@@ -559,8 +559,8 @@ module.exports = function(app, template, hook) {
 
       it('Recreate the tag', done => {
         request(app)
-          .post('/project/' + project._id + '/tag')
-          .send({ tag: '0.0.1' })
+          .post(`/project/${  project._id  }/tag`)
+          .send({tag: '0.0.1'})
           .set('x-jwt-token', template.env.owner.token)
           .expect('Content-Type', /json/)
           .expect(201)
@@ -578,13 +578,12 @@ module.exports = function(app, template, hook) {
             done();
           });
       });
-
     });
 
     describe('Plan Access', () => {
       it('Set to basic plan', done => {
         request(app)
-          .post('/project/' + project._id + '/upgrade')
+          .post(`/project/${  project._id  }/upgrade`)
           .set('x-jwt-token', template.env.owner.token)
           .send({plan: 'basic'})
           .expect(200)
@@ -593,7 +592,7 @@ module.exports = function(app, template, hook) {
 
       it('Should not allow deploying for a basic plans', done => {
         request(app)
-          .post('/project/' + project._id + '/deploy')
+          .post(`/project/${  project._id  }/deploy`)
           .set('x-jwt-token', template.env.owner.token)
           .send({
             type: 'tag',
@@ -605,7 +604,7 @@ module.exports = function(app, template, hook) {
 
       it('Should not allow tagging for a basic plans', done => {
         request(app)
-          .post('/project/' + project._id + '/tag')
+          .post(`/project/${  project._id  }/tag`)
           .set('x-jwt-token', template.env.owner.token)
           .send({
             tag: '0.0.3'
@@ -616,7 +615,7 @@ module.exports = function(app, template, hook) {
 
       it('Set to independent plan', done => {
         request(app)
-          .post('/project/' + project._id + '/upgrade')
+          .post(`/project/${  project._id  }/upgrade`)
           .set('x-jwt-token', template.env.owner.token)
           .send({plan: 'independent'})
           .expect(200)
@@ -625,7 +624,7 @@ module.exports = function(app, template, hook) {
 
       it('Should not allow deploying for a independent plans', done => {
         request(app)
-          .post('/project/' + project._id + '/deploy')
+          .post(`/project/${  project._id  }/deploy`)
           .set('x-jwt-token', template.env.owner.token)
           .send({
             type: 'tag',
@@ -637,7 +636,7 @@ module.exports = function(app, template, hook) {
 
       it('Should not allow tagging for a independent plans', done => {
         request(app)
-          .post('/project/' + project._id + '/tag')
+          .post(`/project/${  project._id  }/tag`)
           .set('x-jwt-token', template.env.owner.token)
           .send({
             tag: '0.0.3'
@@ -648,7 +647,7 @@ module.exports = function(app, template, hook) {
 
       it('Set to team plan', done => {
         request(app)
-          .post('/project/' + project._id + '/upgrade')
+          .post(`/project/${  project._id  }/upgrade`)
           .set('x-jwt-token', template.env.owner.token)
           .send({plan: 'team'})
           .expect(200)
@@ -657,7 +656,7 @@ module.exports = function(app, template, hook) {
 
       it('Should not allow deploying for a team plans', done => {
         request(app)
-          .post('/project/' + project._id + '/deploy')
+          .post(`/project/${  project._id  }/deploy`)
           .set('x-jwt-token', template.env.owner.token)
           .send({
             type: 'tag',
@@ -669,7 +668,7 @@ module.exports = function(app, template, hook) {
 
       it('Should not allow tagging for a team plans', done => {
         request(app)
-          .post('/project/' + project._id + '/tag')
+          .post(`/project/${  project._id  }/tag`)
           .set('x-jwt-token', template.env.owner.token)
           .send({
             tag: '0.0.3'
@@ -680,7 +679,7 @@ module.exports = function(app, template, hook) {
 
       it('Set to commercial plan', done => {
         request(app)
-          .post('/project/' + project._id + '/upgrade')
+          .post(`/project/${  project._id  }/upgrade`)
           .set('x-jwt-token', template.env.owner.token)
           .send({plan: 'commercial'})
           .expect(200)
@@ -689,7 +688,7 @@ module.exports = function(app, template, hook) {
 
       it('Should allow deploying for a commercial plans', done => {
         request(app)
-          .post('/project/' + project._id + '/deploy')
+          .post(`/project/${  project._id  }/deploy`)
           .set('x-jwt-token', template.env.owner.token)
           .send({
             type: 'tag',
@@ -701,7 +700,7 @@ module.exports = function(app, template, hook) {
 
       it('Should allow tagging for a commercial plans', done => {
         request(app)
-          .post('/project/' + project._id + '/tag')
+          .post(`/project/${  project._id  }/tag`)
           .set('x-jwt-token', template.env.owner.token)
           .send({
             tag: '0.0.3'
@@ -712,7 +711,7 @@ module.exports = function(app, template, hook) {
 
       it('Set to trial plan', done => {
         request(app)
-          .post('/project/' + project._id + '/upgrade')
+          .post(`/project/${  project._id  }/upgrade`)
           .set('x-jwt-token', template.env.owner.token)
           .send({plan: 'trial'})
           .expect(200)
@@ -721,7 +720,7 @@ module.exports = function(app, template, hook) {
 
       it('Should allow deploying for a trial plans', done => {
         request(app)
-          .post('/project/' + project._id + '/deploy')
+          .post(`/project/${  project._id  }/deploy`)
           .set('x-jwt-token', template.env.owner.token)
           .send({
             type: 'tag',
@@ -733,7 +732,7 @@ module.exports = function(app, template, hook) {
 
       it('Should allow tagging for a trial plans', done => {
         request(app)
-          .post('/project/' + project._id + '/tag')
+          .post(`/project/${  project._id  }/tag`)
           .set('x-jwt-token', template.env.owner.token)
           .send({
             tag: '0.1.0'
@@ -744,10 +743,10 @@ module.exports = function(app, template, hook) {
     });
 
     describe('Deployments', () => {
-      let env1, env2, form, resource, action, role, tag, _export;
+      let env1, env2, form, formWithEnabledRevisions, formRevisions, parentForm, resource, resourceWithEnabledRevisions, resourceRevisions, parentRecourse, action, role, tag, _export;
 
       it('Create Environment 1', done => {
-        let myProject = {
+        const myProject = {
           title: chance.word(),
           description: chance.sentence(),
           name: chance.word(),
@@ -771,11 +770,10 @@ module.exports = function(app, template, hook) {
 
             done();
           });
-
       });
 
       it('Create Environment 2', done => {
-        let myProject = {
+        const myProject = {
           title: chance.word(),
           description: chance.sentence(),
           name: chance.word(),
@@ -799,11 +797,10 @@ module.exports = function(app, template, hook) {
 
             done();
           });
-
       });
 
       it('Create a form in Environment 1', done => {
-        let tempForm = {
+        const tempForm = {
           title: chance.word(),
           name: chance.word(),
           path: chance.word().toLowerCase(),
@@ -835,7 +832,7 @@ module.exports = function(app, template, hook) {
         };
 
         request(app)
-          .post('/project/' + env1._id + '/form')
+          .post(`/project/${  env1._id  }/form`)
           .set('x-jwt-token', template.env.owner.token)
           .send(tempForm)
           .expect('Content-Type', /json/)
@@ -854,8 +851,250 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      it('Create a form with enabled revisions and form that contains a nested component with the selected revision in Environment 1', done => {
+        const tempFormWithEnabledRevisions = {
+          title: chance.word(),
+          name: chance.word(),
+          path: chance.word().toLowerCase(),
+          type: 'form',
+          revisions: 'original',
+          access: [],
+          submissionAccess: [],
+          components: [
+            {
+              type: 'textfield',
+              validate: {
+                custom: '',
+                pattern: '',
+                maxLength: '',
+                minLength: '',
+                required: false
+              },
+              defaultValue: '',
+              multiple: false,
+              suffix: '',
+              prefix: '',
+              placeholder: 'foo1',
+              key: 'foo1',
+              label: 'foo1',
+              inputMask: '',
+              inputType: 'text',
+              input: true
+            }
+          ]
+        };
+
+        request(app)
+          .post(`/project/${  env1._id  }/form`)
+          .set('x-jwt-token', template.env.owner.token)
+          .send(tempFormWithEnabledRevisions)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            formWithEnabledRevisions = res.body;
+            // Store the JWT for future API calls.
+            template.env.owner.token = res.headers['x-jwt-token'];
+
+            const revision1 = {
+              ...tempFormWithEnabledRevisions,
+              components: [
+                ...tempFormWithEnabledRevisions.components,
+                {
+                  type: 'textfield',
+                  validate: {
+                    custom: '',
+                    pattern: '',
+                    maxLength: '',
+                    minLength: '',
+                    required: false
+                  },
+                  defaultValue: '',
+                  multiple: false,
+                  suffix: '',
+                  prefix: '',
+                  placeholder: 'foo2',
+                  key: 'foo2',
+                  label: 'foo2',
+                  inputMask: '',
+                  inputType: 'text',
+                  input: true
+                }
+              ]
+            };
+            delete revision1._id;
+
+            request(app)
+            .put(`/project/${  env1._id  }/form/${  formWithEnabledRevisions._id}`)
+            .set('x-jwt-token', template.env.owner.token)
+            .send(revision1)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              // Store the JWT for future API calls.
+              template.env.owner.token = res.headers['x-jwt-token'];
+
+              const revision2 = {
+                ...res.body,
+                components: [
+                  ...res.body.components, {
+                    type: 'textfield',
+                    validate: {
+                      custom: '',
+                      pattern: '',
+                      maxLength: '',
+                      minLength: '',
+                      required: false
+                    },
+                    defaultValue: '',
+                    multiple: false,
+                    suffix: '',
+                    prefix: '',
+                    placeholder: 'foo3',
+                    key: 'foo3',
+                    label: 'foo3',
+                    inputMask: '',
+                    inputType: 'text',
+                    input: true
+                }
+              ]
+              };
+              delete revision2._id;
+
+              request(app)
+              .put(`/project/${  env1._id  }/form/${  formWithEnabledRevisions._id}`)
+              .set('x-jwt-token', template.env.owner.token)
+              .send(revision2)
+              .expect('Content-Type', /json/)
+              .expect(200)
+              .end(function(err, res) {
+                if (err) {
+                  return done(err);
+                }
+
+                // Store the JWT for future API calls.
+                template.env.owner.token = res.headers['x-jwt-token'];
+               // done();
+
+                request(app)
+                .get(`/project/${  env1._id  }/form/${ formWithEnabledRevisions._id  }/v`)
+                .set('x-jwt-token', template.env.owner.token)
+                .expect('Content-Type', /json/)
+                .expect(200)
+                .end(function(err, res) {
+                  if (err) {
+                    return done(err);
+                  }
+
+                  formRevisions = res.body;
+
+                  const tempForm = {
+                    title: chance.word(),
+                    name: chance.word(),
+                    path: chance.word().toLowerCase(),
+                    type: 'form',
+                    access: [],
+                    submissionAccess: [],
+                    components: [
+                      {
+                        "label": "Form",
+                        "tableView": true,
+                        "form": formWithEnabledRevisions._id,
+                        "useOriginalRevision": false,
+                        "key": "form",
+                        "type": "form",
+                        "input": true,
+                        "revision": formRevisions[1]._id
+                      }
+                    ]
+                  };
+
+                  request(app)
+                  .post(`/project/${  env1._id  }/form`)
+                  .set('x-jwt-token', template.env.owner.token)
+                  .send(tempForm)
+                  .expect('Content-Type', /json/)
+                  .expect(201)
+                  .end(function(err, res) {
+                    if (err) {
+                      return done(err);
+                    }
+
+                    parentForm = res.body;
+
+                    // Store the JWT for future API calls.
+                    template.env.owner.token = res.headers['x-jwt-token'];
+                    done();
+                  });
+                });
+              });
+            });
+          });
+      });
+/*
+      it('test', done => {
+        request(app)
+        .get('/project/' + env1._id + '/form/'+ formWithEnabledRevisions._id + '/v')
+        .set('x-jwt-token', template.env.owner.token)
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          formRevisions = res.body;
+
+          const tempForm = {
+            title: chance.word(),
+            name: chance.word(),
+            path: chance.word().toLowerCase(),
+            type: 'resource',
+            access: [],
+            submissionAccess: [],
+            components: [
+              {
+                "label": "Form",
+                "tableView": true,
+                "form": formWithEnabledRevisions._id,
+                "useOriginalRevision": false,
+                "key": "form",
+                "type": "form",
+                "input": true,
+                "revision": formRevisions[1]._id
+              }
+            ]
+          };
+
+          request(app)
+          .post('/project/' + env1._id + '/form')
+          .set('x-jwt-token', template.env.owner.token)
+          .send(tempForm)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            parentForm = res.body;
+
+            // Store the JWT for future API calls.
+            template.env.owner.token = res.headers['x-jwt-token'];
+            done();
+          });
+        });
+      });
+*/
+
       it('Create a resource in Environment 1', done => {
-        let tempResource = {
+        const tempResource = {
           title: chance.word(),
           name: chance.word(),
           path: chance.word().toLowerCase(),
@@ -887,7 +1126,7 @@ module.exports = function(app, template, hook) {
         };
 
         request(app)
-          .post('/project/' + env1._id + '/form')
+          .post(`/project/${  env1._id  }/form`)
           .set('x-jwt-token', template.env.owner.token)
           .send(tempResource)
           .expect('Content-Type', /json/)
@@ -906,13 +1145,188 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      it('Create a resource with enabled revisions and a resource that contains a nested component with the selected revision in Environment 1', done => {
+        const tempResourceWithEnabledRevisions = {
+          title: chance.word(),
+          name: chance.word(),
+          path: chance.word().toLowerCase(),
+          type: 'resource',
+          revisions: 'original',
+          access: [],
+          submissionAccess: [],
+          components: [
+            {
+              type: 'textfield',
+              validate: {
+                custom: '',
+                pattern: '',
+                maxLength: '',
+                minLength: '',
+                required: false
+              },
+              defaultValue: '',
+              multiple: false,
+              suffix: '',
+              prefix: '',
+              placeholder: 'foo1',
+              key: 'foo1',
+              label: 'foo1',
+              inputMask: '',
+              inputType: 'text',
+              input: true
+            }
+          ]
+        };
+
+        request(app)
+          .post(`/project/${  env1._id  }/form`)
+          .set('x-jwt-token', template.env.owner.token)
+          .send(tempResourceWithEnabledRevisions)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            resourceWithEnabledRevisions = res.body;
+            // Store the JWT for future API calls.
+            template.env.owner.token = res.headers['x-jwt-token'];
+
+            const revision1 = {
+              ...tempResourceWithEnabledRevisions,
+              components: [
+                ...resourceWithEnabledRevisions.components,
+                {
+                  type: 'textfield',
+                  validate: {
+                    custom: '',
+                    pattern: '',
+                    maxLength: '',
+                    minLength: '',
+                    required: false
+                  },
+                  defaultValue: '',
+                  multiple: false,
+                  suffix: '',
+                  prefix: '',
+                  placeholder: 'foo2',
+                  key: 'foo2',
+                  label: 'foo2',
+                  inputMask: '',
+                  inputType: 'text',
+                  input: true
+                }
+              ]
+            };
+            delete revision1._id;
+
+            request(app)
+            .put(`/project/${  env1._id  }/form/${  resourceWithEnabledRevisions._id}`)
+            .set('x-jwt-token', template.env.owner.token)
+            .send(revision1)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+              const revision2 = {
+                ...res.body,
+                components: [
+                  ...res.body.components, {
+                    type: 'textfield',
+                    validate: {
+                      custom: '',
+                      pattern: '',
+                      maxLength: '',
+                      minLength: '',
+                      required: false
+                    },
+                    defaultValue: '',
+                    multiple: false,
+                    suffix: '',
+                    prefix: '',
+                    placeholder: 'foo3',
+                    key: 'foo3',
+                    label: 'foo3',
+                    inputMask: '',
+                    inputType: 'text',
+                    input: true
+                }
+              ]
+              };
+              delete revision2._id;
+
+              request(app)
+              .put(`/project/${  env1._id  }/form/${  resourceWithEnabledRevisions._id}`)
+              .set('x-jwt-token', template.env.owner.token)
+              .send(revision2)
+              .expect('Content-Type', /json/)
+              .expect(200)
+              .end(function(err, res) {
+                if (err) {
+                  return done(err);
+                }
+
+                request(app)
+                .get(`/project/${  env1._id  }/form/${ resourceWithEnabledRevisions._id  }/v`)
+                .set('x-jwt-token', template.env.owner.token)
+                .expect('Content-Type', /json/)
+                .expect(200)
+                .end(function(err, res) {
+                  if (err) {
+                    return done(err);
+                  }
+
+                  resourceRevisions = res.body;
+
+                  const tempForm = {
+                    title: chance.word(),
+                    name: chance.word(),
+                    path: chance.word().toLowerCase(),
+                    type: 'resource',
+                    access: [],
+                    submissionAccess: [],
+                    components: [
+                      {
+                        "label": "Form",
+                        "tableView": true,
+                        "form": resourceWithEnabledRevisions._id,
+                        "useOriginalRevision": false,
+                        "key": "form",
+                        "type": "form",
+                        "input": true,
+                        "revision": resourceRevisions[2]._id
+                      }
+                    ]
+                  };
+
+                request(app)
+                .post(`/project/${  env1._id  }/form`)
+                .set('x-jwt-token', template.env.owner.token)
+                .send(tempForm)
+                .expect('Content-Type', /json/)
+                .expect(201)
+                .end(function(err, res) {
+                  if (err) {
+                    return done(err);
+                  }
+                  parentRecourse = res.body;
+                  done();
+                  });
+                });
+              });
+            });
+          });
+      });
+
       it('Create a role in Environment 1', done => {
         var myRole = {
           title: 'TestRole',
           description: 'A test role.'
         };
         request(app)
-          .post('/project/' + env1._id + '/role')
+          .post(`/project/${  env1._id  }/role`)
           .set('x-jwt-token', template.env.owner.token)
           .send(myRole)
           .expect('Content-Type', /json/)
@@ -932,7 +1346,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('Create an action in Environment 1', done => {
-        let myAction = {
+        const myAction = {
           title: 'Login',
           name: 'login',
           handler: ['before'],
@@ -945,7 +1359,7 @@ module.exports = function(app, template, hook) {
           }
         };
         request(app)
-          .post('/project/' + env1._id + '/form/' + form._id + '/action')
+          .post(`/project/${  env1._id  }/form/${  form._id  }/action`)
           .set('x-jwt-token', template.env.owner.token)
           .send(myAction)
           .expect('Content-Type', /json/)
@@ -972,7 +1386,7 @@ module.exports = function(app, template, hook) {
           return access;
         });
         request(app)
-          .put('/project/' + env1._id)
+          .put(`/project/${  env1._id}`)
           .set('x-jwt-token', template.env.owner.token)
           .send(env1)
           .expect('Content-Type', /json/)
@@ -993,7 +1407,7 @@ module.exports = function(app, template, hook) {
 
       it('Tag Environment 1', done => {
         request(app)
-          .post('/project/' + env1._id + '/tag')
+          .post(`/project/${  env1._id  }/tag`)
           .set('x-jwt-token', template.env.owner.token)
           .send({
             tag: '0.0.4'
@@ -1007,7 +1421,7 @@ module.exports = function(app, template, hook) {
             tag = res.body;
 
             request(app)
-              .get('/project/' + env1._id)
+              .get(`/project/${  env1._id}`)
               .set('x-jwt-token', template.env.owner.token)
               .send()
               .expect(200)
@@ -1027,12 +1441,23 @@ module.exports = function(app, template, hook) {
 
       it('Tag Contains the form', done => {
         assert(tag.template.forms[form.machineName.split(':')[1]], 'Tag must contain the form');
+        assert(tag.template.forms[formWithEnabledRevisions.machineName.split(':')[1]], 'Tag must contain the form');
+        assert(tag.template.forms[parentForm.machineName.split(':')[1]], 'Tag must contain the form');
 
         done();
       });
 
       it('Tag Contains the resource', done => {
         assert(tag.template.resources[resource.machineName.split(':')[1]], 'Tag must contain the resource');
+        assert(tag.template.resources[resourceWithEnabledRevisions.machineName.split(':')[1]], 'Tag must contain the resource');
+        assert(tag.template.resources[parentRecourse.machineName.split(':')[1]], 'Tag must contain the resource');
+
+        done();
+      });
+
+      it('Tag Contains the revisions', done => {
+        assert(tag.template.revisions[`${formRevisions[1].name}:${formRevisions[1]._id}`], 'Tag must contain the form');
+        assert(tag.template.revisions[`${resourceRevisions[2].name}:${resourceRevisions[2]._id}`], 'Tag must contain the form');
 
         done();
       });
@@ -1061,7 +1486,7 @@ module.exports = function(app, template, hook) {
 
       it('Deploy tag to environment 2', done => {
         request(app)
-          .post('/project/' + env2._id + '/deploy')
+          .post(`/project/${  env2._id  }/deploy`)
           .set('x-jwt-token', template.env.owner.token)
           .send({
             type: 'tag',
@@ -1074,7 +1499,7 @@ module.exports = function(app, template, hook) {
             }
 
             request(app)
-              .get('/project/' + env2._id + '/export')
+              .get(`/project/${  env2._id  }/export`)
               .set('x-jwt-token', template.env.owner.token)
               .send()
               .expect(200)
@@ -1084,6 +1509,8 @@ module.exports = function(app, template, hook) {
                 }
 
                 _export = res.body;
+                console.log('_export');
+                console.log(_export);
 
                 done();
               });
@@ -1092,12 +1519,16 @@ module.exports = function(app, template, hook) {
 
       it('Environment 2 Contains the form', done => {
         assert(_export.forms[form.machineName.split(':')[1]], 'Env 2 must contain the form');
+        assert(_export.forms[formWithEnabledRevisions.machineName.split(':')[1]], 'Tag must contain the resource');
+        assert(_export.forms[parentForm.machineName.split(':')[1]], 'Tag must contain the resource');
 
         done();
       });
 
       it('Environment 2 Contains the resource', done => {
         assert(_export.resources[resource.machineName.split(':')[1]], 'Env 2 must contain the resource');
+        assert(_export.resources[resourceWithEnabledRevisions.machineName.split(':')[1]], 'Tag must contain the resource');
+        assert(_export.resources[parentRecourse.machineName.split(':')[1]], 'Tag must contain the resource');
 
         done();
       });
@@ -1128,7 +1559,7 @@ module.exports = function(app, template, hook) {
     describe('Normalization', () => {
       it('A Project Owner should be able to remove any team with access to the project', done => {
         request(app)
-          .get('/project/' + project._id)
+          .get(`/project/${  project._id}`)
           .set('x-jwt-token', template.env.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
@@ -1151,9 +1582,9 @@ module.exports = function(app, template, hook) {
             template.env.owner.token = res.headers['x-jwt-token'];
 
             request(app)
-              .put('/project/' + project._id)
+              .put(`/project/${  project._id}`)
               .set('x-jwt-token', template.env.owner.token)
-              .send({ access: newAccess })
+              .send({access: newAccess})
               .expect('Content-Type', /json/)
               .expect(200)
               .end((err, res) => {
