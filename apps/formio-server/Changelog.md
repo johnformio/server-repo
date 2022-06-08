@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-5075: fix select data displaying in change log
  - FIO-5095: removed date rewrite from submission revisions.
  - FIO-5077: fixed displaying select in submission revisions change log
+ - FIO-5090: form revisions transfer for stage deployment
 
 ### Added
  - ECR Deployments.
