@@ -1743,7 +1743,12 @@ module.exports = function(app) {
         if (req.body.hasOwnProperty('_fvid') && typeof res.submission === 'object') {
           res.submission._fvid = req.body._fvid;
         }
-        encrypt.handle(req, res, next);
+        try {
+          encrypt.handle(req, res, next);
+        }
+        catch (err) {
+          return next(err);
+        }
       },
       submissionParams(params) {
         params.push('oauth', '_fvid', 'state');

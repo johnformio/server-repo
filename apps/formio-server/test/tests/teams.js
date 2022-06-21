@@ -99,7 +99,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('Register another Formio User', function(done) {
-        let tempPassword = 'test1234';
+        let tempPassword = 'test12345';
         template.formio.user1 = {
           data: {
             'name': chance.word({ length: 10 }),
@@ -133,7 +133,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('Register another Formio User 3 not on a team', function(done) {
-        let tempPassword = 'test1234';
+        let tempPassword = 'test12345';
         template.formio.user3 = {
           data: {
             'name': chance.word({ length: 10 }),

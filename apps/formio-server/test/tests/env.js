@@ -119,7 +119,7 @@ module.exports = function(app, template, hook) {
     };
 
     it(`Register project owner`, function(done) {
-      let tempPassword = chance.word({ length: 8 });
+      let tempPassword = chance.word({ length: 9 });
       template.env.owner = {
         data: {
           'name': chance.word({ length: 10 }),
@@ -386,7 +386,7 @@ module.exports = function(app, template, hook) {
       let tempUser = {
         'name': chance.word({ length: 10 }),
         'email': chance.email(),
-        'password': 'test1234'
+        'password': 'test12345'
       };
 
       getVerificationToken()
@@ -406,7 +406,7 @@ module.exports = function(app, template, hook) {
           data: {
             'name': chance.word({ length: 10 }),
             'email': chance.email(),
-            'password': 'test1234'
+            'password': 'test12345'
           }
         })
         .expect(201)
@@ -419,7 +419,7 @@ module.exports = function(app, template, hook) {
           var response = res.body;
 
           // Update our testProject.owners data.
-          var tempPassword = 'test123';
+          var tempPassword = 'test1234';
           tempUser = response;
           tempUser.data.password = tempPassword;
         });

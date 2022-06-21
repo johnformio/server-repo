@@ -16,6 +16,9 @@ module.exports = app => (type, formio) => {
       // Add the alias handler.
       app.use(formio.middleware.alias);
       return true;
+    case 'config':
+      // Do not use core config.json handlers.
+      return true;
     case 'params':
       app.use(formio.middleware.params);
       return true;

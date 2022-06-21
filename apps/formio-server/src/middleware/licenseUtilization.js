@@ -86,9 +86,9 @@ function middleware(app) {
           let used = {};
           let licenseId = 'remote';
           if (remote) {
-            formManagerEnabled = app.license.terms.scopes.includes('formManager');
-            accessibilityEnabled = app.license.terms.options.sac;
-            tenantEnabled = app.license.terms.scopes.includes('tenant');
+            formManagerEnabled = _.get(app, 'license.terms.scopes', []).includes('formManager');
+            accessibilityEnabled = _.get(app, 'license.terms.options.sac', false);
+            tenantEnabled = _.get(app, 'license.terms.scopes', []).includes('tenant');
           }
           else {
             result = utilization(`project:${req.projectId}`, {

@@ -20,20 +20,24 @@ module.exports = (formio) => {
             actions: {},
             revisions: {}
           };
-          Object.entries(actions).reduce((accum, curr, index, actionsArr)=>{
-            if (curr[0].match(`^${key}:`)) {
-              accum.actions[curr[0]] = curr[1];
-              delete actions[curr[0]];
-            }
-            return accum;
-          }, template);
-          Object.entries(revisions).reduce((accum, curr, index, actionsArr)=>{
-            if (curr[0].match(`^${key}:`)) {
-              accum.revisions[curr[0]] = curr[1];
-              delete revisions[curr[0]];
-            }
-            return accum;
-          }, template);
+          if (actions) {
+            Object.entries(actions).reduce((accum, curr, index, actionsArr)=>{
+              if (curr[0].match(`^${key}:`)) {
+                accum.actions[curr[0]] = curr[1];
+                delete actions[curr[0]];
+              }
+              return accum;
+            }, template);
+          }
+          if (revisions) {
+            Object.entries(revisions).reduce((accum, curr, index, actionsArr)=>{
+              if (curr[0].match(`^${key}:`)) {
+                accum.revisions[curr[0]] = curr[1];
+                delete revisions[curr[0]];
+              }
+              return accum;
+            }, template);
+          }
           result.push(createTemplate(project, tag, template));
         }
         return result;
