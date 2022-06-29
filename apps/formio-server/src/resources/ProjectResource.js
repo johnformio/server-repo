@@ -406,6 +406,15 @@ module.exports = (router, formioServer) => {
       return sqlconnector.generateQueries(req,res,next);
     },
   );
+  router.get(
+    '/project/:projectId/sqlconnector2',
+    formio.middleware.tokenHandler,
+    formio.middleware.restrictProjectAccess({level: 'admin'}),
+    formio.middleware.restrictToPlans(['commercial', 'team', 'trial']),
+    (req,res,next) => {
+        return sqlconnector2.generateQueries(req,res,next);
+    },
+  );
   // The portal check endpoint
   router.post(
     '/project/:projectId/portal-check',
