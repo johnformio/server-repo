@@ -451,5 +451,7 @@ module.exports = (changelog, form, submission) => {
     });
 
     revisionData.forEach(revision => Object.assign(submission.data, revision));
+    currentRevisionId = '';
+    complexComponents.length = 0;
   }
 };
