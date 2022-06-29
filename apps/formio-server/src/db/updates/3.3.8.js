@@ -119,7 +119,10 @@ module.exports = async function(db, config, tools, done) {
         {
           "label" : "Email",
           "key" : "email",
-          "type" : "email"
+          "type" : "email",
+          "validate" : {
+            "required" : true
+          }
         },
         {
           "label" : "Team Admin",
