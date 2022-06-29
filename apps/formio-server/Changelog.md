@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased: 8.0.0-rc.2]
+### Fixed
+ - Broke up sqlconnector routes
+ - License server crash mitigation
+ - FIO-3833: FIX CORS in edge.form.io
+ - FIO-4892: fixed submission change log second time opening
+ - FIO-5163: Made email field required in team member invite form
+
 ## 8.0.0-rc.1
 ### Changed
  - Updated formio-app@8.0.0-rc.5
