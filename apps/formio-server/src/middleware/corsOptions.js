@@ -21,6 +21,7 @@ module.exports = function(router) {
       'https://alpha.form.io',
       'https://beta.form.io',
       'https://classic.form.io',
+      'https://edge.form.io',
     ];
     const pass = {
       origin: true
