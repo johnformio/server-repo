@@ -91,7 +91,7 @@ function middleware(app) {
             tenantEnabled = _.get(app, 'license.terms.scopes', []).includes('tenant');
           }
           else {
-            result = utilization(`project:${req.projectId}`, {
+            result = utilization(app, `project:${req.projectId}`, {
               ...getProjectContext(req),
               licenseKey: getLicenseKey(req),
             });
@@ -107,14 +107,14 @@ function middleware(app) {
               }
             }
 
-            const managerResult = utilization(`project:${req.projectId}:formManager`, {
+            const managerResult = utilization(app, `project:${req.projectId}:formManager`, {
               ...getProjectContext(req),
               licenseKey: getLicenseKey(req),
               type: 'formManager'
             });
             formManagerEnabled = (managerResult && managerResult.error) ? managerResult.error.message : true;
 
-            const accResult = utilization(`project:${req.projectId}:accessibility`, {
+            const accResult = utilization(app, `project:${req.projectId}:accessibility`, {
               ...getProjectContext(req),
               licenseKey: getLicenseKey(req),
               type: 'Accessibility'
@@ -142,7 +142,7 @@ function middleware(app) {
             result = req.body.project ? await remoteUtilization(app) : await remoteUtilization(app, {strict: true});
           }
           else {
-            result = await utilizationSync(`project:create`, {
+            result = await utilizationSync(app, `project:create`, {
               ...getProjectContext(req, true),
               licenseKey: getLicenseKey(req),
             });
@@ -160,13 +160,13 @@ function middleware(app) {
           if (isHosted && req.body.plan && (req.body.plan !== req.currentProject.plan)) {
             const licenseKey = getLicenseKey(req);
             await setLicensePlan(formio, licenseKey, req.body.plan);
-            result = await utilizationSync(`project:${req.projectId}`, {
+            result = await utilizationSync(app, `project:${req.projectId}`, {
               ...getProjectContext(req),
               licenseKey,
             });
           }
           else {
-              result = utilization(`project:${req.projectId}`, {
+              result = utilization(app, `project:${req.projectId}`, {
                 ...getProjectContext(req),
                 licenseKey: getLicenseKey(req),
               });
@@ -194,14 +194,14 @@ function middleware(app) {
             res.status(400).send('Cannot delete the formio project.');
             break;
           }
-          utilization(`project:${req.projectId}`, {
+          utilization(app, `project:${req.projectId}`, {
             ...getProjectContext(req),
             licenseKey: getLicenseKey(req),
           }, '/delete', {terms: 1}, true);
           break;
 
         case 'GET /project/:projectId/manage':
-          utilization(`project:${req.projectId}:formManager`, {
+          utilization(app, `project:${req.projectId}:formManager`, {
             ...getProjectContext(req),
             licenseKey: getLicenseKey(req),
             type: 'formManager'
@@ -234,7 +234,7 @@ function middleware(app) {
             break;
           }
 
-            utilization(`project:${req.projectId}:formCreate`, {
+            utilization(app, `project:${req.projectId}:formCreate`, {
               type: 'form',
               formId: 'new',
               projectId: req.projectId,
@@ -246,7 +246,7 @@ function middleware(app) {
         // Require a formRequest utilization when grabbing a form
         case 'GET /form/:formId':
         case 'GET /form/:formId/draft':
-          utilization(`project:${req.projectId}:form:${req.formId}:formRequest`, {
+          utilization(app, `project:${req.projectId}:form:${req.formId}:formRequest`, {
             type: 'formRequest',
             formId: req.formId,
             title: currentForm.title,
@@ -262,7 +262,7 @@ function middleware(app) {
         case 'PUT /form/:formId':
         case 'PUT /form/:formId/draft':
         case 'PATCH /form/:formId':
-            utilization(`project:${req.projectId}:form:${req.formId}:formUpdate`, {
+            utilization(app, `project:${req.projectId}:form:${req.formId}:formUpdate`, {
               type: 'form',
               formId: req.formId,
               title: currentForm.title,
@@ -280,7 +280,7 @@ function middleware(app) {
             res.status(400).send('Cannot delete forms to formio project.');
             break;
           }
-          utilization(`project:${req.projectId}:form:${req.formId}`, {
+          utilization(app, `project:${req.projectId}:form:${req.formId}`, {
             type: 'form',
             formId: req.formId,
             projectId: req.projectId,
@@ -298,7 +298,7 @@ function middleware(app) {
         // 8P'        `"YbbdP"'   `"YbbdP'Y8  8Y"Ybbd8"'   88      88      88  88  `"YbbdP"'  `"YbbdP"'  88   `"YbbdP"'   88       88
 
         case 'GET /form/:formId/submission':
-          utilization(`project:${req.projectId}:form:${req.formId}:submissionRequest`, {
+          utilization(app, `project:${req.projectId}:form:${req.formId}:submissionRequest`, {
             type: 'submissionRequest',
             submissionId: 'index',
             formId: req.formId,
@@ -308,7 +308,7 @@ function middleware(app) {
           break;
 
         case 'POST /form/:formId/submission':
-          utilization(`project:${req.projectId}:form:${req.formId}:submissionRequest`, {
+          utilization(app, `project:${req.projectId}:form:${req.formId}:submissionRequest`, {
             type: 'submissionRequest',
             submissionId: 'new',
             formId: req.formId,
@@ -321,7 +321,7 @@ function middleware(app) {
         case 'PATCH /form/:formId/submission/:submissionId':
         case 'PUT /form/:formId/submission/:submissionId':
         case 'GET /form/:formId/submission/:submissionId':
-          utilization(`project:${req.projectId}:form:${req.formId}:submissionRequest`, {
+          utilization(app, `project:${req.projectId}:form:${req.formId}:submissionRequest`, {
             type: 'submissionRequest',
             submissionId: req.params.submissionId,
             formId: req.formId,

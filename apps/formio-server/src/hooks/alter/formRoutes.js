@@ -81,7 +81,7 @@ module.exports = app => routes => {
         return next();
       }
 
-      const result = utilization(`project:${item.project}:formCreate`, {
+      const result = utilization(app, `project:${item.project}:formCreate`, {
         type: 'form',
         formId: item._id,
         title: item.title,

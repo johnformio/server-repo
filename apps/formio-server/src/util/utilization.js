@@ -74,14 +74,15 @@ const getProjectContext = (req, isNew = false) => {
   }
 };
 
-async function utilizationSync(cacheKey, body, action = '') {
-  return await utilization(cacheKey, body, action, true, true);
+async function utilizationSync(app, cacheKey, body, action = '') {
+  return await utilization(app, cacheKey, body, action, true, true);
 }
 
-function utilization(cacheKey, body, action = '', clear = false, sync = false) {
+function utilization(app, cacheKey, body, action = '', clear = false, sync = false) {
   if (licenseConfig.remote) {
     return sync ? Promise.resolve(null) : null;
   }
+
   // Add the action to the cacheKey.
   if (action) {
     cacheKey += action.replace(/\//g, ':');
@@ -149,11 +150,21 @@ function utilization(cacheKey, body, action = '', clear = false, sync = false) {
     if (!response.ok) {
       const error = new Error(await response.text());
       error.statusCode = response.status;
+      if (error.statusCode >= 500) {
+        app.utilizationCheckFailed();
+        clearCache(cacheKey);
+        return {licenseServerError: true, ...body};
+      }
       return {error};
     }
 
     return await response.json();
   }).then((utilization) => {
+    if (utilization.licenseServerError) {
+      return utilization;
+    } else {
+      app.utilizationCheckSucceed();
+    }
     if (!utilization.error && !hosted && utilization.hash !== md5(base64(body))) {
       utilization = {error: new Error('Invalid response')};
     }
@@ -161,6 +172,12 @@ function utilization(cacheKey, body, action = '', clear = false, sync = false) {
     responseCache.set(cacheKey, utilization);
     return utilization;
   }).catch((err) => {
+    // License server is down or request timeout exceed
+    if (err.code === 'ECONNREFUSED' || err.type === 'aborted') {
+      app.utilizationCheckFailed();
+      clearCache(cacheKey);
+      return {licenseServerError: true, ...body};
+    }
     const response = {error: err};
     responseCache.set(cacheKey, response);
     requestCache.del(cacheKey);

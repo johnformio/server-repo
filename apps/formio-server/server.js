@@ -17,7 +17,8 @@ const license = require('./src/util/license');
 const audit = require('./src/util/audit');
 const cors = require('cors');
 const debug = {
-  startup: require('debug')('formio:startup')
+  startup: require('debug')('formio:startup'),
+  licenseCheck: require('debug')('formio:licenseCheck'),
 };
 const RequestCache = require('./src/util/requestCache');
 const CryptoJS = require('crypto-js');
@@ -31,6 +32,30 @@ module.exports = function(options) {
 
   // Use the express application.
   var app = options.app || express();
+
+  // Functions to mitigate license server crashes:
+  // Mitigation function to call if license server is unhealthy
+  app.utilizationCheckFailed = () => {
+    debug.licenseCheck('Utilization check failed');
+    if (!app._recoveryTimeout) {
+      console.log('Utilization check failed, going to recovery wait');
+      const timeToRecover = 72 * 60 * 60 * 1000; // 72 hours
+      app._recoveryTimeout = setTimeout(() => {
+        console.log('License server failed to recover, going to restricted mode');
+        app.restrictMethods = true;
+      }, timeToRecover);
+    }
+  };
+  // Recovery function to call if license check was successful
+  app.utilizationCheckSucceed = () => {
+    debug.licenseCheck('Utilization check succeed');
+    if (app._recoveryTimeout) {
+      clearTimeout(app._recoveryTimeout);
+      app._recoveryTimeout = null;
+      app.restrictMethods = false;
+      console.log('License server recovered successfully, going to work normally');
+    }
+  };
 
   // Insert middleware for enforcing gradual degradation
   // as a result of multiple license check failures
@@ -154,6 +179,12 @@ module.exports = function(options) {
   // Create the formio server.
   debug.startup('Creating Form.io Core Server');
   app.formio = options.server || require('formio')(config.formio);
+  // Mitigation functions must be available in every middleware
+  // that uses license utilization function
+  app.formio.utilizationCheckFailed = app.utilizationCheckFailed;
+  app.formio.utilizationCheckSucceed = app.utilizationCheckSucceed;
+  app.formio.formio.utilizationCheckFailed = app.utilizationCheckFailed;
+  app.formio.formio.utilizationCheckSucceed = app.utilizationCheckSucceed;
 
   debug.startup('Attaching middleware: Restrict Request Types');
   app.use(app.formio.formio.middleware.restrictRequestTypes);

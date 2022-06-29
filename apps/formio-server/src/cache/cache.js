@@ -157,7 +157,7 @@ module.exports = function(server) {
               };
               return cb(null, cached);
             }
-            return utilizationSync(`project:${id}`, {
+            return utilizationSync(server, `project:${id}`, {
               licenseKey: server.config.licenseKey,
               type: 'project',
               projectId: id,

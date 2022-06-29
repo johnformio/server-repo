@@ -31,7 +31,7 @@ module.exports = (app) => (req, res, next) => {
 
   const projectId = req.currentProject._id.toString();
   let licenseKey = getLicenseKey(req);
-  const licenseInfo = utilization(`project:${projectId}`, {
+  const licenseInfo = utilization(app, `project:${projectId}`, {
     ...getProjectContext(req),
     licenseKey,
   });

@@ -195,7 +195,7 @@ IzaxfXn16qCWfwKGE+VXkSM7OAS5iunoyHr5QYL9bUh2+vKshM/pnhvoMfDXnIZR
     }
   }
 
-  return await submitUtilizationRequest({
+  return await submitUtilizationRequest(app, {
     // Base validation fields
     type: 'apiServer',
     licenseKey: config.licenseKey,
@@ -208,12 +208,13 @@ IzaxfXn16qCWfwKGE+VXkSM7OAS5iunoyHr5QYL9bUh2+vKshM/pnhvoMfDXnIZR
 
 /* eslint-disable no-console */
 async function submitUtilizationRequest(
+  app,
   payload,
   attempts = 0,
   MAX_ATTEMPTS = 100,
   INTERVAL = 5 * 1000
 ) {
-  const result = await utilizationSync(payload.type, payload);
+  const result = await utilizationSync(app, payload.type, payload);
   if (result.error) {
     const err = result.error;
 
@@ -232,7 +233,7 @@ async function submitUtilizationRequest(
       console.log(`Retrying in ${INTERVAL / 1000}s...`);
 
       return require('bluebird').delay(INTERVAL).then(
-        () => submitUtilizationRequest(payload, attempts + 1, MAX_ATTEMPTS)
+        () => submitUtilizationRequest(app, payload, attempts + 1, MAX_ATTEMPTS)
       );
     }
     // Otherwise, print an error and exit

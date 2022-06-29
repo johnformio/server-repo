@@ -21,7 +21,7 @@ module.exports = (formio) => async (req, res, next) => {
     }
   }
 
-  const result = await utilizationSync(`project:${req.currentProject._id}`, {
+  const result = await utilizationSync(formio, `project:${req.currentProject._id}`, {
     ...getProjectContext(req),
     licenseKey: req.body.settings.licenseKey,
   });

@@ -51,7 +51,7 @@ module.exports = app => (mail, req, res, params, cb) => {
 </table>`;
       }
 
-      const result = utilization(`project:${req.projectId}:email`, {
+      const result = utilization(formioServer,`project:${req.projectId}:email`, {
         type: 'email',
         email: mail.to,
         formId: form._id.toString(),
