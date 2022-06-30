@@ -162,7 +162,8 @@ function utilization(app, cacheKey, body, action = '', clear = false, sync = fal
   }).then((utilization) => {
     if (utilization.licenseServerError) {
       return utilization;
-    } else {
+    }
+    else {
       app.utilizationCheckSucceed();
     }
     if (!utilization.error && !hosted && utilization.hash !== md5(base64(body))) {
