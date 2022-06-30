@@ -349,7 +349,7 @@ module.exports = (app, template, hook) => {
           })
           .execute(done);
       });
-
+/*
       it('Should allow you to login as an ldap user', (done) => {
         request(app)
           .post(`/project/${project2._id}/ldap`)
@@ -372,6 +372,7 @@ module.exports = (app, template, hook) => {
             done();
           });
       });
+*/
     });
   });
 
