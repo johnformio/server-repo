@@ -4,6 +4,10 @@
   "engines": {
     "node": ">=6.0.0"
   },
+  "resolutions": {
+    "xml-encryption": "^2.0.0",
+    "node-forge": "^1.3.0"
+  },
   "scripts": {
     "start:debug": "PROTOCOL=http DOMAIN=localhost PORT=3000 DEBUG=* node main.js",
     "start": "PROTOCOL=http DOMAIN=localhost PORT=3000 node main.js",
@@ -17,7 +21,8 @@
     "builddocker": "docker build --no-cache -t tmpimage -f deployment/docker/Builder .",
     "distdocker": "docker build --no-cache -t formio/formio-enterprise:latest -f deployment/docker/Dockerfile .",
     "lint": "eslint .",
-    "validate": "circleci config validate -c .circleci/config.yml"
+    "validate": "circleci config validate -c .circleci/config.yml",
+    "preinstall": "npx npm-force-resolutions"
   },
   "cache": "1550086650",
   "main": "./main.js",
@@ -70,6 +75,7 @@
     "node-forge": "1.3.1",
     "node-paginate-anything": "^1.0.0",
     "node-saml": "^4.0.0-beta.2",
+    "npm-force-resolutions": "0.0.10",
     "on-finished": "^2.4.0",
     "opn": "^6.0.0",
     "passport-saml-metadata": "^2.5.0",
