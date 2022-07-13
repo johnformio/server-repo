@@ -40,6 +40,7 @@ jobs:
       AWS_DEFAULT_REGION: "us-west-2"
     docker:
       - image: cimg/node:lts
+      - image: cimg/python:3.7
     steps:
     - checkout
     - run:
