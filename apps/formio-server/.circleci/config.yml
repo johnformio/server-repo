@@ -1,6 +1,7 @@
 version: 2.1
 orbs:
   snyk: snyk/snyk@1.1.2
+  python: circleci/python@2.0.3
 jobs:
   build:
     docker:
@@ -40,7 +41,6 @@ jobs:
       AWS_DEFAULT_REGION: "us-west-2"
     docker:
       - image: cimg/node:lts
-      - image: cimg/python:3.7
     steps:
     - checkout
     - run:
@@ -67,7 +67,6 @@ jobs:
       MONGO: "mongodb://localhost:27017/formio"
     docker:
       - image: cimg/node:lts
-      - image: cimg/python:3.7
       - image: circleci/mongo:4.4
     steps:
       - checkout
