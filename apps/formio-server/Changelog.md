@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased: 8.0.0-rc.3]
 ### Changed
  - FIO-5130: resolving vulnerability related to node-same dependency
+ - Change remote license for 8.x
+ - Fixing hosted licensing.
+ - Adding esign support
+
+### Fixed
+ - FIO-5129: resolved vulnerability related to dicer
+ - Added support to the allowAllSubmissionData setting
 
 ## 8.0.0-rc.2
 ### Changed
