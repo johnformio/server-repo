@@ -131,23 +131,23 @@ async function performValidationRound(app) {
     licenseConfig.remote = true;
     try {
       const pubkey = crypto.createPublicKey(`-----BEGIN PUBLIC KEY-----
-MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAyESFs0sS16TAOSiLE/XQ
-tieqYESD265xHfLGoffQBhyoEJ+Bfma9NvSu6WYU5T8Y6mMz3bXtNGy32AMVvRNa
-bNGi/BZxu0ZmR7GOTh8y58GQEW/hQ4qXfgW7UxBCDoCmZhnU3gtO2yW8GlWZl4WN
-x/fp8oYivvXR30rboWCwEU9hadkJMKOeB/2dJRQJ3nQcPqX9VC4q0mXtcpbrn0qq
-VxtHRJCQJbOuO5YhnVTe0FY+OHZp67sbOEXC5mesIZAz2xNqUlWIHFsFqrirQvoX
-nzK0oaY8swXVIJO3slVgHY0fx7/FNdo29OioQDuPHWlXMlRM5F3Ro/Bc3t4cNNZC
-GYmvNLI2bp2tFOHIdczYdh+vygklOqmO/7FpW2E2AS+vbmLuEaViyAYecdgC7aF5
-ZsLwumQpO80kzPLc/t9pGkFATqKKYRHvSDvLqNG69ZzHWM0FLRbh6w4CKZ7MhkFv
-EF01aANqOqx3p3bghu0xKBlvGHdR69BUs/ry5guDM2XKi7TiXZPTm4KdOOjlOltk
-uppscNxvgK8Ljy/DJqBiX42idTmybr5GYAU5hcw+JcdPlLikn6whNM7kUCcl1aNu
-IzaxfXn16qCWfwKGE+VXkSM7OAS5iunoyHr5QYL9bUh2+vKshM/pnhvoMfDXnIZR
-3RR5A++atmNeqWrkKVPOpPMCAwEAAQ==
+MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAvfrMKWDgcffKI86ZPj8D
+dnACabymCcjXLkX/nO9dVvlpVOnZFr7ibDiLd3Op1orUrRyPJ0R3bur4UZKXDlns
+p1wUx5kgTa/q57LV6GRCJQIjLEu+1UZcBAC7so2zV1a9lWSnWBQJA/CsCeANtN9F
+UGZYFOj9EprKLUShEno9+re2vDkjA2O2tavRjiftG+dG+LA6swPjo3L+ux2z4KPi
+BJuplQVPoTukLbb4wGXoJnt7cIrmw3SjPC+0kqWBTY+pfuQFtIMPxbA/4nWuUQfC
+eI4B/9wVSAWiSGmJL9CtnVJE/oFQVChDr2GYU0+5uKBV7w0ojaddQwuggmrKQU1W
+JeMsyw8iDlHwbvH8nD5M2x6O7Pr8Ub7/L0xO0KSOuuz4OddmPcIO6RQWQ8syeUxh
+NB7yryb/BEJH44n16GWd54dY3hpSeI2Vm/12qxt946ui081Ss13sjlyOt6kcXbGn
+HNGm9NZJnkHVrLybZMZrXEpBfSLqHWcFCQSQzHBS3PifUCeOFjdLebOyGbFd0rdh
+bJcTkVafzW5LxWsJX55zSUj8AvyKnQgbcr+kcLqBnZyvQ6m8NmZVroX1wZeQXTHu
+6rOqGz9EgYOSwypDJRqBuefwlhhAs7r53qqfIFVDaRbzrZuUh3SlZF2ifkMDBoy+
+KuKgTy9kdUG5qewqC7H6Jo8CAwEAAQ==
 -----END PUBLIC KEY-----`);
       let {payload} = await compactVerify(config.licenseKey, pubkey);
       payload = JSON.parse(payload.toString());
       // eslint-disable-next-line no-console
-      if (payload.exp < Date.now()) {
+      if (payload.exp < parseInt(Date.now() / 1000)) {
         console.log(`
 
         License is expired.

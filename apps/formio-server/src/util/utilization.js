@@ -268,7 +268,7 @@ async function remoteUtilization(app, flag) {
  else if (licenseData.terms.projectsNumberLimit && numberOfProjects > licenseData.terms.projectsNumberLimit) {
     return {error: new Error(`Exceeded the allowed number of projects. Max number of your projects is ${licenseData.terms.projectsNumberLimit}. You have ${numberOfProjects} projects.`)};
   }
-  if (licenseData.exp && licenseData.exp <= Date.now()) {
+  if (licenseData.exp && licenseData.exp <= parseInt(Date.now() / 1000)) {
     return {error: new Error('License is expired.')};
   }
 }
