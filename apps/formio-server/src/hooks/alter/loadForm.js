@@ -14,6 +14,11 @@ module.exports = app => {
         form.module = formModule;
       }
 
+      const allowAllSubmissionData = _.get(project, 'settings.allowAllSubmissionData');
+      if (allowAllSubmissionData) {
+        form.allowAllSubmissionData = true;
+      }
+
       // Add recaptcha site keys.
       if (_.get(form, 'settings.recaptcha.isEnabled')) {
         _.set(form, 'settings.recaptcha.siteKey', _.get(project, 'settings.recaptcha.siteKey'));
