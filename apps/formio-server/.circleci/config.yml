@@ -12,7 +12,7 @@ jobs:
       - run:
           name: Install npm modules
           command: |
-            sudo npm i -g npm-cli-login
+            npm i -g npm-cli-login
             npm-cli-login -u $NPM_USERNAME -p $NPM_PASSWORD -e $NPM_EMAIL -r https://pkg.form.io
             npm ci
       - save_cache:
@@ -66,6 +66,7 @@ jobs:
       MONGO: "mongodb://localhost:27017/formio"
     docker:
       - image: cimg/node:lts
+      - image: cimg/python:3.7
       - image: circleci/mongo:4.4
     steps:
       - checkout
@@ -79,9 +80,6 @@ jobs:
           command: |
             sudo bash -c "echo \"127.0.0.1 formio.localhost\" >> /etc/hosts"
             sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
-      - run:
-          name: Install NPM 
-          command: sudo apt-get install npm
       - run:
           name: Test
           command: npm test
