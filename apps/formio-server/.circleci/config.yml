@@ -5,14 +5,10 @@ jobs:
   build:
     docker:
       - image: cimg/node:lts
-      - image: cimg/python:3.7
     steps:
       - checkout
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
-      - run:
-          name: Install NPM 
-          command: sudo apt-get install npm
       - run:
           name: Install npm modules
           command: |
@@ -44,7 +40,6 @@ jobs:
       AWS_DEFAULT_REGION: "us-west-2"
     docker:
       - image: cimg/node:lts
-      - image: cimg/python:3.7
     steps:
     - checkout
     - run:
@@ -71,7 +66,6 @@ jobs:
       MONGO: "mongodb://localhost:27017/formio"
     docker:
       - image: cimg/node:lts
-      - image: cimg/python:3.7
       - image: circleci/mongo:4.4
     steps:
       - checkout
