@@ -4,7 +4,7 @@ orbs:
 jobs:
   build:
     docker:
-      - image: cimg/node:14.18.1
+      - image: cimg/node:lts
     steps:
       - checkout
       - restore_cache:
@@ -39,7 +39,7 @@ jobs:
     environment:
       AWS_DEFAULT_REGION: "us-west-2"
     docker:
-      - image: circleci/node:14.18.1
+      - image: cimg/node:lts
     steps:
     - checkout
     - run:
@@ -65,7 +65,7 @@ jobs:
     environment:
       MONGO: "mongodb://localhost:27017/formio"
     docker:
-      - image: cimg/node:14.18.1
+      - image: cimg/node:lts
       - image: circleci/mongo:4.4
     steps:
       - checkout
@@ -86,7 +86,7 @@ jobs:
     environment:
       IMAGE_PATH: formio/formio-enterprise
     docker:
-      - image: circleci/node:14.18.1
+      - image: cimg/node:lts
     steps:
       - setup_remote_docker:
           version: 19.03.13
@@ -145,7 +145,7 @@ jobs:
 
   deploy_npm:
     docker:
-      - image: cimg/node:14.18.1
+      - image: cimg/node:lts
     steps:
       - checkout
       - attach_workspace:
