@@ -21,6 +21,7 @@ const debug = {
   licenseCheck: require('debug')('formio:licenseCheck'),
 };
 const RequestCache = require('./src/util/requestCache');
+var BoxSDK = require('box-node-sdk');
 
 module.exports = function(options) {
   options = options || {};
@@ -322,6 +323,25 @@ module.exports = function(options) {
   });
 
   app.post('/project/:projectId/form/:formId/download', downloadPDF);
+  app.get('/project/:projectId/form/:formId/submission/:submissionId/esign', (req, res, next) => {
+    const {submissionId, projectId} = req.params;
+    app.formio.formio.resources.submission.model.findById(submissionId).exec().then((submission) => {
+      if (submission.data.esign && submission.data.esign.id) {
+        app.formio.formio.resources.project.model.findById(projectId).exec().then((project) => {
+          const config = _.get(project.settings, 'esign');
+          const sdk = BoxSDK.getPreconfiguredInstance(config);
+          const authClient = sdk.getAppAuthClient('enterprise', config.enterpriseID);
+          if (authClient) {
+           authClient.files.getDownloadURL(submission.data.esign.fileId)
+            .then(downloadURL => {
+              return res.status(200).send(downloadURL);
+            });
+          }
+        });
+      }
+      // return res.status(200).send(submission.data.esign.id);
+    });
+  });
 
   debug.startup('Attaching middleware: PDF Upload');
   const uploadPDF = [

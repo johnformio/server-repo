@@ -143,7 +143,7 @@ module.exports = function(app) {
           'googlesheet',
           'ldap',
           'sqlconnector',
-          'signrequest',
+          'esign',
           'twofalogin',
           'twofarecoverylogin'
         ];
@@ -206,7 +206,7 @@ module.exports = function(app) {
        */
       resolve(defaultReturn, action, handler, method, req, res) {
         const premium = [
-          'webhook', 'oauth', 'googlesheet', 'ldap', 'signrequest', 'twofalogin', 'twofarecoverylogin'
+          'webhook', 'oauth', 'googlesheet', 'ldap', 'esign', 'twofalogin', 'twofarecoverylogin'
         ];
 
         // If the action does not have a name, or is not flagged as being premium, ignore it.

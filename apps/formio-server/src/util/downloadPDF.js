@@ -7,6 +7,7 @@ const {getPDFUrls} = require('./pdf');
 const util = require('./util');
 const processChangeLogData = require('./processChangeLogData');
 
+const BoxSDK = require('box-node-sdk');
 const PDF_SERVER = process.env.PDF_SERVER || process.env.FORMIO_FILES_SERVER;
 module.exports = (formioServer) => {
   const formio = formioServer.formio;
