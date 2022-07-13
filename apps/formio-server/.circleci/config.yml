@@ -4,12 +4,15 @@ orbs:
 jobs:
   build:
     docker:
-      - image: cimg/node:lts-browsers
+      - image: cimg/node:lts
       - image: cimg/python:3.7
     steps:
       - checkout
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
+      - run:
+          name: Install NPM 
+          command: sudo apt-get install npm
       - run:
           name: Install npm modules
           command: |
@@ -67,7 +70,7 @@ jobs:
     environment:
       MONGO: "mongodb://localhost:27017/formio"
     docker:
-      - image: cimg/node:lts-browsers
+      - image: cimg/node:lts
       - image: cimg/python:3.7
       - image: circleci/mongo:4.4
     steps:
@@ -82,6 +85,9 @@ jobs:
           command: |
             sudo bash -c "echo \"127.0.0.1 formio.localhost\" >> /etc/hosts"
             sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
+      - run:
+          name: Install NPM 
+          command: sudo apt-get install npm
       - run:
           name: Test
           command: npm test
