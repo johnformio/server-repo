@@ -115,6 +115,9 @@ module.exports = function(config, formio) {
             });
           }
           const customer = JSON.parse(decodeURIComponent(customerResponse));
+          if (!customer.response || !customer.response.content) {
+            return res.status(400).json({message: JSON.stringify(customer.response)});
+          }
           const customerId = customer.response.content.create ? customer.response.content.create.customer.id : customer.response.content.update.customer.id;
           const sessionId = customer.response.authentication.sessionid;
           const contactContent = {

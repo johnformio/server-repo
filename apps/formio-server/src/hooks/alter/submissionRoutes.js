@@ -6,8 +6,6 @@ const util = require('../../util/util');
 const SubmissionRevision = require('../../revisions/SubmissionRevision');
 module.exports = app => routes => {
   const submissionRevision = new SubmissionRevision(app);
-  const licenseUtilizationMiddleware = require('../../middleware/licenseUtilization').middleware(app);
-
   const filterExternalTokens = app.formio.formio.middleware.filterResourcejsResponse(['externalTokens']);
   const conditionalFilter = function(req, res, next) {
     if (req.token && res.resource && res.resource.item && res.resource.item._id) {
@@ -104,10 +102,7 @@ module.exports = app => routes => {
       }
     });
 });
-
-  // Add license utilization middleware
   _.each(['beforePost', 'beforePut', 'beforeIndex', 'beforeGet'], handler => {
-    routes[handler].unshift(licenseUtilizationMiddleware);
     routes[handler].unshift((req, res, next) => {
       app.formio.formio.cache.loadCurrentForm(req, (err, currentForm) => {
         return util.getSubmissionModel(app.formio.formio, req, currentForm, false, next);

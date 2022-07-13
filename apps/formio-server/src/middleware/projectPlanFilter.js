@@ -2,6 +2,7 @@
 
 const _ = require('lodash');
 const debug = require('debug')('formio:middleware:projectPlanFilter');
+const config = require('../../config');
 
 module.exports = function(formio) {
   const domain = function() {
@@ -98,7 +99,7 @@ module.exports = function(formio) {
   return function(req, res, next) {
     const isPost = req.method === 'POST';
     const isPut = req.method === 'PUT';
-    if (!isPost && !isPut) {
+    if (!config.formio.hosted || (!isPost && !isPut)) {
       return next();
     }
 
@@ -120,18 +121,12 @@ module.exports = function(formio) {
         case 'independent':
           generateNameIfMissing(req);
           filterCorsChanges(req);
-          if (process.env.DISABLE_RESTRICTIONS) {
-            return next();
-          }
           filterStorageSettings(req);
           return next();
         case 'basic':
         default:
           filterNameChanges(req);
           filterCorsChanges(req);
-          if (process.env.DISABLE_RESTRICTIONS) {
-            return next();
-          }
           filterOAuthSettings(req);
           filterEmailSettings(req);
           filterStorageSettings(req);

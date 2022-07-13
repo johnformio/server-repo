@@ -22,11 +22,11 @@ module.exports = function(app, formio) {
     next();
   };
 
-  app.post('/payment-gateway',
+  app.post('/payeezy',
     formio.middleware.tokenHandler,
     doNotAllowNewAccounts,
     require('../middleware/userProject')(formio),
-    require('./gateway')(app.formio.config, formio)
+    require('./payeezy')(app.formio.config, formio)
   );
 
   app.post('/project/:projectId/upgrade',
@@ -88,7 +88,7 @@ module.exports = function(app, formio) {
       return Q(formio.resources.submission.model.countDocuments({
         form: formId,
         owner: formio.util.ObjectId(req.user._id),
-        'data.transactionStatus': 'success',
+        'data.validationStatus': 'success',
       }));
     })
     .then(function(count) {

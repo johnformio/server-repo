@@ -18,7 +18,7 @@ const mongodb = require('mongodb');
  */
 module.exports = function(db, config, tools, done) {
   // Do not run on hosted platform
-  if (process.env.FORMIO_HOSTED) {
+  if (config.licenseRemote) {
     return done();
   }
 

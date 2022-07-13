@@ -1,9 +1,10 @@
 'use strict';
 const util = require('../util/util');
 const {utilizationSync} = require('../util/utilization');
+const config = require('../../config');
 const NodeCache = require('node-cache');
 const ncache = new NodeCache();
-const CACHE_TIME =  process.env.FORMIO_HOSTED ? 0 : process.env.CACHE_TIME || 15 * 60;
+const CACHE_TIME = process.env.CACHE_TIME || 15 * 60;
 
 const debug = {
   loadProject: require('debug')('formio:cache:loadProject'),
@@ -148,7 +149,7 @@ module.exports = function(server) {
           return cb(err);
         }
         if (!result) {
-          if (!process.env.FORMIO_HOSTED) {
+          if (!config.formio.hosted) {
             const cached = ncache.get(id.toString());
             // Check for cached info.
             if (cached) {

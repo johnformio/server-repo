@@ -4,17 +4,10 @@ const {
   utilization,
   getProjectContext,
   getLicenseKey,
-  createLicense,
-  getLicense,
-  setLicensePlan,
   licenseConfig
 } = require('../util/utilization');
-const _ = require('lodash');
-const plans = require('../plans/plans');
-const license = require('../util/license');
 
 module.exports = (app) => (req, res, next) => {
-  const formio = app.formio.formio;
   if (licenseConfig.remote) {
     return next();
   }
@@ -30,7 +23,7 @@ module.exports = (app) => (req, res, next) => {
   }
 
   const projectId = req.currentProject._id.toString();
-  let licenseKey = getLicenseKey(req);
+  const licenseKey = getLicenseKey(req);
   const licenseInfo = utilization(app, `project:${projectId}`, {
     ...getProjectContext(req),
     licenseKey,
@@ -51,65 +44,4 @@ module.exports = (app) => (req, res, next) => {
 
   /* eslint-disable callback-return */
   next();
-
-  const postProcess = async function() {
-    // If no key, we need to generate a new license.
-    if (process.env.FORMIO_HOSTED) {
-      let primaryPlan = req.primaryProject.plan;
-      if (!licenseKey) {
-        if (!plans.hasOwnProperty(primaryPlan)) {
-          primaryPlan = 'trial';
-        }
-        const license = await createLicense(formio, req, {
-          ...(new plans[primaryPlan]()).getPlan(),
-          licenseName: `Hosted - ${req.primaryProject.title}`,
-        });
-
-        formio.mongoose.models.project.findOne({
-          _id: req.primaryProject._id,
-        }).exec((err, project) => {
-          if (err || !project) {
-            return;
-          }
-          licenseKey = license.data.licenseKeys[0].key;
-          project.settings = {
-            ...project.settings,
-            licenseKey,
-          };
-          project.save();
-          req.licenseKey = licenseKey;
-        });
-      }
-      // Check if trial license is expired.
-      else if (primaryPlan === 'trial') {
-        const license = await getLicense(formio, licenseKey);
-        if (license && license.data.plan === 'trial' && license.data.endDate) {
-          if (new Date(license.data.endDate) < new Date()) {
-            setLicensePlan(formio, licenseKey, process.env.PROJECT_PLAN);
-          }
-        }
-      }
-
-      if (licenseInfo && !licenseInfo.error) {
-        const plan = _.get(licenseInfo, 'terms.plan') || 'basic';
-
-        // If the plan is not correct, fix it.
-        if (plan !== req.currentProject.plan) {
-          req.currentProject.plan = plan;
-          formio.mongoose.models.project.findOne({
-            _id: req.currentProject._id,
-          }).exec((err, project) => {
-            if (err || !project) {
-              return;
-            }
-            project.plan = plan;
-            project.save();
-          });
-        }
-      }
-    }
-  };
-
-  // Perform the post processing.
-  postProcess();
 };

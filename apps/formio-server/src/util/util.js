@@ -2,6 +2,7 @@
 
 const _ = require('lodash');
 const crypto = require('crypto');
+const config = require('../../config');
 const keygenerator = require('keygenerator');
 const debug = {
   decrypt: require('debug')('formio:util:decrypt')
@@ -125,7 +126,7 @@ const Utils = {
     }
 
     // Disable for hosted projects
-    if (formio.config.hosted) {
+    if (config.formio.hosted) {
       return next();
     }
 

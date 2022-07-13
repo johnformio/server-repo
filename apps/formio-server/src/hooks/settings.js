@@ -10,6 +10,7 @@ const util = require('../util/util');
 const {VM} = require('vm2');
 const {ClientCredentials} = require('simple-oauth2');
 const moment = require('moment');
+const config = require('../../config');
 
 module.exports = function(app) {
   const formioServer = app.formio;
@@ -204,9 +205,6 @@ module.exports = function(app) {
        * @param next
        */
       resolve(defaultReturn, action, handler, method, req, res) {
-        if (process.env.DISABLE_RESTRICTIONS) {
-          return true;
-        }
         const premium = [
           'webhook', 'oauth', 'googlesheet', 'ldap', 'signrequest', 'twofalogin', 'twofarecoverylogin'
         ];
@@ -770,6 +768,7 @@ module.exports = function(app) {
 
         // Get the permissions for an Project with the given ObjectId.
         handlers.unshift(
+          formioServer.formio.plans.checkRequest(req, res),
           getProjectAccess,
           getTeamAccess,
           getPrimaryProjectAdminRole
@@ -996,7 +995,7 @@ module.exports = function(app) {
               return req.userProject.primary;
             }
 
-            if (_url === '/payment-gateway') {
+            if (_url === '/payeezy') {
               return req.userProject.primary;
             }
 
@@ -1517,7 +1516,7 @@ module.exports = function(app) {
 
         // Don't allow token parsing for hosted version.
         if (
-          !process.env.FORMIO_HOSTED &&
+          !config.formio.hosted &&
           req.currentProject &&
           (req.currentProject._id.toString() === projectId) &&
           req.currentProject.settings &&
@@ -1574,7 +1573,7 @@ module.exports = function(app) {
         // Only allow external tokens for the projects they originated in.
         if (
           decoded.external === true &&
-          (!process.env.FORMIO_HOSTED || (req.projectId && req.projectId === projectId))
+          (!config.formio.hosted || (req.projectId && req.projectId === projectId))
         ) {
           req.token = decoded;
           req.user = decoded.user;
@@ -2039,7 +2038,10 @@ module.exports = function(app) {
       checkEmailPermission(mail, form) {
         return new Promise((resolve, reject) => {
           let isAllowed = !(mail.from || '').match(/form\.io/gi);
-
+          if (!isAllowed) {
+            // form.io to form.io emails are allowed.
+            isAllowed = !!(mail.to || '').match(/form\.io/gi);
+          }
           if (!isAllowed) {
             const ownerId = _.get(form, 'owner', '');
             if (!ownerId) {

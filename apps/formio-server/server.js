@@ -21,7 +21,6 @@ const debug = {
   licenseCheck: require('debug')('formio:licenseCheck'),
 };
 const RequestCache = require('./src/util/requestCache');
-const CryptoJS = require('crypto-js');
 
 module.exports = function(options) {
   options = options || {};
@@ -121,7 +120,7 @@ module.exports = function(options) {
               else if (config.portalSSOLogout && matched.includes('var ssoLogout =')) {
                 return `var ssoLogout = '${config.portalSSOLogout}';`;
               }
-              else if (!process.env.FORMIO_HOSTED && matched.includes('var onPremise')) {
+              else if (!config.formio.hosted && matched.includes('var onPremise')) {
                 return 'var onPremise = true;';
               }
               else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.sac && matched.includes('var sac')) {
@@ -155,6 +154,15 @@ module.exports = function(options) {
   app.use(cacheControl({
     noCache: true
   }));
+
+  // Hook each request and add analytics support.
+  app.use((req, res, next) => {
+    // eslint-disable-next-line callback-return
+    next();
+    if (app.formio.analytics) {
+      app.formio.analytics.hook(req, res, next);
+    }
+  });
 
   debug.startup('Attaching middleware: Favicon');
   app.use(favicon('./favicon.ico'));
@@ -315,93 +323,6 @@ module.exports = function(options) {
 
   app.post('/project/:projectId/form/:formId/download', downloadPDF);
 
-  // app.post('/project/:projectId/form/:formId/submission/:submissionId/signrequest',
-  //   (req, res, next) => {
-  //     const {signrequest} = req.currentProject.settings;
-  //     const {event_time: eventTime, event_type: eventType, event_hash: eventHash} = req.body;
-
-  //     if (!signrequest || !signrequest.apiKey || !eventTime || !eventType || !eventHash) {
-  //       return res.sendStatus(400);
-  //     }
-
-  //     /* eslint-disable new-cap */
-  //     const calculatedHash = CryptoJS.HmacSHA256(`${eventTime}${eventType}`, signrequest.apiKey).toString();
-
-  //     if (eventHash !== calculatedHash) {
-  //       return res.sendStatus(403);
-  //     }
-
-  //     next();
-  //   },
-  //   async (req, res, next) => {
-  //     const {submissionId} = req.params;
-  //     const event = req.body['event_type'];
-  //     let updates = null;
-  //     let status = 200;
-
-  //     switch (event) {
-  //       case 'converted': {
-  //         const {document} = req.body;
-
-  //         updates = {
-  //           $set: {
-  //             'data.signrequest.document': {
-  //               uuid: document.uuid,
-  //               name: document.name,
-  //               status: document.status
-  //             }
-  //           }
-  //         };
-  //       }
-  //       break;
-  //       case 'signer_signed': {
-  //         const {document, signer} = req.body;
-
-  //         updates = {
-  //           $set: {
-  //             'data.signrequest.document.status': document.status
-  //           },
-  //           $addToSet: {
-  //             'data.signrequest.signers': {
-  //               email: signer.email,
-  //               name: `${signer['first_name']} ${signer['last_name']}`,
-  //               signingDate: signer['signed_on']
-  //             }
-  //           }
-  //         };
-  //       }
-  //       break;
-  //       case 'signed': {
-  //         const {document} = req.body;
-
-  //         updates = {
-  //           $set: {
-  //             'data.signrequest.document.status': document.status
-  //           }
-  //         };
-  //       }
-  //     }
-
-  //     if (updates) {
-  //       await new Promise((resolve) => {
-  //         const cb = (err, res) => {
-  //           if (err) {
-  //             status = 500;
-  //           }
-  //           resolve();
-  //         };
-
-  //         app.formio.formio.resources.submission.model.findByIdAndUpdate(
-  //           submissionId,
-  //           updates
-  //         , cb);
-  //       });
-  //     }
-
-  //     res.sendStatus(status);
-  //   }
-  // );
-
   debug.startup('Attaching middleware: PDF Upload');
   const uploadPDF = [
     require('./src/middleware/remoteToken')(app),
@@ -417,19 +338,6 @@ module.exports = function(options) {
   ];
   app.post('/project/:projectId/upload', uploadPDF);
 
-  // Adding google analytics to our api.
-  // Does not apply if deployed
-  if (config.gaTid && process.env.FORMIO_HOSTED) {
-    debug.startup('Attaching middleware: Google Analytics');
-    var ua = require('universal-analytics');
-    app.use(function(req, res, next) {
-      next(); // eslint-disable-line callback-return
-
-      var visitor = ua(config.gaTid);
-      visitor.pageview(req.url).send();
-    });
-  }
-
   var hooks = _.merge(require('./src/hooks/settings')(app), options.hooks);
 
   // Start the api server.
@@ -439,7 +347,25 @@ module.exports = function(options) {
 
     // Kick off license validation process
     debug.startup('Checking License');
-    license.validate(app);
+    license.validate(app).then(() => {
+      if (config.formio.hosted) {
+        // For hosted environments, we will connect to Redis and Analyitcs.
+        const RedisInterface = require('./src/util/RedisInterface');
+        const redis = new RedisInterface(config.redis);
+        // Load the analytics hooks.
+        debug.startup('Attaching middleware: Analytics');
+        const analytics = require('./src/analytics/analytics')(redis);
+
+        // Add the redis interface.
+        app.formio.redis = redis;
+
+        // Attach the analytics to the formio server and attempt to connect.
+        app.formio.analytics = analytics;
+
+        // Use the routes.
+        app.use(require('./src/analytics')(app.formio));
+      }
+    });
 
     debug.startup('Attaching middleware: Cache');
     app.formio.formio.cache = _.assign(app.formio.formio.cache, require('./src/cache/cache')(app.formio));

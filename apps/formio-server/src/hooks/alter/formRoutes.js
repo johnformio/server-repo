@@ -2,7 +2,6 @@
 
 const _ = require('lodash');
 const util = require('../../util/util');
-const {utilization, getLicenseKey} = require('../../util/utilization');
 const FormRevision = require('../../revisions/FormRevision');
 const SubmissionRevision = require('../../revisions/SubmissionRevision');
 
@@ -75,24 +74,6 @@ module.exports = app => routes => {
           revision.revisionId = revision._id;
           revision.save(next);
         });
-      }
-
-      if (!item) {
-        return next();
-      }
-
-      const result = utilization(app, `project:${item.project}:formCreate`, {
-        type: 'form',
-        formId: item._id,
-        title: item.title,
-        name: item.name,
-        path: item.path,
-        formType: item.type,
-        projectId: item.project,
-        licenseKey: getLicenseKey(req),
-      });
-      if (result && result.error) {
-        return next(result.error.message);
       }
       return next();
     }
@@ -213,7 +194,6 @@ module.exports = app => routes => {
 
   routes.before.unshift(require('../../middleware/projectProtectAccess')(app.formio.formio));
   routes.before.unshift(require('../../middleware/formConflictHandler')(app.formio.formio));
-  routes.before.unshift(require('../../middleware/licenseUtilization').middleware(app));
   routes.after.push(require('../../middleware/projectModified')(app.formio.formio));
 
   /**

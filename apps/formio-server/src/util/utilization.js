@@ -4,7 +4,6 @@ const _ = require('lodash');
 const {match} = require("path-to-regexp");
 const licenseServer = process.env.LICENSE_SERVER || 'https://license.form.io';
 const NodeCache = require('node-cache');
-const plans = require('../plans/plans');
 const debug = require('debug')('formio:license');
 
 const requestCache = new NodeCache();
@@ -116,11 +115,10 @@ function utilization(app, cacheKey, body, action = '', clear = false, sync = fal
     return sync ? cachedRequest : null;
   }
 
-  const hosted = process.env.FORMIO_HOSTED;
   const onPremiseScopes = ['apiServer', 'pdfServer', 'project', 'tenant', 'stage', 'formManager', 'accessibility', 'submissionServer'];
 
   // If on premise and not scoped for on premise, skip check.
-  if (!hosted && !onPremiseScopes.includes(body.type)) {
+  if (!onPremiseScopes.includes(body.type)) {
     return sync ? Promise.resolve(body) : body;
   }
 
@@ -129,12 +127,10 @@ function utilization(app, cacheKey, body, action = '', clear = false, sync = fal
     return sync ? Promise.resolve(body) : body;
   }
 
-  if (!hosted) {
-    // Tell server to return a hash.
-    qs.hash = 1;
-    // Timestamp required for hash
-    body.timestamp = Date.now() - 6000;
-  }
+  // Tell server to return a hash.
+  qs.hash = 1;
+  // Timestamp required for hash
+  body.timestamp = Date.now() - 6000;
 
   debug(`Licence Check: ${cacheKey}`);
   cachedRequest = fetch(`${licenseServer}/utilization${action}`, {
@@ -166,7 +162,7 @@ function utilization(app, cacheKey, body, action = '', clear = false, sync = fal
     else {
       app.utilizationCheckSucceed();
     }
-    if (!utilization.error && !hosted && utilization.hash !== md5(base64(body))) {
+    if (!utilization.error && utilization.hash !== md5(base64(body))) {
       utilization = {error: new Error('Invalid response')};
     }
     lastUtilizationTime = Date.now();
@@ -238,78 +234,16 @@ async function createLicense(formio, req, data) {
   });
 }
 
-async function getLicense(formio, licenseKey) {
-  return await formio.resources.submission.model.findOne({
-    ...await getLicenseInfo(formio),
-    'data.licenseKeys.key': licenseKey,
-  });
-}
-
-async function setLicensePlan(formio, licenseKey, planName, additional = {}, addScopes = []) {
-  if (!(Object.keys(plans).includes(planName))) {
-    throw new Error('Invalid Plan');
-  }
-
-  const plan = new plans[planName]();
-
-  const license = await getLicense(formio, licenseKey);
-  if (!license) {
-    throw new Error('No license found');
-  }
-  const {
-    licenseName,
-    user,
-    company,
-    comments,
-    location,
-  } = license.toObject().data;
-
-  const data = {
-    ...plan.getPlan(licenseKey),
-    ...additional,
-    licenseName,
-    user,
-    company,
-    comments,
-    location,
-  };
-  _.set(data, 'licenseKeys[0].scope', _.uniq([..._.get(data, 'licenseKeys[0].scope'), ...addScopes]));
-  license.data = data;
-  await license.save();
-  try {
-    await clearLicenseCache(license._id);
-  }
-  catch (err) {
-    // Ignore error. This is only trying to clear cache.
-  }
-}
-
-async function clearLicenseCache(licenseId) {
-  if (licenseConfig.remote) {
-    return Promise.resolve();
-  }
-  await fetch(`${licenseServer}/license/${licenseId}/clear`, {
-    method: 'post',
-    headers: {'content-type': 'application/json'},
-    timeout: 30000,
-    rejectUnauthorized: false,
-  })
-    .then((response) => response.ok ? response.json() : null);
-}
-
 function checkLastUtilizationTime(req) {
-  const hosted = process.env.FORMIO_HOSTED;
-  if (!hosted) {
-    // allow all requests for 12 hours without a license
-    if (lastUtilizationTime + (1 * 60 * 1000) > Date.now()) {
-      return true;
-    }
-    // allow only read data and make submissions after 12 hours without a license
-    else if (req.method === 'GET' ||
-      ['/project/:projectId/form/:formId/submission', '/project/:projectId/form/:formId/submission/:submissionId']
-        .some((route) => match(route)(req.path))) {
-      return true;
-    }
+  // allow all requests for 12 hours without a license
+  if (lastUtilizationTime + (1 * 60 * 1000) > Date.now()) {
+    return true;
+  }
+  // allow only read data and make submissions after 12 hours without a license
+  else if (req.method === 'GET' ||
+    ['/project/:projectId/form/:formId/submission', '/project/:projectId/form/:formId/submission/:submissionId']
+      .some((route) => match(route)(req.path))) {
+    return true;
   }
   return false;
 }
@@ -347,8 +281,6 @@ module.exports = {
   createLicense,
   getProjectContext,
   getLicenseKey,
-  getLicense,
-  setLicensePlan,
   checkLastUtilizationTime,
   getNumberOfExistingProjects,
   remoteUtilization,

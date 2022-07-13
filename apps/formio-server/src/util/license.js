@@ -4,6 +4,7 @@ const config = require('../../config.js');
 const {utilizationSync, getNumberOfExistingProjects, licenseConfig} = require('../util/utilization');
 const crypto = require('crypto');
 const {compactVerify} = require('jose');
+const _ = require('lodash');
 
 const terms = {};
 
@@ -111,12 +112,6 @@ async function validateWithGracefulDegradation(app) {
 }
 
 async function performValidationRound(app) {
-  if (process.env.FORMIO_HOSTED) {
-    // eslint-disable-next-line no-console
-    console.log('\nLicense check skipped');
-    return true;
-  }
-
   app.environmentId = await getEnvironmentId(app);
   const hostname = require('os').hostname();
 
@@ -182,6 +177,9 @@ IzaxfXn16qCWfwKGE+VXkSM7OAS5iunoyHr5QYL9bUh2+vKshM/pnhvoMfDXnIZR
 
         `);
         app.restrictMethods = true;
+      }
+      if (_.get(payload, 'terms.options.hosted', false)) {
+        config.formio.hosted = true;
       }
       if (!app.restrictMethods) {
         console.log('License key validated remotely');

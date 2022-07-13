@@ -188,7 +188,7 @@ config.licenseServer = getConfig('LICENSE_SERVER', 'https://license.form.io');
 config.formio.defaultEmailSource= getConfig('DEFAULT_EMAIL_SOURCE', 'no-reply@example.com');
 
 config.enableOauthM2M = getConfig('OAUTH_M2M_ENABLED', false);
-config.formio.hosted = Boolean(getConfig('FORMIO_HOSTED'), false);
+config.formio.hosted = false;
 
 config.whitelabel = Boolean(getConfig('WHITELABEL'), false);
 config.onlyPrimaryWriteAccess = Boolean(getConfig('ONLY_PRIMARY_WRITE_ACCESS', false));
@@ -247,14 +247,6 @@ config.payeezy = {
   hmacKey: getConfig('PAYEEZY_HMAC_KEY'),
   merchToken: getConfig('PAYEEZY_TOKEN'),
 };
-// tpro3 fields
-config.tpro3 = {
-  gateway: getConfig('TPRO3_GATEWAY'),
-  api: getConfig('TPRO3_API', 'https://api.tpro3.com/json'),
-  account: getConfig('TPRO3_ACCOUNT', 'Form.ioTestCC'),
-  useremail: getConfig('TPRO3_EMAIL'),
-  password: getConfig('TPRO3_PASSWORD'),
-};
 
 // Using docker, support legacy linking and network links.
 var mongoCollection = getConfig('MONGO_COLLECTION', 'formio');
@@ -309,6 +301,49 @@ if (getConfig('MONGO_CONFIG')) {
 // This secret is used to encrypt certain DB fields at rest in the mongo database
 config.formio.mongoSecret = getConfig('DB_SECRET', 'abc123');
 config.formio.mongoSecretOld = getConfig('DB_SECRET_OLD', false);
+
+if (getConfig('REDIS_SERVICE')) {
+  if (getConfig('REDIS_SERVICE').toLowerCase() === 'local') {
+    if (config.docker) {
+      config.redis = {
+        url: 'redis://redis'
+      };
+    }
+    else {
+      config.redis = {
+        url: 'redis://localhost:6379'
+      };
+    }
+  }
+  else {
+    config.redis = {
+      service: getConfig('REDIS_SERVICE')
+    };
+  }
+}
+else if (getConfig('REDIS_ADDR', getConfig('REDIS_PORT_6379_TCP_ADDR'))) {
+  // This is compatible with docker legacy linking.
+  var addr = getConfig('REDIS_ADDR', getConfig('REDIS_PORT_6379_TCP_ADDR', 'localhost'));
+  var redisPort = getConfig('REDIS_PORT', getConfig('REDIS_PORT_6379_TCP_PORT', 6379));
+  config.redis = {
+    port: redisPort,
+    host: addr,
+    url: `redis://${addr}:${redisPort}`
+  };
+}
+else {
+  config.redis = {
+    service: 'false'
+  };
+}
+
+if (getConfig('REDIS_USE_SSL')) {
+  config.redis.useSSL = true;
+}
+
+if (getConfig('REDIS_PASS')) {
+  config.redis.password = getConfig('REDIS_PASS');
+}
 
 // TODO: Need a better way of setting the formio specific configurations.
 if (getConfig('SENDGRID_PASSWORD')) {

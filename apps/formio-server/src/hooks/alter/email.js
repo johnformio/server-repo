@@ -3,8 +3,8 @@
 const jwt = require('jsonwebtoken');
 const util = require('../../util/util');
 const async = require('async');
-const {utilization, getLicenseKey} = require('../../util/utilization');
 const _ = require('lodash');
+const config = require('../../../config');
 
 module.exports = app => (mail, req, res, params, cb) => {
   const formioServer = app.formio;
@@ -16,9 +16,8 @@ module.exports = app => (mail, req, res, params, cb) => {
     if (req.currentProject && req.currentProject.name === 'formio') {
       return;
     }
-    let form = params.form;
     if (typeof params.form === 'string') {
-      form = await new Promise((resolve, reject) => {
+      await new Promise((resolve, reject) => {
         formio.cache.loadForm(req, null, params.form, (err, form) => {
           if (err) {
             return reject(err);
@@ -27,39 +26,45 @@ module.exports = app => (mail, req, res, params, cb) => {
         });
       });
     }
-    if (process.env.FORMIO_HOSTED) {
-      if (params && params.noUtilization) {
-        return;
-      }
+    if (config.formio.hosted) {
       // Restrict basic and independent plans.
-      const transport = mail.msgTransport || 'default';
-      if (transport !== 'test' && req && req.primaryProject && ['basic', 'independent'].includes(req.primaryProject.plan)) {
-        if (transport !== 'default') {
-          throw new Error('Plan limited to default transport only.');
-        }
+      if (req && req.primaryProject) {
+        if (formioServer.analytics.isLimitedEmailPlan(req.primaryProject)) {
+          const transport = mail.msgTransport || 'default';
+          // eslint-disable-next-line max-depth
+          if (transport !== 'default' && transport !== 'test') {
+            throw new Error('Plan limited to default transport only.');
+          }
 
-        mail.html += `
+          formioServer.analytics.checkEmail(req, (err) => {
+            if (err) {
+              throw new Error(err.message);
+            }
+
+            mail.html += `
 <table style="margin: 0px;padding: 20px;background-color:#002941;color:white;width:100%;">
-  <tbody>
-  <tr>
-    <td align="center" style="font-size:24px;font-family:sans-serif;">
-      <div style="padding:10px;">Sent using the <a href="https://form.io" style="color:white;">form.io</a> platform</div>
-      <div style=""><img style="height:64px;" src="https://form.io/assets/images/formio-logo.png"></div>
-    </td>
-  </tr>
-  </tbody>
+<tbody>
+<tr>
+<td align="center" style="font-size:24px;font-family:sans-serif;">
+  <div style="padding:10px;">Sent using the <a href="https://form.io" style="color:white;">form.io</a> platform</div>
+  <div style=""><img style="height:64px;" src="https://form.io/assets/images/formio-logo.png"></div>
+</td>
+</tr>
+</tbody>
 </table>`;
-      }
 
-      const result = utilization(formioServer,`project:${req.projectId}:email`, {
-        type: 'email',
-        email: mail.to,
-        formId: form._id.toString(),
-        projectId: form.project.toString(),
-        licenseKey: getLicenseKey(req),
-      });
-      if (result && result.error) {
-        throw new Error(result.error.message);
+            formioServer.analytics.recordEmail(req);
+            return;
+          });
+        }
+        else {
+          formioServer.analytics.recordEmail(req);
+          return;
+        }
+      }
+      else {
+        formioServer.analytics.recordEmail(req);
+        return;
       }
     }
   };

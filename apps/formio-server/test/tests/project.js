@@ -3209,21 +3209,32 @@ module.exports = function(app, template, hook) {
 
       if (!docker)
       it('Saving a payment method', function(done) {
+        app.formio.config.payeezy = {
+          keyId: 'lFGgmH7ibDkNdCV6LiSbFdmSFXtIVncD', // Test Key
+          host: 'api-cert.payeezy.com',
+          endpoint: '/v1/transactions',
+          gatewayId: 'AJ1234-01',
+          gatewayPassword: '12345678901234567890123456789012',
+          hmacKey: '0efeeaf6f21fdd71e5076dea683b3a11614972d7d8e798d42624b8f999597355', // Test Secret
+          merchToken: 'fdoa-9b1a70e39b4f6b4fb0cef1c25de68010625408dc0b1025ae' // Test Token
+        };
+
         var paymentData = {
           ccNumber: '4012000033330026',
           ccType: 'visa',
           ccExpiryMonth: '12',
-          ccExpiryYear: '2030',
+          ccExpiryYear: '30',
           cardholderName: 'FORMIO Test Account',
           securityCode: '123'
         };
 
         request(app)
-          .post('/payment-gateway')
+          .post('/payeezy')
           .set('x-jwt-token', template.formio.owner.token)
           .send({
             data: paymentData
           })
+          .expect('Content-Type', /text\/plain; charset=utf-8/)
           .expect(200)
           .end(function(err, res) {
             if (err) {
@@ -3233,8 +3244,19 @@ module.exports = function(app, template, hook) {
             .then(function(form) {
               return app.formio.formio.resources.submission.model.findOne({form: form._id, owner: util.ObjectId(template.formio.owner._id)});
             })
-            .then(function() {
+            .then(function(submission) {
+              assert.equal(submission.data.ccNumber, '************0026', 'Only the last 4 digits of the cc number should be stored.');
+              assert.equal(submission.data.ccExpiryMonth, '12', 'The expiration month should be stored.');
+              assert.equal(submission.data.ccExpiryYear, '30', 'The expiration year should be stored.');
+              assert.equal(submission.data.cardholderName, 'FORMIO Test Account', 'The cardholder name should be stored.');
+              assert(submission.data.token.token_data.value.substr(-4) === '0026', 'The transarmor token should have the same last 4 digits as CC number.');
+              assert(submission.data.hasOwnProperty('transactionTag'), 'The submission should store the transactionTag');
+              assert.equal(submission.data.securityCode, undefined, 'The security card should not be stored.');
+
               done();
+            })
+            .catch(function(err) {
+              done(err);
             });
           });
       });
