@@ -3,8 +3,11 @@
 const _ = require('lodash');
 const jwt = require('jsonwebtoken');
 const debug = require('debug')('formio:middleware:projectTemplate');
+const projectCache = require('../cache/projectCache');
 
 module.exports = function(formio) {
+  const formioServer = {formio};
+  const loadCache = projectCache(formioServer);
   const hook = require('formio/src/util/hook')(formio);
   return function(req, res, next) {
     // If we are creating a project without a template, use the default template.
@@ -42,7 +45,7 @@ module.exports = function(formio) {
         }
 
         // Reload the project to reflect any changes made by the template.
-        formio.resources.project.model.findOne({_id: project._id}, function(err, project) {
+        loadCache.load({_id: project._id}, function(err, project) {
           if (err) {
             return res.status(400).send(err);
           }

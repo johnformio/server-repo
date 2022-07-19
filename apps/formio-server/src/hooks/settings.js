@@ -10,12 +10,13 @@ const util = require('../util/util');
 const {VM} = require('vm2');
 const {ClientCredentials} = require('simple-oauth2');
 const moment = require('moment');
+const projectCache = require('../cache/projectCache');
 const config = require('../../config');
 
 module.exports = function(app) {
   const formioServer = app.formio;
   const audit = formioServer.formio.audit;
-
+  const loadCache = projectCache(formioServer);
   // Add the encrypt handler.
   const encrypt = require('../util/encrypt')(formioServer);
 
@@ -1303,7 +1304,7 @@ module.exports = function(app) {
         steps.unshift(async.apply(_install, template, project));
 
         const _importAccess = (template, items, done) => {
-          formioServer.formio.resources.project.model.findOne({_id: template._id}).lean().exec((err, project) => {
+          loadCache.load({_id: template._id},(err, project) => {
             if (err) {
               return done(err);
             }
@@ -1819,10 +1820,10 @@ module.exports = function(app) {
          *
          * @param done
          */
-        const updateProject = function(_role, done) {
-          formioServer.formio.resources.project.model.findOne({
+        const updateProject = function(_role, done, req, id, cb) {
+          loadCache.load({
             _id: formioServer.formio.util.idToBson(projectId)
-          }).exec((err, project) => {
+          }, (err, project) => {
             if (err) {
               return done(err);
             }
@@ -1902,8 +1903,7 @@ module.exports = function(app) {
         if (!document) {
           return done(null, machineName);
         }
-        formioServer.formio.resources.project.model.findOne({_id: document.project, deleted: {$eq: null}})
-          .lean().exec(function(err, project) {
+        loadCache.load({_id: document.project, deleted: {$eq: null}}, function(err, project) {
             if (err) {
               return done(err);
             }

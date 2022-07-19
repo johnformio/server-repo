@@ -1,4 +1,6 @@
 'use strict';
+const projectCache = require('../cache/projectCache');
+
 const template = require('../../project.json');
 const debug = {
   install: require('debug')('formio:install')
@@ -6,6 +8,8 @@ const debug = {
 const portalEnabled = (process.env.PRIMARY && process.env.PRIMARY !==  'false') || (process.env.PORTAL_ENABLED && process.env.PORTAL_ENABLED !==  'false');
 
 module.exports = (app, config, next) => {
+  const formioServer = app.formio;
+  const loadCache = projectCache(formioServer);
   const formio = app.formio.formio;
   const log = (...args) => {
     debug.install(...args);
@@ -19,7 +23,7 @@ module.exports = (app, config, next) => {
     return next();
   }
   try {
-    formio.resources.project.model.findOne({primary: true}, (err, project) => {
+    loadCache.load({primary: true}, (err, project) => {
       if (err) {
         log(' > Error:', err);
         return next();
@@ -37,7 +41,7 @@ module.exports = (app, config, next) => {
           log('Error: ', err);
         }
         log(' > Finished creating portal project\n');
-        formio.resources.project.model.findOne({
+        loadCache.load({
           name: template.name
         }, (err, project) => {
           formio.resources.role.model.findOne({
