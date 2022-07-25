@@ -65,17 +65,24 @@ module.exports = (formioServer) => {
             return reject(err);
           }
 
-          if (project.settings.secret) {
+          if (_.get(project, 'settings.secret', '')) {
             return resolve(project);
           }
 
-          // Update project with randomly generated secret key.
-          const secret = keygenerator._();
-          project.settings = _.extend({}, project.settings, {
-            secret: secret
+          // Update the request cached item.
+          _.set(project, 'settings.secret', keygenerator._());
+
+          // Create a secret key.
+          formioServer.formio.cache.updateCurrentProject(req, {
+            settings: {
+              secret: project.settings.secret
+            }
+          }, (err, project) => {
+            if (err) {
+              return reject(err);
+            }
+            return resolve(project);
           });
-          project.save(); // Asynchronously save the project for performance reasons.
-          return resolve(project);
         });
       });
     },

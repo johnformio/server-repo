@@ -100,36 +100,14 @@ const middleware = router => {
             res.send(dropbox);
 
             // Write token to project settings
-            router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
-              if (!err) {
-                // Cannot directly set project.settings.storage.dropbox due to encryption.
-                const settings = project.settings;
-                if (!settings.storage) {
-                  settings.storage = {};
-                }
-                settings.storage.dropbox = dropbox;
-                project.settings = settings;
-                project.save();
-              }
-            });
+            router.formio.formio.cache.updateProject(req.projectId, {storage: {dropbox}});
           });
       }
       else {
         res.send({});
+
         // If a code is not sent, this is a disconnect.
-        // Write token to project settings
-        router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
-          if (!err) {
-            // Cannot directly set project.settings.storage.dropbox due to encryption.
-            const settings = project.settings;
-            if (!settings.storage) {
-              settings.storage = {};
-            }
-            settings.storage.dropbox = {};
-            project.settings = settings;
-            project.save();
-          }
-        });
+        router.formio.formio.cache.updateProject(req.projectId, {storage: {dropbox: {}}});
       }
     }
   );

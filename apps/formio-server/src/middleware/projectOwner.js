@@ -7,18 +7,9 @@ module.exports = function(formioServer) {
   return function(req, res, next) {
     // Only allow admins to change owner for now.
     if (req.projectId && req.isAdmin && req.adminKey) {
-      formio.cache.loadCurrentProject(req, (err, project) => {
-        if (err) {
-          return next(err);
-        }
-        if (!project) {
-          return res.status(404).send('Project not found');
-        }
-        project.owner = formioServer.formio.util.idToBson(req.body.owner);
-        project.markModified('owner');
-        project.save();
-        const projectObj = project.toObject();
-
+      formio.cache.updateProject(req.projectId, {
+        owner: formioServer.formio.util.idToBson(req.body.owner)
+      }, (err, projectObj) => {
         formio.resources.role.model.findOne({
           project: projectObj._id,
           title: 'Administrator',

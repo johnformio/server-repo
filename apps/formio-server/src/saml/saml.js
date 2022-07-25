@@ -30,7 +30,7 @@ module.exports = (formioServer) => {
 
         // Load the valid roles for this project.
         formio.resources.role.model.find({
-          project: project._id,
+          project: formio.util.idToBson(project._id),
           deleted: {$eq: null}
         }).exec((err, roles) => {
           if (err) {

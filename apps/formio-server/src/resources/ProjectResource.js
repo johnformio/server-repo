@@ -223,6 +223,15 @@ module.exports = (router, formioServer) => {
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       formio.middleware.licenseRemote,
       formio.middleware.licenseUtilization,
+      (req, res, next) => {
+        if (req.body._id) {
+          return next();
+        }
+        if (req.body._id && (req.body._id !== req.projectId)) {
+          return res.status(400).send('Project ID is different from the project body ID.');
+        }
+        return next();
+      },
       function(req, res, next) {
         // Always keep the licenseKey even if they don't send it.
         const licenseKey = _.get(req.body, 'settings.licenseKey');
@@ -315,6 +324,10 @@ module.exports = (router, formioServer) => {
       projectSettings,
       formio.middleware.customCrmAction('updateproject'),
       (req, res, next) => {
+        formio.cache.updateProjectCache(res.resource.item);
+        next();
+      },
+      (req, res, next) => {
         /* eslint-disable callback-return */
         next();
         /* eslint-enable callback-return */
@@ -324,7 +337,7 @@ module.exports = (router, formioServer) => {
           let parts = [];
           formio.mongoose.model('form').find({
             deleted: {$eq: null},
-            project: req.currentProject._id,
+            project: formio.util.idToBson(req.currentProject._id),
           }).then((forms) => forms.forEach((form) => {
             parts = form.machineName.split(':');
             if (parts.length === 2) {
@@ -347,7 +360,7 @@ module.exports = (router, formioServer) => {
           // Update all roles.
           formio.mongoose.model('role').find({
             deleted: {$eq: null},
-            project: req.currentProject._id,
+            project: formio.util.idToBson(req.currentProject._id),
           }).then((roles) => roles.forEach((role) => {
             parts = role.machineName.split(':');
             if (parts.length === 2) {
@@ -365,9 +378,13 @@ module.exports = (router, formioServer) => {
       require('../middleware/deleteProjectHandler')(formio),
     ],
     afterDelete: [
+      (req, res, next) => {
+        formio.cache.deleteProjectCache(req.currentProject);
+        next();
+      },
       formio.middleware.filterResourcejsResponse(hiddenFields),
       formio.middleware.customCrmAction('deleteproject'),
-      projectSettings,
+      projectSettings
     ],
   });
 
@@ -429,19 +446,19 @@ module.exports = (router, formioServer) => {
           const hash = crypto.createHash('md5').update(origin).digest('hex');
 
           if (hash === req.body.payload && origin) {
-            formio.cache.loadCurrentProject(req, (err, project) => {
-              if (err) {
-                return next(err);
-              }
-              util.decryptProperty(project, 'settings_encrypted', 'settings', formio.config.mongoSecret);
-
-              const domain = _.get(project, 'settings.portalDomain', '');
-              if (!domain || domain !== origin) {
-                project.settings = {...project.settings, portalDomain: origin};
-                project.save();
-              }
-              return res.status(200).send('OK');
-            });
+            const domain = _.get(req.currentProject, 'settings.portalDomain');
+            if (!domain || domain !== origin) {
+              formio.cache.updateCurrentProject(req, {
+                settings: {
+                  portalDomain: origin
+                }
+              }, (err, project) => {
+                if (err) {
+                  return next(err);
+                }
+                return res.status(200).send('OK');
+              });
+            }
           }
           else {
             res.status(400).send();

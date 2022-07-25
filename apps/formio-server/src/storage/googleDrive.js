@@ -151,16 +151,11 @@ const middleware = router => {
 
             // If has permissions for the Google Drive, response with enabled.
             res.send({enabled: true});
-
-            if (!settings.storage) {
-              settings.storage = {};
-            }
-
-            // Update the project settings
-            settings.storage.googleDrive = true;
-            project.settings = settings;
-            project.save();
-
+            router.formio.formio.cache.updateProject(project._id, {
+              settings: {
+                storage: {googleDrive: true}
+              }
+            });
             debug('Switched on Google Drive.');
           })
           .catch((err) => {
@@ -174,20 +169,9 @@ const middleware = router => {
 
         // Swith off the Google Drive
         res.send({});
-        // If a body without enable is not sent, this is a disconnect.
-        router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
-          if (!err) {
-            const {settings} = project;
-            if (!settings.storage) {
-              settings.storage = {};
-            }
-            // Update the project settings
-            settings.storage.googleDrive = null;
-            project.settings = settings;
-            project.save();
-          }
-          else {
-            debug(err);
+        router.formio.formio.cache.updateProject(req.projectId, {
+          settings: {
+            storage: {googleDrive: null}
           }
         });
       }

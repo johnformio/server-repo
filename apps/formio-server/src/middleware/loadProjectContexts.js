@@ -19,8 +19,7 @@ module.exports = (formio) => (req, res, next) => {
         if (err || !currentProject) {
           return resolve();
         }
-        req.currentProject = currentProject.toObject();
-
+        req.currentProject = currentProject;
         formio.resources.role.model.find(
           formio.hook.alter('roleQuery', {deleted: {$eq: null}}, req)
         )
@@ -40,7 +39,7 @@ module.exports = (formio) => (req, res, next) => {
         if (err || !parentProject) {
           return resolve();
         }
-        req.parentProject = parentProject.toObject();
+        req.parentProject = parentProject;
         return resolve();
       });
     }),
@@ -49,7 +48,7 @@ module.exports = (formio) => (req, res, next) => {
         if (err || !primaryProject) {
           return resolve();
         }
-        req.primaryProject = primaryProject.toObject();
+        req.primaryProject = primaryProject;
         return resolve();
       });
     }),

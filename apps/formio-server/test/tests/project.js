@@ -14,6 +14,7 @@ var customer = process.env.CUSTOMER;
 
 module.exports = function(app, template, hook) {
   let Helper = require('formio/test/helper')(app);
+  const cache = require('../../src/cache/cache')(app.formio);
 
   /**
    * Helper function to confirm the given properties are not present.
@@ -2005,17 +2006,12 @@ module.exports = function(app, template, hook) {
       if (!docker)
       before(function(done) {
         // Confirm the dummy project is on the team plan.
-        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
-          if (err) return done(err);
+        cache.updateProject(template.project._id, {plan: 'team'}, (err, project) => {
+          if (err) {
+            return done(err);
+          }
 
-          project.plan = 'team';
-          project.save(function(err) {
-            if (err) {
-              return done(err);
-            }
-
-            done();
-          });
+          done();
         });
       });
 
@@ -2096,17 +2092,12 @@ module.exports = function(app, template, hook) {
 
       if (!docker)
       before(function(done) {
-        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
-          if (err) return done(err);
+        cache.updateProject(template.project._id, {plan: 'commercial'}, (err, project) => {
+          if (err) {
+            return done(err);
+          }
 
-          project.plan = 'commercial';
-          project.save(function(err) {
-            if (err) {
-              return done(err);
-            }
-
-            done();
-          });
+          done();
         });
       });
 

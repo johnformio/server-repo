@@ -55,7 +55,7 @@ module.exports = (app) => (middleware) => {
 
       // Load the valid roles for this project.
       app.formio.formio.resources.role.model.find({
-        project: currentProject._id,
+        project: app.formio.formio.util.idToBson(currentProject._id),
         deleted: {$eq: null},
       }).exec((err, roles) => {
         if (err) {
@@ -64,7 +64,6 @@ module.exports = (app) => (middleware) => {
 
         // Get a list of valid roles for this project.
         const validRoles = (roles && roles.length) ? _.map(roles, (role) => role._id.toString()) : [];
-        currentProject = currentProject.toObject();
 
         // Only continue if oauth settings are set.
         const oauthSettings = _.get(currentProject, 'settings.oauth.openid', false);

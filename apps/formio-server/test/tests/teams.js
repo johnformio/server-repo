@@ -16,6 +16,7 @@ module.exports = function(app, template, hook) {
   }
   var ignoreFields = ['config', 'disabled'];
   let teamProject = null;
+  const cache = require('../../src/cache/cache')(app.formio);
   describe('Teams', function() {
 
     // For verify email
@@ -801,39 +802,10 @@ module.exports = function(app, template, hook) {
       });
 
       it('Upgrade the project to a team project plan', function(done) {
-          app.formio.formio.resources.project.model.findOne({_id: teamProject._id, deleted: {$eq: null}}, function(err, project) {
-            if(err) {
-              return done(err);
-            }
-
-            project.plan = 'team';
-            project.save(function(err) {
-              if(err) {
-                return done(err);
-              }
-
-              // Update the template version of the project.
-              request(app)
-                .get('/project/' + teamProject._id)
-                .set('x-jwt-token', template.formio.teamAdmin.token)
-                .expect('Content-Type', /json/)
-                .expect(200)
-                .end(function(err, res) {
-                  if (err) {
-                    return done(err);
-                  }
-
-                  // Update the project.
-                  var response = res.body;
-                  teamProject = response;
-
-                  // Store the JWT for future API calls.
-                  template.formio.teamAdmin.token = res.headers['x-jwt-token'];
-
-                  done();
-                });
-            });
-          });
+        cache.updateProject(teamProject._id, {plan: 'team'}, (err, project) => {
+          teamProject = project;
+          done();
+        });
       });
 
       it('A Project Owner should be able to add a Team they own to their project, if its on a team plan', function(done) {
@@ -1069,38 +1041,9 @@ module.exports = function(app, template, hook) {
       });
 
       it('Upgrade the project to a commercial project plan', function(done) {
-        app.formio.formio.resources.project.model.findOne({_id: teamProject._id, deleted: {$eq: null}}, function(err, project) {
-          if(err) {
-            return done(err);
-          }
-
-          project.plan = 'commercial';
-          project.save(function(err) {
-            if(err) {
-              return done(err);
-            }
-
-            // Update the template version of the project.
-            request(app)
-              .get('/project/' + teamProject._id)
-              .set('x-jwt-token', template.formio.teamAdmin.token)
-              .expect('Content-Type', /json/)
-              .expect(200)
-              .end(function(err, res) {
-                if (err) {
-                  return done(err);
-                }
-
-                // Update the project.
-                var response = res.body;
-                teamProject = response;
-
-                // Store the JWT for future API calls.
-                template.formio.teamAdmin.token = res.headers['x-jwt-token'];
-
-                done();
-              });
-          });
+        cache.updateProject(teamProject._id, {plan: 'commercial'}, (err, project) => {
+          teamProject = project;
+          done();
         });
       });
 
@@ -1160,38 +1103,9 @@ module.exports = function(app, template, hook) {
       });
 
       it('Upgrade the project to a commercial project plan', function(done) {
-        app.formio.formio.resources.project.model.findOne({_id: teamProject._id, deleted: {$eq: null}}, function(err, project) {
-          if(err) {
-            return done(err);
-          }
-
-          project.plan = 'trial';
-          project.save(function(err) {
-            if(err) {
-              return done(err);
-            }
-
-            // Update the template version of the project.
-            request(app)
-              .get('/project/' + teamProject._id)
-              .set('x-jwt-token', template.formio.teamAdmin.token)
-              .expect('Content-Type', /json/)
-              .expect(200)
-              .end(function(err, res) {
-                if (err) {
-                  return done(err);
-                }
-
-                // Update the project.
-                var response = res.body;
-                teamProject = response;
-
-                // Store the JWT for future API calls.
-                template.formio.teamAdmin.token = res.headers['x-jwt-token'];
-
-                done();
-              });
-          });
+        cache.updateProject(teamProject._id, {plan: 'trial'}, (err, project) => {
+          teamProject = project;
+          done();
         });
       });
 
@@ -1251,38 +1165,9 @@ module.exports = function(app, template, hook) {
       });
 
       it('Revert the project to a team project plan', function(done) {
-        app.formio.formio.resources.project.model.findOne({_id: teamProject._id, deleted: {$eq: null}}, function(err, project) {
-          if(err) {
-            return done(err);
-          }
-
-          project.plan = 'team';
-          project.save(function(err) {
-            if(err) {
-              return done(err);
-            }
-
-            // Update the template version of the project.
-            request(app)
-              .get('/project/' + teamProject._id)
-              .set('x-jwt-token', template.formio.teamAdmin.token)
-              .expect('Content-Type', /json/)
-              .expect(200)
-              .end(function(err, res) {
-                if (err) {
-                  return done(err);
-                }
-
-                // Update the project.
-                var response = res.body;
-                teamProject = response;
-
-                // Store the JWT for future API calls.
-                template.formio.teamAdmin.token = res.headers['x-jwt-token'];
-
-                done();
-              });
-          });
+        cache.updateProject(teamProject._id, {plan: 'team'}, (err, project) => {
+          teamProject = project;
+          done();
         });
       });
 
@@ -3559,7 +3444,7 @@ module.exports = function(app, template, hook) {
               return done();
             }
 
-            app.formio.formio.resources.project.model.findOne({_id: teamProject._id}, function(err, project) {
+            cache.loadCache.load(teamProject._id, (err, project) => {
               if(err) {
                 return done(err);
               }
@@ -3571,7 +3456,7 @@ module.exports = function(app, template, hook) {
               template.formio.user1.token = res.headers['x-jwt-token'];
 
               done();
-            });
+            }, true);
           });
       });
 

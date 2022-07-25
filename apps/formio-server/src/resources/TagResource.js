@@ -80,10 +80,12 @@ module.exports = function(router, formioServer) {
       formio.middleware.createTagChunks,
       formio.middleware.getFullTagTemplate,
       function(req, res, next) {
-        formio.cache.loadCurrentProject(req, (err, project) => {
-          project.tag = req.body.tag;
-          project.markModified('tag');
-          project.save();
+        formio.cache.updateCurrentProject(req, {
+          tag: req.body.tag
+        }, (err) => {
+          if (err) {
+            return next(err);
+          }
           return next();
         });
       },
@@ -148,10 +150,7 @@ module.exports = function(router, formioServer) {
     '/project/:projectId/deploy',
     formio.middleware.restrictToPlans(['commercial', 'trial']),
     function(req, res, next) {
-      formio.mongoose.model('project').findOne({
-        _id: req.projectId,
-        deleted: {$eq: null}
-      }).exec((err, project) => {
+      formio.cache.loadCurrentProject(req, (err, project) => {
         const deploy = req.body;
 
         // Sanity checks.
@@ -167,7 +166,7 @@ module.exports = function(router, formioServer) {
             router.formio.formio.log('Deploy Tag', req, deploy.tag);
             const search = {
               tag: deploy.tag,
-              project: project.project || project._id,
+              project: router.formio.formio.util.idToBson(project.project || project._id),
               deleted: {$eq: null}
             };
             formio.mongoose.model('tag').find(search).exec((err, tags) => {
@@ -189,10 +188,10 @@ module.exports = function(router, formioServer) {
                   return res.status(400).send(err);
                 }
 
-                project.tag = tags[0].tag;
-                project.markModified('tag');
-                project.set('lastDeploy', Date.now());
-                project.save((err) => {
+                formio.cache.updateCurrentProject(req, {
+                  tag: tags[0].tag,
+                  lastDeploy: Date.now()
+                }, (err) => {
                   if (err) {
                     return res.status(400).send(err.message || err);
                   }
@@ -227,10 +226,10 @@ module.exports = function(router, formioServer) {
               }
 
               router.formio.formio.log('Deploy Template', req, template.tag);
-              project.tag = template.tag;
-              project.markModified('tag');
-              project.set('lastDeploy', Date.now());
-              project.save((err) => {
+              formio.cache.updateCurrentProject(req, {
+                tag: template.tag,
+                lastDeploy: Date.now()
+              }, (err) => {
                 if (err) {
                   return res.status(400).send(err.message || err);
                 }

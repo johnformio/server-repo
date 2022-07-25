@@ -3,11 +3,8 @@
 const _ = require('lodash');
 const jwt = require('jsonwebtoken');
 const debug = require('debug')('formio:middleware:projectTemplate');
-const projectCache = require('../cache/projectCache');
 
 module.exports = function(formio) {
-  const formioServer = {formio};
-  const loadCache = projectCache(formioServer);
   const hook = require('formio/src/util/hook')(formio);
   return function(req, res, next) {
     // If we are creating a project without a template, use the default template.
@@ -45,14 +42,14 @@ module.exports = function(formio) {
         }
 
         // Reload the project to reflect any changes made by the template.
-        loadCache.load({_id: project._id}, function(err, project) {
+        formio.cache.loadCache.load(project._id, function(err, project) {
           if (err) {
             return res.status(400).send(err);
           }
           res.resource.item = project;
 
           return next();
-        });
+         }, true);
       };
 
       const importTemplateToProject = (template, project, alters) => {
@@ -99,7 +96,7 @@ module.exports = function(formio) {
       formio.cache.loadProject(req, projectId, function(err, primaryProject) {
         formio.template.export({
           projectId: projectId,
-          access: primaryProject.access ? primaryProject.access.toObject() : [],
+          access: primaryProject.access ? primaryProject.access : [],
         }, function(err, template) {
           if (err) {
             // If something went wrong, just import the default template instead.

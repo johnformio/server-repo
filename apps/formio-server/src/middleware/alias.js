@@ -75,6 +75,33 @@ module.exports = function(formio) {
       return skip(req, res, next);
     }
 
+    const checkSubDomain = () => {
+      // Allow using subdomains as subdirectories as well.
+      const subdirectory = req.url.split('/')[1];
+      // Quick confirmation that we have an projectName.
+      if (subdirectory === 'api' || config.reservedSubdomains.indexOf(subdirectory) !== -1) {
+        return next();
+      }
+      else {
+        formio.cache.loadProjectByName(req, subdirectory, function(err, project) {
+          debug.alias(`Loading project from subdir: ${projectName}`);
+
+          if (err || !project) {
+            return next();
+          }
+
+          // Set the Project Id in the request.
+          req.projectId = project._id.toString();
+          req.url = `/project/${project._id}${req.url.slice(subdirectory.length + 1)}`;
+          return next();
+        });
+      }
+    };
+
+    if (!projectName) {
+      return checkSubDomain();
+    }
+
     // Look up the subdomain.
     formio.cache.loadProjectByName(req, projectName, function(err, project) {
       debug.alias(`Loading project: ${projectName}`);
@@ -82,26 +109,7 @@ module.exports = function(formio) {
       if (err || !project) {
         // If project is not found by subdomain, check if the directory refers to the project.
         if (err === 'Project not found') {
-          // Allow using subdomains as subdirectories as well.
-          const subdirectory = req.url.split('/')[1];
-          // Quick confirmation that we have an projectName.
-          if (subdirectory === 'api' || config.reservedSubdomains.indexOf(subdirectory) !== -1) {
-            return next();
-          }
-          else {
-            formio.cache.loadProjectByName(req, subdirectory, function(err, project) {
-              debug.alias(`Loading project from subdir: ${projectName}`);
-
-              if (err || !project) {
-                return next();
-              }
-
-              // Set the Project Id in the request.
-              req.projectId = project._id.toString();
-              req.url = `/project/${project._id}${req.url.slice(subdirectory.length + 1)}`;
-              return next();
-            });
-          }
+          return checkSubDomain();
         }
         else {
           return next();

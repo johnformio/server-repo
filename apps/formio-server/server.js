@@ -434,7 +434,7 @@ module.exports = function(options) {
     // Allow for the project public info to be sent without access to the project endpoint.
     debug.startup('Attaching middleware: config.json');
     app.get('/project/:projectId/config.json', (req, res) => {
-      if (!req.currentProject.settings.allowConfig) {
+      if (!_.get(req.currentProject, 'settings.allowConfig', false)) {
         return res.json({
           _id: req.currentProject._id
         });

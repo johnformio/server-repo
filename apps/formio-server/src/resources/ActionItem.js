@@ -21,10 +21,10 @@ module.exports = function(router, formioServer) {
         (req, res, next) => {
           if (req.method === 'GET') {
             req.modelQuery = req.modelQuery || req.model || this.model;
-            req.modelQuery = req.modelQuery.find({project: req.currentProject._id});
+            req.modelQuery = req.modelQuery.find({project: formio.util.idToBson(req.currentProject._id)});
 
             req.countQuery = req.countQuery || req.model || this.model;
-            req.countQuery = req.countQuery.find({project: req.primaryProject._id});
+            req.countQuery = req.countQuery.find({project: formio.util.idToBson(req.primaryProject._id)});
           }
 
           return next();

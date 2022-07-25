@@ -316,17 +316,9 @@ module.exports = (router) => {
         };
 
         const primaryKey = this.settings.primary;
-        let project = formio.cache.currentProject(req);
+        const project = formio.cache.currentProject(req);
         if (_.isNil(project)) {
           return handleErrors('No project found.');
-        }
-        else {
-          try {
-            project = project.toObject();
-          }
-          catch (e) {
-            // Project is already a plain object.
-          }
         }
 
         // Add basic auth if available.
@@ -350,9 +342,16 @@ module.exports = (router) => {
 
         // If this is a create/update, determine what to send in the request body.
         if (['post', 'put'].includes(method)) {
-          const item = res.resource
-            ? res.resource.item.toObject()
+          let item = res.resource
+            ? res.resource.item
             : req.body;
+
+          try {
+            item = item.toObject();
+          }
+          catch (err) {
+            // item is already an object.
+          }
 
           // Remove protected fields from the external request.
           formio.util.removeProtectedFields(req.currentForm, method, item);

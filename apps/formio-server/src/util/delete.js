@@ -276,49 +276,36 @@ module.exports = function(formio) {
    *   The callback function to return the results.
    */
   function deleteProject(projectId, next) {
-    const util = formio.util;
     if (!projectId) {
       return next();
     }
-
-    const query = {_id: util.idToBson(projectId), deleted: {$eq: null}};
-    formio.resources.project.model.findOne(query).exec((err, project) => {
+    formio.cache.updateProject(projectId, {
+      deleted: Date.now()
+    }, (err, project) => {
       if (err) {
         return next(err.message || err);
       }
-      if (!project) {
-        return next();
-      }
-
-      project.deleted = Date.now();
-      project.markModified('deleted');
-      project.save(function(err) {
+      deleteRole(projectId, function(err) {
         if (err) {
           return next(err.message || err);
         }
 
-        deleteRole(projectId, function(err) {
+        deleteForm(projectId, function(err) {
           if (err) {
             return next(err.message || err);
           }
+          else if (project.type !== 'stage') {
+            deleteStages(projectId, function(err) {
+              if (err) {
+                return next(err.message || err);
+              }
 
-          deleteForm(projectId, function(err) {
-            if (err) {
-              return next(err.message || err);
-            }
-            else if (project.type !== 'stage') {
-              deleteStages(projectId, function(err) {
-                if (err) {
-                  return next(err.message || err);
-                }
-
-                next();
-              });
-            }
-            else {
-              return next();
-            }
-          });
+              next();
+            });
+          }
+          else {
+            return next();
+          }
         });
       });
     });

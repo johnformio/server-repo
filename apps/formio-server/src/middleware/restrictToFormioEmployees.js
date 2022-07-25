@@ -11,20 +11,13 @@ module.exports = function(formio) {
         return res.sendStatus(401);
       }
 
-      try {
-        project = project.toObject();
-      }
-      catch (err) {
-        // project was already a plain js object.
-      }
-
       // Owner of Formio
       if (req.user._id.toString() === project.owner.toString()) {
         return next();
       }
 
       formio.resources.role.model.findOne({
-        project: project._id,
+        project: formio.util.idToBson(project._id),
         title: "Administrator",
         deleted: {$eq: null}
       }, (err, response) => {

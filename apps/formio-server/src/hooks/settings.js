@@ -10,13 +10,11 @@ const util = require('../util/util');
 const {VM} = require('vm2');
 const {ClientCredentials} = require('simple-oauth2');
 const moment = require('moment');
-const projectCache = require('../cache/projectCache');
 const config = require('../../config');
 
 module.exports = function(app) {
   const formioServer = app.formio;
   const audit = formioServer.formio.audit;
-  const loadCache = projectCache(formioServer);
   // Add the encrypt handler.
   const encrypt = require('../util/encrypt')(formioServer);
 
@@ -242,7 +240,7 @@ module.exports = function(app) {
       },
       hasEmailAccess(req) {
         const noEmailPlans = ['basic'];
-        return !(req.projectLicense && noEmailPlans.includes(req.projectLicense.terms.plan));
+        return !(req.currentProject && noEmailPlans.includes(req.currentProject.plan));
       },
       path(url, req) {
         return `/project/${req.projectId}${url}`;
@@ -567,16 +565,9 @@ module.exports = function(app) {
               return callback(`No project found with projectId: ${req.projectId}`);
             }
 
-            // Add the current project to the req.
-            try {
-              req.currentProject = project.toObject();
-            }
-            catch (err) {
-              req.currentProject = project;
-            }
-
+            req.currentProject = project;
             formioServer.formio.cache.loadPrimaryProject(req, function(err, primaryProject) {
-              req.primaryProject = primaryProject ? primaryProject.toObject() : project;
+              req.primaryProject = primaryProject;
 
               // Store the Project Owners UserId, because they will have all permissions.
               if (req.primaryProject && req.primaryProject.owner) {
@@ -1304,7 +1295,7 @@ module.exports = function(app) {
         steps.unshift(async.apply(_install, template, project));
 
         const _importAccess = (template, items, done) => {
-          loadCache.load({_id: template._id},(err, project) => {
+          formioServer.formio.cache.loadCache.load(template._id, (err, project) => {
             if (err) {
               return done(err);
             }
@@ -1384,10 +1375,8 @@ module.exports = function(app) {
             }
 
             // Update this project.
-            formioServer.formio.resources.project.model.updateOne({
-              _id: project._id
-            }, {
-              $set: {access: project.access}
+            formioServer.formio.cache.updateProject(project._id, {
+              access: project.access
             }, done);
           });
         };
@@ -1427,7 +1416,7 @@ module.exports = function(app) {
         options.name = currentProject.name;
         options.description = currentProject.description;
         options.projectId = currentProject._id.toString() || req.projectId || req.params.projectId || 0;
-        options.access = currentProject.access.toObject();
+        options.access = currentProject.access;
 
         return options;
       },
@@ -1821,9 +1810,7 @@ module.exports = function(app) {
          * @param done
          */
         const updateProject = function(_role, done, req, id, cb) {
-          loadCache.load({
-            _id: formioServer.formio.util.idToBson(projectId)
-          }, (err, project) => {
+          formioServer.formio.cache.loadCache.load(projectId, (err, project) => {
             if (err) {
               return done(err);
             }
@@ -1852,7 +1839,9 @@ module.exports = function(app) {
             }
 
             // Save the updated permissions.
-            project.save(function(err) {
+            formioServer.formio.cache.updateProject(projectId, {
+              access: project.access
+            }, (err) => {
               if (err) {
                 return done(err);
               }
@@ -1903,7 +1892,7 @@ module.exports = function(app) {
         if (!document) {
           return done(null, machineName);
         }
-        loadCache.load({_id: document.project, deleted: {$eq: null}}, function(err, project) {
+        formioServer.formio.cache.loadCache.load(document.project, function(err, project) {
             if (err) {
               return done(err);
             }

@@ -9,6 +9,7 @@ const ObjectID = require('mongodb').ObjectId;
 
 module.exports = function(app, template, hook) {
   let Helper = require('formio/test/helper')(app);
+  const cache = require('../../src/cache/cache')(app.formio);
 
   describe('Encrypted Fields', function() {
     let tempForm;
@@ -678,7 +679,7 @@ module.exports = function(app, template, hook) {
               if (err) {
                 return done(err);
               }
-
+              cache.loadCache.set(project.toObject());
               done();
             });
           });

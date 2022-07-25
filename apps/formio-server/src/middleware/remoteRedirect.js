@@ -40,7 +40,7 @@ module.exports = app => (req, res, next) => {
       return res.status(400).send('Project not found');
     }
 
-    const currentProject = project.toObject();
+    const currentProject = project;
     if (currentProject.remote && !res.headersSent) {
       return res.redirect(301, projectPath(
           currentProject.remote.project,

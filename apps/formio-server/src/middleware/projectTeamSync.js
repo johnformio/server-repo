@@ -55,7 +55,7 @@ module.exports = function(formio) {
           return next();
         }
 
-        const teamAccess = _.filter(project.access.toObject(), access => _.startsWith(access.type, 'team_'));
+        const teamAccess = _.filter(project.access, access => _.startsWith(access.type, 'team_'));
         req.body.access = req.body.access || [];
         teamAccess.forEach(access => replaceAccess(req.body, access));
 
