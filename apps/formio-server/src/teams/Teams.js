@@ -337,6 +337,11 @@ const Teams = {
       }
     ]).exec();
 
+    for (const member of membership) {
+      const members = await Teams.getMembers(member.data.team);
+      member.data.team.metadata.memberCount = members.length;
+    }
+
     let teams = [];
 
     if (user.sso && user.teams) {
