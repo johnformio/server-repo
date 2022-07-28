@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased: 8.0.0-rc.4]
+### Fixed
+ - FIO-5241: fixed an issue where are displayed wrong number of teams participants
+
 ## 8.0.0-rc.3
 ### Changed
  - FIO-5130: resolving vulnerability related to node-same dependency
