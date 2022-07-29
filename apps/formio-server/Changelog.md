@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased: 8.0.0-rc.4]
+### Changed
+ - Updated formio-app@8.0.0-rc.9
+ - Updated @formio/premium@1.18.5-rc.5
+ - Updated formio@3.0.0-rc.5
+
 ### Fixed
  - FIO-5241: fixed an issue where are displayed wrong number of teams participants
 
