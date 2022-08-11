@@ -100,6 +100,7 @@ module.exports = function(formio) {
     const isPost = req.method === 'POST';
     const isPut = req.method === 'PUT';
     if (!config.formio.hosted || (!isPost && !isPut)) {
+      generateNameIfMissing(req);
       return next();
     }
 
