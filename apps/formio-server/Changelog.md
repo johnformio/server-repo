@@ -4,7 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 8.0.0-rc.5]
+## 8.0.0-rc.5
+### Changed
+ - Updated formio-app@8.0.0-rc.10
+ - Updated formio@3.0.0-rc.6
+
 ### Fixed
  - FIO-5343: added generateNameIfMissing to project creation for not hosted licenses
  - FIO-4212: Fix permission denied error after getting team project
