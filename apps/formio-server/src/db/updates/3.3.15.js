@@ -2,7 +2,7 @@
 const _ = require('lodash');
 
 /**
- * Update 3.3.12
+ * Update 3.3.15
  *
  * Move user to admin.
  *
@@ -159,7 +159,7 @@ const _ = require('lodash');
     });
 
     if (!userRoleAssignmentAction) {
-      console.log('No Role Assignment acttion found.');
+      console.log('No Role Assignment action found.');
       return;
     }
 
@@ -172,7 +172,7 @@ const _ = require('lodash');
 
     const createdAdminRoleAssignmentAction = await actions.insertOne(adminRoleAssignmentAction);
     if (createdAdminRoleAssignmentAction.insertedId) {
-      console.log('Created admin Role Assignment acttion.');
+      console.log('Created admin Role Assignment action.');
     }
     else {
       return;
@@ -193,7 +193,7 @@ const _ = require('lodash');
     });
 
     if (!userSaveSubmissionAction) {
-      console.log('No Save Submission acttion found.');
+      console.log('No Save Submission action found.');
       return;
     }
 
