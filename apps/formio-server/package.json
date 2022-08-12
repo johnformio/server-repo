@@ -31,7 +31,7 @@
   "portalVersion": "8.0.0-rc.9",
   "dependencies": {
     "@braintree/sanitize-url": "^6.0.0",
-    "@formio/premium": "^1.18.5-rc.5",
+    "@formio/premium": "^1.18.6-rc.1",
     "@types/qrcode": "^1.4.1",
     "@types/speakeasy": "^2.0.6",
     "acorn": "^8.5.0",
