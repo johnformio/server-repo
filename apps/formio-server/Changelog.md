@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased: 8.0.0-rc.5]
 ### Fixed
  - FIO-5343: added generateNameIfMissing to project creation for not hosted licenses
+ - FIO-4212: Fix permission denied error after getting team project
 
 ## 8.0.0-rc.4
 ### Changed
