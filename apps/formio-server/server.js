@@ -105,6 +105,7 @@ module.exports = function(options) {
     // Override config.js so we can set onPremise to true.
     app.get('/config.js', (req, res) => {
       fs.readFile(`./portal/config.js`, 'utf8', (err, contents) => {
+        res.set('Content-Type', 'application/javascript; charset=UTF-8');
         res.send(
           contents.replace(
             /var hostedPDFServer = '';|var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false|var whitelabel = false;/gi,
