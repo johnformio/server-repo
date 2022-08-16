@@ -24,8 +24,10 @@ module.exports = function(formio) {
                 _id: formio.util.idToBson(projectId),
                 deleted: {$eq: null}
             }).exec().then(function(result) {
-                result = result.toObject();
-                projectCache.set(result);
+                if (result) {
+                  result = result.toObject();
+                  projectCache.set(result);
+                }
                 return cb(null, result);
             }).catch(err => cb(err, null));
         },
