@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased: 8.0.0-rc.6]
+### Fixed
+ - FIO-5346: added the correct header type
+ - FIO-5377: fixed processing of empty project search result
+
 ## 8.0.0-rc.5
 ### Changed
  - Updated formio-app@8.0.0-rc.10
