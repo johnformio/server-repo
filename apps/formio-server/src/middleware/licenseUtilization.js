@@ -72,7 +72,7 @@ function middleware(app) {
             tenantEnabled = _.get(app, 'license.terms.scopes', []).includes('tenant');
           }
           else {
-            result = utilization(app, `project:${req.projectId}`, {
+            result = await utilizationSync(app, `project:${req.projectId}`, {
               ...getProjectContext(req),
               licenseKey: getLicenseKey(req),
             });
@@ -88,7 +88,7 @@ function middleware(app) {
               }
             }
 
-            const managerResult = utilization(app, `project:${req.projectId}:formManager`, {
+            const managerResult = await utilizationSync(app, `project:${req.projectId}:formManager`, {
               ...getProjectContext(req),
               licenseKey: getLicenseKey(req),
               type: 'formManager'
