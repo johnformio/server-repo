@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased: 8.0.0-rc.6]
+### Changed
+ - Updated formio-app@8.0.0-rc.11
+ - Updated @formio/premium@1.18.6-rc.3
+ - Updated formio@3.0.0-rc.7
+
 ### Fixed
  - FIO-5346: added the correct header type
  - FIO-5377: fixed processing of empty project search result
