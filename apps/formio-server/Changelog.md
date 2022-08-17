@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
  - FIO-5346: added the correct header type
  - FIO-5377: fixed processing of empty project search result
+ - FIO-4714: Remove unused signrequest code
+ - FIO-4483: fixed an issue where display of the Tenant/Form Manager button is not constant when switching the stages
 
 ## 8.0.0-rc.5
 ### Changed
