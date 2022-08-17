@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 8.0.0-rc.6]
+## 8.0.0-rc.6
 ### Changed
  - Updated formio-app@8.0.0-rc.11
  - Updated @formio/premium@1.18.6-rc.3
