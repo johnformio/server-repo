@@ -12,8 +12,8 @@ jobs:
       - run:
           name: Install npm modules
           command: |
-            npm i -g npm-cli-login
-            npm-cli-login -u $NPM_USERNAME -p $NPM_PASSWORD -e $NPM_EMAIL -r https://pkg.form.io
+            npm i npm-cli-login
+            ./node_modules/.bin/npm-cli-login -u $NPM_USERNAME -p $NPM_PASSWORD -e $NPM_EMAIL -r https://pkg.form.io
             npm install --legacy-peer-deps
       - save_cache:
           key: dependency-cache-{{ checksum "package.json" }}
