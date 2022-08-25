@@ -6,6 +6,10 @@ module.exports = function(formio) {
       return next();
     }
 
+    if (req.headers.hasOwnProperty('x-remote-token')) {
+      return next();
+    }
+
     if (!('project' in req.body)) {
       return next('Parent project not found.');
     }
