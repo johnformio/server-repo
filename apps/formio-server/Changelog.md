@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased: 8.0.0-rc.7]
+### Fixed
+ - FIO-3787: LIC when trying to connect a tenant to an on premise environment receiving a 400 error
+
 ## 8.0.0-rc.6
 ### Changed
  - Updated formio-app@8.0.0-rc.11
