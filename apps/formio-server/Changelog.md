@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased: 8.0.0-rc.7]
 ### Fixed
  - FIO-3787: LIC when trying to connect a tenant to an on premise environment receiving a 400 error
+ - FIO-3764: lic tenants stages and project stages are registering as projects when connecting to a remote environment
 
 ## 8.0.0-rc.6
 ### Changed
