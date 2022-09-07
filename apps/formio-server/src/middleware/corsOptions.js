@@ -37,9 +37,8 @@ module.exports = function(router) {
       });
     }
 
-     // Disallow cors if they are attempting to use a token as querystring.
     if (!req.header('Origin') || req.header('Origin') === 'null') {
-      return callback(null, fail);
+      return callback(null, pass);
     }
 
     // Allow CORS if there is no project.
