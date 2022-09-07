@@ -10,6 +10,7 @@ const terms = {};
 
 module.exports = {
   validate: validateWithGracefulDegradation,
+  getEnvironmentId: getEnvironmentId,
   generateMiddleware: app => (req, res, next) => {
     if (app.restrictMethods) {
       if (['PUT', 'PATCH', 'POST'].includes(req.method)) {

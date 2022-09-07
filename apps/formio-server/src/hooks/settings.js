@@ -737,6 +737,9 @@ module.exports = function(app) {
            getRoles(req.userProject);
           }
           else if (req.user && req.token) {
+            if (!req.projectId) {
+              return callback(null);
+            }
             const projectId = req.token.project ? req.token.project._id : req.token.form.project;
 
             formioServer.formio.cache.loadProject(req, projectId, function(err, project) {
@@ -2240,7 +2243,6 @@ module.exports = function(app) {
         }
         else if (req.user && req.token) {
           const projectId = req.token.project ? req.token.project._id : req.token.form.project;
-
           formioServer.formio.cache.loadProject(req, projectId, function(err, project) {
             if (err) {
               return cb(err);

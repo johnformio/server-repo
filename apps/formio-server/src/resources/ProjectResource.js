@@ -150,7 +150,6 @@ module.exports = (router, formioServer) => {
 
   // Fix project plan (pull from actual license instead of stored DB value)
   formio.middleware.licenseUtilization = require('../middleware/licenseUtilization').middleware(router);
-  formio.middleware.licenseRemote = require('../middleware/licenseRemote').middleware(formio);
 
   const hiddenFields = ['deleted', '__v', 'machineName', 'primary'];
   const resource = Resource(
@@ -198,6 +197,12 @@ module.exports = (router, formioServer) => {
         }
         next();
       },
+      (req, res, next) => {
+        if (_.get(req.headers, 'x-remote-token')) {
+          _.set(req.body, 'settings.remoteStage', true);
+        }
+        next();
+      },
       formio.middleware.bootstrapEntityOwner,
       formio.middleware.projectTeamSync,
       formio.middleware.condensePermissionTypes,
@@ -220,7 +225,6 @@ module.exports = (router, formioServer) => {
     ],
     beforePut: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
-      formio.middleware.licenseRemote,
       formio.middleware.licenseUtilization,
       (req, res, next) => {
         if (req.body._id) {

@@ -263,6 +263,9 @@ module.exports = function(options) {
   // Set the project query middleware for filtering disabled projects
   app.use(require('./src/middleware/projectQueryLimits'));
 
+  // Add EnvironmentId to request if not already added
+  app.use(require('./src/middleware/environmentId')(app));
+
    // Check project status
   app.use(require('./src/middleware/projectUtilization')(app));
 

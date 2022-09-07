@@ -174,15 +174,16 @@ function middleware(app) {
       }
 
       if (result && result.error) {
-        if (checkLastUtilizationTime(req)) {
+        if (checkLastUtilizationTime(req) && app.restrictMethods) {
           return next();
         }
-        return res.status(400).send(result.error.message);
+        const status = result.error.statusCode ? result.error.statusCode : 400;
+        return res.status(status).send(result.error.message);
       }
       return next();
     }
     catch (e) {
-      if (checkLastUtilizationTime(req)) {
+      if (checkLastUtilizationTime(req) && app.restrictMethods) {
         return next();
       }
       return res.status(e.statusCode || 400).send(

@@ -43,6 +43,7 @@ const getProjectContext = (req, isNew = false) => {
         name: req.currentProject && !isNew ? req.currentProject.name : req.body.name,
         remote: req.currentProject && !isNew ? !!req.currentProject.remote : false,
         projectType: req.currentProject && !isNew ? req.currentProject.type : req.body.type,
+        environmentId: req.body.environmentId,
       };
     case 'stage':
       return {
@@ -54,11 +55,13 @@ const getProjectContext = (req, isNew = false) => {
         name: req.currentProject && !isNew ? req.currentProject.name : req.body.name,
         remote: req.currentProject && !isNew ? !!req.currentProject.remote : false,
         projectType: req.currentProject && !isNew ? req.currentProject.type : req.body.type,
+        environmentId: req.body.environmentId,
         isDefaultAuthoring: (
           req.currentProject && !isNew
             ? _.get(req.currentProject, 'config.defaultStageName', '')
             : _.get(req, 'body.config.defaultStageName', '')
         ) === 'authoring',
+        remoteStage: _.get(req.headers, 'x-remote-token') ? true : _.get(req.currentProject, 'settings.remoteStage', false)
       };
     case 'project':
     default:
@@ -69,6 +72,7 @@ const getProjectContext = (req, isNew = false) => {
         name: req.currentProject ? req.currentProject.name : req.body.name,
         remote: req.currentProject ? !!req.currentProject.remote : false,
         projectType: req.currentProject ? req.currentProject.type : req.body.type,
+        environmentId: req.body.environmentId,
       };
   }
 };
@@ -115,7 +119,7 @@ function utilization(app, cacheKey, body, action = '', clear = false, sync = fal
     return sync ? cachedRequest : null;
   }
 
-  const onPremiseScopes = ['apiServer', 'pdfServer', 'project', 'tenant', 'stage', 'formManager', 'accessibility', 'submissionServer'];
+  const onPremiseScopes = ['apiServer', 'pdfServer', 'project', 'tenant', 'stage', 'remoteStage', 'formManager', 'accessibility', 'submissionServer'];
 
   // If on premise and not scoped for on premise, skip check.
   if (!onPremiseScopes.includes(body.type)) {
@@ -132,7 +136,11 @@ function utilization(app, cacheKey, body, action = '', clear = false, sync = fal
   // Timestamp required for hash
   body.timestamp = Date.now() - 6000;
 
-  debug(`Licence Check: ${cacheKey}`);
+  if (body.remoteStage) {
+    body.type = 'remoteStage';
+  }
+
+  debug(`License Check: ${cacheKey}`);
   cachedRequest = fetch(`${licenseServer}/utilization${action}`, {
     method: 'post',
     headers: {'content-type': 'application/json'},
@@ -156,8 +164,11 @@ function utilization(app, cacheKey, body, action = '', clear = false, sync = fal
 
     return await response.json();
   }).then((utilization) => {
-    if (utilization.licenseServerError) {
-      return utilization;
+    if (utilization.error) {
+      throw utilization.error;
+    }
+    else if (utilization.licenseServerError) {
+      throw utilization.licenseServerError;
     }
     else {
       app.utilizationCheckSucceed();

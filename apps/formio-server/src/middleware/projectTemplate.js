@@ -16,6 +16,9 @@ module.exports = function(formio) {
       return next();
     }
 
+    if (res.resource.error) {
+      return res.status(400).json(res.resource.error);
+    }
     // The Project that was just created.
     const project = res.resource.item;
     if (!project) {

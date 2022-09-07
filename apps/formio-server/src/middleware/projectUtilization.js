@@ -18,7 +18,7 @@ module.exports = (app) => (req, res, next) => {
   }
 
   // Always allow access to the formio base project.
-  if (req.primaryProject.name === 'formio') {
+  if (req.primaryProject && req.primaryProject.name === 'formio') {
     return next();
   }
 
