@@ -29,7 +29,7 @@ module.exports = {
           to:'.'
         },
         {
-          from:'./package-lock.json',
+          from:'./yarn.lock',
           to:'.'
         }
       ]
