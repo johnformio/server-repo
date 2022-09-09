@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased: 8.0.0-rc.7]
+### Changed
+ - Updated formio-app@8.0.0-rc.12
+ - Updated @formio/premium@1.18.6-rc.5
+ - Updated formio@3.0.0-rc.8
+
 ### Fixed
  - FIO-3787: LIC when trying to connect a tenant to an on premise environment receiving a 400 error
  - FIO-3764: lic tenants stages and project stages are registering as projects when connecting to a remote environment
