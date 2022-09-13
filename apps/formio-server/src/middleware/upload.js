@@ -72,6 +72,7 @@ module.exports = (formioServer) => async (req, res, next) => {
         method: 'POST',
         headers: headers,
         body: form,
+        rejectUnauthorized: false
       })
         .catch(async (err) => {
           debug('unlinked file');
