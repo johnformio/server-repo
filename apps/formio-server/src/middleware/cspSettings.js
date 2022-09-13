@@ -9,31 +9,6 @@ const helmet = require('helmet');
  */
 module.exports = function(router) {
   return function(req, res, next) {
-    const helmetOverrides = {};
-     // Do not add opener, embedder, or resource policies.
-    helmetOverrides.crossOriginOpenerPolicy = false;
-    helmetOverrides.crossOriginEmbedderPolicy = false;
-    helmetOverrides.crossOriginResourcePolicy = false;
-
-    // Strict-Transport-Security middleware
-    helmetOverrides.hsts = {
-      includeSubDomains: true,
-      preload: true,
-      maxAge: 15552000
-    };
-
-    // Referer-Policy middleware
-    helmetOverrides.referrerPolicy = {
-      policy: ['origin', 'same-origin'],
-    };
-
-    const createCSPMiddleware = (settings) => {
-      helmetOverrides.contentSecurityPolicy = {
-        directives: settings,
-      };
-    return helmet(helmetOverrides);
-    };
-
     const hostParts = req.hostname.split('.');
     let host = '';
     if (hostParts[hostParts.length - 1].match(/^localhost(:[0-9]+)?$/)) {
@@ -45,6 +20,12 @@ module.exports = function(router) {
 
     const directives = {
       'default-src': ['*', 'data:', '\'unsafe-inline\'', '\'unsafe-eval\''],
+    };
+
+    const createCSPMiddleware = (settings) => {
+      return  helmet.contentSecurityPolicy({
+        directives: settings,
+      });
     };
 
     if (!req.projectId ||

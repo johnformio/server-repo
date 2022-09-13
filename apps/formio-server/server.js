@@ -281,13 +281,6 @@ module.exports = function(options) {
     corsRoute(req, res, next);
   });
 
-  const cspSettings = require('./src/middleware/cspSettings')(app);
-
-  if (app.portalEnabled) {
-    debug.startup('Attaching middleware: Helmet\'s middlewares');
-    app.use(cspSettings);
-  }
-
   // Handle our API Keys.
   debug.startup('Attaching middleware: API Key Handler');
   app.use(require('./src/middleware/apiKey')(app.formio.formio));
