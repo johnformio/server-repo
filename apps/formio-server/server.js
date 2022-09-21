@@ -281,6 +281,10 @@ module.exports = function(options) {
     corsRoute(req, res, next);
   });
 
+  debug.startup('Attaching middleware: CSP');
+  if (app.portalEnabled) {
+  app.use(require('./src/middleware/cspSettings')(app));
+  }
   // Handle our API Keys.
   debug.startup('Attaching middleware: API Key Handler');
   app.use(require('./src/middleware/apiKey')(app.formio.formio));
