@@ -66,6 +66,7 @@ module.exports = (router) => {
           validate: {
             required: true,
           },
+          filter: "type=select&dataSrc=resource",
         },
         {
           type: 'select',
@@ -81,6 +82,7 @@ module.exports = (router) => {
           validate: {
             required: false,
           },
+          filter: "type=select&dataSrc=resource",
         },
         {
           type: 'select',
@@ -149,7 +151,10 @@ module.exports = (router) => {
           }
 
           return submission;
-        });
+        })
+        .catch(((err) => {
+          throw new Error(`Could not find the ${name} resource for group assignment action.`);
+        }));
     }
 
     verifyGroupAccess(groupId, submissionModel) {
