@@ -2,10 +2,10 @@
 'use strict';
 const {
   utilization,
-  getProjectContext,
   getLicenseKey,
   licenseConfig
 } = require('../util/utilization');
+const getProjectContext = require('../util/getProjectContext');
 
 module.exports = (app) => (req, res, next) => {
   if (licenseConfig.remote) {
@@ -27,6 +27,7 @@ module.exports = (app) => (req, res, next) => {
   const licenseInfo = utilization(app, `project:${projectId}`, {
     ...getProjectContext(req),
     licenseKey,
+    environmentId: app.environmentId,
   });
 
   if (licenseInfo && licenseInfo.error) {

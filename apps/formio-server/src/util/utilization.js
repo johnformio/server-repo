@@ -31,52 +31,6 @@ function base64(data) {
   return Buffer.from(JSON.stringify(data)).toString('base64');
 }
 
-const getProjectContext = (req, isNew = false) => {
-  const type = isNew ? _.get(req, 'body.type', 'project') : _.get(req, 'currentProject.type', req.body.type || 'project');
-  switch (type) {
-    case 'tenant':
-      return {
-        type: 'tenant',
-        projectId: req.primaryProject ? req.primaryProject._id : ((req.body && req.body.project) ? req.body.project : 'new'),
-        tenantId: req.currentProject && !isNew ? req.currentProject._id : 'new',
-        title: req.currentProject && !isNew ? req.currentProject.title : req.body.title,
-        name: req.currentProject && !isNew ? req.currentProject.name : req.body.name,
-        remote: req.currentProject && !isNew ? !!req.currentProject.remote : false,
-        projectType: req.currentProject && !isNew ? req.currentProject.type : req.body.type,
-        environmentId: req.body.environmentId,
-      };
-    case 'stage':
-      return {
-        type: 'stage',
-        projectId: req.primaryProject ? req.primaryProject._id : ((req.body && req.body.project) ? req.body.project : 'new'),
-        tenantId: (req.parentProject && req.parentProject._id.toString() !== req.primaryProject._id.toString()) ? req.parentProject._id : 'none',
-        stageId: req.currentProject && !isNew ? req.currentProject._id : 'new',
-        title: req.currentProject && !isNew ? req.currentProject.title : req.body.title,
-        name: req.currentProject && !isNew ? req.currentProject.name : req.body.name,
-        remote: req.currentProject && !isNew ? !!req.currentProject.remote : false,
-        projectType: req.currentProject && !isNew ? req.currentProject.type : req.body.type,
-        environmentId: req.body.environmentId,
-        isDefaultAuthoring: (
-          req.currentProject && !isNew
-            ? _.get(req.currentProject, 'config.defaultStageName', '')
-            : _.get(req, 'body.config.defaultStageName', '')
-        ) === 'authoring',
-        remoteStage: _.get(req.headers, 'x-remote-token') ? true : _.get(req.currentProject, 'settings.remoteStage', false)
-      };
-    case 'project':
-    default:
-      return {
-        type: 'project',
-        projectId: req.currentProject ? req.currentProject._id : 'new',
-        title: req.currentProject ? req.currentProject.title : req.body.title,
-        name: req.currentProject ? req.currentProject.name : req.body.name,
-        remote: req.currentProject ? !!req.currentProject.remote : false,
-        projectType: req.currentProject ? req.currentProject.type : req.body.type,
-        environmentId: req.body.environmentId,
-      };
-  }
-};
-
 async function utilizationSync(app, cacheKey, body, action = '') {
   return await utilization(app, cacheKey, body, action, true, true);
 }
@@ -290,7 +244,6 @@ module.exports = {
   utilization,
   clearCache,
   createLicense,
-  getProjectContext,
   getLicenseKey,
   checkLastUtilizationTime,
   getNumberOfExistingProjects,

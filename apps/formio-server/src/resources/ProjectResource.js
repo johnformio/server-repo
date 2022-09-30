@@ -151,6 +151,8 @@ module.exports = (router, formioServer) => {
   // Fix project plan (pull from actual license instead of stored DB value)
   formio.middleware.licenseUtilization = require('../middleware/licenseUtilization').middleware(router);
 
+  formio.middleware.postCreateLicenseCheck = require('../middleware/postCreateLicenseCheck').middleware(router);
+
   const hiddenFields = ['deleted', '__v', 'machineName', 'primary'];
   const resource = Resource(
     router,
@@ -209,6 +211,7 @@ module.exports = (router, formioServer) => {
       formio.middleware.projectPlanFilter,
     ],
     afterPost: [
+      formio.middleware.postCreateLicenseCheck,
       require('../middleware/projectTemplate')(formio),
       formio.middleware.filterResourcejsResponse(hiddenFields),
       projectSettings,

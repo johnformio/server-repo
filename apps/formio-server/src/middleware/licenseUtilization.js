@@ -9,11 +9,11 @@ const config = require('../../config');
 const {
   utilization,
   utilizationSync,
-  getProjectContext,
   getLicenseKey,
   checkLastUtilizationTime,
   remoteUtilization
 } = require('../util/utilization');
+const getProjectContext = require('../util/getProjectContext');
 
 function middleware(app) {
   const formio = app.formio.formio;
@@ -158,7 +158,7 @@ function middleware(app) {
             break;
           }
           utilization(app, `project:${req.projectId}:formManager`, {
-            ...getProjectContext(req),
+            ...getProjectContext(req, res),
             licenseKey: getLicenseKey(req),
             type: 'formManager'
           });

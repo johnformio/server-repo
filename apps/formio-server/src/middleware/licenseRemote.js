@@ -1,6 +1,7 @@
 'use strict';
 
-const {utilization, getProjectContext, getLicenseKey} = require('../util/utilization');
+const {utilization, getLicenseKey} = require('../util/utilization');
+const getProjectContext = require('../util/getProjectContext');
 
 function middleware(formio) {
   return (req, res, next) => {
