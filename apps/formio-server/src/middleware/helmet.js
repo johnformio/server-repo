@@ -16,6 +16,7 @@ module.exports = (router) => {
                 helmetOverrides.crossOriginOpenerPolicy = false;
                 helmetOverrides.crossOriginEmbedderPolicy = false;
                 helmetOverrides.crossOriginResourcePolicy = false;
+                helmetOverrides.frameguard = false;
 
                 // Strict-Transport-Security middleware
                 helmetOverrides.hsts = {
