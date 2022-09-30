@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased: 8.0.0-rc.16]
 ### Fixed
  - Disable frame sameorigin
+ - FIO-4484: License regression post request to create a project stage tenant does not check if there is an available slot for in a license
 
 ## 8.0.0-rc.15
 ### Changed
