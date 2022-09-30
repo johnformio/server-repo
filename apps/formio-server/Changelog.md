@@ -4,7 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 8.0.0-rc.16]
+## 8.0.0-rc.16
+### Changed
+ - Updated formio-app@8.0.0-rc.20
+
 ### Fixed
  - Disable frame sameorigin
  - FIO-4484: License regression post request to create a project stage tenant does not check if there is an available slot for in a license
