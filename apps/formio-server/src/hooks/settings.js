@@ -1762,6 +1762,7 @@ module.exports = function(app) {
         }
         return query;
       },
+      getSubmissionModel: require('../util/util').getSubmissionModel,
       formRoutes: require('./alter/formRoutes')(app),
       submissionRoutes: require('./alter/submissionRoutes')(app),
       worker: require('./alter/worker')(app),
