@@ -415,12 +415,15 @@ module.exports = (router) => {
         let url = settings.url;
 
         // Interpolate URL if possible
-        if (res && res.resource && res.resource.item && res.resource.item.data) {
+        if (res && res.resource &&
+          (res.resource.item && res.resource.item.data || res.resource.previousItem && res.resource.previousItem.data)
+          ) {
           // Interpolation data was originally just the data object itself. We have to move it to "data" so merge it as the root item.
+          const itemData = res.resource.item ? res.resource.item.data : res.resource.previousItem.data;
           const params = {
-            ...res.resource.item.data, // Legacy support for interpolation.
+            ...itemData, // Legacy support for interpolation.
             config: req.currentProject && req.currentProject.hasOwnProperty('config') ? req.currentProject.config : {},
-            data: res.resource.item.data,
+            data: res.resource.item.data || res.resource.previousItem.data,
             submission: (submission && submission.toObject) ? submission.toObject() : {},
             externalId
           };
