@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased: 8.0.0-rc.18]
 ### Changed
  - FIO-5444: removed response object and updated placeholder (in Webhook action)
+ - FIO-5495: added submission data for delete req
 
 ## 8.0.0-rc.17
 ### Changed
