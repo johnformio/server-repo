@@ -2,6 +2,7 @@
 .DS_Store
 node_modules
 .env
+.env.bak
 test/bower_components
 .vscode
 .idea
