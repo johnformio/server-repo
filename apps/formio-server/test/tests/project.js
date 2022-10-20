@@ -801,6 +801,72 @@ module.exports = function(app, template, hook) {
         });
     });
 
+    it('Create tenant', function(done) {
+      const tenantTemplate = {
+        "title": "tenantTemplateTest",
+        "project": template.project._id,
+        "type": "tenant",
+        "copyFromProject": template.project._id
+    };
+
+      request(app)
+      .post('/project')
+      .send(tenantTemplate)
+      .set('x-jwt-token', template.formio.owner.token)
+      .expect(201)
+      .end(function(err, res) {
+        if (err) {
+          return done(err);
+        }
+        const response = res.body;
+        assert.equal(response.type, 'tenant');
+        assert.equal(response.project, template.project._id);
+        template.tenant = response;
+        done();
+      });
+    });
+
+    it('Should not be able to update CORS settings for tenant', function(done) {
+      const newSettings = {
+        cors: 'https://mysecuredomain.com,http://test-mysecuredomain.com',
+        allowConfig: false,
+        keys: [
+          {
+            name: 'Test Key',
+            key: '123testing123testing'
+          }
+        ],
+        email: {
+          smtp: {
+            host: 'example.com',
+            auth: {
+              user: 'test',
+              pass: 'test1234567890'
+            }
+          }
+        }
+      };
+      request(app)
+        .put(`/project/${  template.tenant._id}`)
+        .set('x-jwt-token', template.formio.owner.token)
+        .send({
+          ...template.tenant,
+          settings: newSettings
+        })
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+          const response = res.body;
+          assert.equal(response.hasOwnProperty('settings'), true);
+          assert.deepEqual(response.settings, _.omit(newSettings, ['cors']));
+          not(response, ['__v', 'deleted', 'settings_encrypted']);
+        done();
+        });
+    });
+
     describe('Protected Project', function() {
       var project, form, submission, action, role;
 
@@ -2777,7 +2843,7 @@ module.exports = function(app, template, hook) {
           .expect(402)
           .end(done);
       });
-      
+
       it('A Project on the Team plan will be able to use the default email provider', function(done){
         request(app)
           .get('/project/' + template.project._id + '/form/' + formId + '/actions')
