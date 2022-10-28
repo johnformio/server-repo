@@ -1,6 +1,7 @@
 'use strict';
 
 const Resource = require('resourcejs');
+const util = require('../util/util');
 
 module.exports = function(router, formioServer) {
   const formio = formioServer.formio;
@@ -15,6 +16,17 @@ module.exports = function(router, formioServer) {
       },
       (req, res, next) => {
           req.query['_rid'] =  req.params['submissionId'];
+        next();
+      },
+      (req, res, next) => {
+        formio.cache.loadCurrentForm(req, (err, currentForm) => {
+          return util.getSubmissionRevisionModel(formio, req, currentForm, false, next);
+        });
+      },
+      (req, res, next) => {
+        if (req.submissionRevisionModel) {
+          req.model = req.submissionRevisionModel;
+        }
         next();
       },
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true})

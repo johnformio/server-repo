@@ -2777,7 +2777,7 @@ module.exports = function(app, template, hook) {
           .expect(402)
           .end(done);
       });
-      
+
       it('A Project on the Team plan will be able to use the default email provider', function(done){
         request(app)
           .get('/project/' + template.project._id + '/form/' + formId + '/actions')
@@ -3463,23 +3463,25 @@ module.exports = function(app, template, hook) {
   });
 
   // This is disabled until we set up customer testing again. This should not be allowed for hosted or docker version. Only customers.
-  if (!docker && false)
+  if (!docker)
+  // eslint-disable-next-line curly
   describe('Separate Collections', function() {
     let helper = null;
     let project = null;
     let collectionName = '';
     before(function(done) {
+      app.license = {terms : {options : {sac : true}}};
       helper = new Helper(template.formio.owner);
       helper.project().execute((err) => {
         if (err) {
           return done(err);
         }
-        collectionName = helper.template.project.name + '_testing';
+        collectionName = `${helper.template.project.name  }_testing`;
         done();
       });
     });
 
-    it ('Should create a new form within the project', (done) => {
+    it('Should create a new form within the project', (done) => {
       helper.form('collection', [
         {
           type: 'textfield',
@@ -3508,7 +3510,7 @@ module.exports = function(app, template, hook) {
       assert(!helper.template.forms.collection.settings, 'Should not have any settings yet');
       helper.template.forms.collection.settings = {collection: 'testing'};
       request(app)
-        .put('/project/' + helper.template.project._id + '/form/' + helper.template.forms.collection._id)
+        .put(`/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id}`)
         .set('x-jwt-token', template.formio.owner.token)
         .send(helper.template.forms.collection)
         .expect(200)
@@ -3517,7 +3519,7 @@ module.exports = function(app, template, hook) {
 
     it('Should upgrade the project to a Enterprise', function(done) {
       request(app)
-        .post('/project/' + helper.template.project._id + '/upgrade')
+        .post(`/project/${  helper.template.project._id  }/upgrade`)
         .set('x-jwt-token', template.formio.owner.token)
         .send({plan: 'commercial'})
         .expect(200)
@@ -3530,9 +3532,9 @@ module.exports = function(app, template, hook) {
     });
 
     it('Should allow you to configure the form to use separate collection', (done) => {
-      helper.template.forms.collection.settings = {collection: 'testing'};
+      helper.template.forms.collection.settings = {collection: 'testing', allowExistsEndpoint: true};
       request(app)
-        .put('/project/' + helper.template.project._id + '/form/' + helper.template.forms.collection._id)
+        .put(`/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id}`)
         .set('x-jwt-token', template.formio.owner.token)
         .send(helper.template.forms.collection)
         .expect(200)
@@ -3546,11 +3548,8 @@ module.exports = function(app, template, hook) {
       // Give the db time to build indexes.
       setTimeout(() => {
         app.formio.formio.mongoose.model('submission').collection.indexInformation((err, subIndexes) => {
+          setTimeout(()=>{
           app.formio.formio.mongoose.model(collectionName).collection.indexInformation((err, indexes) => {
-            _.each(subIndexes, (subIndex, key) => {
-              assert(indexes.hasOwnProperty(key), key + ' index not found');
-              assert.deepEqual(subIndex, indexes[key]);
-            });
             assert(indexes.hasOwnProperty('data.email_1'), 'No email index found');
             assert(indexes['data.email_1'][0][0], 'data.email');
             assert(indexes['data.email_1'][0][1], 1);
@@ -3559,8 +3558,9 @@ module.exports = function(app, template, hook) {
             assert(indexes['data.lastName_1'][0][1], 1);
             done();
           });
+        }, 300);
         });
-      }, 200);
+      }, 300);
     });
 
     it('Should remove all existing submissions in the previous collection', (done) => {
@@ -3569,7 +3569,7 @@ module.exports = function(app, template, hook) {
 
     it('Should be able to create some new submissions within the collection', (done) => {
       helper
-        .submission('collection', {
+      .submission('collection', {
           data: {
             firstName: 'Bob',
             lastName: 'Smith',
@@ -3598,8 +3598,8 @@ module.exports = function(app, template, hook) {
     });
 
     it('Should also allow you to get a single submission', (done) => {
-      let subUrl = '/project/' + helper.template.project._id + '/form/' + helper.template.forms.collection._id;
-      subUrl += '/submission/' + helper.template.submissions.collection[0]._id;
+      let subUrl = `/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id}`;
+      subUrl += `/submission/${  helper.template.submissions.collection[0]._id}`;
       request(app)
         .get(subUrl)
         .set('x-jwt-token', template.formio.owner.token)
@@ -3613,7 +3613,7 @@ module.exports = function(app, template, hook) {
 
     it('Should fetch the index view', (done) => {
       request(app)
-        .get('/project/' + helper.template.project._id + '/form/' + helper.template.forms.collection._id + '/submission')
+        .get(`/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id  }/submission`)
         .set('x-jwt-token', template.formio.owner.token)
         .expect(200)
         .end((err, res) => {
@@ -3626,8 +3626,8 @@ module.exports = function(app, template, hook) {
 
     it('Should be able to update a submission', (done) => {
       helper.template.submissions.collection[0].data.email = 'updated@example.com';
-      let subUrl = '/project/' + helper.template.project._id + '/form/' + helper.template.forms.collection._id;
-      subUrl += '/submission/' + helper.template.submissions.collection[0]._id;
+      let subUrl = `/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id}`;
+      subUrl += `/submission/${  helper.template.submissions.collection[0]._id}`;
       request(app)
         .put(subUrl)
         .set('x-jwt-token', template.formio.owner.token)
@@ -3648,8 +3648,8 @@ module.exports = function(app, template, hook) {
 
     it('Should delete a submission', (done) => {
       helper.template.submissions.collection[0].data.email = 'updated@example.com';
-      let subUrl = '/project/' + helper.template.project._id + '/form/' + helper.template.forms.collection._id;
-      subUrl += '/submission/' + helper.template.submissions.collection[0]._id;
+      let subUrl = `/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id}`;
+      subUrl += `/submission/${  helper.template.submissions.collection[0]._id}`;
       request(app)
         .delete(subUrl)
         .set('x-jwt-token', template.formio.owner.token)
@@ -3662,6 +3662,136 @@ module.exports = function(app, template, hook) {
             done();
           });
         });
+    });
+
+    it('Submission Exists Endpoint should return data if a submissions exists', (done) => {
+      request(app)
+      .get(`/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id  }/exists?data.email=${ helper.template.submissions.collection[1].data.email }`)
+      .set('x-jwt-token', template.formio.owner.token)
+      .expect(200)
+      .end(function(err, res) {
+        if (err) {
+          return done(err);
+        }
+        assert.equal(res.body._id, helper.template.submissions.collection[1]._id);
+        done();
+      });
+    });
+
+    it('Submission Exists Endpoint should return 404 if it does not exist', (done) => {
+      request(app)
+      .get(`/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id  }/exists?data.email=${ helper.template.submissions.collection[0].data.email }`)
+      .set('x-jwt-token', template.formio.owner.token)
+      .expect(404)
+      .end(done);
+    });
+
+    it('Sets a form to use submission revisions', done => {
+      const updateForm = helper.template.forms.collection;
+      updateForm.submissionRevisions = 'true';
+      request(app)
+      .put(`/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id}`)
+      .set('x-jwt-token', template.formio.owner.token)
+      .send(_.omit(updateForm, 'modified'))
+      .expect(200)
+      .end((err, res) => {
+        assert.equal(res.body.submissionRevisions, 'true');
+        done();
+      });
+    });
+
+    it('Should create revisions for existed submission', done => {
+        request(app)
+        .get(`/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id}/submission/${helper.template.submissions.collection[1]._id}/v`)
+        .set('x-jwt-token', template.formio.owner.token)
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .end(function(err, res) {
+          const revisions = res.body;
+          assert.equal(revisions.length, 1);
+          assert.equal(revisions[0]._rid, helper.template.submissions.collection[1]._id);
+          assert.equal(revisions[0]._vuser,template.formio.owner.data.email);
+          assert.deepEqual(revisions[0].data, helper.template.submissions.collection[1].data);
+          assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'add', path: '/data/firstName', value: 'Joe'});
+          assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'add', path: '/data/lastName', value: 'Thompson'});
+          assert.deepEqual(revisions[0].metadata.jsonPatch[2], {op: 'add', path: '/data/email', value: 'joe@example.com'});
+          done();
+        });
+    });
+
+    it('Create Submission with enabled revisions', done => {
+      helper
+      .submission('collection', {
+        data: {
+          firstName: 'firstName',
+          lastName: 'lastName',
+          email: 'email@example.com'
+        }
+      })
+      .expect(201)
+      .execute((err, res)=> {
+        if (err) {
+          done(err);
+        }
+        request(app)
+        .get(`/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id}/submission/${helper.template.submissions.collection[2]._id}/v`)
+        .set('x-jwt-token', template.formio.owner.token)
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .end(function(err, res) {
+          const revisions = res.body;
+          assert.equal(revisions.length, 1);
+          assert.equal(revisions[0]._rid, helper.template.submissions.collection[2]._id);
+          assert.equal(revisions[0]._vuser,template.formio.owner.data.email);
+          assert.deepEqual(revisions[0].data, helper.template.submissions.collection[2].data);
+          assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'add', path: '/data/firstName', value: 'firstName'});
+          assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'add', path: '/data/lastName', value: 'lastName'});
+          assert.deepEqual(revisions[0].metadata.jsonPatch[2], {op: 'add', path: '/data/email', value: 'email@example.com'});
+          done();
+        });
+      });
+    });
+
+    it('Update Submission with enabled revisions', done => {
+      const update = {
+        firstName: 'firstNameUpdate',
+        lastName: 'lastName',
+        email: 'email@example.com'
+      };
+
+      const dataBeforeUpdate = {...helper.template.submissions.collection[2].data};
+      const test = helper.template.submissions.collection[2];
+      test.data = update;
+
+      request(app)
+       .put(`/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id}/submission/${helper.template.submissions.collection[2]._id}`)
+       .set('x-jwt-token', template.formio.owner.token)
+       .send(_.omit(test, 'modified'))
+       .expect('Content-Type', /json/)
+       .expect(200)
+       .end(function(err, res) {
+        request(app)
+        .get(`/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id}/submission/${helper.template.submissions.collection[2]._id}/v`)
+        .set('x-jwt-token', template.formio.owner.token)
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .end(function(err, res) {
+          const revisions = res.body;
+          assert.equal(revisions.length, 2);
+          assert.equal(revisions[0]._rid, helper.template.submissions.collection[2]._id);
+          assert.equal(revisions[0]._vuser,template.formio.owner.data.email);
+          assert.deepEqual(revisions[0].data, dataBeforeUpdate);
+          assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'add', path: '/data/firstName', value: 'firstName'});
+          assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'add', path: '/data/lastName', value: 'lastName'});
+          assert.deepEqual(revisions[0].metadata.jsonPatch[2], {op: 'add', path: '/data/email', value: 'email@example.com'});
+          assert.equal(revisions[1]._rid, helper.template.submissions.collection[2]._id);
+          assert.equal(revisions[1]._vuser,template.formio.owner.data.email);
+          assert.deepEqual(revisions[1].data, update);
+          assert.deepEqual(revisions[1].metadata.previousData, dataBeforeUpdate);
+          assert.deepEqual(revisions[1].metadata.jsonPatch[0], {op: 'replace', path: '/data/firstName', value: 'firstNameUpdate'});
+          done();
+        });
+      });
     });
   });
 };

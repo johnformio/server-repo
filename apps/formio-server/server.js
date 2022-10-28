@@ -22,6 +22,7 @@ const debug = {
 };
 const RequestCache = require('./src/util/requestCache');
 var BoxSDK = require('box-node-sdk');
+const util = require('./src/util/util');
 
 module.exports = function(options) {
   options = options || {};
@@ -308,6 +309,11 @@ module.exports = function(options) {
     app.formio.formio.middleware.tokenHandler,
     app.formio.formio.middleware.params,
     app.formio.formio.middleware.permissionHandler,
+    (req, res, next) => {
+      app.formio.formio.cache.loadCurrentForm(req, (err, currentForm) => {
+        return util.getSubmissionRevisionModel(app.formio.formio, req, currentForm, false, next);
+      });
+    },
     require('./src/middleware/submissionChangeLog')(app),
   ];
 

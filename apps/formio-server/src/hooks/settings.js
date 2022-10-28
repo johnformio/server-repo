@@ -1763,6 +1763,7 @@ module.exports = function(app) {
         return query;
       },
       getSubmissionModel: require('../util/util').getSubmissionModel,
+      getSubmissionRevisionModel: require('../util/util').getSubmissionRevisionModel,
       formRoutes: require('./alter/formRoutes')(app),
       submissionRoutes: require('./alter/submissionRoutes')(app),
       worker: require('./alter/worker')(app),

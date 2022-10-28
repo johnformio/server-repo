@@ -184,6 +184,59 @@ const Utils = {
       return next(null, req.submissionModel);
     });
   },
+  getSubmissionRevisionModel: (formio, req, form, init, next) => {
+    if (!form) {
+      return next('No form provided');
+    }
+
+    // No collection provided.
+    if (!form.settings || !form.settings.collection) {
+      return next();
+    }
+
+    // Disable for hosted projects
+    if (config.formio.hosted) {
+      return next();
+    }
+
+    // Return if the submission model is already established.
+    if (req.submissionRevisionModel) {
+      return next(null, req.submissionRevisionModel);
+    }
+
+    // Load the project in context.
+    formio.cache.loadCache.load(req.projectId, (err, project) => {
+      if (err) {
+        delete form.settings.collection;
+        return next(err);
+      }
+
+      if (!project) {
+        delete form.settings.collection;
+        return next('No project found');
+      }
+
+      if (project.plan !== 'commercial') {
+        delete form.settings.collection;
+        return next('Only Enterprise projects can set different form collections.');
+      }
+
+      // Get the project name.
+      const projectName = project.name.replace(/[^A-Za-z0-9]+/g, '');
+      if (!projectName) {
+        return next('Invalid project name');
+      }
+
+      // Set the collection name.
+      const collectionName = `${projectName}_${form.settings.collection.replace(/[^A-Za-z0-9]+/g, '')}_revisions`;
+
+      // Set the submission revision model.
+      req.submissionRevisionModel = formio.mongoose.model(collectionName, formio.schemas.submissionrevision, collectionName, init);
+
+      // Establish a model using the schema.
+      return next(null, req.submissionRevisionModel);
+    });
+  },
   getComponentDataByPath: (path, data) => {
     if (Array.isArray(path)) {
       return path.reduce((acc, key) => {

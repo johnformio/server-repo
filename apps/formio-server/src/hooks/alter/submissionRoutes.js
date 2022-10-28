@@ -5,7 +5,6 @@ const config = require('../../../config');
 const util = require('../../util/util');
 const SubmissionRevision = require('../../revisions/SubmissionRevision');
 module.exports = app => routes => {
-  const submissionRevision = new SubmissionRevision(app);
   const filterExternalTokens = app.formio.formio.middleware.filterResourcejsResponse(['externalTokens']);
   const conditionalFilter = function(req, res, next) {
     if (req.token && res.resource && res.resource.item && res.resource.item._id) {
@@ -36,16 +35,15 @@ module.exports = app => routes => {
     next();
   };
 
-  const deleteRevisions = function(req, res, next) {
-    submissionRevision.delete(req.params.submissionId, next);
-  };
-
   _.each(['afterGet', 'afterIndex', 'afterPost', 'afterPut', 'afterDelete'], function(handler) {
     routes[handler].push(conditionalFilter);
   });
 
   routes.afterGet.push(addAdminAccess);
-  routes.afterDelete.push(deleteRevisions);
+  routes.afterDelete.push((req, res, next)=> {
+    const submissionRevision = new SubmissionRevision(app, req.submissionModel || null);
+    submissionRevision.delete(req.params.submissionId, next);
+  });
 
   // Add a submission model set before the index.
   routes.beforeIndex.unshift((req, res, next) => app.formio.formio.cache.setSubmissionModel(
@@ -116,6 +114,7 @@ module.exports = app => routes => {
         if (err) {
           return next(err);
         }
+        const submissionRevision = new SubmissionRevision(app, req.submissionModel || null);
         if (submissionRevision.shouldCreateNewRevision(req, item, null, form)) {
           return submissionRevision.createVersion(item, req.user, req.body._vnote, (err, revision) => {
             if (err) {
@@ -135,6 +134,7 @@ module.exports = app => routes => {
         if (err) {
           return next(err);
         }
+        const submissionRevision = new SubmissionRevision(app, req.submissionModel || null);
         app.formio.formio.cache.loadSubmission(
           req,
           req.body.form,
@@ -143,18 +143,10 @@ module.exports = app => routes => {
             if (err) {
               return next(err);
             }
-            if (loadSubmission && loadSubmission.state === 'draft') {
-              const revisions = await app.formio.formio.mongoose.models.submissionrevision.find({
-                deleted: {$eq: null},
-                _rid: loadSubmission._id
-              })
-              .sort('-modified')
-              .lean();
-              loadSubmission = revisions[0] || undefined;
+            loadSubmission = await submissionRevision.checkDraft(loadSubmission);
+            if (submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form)) {
+              req.shouldCreateSubmissionRevision = true;
             }
-              if (submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form)) {
-                req.shouldCreateSubmissionRevision = true;
-              }
             return next();
         });
       });
@@ -164,6 +156,7 @@ module.exports = app => routes => {
         if (err) {
           return next(err);
         }
+        const submissionRevision = new SubmissionRevision(app, req.submissionModel || null);
         app.formio.formio.cache.loadSubmission(
           req,
           req.body.form,
@@ -171,15 +164,7 @@ module.exports = app => routes => {
             if (err) {
               return next(err);
             }
-            if (loadSubmission.state === 'draft') {
-              const revisions = await app.formio.formio.mongoose.models.submissionrevision.find({
-                deleted: {$eq: null},
-                _rid: loadSubmission._id
-              })
-              .sort('-modified')
-              .lean();
-              loadSubmission = revisions[0] || undefined;
-            }
+            loadSubmission = await submissionRevision.checkDraft(loadSubmission);
               if (submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form) || req.shouldCreateSubmissionRevision) {
                 return submissionRevision.createVersion(item, req.user, req.body._vnote, (err, revision) => {
                   if (err) {
@@ -206,6 +191,7 @@ module.exports = app => routes => {
         if (err) {
           return next(err);
         }
+        const submissionRevision = new SubmissionRevision(app, req.submissionModel || null);
         app.formio.formio.cache.loadSubmission(
           req,
           req.body.form,
@@ -213,15 +199,7 @@ module.exports = app => routes => {
             if (err) {
               return next(err);
             }
-            if (loadSubmission.state === 'draft') {
-              const revisions = await app.formio.formio.mongoose.models.submissionrevision.find({
-                deleted: {$eq: null},
-                _rid: loadSubmission._id
-              })
-              .sort('-modified')
-              .lean();
-              loadSubmission = revisions[0] || undefined;
-            }
+            loadSubmission = await submissionRevision.checkDraft(loadSubmission);
             if (submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form)) {
               return submissionRevision.createVersion(item, null, req.body._vnote, (err, revision) => {
                 if (err) {

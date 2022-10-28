@@ -9,8 +9,10 @@ module.exports = function(app) {
 
   return function(req, res, next) {
     const util = app.formio.formio.util;
+    //
+    const submissionRevisionModel = req.submissionRevisionModel ? req.submissionRevisionModel : app.formio.formio.mongoose.models.submissionrevision;
     if (req.query.submissionRevision) {
-      app.formio.formio.mongoose.models.submissionrevision.findOne({
+      submissionRevisionModel.findOne({
         _id: util.idToBson(req.query.submissionRevision),
         deleted: {$eq: null},
       })
@@ -25,7 +27,7 @@ module.exports = function(app) {
       });
     }
     else {
-      app.formio.formio.mongoose.models.submissionrevision.find({
+      submissionRevisionModel.find({
         deleted: {$eq: null},
         _rid: util.idToBson(req.params.submissionId)
       })
