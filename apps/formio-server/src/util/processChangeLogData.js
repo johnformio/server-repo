@@ -12,7 +12,7 @@ const addComponentToTable = (component, tableTemplate, components, revisionIndex
    component.label = `${component.label} &Delta;`;
   }
   if (
-    !['signature', 'sketchpad', 'datetime', 'time', 'currency', 'select', 'radio', 'address', 'survey', 'tagpad'].includes(component.type)
+    !['signature', 'sketchpad', 'datetime', 'time', 'currency', 'select', 'radio', 'address', 'survey', 'tagpad', 'password'].includes(component.type)
     && !component.multiple
     || component.type==='file'
     || (component.type === 'select' && component.dataSrc === 'resource')
