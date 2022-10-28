@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-5495: added submission data for delete req
  - FIO-5774: added revisions of submissions collections
  - FIO-5747: fixed password displaying on submission changelog
+ - FIO-5644: Unable to access Form Manager and FVP If the project was imported via Custom Project Template.
 
 ## 8.0.0-rc.17
 ### Changed
