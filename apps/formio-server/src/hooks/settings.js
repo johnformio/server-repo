@@ -1271,7 +1271,7 @@ module.exports = function(app) {
       },
 
       templateImportSteps: (steps, install, template) => {
-        const _install = install({
+        const projectEntity = {
           createOnly: !template.primary,
           model: formioServer.formio.resources.project.model,
           valid: entity => {
@@ -1287,16 +1287,15 @@ module.exports = function(app) {
 
             return done();
           }
-        });
+        };
+
         const project = {};
         const projectKeys = ['title', 'name', 'tag', 'description', 'machineName'];
-
         project[template.machineName || template.name || 'export'] = _.pick(template, projectKeys);
-
         project[template.machineName || template.name || 'export'].primary = !!template.isPrimary;
+        steps.unshift(async.apply(install(projectEntity), template, project));
 
-        steps.unshift(async.apply(_install, template, project));
-
+        // TODO: this may be better in the project entity's transform() method so we can install project entity in one fell swoop
         const _importAccess = (template, items, done) => {
           formioServer.formio.cache.loadCache.load(template._id, (err, project) => {
             if (err) {

@@ -1,8 +1,35 @@
 'use strict';
 
 const _ = require('lodash');
-const jwt = require('jsonwebtoken');
 const debug = require('debug')('formio:middleware:projectTemplate');
+
+function mergeAccess(targetAccess, sourceAccess) {
+  // merge access; ensure unique entries by using Map/Set
+  const validatedTargetAccess = targetAccess ? [...targetAccess] : [];
+  const validatedSourceAccess = sourceAccess ? [...sourceAccess] : [];
+  return [...validatedTargetAccess.concat(validatedSourceAccess).reduce((map, curr) => {
+    const existingRoles = map.get(curr.type) ? map.get(curr.type).roles || [] : [];
+    map.set(curr.type, {type: curr.type, roles: [...new Set([...existingRoles, ...curr.roles])]});
+    return map;
+  }, new Map()).values()];
+}
+
+function provideFormsWithDefaultAccess(targetForms, sourceForms, roles) {
+  return Object.entries(targetForms).reduce((acc, [formKey, form]) => {
+    // if our source template has the form, merge the access
+    if (sourceForms[formKey]) {
+      return {...acc, [formKey]: {
+        ...form,
+        access: mergeAccess(form.access, sourceForms[formKey].access),
+        submissionAccess: mergeAccess(form.submissionAccess, sourceForms[formKey].submissionAccess)
+      }};
+    }
+    // otherwise provide a default
+    // TODO: grabbed this from bootstrapFormAccess, good candidate for a constant
+    const defaultFormAccess = [{type: 'read_all', roles: Object.keys(roles)}];
+    return {...acc, [formKey]: {...form, access: [...defaultFormAccess], submissionAccess: []}};
+  }, {});
+}
 
 module.exports = function(formio) {
   const hook = require('formio/src/util/hook')(formio);
@@ -63,6 +90,15 @@ module.exports = function(formio) {
         formio.template.import.template(template, alters, done);
       };
 
+      if (template.excludeAccess) {
+        const defaultTemplate = _.cloneDeep(formio.templates['default']);
+        template = {
+          ...template,
+          access: mergeAccess(template.access, defaultTemplate.access),
+          forms: provideFormsWithDefaultAccess(template.forms, defaultTemplate.forms, template.roles),
+          resources: provideFormsWithDefaultAccess(template.resources, defaultTemplate.resources, template.roles)
+        };
+      }
       const alters = hook.alter('templateAlters', {});
       const components = Object.values(template.forms).concat(Object.values(template.resources));
       const missingComponents = formio.template.import.check(components, template);

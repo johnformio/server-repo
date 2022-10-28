@@ -1,15 +1,24 @@
 /**/'use strict';
 
-var request = require('supertest');
-var assert = require('assert');
-var _ = require('lodash');
-var chance = new (require('chance'))();
-let formioUtils = require('formiojs/utils').default;
+const request = require('supertest');
+const assert = require('assert');
+const _ = require('lodash');
+const formioUtils = require('formiojs/utils').default;
 
 module.exports = function(app, template, hook) {
   let formio = app.formio.formio;
   let alters = hook.alter(`templateAlters`, {});
   let importer = formio.template;
+
+  const getRoleNameFromId = (roles, id) => {
+    // TODO: risky, what if title gets changed; find API that returns key-value of role so you can key into key name
+    const result = roles.find((role) => role._id === id)['title'];
+    return result ? result.toLowerCase() : undefined;
+  };
+
+  const mapRoleIdsToRoleNames = ({type, roles: accessRoles}, roles) => {
+    return {type: type.toLowerCase(), roles: accessRoles.map((id) => getRoleNameFromId(roles, id)).sort()};
+  }
 
   let getResourceFromId = (project, id) => {
     project = project || {};
@@ -387,4 +396,143 @@ module.exports = function(app, template, hook) {
       template.clearData(done);
     });
   });
+
+  describe('Project templates that exclude access', function() {
+    let templateThatExcludesAccessJSON = require('./fixtures/excludeAccessTemplate.json');
+    let templateThatExcludesAccess = _.cloneDeep(templateThatExcludesAccessJSON);
+    let project;
+    let roles;
+
+    before(() => {
+      process.env.ADMIN_KEY = 'examplekey';
+    });
+
+    it('Should create the project from template', (done) => {
+      request(app)
+        .post('/project')
+        .set('x-admin-key', process.env.ADMIN_KEY)
+        .send(templateThatExcludesAccess)
+        .expect(201)
+        .expect('Content-Type', /json/)
+        .end((err, res) => {
+          if (err) {
+            done(err);
+          }
+          assert(res.body.hasOwnProperty('access'), 'Created project should have access property');
+          assert(res.body.hasOwnProperty('created'), 'Created project should have created at property');
+          assert(res.body.hasOwnProperty('type'), 'Created project should have type property');
+          assert.equal(res.body.type, 'project');
+          project = res.body;
+
+          done();
+        });
+    });
+
+    it('Should grant default project level access', (done) => {
+      const defaultTemplateJSON = formio.templates['default'];
+      const defaultProjectAccess = _.cloneDeep(defaultTemplateJSON.access);
+      assert(defaultProjectAccess, 'Default template should exist');
+
+      request(app)
+        .get(`/project/${project._id}`)
+        .set('x-admin-key', process.env.ADMIN_KEY)
+        .expect(200)
+        .expect('Content-Type', /json/)
+        .end((err, res) => {
+          if (err) {
+            done(err);
+          }
+          project = res.body;
+          // get the roles
+          request(app)
+            .get(`/project/${project._id}/role`)
+            .set('x-admin-key', process.env.ADMIN_KEY)
+            .expect(200)
+            .expect('Content-Type', /json/)
+            .end((err, res) => {
+              if (err) {
+                done(err);
+              }
+              roles = res.body;
+              const mappedProjectAccess = project.access.map((access) => mapRoleIdsToRoleNames(access, roles));
+              assert.deepEqual(mappedProjectAccess, defaultProjectAccess);
+              done();
+            });
+        })
+    });
+
+    it('Should grant default form level access and submission access to forms whose names match the default template', (done) => {
+      const defaultTemplateJSON = formio.templates['default'];
+      const defaultForms = _.cloneDeep(defaultTemplateJSON.forms);
+      assert(defaultForms, 'Default template should exist');
+      assert.equal(typeof defaultForms, 'object');
+
+      request(app)
+        .get(`/project/${project._id}/form`)
+        .set('x-admin-key', process.env.ADMIN_KEY)
+        .expect(200)
+        .expect('Content-Type', /json/)
+        .end((err, res) => {
+          if (err) {
+            done(err);
+          }
+
+          const forms = res.body;
+          Object.entries(defaultForms).forEach(([defaultFormKey, defaultForm]) => {
+            const matchingProjectForm = forms.find((form) => form.name === defaultFormKey);
+            if (matchingProjectForm) {
+              const mappedFormAccess = matchingProjectForm.access.map((access) => mapRoleIdsToRoleNames(access, roles));
+              const mappedFormSubmissionAccess = matchingProjectForm.submissionAccess.map((access) => mapRoleIdsToRoleNames(access, roles));
+              assert.deepEqual(mappedFormAccess, defaultForm.access);
+              assert.deepEqual(mappedFormSubmissionAccess, defaultForm.submissionAccess);
+            }
+          });
+          done();
+        });
+    });
+
+    it('Should grant default form level access and submission access to forms whose names are not included in the default template', (done) => {
+      const defaultTemplateJSON = formio.templates['default'];
+      const defaultForms = _.cloneDeep(defaultTemplateJSON.forms);
+      const defaultResources = _.cloneDeep(defaultTemplateJSON.resources);
+      const templateRoles = _.cloneDeep(templateThatExcludesAccess.roles);
+      const defaultFormAccess = [{type: 'read_all', roles: Object.keys(templateRoles).sort()}];
+      const defaultSubmissionAccess = [];
+      assert(defaultForms, 'Default template should exist');
+      assert.equal(typeof defaultForms, 'object');
+
+      request(app)
+        .get(`/project/${project._id}/form`)
+        .set('x-admin-key', process.env.ADMIN_KEY)
+        .expect(200)
+        .expect('Content-Type', /json/)
+        .end((err, res) => {
+          if (err) {
+            done(err);
+          }
+
+          const forms = res.body.filter((item) => item.type === 'form');
+          const resources = res.body.filter((item) => item.type === 'resource');
+          forms.forEach((form) => {
+            const matchingProjectForm = defaultForms[form.name];
+            const mappedFormAccess = form.access.map((access) => mapRoleIdsToRoleNames(access, roles));
+            const mappedFormSubmissionAccess = form.submissionAccess.map((access) => mapRoleIdsToRoleNames(access, roles));
+            if (!matchingProjectForm) {
+              assert.deepEqual(mappedFormAccess, defaultFormAccess);
+              assert.deepEqual(mappedFormSubmissionAccess, defaultSubmissionAccess);
+            }
+          });
+          resources.forEach((resource) => {
+            const matchingProjectForm = defaultResources[resource.name];
+            const mappedFormAccess = resource.access.map((access) => mapRoleIdsToRoleNames(access, roles));
+            const mappedFormSubmissionAccess = resource.submissionAccess.map((access) => mapRoleIdsToRoleNames(access, roles));
+            if (!matchingProjectForm) {
+              assert.deepEqual(mappedFormAccess, defaultFormAccess);
+              assert.deepEqual(mappedFormSubmissionAccess, defaultSubmissionAccess);
+            }
+          });
+          done();
+        });
+    });
+  })
 };
