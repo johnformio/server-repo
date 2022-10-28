@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
  - FIO-5444: removed response object and updated placeholder (in Webhook action)
  - FIO-5495: added submission data for delete req
+ - FIO-5774: added revisions of submissions collections
+ - FIO-5747: fixed password displaying on submission changelog
 
 ## 8.0.0-rc.17
 ### Changed
