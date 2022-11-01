@@ -6,7 +6,7 @@ ARG  NPM_EMAIL
 
 # Install the latest versions from edge
 RUN sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories && \
-    apk add --upgrade --virtual .build-deps nodejs npm nghttp2 nghttp2-libs bash git make gcc g++ python3 openssh-client && \
+    apk add --upgrade --virtual .build-deps nodejs npm nghttp2 nghttp2-libs bash git make gcc g++ openssh-client && \
     rm -rf /var/lib/apt/lists/* && \
     rm /var/cache/apk/*
 
@@ -18,7 +18,6 @@ RUN mkdir /root/.ssh/ && ssh-keyscan github.com >> /root/.ssh/known_hosts
 ADD id_rsa /root/.ssh/id_rsa
 RUN npm i -g yarn
 RUN chmod 600 /root/.ssh/id_rsa
-RUN npm config set python /usr/bin/python
 RUN npm i -g npm-cli-login
 RUN npm-cli-login -u $NPM_USERNAME -p $NPM_PASSWORD -e $NPM_EMAIL -r https://pkg.form.io
 RUN echo "@formio:registry=https://pkg.form.io" > .npmrc
