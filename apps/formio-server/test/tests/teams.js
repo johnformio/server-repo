@@ -1304,6 +1304,24 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      it('A Team admin should be able to add teams to a project.', function(done) {
+        request(app)
+          .get('/team/own')
+          .set('x-jwt-token', template.formio.teamAdmin.token)
+          .send()
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            // Store the JWT for future API calls.
+            template.formio.teamAdmin.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
       it('The Team should not have any members, after the final user leaves.', function(done) {
         request(app)
           .get('/team/' + template.team1._id)

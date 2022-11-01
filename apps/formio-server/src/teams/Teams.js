@@ -354,7 +354,7 @@ const Teams = {
       }).lean().exec();
     }
 
-    const userTeams = _.get(user, 'metadata.teams', []);
+    const userTeams = _.get(user, user.metadata ? 'metadata.teams' : 'teams', []);
     (membership || []).forEach((member) => {
       const memberTeam = _.get(member, 'data.team', null);
       if (
