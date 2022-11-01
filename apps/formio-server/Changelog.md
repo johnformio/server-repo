@@ -4,7 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 8.0.0-rc.18]
+## 8.0.0-rc.18
+### Changed
+ - Updated formio-app@8.0.0-rc.22
+ - Updated @formio/premium@1.18.7-rc.3
+ - Updated formio@3.0.0-rc.11
+
 ### Changed
  - FIO-5444: removed response object and updated placeholder (in Webhook action)
  - FIO-5495: added submission data for delete req
