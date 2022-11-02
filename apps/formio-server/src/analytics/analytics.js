@@ -106,7 +106,7 @@ class FormioAnalytics {
 
   isLimitedEmailPlan(project) {
     const limits = this.formio.plans.limits;
-    return limits.hasOwnProperty(project.plan) && limits[project.plan].hasOwnProperty('email');
+    return limits.hasOwnProperty(project.plan) && limits[project.plan].hasOwnProperty('emails');
   }
 
   checkEmail(req, next) {
@@ -116,7 +116,7 @@ class FormioAnalytics {
         return next(err);
       }
 
-      if (this.isLimitedEmailPlan(req.primaryProject) && value >= this.formio.plans.limits[req.primaryProject.plan].email) {
+      if (this.isLimitedEmailPlan(req.primaryProject) && value >= this.formio.plans.limits[req.primaryProject.plan].emails) {
         return next('Over email limit');
       }
       return next(null, value);
