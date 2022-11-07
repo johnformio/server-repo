@@ -349,7 +349,7 @@ module.exports = (app, template, hook) => {
           })
           .execute(done);
       });
-/*
+
       it('Should allow you to login as an ldap user', (done) => {
         request(app)
           .post(`/project/${project2._id}/ldap`)
@@ -365,14 +365,13 @@ module.exports = (app, template, hook) => {
             if (err) {
               return done(err);
             }
-            assert.equal(res.body._id, 'uid=einstein,dc=example,dc=com');
+            assert.equal(res.body._id, 'einstein');
             assert.equal(res.body.roles.length, 1);
             assert.equal(res.body.roles[0], helper2.template.roles.authenticated._id.toString());
-            assert.equal(res.body.data.email, 'einstein@ldap.forumsys.com');
+            assert.equal(res.body.data.mail, 'einstein@ldap.forumsys.com');
             done();
           });
       });
-*/
     });
   });
 

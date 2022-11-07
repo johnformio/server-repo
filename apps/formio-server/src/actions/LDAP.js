@@ -277,12 +277,14 @@ module.exports = router => {
               }
               if (err && (['Invalid Credentials'].includes(err) || !this.settings.passthrough)) {
                 debug('Error occurred 1: ', err);
+                auth.close();
                 return res.status(401).send(err);
               }
 
               // If something goes wrong, skip auth and pass through to other login handlers.
               if (err || !data) {
                 debug('No data returned');
+                auth.close();
                 return next();
               }
 
@@ -364,7 +366,9 @@ module.exports = router => {
                   'title',
                   'department',
                   'company',
-                  'manager'
+                  'manager',
+                  'uid',
+                  'uidNumber'
                 ];
 
                 debug('Deleting non-whitelisted fields');
