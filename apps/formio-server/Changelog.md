@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
  - Increment minor version.
 
+### Fixed
+ - FIO-5529: uid and uidNumber added into whitelist
+
 ## 8.0.0-rc.18
 ### Changed
  - Updated formio-app@8.0.0-rc.22
