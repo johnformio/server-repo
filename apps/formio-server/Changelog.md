@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
  - FIO-5529: uid and uidNumber added into whitelist
+ - FIO-5881: Removed the viewer from the alias token handler.
 
 ## 8.0.0-rc.18
 ### Changed
