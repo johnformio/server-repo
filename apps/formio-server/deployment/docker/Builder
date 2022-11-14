@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM node:18-alpine3.16
 MAINTAINER Form.io <support@form.io>
 ARG  NPM_USERNAME
 ARG  NPM_PASSWORD
@@ -24,4 +24,4 @@ RUN echo "@formio:registry=https://pkg.form.io" > .npmrc
 RUN yarn install --production
 
 EXPOSE      80
-ENTRYPOINT  ["node", "formio.js --max_old_space_size=4096"]
+ENTRYPOINT  ["node", "--openssl-legacy-provider", "formio.js --max_old_space_size=4096"]

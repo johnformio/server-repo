@@ -1,4 +1,4 @@
-FROM        alpine:latest
+FROM        node:18-alpine3.16
 MAINTAINER  Form.io <support@form.io>
 
 
@@ -32,4 +32,4 @@ RUN apk add libcap && setcap 'cap_net_bind_service=+ep' $(which node)
 USER ${USERNAME}
 
 EXPOSE      80
-CMD  ["node", "formio.js", "--max_old_space_size=8192"]
+CMD  ["node", "--openssl-legacy-provider", "formio.js", "--max_old_space_size=8192"]
