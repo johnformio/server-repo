@@ -1,7 +1,6 @@
 'use strict';
 
 const _ = require('lodash');
-const util = require('../../util/util');
 const FormRevision = require('../../revisions/FormRevision');
 const SubmissionRevision = require('../../revisions/SubmissionRevision');
 
@@ -80,61 +79,7 @@ module.exports = app => routes => {
   };
 
   // Setup a form for separate collection.
-  routes.before.unshift((req, res, next) => {
-    if (
-      (req.method !== 'POST' && req.method !== 'PUT') ||
-      !req.body
-    ) {
-      return next();
-    }
-
-    // Get the submissionModel.
-    util.getSubmissionModel(app.formio.formio, req, req.body, false, (err, submissionModel) => {
-      if (err) {
-        return next(err);
-      }
-
-      if (!submissionModel) {
-        submissionModel = _.get(app.formio.formio, 'resources.submission.model');
-        if (!submissionModel) {
-          return next();
-        }
-      }
-
-      const hasSacLicense = _.get(app, 'license.terms.options.sac', false);
-      let isAllowed = true;
-
-      if ( _.get(req, 'body.settings.collection', false) && !hasSacLicense) {
-        isAllowed = false;
-        return res.status(403).send('Security and compliance license is required to use Submissions Collection');
-      }
-      // Set the indexes.
-      app.formio.formio.util.eachComponent(req.body.components, (component, path) => {
-        if (component.dbIndex) {
-          if (hasSacLicense) {
-            const index = {};
-            index[`data.${path}`] = 1;
-            submissionModel.collection.createIndex(index, {
-              background: true
-            });
-          }
-          else {
-            isAllowed = false;
-          return res.status(403).send('Security and compliance license is required to use the index');
-          }
-        }
-
-        if (component.encrypted && !hasSacLicense) {
-          isAllowed = false;
-          return res.status(403).send('Security and compliance license is required to use the encryption');
-        }
-      });
-
-      if (isAllowed) {
-        return next();
-      }
-    });
-  });
+  routes.before.unshift(require('../../middleware/validateSacPackageAndApplySubmissionCollection')(app));
 
   routes.before.unshift((req, res, next) => {
     // Remove _vid from any updates so it is set automatically.

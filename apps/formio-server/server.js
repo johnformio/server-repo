@@ -545,14 +545,16 @@ module.exports = function(options) {
     // Mount the error logging middleware.
     debug.startup('Attaching middleware: Error Handler');
     app.use((err, req, res, next) => {
-      /* eslint-disable no-console */
+      // delegate to the default Express error handler when the headers have already been sent to the client
+      if (res.headersSent) {
+        return next(err);
+      }
       console.log('Uncaught exception:');
       if (err) {
         console.log(err);
         console.log(err.stack);
       }
-      /* eslint-enable no-console */
-      res.status(400).send(typeof err === 'string' ? {message: err} : err);
+      res.status(err.status ? err.status : 400).send(typeof err === 'string' ? {message: err} : err);
     });
 
     debug.startup('Attaching middleware: File Storage');

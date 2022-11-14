@@ -5,7 +5,8 @@ const crypto = require('crypto');
 const config = require('../../config');
 const keygenerator = require('keygenerator');
 const debug = {
-  decrypt: require('debug')('formio:util:decrypt')
+  decrypt: require('debug')('formio:util:decrypt'),
+  db: require('debug')('formio:db'),
 };
 
 const defaultSaltLength = 40;
@@ -177,11 +178,17 @@ const Utils = {
         return next(`${collectionName} is a reserved collection name.`);
       }
 
-      // Set the submission model.
+      // Set the submission model. Mongoose does not automatically create a collection upon establishing a model, (see
+      // https://mongoosejs.com/docs/api/model.html#model_Model-createCollection), so we'll call init() to create the model
+      // if it has indexes or prepare it to be created upon an initial submission
+      debug.db(`Setting submission model to ${collectionName} from submission schema and creating a collection`);
       req.submissionModel = formio.mongoose.model(collectionName, formio.schemas.submission, collectionName, init);
-
-      // Establish a model using the schema.
-      return next(null, req.submissionModel);
+      req.submissionModel.init((err) => {
+        if (err) {
+          return next(err);
+        }
+        return next(null, req.submissionModel);
+      });
     });
   },
   getSubmissionRevisionModel: (formio, req, form, init, next) => {

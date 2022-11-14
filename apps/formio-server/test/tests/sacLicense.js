@@ -1,220 +1,358 @@
 /* eslint-env mocha */
-'use strict';
+"use strict";
 
-var request = require('supertest');
-var assert = require('assert');
+const request = require("supertest");
+const assert = require("assert");
+const getSubmissionModel = require("../../src/util/util").getSubmissionModel;
 
-module.exports = function(app, template, hook) {
-
-  describe('S+C license', function(){
-
+module.exports = function (app, template, hook) {
+  describe("S+C license", function () {
     const resourceTemplate = {
-      "display": "form",
-      "type": "resource",
-      "components": [
-          {
-              "label": "Text Field",
-              "tableView": true,
-              "key": "textField",
-              "type": "textfield",
-              "input": true
-          }
+      display: "form",
+      type: "resource",
+      components: [
+        {
+          label: "Text Field",
+          tableView: true,
+          key: "textField",
+          type: "textfield",
+          input: true,
+        },
       ],
-      "access": [],
-      "submissionAccess": [],
-      "controller": "",
-      "properties": {},
-      "settings": {},
-      "builder": false,
+      access: [],
+      submissionAccess: [],
+      controller: "",
+      properties: {},
+      settings: {},
+      builder: false,
     };
 
-    let id;
+    let resourceId, project, form;
 
-    describe('S+C license is not set', function(){
-      it('Create recourse', function(done){
-        request(app)
-        .post(hook.alter('url', '/form', template))
-        .set('x-jwt-token', template.users.admin.token)
-        .send({
-          ...resourceTemplate,
-          title: 'testResource',
-          name: 'testResource',
-          path: 'testResource'
-        })
-        .expect('Content-Type', /json/)
-        .expect(201)
-        .end(function(err, res) {
-          if (err) {
-            return done(err);
-          }
-          id = res.body._id;
-          done();
-        });
+    describe("S+C license is not set", function () {
+      before(() => {
+        process.env.ADMIN_KEY = "examplekey";
       });
 
-      it('Should not be able to create recourse with index', function(done){
+      it("Should create the project from template", (done) => {
         request(app)
-        .post(hook.alter('url', '/form', template))
-        .set('x-jwt-token', template.users.admin.token)
-        .send({
-          ...resourceTemplate,
-          title: 'testResource1',
-          name: 'testResource1',
-          path: 'testResource1',
-          components: [
-            {
-              ...resourceTemplate.components,
-              dbIndex: true
+          .post("/project")
+          .set("x-admin-key", process.env.ADMIN_KEY)
+          .send(template)
+          .expect(201)
+          .expect("Content-Type", /json/)
+          .end((err, res) => {
+            if (err) {
+              done(err);
             }
-          ]
-        })
-        .expect(403)
-        .end(function(err, res) {
-          if (err) {
-            return done(err);
-          }
-          done();
-        });
+            assert(
+              res.body.hasOwnProperty("access"),
+              "Created project should have access property"
+            );
+            assert(
+              res.body.hasOwnProperty("created"),
+              "Created project should have created at property"
+            );
+            assert(
+              res.body.hasOwnProperty("type"),
+              "Created project should have type property"
+            );
+            assert.equal(res.body.type, "project");
+            project = res.body;
+
+            done();
+          });
       });
 
-      it('Should not be able to create recourse with encrypted', function(done){
+      it("Create resource", function (done) {
         request(app)
-        .post(hook.alter('url', '/form', template))
-        .set('x-jwt-token', template.users.admin.token)
-        .send({
-          ...resourceTemplate,
-          title: 'testResource2',
-          name: 'testResource2',
-          path: 'testResource2',
-          components: [
-            {
-              ...resourceTemplate.components,
-              encrypted: true
+          .post(`/project/${project._id}/form`)
+          .set("x-admin-key", process.env.ADMIN_KEY)
+          .send({
+            ...resourceTemplate,
+            title: "testResource",
+            name: "testResource",
+            path: "testResource",
+          })
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function (err, res) {
+            if (err) {
+              return done(err);
             }
-          ]
-        })
-        .expect(403)
-        .end(function(err, res) {
-          if (err) {
-            return done(err);
-          }
-          done();
-        });
+            resourceId = res.body._id;
+            done();
+          });
       });
 
-      it('Should not be able set field to index', function(done){
+      it("Should not be able to create a new resource with component that creates an index", function (done) {
         request(app)
-        .put(hook.alter('url', '/form/' + id + '/', template))
-        .set('x-jwt-token', template.users.admin.token)
-        .send({
-          components: [
-            {
-              ...resourceTemplate.components,
-              dbIndex: true
-            }
-          ]
-        })
-        .expect(403)
-        .end(function(err, res) {
-          if (err) {
-            return done(err);
-          }
-          done();
-        });
-      })
-
-      it('Should not be able set field to encrypted', function(done){
-        request(app)
-        .put(hook.alter('url', '/form/' + id + '/', template))
-        .set('x-jwt-token', template.users.admin.token)
-        .send({
-          components: [
-            {
-              ...resourceTemplate.components,
-              encrypted: true
-            }
-          ]
-        })
-        .expect(403)
-        .end(function(err, res) {
-          if (err) {
-            return done(err);
-          }
-          done();
-        });
-      })
-
-      it('Should not be able set submission collection', function(done){
-        request(app)
-        .put(hook.alter('url', '/form/' + id + '/', template))
-        .set('x-jwt-token', template.users.admin.token)
-        .send({
-          settings: {collection : 'textField'}
-        })
-        .expect(403)
-        .end(function(err, res) {
-          if (err) {
-            return done(err);
-          }
-          done();
-        });
-      })
-    })
-
-    describe('S+C license is set', function(){
-
-      before(function(done) {
-        app.license = {terms : {options : {sac : true}}};
-        done();
-      });
-
-      it('Should be able to create recourse with index and encrypted field', function(done){
-        request(app)
-        .post(hook.alter('url', '/form', template))
-        .set('x-jwt-token', template.users.admin.token)
-        .send({
-          ...resourceTemplate,
-          title: 'testResource1',
-          name: 'testResource1',
-          path: 'testResource1',
-          components: [
-            {
-              ...resourceTemplate.components,
+          .post(`/project/${project._id}/form`)
+          .set("x-admin-key", process.env.ADMIN_KEY)
+          .send({
+            ...resourceTemplate,
+            title: "testResource1",
+            name: "testResource1",
+            path: "testResource1",
+            components: resourceTemplate.components.map((component) => ({
+              ...component,
               dbIndex: true,
-              encrypted: true
+            })),
+          })
+          .expect(403)
+          .end(function (err, res) {
+            if (err) {
+              return done(err);
             }
-          ]
-        })
-        .expect('Content-Type', /json/)
-        .expect(201)
-        .end(function(err, res) {
-          if (err) {
-            return done(err);
-          }
-          assert.equal(res.body.components[0].dbIndex, true);
-          assert.equal(res.body.components[0].encrypted, true);
-          id = res.body._id;
-          done();
-        });
+            assert.equal(res.status, 403);
+            assert.equal(
+              res.text,
+              `Cannot create index at path "textField", the Security & Compliance package is required to create database indexes`
+            );
+            done();
+          });
       });
 
-      it('Should be able set submission collection', function(done){
+      it("Should not be able to create a new resource with an encrypted field", function (done) {
         request(app)
-        .put(hook.alter('url', '/form/' + id + '/', template))
-        .set('x-jwt-token', template.users.admin.token)
-        .send({
-          settings: {collection : 'textField'}
-        })
-        .expect(200)
-        .end(function(err, res) {
-          if (err) {
-            return done(err);
-          }
-          assert.equal(res.body.settings.collection, 'textField');
-          done();
-        });
-      })
-    })
+          .post(`/project/${project._id}/form`)
+          .set("x-admin-key", process.env.ADMIN_KEY)
+          .send({
+            ...resourceTemplate,
+            title: "testResource2",
+            name: "testResource2",
+            path: "testResource2",
+            components: resourceTemplate.components.map((component) => ({
+              ...component,
+              encrypted: true,
+            })),
+          })
+          .expect(403)
+          .end(function (err, res) {
+            if (err) {
+              return done(err);
+            }
+            assert.equal(
+              res.text,
+              `Cannot set field "textField" to encrypted, the Security & Compliance package is required to use field-level encryption`
+            );
+            done();
+          });
+      });
 
-  })
-}
+      it("Should not be able update a resource component to create a database index", function (done) {
+        request(app)
+          .put(`/project/${project._id}/form/${resourceId}`)
+          .set("x-admin-key", process.env.ADMIN_KEY)
+          .send({
+            components: resourceTemplate.components.map((component) => ({
+              ...component,
+              dbIndex: true,
+            })),
+          })
+          .expect(403)
+          .end(function (err, res) {
+            if (err) {
+              return done(err);
+            }
+            done();
+          });
+      });
+
+      it("Should not be able set field to encrypted", function (done) {
+        request(app)
+          .put(`/project/${project._id}/form/${resourceId}`)
+          .set("x-admin-key", process.env.ADMIN_KEY)
+          .send({
+            components: resourceTemplate.components.map((component) => ({
+              ...component,
+              encrypted: true,
+            })),
+          })
+          .expect(403)
+          .end(function (err, res) {
+            if (err) {
+              return done(err);
+            }
+            done();
+          });
+      });
+
+      it("Should not be able to modify a resource to add a submission collection", function (done) {
+        request(app)
+          .put(`/project/${project._id}/form/${resourceId}`)
+          .set("x-admin-key", process.env.ADMIN_KEY)
+          .send({
+            settings: { collection: "textField" },
+          })
+          .expect(403)
+          .end(function (err, res) {
+            if (err) {
+              return done(err);
+            }
+            assert.equal(
+              res.text,
+              `The Security & Compliance package is required to use Submission Collections`
+            );
+            done();
+          });
+      });
+    });
+
+    describe("S+C license is set", function () {
+      before(function () {
+        app.license = { terms: { options: { sac: true } } };
+        process.env.ADMIN_KEY = "examplekey";
+      });
+
+      it("Should not be able to create resource with index without a submission collection", function (done) {
+        request(app)
+          .post(`/project/${project._id}/form`)
+          .set("x-admin-key", process.env.ADMIN_KEY)
+          .send({
+            ...resourceTemplate,
+            title: "testResource1",
+            name: "testResource1",
+            path: "testResource1",
+            components: resourceTemplate.components.map((component) => ({
+              ...component,
+              dbIndex: true,
+            })),
+          })
+          .expect(403)
+          .end(function (err, res) {
+            if (err) {
+              return done(err);
+            }
+            assert.equal(
+              res.text,
+              `Cannot create index at path "textField", a Submission Collection is required to create database indexes`
+            );
+            done();
+          });
+      });
+
+      it("Should be able to create a resource with a submission collection", function (done) {
+        request(app)
+          .post(`/project/${project._id}/form/`)
+          .set("x-admin-key", process.env.ADMIN_KEY)
+          .send({
+            ...resourceTemplate,
+            title: "testResource1",
+            name: "testResource1",
+            path: "testResource1",
+            settings: {
+              collection: "textField",
+            },
+          })
+          .expect(201)
+          .end(function (err, res) {
+            if (err) {
+              return done(err);
+            }
+            assert.equal(res.body.settings.collection, "textField");
+            resourceId = res.body._id;
+            const mockReq = { projectId: project._id, params: {} };
+            getSubmissionModel(
+              app.formio.formio,
+              mockReq,
+              res.body,
+              false,
+              (err, model) => {
+                if (err) {
+                  done(err);
+                }
+                assert.equal(model.collection.name, "default_textField");
+                done();
+              }
+            );
+          });
+      });
+
+      it("Should be able to update a resource's submission collection", function (done) {
+        request(app)
+          .put(`/project/${project._id}/form/${resourceId}`)
+          .set("x-admin-key", process.env.ADMIN_KEY)
+          .send({
+            settings: {
+              collection: "textFieldNew",
+            },
+          })
+          .expect(200)
+          .end(function (err, res) {
+            if (err) {
+              return done(err);
+            }
+            const mockReq = { projectId: project._id, params: {} };
+            getSubmissionModel(
+              app.formio.formio,
+              mockReq,
+              res.body,
+              false,
+              (err, model) => {
+                if (err) {
+                  done(err);
+                }
+                assert.equal(model.collection.name, "default_textFieldNew");
+                done();
+              }
+            );
+          });
+      });
+
+      it("Should be able to update a resource's access settings", function (done) {
+        request(app)
+          .put(`/project/${project._id}/form/${resourceId}`)
+          .set("x-admin-key", process.env.ADMIN_KEY)
+          .send({
+            access: [
+              {
+              type: "read_all",
+              roles: [],
+            }
+          ],
+          })
+          .expect(200)
+          .end(function (err, res) {
+            if (err) {
+              return done(err);
+            }
+            assert.deepEqual(res.body.access, [{type: "read_all", roles: []}]);
+            done();
+          });
+      });
+
+      it("Should gracefully handle error if encountering indexing error and roll back (NOTE: may not fail if using CosmosDB)", function (done) {
+        request(app)
+          .post(`/project/${project._id}/form`)
+          .set("x-admin-key", process.env.ADMIN_KEY)
+          .send({
+            ...resourceTemplate,
+            title: "testResource2",
+            name: "testResource2",
+            path: "testResource2",
+            components: Array.from({ length: 120 }, (_, idx) => ({
+              label: String(idx + 1),
+              tableView: true,
+              key: `textField${idx}`,
+              type: "textfield",
+              input: true,
+              dbIndex: true,
+            })),
+            settings: {
+              collection: "textField",
+            },
+          })
+          .expect(400)
+          .end(function (err, res) {
+            if (err) {
+              return done(err);
+            }
+            assert.equal(res.ok, false);
+            assert(res.text.includes("too many indexes"));
+            done();
+          });
+      });
+    });
+  });
+};
