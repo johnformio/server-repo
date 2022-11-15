@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-5881: Removed the viewer from the alias token handler.
  - FIO-5348: clean up indexing behavior
  - FIO-5862: upgraded to node 18
+ - FIO-5513 / FIO-5531
 
 ## 8.0.0-rc.18
 ### Changed
