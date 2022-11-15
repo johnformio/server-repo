@@ -289,7 +289,7 @@ module.exports = (router) => {
     }
 
     /**
-     * Trigger the webhooks.
+     * Trigger the webhook.
      *
      * @param handler
      * @param method
@@ -302,6 +302,8 @@ module.exports = (router) => {
      */
     resolve(handler, method, req, res, next, setActionItemMessage) {
       const settings = this.settings || {};
+      const shouldBlock = !!(settings.block);
+      const hasExternalIdSettings = !!(settings.externalIdType && settings.externalIdPath);
 
       /**
        * Util function to handle success for a potentially blocking request.
@@ -310,25 +312,43 @@ module.exports = (router) => {
        * @param response
        * @returns {*}
        */
-      const handleSuccess = (data, response) => {
+      const handleSuccess = (data) => {
         setActionItemMessage('Webhook succeeded');
-        if (settings.externalIdType && settings.externalIdPath) {
-          const type = settings.externalIdType;
 
-          const id = _.get(data, settings.externalIdPath, '');
-          util.setCustomExternalIdType(req, res, router, type, id);
+        const resourceExists = !!(res && res.resource && res.resource.item);
+
+        let type, id;
+        if (hasExternalIdSettings) {
+          type = settings.externalIdType;
+          id = _.get(data, settings.externalIdPath, '');
+          if (resourceExists) {
+            util.writeExternalIdToSubmission(req, res, router, type, id);
+          }
+          // TODO: We may consider if a non-blocking `before` webhook returns quickly enough we may have time to write externalIds to
+          // the resourcejs model here via the req object; my concern here is that a very expensive non-blocking webhook might resolve to this
+          // function well after the req-res cycle is over and at this moment I can't guarantee the stability of the req object in that case
         }
 
-        if (!settings.block || settings.block === false) {
+        if (!shouldBlock) {
           return;
         }
 
-        // Return response in metadata
-        if (res && res.resource && res.resource.item) {
-          res.resource.item.metadata = res.resource.item.metadata || {};
-          res.resource.item.metadata[this.title] = data;
+        // Return webhook's response in submission response metadata
+        if (handler === 'before') {
+            if (hasExternalIdSettings) {
+              req.body.externalIds = req.body.externalIds ? [...req.body.externalIds, {type, id}] : [{type, id}];
+            }
+            req.body.metadata = {...req.body.metadata, [this.title]: data};
         }
 
+        // Optimistically update externalIds in the submission response object and write webhook response to metadata
+        // NOTE: The externalId will have a stale ObjectID due to Proxy setters
+        if (handler === 'after' && resourceExists) {
+          if (hasExternalIdSettings) {
+            res.resource.item.externalIds = res.resource.item.externalIds ? [...res.resource.item.externalIds, {type, id}] : [{type, id}];
+          }
+          res.resource.item.metadata = {...res.resource.item.metadata, [this.title]: data};
+        }
         return next();
       };
 
@@ -341,11 +361,11 @@ module.exports = (router) => {
        */
       const handleError = (data, response = {}) => {
         setActionItemMessage('Webhook failed', {data, response}, 'error');
-        if (!settings.block || settings.block === false) {
+        if (!shouldBlock) {
           return;
         }
 
-        const message = data ? (data.message || data) : response.statusMessage;
+        const message = !_.isEmpty(data) ? (data.message || data) : response.statusText;
 
         return res.status((response && response.status) ? response.status : 400).send(message);
       };
@@ -356,8 +376,8 @@ module.exports = (router) => {
           return next();
         }
 
-        // Continue if were not blocking
-        if (!settings.block || settings.block === false) {
+        // Continue if we're not blocking
+        if (!shouldBlock) {
           next(); // eslint-disable-line callback-return
         }
 
@@ -436,7 +456,8 @@ module.exports = (router) => {
 
         let payload = {
           request: req.body,
-          submission: (submission && submission.toObject) ? submission.toObject() : {},
+          // if we're in a before handler e.g., submission will be empty, so fallback to a clone of req.body to increase usability
+          submission: (submission && submission.toObject) ? submission.toObject() : _.cloneDeep(req.body),
           params: req.params
         };
 
@@ -477,34 +498,24 @@ module.exports = (router) => {
           options.body = JSON.stringify(payload);
         }
 
-        if (reqMethod === 'delete') {
+        const isDeleteRequest = reqMethod === 'delete';
+        if (isDeleteRequest) {
           options.qs = req.params;
           options.body = JSON.stringify(payload);
         }
 
-        // Make the request.
-        fetch(url, options)
-          .then((response) => {
-            if (!response.bodyUsed) {
-              if (response.ok) {
-                return handleSuccess({}, response);
-              }
-              else {
-                return handleError({}, response);
-              }
-            }
-            else {
-              if (response.ok) {
-                return response.json().then((body) => handleSuccess(body, response));
-              }
-              else {
-                return response.json().then((body) => handleError(body, response));
-              }
-            }
-          })
-          .catch((err) => {
-            handleError(err);
-          });
+        // Make the request
+        const fetchRequest = fetch(url, options);
+        const processResponseBody = fetchRequest.then((response) =>
+          util.processWebhookResponseBody(response, isDeleteRequest)
+        );
+
+        // Set up closures
+        const result = Promise.all([fetchRequest, processResponseBody]);
+        const onResolve = (([response, body]) => response.ok ? handleSuccess(body) : handleError(body, response));
+        const onError = (err) => handleError(err);
+
+        return result.then(onResolve).catch(onError);
       }
       catch (e) {
         handleError(e);

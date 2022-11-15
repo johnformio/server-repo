@@ -3,7 +3,7 @@
 const _ = require('lodash');
 
 module.exports = {
-  setCustomExternalIdType(req, res, router, type, id) {
+  writeExternalIdToSubmission(req, res, router, type, id) {
     const submissionModel = req.submissionModel || router.formio.resources.submission.model;
     return submissionModel.findOne(
       {_id: _.get(res, 'resource.item._id'), deleted: {$eq: null}}
@@ -30,5 +30,31 @@ module.exports = {
         return submission.save();
       })
       .catch(router.formio.util.log);
+  },
+
+  /**
+     * Process the webhook response body
+     *
+     * @param response {Response} The webhook fetch response.
+     * @param isDeleteRequest {boolean} Indicates whether or not the webhook request was of type DELETE.
+     * @returns {Promise} A promise that resolves to the response body or an empty object (if we're ignoring the repsonse body)
+     */
+  processWebhookResponseBody(response, isDeleteRequest) {
+    let bodyPromise = {};
+
+    // TODO: Should we consider what happens if Content-Length is unset/stripped by the 3rd party API? Might cause issues b/c Number(null) === 0
+    const contentType = response.headers.get("content-type");
+    const contentLength = Number(response.headers.get("content-length"));
+
+    // Restore the delete request check to ensure fidelity with fixes implemented in FOR-2722
+    if (!isDeleteRequest && contentLength > 0) {
+      if (contentType.includes('application/json')) {
+        bodyPromise = response.json();
+      }
+      else if (contentType.includes('text/plain') || contentType.includes('text/html')) {
+        bodyPromise = response.text();
+      }
+    }
+    return bodyPromise;
   }
 };

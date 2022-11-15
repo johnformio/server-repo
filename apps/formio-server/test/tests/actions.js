@@ -3,6 +3,7 @@
 
 const request = require('supertest');
 const assert = require('assert');
+const WebhookListener = require('./fixtures/WebhookListener');
 
 const docker = process.env.DOCKER;
 const customer = process.env.CUSTOMER;
@@ -265,6 +266,429 @@ module.exports = (app, template, hook) => {
           });
       });
     });
+
+    describe('Webhook (Premium)', () => {
+      if (docker) {
+        return;
+      }
+
+      let webhookForm = {
+        title: 'Webhook Sender',
+        name: 'webhookSender',
+        path: 'webhookSender',
+        type: 'form',
+        access: [],
+        submissionAccess: [
+          {
+            type: "create_own",
+            roles: [
+                "000000000000000000000000"
+            ]
+        },
+        ],
+        components: [
+          {
+            type: 'textfield',
+            key: 'player',
+            inputType: 'text',
+            input: true,
+          },
+
+        ],
+      };
+      let testWebhookUrl;
+      let webhookAction;
+      const webhookListener = new WebhookListener();
+
+      describe('Blocking webhooks', () => {
+        describe('After handled webhooks', () => {
+          before('Set up webhook listener', (done) => {
+            // create the webhook listener child process
+            webhookListener.setup(1337, '/player', 201, {records: [{playerId: '123456'}]})
+              .then((config) => {
+                console.log("Done with setup!");
+                testWebhookUrl = config.url;
+                done();
+              })
+          });
+
+          afterEach('Clear in-memory webhook responses', () => {
+            webhookListener.clearReceivedHooks();
+          });
+
+          after('Stop the webhook listener process', () => {
+            webhookListener.stop();
+          });
+
+          it('Should create the form and action for the after handled webhook tests', (done) => {
+            request(app)
+              .post(hook.alter('url', '/form', template))
+              .set('x-jwt-token', template.users.admin.token)
+              .send(webhookForm)
+              .expect('Content-Type', /json/)
+              .expect(201)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                webhookForm = res.body;
+                template.users.admin.token = res.headers['x-jwt-token'];
+                request(app)
+                  .post(hook.alter('url', `/form/${webhookForm._id}/action`, template))
+                  .set('x-jwt-token', template.users.admin.token)
+                  .send({
+                    title: 'Test Webhook',
+                    name: 'webhook',
+                    form: webhookForm._id.toString(),
+                    handler: ['after'],
+                    method: ['create', 'update', 'delete'],
+                    priority: 1,
+                    settings: {
+                      url: testWebhookUrl,
+                      username: '',
+                      password: '',
+                      transform: 'payload = { player: payload.submission.data.player, playerId: externalId }',
+                      block: true,
+                      externalIdType: 'fake_baseball',
+                      externalIdPath: 'records[0].playerId',
+                      headers: [
+                        {
+                            header: "x-test-header",
+                            value: "hello, world!"
+                        }
+                    ]
+                    },
+                  })
+                  .expect('Content-Type', /json/)
+                  .expect(201)
+                  .end((err, res) => {
+                    if (err) {
+                      return done(err);
+                    }
+                    webhookAction = res.body
+                    template.users.admin.token = res.headers['x-jwt-token'];
+
+                    done();
+                  });
+              });
+          });
+
+          it('Should correctly transform webhook payload', (done) => {
+            request(app)
+              .post(hook.alter('url', `/form/${webhookForm._id}/submission`, template))
+              .set('x-jwt-token', template.users.admin.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.deepEqual(webhookListener.hooksReceived[0].body, {player: 'Jason Giambi', playerId: ''});
+                done();
+              });
+          });
+
+          it('Should correctly forward headers', (done) => {
+            request(app)
+              .post(hook.alter('url', `/form/${webhookForm._id}/submission`, template))
+              .set('x-jwt-token', template.users.admin.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.equal(webhookListener.hooksReceived[0].headers.hasOwnProperty('x-test-header'), true);
+                assert.equal(webhookListener.hooksReceived[0].headers['x-test-header'], 'hello, world!')
+                done();
+              });
+          });
+
+          it('Should return a submission response that contains externalIds and metadata with webhook response', (done) => {
+            request(app)
+              .post(hook.alter('url', `/form/${webhookForm._id}/submission`, template))
+              .set('x-jwt-token', template.users.admin.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.equal(res.body.externalIds[0].id, '123456');
+                assert.deepEqual(res.body.metadata['Test Webhook'], {
+                  records: [
+                    {
+                      playerId: '123456'
+                    }
+                  ]
+                });
+                done();
+              });
+          });
+        });
+
+        describe('Before handled webhooks', () => {
+          before('Set up webhook listener', (done) => {
+            // create the webhook listener child process
+            webhookListener.setup(1337, '/player', 201, {records: [{playerId: '123456'}]})
+              .then((config) => {
+                console.log("Done with setup!");
+                testWebhookUrl = config.url;
+                done();
+              })
+          });
+
+          afterEach('Clear in-memory webhook responses', () => {
+            webhookListener.clearReceivedHooks();
+          });
+
+          after('Stop the webhook listener process', () => {
+            webhookListener.stop();
+          });
+
+          it('Should update the action for the before handled webhook tests', (done) => {
+            request(app)
+              .put(hook.alter('url', `/form/${webhookForm._id}/action/${webhookAction._id}`, template))
+              .set('x-jwt-token', template.users.admin.token)
+              .send({
+                ...webhookAction,
+                settings: {
+                  ...webhookAction.settings,
+                  handler: ['before']
+                }
+              })
+              .expect('Content-Type', /json/)
+              .expect(200)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+                webhookAction = res.body;
+                template.users.admin.token = res.headers['x-jwt-token'];
+
+                done();
+              });
+          });
+
+          it('Should correctly transform webhook payload', (done) => {
+            request(app)
+              .post(hook.alter('url', `/form/${webhookForm._id}/submission`, template))
+              .set('x-jwt-token', template.users.admin.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.deepEqual(webhookListener.hooksReceived[0].body, {player: 'Jason Giambi', playerId: ''});
+                done();
+              });
+          });
+
+          it('Should correctly forward headers', (done) => {
+            request(app)
+              .post(hook.alter('url', `/form/${webhookForm._id}/submission`, template))
+              .set('x-jwt-token', template.users.admin.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.equal(webhookListener.hooksReceived[0].headers.hasOwnProperty('x-test-header'), true);
+                assert.equal(webhookListener.hooksReceived[0].headers['x-test-header'], 'hello, world!')
+                done();
+              });
+          });
+
+          it('Should return a submission response that contains externalIds and metadata with webhook response', (done) => {
+            request(app)
+              .post(hook.alter('url', `/form/${webhookForm._id}/submission`, template))
+              .set('x-jwt-token', template.users.admin.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.equal(res.body.externalIds[0].id, '123456');
+                assert.deepEqual(res.body.metadata['Test Webhook'], {
+                  records: [
+                    {
+                      playerId: '123456'
+                    }
+                  ]
+                });
+                done();
+              });
+          });
+        });
+
+      });
+
+      describe('Unsuccessful webhooks without error message parameter but with error data', () => {
+        let testWebhookUrl;
+
+        before('Set up new error-responding listener', (done) => {
+          // create the webhook listener child process
+          webhookListener.setup(1337, '/shouldError', 401, {error: true, myCustomParameter: `The operation 'twas not successful.`})
+            .then((config) => {
+              testWebhookUrl = config.url;
+              done();
+            });
+        })
+
+        afterEach('Clear in-memory webhook responses', () => {
+          webhookListener.clearReceivedHooks();
+        });
+
+        after('Stop the webhook listener process', () => {
+          webhookListener.stop();
+        });
+
+        it('Should transparently pass error object if `message` property does not exist on webhook response', (done) => {
+          request(app)
+            .put(hook.alter('url', `/form/${webhookForm._id}/action/${webhookAction._id}`, template))
+            .set('x-jwt-token', template.users.admin.token)
+            .send({
+              ...webhookAction,
+              settings: {
+                ...webhookAction.settings,
+                handler: ['after'],
+                url: testWebhookUrl,
+              }
+            })
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              webhookAction = res.body;
+              template.users.admin.token = res.headers['x-jwt-token'];
+              request(app)
+                .post(hook.alter('url', `/form/${webhookForm._id}/submission`, template))
+                .set('x-jwt-token', template.users.admin.token)
+                .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(401)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+                console.log("res:", res);
+
+                assert.deepEqual(res.body, {error: true, myCustomParameter: `The operation 'twas not successful.`});
+                done();
+              });
+            });
+        });
+      });
+
+      describe('Unsuccessful webhooks without error message parameter and without error data', () => {
+        let testWebhookUrl;
+
+        before('Set up new error-responding listener', (done) => {
+          // create the webhook listener child process
+          webhookListener.setup(1337, '/shouldError', 405)
+            .then((config) => {
+              testWebhookUrl = config.url;
+              done();
+            });
+        })
+
+        afterEach('Clear in-memory webhook responses', () => {
+          webhookListener.clearReceivedHooks();
+        });
+
+        after('Stop the webhook listener process', () => {
+          webhookListener.stop();
+        });
+
+        it('Should transparently pass error status text if `message` property nor object exist on webhook response', (done) => {
+          request(app)
+            .put(hook.alter('url', `/form/${webhookForm._id}/action/${webhookAction._id}`, template))
+            .set('x-jwt-token', template.users.admin.token)
+            .send({
+              ...webhookAction,
+              settings: {
+                ...webhookAction.settings,
+                handler: ['after'],
+                url: testWebhookUrl,
+              }
+            })
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              webhookAction = res.body;
+              template.users.admin.token = res.headers['x-jwt-token'];
+              request(app)
+                .post(hook.alter('url', `/form/${webhookForm._id}/submission`, template))
+                .set('x-jwt-token', template.users.admin.token)
+                .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(405)
+              .expect('Content-Type', /text/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+                console.log("res:", res);
+
+                assert.deepEqual(res.text, 'Method Not Allowed');
+                done();
+              });
+            });
+        });
+      });
+    })
 
     describe('LDAP Login', () => {
       if (docker || customer) {
