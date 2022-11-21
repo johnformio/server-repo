@@ -387,7 +387,8 @@ module.exports = router => {
                   _id: data.uidNumber || data.uid || data.dn, // Try to use numbers but fall back to dn which is guaranteed.
                   data,
                   roles,
-                  project: req.currentProject._id.toString()
+                  project: req.currentProject._id.toString(),
+                  sso: true
                 };
                 debug('Final user object', user);
 
