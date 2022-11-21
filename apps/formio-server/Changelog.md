@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-5348: clean up indexing behavior
  - FIO-5862: upgraded to node 18
  - FIO-5513 / FIO-5531
+ - FIO-5536: added sso for LDAP user
 
 ## 8.0.0-rc.18
 ### Changed
