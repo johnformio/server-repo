@@ -15,6 +15,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-5862: upgraded to node 18
  - FIO-5513 / FIO-5531
  - FIO-5536: added sso for LDAP user
+ - FIO-4823: FJS box sign component
+ - FIO-5885: hide labels for portal login form components
+ - FIO-5348: S&C form validation edge case fix
+ - FIO-5900: Removed ResetPassword form from PortalBase
+ - FIO-5721: forbid repeated click on save/create/publish form button when prev api call is not finished
+ - FIO-5175: Footer Logo
+ - FIO-3611: Hide Edit profile when user is SSO
+ - FIO-5898: removed ResetPasswod from list of available actions
+ - FIO-5948: Fixed 'Delete project' in protected mode
+ - FIO-5736: fixed an issue where diplay-as dropdown overlays stages dropdown.
 
 ## 8.0.0-rc.18
 ### Changed
