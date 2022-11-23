@@ -150,7 +150,7 @@ module.exports = (router) => {
             }
             // Replace \\n with \n chars because the renderer sanitizes \n with \\n
             const privateKey = esignConfig.boxAppSettings.appAuth.privateKey;
-            esignConfig.boxAppSettings.appAuth.privateKey = privateKey.replaceAll('\\n', '\n').replaceAll('\\r', '\r');
+            esignConfig.boxAppSettings.appAuth.privateKey = privateKey.replace(/\\n/g, '\n').replace(/\\r/g, '\r');
             const submissionId = res.resource && res.resource.item && res.resource.item._id.toString();
             if (!submissionId) {
                 log(req, SUBMISSION_NOT_FOUND);

@@ -180,7 +180,7 @@ module.exports = (app) => {
     const downloadBoxSignature = async (project, submission) => {
         const config = _.get(project.settings, 'esign');
         const privateKey = config.boxAppSettings.appAuth.privateKey;
-        config.boxAppSettings.appAuth.privateKey = privateKey.replaceAll('\\n', '\n').replaceAll('\\r', '\r');
+        config.boxAppSettings.appAuth.privateKey = privateKey.replace(/\\n/g, '\n').replace(/\\r/g, '\r');
         const authClient = authenticateToBox(config);
         if (authClient) {
             return new Promise((resolve, reject) => {
