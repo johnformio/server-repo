@@ -109,7 +109,7 @@ module.exports = function(app) {
 
       const indexesToCreate = [];
       const indexesToPotentiallyDrop = [];
-      formio.util.eachComponent(form.components, (component, path) => {
+      formio.util.eachComponent(req.body.components, (component, path) => {
         validateComponentAgainstSacPackage(
           component,
           path,
