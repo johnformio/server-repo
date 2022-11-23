@@ -45,6 +45,7 @@
           "key": "email",
           "label": "Email",
           "inputType": "email",
+          "hideLabel": true,
           "input": true,
           "validate": {
           "required": true
@@ -57,6 +58,7 @@
           "type": "password",
           "persistent": true,
           "protected": true,
+          "hideLabel": true,
           "suffix": "",
           "prefix": "",
           "placeholder": "Password",
