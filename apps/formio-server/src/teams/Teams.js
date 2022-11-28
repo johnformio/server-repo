@@ -766,8 +766,13 @@ const Teams = {
    * @param {*} next
    */
   async removeTeamMembershipHandler(team, member, req, res, respond) {
-    await Teams.removeTeamMembership(team, member);
-    await Teams.teamMembershipHandler('delete', member._id ? member._id.toString() : '', respond)(req, res);
+    try {
+      await Teams.removeTeamMembership(team, member);
+      await Teams.teamMembershipHandler('delete', member._id ? member._id.toString() : '', respond)(req, res);
+    }
+    catch (err) {
+      res.status(500).send(err.message ? err.message : err);
+    }
   },
 
   /**
@@ -836,6 +841,21 @@ const Teams = {
         return res.status(400).send(err.message || 'Could not create membership.');
       }
     };
+  },
+
+  /**
+   * Filters team membership requests.
+   *
+   * @param req
+   * @param res
+   * @param next
+   */
+  filterForSSOTeams: async (req, res, next) => {
+    const team = await Teams.getTeam(req.params.teamId);
+    if (team && team.metadata && team.metadata.ssoteam === true) {
+      return res.status(403).send("Cannot perform this action on an SSO Team");
+    }
+    next();
   }
 };
 

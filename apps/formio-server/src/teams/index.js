@@ -160,11 +160,12 @@ module.exports = function(app, formioServer) {
   /**
    * Add a new team member.
    */
-  app.post('/team/:teamId/member', ...teamMembershipHandlers);
+  app.post('/team/:teamId/member', Teams.filterForSSOTeams, ...teamMembershipHandlers);
   app.get('/team/:teamId/member/:submissionId', ...teamMembershipHandlers);
   app.put('/team/:teamId/member/:submissionId', ...teamMembershipHandlers);
   app.delete('/team/:teamId/member/:submissionId',
     ...initializeTeams,
+    Teams.filterForSSOTeams,
     Teams.teamAccessHandler(true),
     async (req, res, next) => {
       req.currentMember = await Teams.getMemberFromId(req.params.submissionId);
@@ -178,6 +179,7 @@ module.exports = function(app, formioServer) {
    */
   app.post('/team/:teamId/join',
     ...initializeTeams,
+    Teams.filterForSSOTeams,
     Teams.teamAccessHandler(false),
     Teams.currentMemberHandler,
     async (req, res) => {
@@ -187,6 +189,7 @@ module.exports = function(app, formioServer) {
   );
   app.post('/team/:teamId/leave',
     ...initializeTeams,
+    Teams.filterForSSOTeams,
     Teams.teamAccessHandler(false),
     Teams.currentMemberHandler,
     (req, res) => Teams.removeTeamMembershipHandler(req.currentTeam, req.currentMember, req, res, true)
