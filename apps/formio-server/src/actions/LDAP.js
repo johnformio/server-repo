@@ -206,22 +206,7 @@ module.exports = router => {
 
     checkForLDAPTeams(req, data, user) {
       return new Promise((resolve, reject) => {
-        if (req.currentProject.primary && router.config.ssoTeams) {
-          const userRoles = [];
-          _.map(data.dn.split(','), map => {
-            if (map.indexOf('ou') !== -1) {
-              userRoles.push(map.split('=')[1]);
-            }
-          });
-
-          return router.formio.teams.getSSOTeams(user, userRoles).then((teams) => {
-            teams = teams || [];
-            user.teams = _.map(_.map(teams, '_id'), formio.util.idToString);
-            return resolve(user);
-          },reject);
-        }
-
-        return resolve(user);
+      router.formio.teams.getTeams(user, false, true).then(()=>resolve(user));
       });
     }
 
@@ -388,7 +373,7 @@ module.exports = router => {
                   data,
                   roles,
                   project: req.currentProject._id.toString(),
-                  sso: true
+                  ldap: true
                 };
                 debug('Final user object', user);
 

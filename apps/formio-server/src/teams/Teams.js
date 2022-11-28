@@ -201,31 +201,44 @@ const Teams = {
     const userTeams = _.get(user, 'metadata.teams', []);
     userTeams.push(team._id.toString());
 
-    // Accept the team on the user object.
-    await Teams.submissionModel().updateOne({
-      _id: user._id,
-      project: userResource.project,
-      form: userResource._id,
-      deleted: {$eq: null}
-    }, {
-      $set: {'metadata.teams': _.uniq(userTeams)}
-    }).exec();
+    try {
+      if (!user.ldap) {
+        // Accept the team on the user object.
+        await Teams.submissionModel().updateOne({
+          _id: user._id,
+          project: userResource.project,
+          form: userResource._id,
+          deleted: {$eq: null}
+        }, {
+          $set: {'metadata.teams': _.uniq(userTeams)}
+        }).exec();
+      }
+    }
+     catch (err) {
+      debug.teamUsers(err);
+    }
 
-    // Update the accepted flag for this user.
-    await Teams.submissionModel().updateOne({
-      _id: member._id,
-      project: memberResource.project,
-      form: memberResource._id
-    }, {
-      $set: {'metadata.accepted': true}
-    }).exec();
+    try {
+      // Update the accepted flag for this user.
+      await Teams.submissionModel().updateOne({
+        _id: member._id,
+        project: memberResource.project,
+        form: memberResource._id
+      }, {
+        $set: {'metadata.accepted': true}
+      }).exec();
 
-    // Update the member count.
-    await Teams.submissionModel().updateOne({
-      _id: Teams.util().idToBson(team._id)
-    }, {
-      $set: {'metadata.memberCount': (_.get(team, 'metadata.memberCount', 0) + 1)}
-    });
+      // Update the member count.
+      await Teams.submissionModel().updateOne({
+        _id: Teams.util().idToBson(team._id)
+      }, {
+        $set: {'metadata.memberCount': (_.get(team, 'metadata.memberCount', 0) + 1)}
+      });
+    }
+    catch (err) {
+      debug.teamUsers(err);
+      return err;
+    }
     return user;
   },
 
@@ -355,11 +368,15 @@ const Teams = {
     }
 
     const userTeams = _.get(user, user.metadata ? 'metadata.teams' : 'teams', []);
+    if (user.ldap) {
+      user.metadata = {teams: []};
+    }
     (membership || []).forEach((member) => {
       const memberTeam = _.get(member, 'data.team', null);
       if (
         memberTeam &&
         (
+          (user.ldap && member.metadata && member.metadata.accepted)||
           user.sso ||
           !accepted ||
           (memberTeam._id && userTeams.indexOf(memberTeam._id.toString()) !== -1) ||
@@ -367,6 +384,9 @@ const Teams = {
         )
       ) {
         teams.push(member.data.team);
+        if (user.ldap) {
+          user.metadata.teams.push(member.data.team._id.toString());
+        }
       }
     });
     return _.uniqBy(teams, (team) => team._id.toString());
@@ -747,7 +767,7 @@ const Teams = {
    */
   async removeTeamMembershipHandler(team, member, req, res, respond) {
     await Teams.removeTeamMembership(team, member);
-    await Teams.teamMembershipHandler('delete', member._id.toString(), respond)(req, res);
+    await Teams.teamMembershipHandler('delete', member._id ? member._id.toString() : '', respond)(req, res);
   },
 
   /**
@@ -796,20 +816,25 @@ const Teams = {
    */
   teamMembershipHandler(_method = '', _memberId = '', respond) {
     return async function(req, res) {
-      const method = _method || req.method.toLowerCase();
-      const memberId = _memberId || req.params.submissionId;
-      const memberResource = await Teams.getMemberResource();
-      if (method !== 'delete' && req.currentTeam) {
-        _.set(req.body, 'data.team', req.currentTeam);
-      }
-      const member = await Teams.subRequest(req, res, method, memberResource, memberId);
-      if (respond) {
-        if (method !== 'delete' && !member) {
-          return res.status(400).send('Could not create membership.');
+      try {
+        const method = _method || req.method.toLowerCase();
+        const memberId = _memberId || req.params.submissionId;
+        const memberResource = await Teams.getMemberResource();
+        if (method !== 'delete' && req.currentTeam) {
+          _.set(req.body, 'data.team', req.currentTeam);
         }
-        return res.status(200).json(member || {});
+        const member = await Teams.subRequest(req, res, method, memberResource, memberId);
+        if (respond) {
+          if (method !== 'delete' && !member) {
+            return res.status(400).send('Could not create membership.');
+          }
+          return res.status(200).json(member || {});
+        }
+        return member;
       }
-      return member;
+      catch (err) {
+        return res.status(400).send(err.message || 'Could not create membership.');
+      }
     };
   }
 };
