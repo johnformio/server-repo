@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-5898: removed ResetPasswod from list of available actions
  - FIO-5948: Fixed 'Delete project' in protected mode
  - FIO-5736: fixed an issue where diplay-as dropdown overlays stages dropdown.
+ - FIO-5536 ldap users regular teams
 
 ## 8.0.0-rc.18
 ### Changed
