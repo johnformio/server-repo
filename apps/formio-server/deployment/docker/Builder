@@ -1,4 +1,4 @@
-FROM node:18-alpine3.16
+FROM alpine:latest
 MAINTAINER Form.io <support@form.io>
 ARG  NPM_USERNAME
 ARG  NPM_PASSWORD
