@@ -1,4 +1,4 @@
-/**/'use strict';
+'use strict';
 
 var request = require('supertest');
 var assert = require('assert');
@@ -6,6 +6,7 @@ var _ = require('lodash');
 var chance = new (require('chance'))();
 var uuidRegex = /^([a-z]{15})$/;
 var docker = process.env.DOCKER;
+const config = require('../../config');
 
 module.exports = function(app, template, hook) {
   if (docker) {
@@ -131,27 +132,30 @@ module.exports = function(app, template, hook) {
         if (err) {
           return done(err);
         }
+        if (!config.formio.hosted) {
+          return done();
+        }
 
         request(app)
-        .post('/payment-gateway')
-        .set('x-jwt-token', template.env.owner.token)
-        .send({
-          data: {
-            ccNumber: '4012000033330026',
-            ccType: 'visa',
-            ccExpiryMonth: '12',
-            ccExpiryYear: '2030',
-            cardholderName: 'FORMIO Test Account',
-            securityCode: '123'
-          }
-        })
-        .expect(200)
-        .end(function(err, res) {
-          if (err) {
-            return done(err);
-          }
-          done();
-        });
+          .post('/payeezy')
+          .set('x-jwt-token', template.env.owner.token)
+          .send({
+            data: {
+              ccNumber: '4012000033330026',
+              ccType: 'visa',
+              ccExpiryMonth: '12',
+              ccExpiryYear: '2030',
+              cardholderName: 'FORMIO Test Account',
+              securityCode: '123'
+            }
+          })
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            done();
+          });
       }
 
       getVerificationToken()
@@ -475,6 +479,9 @@ module.exports = function(app, template, hook) {
     });
 
     it('Set to commercial plan', done => {
+      if (!config.formio.hosted) {
+        return done();
+      }
       request(app)
         .post('/project/' + firstProject._id + '/upgrade')
         .set('x-jwt-token', template.env.owner.token)
@@ -528,6 +535,8 @@ module.exports = function(app, template, hook) {
           assert.notEqual(response.defaultAccess, [], 'The Projects default `role` should not be empty.');
           assert.equal(response.hasOwnProperty('name'), true);
           assert.equal(response.description, myProject.description);
+          // commenting this out for now
+          // TODO: investigate why in hosted the name field will be renamed as if the parent project is a 'trial', I suspect it's a stale project cache
           assert.equal(response.name, myProject.name);
 
           // Check plan and api calls info

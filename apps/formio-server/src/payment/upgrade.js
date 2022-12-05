@@ -49,6 +49,12 @@ module.exports = function(formio) {
           })
           .then(function(rawResponse) {
             if (rawResponse.modifiedCount) {
+              // shouldn't we invalidate the cache here? TODO: a better place for this would be in each project create/update
+              // middleware pipeline (you could even pass a cache object to ResourceJS!!)
+              const cache = formio.cache.cache(req);
+              if (cache.projects[project._id]) {
+                formio.cache.deleteProjectCache(project);
+              }
               return formio.payment.getUpgradeHistoryFormId(req.userProject._id);
             }
 

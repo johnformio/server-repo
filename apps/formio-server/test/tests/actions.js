@@ -4,6 +4,7 @@
 const request = require('supertest');
 const assert = require('assert');
 const WebhookListener = require('./fixtures/WebhookListener');
+const config = require("../../config");
 
 const docker = process.env.DOCKER;
 const customer = process.env.CUSTOMER;
@@ -82,189 +83,191 @@ module.exports = (app, template, hook) => {
           });
       });
 
-      it('A project on the basic plan cannot access the /sqlconnector endpoint', (done) => {
-        request(app)
-          .get(`/project/${project._id}/sqlconnector`)
-          .set('x-jwt-token', template.formio.owner.token)
-          .expect('Content-Type', /text/)
-          .expect(402)
-          .end((err, res) => {
-            if (err) {
-              return done(err);
-            }
-
-            const response = res.text;
-            assert.equal(response, 'Payment Required');
-
-            done();
-          });
-      });
-
-      it('A project on the basic plan cannot access the /sqlconnector?format=v2 endpoint', (done) => {
-        request(app)
-          .get(`/project/${project._id}/sqlconnector?format=v2`)
-          .set('x-jwt-token', template.formio.owner.token)
-          .expect('Content-Type', /text/)
-          .expect(402)
-          .end((err, res) => {
-            if (err) {
-              return done(err);
-            }
-
-            const response = res.text;
-            assert.equal(response, 'Payment Required');
-
-            done();
-          });
-      });
-
-      it('Update the project to the independent plan', (done) => {
-        helper
-          .plan('independent')
-          .execute(done);
-      });
-
-      it('A project on the independent plan cannot access the /sqlconnector endpoint', (done) => {
-        request(app)
-          .get(`/project/${project._id}/sqlconnector`)
-          .set('x-jwt-token', template.formio.owner.token)
-          .expect('Content-Type', /text/)
-          .expect(402)
-          .end((err, res) => {
-            if (err) {
-              return done(err);
-            }
-
-            const response = res.text;
-            assert.equal(response, 'Payment Required');
-
-            done();
-          });
-      });
-
-      it('A project on the independent plan cannot access the /sqlconnector?format=v2 endpoint', (done) => {
-        request(app)
-          .get(`/project/${project._id}/sqlconnector?format=v2`)
-          .set('x-jwt-token', template.formio.owner.token)
-          .expect('Content-Type', /text/)
-          .expect(402)
-          .end((err, res) => {
-            if (err) {
-              return done(err);
-            }
-
-            const response = res.text;
-            assert.equal(response, 'Payment Required');
-
-            done();
-          });
-      });
-
-      it('Update the project to the team plan', (done) => {
-        helper
-          .plan('team')
-          .execute(done);
-      });
-
-      it('Add the sqlconnector project settings', (done) => {
-        helper
-          .settings({
-            cors: '*',
-            sqlconnector: {
-              host: 'example.com',
-              type: 'mysql',
-            },
-          })
-          .execute(done);
-      });
-
-      it('A project on the team plan can access the /sqlconnector endpoint', (done) => {
-        request(app)
-          .get(`/project/${project._id}/sqlconnector`)
-          .set('x-jwt-token', template.formio.owner.token)
-          .expect('Content-Type', /json/)
-          .expect(200)
-          .end((err, res) => {
-            if (err) {
-              return done(err);
-            }
-            console.log(res.body);
-
-            const response = res.body;
-            assert(Array.isArray(response));
-            assert.equal(response.length, 5);
-            response.forEach((item) => {
-              assert.deepEqual(['endpoint', 'method', 'query'], Object.keys(item));
-              assert(['POST', 'GET', 'PUT', 'DELETE', 'INDEX'].includes(item.method));
-            });
-
-            done();
-          });
-      });
-
-      it('A project on the team plan can access the /sqlconnector?format=v2 endpoint'  , (done) => {
-        request(app)
-          .get(`/project/${project._id}/sqlconnector?format=v2`)
-          .set('x-jwt-token', template.formio.owner.token)
-          .expect('Content-Type', /json/)
-          .expect(200)
-          .end((err, res) => {
-            if (err) {
-              return done(err);
-            }
-            const response = res.body;
-
-            assert(Array.isArray(response));
-            assert.equal(response.length, 5);
-
-            response.forEach((item) => {
-              assert.deepEqual(['endpoint', 'db', 'method', 'query'], Object.keys(item));
-              assert(['POST', 'GET', 'PUT', 'DELETE', 'INDEX'].includes(item.method));
-              const {primary, table, fields} = sqlConnectorActionSettings.settings;
-              const [param1, param2] = fields;
-              const column1 = param1.column;
-              const column2 = param2.column
-
-
-              switch (item.method) {
-                case 'GET':
-                  if(item.endpoint === '/customers/:id'){
-                    assert.deepEqual(item.query[0], [ 'select * from `'+ table +'` where `'+ primary +'` = ?', 'params.' + primary ] )
-                  } else if (item.endpoint === '/customers') {
-                    assert.deepEqual(item.query[0], [ 'select * from `' + table + '`'])
-                  } else {
-                    assert.fail('Wrong endpoint for get method')
-                  }
-                  break;
-                case 'POST':
-                  assert.equal(item.endpoint, '/' + table);
-                  assert.deepEqual(item.query[0], [ 'insert into `'+ table +'` (`' + column1 + '`, `' + column2 + '`) values (?, ?)',
-                                                    'body.data.' + column1,
-                                                    'body.data.' + column2] );
-                   assert.deepEqual(item.query[1], [ 'select * from `customers` where ' + primary + ' = LAST_INSERT_ID()' ])
-                  break;
-                case 'PUT':
-                  assert.equal(item.endpoint, '/' + table +'/:id');
-                  assert.deepEqual(item.query[0], [ 'update `'+ table +'` set `firstName` = ?, `' + column2 + '` = ? where `' + primary + '` = ?',
-                                                    'body.data.' + column1,
-                                                    'body.data.' + column2,
-                                                    'params.' + primary
-                                                  ] );
-                  assert.deepEqual(item.query[1], [ 'select * from `' + table + '` where `'+ primary +'` = ?', 'params.' + primary])
-                  break;
-                case 'DELETE':
-                  assert.equal(item.endpoint, '/' + table +'/:id');
-                  assert.deepEqual(item.query[0], [ 'delete from `'+ table +'` where `'+ primary +'` = ?', 'params.' + primary ] )
-                  break;
-                default:
-                  assert.fail('Wrong method')
+      if (config.formio.hosted) {
+        it('A project on the basic plan cannot access the /sqlconnector endpoint', (done) => {
+          request(app)
+            .get(`/project/${project._id}/sqlconnector`)
+            .set('x-jwt-token', template.formio.owner.token)
+            .expect('Content-Type', /text/)
+            .expect(402)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
               }
 
-            });
+              const response = res.text;
+              assert.equal(response, 'Payment Required');
 
-            done();
-          });
-      });
+              done();
+            });
+        });
+
+        it('A project on the basic plan cannot access the /sqlconnector?format=v2 endpoint', (done) => {
+          request(app)
+            .get(`/project/${project._id}/sqlconnector?format=v2`)
+            .set('x-jwt-token', template.formio.owner.token)
+            .expect('Content-Type', /text/)
+            .expect(402)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              const response = res.text;
+              assert.equal(response, 'Payment Required');
+
+              done();
+            });
+        });
+
+        it('Update the project to the independent plan', (done) => {
+          helper
+            .plan('independent')
+            .execute(done);
+        });
+
+        it('A project on the independent plan cannot access the /sqlconnector endpoint', (done) => {
+          request(app)
+            .get(`/project/${project._id}/sqlconnector`)
+            .set('x-jwt-token', template.formio.owner.token)
+            .expect('Content-Type', /text/)
+            .expect(402)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              const response = res.text;
+              assert.equal(response, 'Payment Required');
+
+              done();
+            });
+        });
+
+        it('A project on the independent plan cannot access the /sqlconnector?format=v2 endpoint', (done) => {
+          request(app)
+            .get(`/project/${project._id}/sqlconnector?format=v2`)
+            .set('x-jwt-token', template.formio.owner.token)
+            .expect('Content-Type', /text/)
+            .expect(402)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              const response = res.text;
+              assert.equal(response, 'Payment Required');
+
+              done();
+            });
+        });
+
+        it('Update the project to the team plan', (done) => {
+          helper
+            .plan('team')
+            .execute(done);
+        });
+
+        it('Add the sqlconnector project settings', (done) => {
+          helper
+            .settings({
+              cors: '*',
+              sqlconnector: {
+                host: 'example.com',
+                type: 'mysql',
+              },
+            })
+            .execute(done);
+        });
+
+        it('A project on the team plan can access the /sqlconnector endpoint', (done) => {
+          request(app)
+            .get(`/project/${project._id}/sqlconnector`)
+            .set('x-jwt-token', template.formio.owner.token)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              console.log(res.body);
+
+              const response = res.body;
+              assert(Array.isArray(response));
+              assert.equal(response.length, 5);
+              response.forEach((item) => {
+                assert.deepEqual(['endpoint', 'method', 'query'], Object.keys(item));
+                assert(['POST', 'GET', 'PUT', 'DELETE', 'INDEX'].includes(item.method));
+              });
+
+              done();
+            });
+        });
+
+        it('A project on the team plan can access the /sqlconnector?format=v2 endpoint'  , (done) => {
+          request(app)
+            .get(`/project/${project._id}/sqlconnector?format=v2`)
+            .set('x-jwt-token', template.formio.owner.token)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              const response = res.body;
+
+              assert(Array.isArray(response));
+              assert.equal(response.length, 5);
+
+              response.forEach((item) => {
+                assert.deepEqual(['endpoint', 'db', 'method', 'query'], Object.keys(item));
+                assert(['POST', 'GET', 'PUT', 'DELETE', 'INDEX'].includes(item.method));
+                const {primary, table, fields} = sqlConnectorActionSettings.settings;
+                const [param1, param2] = fields;
+                const column1 = param1.column;
+                const column2 = param2.column
+
+
+                switch (item.method) {
+                  case 'GET':
+                    if(item.endpoint === '/customers/:id'){
+                      assert.deepEqual(item.query[0], [ 'select * from `'+ table +'` where `'+ primary +'` = ?', 'params.' + primary ] )
+                    } else if (item.endpoint === '/customers') {
+                      assert.deepEqual(item.query[0], [ 'select * from `' + table + '`'])
+                    } else {
+                      assert.fail('Wrong endpoint for get method')
+                    }
+                    break;
+                  case 'POST':
+                    assert.equal(item.endpoint, '/' + table);
+                    assert.deepEqual(item.query[0], [ 'insert into `'+ table +'` (`' + column1 + '`, `' + column2 + '`) values (?, ?)',
+                                                      'body.data.' + column1,
+                                                      'body.data.' + column2] );
+                     assert.deepEqual(item.query[1], [ 'select * from `customers` where ' + primary + ' = LAST_INSERT_ID()' ])
+                    break;
+                  case 'PUT':
+                    assert.equal(item.endpoint, '/' + table +'/:id');
+                    assert.deepEqual(item.query[0], [ 'update `'+ table +'` set `firstName` = ?, `' + column2 + '` = ? where `' + primary + '` = ?',
+                                                      'body.data.' + column1,
+                                                      'body.data.' + column2,
+                                                      'params.' + primary
+                                                    ] );
+                    assert.deepEqual(item.query[1], [ 'select * from `' + table + '` where `'+ primary +'` = ?', 'params.' + primary])
+                    break;
+                  case 'DELETE':
+                    assert.equal(item.endpoint, '/' + table +'/:id');
+                    assert.deepEqual(item.query[0], [ 'delete from `'+ table +'` where `'+ primary +'` = ?', 'params.' + primary ] )
+                    break;
+                  default:
+                    assert.fail('Wrong method')
+                }
+
+              });
+
+              done();
+            });
+        });
+      }
     });
 
     describe('Webhook (Premium)', () => {

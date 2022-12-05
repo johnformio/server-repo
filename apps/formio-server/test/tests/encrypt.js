@@ -6,6 +6,7 @@ const assert = require('assert');
 const async = require('async');
 const _each = require('lodash/each');
 const ObjectID = require('mongodb').ObjectId;
+const config = require('../../config');
 
 module.exports = function(app, template, hook) {
   let Helper = require('formio/test/helper')(app);
@@ -77,10 +78,6 @@ module.exports = function(app, template, hook) {
         ]
       }
     ];
-
-    before(function(done) {
-      done();
-    });
 
     after((done) => {
       delete template.forms.encryptedFields;
@@ -380,311 +377,312 @@ module.exports = function(app, template, hook) {
       ];
     };
 
-    it('Create a temporary form for with non-encrypted fields', function(done) {
-      helper.form('encryptedFields', getForm(false))
-      .execute((err, results) => {
-        if (err) {
-          return done;
-        }
-
-        tempForm = results.getForm('encryptedFields');
-        return done();
-      });
-    });
-
-    it('Should create a few submissions as not encrypted', (done) => {
-      helper.submission(`encryptedFields`, submissions[0])
-        .execute((err, response1) => {
+    if (config.formio.hosted) {
+      it('Create a temporary form for with non-encrypted fields', function(done) {
+        helper.form('encryptedFields', getForm(false))
+        .execute((err, results) => {
           if (err) {
-            return done(err);
-          }
-          submissions[0] = response1.getLastSubmission();
-          helper.submission(`encryptedFields`, submissions[1])
-            .execute((err, response2) => {
-              if (err) {
-                return done(err);
-              }
-              submissions[1] = response2.getLastSubmission();
-              return done();
-            });
-        });
-    });
-
-    it('Should update the form to enable encryption on those fields', (done) => {
-      tempForm.components = getForm(true);
-      app.formio.formio.mongoose.model('form').updateOne({
-        _id: ObjectID(tempForm._id)
-      }, {
-        '$set': {
-          components: tempForm.components
-        }
-      }, (err, result) => {
-        if (err) {
-          return done(err);
-        }
-
-        done();
-      });
-    });
-
-    it('Should be able to create a submission with certain fields encrypted.', function(done) {
-      helper.submission(`encryptedFields`, submissions[2])
-        .execute((err, response) => {
-          if (err) {
-            return done(err);
+            return done;
           }
 
-          submissions[2] = response.getLastSubmission();
-          // Make sure the response does not allow encryption for anything other than commercial plans.
-          assert.equal(submissions[2].data.ssn, 'Encryption requires Enterprise Plan');
-          assert.equal(submissions[2].data.secret, 'Encryption requires Enterprise Plan');
-          assert.equal(submissions[2].data.datagrid[0].c, 'Encryption requires Enterprise Plan');
-          assert.equal(submissions[2].data.datagrid[1].c, 'Encryption requires Enterprise Plan');
+          tempForm = results.getForm('encryptedFields');
           return done();
         });
-    });
+      });
 
-    it('Should not decrypt for anything other than commercial plan.', (done) => {
-      request(app)
-        .get(hook.alter(`url`, `/form/${tempForm._id}/submission/${submissions[2]._id}`, template))
-        .set(`x-jwt-token`, template.formio.owner.token)
-        .expect(200)
-        .end((err, res) => {
+      it('Should create a few submissions as not encrypted', (done) => {
+        helper.submission(`encryptedFields`, submissions[0])
+          .execute((err, response1) => {
+            if (err) {
+              return done(err);
+            }
+            submissions[0] = response1.getLastSubmission();
+            helper.submission(`encryptedFields`, submissions[1])
+              .execute((err, response2) => {
+                if (err) {
+                  return done(err);
+                }
+                submissions[1] = response2.getLastSubmission();
+                return done();
+              });
+          });
+      });
+
+      it('Should update the form to enable encryption on those fields', (done) => {
+        tempForm.components = getForm(true);
+        app.formio.formio.mongoose.model('form').updateOne({
+          _id: ObjectID(tempForm._id)
+        }, {
+          '$set': {
+            components: tempForm.components
+          }
+        }, (err, result) => {
           if (err) {
             return done(err);
           }
 
-          assert.equal(res.body.data.ssn, 'Encryption requires Enterprise Plan');
-          assert.equal(res.body.data.secret, 'Encryption requires Enterprise Plan');
-          assert.equal(res.body.data.datagrid[0].c, 'Encryption requires Enterprise Plan');
-          assert.equal(res.body.data.datagrid[1].c, 'Encryption requires Enterprise Plan');
-          return done();
-        });
-    });
-
-
-    it('Should upgrade the project to "commercial"', (done) => {
-      request(app)
-        .post('/project/' + helper.template.project._id + '/upgrade')
-        .set('x-jwt-token', template.formio.owner.token)
-        .send({plan: 'commercial'})
-        .expect(200)
-        .end(function(err, res) {
-          if (err) {
-            return done(err);
-          }
           done();
         });
-    });
-
-    it('Should let you load the individual submission and show unencrypted.', (done) => {
-      request(app)
-        .get(hook.alter(`url`, `/form/${tempForm._id}/submission/${submissions[2]._id}`, template))
-        .set(`x-jwt-token`, template.formio.owner.token)
-        .expect(200)
-        .end((err, res) => {
-          if (err) {
-            return done(err);
-          }
-
-          submissions[2] = res.body;
-          assert.equal(res.body.data.ssn, '123-23-2345');
-          assert.equal(res.body.data.secret, 'sshhhhhhh');
-          assert.equal(res.body.data.datagrid[0].c, 'private');
-          assert.equal(res.body.data.datagrid[1].c, 'private2');
-          return done();
-        });
-    });
-
-    it('Should be able to still get the unencrypted fields', (done) => {
-      request(app)
-        .get(hook.alter(`url`, `/form/${tempForm._id}/submission/${submissions[0]._id}`, template))
-        .set(`x-jwt-token`, template.formio.owner.token)
-        .expect(200)
-        .end((err, res) => {
-          if (err) {
-            return done(err);
-          }
-
-          assert.equal(res.body.data.ssn, submissions[0].data.ssn);
-          assert.equal(res.body.data.secret, submissions[0].data.secret);
-          assert.equal(res.body.data.datagrid[0].c, submissions[0].data.datagrid[0].c);
-          assert.equal(res.body.data.datagrid[1].c, submissions[0].data.datagrid[1].c);
-          return done();
-        });
-    });
-
-    it('The actual database object should be encrypted', (done) => {
-      app.formio.formio.mongoose.model('submission').findOne({
-        _id: ObjectID(submissions[2]._id)
-      }, (err, submission) => {
-        assert(submission.data.ssn.toString().length);
-        assert(submission.data.secret.toString().length);
-        assert(submission.data.datagrid[0].c.length);
-        assert(submission.data.datagrid[1].c.length);
-        assert(submission.data.ssn.toString() !== submissions[2].data.ssn);
-        assert(submission.data.secret.toString() !== submissions[2].data.secret);
-        assert(submission.data.datagrid[0].c.toString() !== submissions[2].data.datagrid[0].c);
-        assert(submission.data.datagrid[1].c.toString() !== submissions[2].data.datagrid[1].c);
-        done();
       });
-    });
 
-    it('Updating the submission should not double encrypt.', (done) => {
-      submissions[2].data.ssn = '456-78-9012';
-      submissions[2].data.datagrid[1].c = 'privateUpdated';
-      helper.updateSubmission(submissions[2], (err, sub) => {
-        if (err) {
-          return done(err);
-        }
+      it('Should not be able to create a submission with certain fields encrypted.', function(done) {
+        helper.submission(`encryptedFields`, submissions[2])
+          .execute((err, response) => {
+            if (err) {
+              return done(err);
+            }
 
-        assert.equal(sub.data.ssn, submissions[2].data.ssn);
-        assert.equal(sub.data.secret, submissions[2].data.secret);
-        assert.equal(sub.data.datagrid[0].c, submissions[2].data.datagrid[0].c);
-        assert.equal(sub.data.datagrid[1].c, submissions[2].data.datagrid[1].c);
-        submissions[2] = sub;
-        return done();
-      });
-    });
-
-    it('The actual database object should be encrypted', (done) => {
-      app.formio.formio.mongoose.model('submission').findOne({
-        _id: ObjectID(submissions[2]._id)
-      }, (err, submission) => {
-        assert(submission.data.ssn.toString().length);
-        assert(submission.data.secret.toString().length);
-        assert(submission.data.datagrid[0].c.length);
-        assert(submission.data.datagrid[1].c.length);
-        assert(submission.data.ssn.toString() !== submissions[2].data.ssn);
-        assert(submission.data.secret.toString() !== submissions[2].data.secret);
-        assert(submission.data.datagrid[0].c.toString() !== submissions[2].data.datagrid[0].c);
-        assert(submission.data.datagrid[1].c.toString() !== submissions[2].data.datagrid[1].c);
-        done();
-      });
-    });
-
-    it('Should let you load the individual submission and show unencrypted.', (done) => {
-      request(app)
-        .get(hook.alter(`url`, `/form/${tempForm._id}/submission/${submissions[2]._id}`, template))
-        .set(`x-jwt-token`, template.formio.owner.token)
-        .expect(200)
-        .end((err, res) => {
-          if (err) {
-            return done(err);
-          }
-
-          assert.equal(res.body.data.ssn, submissions[2].data.ssn);
-          assert.equal(res.body.data.secret, submissions[2].data.secret);
-          assert.equal(res.body.data.datagrid[0].c, submissions[2].data.datagrid[0].c);
-          assert.equal(res.body.data.datagrid[1].c, submissions[2].data.datagrid[1].c);
-          return done();
-        });
-    });
-
-    it('Should create a new submission that gets encrypted', (done) => {
-      helper.submission(`encryptedFields`, submissions[3])
-        .execute((err, response) => {
-          if (err) {
-            return done(err);
-          }
-
-          submissions[3] = response.getLastSubmission();
-
-          // Make sure the response shows that it is decrypted.
-          assert.equal(submissions[3].data.ssn, '999-33-2222');
-          assert.equal(submissions[3].data.secret, 'this is super secret!!! do not tell anyone!');
-          assert.equal(submissions[3].data.datagrid[0].c, 'hush!');
-          assert.equal(submissions[3].data.datagrid[1].c, 'you should not see this!');
-          return done();
-        });
-    });
-
-    it('The actual database object should be encrypted', (done) => {
-      app.formio.formio.mongoose.model('submission').findOne({
-        _id: ObjectID(submissions[3]._id)
-      }, (err, submission) => {
-        assert(submission.data.ssn.toString().length);
-        assert(submission.data.secret.toString().length);
-        assert(submission.data.datagrid[0].c.length);
-        assert(submission.data.datagrid[1].c.length);
-        assert(submission.data.ssn.toString() !== submissions[3].data.ssn);
-        assert(submission.data.secret.toString() !== submissions[3].data.secret);
-        assert(submission.data.datagrid[0].c.toString() !== submissions[3].data.datagrid[0].c);
-        assert(submission.data.datagrid[1].c.toString() !== submissions[3].data.datagrid[1].c);
-        done();
-      });
-    });
-
-    it('Should let you load the individual submission and show unencrypted.', (done) => {
-      request(app)
-        .get(hook.alter(`url`, `/form/${tempForm._id}/submission/${submissions[3]._id}`, template))
-        .set(`x-jwt-token`, template.formio.owner.token)
-        .expect(200)
-        .end((err, res) => {
-          if (err) {
-            return done(err);
-          }
-
-          assert.equal(res.body.data.ssn, submissions[3].data.ssn);
-          assert.equal(res.body.data.secret, submissions[3].data.secret);
-          assert.equal(res.body.data.datagrid[0].c, submissions[3].data.datagrid[0].c);
-          assert.equal(res.body.data.datagrid[1].c, submissions[3].data.datagrid[1].c);
-          return done();
-        });
-    });
-
-    it('Should fetch a full index and decrypt all items', (done) => {
-      request(app)
-        .get(hook.alter(`url`, `/form/${tempForm._id}/submission?sort=created`, template))
-        .set(`x-jwt-token`, template.formio.owner.token)
-        .expect(200)
-        .end((err, res) => {
-          if (err) {
-            return done(err);
-          }
-
-          assert.equal(res.body.length, submissions.length);
-          _each(submissions, (submission, index) => {
-            assert.equal(res.body[index].data.ssn, submission.data.ssn);
-            assert.equal(res.body[index].data.secret, submission.data.secret);
-            assert.equal(res.body[index].data.datagrid[0].c, submission.data.datagrid[0].c);
-            assert.equal(res.body[index].data.datagrid[1].c, submission.data.datagrid[1].c);
+            submissions[2] = response.getLastSubmission();
+            // Make sure the response does not allow encryption for anything other than commercial plans.
+            assert.equal(submissions[2].data.ssn, 'Encryption requires Enterprise Plan');
+            assert.equal(submissions[2].data.secret, 'Encryption requires Enterprise Plan');
+            assert.equal(submissions[2].data.datagrid[0].c, 'Encryption requires Enterprise Plan');
+            assert.equal(submissions[2].data.datagrid[1].c, 'Encryption requires Enterprise Plan');
+            return done();
           });
+      });
+
+      it('Should not decrypt for anything other than commercial plan.', (done) => {
+        request(app)
+          .get(hook.alter(`url`, `/form/${tempForm._id}/submission/${submissions[2]._id}`, template))
+          .set(`x-jwt-token`, template.formio.owner.token)
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            assert.equal(res.body.data.ssn, 'Encryption requires Enterprise Plan');
+            assert.equal(res.body.data.secret, 'Encryption requires Enterprise Plan');
+            assert.equal(res.body.data.datagrid[0].c, 'Encryption requires Enterprise Plan');
+            assert.equal(res.body.data.datagrid[1].c, 'Encryption requires Enterprise Plan');
+            return done();
+          });
+      });
+
+      it('Should upgrade the project to "commercial"', (done) => {
+        request(app)
+          .post('/project/' + helper.template.project._id + '/upgrade')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({plan: 'commercial'})
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            done();
+          });
+      });
+
+      it('Should let you load the individual submission and show unencrypted.', (done) => {
+        request(app)
+          .get(hook.alter(`url`, `/form/${tempForm._id}/submission/${submissions[2]._id}`, template))
+          .set(`x-jwt-token`, template.formio.owner.token)
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            submissions[2] = res.body;
+            assert.equal(res.body.data.ssn, '123-23-2345');
+            assert.equal(res.body.data.secret, 'sshhhhhhh');
+            assert.equal(res.body.data.datagrid[0].c, 'private');
+            assert.equal(res.body.data.datagrid[1].c, 'private2');
+            return done();
+          });
+      });
+
+      it('Should be able to still get the unencrypted fields', (done) => {
+        request(app)
+          .get(hook.alter(`url`, `/form/${tempForm._id}/submission/${submissions[0]._id}`, template))
+          .set(`x-jwt-token`, template.formio.owner.token)
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            assert.equal(res.body.data.ssn, submissions[0].data.ssn);
+            assert.equal(res.body.data.secret, submissions[0].data.secret);
+            assert.equal(res.body.data.datagrid[0].c, submissions[0].data.datagrid[0].c);
+            assert.equal(res.body.data.datagrid[1].c, submissions[0].data.datagrid[1].c);
+            return done();
+          });
+      });
+
+      it('The actual database object should be encrypted', (done) => {
+        app.formio.formio.mongoose.model('submission').findOne({
+          _id: ObjectID(submissions[2]._id)
+        }, (err, submission) => {
+          assert(submission.data.ssn.toString().length);
+          assert(submission.data.secret.toString().length);
+          assert(submission.data.datagrid[0].c.length);
+          assert(submission.data.datagrid[1].c.length);
+          assert(submission.data.ssn.toString() !== submissions[2].data.ssn);
+          assert(submission.data.secret.toString() !== submissions[2].data.secret);
+          assert(submission.data.datagrid[0].c.toString() !== submissions[2].data.datagrid[0].c);
+          assert(submission.data.datagrid[1].c.toString() !== submissions[2].data.datagrid[1].c);
+          done();
+        });
+      });
+
+      it('Updating the submission should not double encrypt.', (done) => {
+        submissions[2].data.ssn = '456-78-9012';
+        submissions[2].data.datagrid[1].c = 'privateUpdated';
+        helper.updateSubmission(submissions[2], (err, sub) => {
+          if (err) {
+            return done(err);
+          }
+
+          assert.equal(sub.data.ssn, submissions[2].data.ssn);
+          assert.equal(sub.data.secret, submissions[2].data.secret);
+          assert.equal(sub.data.datagrid[0].c, submissions[2].data.datagrid[0].c);
+          assert.equal(sub.data.datagrid[1].c, submissions[2].data.datagrid[1].c);
+          submissions[2] = sub;
           return done();
         });
-    });
+      });
 
-    it('Should downgrade the project to "trial"', (done) => {
-      app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
-        if (err) return done(err);
+      it('The actual database object should be encrypted', (done) => {
+        app.formio.formio.mongoose.model('submission').findOne({
+          _id: ObjectID(submissions[2]._id)
+        }, (err, submission) => {
+          assert(submission.data.ssn.toString().length);
+          assert(submission.data.secret.toString().length);
+          assert(submission.data.datagrid[0].c.length);
+          assert(submission.data.datagrid[1].c.length);
+          assert(submission.data.ssn.toString() !== submissions[2].data.ssn);
+          assert(submission.data.secret.toString() !== submissions[2].data.secret);
+          assert(submission.data.datagrid[0].c.toString() !== submissions[2].data.datagrid[0].c);
+          assert(submission.data.datagrid[1].c.toString() !== submissions[2].data.datagrid[1].c);
+          done();
+        });
+      });
 
-        app.formio.formio.resources.submission.model.findOne({
-          'data.licenseKeys.key': project.settings.licenseKey,
-        }, function(err, sub) {
+      it('Should let you load the individual submission and show unencrypted.', (done) => {
+        request(app)
+          .get(hook.alter(`url`, `/form/${tempForm._id}/submission/${submissions[2]._id}`, template))
+          .set(`x-jwt-token`, template.formio.owner.token)
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            assert.equal(res.body.data.ssn, submissions[2].data.ssn);
+            assert.equal(res.body.data.secret, submissions[2].data.secret);
+            assert.equal(res.body.data.datagrid[0].c, submissions[2].data.datagrid[0].c);
+            assert.equal(res.body.data.datagrid[1].c, submissions[2].data.datagrid[1].c);
+            return done();
+          });
+      });
+
+      it('Should create a new submission that gets encrypted', (done) => {
+        helper.submission(`encryptedFields`, submissions[3])
+          .execute((err, response) => {
+            if (err) {
+              return done(err);
+            }
+
+            submissions[3] = response.getLastSubmission();
+
+            // Make sure the response shows that it is decrypted.
+            assert.equal(submissions[3].data.ssn, '999-33-2222');
+            assert.equal(submissions[3].data.secret, 'this is super secret!!! do not tell anyone!');
+            assert.equal(submissions[3].data.datagrid[0].c, 'hush!');
+            assert.equal(submissions[3].data.datagrid[1].c, 'you should not see this!');
+            return done();
+          });
+      });
+
+      it('The actual database object should be encrypted', (done) => {
+        app.formio.formio.mongoose.model('submission').findOne({
+          _id: ObjectID(submissions[3]._id)
+        }, (err, submission) => {
+          assert(submission.data.ssn.toString().length);
+          assert(submission.data.secret.toString().length);
+          assert(submission.data.datagrid[0].c.length);
+          assert(submission.data.datagrid[1].c.length);
+          assert(submission.data.ssn.toString() !== submissions[3].data.ssn);
+          assert(submission.data.secret.toString() !== submissions[3].data.secret);
+          assert(submission.data.datagrid[0].c.toString() !== submissions[3].data.datagrid[0].c);
+          assert(submission.data.datagrid[1].c.toString() !== submissions[3].data.datagrid[1].c);
+          done();
+        });
+      });
+
+      it('Should let you load the individual submission and show unencrypted.', (done) => {
+        request(app)
+          .get(hook.alter(`url`, `/form/${tempForm._id}/submission/${submissions[3]._id}`, template))
+          .set(`x-jwt-token`, template.formio.owner.token)
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            assert.equal(res.body.data.ssn, submissions[3].data.ssn);
+            assert.equal(res.body.data.secret, submissions[3].data.secret);
+            assert.equal(res.body.data.datagrid[0].c, submissions[3].data.datagrid[0].c);
+            assert.equal(res.body.data.datagrid[1].c, submissions[3].data.datagrid[1].c);
+            return done();
+          });
+      });
+
+      it('Should fetch a full index and decrypt all items', (done) => {
+        request(app)
+          .get(hook.alter(`url`, `/form/${tempForm._id}/submission?sort=created`, template))
+          .set(`x-jwt-token`, template.formio.owner.token)
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            assert.equal(res.body.length, submissions.length);
+            _each(submissions, (submission, index) => {
+              assert.equal(res.body[index].data.ssn, submission.data.ssn);
+              assert.equal(res.body[index].data.secret, submission.data.secret);
+              assert.equal(res.body[index].data.datagrid[0].c, submission.data.datagrid[0].c);
+              assert.equal(res.body[index].data.datagrid[1].c, submission.data.datagrid[1].c);
+            });
+            return done();
+          });
+      });
+
+      it('Should downgrade the project to "trial"', (done) => {
+        app.formio.formio.resources.project.model.findOne({_id: template.project._id, deleted: {$eq: null}}, function(err, project) {
           if (err) return done(err);
 
-          if (sub) {
-            sub.data = {
-              ...sub.data,
-              plan: 'trial',
-            };
-          }
-
-          sub.markModified('data');
-          sub.save(function(err) {
+          app.formio.formio.resources.submission.model.findOne({
+            'data.licenseKeys.key': project.settings.licenseKey,
+          }, function(err, sub) {
             if (err) return done(err);
 
-            project.plan = 'trial';
-            project.save(function(err) {
-              if (err) {
-                return done(err);
-              }
-              cache.loadCache.set(project.toObject());
-              done();
+            if (sub) {
+              sub.data = {
+                ...sub.data,
+                plan: 'trial',
+              };
+            }
+
+            sub.markModified('data');
+            sub.save(function(err) {
+              if (err) return done(err);
+
+              project.plan = 'trial';
+              project.save(function(err) {
+                if (err) {
+                  return done(err);
+                }
+                cache.loadCache.set(project.toObject());
+                done();
+              });
             });
           });
         });
       });
-    });
+    }
   });
 };

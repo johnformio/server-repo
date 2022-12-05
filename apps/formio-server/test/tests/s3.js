@@ -8,6 +8,7 @@ var AWS = require('aws-sdk');
 var docker = process.env.DOCKER;
 var customer = process.env.CUSTOMER;
 var _ = require('lodash');
+const config = require('../../config');
 
 module.exports = function(app, template, hook) {
   describe('S3 Tests', function() {
@@ -43,47 +44,49 @@ module.exports = function(app, template, hook) {
           password: 'password'
         };
 
-        it('A project on the basic plan can not set S3 settings', function(done) {
-          request(app)
-            .put('/project/' + template.project._id)
-            .set('x-jwt-token', template.formio.owner.token)
-            .send({
-              settings: {
-                cors: '*',
-                storage: {
-                  s3: {
-                    AWSAccessKeyId: 'abcdefghijklmnop',
-                    AWSSecretKey: 'jsd09u04j0f9sue0f9j34wesd',
-                    bucket: 'testbucket',
-                    bucketUrl: 'https://testbucket.aws.amazon.com/',
-                    startsWith: 'upload/',
-                    acl: 'private',
-                    maxSize: 100 * 1024 * 1024,
-                    expiration: 15 * 60
+        if (config.formio.hosted) {
+          it('A project on the basic plan can not set S3 settings', function(done) {
+            request(app)
+              .put('/project/' + template.project._id)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                settings: {
+                  cors: '*',
+                  storage: {
+                    s3: {
+                      AWSAccessKeyId: 'abcdefghijklmnop',
+                      AWSSecretKey: 'jsd09u04j0f9sue0f9j34wesd',
+                      bucket: 'testbucket',
+                      bucketUrl: 'https://testbucket.aws.amazon.com/',
+                      startsWith: 'upload/',
+                      acl: 'private',
+                      maxSize: 100 * 1024 * 1024,
+                      expiration: 15 * 60
+                    }
                   }
                 }
-              }
-            })
-            .expect('Content-Type', /json/)
-            .expect(200)
-            .end(function(err, res) {
-              if (err) {
-                return done(err);
-              }
+              })
+              .expect('Content-Type', /json/)
+              .expect(200)
+              .end(function(err, res) {
+                if (err) {
+                  return done(err);
+                }
 
-              var response = res.body;
-              assert.equal(response.plan, 'basic');
-              assert.equal(response.hasOwnProperty('settings'), true);
-              assert.deepEqual(_.omit(response.settings, ['licenseKey']), {cors: '*'});
+                var response = res.body;
+                assert.equal(response.plan, 'basic');
+                assert.equal(response.hasOwnProperty('settings'), true);
+                assert.deepEqual(_.omit(response.settings, ['licenseKey']), {cors: '*'});
 
-              template.project = response;
+                template.project = response;
 
-              // Store the JWT for future API calls.
-              template.formio.owner.token = res.headers['x-jwt-token'];
+                // Store the JWT for future API calls.
+                template.formio.owner.token = res.headers['x-jwt-token'];
 
-              done();
-            });
-        });
+                done();
+              });
+          });
+        }
 
         it('Registers an authenticated user', function(done)  {
           request(app)
@@ -291,47 +294,49 @@ module.exports = function(app, template, hook) {
           password: 'password'
         };
 
-        it('A project on the independent plan can not set S3 settings', function(done) {
-          request(app)
-            .put('/project/' + template.project._id)
-            .set('x-jwt-token', template.formio.owner.token)
-            .send({
-              settings: {
-                cors: '*',
-                storage: {
-                  s3: {
-                    AWSAccessKeyId: 'abcdefghijklmnop',
-                    AWSSecretKey: 'jsd09u04j0f9sue0f9j34wesd',
-                    bucket: 'testbucket',
-                    bucketUrl: 'https://testbucket.aws.amazon.com/',
-                    startsWith: 'upload/',
-                    acl: 'private',
-                    maxSize: 100 * 1024 * 1024,
-                    expiration: 15 * 60
+        if (config.formio.hosted) {
+          it('A project on the independent plan can not set S3 settings', function(done) {
+            request(app)
+              .put('/project/' + template.project._id)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                settings: {
+                  cors: '*',
+                  storage: {
+                    s3: {
+                      AWSAccessKeyId: 'abcdefghijklmnop',
+                      AWSSecretKey: 'jsd09u04j0f9sue0f9j34wesd',
+                      bucket: 'testbucket',
+                      bucketUrl: 'https://testbucket.aws.amazon.com/',
+                      startsWith: 'upload/',
+                      acl: 'private',
+                      maxSize: 100 * 1024 * 1024,
+                      expiration: 15 * 60
+                    }
                   }
                 }
-              }
-            })
-            .expect('Content-Type', /json/)
-            .expect(200)
-            .end(function(err, res) {
-              if (err) {
-                return done(err);
-              }
+              })
+              .expect('Content-Type', /json/)
+              .expect(200)
+              .end(function(err, res) {
+                if (err) {
+                  return done(err);
+                }
 
-              var response = res.body;
-              assert.equal(response.plan, 'independent');
-              assert.equal(response.hasOwnProperty('settings'), true);
-              assert.deepEqual(_.omit(response.settings, ['licenseKey']), {cors: '*'});
+                var response = res.body;
+                assert.equal(response.plan, 'independent');
+                assert.equal(response.hasOwnProperty('settings'), true);
+                assert.deepEqual(_.omit(response.settings, ['licenseKey']), {cors: '*'});
 
-              template.project = response;
+                template.project = response;
 
-              // Store the JWT for future API calls.
-              template.formio.owner.token = res.headers['x-jwt-token'];
+                // Store the JWT for future API calls.
+                template.formio.owner.token = res.headers['x-jwt-token'];
 
-              done();
-            });
-        });
+                done();
+              });
+          });
+        }
 
         it('Registers an authenticated user', function(done)  {
           request(app)
@@ -441,29 +446,31 @@ module.exports = function(app, template, hook) {
       });
 
       describe('S3', function() {
-        it('A project on the independent plan can not access s3 signing', function(done) {
-          var file = {
-            name: 'myfile.doc',
-            type: 'application/document',
-            size: '10001'
-          };
+        if (config.formio.hosted) {
+          it('A project on the independent plan can not access s3 signing', function(done) {
+            var file = {
+              name: 'myfile.doc',
+              type: 'application/document',
+              size: '10001'
+            };
 
-          request(app)
-            .post('/project/' + template.project._id + '/form/' + template.forms.uploadForm._id + '/storage/s3')
-            .set('x-jwt-token', template.users.tempUser.token)
-            .send(file)
-            .expect(402)
-            .expect('Content-Type', /text/)
-            .end(function(err, res) {
-              if (err) {
-                return done(err);
-              }
+            request(app)
+              .post('/project/' + template.project._id + '/form/' + template.forms.uploadForm._id + '/storage/s3')
+              .set('x-jwt-token', template.users.tempUser.token)
+              .send(file)
+              .expect(402)
+              .expect('Content-Type', /text/)
+              .end(function(err, res) {
+                if (err) {
+                  return done(err);
+                }
 
-              template.users.tempUser.token = res.headers['x-jwt-token'];
+                template.users.tempUser.token = res.headers['x-jwt-token'];
 
-              done();
-            });
-        });
+                done();
+              });
+          });
+        }
       });
 
       describe('S3 teardown', function() {

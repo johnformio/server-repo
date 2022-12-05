@@ -6,6 +6,7 @@ var _ = require('lodash');
 var chance = new (require('chance'))();
 var sinon = require('sinon');
 var docker = process.env.DOCKER;
+const config = require('../../config');
 
 module.exports = function(app, template, hook) {
   if (docker) {
@@ -46,14 +47,16 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      it('Set to team plan', done => {
-        request(app)
-          .post(`/project/${  project._id  }/upgrade`)
-          .set('x-jwt-token', template.env.owner.token)
-          .send({plan: 'commercial'})
-          .expect(200)
-          .end(done);
-      });
+      if (config.formio.hosted) {
+        it('Set to team plan', done => {
+          request(app)
+            .post(`/project/${  project._id  }/upgrade`)
+            .set('x-jwt-token', template.env.owner.token)
+            .send({plan: 'commercial'})
+            .expect(200)
+            .end(done);
+        });
+      }
 
       it('A Project Owner should be able to add one of their teams to have access with the team_admin permission', done => {
         const teamAccess = {type: 'team_admin', roles: [template.env.teams.team1._id]};
@@ -581,6 +584,9 @@ module.exports = function(app, template, hook) {
     });
 
     describe('Plan Access', () => {
+      if (!config.formio.hosted) {
+        return;
+      }
       it('Set to basic plan', done => {
         request(app)
           .post(`/project/${  project._id  }/upgrade`)

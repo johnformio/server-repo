@@ -95,7 +95,7 @@ module.exports = function(app) {
         return false;
       },
       audit(args, event, req) {
-        if (!app.formio.formio.config.audit || !_.get(app, 'license.terms.options.sac', false)) {
+        if (!app.formio.formio.config.audit || !_.get(app, 'license.terms.options.sac', false) || process.env.TEST_SUITE) {
           return false;
         }
         args.unshift(new Date());

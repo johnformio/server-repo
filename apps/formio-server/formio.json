@@ -1518,6 +1518,46 @@
         },
         {
           "input": true,
+          "tableView": false,
+          "key": "transactionId",
+          "label": "Transaction ID",
+          "protected": true,
+          "unique": false,
+          "persistent": true,
+          "type": "hidden"
+        },
+        {
+          "input": true,
+          "tableView": false,
+          "key": "transactionStatus",
+          "label": "Transaction Status",
+          "protected": true,
+          "unique": false,
+          "persistent": true,
+          "type": "hidden"
+        },
+        {
+          "input": true,
+          "tableView": false,
+          "key": "validationStatus",
+          "label": "Validation Status",
+          "protected": true,
+          "unique": false,
+          "persistent": true,
+          "type": "hidden"
+        },
+        {
+          "input": true,
+          "tableView": false,
+          "key": "correlationId",
+          "label": "Correlation ID",
+          "protected": true,
+          "unique": false,
+          "persistent": true,
+          "type": "hidden"
+        },
+        {
+          "input": true,
           "tableView": true,
           "inputType": "text",
           "inputMask": "",

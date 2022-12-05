@@ -103,13 +103,14 @@ module.exports = function(app) {
       const hasSacPackage =
         _.get(req.projectLicense, 'terms.options.sac', false) ||
         _.get(app, 'license.terms.options.sac', false);
-      const hasSubmissionCollection = _.get(form, 'settings.collection', false);
+      const hasSubmissionCollection = _.get(req.body, 'settings.collection', false) || _.get(form, 'settings.collection', false);
 
       validateFormAgainstSacPackage(hasSubmissionCollection, hasSacPackage, submissionModel);
 
       const indexesToCreate = [];
       const indexesToPotentiallyDrop = [];
-      formio.util.eachComponent(req.body.components, (component, path) => {
+      const components = _.get(req.body, 'components') || _.get(form, 'components', []);
+      formio.util.eachComponent(components, (component, path) => {
         validateComponentAgainstSacPackage(
           component,
           path,

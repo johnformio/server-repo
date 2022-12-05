@@ -3,10 +3,21 @@
 
 const request = require("supertest");
 const assert = require("assert");
+const license = require("../../src/util/license");
+const config = require("../../config");
 const getSubmissionModel = require("../../src/util/util").getSubmissionModel;
 
 module.exports = function (app, template, hook) {
   describe("S+C license", function () {
+    const projectTemplate = {
+      title: "S+C Test Project",
+      name: "sacTestProject",
+      type: "project",
+      plan: "commercial",
+      formDefaults: null,
+      settings: {
+      },
+    };
     const resourceTemplate = {
       display: "form",
       type: "resource",
@@ -32,13 +43,14 @@ module.exports = function (app, template, hook) {
     describe("S+C license is not set", function () {
       before(() => {
         process.env.ADMIN_KEY = "examplekey";
+        app.license = {terms : {options : {sac : false}}};
       });
 
       it("Should create the project from template", (done) => {
         request(app)
           .post("/project")
           .set("x-admin-key", process.env.ADMIN_KEY)
-          .send(template)
+          .send(projectTemplate)
           .expect(201)
           .expect("Content-Type", /json/)
           .end((err, res) => {
@@ -205,6 +217,33 @@ module.exports = function (app, template, hook) {
         process.env.ADMIN_KEY = "examplekey";
       });
 
+      if (config.formio.hosted) {
+        it("Hosted projects should NOT be able to create a resource with a submission collection", function (done) {
+          request(app)
+            .post(`/project/${project._id}/form/`)
+            .set("x-admin-key", process.env.ADMIN_KEY)
+            .send({
+              ...resourceTemplate,
+              title: "testResource1",
+              name: "testResource1",
+              path: "testResource1",
+              settings: {
+                collection: "textField",
+              },
+            })
+            .expect(403)
+            .end(function (err, res) {
+              if (err) {
+                return done(err);
+              }
+              assert.equal(res.text, `Your project cannot be configured for Submission Collections`);
+              done()
+            });
+        });
+
+        return;
+      }
+
       it("Should not be able to create resource with index without a submission collection", function (done) {
         request(app)
           .post(`/project/${project._id}/form`)
@@ -262,7 +301,7 @@ module.exports = function (app, template, hook) {
                 if (err) {
                   done(err);
                 }
-                assert.equal(model.collection.name, "default_textField");
+                assert.equal(model.collection.name, "sacTestProject_textField");
                 done();
               }
             );
@@ -293,7 +332,7 @@ module.exports = function (app, template, hook) {
                 if (err) {
                   done(err);
                 }
-                assert.equal(model.collection.name, "default_textFieldNew");
+                assert.equal(model.collection.name, "sacTestProject_textFieldNew");
                 done();
               }
             );
