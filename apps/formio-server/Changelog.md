@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased: 8.1.0-rc.1]
 ### Changed
  - Increment minor version.
+ - FIO-5653: Get test suite in a runnable state
 
 ### Fixed
  - FIO-5529: uid and uidNumber added into whitelist
