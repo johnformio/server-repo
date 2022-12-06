@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-5536: ldap users regular teams
  - FIO-5880: prevent server crash sso teams
  - FIO-5862: removed unnecessary updates
+ - pdf server proxy added
 
 ## 8.0.0-rc.18
 ### Changed
