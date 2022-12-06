@@ -251,7 +251,7 @@ const Utils = {
       }, data);
     }
 
-    return Array.isArray(data) ? data.map(item => item[path]) : data[path];
+    return Array.isArray(data) ? data.map(item => _.get(item, path)) : _.get(data, path);
   },
 };
 
