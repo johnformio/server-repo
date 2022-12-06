@@ -203,6 +203,9 @@ module.exports = function(options) {
   // Attach the formio-server config.
   app.formio.config = _.omit(config, 'formio');
 
+  // Mount PDF server proxy
+  app.use('/pdf-proxy', require('./src/middleware/pdfProxy')(app.formio.formio));
+
   // Import the OAuth providers
   debug.startup('Attaching middleware: OAuth Providers');
   app.formio.formio.oauth = require('./src/oauth/oauth')(app.formio.formio);
