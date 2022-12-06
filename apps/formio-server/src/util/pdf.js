@@ -10,7 +10,8 @@ module.exports = {
     else {
       localServer = PDF_SERVER;
       if (localServer === 'http://pdf-server:4005') {
-        localServer = `${project.settings.appOrigin}/pdf`;
+        const appOrigin = project.settings && project.settings.appOrigin ? project.settings.appOrigin : '';
+        localServer = `${appOrigin}/pdf`;
       }
       else if (!localServer) {
         throw Error('PDF server is not configured');
