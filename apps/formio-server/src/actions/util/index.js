@@ -40,9 +40,10 @@ module.exports = {
      * @returns {Promise} A promise that resolves to the response body or an empty object (if we're ignoring the repsonse body)
      */
   processWebhookResponseBody(response, isDeleteRequest) {
+    // TODO: ascertain whether below concern about delete requests (FOR-2722) is warranted here, this function should be
+    // integrated with the parseUnkownContentResponse util
     let bodyPromise = {};
 
-    // TODO: Should we consider what happens if Content-Length is unset/stripped by the 3rd party API? Might cause issues b/c Number(null) === 0
     const contentType = response.headers.get("content-type");
     const contentLength = Number(response.headers.get("content-length"));
 
