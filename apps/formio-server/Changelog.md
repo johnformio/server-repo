@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-5862: removed unnecessary updates
  - pdf server proxy added
  - FIO-5768: fixed an issue where emails are not sent for wizard forms with hidden page with nested file component on it
+ - FIO-6055: fix regression in SaC Submission Collection behavior
 
 ## 8.0.0-rc.18
 ### Changed
