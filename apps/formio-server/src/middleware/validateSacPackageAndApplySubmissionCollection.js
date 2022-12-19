@@ -41,7 +41,14 @@ module.exports = function(app) {
   const getCurrentForm = async (req) => {
     try {
       const form = await getCurrentFormFromCache(req);
-      return form;
+      return {
+        ...form,
+        settings: req.body.settings ? {
+          ...form.settings,
+          ...req.body.settings
+        } : form.settings,
+        components: req.body.components ? req.body.components : form.components,
+      };
     }
     catch (err) {
       return req.body;
@@ -103,14 +110,13 @@ module.exports = function(app) {
       const hasSacPackage =
         _.get(req.projectLicense, 'terms.options.sac', false) ||
         _.get(app, 'license.terms.options.sac', false);
-      const hasSubmissionCollection = _.get(req.body, 'settings.collection', false) || _.get(form, 'settings.collection', false);
+      const hasSubmissionCollection = _.get(form, 'settings.collection', false);
 
       validateFormAgainstSacPackage(hasSubmissionCollection, hasSacPackage, submissionModel);
 
       const indexesToCreate = [];
       const indexesToPotentiallyDrop = [];
-      const components = _.get(req.body, 'components') || _.get(form, 'components', []);
-      formio.util.eachComponent(components, (component, path) => {
+      formio.util.eachComponent(form.components, (component, path) => {
         validateComponentAgainstSacPackage(
           component,
           path,
