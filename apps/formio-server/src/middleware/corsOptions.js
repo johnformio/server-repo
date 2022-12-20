@@ -75,19 +75,19 @@ module.exports = function(router) {
       }
 
       settings = settings || {};
-      const domain = settings.portalDomain || '';
+      if (settings.portalDomain) {
+        whitelist.push(settings.portalDomain);
+      }
 
       // Build the list of supported domains.
       const cors = settings.cors || '*';
       whitelist = whitelist.concat(cors.split(/[\s,]+/));
 
-      if (domain) {
-        whitelist.push(domain);
-      }
-
       // Support * for domain name.
       if (whitelist.indexOf('*') !== -1) {
-        return callback(null, pass);
+        return callback(null, {
+          origin: '*'
+        });
       }
 
       if (whitelist.indexOf(req.header('Origin')) !== -1) {
