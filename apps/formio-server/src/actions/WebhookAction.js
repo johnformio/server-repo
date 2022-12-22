@@ -487,6 +487,7 @@ module.exports = (router) => {
         // Use either the method specified in settings or the request method.
         const reqMethod = (settings.method || req.method).toLowerCase();
         options.method = reqMethod;
+        options.rejectUnauthorized = false;
 
         setActionItemMessage('Attempting webhook', {
           method: reqMethod,
