@@ -6,10 +6,40 @@ const _ = require('lodash');
 const {SAML} = require('node-saml');
 const {MetadataReader, toPassportConfig} = require('passport-saml-metadata');
 const xss = require("xss");
+const {getConfig} = require("../../config");
+const fs = require("fs");
+const path = require('path');
 
 module.exports = (formioServer) => {
   const formio = formioServer.formio;
   const config = formioServer.config;
+
+  const parseSAMLPassportSettings = (settings) => {
+    const pathToDecryptionPrivateKey = getConfig("SAML_PASSPORT_DECRYPTION_PVK_PATH", null);
+    const pathToPrivateKey = getConfig("SAML_PASSPORT_PRIVATE_KEY_PATH", null);
+    const samlPassportConfig = (typeof settings.passport === 'string') ? JSON.parse(settings.passport) : settings.passport;
+    if (!samlPassportConfig.callbackUrl && settings.callbackUrl) {
+      samlPassportConfig.callbackUrl = settings.callbackUrl;
+    }
+
+    if (pathToDecryptionPrivateKey) {
+      if (!path.isAbsolute(pathToDecryptionPrivateKey)) {
+        debug('ERROR: SAML_PASSPORT_DECRYPTION_PVK_PATH does not support relative paths, falling back to SAML passport settings JSON...');
+      }
+      else {
+        samlPassportConfig.decryptionPvk = fs.readFileSync(pathToDecryptionPrivateKey, 'utf-8');
+      }
+    }
+    if (pathToPrivateKey) {
+      if (!path.isAbsolute(pathToPrivateKey)) {
+        debug('SAML_PASSPORT_PRIVATE_KEY_PATH does not support relative paths, falling back to SAML passport settings JSON...');
+      }
+      else {
+        samlPassportConfig.privateKey = fs.readFileSync(pathToPrivateKey, 'utf-8');
+      }
+    }
+    return samlPassportConfig;
+  };
 
   // Get the SAML providers for this project.
   const getSAMLProviders = function(req) {
@@ -49,10 +79,7 @@ module.exports = (formioServer) => {
           let config = null;
           try {
             if (settings.passport) {
-              config = (typeof settings.passport === 'string') ? JSON.parse(settings.passport) : settings.passport;
-              if (!config.callbackUrl && settings.callbackUrl) {
-                config.callbackUrl = settings.callbackUrl;
-              }
+              config = parseSAMLPassportSettings(settings);
             }
             else if (settings.idp) {
               config = toPassportConfig(new MetadataReader(settings.idp));
@@ -61,7 +88,8 @@ module.exports = (formioServer) => {
             }
           }
           catch (err) {
-            // Do nothing.
+            // We'll log that an error occurred but not the error object in case it has sensitive project settings (e.g. private keys)
+            debug("Error while parsing SAML settings");
           }
           if (!config) {
             return reject('Invalid SAML Configuration');

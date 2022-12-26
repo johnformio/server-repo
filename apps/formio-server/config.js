@@ -395,6 +395,11 @@ sanitized.formio = _.pick(_.clone(config.formio), debugFormioConfigVars);
 
 config.maxBodySize = getConfig('MAX_BODY_SIZE', '25mb');
 
+// Add the getConfig function to the config object so we can get at secrets/environment variables that we don't
+// necessarily want to store in the global-ish config object (mainly we just want to support docker secrets along
+// with process.env)
+config.getConfig = getConfig;
+
 // Only output sanitized data.
 debug.config(sanitized);
 module.exports = config;
