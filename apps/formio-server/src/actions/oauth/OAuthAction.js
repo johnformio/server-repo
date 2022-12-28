@@ -810,7 +810,8 @@ module.exports = router => {
                     authURI: oauthSettings.authURI || provider.authURI,
                     redirectURI: self.settings.redirectURI,
                     state: state,
-                    scope: oauthSettings.scope || provider.scope
+                    scope: oauthSettings.scope || provider.scope,
+                    logoutURI: oauthSettings.logoutURI || null,
                   };
                   if (provider.display) {
                     component.oauth.display = provider.display;
