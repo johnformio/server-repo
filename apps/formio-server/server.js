@@ -204,7 +204,17 @@ module.exports = function(options) {
   app.formio.config = _.omit(config, 'formio');
 
   // Mount PDF server proxy
-  app.use('/pdf-proxy', require('./src/middleware/pdfProxy')(app.formio.formio));
+  app.use('/pdf-proxy', [
+    app.formio.formio.middleware.tokenHandler,
+    app.formio.formio.middleware.params,
+    (req, res, next) => {
+      if (!req.user && !req.isAdmin) {
+        return res.sendStatus(401);
+      }
+      next();
+    },
+    require('./src/middleware/pdfProxy')(app.formio.formio),
+  ]);
 
   // Import the OAuth providers
   debug.startup('Attaching middleware: OAuth Providers');
