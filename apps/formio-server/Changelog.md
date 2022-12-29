@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-5768: fixed an issue where emails are not sent for wizard forms with hidden page with nested file component on it
  - FIO-6055: fix regression in SaC Submission Collection behavior
  - FIO-5850: Allow for self-signed certificates when making webhook requests.
+ - FIO-5033: fixed iframe work
 
 ## 8.0.0-rc.18
 ### Changed
