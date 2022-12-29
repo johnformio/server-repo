@@ -205,9 +205,20 @@ module.exports = function(options) {
 
   // Mount PDF server proxy
   app.use('/pdf-proxy', [
+    (req, res, next) => {
+      const regex = /^\/pdf\/[\w\d]+\/file\/[\w\d-]+\.(html|pdf)$/; // regex for '/pdf/:project/file/:file.html | pdf' path
+      if (req.method === 'GET' && regex.test(req.path)) {
+        req.bypass = true;
+        return next();
+      }
+      next();
+    },
     app.formio.formio.middleware.tokenHandler,
     app.formio.formio.middleware.params,
     (req, res, next) => {
+      if (req.bypass) {
+        return next();
+      }
       if (!req.user && !req.isAdmin) {
         return res.sendStatus(401);
       }
