@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-5653: Get test suite in a runnable state
 
 ### Fixed
+ - FIO-5033: fixed filetoken
  - FIO-5529: uid and uidNumber added into whitelist
  - FIO-5881: Removed the viewer from the alias token handler.
  - FIO-5348: clean up indexing behavior
