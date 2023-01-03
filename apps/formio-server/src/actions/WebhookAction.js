@@ -454,6 +454,28 @@ module.exports = (router) => {
           url = settings.url;
         }
 
+        const formIds = req.headers['form-ids']
+          ? req.headers['form-ids'].split(',')
+          : [];
+        const formNames = req.headers['form-names']
+          ? req.headers['form-names'].split(',')
+          : [];
+
+        if (formIds.some(id => url.includes(id))) {
+          return next();
+        }
+
+        if (formNames.some(name => url.toLowerCase().includes(name))) {
+          return next();
+        }
+
+        if (req.currentForm) {
+          formIds.push(req.currentForm._id.toString());
+          formNames.push(req.currentForm.path);
+          options.headers['form-ids'] = formIds.join(',');
+          options.headers['form-names'] = formNames.join(',');
+        }
+
         let payload = {
           request: req.body,
           // if we're in a before handler e.g., submission will be empty, so fallback to a clone of req.body to increase usability
