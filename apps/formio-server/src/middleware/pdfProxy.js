@@ -18,7 +18,7 @@ module.exports = (formio) => {
 
   router.use((req, res, next) => {
     if (config.formio.hosted) {
-      req.headers["x-file-token"] = req.currentProject.settings.token;
+      req.headers["x-file-token"] = req.currentProject.settings?.filetoken;
     }
     else {
       req.headers["x-license-key"] = process.env.LICENSE_KEY;
