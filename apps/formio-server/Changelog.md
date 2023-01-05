@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-6055: fix regression in SaC Submission Collection behavior
  - FIO-5850: Allow for self-signed certificates when making webhook requests.
  - FIO-5033: fixed iframe work
+ - FIO-5033: fixed cors for pdf-proxy
 
 ## 8.0.0-rc.18
 ### Changed
