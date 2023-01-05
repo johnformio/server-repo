@@ -682,6 +682,7 @@ module.exports = router => {
 
                     const userId = await provider.getUserId(data, req);
                     data.email = await provider.getUserEmail(data, req);
+                    data.logoutURI =  settings.logout;
                     const user = {
                       _id: formioUtil.toMongoId(userId),
                       project: req.currentProject._id.toString(),
