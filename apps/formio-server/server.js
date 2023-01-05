@@ -207,7 +207,7 @@ module.exports = function(options) {
   app.use('/pdf-proxy', [
     (req, res, next) => {
       const regex = /^\/pdf\/[\w\d]+\/file\/[\w\d-]+\.(html|pdf)$/; // regex for '/pdf/:project/file/:file.html | pdf' path
-      if (req.method === 'GET' && regex.test(req.path)) {
+      if ((req.method === 'GET' && regex.test(req.path)) || req.method === 'OPTIONS') {
         req.bypass = true;
         return next();
       }
