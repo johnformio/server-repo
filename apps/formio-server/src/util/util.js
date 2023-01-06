@@ -253,6 +253,20 @@ const Utils = {
 
     return Array.isArray(data) ? data.map(item => _.get(item, path)) : _.get(data, path);
   },
+  parseUnknownContentResponse: (response) => {
+    const contentType = response.headers.get("content-type");
+    const contentLength = Number(response.headers.get("content-length"));
+
+    if (contentLength > 0) {
+      if (contentType.includes('application/json')) {
+        return response.json();
+      }
+      else {
+        return response.text();
+      }
+    }
+    return {};
+  }
 };
 
 module.exports = Utils;

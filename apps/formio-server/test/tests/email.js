@@ -302,6 +302,64 @@ module.exports = function(app, template, hook) {
             message: '{{ data.message }}, Your auth token is token=[[token(data.email=user)]]'
           }
         })
+        .form('pdfSubmissionTest', [
+          {
+            type: 'textfield',
+            validate: {
+              custom: '',
+              pattern: '',
+              maxLength: '',
+              minLength: '',
+              required: false
+            },
+            defaultValue: '',
+            multiple: false,
+            suffix: '',
+            prefix: '',
+            placeholder: 'Enter a baseball player',
+            key: 'player',
+            label: 'Ball Player',
+            inputMask: '',
+            inputType: 'text',
+            input: true
+          },
+          {
+            type: 'textfield',
+            validate: {
+              custom: '',
+              pattern: '',
+              maxLength: '',
+              minLength: '',
+              required: false
+            },
+            defaultValue: '',
+            multiple: false,
+            suffix: '',
+            prefix: '',
+            placeholder: 'Send to',
+            key: 'sendTo',
+            label: 'Send To:',
+            inputMask: '',
+            inputType: 'text',
+            input: true
+          }
+        ])
+        .action('pdfSubmissionTest', {
+          title: 'Email',
+          name: 'email',
+          handler: ['after'],
+          method: ['create'],
+          priority: 1,
+          settings: {
+            transport: 'test',
+            from: 'travis@form.io',
+            emails: '{{ data.sendTo }}',
+            sendEach: true,
+            subject: 'Should send with no attachment if PDF submission fails',
+            message: 'Hello, world!',
+            attachPDF: true,
+          }
+        })
         .execute(done);
     });
 
@@ -570,6 +628,26 @@ module.exports = function(app, template, hook) {
           assert.equal(res.body.data.email, 'joe@example.com');
           done();
         });
+    });
+
+    it('Should silently fail to attach PDF if PDF server is not configured', function (done) {
+      let event = template.hooks.getEmitter();
+
+      event.on('newMail', (email) => {
+        assert.equal(email.to, 'joe@example.com');
+        // assert.equal(email.html.indexOf('This is amazing!, Your auth token is token='), 0);
+        event.removeAllListeners('newMail');
+        done();
+      })
+
+      emailTest.createSubmission('pdfSubmissionTest', {
+        player: 'Sammy Sosa',
+        sendTo: 'joe@example.com'
+      }, function(err) {
+        if (err) {
+          return done(err);
+        }
+      });
     });
   });
 };
