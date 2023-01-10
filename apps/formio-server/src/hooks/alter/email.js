@@ -32,11 +32,6 @@ module.exports = app => (mail, req, res, params, setActionItemMessage, cb) => {
         if (formioServer.analytics.isLimitedEmailPlan(req.primaryProject)) {
           const transport = mail.msgTransport || 'default';
           // eslint-disable-next-line max-depth
-          if (req.primaryProject.plan === 'commercial' && transport !== 'default') {
-            formioServer.analytics.recordEmail(req);
-            return;
-          }
-          // eslint-disable-next-line max-depth
           if (transport !== 'default' && transport !== 'test') {
             throw new Error('Plan limited to default transport only.');
           }
