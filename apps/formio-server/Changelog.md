@@ -36,6 +36,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-5850: Allow for self-signed certificates when making webhook requests.
  - FIO-5033: fixed iframe work
  - FIO-5033: fixed cors for pdf-proxy
+ - FIO-5688: removing email limits
+ - FIO-5911: Email action no longer naively attaches PDF server response as attachment
 
 ## 8.0.0-rc.18
 ### Changed
