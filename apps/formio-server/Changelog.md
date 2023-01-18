@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-6041: fixed delete requests with query parameters set in url
  - FIO-6001: fixed an issue where it is impossible to add button to oauth action if it is inside layout/data components
  - FIO-5991: Replace deprecated node-saml with @node-saml/node-saml dependency
+ - FIO-5941: added tests for /tag get req with x-token
 
 ## 8.0.0-rc.18
 ### Changed
