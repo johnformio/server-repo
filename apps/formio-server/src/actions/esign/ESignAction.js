@@ -184,14 +184,27 @@ module.exports = (router) => {
                     const signer = {};
                     signer['email'] = email;
                     signer['provider'] = comp.provider.name;
+
+                    let userId;
+
+                    if (redirect) {
+                        userId = req.user && req.user._id;
+
+                        if (!userId) {
+                            //create user id for anonymous user to use it in box sign
+                            const submissionModified = new Date(res.resource.item.modified).getTime();
+                            userId = `anonym-${submissionId}-${submissionModified}`;
+                        }
+                    }
+
                     if (comp.order) {
                         if (comp.order === 1 && redirect) {
-                            signer['userId'] = req.user._id;
+                            signer['userId'] = userId;
                         }
                         signer['order'] = comp.order;
                     }
                     else if (redirect) {
-                        signer['userId'] = req.user._id;
+                        signer['userId'] = userId;
                         comp.order = 1;
                     }
                     else {
