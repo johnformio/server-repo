@@ -58,6 +58,18 @@ module.exports = router => {
             Q.ninvoke(formio.cache, 'loadCurrentForm', req)
           ])
             .spread(function(availableProviders, form) {
+              const getOAuthActionButtons = () => {
+                const buttons = [];
+
+                util.eachComponent(form.components, (comp, path) => {
+                  if (comp.type === 'button' && comp.action === 'oauth') {
+                    buttons.push({...comp, path});
+                  }
+                });
+
+                return buttons;
+              };
+
               let settingForm = [
                 {
                   type: 'select',
@@ -146,12 +158,12 @@ module.exports = router => {
                   label: 'Sign-in with OAuth Button',
                   key: 'button',
                   placeholder: 'Select the button that triggers OAuth sign-in',
-                  template: '<span>{{ item.label || item.key }}</span>',
+                  template: '<span>{{ item.label || item.key }} ({{item.path}})</span>',
                   dataSrc: 'json',
                   data: {
-                    json: JSON.stringify(_.filter(form.components, {type: 'button', action: 'oauth'}))
+                    json: JSON.stringify(getOAuthActionButtons())
                   },
-                  valueProperty: 'key',
+                  valueProperty: 'path',
                   multiple: false,
                   validate: {
                     required: true
