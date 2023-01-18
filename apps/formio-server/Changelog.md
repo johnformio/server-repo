@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
  - Increment minor version.
  - FIO-5653: Get test suite in a runnable state
+ - Security upgrade jsonwebtoken from 8.5.1 to 9.0.0
 
 ### Fixed
  - FIO-5033: fixed filetoken
@@ -38,6 +39,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-5033: fixed cors for pdf-proxy
  - FIO-5688: removing email limits
  - FIO-5911: Email action no longer naively attaches PDF server response as attachment
+ - FIO-6115: fixed an issue where box sign returns an error when using interpolation for Approvers and Final Signed Copy Recipients
+ - FIO-6076: stage team permissions when upgrading stage issue fix
+ - FIO-5889: fixed limits on Usage Page
+ - FIO-6117: fixed an issue where anonymous users are not redirected to signbox webside page for signature
 
 ## 8.0.0-rc.18
 ### Changed
