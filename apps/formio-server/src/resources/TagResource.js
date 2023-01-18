@@ -69,6 +69,7 @@ module.exports = function(router, formioServer) {
         template.revisions = req.body.template.revisions;
         req.templateData = template;
 
+        req.body.template.access = [];
         delete req.body.template.forms;
         delete req.body.template.resources;
         delete req.body.template.actions;
@@ -215,6 +216,7 @@ module.exports = function(router, formioServer) {
             }
 
             const template = deploy.template;
+            template.access = [];
 
             Object.assign(template, _.pick(project, ['name', 'title', 'description', 'machineName']));
             const alters = hook.alter('templateAlters', {});
