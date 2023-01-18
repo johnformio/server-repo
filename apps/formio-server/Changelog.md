@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-6076: stage team permissions when upgrading stage issue fix
  - FIO-5889: fixed limits on Usage Page
  - FIO-6117: fixed an issue where anonymous users are not redirected to signbox webside page for signature
+ - FIO-6041: fixed delete requests with query parameters set in url
 
 ## 8.0.0-rc.18
 ### Changed
