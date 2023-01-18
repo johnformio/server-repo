@@ -3,6 +3,7 @@
 const fetch = require('formio/src/util/fetch');
 const _ = require('lodash');
 const {NodeVM, VMScript} = require('vm2');
+const parseUrl = require('url');
 
 const util = require('./util');
 
@@ -452,6 +453,15 @@ module.exports = (router) => {
         // Fall back if interpolation failed
         if (!url) {
           url = settings.url;
+        }
+
+        const parsedUrl = new URL(url);
+        const query = parsedUrl.search;
+
+        if (query) {
+         const queryParams = Object.fromEntries(new URLSearchParams(query));
+         req.params = {...req.params, ...queryParams};
+         url = url.replace(query, '');
         }
 
         const formIds = req.headers['form-ids']
