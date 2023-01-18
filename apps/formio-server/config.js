@@ -134,6 +134,7 @@ config.formio.reservedForms = [
   '2fa\/represent',
   '2fa\/turn-off',
   '2fa\/turn-on',
+  'analytics'
 ];
 /* eslint-enable no-useless-escape */
 // If it isn't allowed as a form, it isn't allowed as a project either.

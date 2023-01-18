@@ -7,6 +7,9 @@ module.exports = app => (type, formio) => {
     case 'alias':
       // Dynamically set the baseUrl.
       formio.middleware.alias.baseUrl = function(req) {
+        if (!req.projectId && req.originalUrl.match(/^\/analytics/)) {
+          return '';
+        }
         const baseUrl = `/project/${req.projectId}`;
         // Save the alias as well.
         req.pathAlias = url.parse(req.url).pathname.substr(baseUrl.length);
