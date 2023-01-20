@@ -130,6 +130,9 @@ module.exports = (router, formioServer) => {
   formio.middleware.projectPlanFilter = require('../middleware/projectPlanFilter')(formio);
   formio.middleware.projectDefaultPlan = require('../middleware/projectDefaultPlan')(formioServer);
 
+  // Load the project analytics middleware.
+  formio.middleware.projectAnalytics = require('../middleware/projectAnalytics')(formioServer);
+
   // Load the project index filter middleware.
   formio.middleware.projectIndexFilter = require('../middleware/projectIndexFilter')(formioServer);
 
@@ -171,6 +174,7 @@ module.exports = (router, formioServer) => {
     afterGet: [
       formio.middleware.filterResourcejsResponse(hiddenFields),
       formio.middleware.licenseUtilization,
+      formio.middleware.projectAnalytics,
       projectSettings,
     ],
     beforePatch: [
@@ -214,6 +218,7 @@ module.exports = (router, formioServer) => {
       formio.middleware.postCreateLicenseCheck,
       require('../middleware/projectTemplate')(formio),
       formio.middleware.filterResourcejsResponse(hiddenFields),
+      formio.middleware.projectAnalytics,
       projectSettings,
       formio.middleware.customCrmAction('newproject'),
     ],
@@ -224,6 +229,7 @@ module.exports = (router, formioServer) => {
     afterIndex: [
       formio.middleware.licenseUtilization,
       formio.middleware.filterResourcejsResponse(hiddenFields),
+      formio.middleware.projectAnalytics,
       projectSettings,
     ],
     beforePut: [
