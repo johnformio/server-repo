@@ -14,36 +14,35 @@ module.exports = (formio) => {
     if (params.pdf) {
       req.projectId = params.pdf;
     }
-    if (!req.projectId) {
-      return next('No project found');
+    if (req.projectId) {
+      loadProjectContexts(formio)(req, res, (err) => {
+        if (err) {
+          return next(err);
+        }
+        if (config.formio.hosted) {
+          // Hosted projects use the x-file-token for pdf server communication.
+          if (req.currentProject.settings && req.currentProject.settings.filetoken) {
+            req.headers["x-file-token"] = req.currentProject.settings.filetoken;
+          }
+
+          // It is a problem if the environment variable is not set in hosted. We do not want them to be able to point
+          // to arbitrary pdf servers if they are on our hosted environments.
+          if (!req.pdfServer) {
+            return next('No PDF_SERVER environment configuration.');
+          }
+        }
+        else {
+          // Set the license key header for authorization.
+          req.headers["x-license-key"] = process.env.LICENSE_KEY;
+
+          // Always use the environment variable. If it does not exist, then we can try the project settings.
+          if (!req.pdfServer && req.currentProject.settings && req.currentProject.settings.pdfserver) {
+            req.pdfServer = req.currentProject.settings.pdfserver;
+          }
+        }
+        return next();
+      });
     }
-    loadProjectContexts(formio)(req, res, (err) => {
-      if (err) {
-        return next(err);
-      }
-      if (config.formio.hosted) {
-        // Hosted projects use the x-file-token for pdf server communication.
-        if (req.currentProject.settings && req.currentProject.settings.filetoken) {
-          req.headers["x-file-token"] = req.currentProject.settings.filetoken;
-        }
-
-        // It is a problem if the environment variable is not set in hosted. We do not want them to be able to point
-        // to arbitrary pdf servers if they are on our hosted environments.
-        if (!req.pdfServer) {
-          return next('No PDF_SERVER environment configuration.');
-        }
-      }
-      else {
-        // Set the license key header for authorization.
-        req.headers["x-license-key"] = process.env.LICENSE_KEY;
-
-        // Always use the environment variable. If it does not exist, then we can try the project settings.
-        if (!req.pdfServer && req.currentProject.settings && req.currentProject.settings.pdfserver) {
-          req.pdfServer = req.currentProject.settings.pdfserver;
-        }
-      }
-      return next();
-    });
   });
 
   router.use(async (req, res) => {
@@ -51,7 +50,7 @@ module.exports = (formio) => {
       method: req.method,
       headers: req.headers,
     };
-    if (req.method !== "HEAD" && req.method !== "GET") {
+    if (req.method !== 'HEAD' && req.method !== 'GET') {
       options.body = JSON.stringify(req.body);
     }
     const resultUrl = `${req.pdfServer}${req.path}`;
