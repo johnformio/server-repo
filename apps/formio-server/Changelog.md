@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-5991: Replace deprecated node-saml with @node-saml/node-saml dependency
  - FIO-5941: added tests for /tag get req with x-token
  - FIO-6167: fixed an issue where tenant with stages is displayed as project in License Management 
+ - FIO-6212, FIO-6213: Fixed the server to work with hosted pdf server configurations.
 
 ## 8.0.0-rc.18
 ### Changed
