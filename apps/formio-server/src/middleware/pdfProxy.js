@@ -58,7 +58,7 @@ module.exports = (formio) => {
     const headers = Object.fromEntries(response.headers.entries());
 
     // If the pdf server returns a file token and our project does not have one, then save it.
-    if (req.method === 'GET' && response.ok && config.formio.hosted) {
+    if (req.method === 'GET' && response.ok && config.formio.hosted && req.currentProject) {
       const fileToken = headers['x-file-token'];
       if (fileToken && !req.currentProject.settings.filetoken) {
         req.currentProject.settings.filetoken = fileToken;
@@ -74,4 +74,3 @@ module.exports = (formio) => {
   });
   return router;
 };
-
