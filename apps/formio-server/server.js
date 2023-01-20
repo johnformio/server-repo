@@ -109,12 +109,9 @@ module.exports = function(options) {
         res.set('Content-Type', 'application/javascript; charset=UTF-8');
         res.send(
           contents.replace(
-            /var hostedPDFServer = '';|var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false|var whitelabel = false;/gi,
+            /var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false|var whitelabel = false;/gi,
             (matched) => {
-              if (config.hostedPDFServer && matched.includes('var hostedPDFServer')) {
-                return `var hostedPDFServer = '${config.hostedPDFServer}';`;
-              }
-              else if (config.portalSSO && matched.includes('var sso =')) {
+              if (config.portalSSO && matched.includes('var sso =')) {
                 return `var sso = '${config.portalSSO}';`;
               }
               else if (config.ssoTeams && matched.includes('var ssoTeamsEnabled =')) {
