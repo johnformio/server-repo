@@ -128,6 +128,7 @@ config.formio.reservedForms = [
   'actionItem',
   'tag',
   'upload',
+  'pdf-proxy',
   'config.json',
   'portal-check',
   '2fa\/generate',
