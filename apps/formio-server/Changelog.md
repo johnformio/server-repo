@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-6167: fixed an issue where tenant with stages is displayed as project in License Management 
  - FIO-6212, FIO-6213: Fixed the server to work with hosted pdf server configurations.
  - FIO-5889, FIO-6214: Fixing the hosted project usage.
+ - FIO-6216: Update twilio and resourcejs versions
 
 ## 8.0.0-rc.18
 ### Changed
