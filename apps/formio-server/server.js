@@ -187,6 +187,11 @@ module.exports = function(options) {
 
   app.use(require('./src/middleware/requestCache')(requestCache));
 
+  // Mount empty analytics router
+  // and create a promise to wait for formio to get ready
+  let formioAnalyticsReady;
+  const formioAnalyticsReadyPromise = new Promise((resolve) => formioAnalyticsReady = resolve);
+  app.use(require('./src/analytics')(formioAnalyticsReadyPromise));
   // Create the formio server.
   debug.startup('Creating Form.io Core Server');
   app.formio = options.server || require('formio')(config.formio);
@@ -396,8 +401,8 @@ module.exports = function(options) {
         // Attach the analytics to the formio server and attempt to connect.
         app.formio.analytics = analytics;
 
-        // Use the routes.
-        app.use(require('./src/analytics')(app.formio));
+        // Tell analytics router formioServer is ready.
+        formioAnalyticsReady(app.formio);
       }
     });
 
