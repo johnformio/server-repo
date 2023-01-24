@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Increment minor version.
  - FIO-5653: Get test suite in a runnable state
  - Security upgrade jsonwebtoken from 8.5.1 to 9.0.0
+ - FIO-5497: fixed DeprecationWarning for crypto.createDecipher
 
 ### Fixed
  - FIO-5033: fixed filetoken
