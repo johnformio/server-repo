@@ -69,7 +69,7 @@ const Utils = {
     const salt = nosalt ? '' : keygenerator._({
       length: defaultSaltLength
     });
-    const cipher = crypto.createCipher('aes-256-cbc', secret);
+    const cipher = crypto.createCipheriv('aes-256-cbc', secret, Buffer.alloc(16, 0));
     const decryptedJSON = JSON.stringify(rawData) + salt;
 
     return Buffer.concat([
@@ -85,7 +85,7 @@ const Utils = {
 
     try {
       const buffer = Buffer.isBuffer(cipherbuffer) ? cipherbuffer : cipherbuffer.buffer;
-      const decipher = crypto.createDecipher('aes-256-cbc', secret);
+      const decipher = crypto.createDecipheriv('aes-256-cbc', secret, Buffer.alloc(16, 0));
       const decryptedJSON = Buffer.concat([
         decipher.update(buffer), // Buffer contains encrypted utf8
         decipher.final()
