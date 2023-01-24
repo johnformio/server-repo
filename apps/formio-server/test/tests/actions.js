@@ -273,6 +273,7 @@ module.exports = (app, template, hook) => {
       if (docker) {
         return;
       }
+      const helper = new template.Helper(template.formio.owner);
 
       let webhookForm = {
         title: 'Webhook Sender',
@@ -298,21 +299,50 @@ module.exports = (app, template, hook) => {
 
         ],
       };
+      let project;
       let testWebhookUrl;
       let webhookAction;
       const webhookListener = new WebhookListener();
 
       describe('Blocking webhooks', () => {
         describe('After handled webhooks', () => {
+
           before('Set up webhook listener', (done) => {
             // create the webhook listener child process
             webhookListener.setup(1337, '/player', 201, {records: [{playerId: '123456'}]})
               .then((config) => {
-                console.log("Done with setup!");
                 testWebhookUrl = config.url;
                 done();
               })
           });
+
+          before('Set up the project', (done) => {
+            helper
+              .project()
+              .plan('commercial')
+              .execute(() => {
+                const projectId = helper.template.project._id;
+                // add the public configurations
+                request(app)
+                  .put(`/project/${projectId}`)
+                  .set('x-jwt-token', template.formio.owner.token)
+                  .send({
+                    config: {
+                      myTestConfig: "Hello, world!"
+                    }
+                  })
+                  .expect(200)
+                  .expect("Content-Type", /json/)
+                  .end((err, res) => {
+                    if (err) {
+                      done(err);
+                    }
+                    assert(res.body.hasOwnProperty("config"), 'Test project should have public configurations');
+                    project = res.body;
+                    done();
+                  })
+              });
+          })
 
           afterEach('Clear in-memory webhook responses', () => {
             webhookListener.clearReceivedHooks();
@@ -324,21 +354,20 @@ module.exports = (app, template, hook) => {
 
           it('Should create the form and action for the after handled webhook tests', (done) => {
             request(app)
-              .post(hook.alter('url', '/form', template))
-              .set('x-jwt-token', template.users.admin.token)
+              .post(`/project/${project._id}/form`)
+              .set('x-jwt-token', template.formio.owner.token)
               .send(webhookForm)
-              .expect('Content-Type', /json/)
               .expect(201)
+              .expect('Content-Type', /json/)
               .end((err, res) => {
                 if (err) {
                   return done(err);
                 }
-
                 webhookForm = res.body;
-                template.users.admin.token = res.headers['x-jwt-token'];
+                template.formio.owner.token = res.headers['x-jwt-token'];
                 request(app)
-                  .post(hook.alter('url', `/form/${webhookForm._id}/action`, template))
-                  .set('x-jwt-token', template.users.admin.token)
+                  .post(`/project/${project._id}/form/${webhookForm._id}/action`)
+                  .set('x-jwt-token', template.formio.owner.token)
                   .send({
                     title: 'Test Webhook',
                     name: 'webhook',
@@ -356,11 +385,23 @@ module.exports = (app, template, hook) => {
                       externalIdPath: 'records[0].playerId',
                       headers: [
                         {
-                            header: "x-test-header",
-                            value: "hello, world!"
+                          header: "x-test-header",
+                          value: "hello, world!"
+                        },
+                        {
+                          header: "x-test-header-data",
+                          value: "{{data.player}}"
+                        },
+                        {
+                          header: "x-test-header-config",
+                          value: "{{config.myTestConfig}}"
+                        },
+                        {
+                          header: "x-test-header-undefined",
+                          value: "{{doesNotExist.foo}}"
                         }
-                    ]
-                    },
+                      ]
+                    }
                   })
                   .expect('Content-Type', /json/)
                   .expect(201)
@@ -369,7 +410,7 @@ module.exports = (app, template, hook) => {
                       return done(err);
                     }
                     webhookAction = res.body
-                    template.users.admin.token = res.headers['x-jwt-token'];
+                    template.formio.owner.token = res.headers['x-jwt-token'];
 
                     done();
                   });
@@ -378,8 +419,8 @@ module.exports = (app, template, hook) => {
 
           it('Should correctly transform webhook payload', (done) => {
             request(app)
-              .post(hook.alter('url', `/form/${webhookForm._id}/submission`, template))
-              .set('x-jwt-token', template.users.admin.token)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
               .send({
                 data: {
                   player: 'Jason Giambi'
@@ -399,8 +440,8 @@ module.exports = (app, template, hook) => {
 
           it('Should correctly forward headers', (done) => {
             request(app)
-              .post(hook.alter('url', `/form/${webhookForm._id}/submission`, template))
-              .set('x-jwt-token', template.users.admin.token)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
               .send({
                 data: {
                   player: 'Jason Giambi'
@@ -419,10 +460,76 @@ module.exports = (app, template, hook) => {
               });
           });
 
+          it('Should interpolate custom headers from the submission data', (done) => {
+            request(app)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.equal(webhookListener.hooksReceived[0].headers.hasOwnProperty('x-test-header-data'), true);
+                assert.equal(webhookListener.hooksReceived[0].headers['x-test-header-data'], 'Jason Giambi')
+                done();
+              });
+          });
+
+          it('Should interpolate custom headers from the project public configurations', (done) => {
+            request(app)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.equal(webhookListener.hooksReceived[0].headers.hasOwnProperty('x-test-header-config'), true);
+                assert.equal(webhookListener.hooksReceived[0].headers['x-test-header-config'], 'Hello, world!')
+                done();
+              });
+          });
+
+          it('Should interpolate custom headers as `undefined` if they cannot be interpolated', (done) => {
+            request(app)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.equal(webhookListener.hooksReceived[0].headers.hasOwnProperty('x-test-header-undefined'), true);
+                assert.equal(webhookListener.hooksReceived[0].headers['x-test-header-undefined'], 'undefined');
+                done();
+              });
+          });
+
           it('Should return a submission response that contains externalIds and metadata with webhook response', (done) => {
             request(app)
-              .post(hook.alter('url', `/form/${webhookForm._id}/submission`, template))
-              .set('x-jwt-token', template.users.admin.token)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
               .send({
                 data: {
                   player: 'Jason Giambi'
@@ -448,7 +555,7 @@ module.exports = (app, template, hook) => {
           });
         });
 
-        describe('Before handled webhooks', () => {
+      describe('Before handled webhooks', () => {
           before('Set up webhook listener', (done) => {
             // create the webhook listener child process
             webhookListener.setup(1337, '/player', 201, {records: [{playerId: '123456'}]})
@@ -469,8 +576,8 @@ module.exports = (app, template, hook) => {
 
           it('Should update the action for the before handled webhook tests', (done) => {
             request(app)
-              .put(hook.alter('url', `/form/${webhookForm._id}/action/${webhookAction._id}`, template))
-              .set('x-jwt-token', template.users.admin.token)
+              .put(`/project/${project._id}/form/${webhookForm._id}/action/${webhookAction._id}`)
+              .set('x-jwt-token', template.formio.owner.token)
               .send({
                 ...webhookAction,
                 settings: {
@@ -485,7 +592,7 @@ module.exports = (app, template, hook) => {
                   return done(err);
                 }
                 webhookAction = res.body;
-                template.users.admin.token = res.headers['x-jwt-token'];
+                template.formio.owner.token = res.headers['x-jwt-token'];
 
                 done();
               });
@@ -493,8 +600,8 @@ module.exports = (app, template, hook) => {
 
           it('Should correctly transform webhook payload', (done) => {
             request(app)
-              .post(hook.alter('url', `/form/${webhookForm._id}/submission`, template))
-              .set('x-jwt-token', template.users.admin.token)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
               .send({
                 data: {
                   player: 'Jason Giambi'
@@ -514,8 +621,8 @@ module.exports = (app, template, hook) => {
 
           it('Should correctly forward headers', (done) => {
             request(app)
-              .post(hook.alter('url', `/form/${webhookForm._id}/submission`, template))
-              .set('x-jwt-token', template.users.admin.token)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
               .send({
                 data: {
                   player: 'Jason Giambi'
@@ -534,10 +641,77 @@ module.exports = (app, template, hook) => {
               });
           });
 
+          it('Should interpolate custom headers from the submission data', (done) => {
+            request(app)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.equal(webhookListener.hooksReceived[0].headers.hasOwnProperty('x-test-header-data'), true);
+                assert.equal(webhookListener.hooksReceived[0].headers['x-test-header-data'], 'Jason Giambi')
+                done();
+              });
+          });
+
+          it('Should interpolate custom headers from the project public configurations', (done) => {
+            request(app)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.equal(webhookListener.hooksReceived[0].headers.hasOwnProperty('x-test-header-config'), true);
+                assert.equal(webhookListener.hooksReceived[0].headers['x-test-header-config'], 'Hello, world!')
+                done();
+              });
+          });
+
+          it('Should interpolate custom headers as `undefined` if they cannot be interpolated', (done) => {
+            request(app)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.equal(webhookListener.hooksReceived[0].headers.hasOwnProperty('x-test-header-undefined'), true);
+                assert.equal(webhookListener.hooksReceived[0].headers['x-test-header-undefined'], 'undefined');
+                done();
+              });
+          });
+
+
           it('Should return a submission response that contains externalIds and metadata with webhook response', (done) => {
             request(app)
-              .post(hook.alter('url', `/form/${webhookForm._id}/submission`, template))
-              .set('x-jwt-token', template.users.admin.token)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
               .send({
                 data: {
                   player: 'Jason Giambi'
@@ -584,8 +758,8 @@ module.exports = (app, template, hook) => {
 
           it('Should update the action for the before handled webhook tests', (done) => {
             request(app)
-              .put(hook.alter('url', `/form/${webhookForm._id}/action/${webhookAction._id}`, template))
-              .set('x-jwt-token', template.users.admin.token)
+              .put(`/project/${project._id}/form/${webhookForm._id}/action/${webhookAction._id}`)
+              .set('x-jwt-token', template.formio.owner.token)
               .send({
                 ...webhookAction,
                 settings: {
@@ -609,8 +783,8 @@ module.exports = (app, template, hook) => {
 
           it('Should build the webhook url with query parameters for delete request correctly', (done) => {
             request(app)
-              .post(hook.alter('url', `/form/${webhookForm._id}/submission`, template))
-              .set('x-jwt-token', template.users.admin.token)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
               .send({
                 data: {
                   player: 'Jason Giambi'
@@ -651,8 +825,8 @@ module.exports = (app, template, hook) => {
 
         it('Should transparently pass error object if `message` property does not exist on webhook response', (done) => {
           request(app)
-            .put(hook.alter('url', `/form/${webhookForm._id}/action/${webhookAction._id}`, template))
-            .set('x-jwt-token', template.users.admin.token)
+            .put(`/project/${project._id}/form/${webhookForm._id}/action/${webhookAction._id}`)
+            .set('x-jwt-token', template.formio.owner.token)
             .send({
               ...webhookAction,
               settings: {
@@ -669,10 +843,10 @@ module.exports = (app, template, hook) => {
                 return done(err);
               }
               webhookAction = res.body;
-              template.users.admin.token = res.headers['x-jwt-token'];
+              template.formio.owner.token = res.headers['x-jwt-token'];
               request(app)
-                .post(hook.alter('url', `/form/${webhookForm._id}/submission`, template))
-                .set('x-jwt-token', template.users.admin.token)
+                .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+                .set('x-jwt-token', template.formio.owner.token)
                 .send({
                 data: {
                   player: 'Jason Giambi'
@@ -714,8 +888,8 @@ module.exports = (app, template, hook) => {
 
         it('Should transparently pass error status text if `message` property nor object exist on webhook response', (done) => {
           request(app)
-            .put(hook.alter('url', `/form/${webhookForm._id}/action/${webhookAction._id}`, template))
-            .set('x-jwt-token', template.users.admin.token)
+            .put(`/project/${project._id}/form/${webhookForm._id}/action/${webhookAction._id}`)
+            .set('x-jwt-token', template.formio.owner.token)
             .send({
               ...webhookAction,
               settings: {
@@ -731,10 +905,10 @@ module.exports = (app, template, hook) => {
                 return done(err);
               }
               webhookAction = res.body;
-              template.users.admin.token = res.headers['x-jwt-token'];
+              template.formio.owner.token = res.headers['x-jwt-token'];
               request(app)
-                .post(hook.alter('url', `/form/${webhookForm._id}/submission`, template))
-                .set('x-jwt-token', template.users.admin.token)
+                .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+                .set('x-jwt-token', template.formio.owner.token)
                 .send({
                 data: {
                   player: 'Jason Giambi'
@@ -746,14 +920,13 @@ module.exports = (app, template, hook) => {
                 if (err) {
                   return done(err);
                 }
-
                 assert.deepEqual(res.text, 'Method Not Allowed');
                 done();
               });
             });
         });
       });
-    })
+    });
 
     describe('LDAP Login', () => {
       if (docker || customer) {
@@ -862,7 +1035,7 @@ module.exports = (app, template, hook) => {
           });
       });
     });
-  });
+  })
 
   if (!docker)
   describe('x- headers for actions', () => {
