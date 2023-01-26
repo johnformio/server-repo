@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased: 8.1.0-rc.2]
 ### Fixed
  - Revert "FIO-5497: fixed DeprecationWarning for crypto.createDecipher"
+ - FIO-6179: Ensure server does not crash if a pdf server is not running.
 
 ## 8.1.0-rc.1
 ### Changed
