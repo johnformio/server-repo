@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased: 8.1.0-rc.2]
+### Fixed
+ - Revert "FIO-5497: fixed DeprecationWarning for crypto.createDecipher"
+
 ## 8.1.0-rc.1
 ### Changed
  - Updated formio-app@8.1.0-rc.2
