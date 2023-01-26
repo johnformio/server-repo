@@ -54,23 +54,28 @@ module.exports = (formio) => {
       options.body = JSON.stringify(req.body);
     }
     const resultUrl = `${req.pdfServer}${req.path}`;
-    const response = await fetch(resultUrl, options);
-    const headers = Object.fromEntries(response.headers.entries());
+    try {
+      const response = await fetch(resultUrl, options);
+      const headers = Object.fromEntries(response.headers.entries());
 
-    // If the pdf server returns a file token and our project does not have one, then save it.
-    if (req.method === 'GET' && response.ok && config.formio.hosted && req.currentProject) {
-      const fileToken = headers['x-file-token'];
-      if (fileToken && !req.currentProject.settings.filetoken) {
-        req.currentProject.settings.filetoken = fileToken;
-        await formio.cache.updateProject(req.currentProject._id, {
-          settings: req.currentProject.settings
-        });
+      // If the pdf server returns a file token and our project does not have one, then save it.
+      if (req.method === 'GET' && response.ok && config.formio.hosted && req.currentProject) {
+        const fileToken = headers['x-file-token'];
+        if (fileToken && !req.currentProject.settings.filetoken) {
+          req.currentProject.settings.filetoken = fileToken;
+          await formio.cache.updateProject(req.currentProject._id, {
+            settings: req.currentProject.settings
+          });
+        }
       }
-    }
 
-    res.set(headers);
-    res.status(response.status);
-    res.end(await response.buffer());
+      res.set(headers);
+      res.status(response.status);
+      res.end(await response.buffer());
+    }
+    catch (err) {
+      require('cors')()(req, res, () => res.status(400).send(err.message));
+    }
   });
   return router;
 };
