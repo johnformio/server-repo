@@ -60,6 +60,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-5889, FIO-6214: Fixing the hosted project usage.
  - FIO-6216: Update twilio and resourcejs versions
  - FIO-5229 fixed invalid alias error from hosted analytics route
+ - FIO-5870: aggregate query replaced
 
 ## 8.0.0-rc.18
 ### Changed
