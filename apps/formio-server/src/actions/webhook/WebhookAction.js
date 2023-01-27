@@ -3,7 +3,6 @@
 const fetch = require('formio/src/util/fetch');
 const _ = require('lodash');
 const {NodeVM, VMScript} = require('vm2');
-const parseUrl = require('url');
 
 const {
   getSubmission,
@@ -393,7 +392,7 @@ module.exports = (router) => {
           : response.statusText;
         return res
           .status(response && response.status ? response.status : 400)
-          .send(message);
+          .json(message);
       };
 
       try {
