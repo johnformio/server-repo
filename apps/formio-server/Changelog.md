@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased: 8.1.0-rc.3]
-## Fixed
+### Fixed
  - FIO-5613: refactor of webhook action allowing for interpolation of headers and better treatment of before-handled webhooks
 
 ## 8.1.0-rc.2
