@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased: 8.1.0-rc.3]
 ### Fixed
  - FIO-5613: refactor of webhook action allowing for interpolation of headers and better treatment of before-handled webhooks
+ - FIO-6114: fixed an issue where signature fields in the box sign provider are not displayed in the order defined by the 'order' setting
 
 ## 8.1.0-rc.2
 ### Changed
