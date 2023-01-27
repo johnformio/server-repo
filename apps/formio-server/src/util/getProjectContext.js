@@ -37,9 +37,11 @@ module.exports = (req, isNew, res = null, postCreate = false, app = null) => {
                     : _.get(req, 'body.config.defaultStageName', '')
                  === 'authoring';
             if (postCreate) {
+                const isTenantStage = req.currentProject && req.currentProject.type === 'tenant';
+
                 context.environmentId = app.environmentId;
-                context.projectId = res.resource.item.project;
-                context.tenantId = res.resource.item.tenant ? res.resource.item.tenant : 'none';
+                context.projectId = isTenantStage ? req.currentProject.project : res.resource.item.project;
+                context.tenantId = isTenantStage ? res.resource.item.project : 'none';
                 context.stageId = res.resource.item._id;
                 context.title = res.resource.item.title;
                 context.name = res.resource.item.name;

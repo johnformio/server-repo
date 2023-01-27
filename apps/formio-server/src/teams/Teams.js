@@ -331,24 +331,26 @@ const Teams = {
       query['data.admin'] = true;
     }
 
-    // Query for all teams this user is a member of.
-    const membership = await Teams.submissionModel().aggregate([
-      {$match: query},
-      {
-        $lookup: {
-          from: 'submissions',
-          localField: `data.team._id`,
-          foreignField: '_id',
-          as: `data.team`
-        }
-      },
-      {
-        $unwind: {
-          path: `$data.team`,
-          preserveNullAndEmptyArrays: true
-        }
+    const userData = await Teams.submissionModel().find(query);
+
+    const teamsIds= userData.reduce((idList, currentItem)=>{
+      if (currentItem.data && currentItem.data.team && currentItem.data.team._id) {
+        idList.push(currentItem.data.team._id);
+        return idList;
       }
-    ]).exec();
+    }, []);
+
+    const teamsData = await Teams.submissionModel().find({
+        '_id' : {$in: teamsIds},
+        deleted: {$eq: null}
+    });
+
+    const membership = userData.map(item => {
+      const id = item.data.team._id;
+      const data = teamsData.find((team)=>team._id.toString() === id.toString());
+      item.data.team = data;
+      return item;
+    });
 
     for (const member of membership) {
       const members = await Teams.getMembers(member.data.team);

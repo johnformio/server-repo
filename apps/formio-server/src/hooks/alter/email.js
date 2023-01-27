@@ -6,7 +6,7 @@ const async = require('async');
 const _ = require('lodash');
 const config = require('../../../config');
 
-module.exports = app => (mail, req, res, params, cb) => {
+module.exports = app => (mail, req, res, params, setActionItemMessage, cb) => {
   const formioServer = app.formio;
   const formio = formioServer.formio;
 
@@ -112,16 +112,38 @@ module.exports = app => (mail, req, res, params, cb) => {
       });
       const submission = _.get(res.resource, 'item', req.body);
       const downloadPDF = require('../../util/downloadPDF')(formioServer);
-      const response = await downloadPDF(req, project, form, submission);
-      const responseBuffer = await response.buffer();
-      const base64 = responseBuffer.toString('base64');
-      if (mail.transport === 'sendgrid') {
-        attachment = {content: `${base64}`};
+
+      try {
+        const response = await downloadPDF(req, project, form, submission);
+        if (response.status !== 200 || response.ok === false) {
+          const nonFatalAttachmentError = await util.parseUnknownContentResponse(response);
+          setActionItemMessage(
+            'PDF Server returned an error while attempting to attach PDF submission',
+            nonFatalAttachmentError,
+            'error'
+          );
+          return;
+        }
+        const responseBuffer = await response.buffer();
+        const base64 = responseBuffer.toString('base64');
+        if (mail.transport === 'sendgrid') {
+          attachment = {content: `${base64}`};
+        }
+        else {
+          attachment = {
+            path: `data:application/pdf;base64,${base64}`
+          };
+        }
       }
-      else {
-        attachment = {
-          path: `data:application/pdf;base64,${base64}`
-        };
+      catch (err) {
+        // in case PDF throws an error rather than a bad response (e.g. the PDF server is not even configured) we want to
+        // fail non-fatally
+        setActionItemMessage(
+          'Something went wrong while attempting to attach PDF submission',
+          err.message || err,
+          'error'
+        );
+        return;
       }
 
       // Get the file name settings.
