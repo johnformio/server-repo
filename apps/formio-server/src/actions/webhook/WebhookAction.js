@@ -4,6 +4,7 @@ const fetch = require('formio/src/util/fetch');
 const _ = require('lodash');
 const {NodeVM, VMScript} = require('vm2');
 
+const {isEmptyObject} = require('../../util/util');
 const {
   getSubmission,
   getExternalId,
@@ -387,9 +388,9 @@ module.exports = (router) => {
           return;
         }
 
-        const message = !_.isEmpty(data)
-          ? data.message || data
-          : response.statusText;
+        const message = isEmptyObject(data)
+          ? response.statusText
+          : data.message || data;
         return res
           .status(response && response.status ? response.status : 400)
           .json(message);
