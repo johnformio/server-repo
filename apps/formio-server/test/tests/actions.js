@@ -915,12 +915,12 @@ module.exports = (app, template, hook) => {
                 },
               })
               .expect(405)
-              .expect('Content-Type', /text/)
+              .expect('Content-Type', /json/)
               .end((err, res) => {
                 if (err) {
                   return done(err);
                 }
-                assert.deepEqual(res.text, 'Method Not Allowed');
+                assert.deepEqual(res.text, '"Method Not Allowed"');
                 done();
               });
             });
