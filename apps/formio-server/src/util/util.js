@@ -274,6 +274,9 @@ const Utils = {
       }
     }
     return {};
+  },
+  isEmptyObject(object) {
+    return !!object && _.isEmpty(object) && object.constructor === Object;
   }
 };
 
