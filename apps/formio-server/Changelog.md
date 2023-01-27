@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-6215: upgrade knex to 2.4.0
  - FIO-6228: remove unused xmldom dependency
  - FIO-6282: remove twilio dependency
+ - FIO-6129: Display branding in form viewer by default
 
 ## 8.1.0-rc.2
 ### Changed
