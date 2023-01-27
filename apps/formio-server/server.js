@@ -501,7 +501,7 @@ module.exports = function(options) {
           config: project.config,
           public: project.public
         })};
-        window.APP_BRANDING = false;
+        window.APP_BRANDING = true;
       `;
     };
 
