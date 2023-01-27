@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-5613: refactor of webhook action allowing for interpolation of headers and better treatment of before-handled webhooks
  - FIO-6114: fixed an issue where signature fields in the box sign provider are not displayed in the order defined by the 'order' setting
  - FIO-6215: upgrade knex to 2.4.0
+ - FIO-6228: remove unused xmldom dependency
 
 ## 8.1.0-rc.2
 ### Changed
