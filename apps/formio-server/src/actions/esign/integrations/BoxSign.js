@@ -79,7 +79,7 @@ module.exports = (app) => {
     };
 
     const createESignRequest = async (esignRequest, authClient, file, folderId) => {
-        const signers = [];
+        let signers = [];
         esignRequest.signers.forEach((recipient) => {
             if (recipient.userId) {
                 signers.push({
@@ -98,19 +98,22 @@ module.exports = (app) => {
                 });
             }
         });
+
+        signers = _.orderBy(signers, 'order');
+
         esignRequest.approvers.forEach((approver) => {
             if (!_.isEmpty(approver.emailAddress)) {
-              signers.push({
-                role: 'approver',
-                email: approver.emailAddress
+                signers.push({
+                    role: 'approver',
+                    email: approver.emailAddress
                 });
             }
         });
         esignRequest.finalCopyRecipients.forEach((recipient) => {
             if (!_.isEmpty(recipient.emailAddress)) {
-              signers.push({
-                role: 'final_copy_reader',
-                email: recipient.emailAddress
+                signers.push({
+                    role: 'final_copy_reader',
+                    email: recipient.emailAddress
                 });
             }
         });
