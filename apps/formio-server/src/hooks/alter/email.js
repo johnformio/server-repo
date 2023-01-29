@@ -27,44 +27,16 @@ module.exports = app => (mail, req, res, params, setActionItemMessage, cb) => {
       });
     }
     if (config.formio.hosted) {
-      // Restrict basic and independent plans.
-      if (req && req.primaryProject) {
-        if (formioServer.analytics.isLimitedEmailPlan(req.primaryProject)) {
-          const transport = mail.msgTransport || 'default';
-          // eslint-disable-next-line max-depth
-          if (transport !== 'default' && transport !== 'test') {
-            throw new Error('Plan limited to default transport only.');
+      const transport = mail.msgTransport || 'default';
+      if (transport === 'default') {
+        // If they are using a default transport, then we need to ensure we limit the usage.
+        formioServer.analytics.checkEmail(req, (err) => {
+          if (err) {
+            throw new Error(err.message || err);
           }
-
-          formioServer.analytics.checkEmail(req, (err) => {
-            if (err) {
-              throw new Error(err.message);
-            }
-
-            mail.html += `
-<table style="margin: 0px;padding: 20px;background-color:#002941;color:white;width:100%;">
-<tbody>
-<tr>
-<td align="center" style="font-size:24px;font-family:sans-serif;">
-  <div style="padding:10px;">Sent using the <a href="https://form.io" style="color:white;">form.io</a> platform</div>
-  <div style=""><img style="height:64px;" src="https://form.io/assets/images/formio-logo.png"></div>
-</td>
-</tr>
-</tbody>
-</table>`;
-
-            formioServer.analytics.recordEmail(req);
-            return;
-          });
-        }
-        else {
           formioServer.analytics.recordEmail(req);
           return;
-        }
-      }
-      else {
-        formioServer.analytics.recordEmail(req);
-        return;
+        });
       }
     }
   };
