@@ -115,11 +115,6 @@ class FormioAnalytics {
     this.redis.set(key, value, next);
   }
 
-  isLimitedEmailPlan(project) {
-    const limits = this.formio.plans.limits;
-    return limits.hasOwnProperty(project.plan) && limits[project.plan].hasOwnProperty('email');
-  }
-
   checkEmail(req, next) {
     const now = new Date();
     this.redis.analytics(req.projectId, now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 'e', (err, value) => {
@@ -127,7 +122,7 @@ class FormioAnalytics {
         return next(err);
       }
 
-      if (this.isLimitedEmailPlan(req.primaryProject) && value >= this.formio.plans.limits[req.primaryProject.plan].email) {
+      if (value >= this.formio.plans.limits[req.primaryProject.plan].email) {
         return next('Over email limit');
       }
       return next(null, value);

@@ -223,18 +223,20 @@ module.exports = function(app) {
         settings = settings || {};
         // Limit independent
         if (req && req.primaryProject) {
-          if (req.primaryProject.plan === 'independent') {
-            transports = [{
-              transport: 'default',
-              title: 'Default (limit 1000 per month)'
-            }];
+          if (config.formio.hosted) {
+            if (req.primaryProject.plan === 'commercial') {
+              transports.push({
+                transport: 'default',
+                title: 'Default (limit 1000 per month)'
+              });
+             }
           }
-          if (req.primaryProject.plan === 'commercial' || req.primaryProject.plan === 'trial') {
+          else if (process.env.DEFAULT_TRANSPORT) {
             transports.push({
               transport: 'default',
-              title: 'Default (limit 1000 per month)'
+              title: 'Default'
             });
-           }
+          }
         }
         return cb(null, transports);
       },
