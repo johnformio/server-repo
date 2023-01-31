@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-6282: remove twilio dependency
  - FIO-6129: Display branding in form viewer by default
  - No longer treat descendants of `Error` as empty objects in webhook error response
+ - FIO-5688: Fixing the email limits for hosted environments.
 
 ## 8.1.0-rc.2
 ### Changed
