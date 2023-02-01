@@ -43,7 +43,7 @@ module.exports = function (app, template, hook) {
     describe("S+C license is not set", function () {
       before(() => {
         process.env.ADMIN_KEY = "examplekey";
-        app.license = {terms : {options : {sac : false}}};
+        process.env.TEST_SIMULATE_SAC_PACKAGE = false;
       });
 
       it("Should create the project from template", (done) => {
@@ -213,7 +213,7 @@ module.exports = function (app, template, hook) {
 
     describe("S+C license is set", function () {
       before(function () {
-        app.license = { terms: { options: { sac: true } } };
+        process.env.TEST_SIMULATE_SAC_PACKAGE = '1';
         process.env.ADMIN_KEY = "examplekey";
       });
 

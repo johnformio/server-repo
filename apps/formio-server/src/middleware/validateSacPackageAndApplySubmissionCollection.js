@@ -107,9 +107,7 @@ module.exports = function(app) {
       const form = await getCurrentForm(req);
       const submissionModel = await getSubmissionModel(req, form, false);
 
-      const hasSacPackage =
-        _.get(req.projectLicense, 'terms.options.sac', false) ||
-        _.get(app, 'license.terms.options.sac', false);
+      const hasSacPackage = _.get(req, 'licenseTerms.options.sac', false);
       const hasSubmissionCollection = _.get(form, 'settings.collection', false);
 
       validateFormAgainstSacPackage(hasSubmissionCollection, hasSacPackage, submissionModel);

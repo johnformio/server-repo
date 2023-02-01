@@ -3452,7 +3452,7 @@ module.exports = function(app, template, hook) {
     let project = null;
     let collectionName = '';
     before(function(done) {
-      app.license = {terms : {options : {sac : true}}};
+      process.env.TEST_SIMULATE_SAC_PACKAGE = '1';
       helper = new Helper(template.formio.owner);
       helper.project().execute((err) => {
         if (err) {

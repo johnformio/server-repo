@@ -2,7 +2,6 @@
 
 require('dotenv').config();
 const express = require('express');
-const helmet = require('helmet');
 const _ = require('lodash');
 const bodyParser = require('body-parser');
 const favicon = require('serve-favicon');
@@ -404,7 +403,8 @@ module.exports = function(options) {
 
     // Kick off license validation process
     debug.startup('Checking License');
-    license.validate(app).then(() => {
+    const licenseValidationPromise = license.validate(app);
+    licenseValidationPromise.then(() => {
       if (config.formio.hosted) {
         // For hosted environments, we will connect to Redis and Analyitcs.
         const RedisInterface = require('./src/util/RedisInterface');
@@ -423,6 +423,9 @@ module.exports = function(options) {
         formioAnalyticsReady(app.formio);
       }
     });
+
+    debug.startup('Attaching middleware: License Terms');
+    app.use(require('./src/middleware/attachLicenseTerms')(licenseValidationPromise, app));
 
     debug.startup('Attaching middleware: Cache');
     app.formio.formio.cache = _.assign(app.formio.formio.cache, require('./src/cache/cache')(app.formio));
