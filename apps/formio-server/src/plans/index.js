@@ -39,7 +39,7 @@ const plans = {
     failure: 2
   },
   commercial: {
-    submissionRequests: 2000000,
+    submissionRequests: 1000000,
     pdfDownloads: 1000,
     emails: 1000,
     pdfs: 25,
