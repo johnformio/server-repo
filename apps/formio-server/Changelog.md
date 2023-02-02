@@ -42,6 +42,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-5653: Get test suite in a runnable state
  - Security upgrade jsonwebtoken from 8.5.1 to 9.0.0
  - FIO-5497: fixed DeprecationWarning for crypto.createDecipher
+ - FIO-5985: OIDC SSO Logout
+ - FIO-5374: Add headers to prevent cascading webhook action execution
 
 ### Fixed
  - FIO-5033: fixed filetoken
