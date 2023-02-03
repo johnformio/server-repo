@@ -1,6 +1,7 @@
 "use strict";
 const express = require("express");
 const fetch = require("node-fetch");
+const _ = require('lodash');
 const config = require("../../config");
 const loadProjectContexts = require("./loadProjectContexts");
 const PDF_SERVER = process.env.PDF_SERVER || process.env.FORMIO_FILES_SERVER;
@@ -43,6 +44,18 @@ module.exports = (formio) => {
         return next();
       });
     }
+  });
+
+  // Keep only essential and user defined headers
+  router.use((req, res, next) => {
+    req.headers = _.mapKeys(req.headers, (_, h) => h.toLowerCase());
+    const headers = {};
+    _.merge(headers,
+      _.pick(req.headers, 'accept', 'accept-encoding', 'accept-language'),
+      _.pickBy(req.headers, (_, h) => h.startsWith('x-'))
+    );
+    req.headers = headers;
+    next();
   });
 
   router.use(async (req, res) => {
