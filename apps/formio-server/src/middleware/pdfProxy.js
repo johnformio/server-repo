@@ -54,7 +54,6 @@ module.exports = (formio) => {
 
   // Keep only essential and user defined headers
   router.use((req, res, next) => {
-    req.headers = _.mapKeys(req.headers, (_, h) => h.toLowerCase());
     const headers = {};
     _.merge(headers,
       _.pick(req.headers, 'accept', 'accept-encoding', 'accept-language'),
