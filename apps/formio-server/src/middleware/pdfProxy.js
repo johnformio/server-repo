@@ -46,9 +46,14 @@ module.exports = (formio) => {
     }
   });
 
+  // Set access-control-allow-headers before removing headers
+  router.use((req, res, next) => {
+    res.setHeader('access-control-allow-headers', Object.keys(req.headers).join(','));
+    next();
+  });
+
   // Keep only essential and user defined headers
   router.use((req, res, next) => {
-    req.headers = _.mapKeys(req.headers, (_, h) => h.toLowerCase());
     const headers = {};
     _.merge(headers,
       _.pick(req.headers, 'accept', 'accept-encoding', 'accept-language'),
