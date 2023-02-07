@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-5688: Fixing the email limits for hosted environments.
  - FIO-6095: Fixed race condition between project license and SaC validation
  - FIO-6303: added middleware to pdf proxy to keep only essential headers
+ - FIO-6320: fixed cors error for pdf proxy
 
 ## 8.1.0-rc.2
 ### Changed
