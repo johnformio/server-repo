@@ -1000,6 +1000,131 @@
         }
       ]
     },
+    "sendPasswordReset": {
+      "title": "Send Password Reset",
+      "type": "form",
+      "name": "sendPasswordReset",
+      "path": "sendpasswordreset",
+      "display": "form",
+      "tags": [],
+      "components": [
+        {
+          "label": "Email",
+          "tableView": true,
+          "key": "email",
+          "type": "email",
+          "input": true
+        },
+        {
+          "label": "Send Email",
+          "showValidations": false,
+          "block": true,
+          "leftIcon": "fa fa-paper-plane",
+          "disableOnInvalid": true,
+          "tableView": false,
+          "key": "submit",
+          "type": "button",
+          "input": true,
+          "saveOnEnter": false
+        }
+      ],
+      "access": [
+        {
+          "type": "read_all",
+          "roles": [
+            "administrator",
+            "authenticated",
+            "anonymous"
+          ]
+        }
+      ],
+      "submissionAccess": [
+        {
+          "type": "create_own",
+          "roles": [
+            "anonymous"
+          ]
+        },
+        {
+          "type": "create_all",
+          "roles": []
+        },
+        {
+          "type": "read_own",
+          "roles": []
+        },
+        {
+          "type": "read_all",
+          "roles":[]
+        },
+        {
+          "type": "update_own",
+          "roles": []
+        },
+        {
+          "type": "update_all",
+          "roles": []
+        },
+        {
+          "type": "delete_own",
+          "roles": []
+        },
+        {
+          "type": "delete_all",
+          "roles": []
+        }
+      ]
+    },
+    "passwordReset": {
+      "title": "Password Reset",
+      "type": "form",
+      "name": "passwordReset",
+      "path": "passwordreset",
+      "display": "form",
+      "tags": [],
+      "components": [
+        {
+          "label": "New Password",
+          "applyMaskOn": "change",
+          "autocomplete": "new-password",
+          "tableView": false,
+          "validate": {
+            "required": true,
+            "minLength": 8
+          },
+          "key": "newPassword",
+          "type": "password",
+          "input": true,
+          "protected": true
+        },
+        {
+          "label": "Verify Password",
+          "applyMaskOn": "change",
+          "autocomplete": "new-password",
+          "tableView": false,
+          "validate": {
+            "required": true,
+            "custom": "valid = ( input === data.newPassword ) ? true : 'Passwords must match';"
+          },
+          "key": "verifyPassword",
+          "type": "password",
+          "input": true,
+          "protected": true
+        },
+        {
+          "label": "Change Password",
+          "action": "event",
+          "showValidations": false,
+          "block": true,
+          "disableOnInvalid": true,
+          "tableView": false,
+          "key": "submit",
+          "type": "button",
+          "input": true,
+          "event": "changePassword"
+        }
+      ]
+    },
     "verifyAccount": {
       "title": "Verify Account",
       "type": "form",
@@ -4070,6 +4195,38 @@
       "handler": [
         "before"
       ]
+    },
+    "sendPasswordReset:email": {
+      "name": "email",
+      "title": "Email",
+      "form": "sendPasswordReset",
+      "handler": [
+        "after"
+      ],
+      "method": [
+          "create"
+      ],
+      "condition": {
+          "field": {},
+          "eq": "",
+          "value": "",
+          "custom": ""
+      },
+      "priority": 0,
+      "settings": {
+        "from": "no-reply@form.io",
+        "replyTo": "",
+        "emails": [
+            "{{ data.email }}"
+        ],
+        "sendEach": false,
+        "subject": "You requested a password reset.",
+        "template": "https://pro.formview.io/assets/email.html",
+        "message": "<p>Please click on the following link to Reset your Password:</p>\n\n<a href=\"https://portal.form.io/#/resetpass?x-jwt-token=[[token(data.email=user)]]\">Click here to reset Your password</a>",
+        "renderingMethod": "dynamic",
+        "attachFiles": false,
+        "attachPDF": false
+      }
     }
   },
   "resources": {
