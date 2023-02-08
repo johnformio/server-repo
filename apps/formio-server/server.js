@@ -2,7 +2,6 @@
 
 require('dotenv').config();
 const express = require('express');
-const helmet = require('helmet');
 const _ = require('lodash');
 const bodyParser = require('body-parser');
 const favicon = require('serve-favicon');
@@ -109,12 +108,9 @@ module.exports = function(options) {
         res.set('Content-Type', 'application/javascript; charset=UTF-8');
         res.send(
           contents.replace(
-            /var hostedPDFServer = '';|var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false|var whitelabel = false;/gi,
+            /var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false|var whitelabel = false;/gi,
             (matched) => {
-              if (config.hostedPDFServer && matched.includes('var hostedPDFServer')) {
-                return `var hostedPDFServer = '${config.hostedPDFServer}';`;
-              }
-              else if (config.portalSSO && matched.includes('var sso =')) {
+              if (config.portalSSO && matched.includes('var sso =')) {
                 return `var sso = '${config.portalSSO}';`;
               }
               else if (config.ssoTeams && matched.includes('var ssoTeamsEnabled =')) {
@@ -187,6 +183,11 @@ module.exports = function(options) {
 
   app.use(require('./src/middleware/requestCache')(requestCache));
 
+  // Mount empty analytics router
+  // and create a promise to wait for formio to get ready
+  let formioAnalyticsReady;
+  const formioAnalyticsReadyPromise = new Promise((resolve) => formioAnalyticsReady = resolve);
+  app.use(require('./src/analytics')(formioAnalyticsReadyPromise));
   // Create the formio server.
   debug.startup('Creating Form.io Core Server');
   app.formio = options.server || require('formio')(config.formio);
@@ -204,7 +205,28 @@ module.exports = function(options) {
   app.formio.config = _.omit(config, 'formio');
 
   // Mount PDF server proxy
-  app.use('/pdf-proxy', require('./src/middleware/pdfProxy')(app.formio.formio));
+  app.use('/pdf-proxy', [
+    (req, res, next) => {
+      const regex = /^\/pdf\/[\w\d]+\/file\/[\w\d-]+\.(html|pdf)$/; // regex for '/pdf/:project/file/:file.html | pdf' path
+      if ((req.method === 'GET' && regex.test(req.path)) || req.method === 'OPTIONS') {
+        req.bypass = true;
+        return next();
+      }
+      next();
+    },
+    app.formio.formio.middleware.tokenHandler,
+    app.formio.formio.middleware.params,
+    (req, res, next) => {
+      if (req.bypass) {
+        return next();
+      }
+      if (!req.user && !req.isAdmin) {
+        return res.sendStatus(401);
+      }
+      next();
+    },
+    require('./src/middleware/pdfProxy')(app.formio.formio),
+  ]);
 
   // Import the OAuth providers
   debug.startup('Attaching middleware: OAuth Providers');
@@ -381,7 +403,8 @@ module.exports = function(options) {
 
     // Kick off license validation process
     debug.startup('Checking License');
-    license.validate(app).then(() => {
+    const licenseValidationPromise = license.validate(app);
+    licenseValidationPromise.then(() => {
       if (config.formio.hosted) {
         // For hosted environments, we will connect to Redis and Analyitcs.
         const RedisInterface = require('./src/util/RedisInterface');
@@ -396,10 +419,13 @@ module.exports = function(options) {
         // Attach the analytics to the formio server and attempt to connect.
         app.formio.analytics = analytics;
 
-        // Use the routes.
-        app.use(require('./src/analytics')(app.formio));
+        // Tell analytics router formioServer is ready.
+        formioAnalyticsReady(app.formio);
       }
     });
+
+    debug.startup('Attaching middleware: License Terms');
+    app.use(require('./src/middleware/attachLicenseTerms')(licenseValidationPromise, app));
 
     debug.startup('Attaching middleware: Cache');
     app.formio.formio.cache = _.assign(app.formio.formio.cache, require('./src/cache/cache')(app.formio));
@@ -478,7 +504,7 @@ module.exports = function(options) {
           config: project.config,
           public: project.public
         })};
-        window.APP_BRANDING = false;
+        window.APP_BRANDING = true;
       `;
     };
 

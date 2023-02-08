@@ -253,6 +253,31 @@ const Utils = {
 
     return Array.isArray(data) ? data.map(item => _.get(item, path)) : _.get(data, path);
   },
+  transform: (obj, predicate) => {
+    return Object.keys(obj).reduce((acc, key) => {
+      if (predicate(key, obj[key])) {
+          acc[key] = obj[key];
+      }
+      return acc;
+    }, {});
+  },
+  parseUnknownContentResponse: (response) => {
+    const contentType = response.headers.get("content-type");
+    const contentLength = Number(response.headers.get("content-length"));
+
+    if (contentLength > 0) {
+      if (contentType.includes('application/json')) {
+        return response.json();
+      }
+      else {
+        return response.text();
+      }
+    }
+    return {};
+  },
+  isEmptyObject(object) {
+    return !!object && _.isEmpty(object) && object.constructor === Object;
+  }
 };
 
 module.exports = Utils;

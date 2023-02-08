@@ -608,6 +608,14 @@ module.exports = function(app, template, hook) {
         .end(done);
     });
 
+    it('Should allow you to get tags with a valid token', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/tag')
+        .set('x-token', '123testing123testing')
+        .expect(200)
+        .end(done);
+    });
+
     it('A Form.io User should be able to Read the Index of their User-Created Projects', function(done) {
       request(app)
         .get('/project?limit=99999999')
@@ -3444,7 +3452,7 @@ module.exports = function(app, template, hook) {
     let project = null;
     let collectionName = '';
     before(function(done) {
-      app.license = {terms : {options : {sac : true}}};
+      process.env.TEST_SIMULATE_SAC_PACKAGE = '1';
       helper = new Helper(template.formio.owner);
       helper.project().execute((err) => {
         if (err) {

@@ -573,7 +573,6 @@ module.exports = function(app, template, hook) {
             }
 
             tag = res.body;
-            console.log(res.body);
 
             // Store the JWT for future API calls.
             template.env.owner.token = res.headers['x-jwt-token'];
@@ -783,7 +782,14 @@ module.exports = function(app, template, hook) {
           title: chance.word(),
           description: chance.sentence(),
           name: chance.word(),
-          project: project._id
+          project: project._id,
+          access: [project.access,
+            {
+              "type": "stage_read",
+              "roles": [
+                template.formio.teamResource._id
+              ]
+            }]
         };
         request(app)
           .post('/project')
@@ -1484,8 +1490,19 @@ module.exports = function(app, template, hook) {
         done();
       });
 
-      it('Tag Contains the project access', done => {
-        assert(tag.template.access.reduce((prev, access) => prev || (access.type === 'update_all' && access.roles.includes('testRole')), false), 'Update all must contain the role.');
+      it('Tag should not contain the project access', done => {
+        assert.deepEqual(tag.template.access, []);
+
+        done();
+      });
+
+      it('Tag should contain the form and resource access', done => {
+        assert(tag.template.forms[form.machineName.split(':')[1]].access, 'Tag must contain form access');
+        assert(tag.template.forms[formWithEnabledRevisions.machineName.split(':')[1]].access, 'Tag must contain form access');
+        assert(tag.template.forms[parentForm.machineName.split(':')[1]].access, 'Tag must contain form access');
+        assert(tag.template.resources[resource.machineName.split(':')[1]].access, 'Tag must contain resource access');
+        assert(tag.template.resources[resourceWithEnabledRevisions.machineName.split(':')[1]].access, 'Tag must contain resource access');
+        assert(tag.template.resources[parentRecourse.machineName.split(':')[1]].access, 'Tag must contain resource access');
 
         done();
       });
@@ -1515,8 +1532,6 @@ module.exports = function(app, template, hook) {
                 }
 
                 _export = res.body;
-                console.log('_export');
-                console.log(_export);
 
                 done();
               });
@@ -1555,10 +1570,21 @@ module.exports = function(app, template, hook) {
         done();
       });
 
-      it('Environment 2 Contains the project access', done => {
-        assert(_export.access.reduce((prev, access) => prev || (access.type === 'update_all' && access.roles.includes('testRole')), false), 'Env 2 Update all must contain the role.');
+      it('Environment 2 access should not be changed after deployment (including stage teams settings)', done => {
+        request(app)
+        .get(`/project/${  env2._id  }`)
+        .set('x-jwt-token', template.env.owner.token)
+        .send()
+        .expect(200)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
 
-        done();
+          assert.deepEqual(res.body.access, env2.access);
+
+          done();
+        });
       });
     });
 
@@ -1577,7 +1603,6 @@ module.exports = function(app, template, hook) {
             // Update the users project access with the new team.
             var oldResponse = res.body;
             var oldAccess = _.clone(oldResponse.access);
-            console.log(oldAccess);
             var newAccess = _.filter(oldAccess, function(permission) {
               if (permission.type && !_.startsWith(permission.type, 'team_')) {
                 return permission;

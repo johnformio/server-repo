@@ -378,6 +378,10 @@ module.exports = function(app, template, hook) {
     };
 
     if (config.formio.hosted) {
+      before('Enable the SaC Package', () => {
+        process.env.TEST_SIMULATE_SAC_PACKAGE = '1';
+      });
+
       it('Create a temporary form for with non-encrypted fields', function(done) {
         helper.form('encryptedFields', getForm(false))
         .execute((err, results) => {
@@ -684,5 +688,8 @@ module.exports = function(app, template, hook) {
         });
       });
     }
+    after('Disable the Sac Package', () => {
+      process.env.TEST_SIMULATE_SAC_PACKAGE = false;
+    })
   });
 };

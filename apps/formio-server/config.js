@@ -128,6 +128,7 @@ config.formio.reservedForms = [
   'actionItem',
   'tag',
   'upload',
+  'pdf-proxy',
   'config.json',
   'portal-check',
   '2fa\/generate',
@@ -177,7 +178,6 @@ config.formioHost = formioHost;
 config.formio.formioHost = formioHost;
 config.licenseKey = getConfig('LICENSE_KEY');
 config.licenseRemote = getConfig('LICENSE_REMOTE', false);
-config.hostedPDFServer = getConfig('PDF_SERVER', getConfig('FORMIO_FILES_SERVER', ''));
 config.portalSSO = getConfig('PORTAL_SSO', '');
 config.ssoTeams = Boolean(getConfig('SSO_TEAMS', false) || config.portalSSO);
 config.portalSSOLogout = getConfig('PORTAL_SSO_LOGOUT', '');
@@ -394,6 +394,11 @@ const debugFormioConfigVars = getConfig('DEBUG_CONFIG_FORMIO_VARS', 'domain,sche
 sanitized.formio = _.pick(_.clone(config.formio), debugFormioConfigVars);
 
 config.maxBodySize = getConfig('MAX_BODY_SIZE', '25mb');
+
+// Add the getConfig function to the config object so we can get at secrets/environment variables that we don't
+// necessarily want to store in the global-ish config object (mainly we just want to support docker secrets along
+// with process.env)
+config.getConfig = getConfig;
 
 // Only output sanitized data.
 debug.config(sanitized);

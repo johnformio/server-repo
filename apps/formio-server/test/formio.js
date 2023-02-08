@@ -617,6 +617,7 @@ describe('Initial Tests', function() {
     after(function() {
       describe('Project Tests', function() {
         this.retries(4);
+        require('./tests/middleware')(app, template, hook);
         require('./tests/teams')(app, template, hook);
         require('./tests/ssoTeams')(app, template, hook);
         require('./tests/sessions')(app, template, hook);

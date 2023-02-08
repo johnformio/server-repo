@@ -160,9 +160,11 @@ module.exports = (router) => {
             const {redirect, emailSubject, emailMessage, approvers, finalCopyRecipients} = settings;
             // Set Upload file and folder names
             let uploadFileName = submissionId;
+
+            const interpolationData = {data: submission.data, submission};
+
             if (!_.isEmpty(settings.uploadFileName)) {
-                const data = {data: submission.data, submission};
-                uploadFileName = interpolate(settings.uploadFileName, data);
+                uploadFileName = interpolate(settings.uploadFileName, interpolationData);
                 if (_.isEmpty(uploadFileName)) {
                     uploadFileName = submissionId;
                 }
@@ -174,8 +176,7 @@ module.exports = (router) => {
             const providers = [];
             eachComponent(req.currentForm.components, comp => {
                 if (comp.type === 'signature' && comp.provider.name !== 'default') {
-                    const data = {data: submission.data, submission};
-                    const email = interpolate(comp.email, data);
+                    const email = interpolate(comp.email, interpolationData);
                     if (_.isEmpty(email)) {
                         setActionItemMessage(EMAIL_IS_EMPTY);
                         return res.status(400).send(EMAIL_IS_EMPTY);
@@ -183,14 +184,27 @@ module.exports = (router) => {
                     const signer = {};
                     signer['email'] = email;
                     signer['provider'] = comp.provider.name;
+
+                    let userId;
+
+                    if (redirect) {
+                        userId = req.user && req.user._id;
+
+                        if (!userId) {
+                            //create user id for anonymous user to use it in box sign
+                            const submissionModified = new Date(res.resource.item.modified).getTime();
+                            userId = `anonym-${submissionId}-${submissionModified}`;
+                        }
+                    }
+
                     if (comp.order) {
                         if (comp.order === 1 && redirect) {
-                            signer['userId'] = req.user._id;
+                            signer['userId'] = userId;
                         }
                         signer['order'] = comp.order;
                     }
                     else if (redirect) {
-                        signer['userId'] = req.user._id;
+                        signer['userId'] = userId;
                         comp.order = 1;
                     }
                     else {
@@ -223,17 +237,38 @@ module.exports = (router) => {
             const responseBuffer = await pdf.buffer();
             const base64 = responseBuffer.toString('base64');
 
+            const transformRecipients = (recipients) => {
+                if (!_.isArray(recipients) || _.isEmpty(recipients)) {
+                    return [];
+                }
+
+                const transformedRecipients = recipients.map(recipientSettings => {
+                    if (!recipientSettings.emailAddress) {
+                        return recipientSettings;
+                    }
+
+                    const email = interpolate(recipientSettings.emailAddress, interpolationData);
+
+                    return _.chain(_.split(email, ','))
+                        .filter(emailAddress => emailAddress)
+                        .map(emailAddress => ({...recipientSettings, emailAddress: _.trim(emailAddress)}))
+                        .value();
+                });
+
+                return _.flatten(transformedRecipients);
+            };
+
             const esignRequest = new ESignRequestBuilder()
                 .setSubmission(submission)
                 .setType(provider)
                 .setSigners(signatureCompsKeys)
-                .setApprovers(approvers)
-                .setFinalCopyRecipients(finalCopyRecipients)
+                .setApprovers(transformRecipients(approvers))
+                .setFinalCopyRecipients(transformRecipients(finalCopyRecipients))
                 .setConfig(esignConfig)
                 .setProvider(provider)
                 .setPDFContent(base64)
-                .setEmailSubject(emailSubject)
-                .setEmailMessage(emailMessage)
+                .setEmailSubject(interpolate(emailSubject, interpolationData))
+                .setEmailMessage(interpolate(emailMessage, interpolationData))
                 .setUploadFileName(uploadFileName)
                 .setUploadFolderName(uploadFolderName)
                 .build();

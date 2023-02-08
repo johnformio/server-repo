@@ -47,14 +47,19 @@ class FormioAnalytics {
       // f = form
       // o = other
       // e = email
+      // p = pdfDownload
       const form = /\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}$/;
       const submission = /\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}\/submission(\/[a-f0-9]{24})?$/;
+      const pdfDownload = /\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}\/submission(\/[a-f0-9]{24})\/download?$/;
       let type;
       if (submission.test(path)) {
         type = 's';
       }
       else if (form.test(path)) {
         type = 'f';
+      }
+      else if (pdfDownload.test(path)) {
+        type = 'p';
       }
       else {
         type = 'o';
@@ -86,10 +91,16 @@ class FormioAnalytics {
           if (err) {
             return next(err);
           }
-          return next(null, {
-            submissionRequests,
-            formRequests,
-            emails
+          this.redis.calls(year, month, day, project, 'p', (err, pdfDownloads) => {
+            if (err) {
+              return next(err);
+            }
+            return next(null, {
+              submissionRequests,
+              formRequests,
+              emails,
+              pdfDownloads
+            });
           });
         });
       });
@@ -104,11 +115,6 @@ class FormioAnalytics {
     this.redis.set(key, value, next);
   }
 
-  isLimitedEmailPlan(project) {
-    const limits = this.formio.plans.limits;
-    return limits.hasOwnProperty(project.plan) && limits[project.plan].hasOwnProperty('email');
-  }
-
   checkEmail(req, next) {
     const now = new Date();
     this.redis.analytics(req.projectId, now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 'e', (err, value) => {
@@ -116,7 +122,7 @@ class FormioAnalytics {
         return next(err);
       }
 
-      if (this.isLimitedEmailPlan(req.primaryProject) && value >= this.formio.plans.limits[req.primaryProject.plan].email) {
+      if (value >= this.formio.plans.limits[req.primaryProject.plan].email) {
         return next('Over email limit');
       }
       return next(null, value);

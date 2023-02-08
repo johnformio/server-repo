@@ -4,12 +4,51 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 8.1.0-rc.1]
+## [Unreleased: 8.2.0-rc.1]
+### Changed
+ - Added opt-in environment variables for SAML Passport keypaths
+
+### Fixed
+ - FIO-5613: refactor of webhook action allowing for interpolation of headers and better treatment of before-handled webhooks
+ - FIO-6114: fixed an issue where signature fields in the box sign provider are not displayed in the order defined by the 'order' setting
+ - FIO-6215: upgrade knex to 2.4.0
+ - FIO-6228: remove unused xmldom dependency
+ - FIO-6282: remove twilio dependency
+ - FIO-6129: Display branding in form viewer by default
+ - No longer treat descendants of `Error` as empty objects in webhook error response
+ - FIO-6214 added updates for Enterprise plan
+ - FIO-5688: Fixing the email limits for hosted environments.
+ - FIO-6095: Fixed race condition between project license and SaC validation
+ - FIO-6303: added middleware to pdf proxy to keep only essential headers
+ - FIO-6320: fixed cors error for pdf proxy
+
+## 8.1.0-rc.2
+### Changed
+ - Updated formio-app@8.1.0-rc.3
+ - Updated formio@3.1.0-rc.2
+
+### Fixed
+ - Revert "FIO-5497: fixed DeprecationWarning for crypto.createDecipher"
+ - FIO-6179: Ensure server does not crash if a pdf server is not running.
+
+## 8.1.0-rc.1
+### Changed
+ - Updated formio-app@8.1.0-rc.2
+ - Updated formiojs@4.15.0-rc.18
+ - Updated @formio/premium@1.19.0-rc.4
+ - Updated formio@3.1.0-rc.1
+ - Updated formio-workers@1.17.0-rc.1
+
 ### Changed
  - Increment minor version.
  - FIO-5653: Get test suite in a runnable state
+ - Security upgrade jsonwebtoken from 8.5.1 to 9.0.0
+ - FIO-5497: fixed DeprecationWarning for crypto.createDecipher
+ - FIO-5985: OIDC SSO Logout
+ - FIO-5374: Add headers to prevent cascading webhook action execution
 
 ### Fixed
+ - FIO-5033: fixed filetoken
  - FIO-5529: uid and uidNumber added into whitelist
  - FIO-5881: Removed the viewer from the alias token handler.
  - FIO-5348: clean up indexing behavior
@@ -32,6 +71,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - pdf server proxy added
  - FIO-5768: fixed an issue where emails are not sent for wizard forms with hidden page with nested file component on it
  - FIO-6055: fix regression in SaC Submission Collection behavior
+ - FIO-5850: Allow for self-signed certificates when making webhook requests.
+ - FIO-5033: fixed iframe work
+ - FIO-5033: fixed cors for pdf-proxy
+ - FIO-5688: removing email limits
+ - FIO-5911: Email action no longer naively attaches PDF server response as attachment
+ - FIO-6115: fixed an issue where box sign returns an error when using interpolation for Approvers and Final Signed Copy Recipients
+ - FIO-6076: stage team permissions when upgrading stage issue fix
+ - FIO-5889: fixed limits on Usage Page
+ - FIO-6117: fixed an issue where anonymous users are not redirected to signbox webside page for signature
+ - FIO-6041: fixed delete requests with query parameters set in url
+ - FIO-6001: fixed an issue where it is impossible to add button to oauth action if it is inside layout/data components
+ - FIO-5991: Replace deprecated node-saml with @node-saml/node-saml dependency
+ - FIO-5941: added tests for /tag get req with x-token
+ - FIO-6167: fixed an issue where tenant with stages is displayed as project in License Management 
+ - FIO-6212, FIO-6213: Fixed the server to work with hosted pdf server configurations.
+ - FIO-5889, FIO-6214: Fixing the hosted project usage.
+ - FIO-6216: Update twilio and resourcejs versions
+ - FIO-5229 fixed invalid alias error from hosted analytics route
+ - FIO-5870: aggregate query replaced
 
 ## 8.0.0-rc.18
 ### Changed

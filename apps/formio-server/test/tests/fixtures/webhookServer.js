@@ -33,6 +33,12 @@ webhookServer.get(path, (req, res) => {
   res.send(JSON.stringify(hooksRecieved));
 });
 
+webhookServer.delete(path, async (req, res) => {
+  const hookData = { recievedAt: Date(), headers: req.headers, url: req.url };
+  res.send();
+  process.send(hookData);
+});
+
 process.on("message", function (message) {
   if (message.clearHooks) {
     hooksRecieved = [];
