@@ -1987,7 +1987,12 @@ module.exports = function(app, template, hook) {
       if (!docker)
       before(function(done) {
         // Confirm the dummy project is on the team plan.
-        cache.updateProject(template.project._id, {plan: 'team'}, (err, project) => {
+        cache.updateProject(template.project._id, {
+          plan: 'team',
+          settings: {
+            portalDomain: 'https://portal.form.io'
+          }
+        }, (err, project) => {
           if (err) {
             return done(err);
           }
@@ -2047,7 +2052,7 @@ module.exports = function(app, template, hook) {
           .set('Origin', 'http://www.example.com')
           .send()
           .end(function(err, res) {
-            assert.equal(res.headers['access-control-allow-origin'], 'http://www.example.com');
+            assert.equal(res.headers['access-control-allow-origin'], '*');
             assert.equal(res.headers['access-control-allow-methods'], 'GET,HEAD,PUT,PATCH,POST,DELETE');
             done();
           });

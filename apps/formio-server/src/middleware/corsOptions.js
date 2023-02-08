@@ -82,18 +82,16 @@ module.exports = function(router) {
       // Build the list of supported domains.
       const cors = settings.cors || '*';
       whitelist = whitelist.concat(cors.split(/[\s,]+/));
-
-      // Support * for domain name.
-      if (whitelist.indexOf('*') !== -1) {
-        return callback(null, {
-          origin: '*'
-        });
-      }
-
       if (whitelist.indexOf(req.header('Origin')) !== -1) {
         return callback(null, pass);
       }
       else {
+        // Support * for domain name.
+        if (whitelist.indexOf('*') !== -1) {
+          return callback(null, {
+            origin: '*'
+          });
+        }
         return callback(null, fail);
       }
     });
