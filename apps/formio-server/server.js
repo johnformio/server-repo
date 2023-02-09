@@ -282,17 +282,7 @@ module.exports = function(options) {
     }
   ]);
 
-  // Load projects and roles.
-  debug.startup('Attaching middleware: Project & Roles Loader');
-  app.use(require('./src/middleware/loadProjectContexts')(app.formio.formio));
-
-  // Set the project query middleware for filtering disabled projects
-  app.use(require('./src/middleware/projectQueryLimits'));
-
-   // Check project status
-  app.use(require('./src/middleware/projectUtilization')(app));
-
-   // CORS Support
+  // CORS Support
   debug.startup('Attaching middleware: CORS');
   var corsMiddleware = require('./src/middleware/corsOptions')(app);
   var corsRoute = cors(corsMiddleware);
@@ -303,6 +293,16 @@ module.exports = function(options) {
     }
     corsRoute(req, res, next);
   });
+
+  // Load projects and roles.
+  debug.startup('Attaching middleware: Project & Roles Loader');
+  app.use(require('./src/middleware/loadProjectContexts')(app.formio.formio));
+
+  // Set the project query middleware for filtering disabled projects
+  app.use(require('./src/middleware/projectQueryLimits'));
+
+   // Check project status
+  app.use(require('./src/middleware/projectUtilization')(app));
 
   debug.startup('Attaching middleware: CSP');
   if (app.portalEnabled) {
