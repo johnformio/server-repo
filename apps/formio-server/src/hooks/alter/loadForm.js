@@ -1,5 +1,6 @@
 'use strict';
 const _ = require('lodash');
+const config = require("../../../config");
 module.exports = app => {
   const loadFormAlter = {
     alter: (project, form) => {
@@ -28,6 +29,9 @@ module.exports = app => {
     hook: (form, req, next) => {
       if (!form || !form.project) {
         return next(null, form);
+      }
+      if (config.formio.hosted) {
+        form.plan = req.currentProject.plan;
       }
       app.formio.formio.cache.loadProject(req, form.project.toString(), (err, project) => {
         if (err) {
