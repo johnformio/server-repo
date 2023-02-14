@@ -242,7 +242,7 @@ module.exports = async function(db, config, tools, done) {
     }));
     await Promise.all(members.map(async (member) => {
       let isAdmin = false;
-      if (!member) {
+      if (!member || !member._id) {
         return;
       }
       if (member._id.toString() === team.owner.toString()) {
