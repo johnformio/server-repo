@@ -1,6 +1,22 @@
 'use strict';
 const _ = require('lodash');
-const mongodb = require('mongodb');
+const { ObjectId } = require('mongodb');
+function idToBson(_id) {
+  if (typeof _id === 'string') {
+    _id = _id.replace(/[^0-9a-z]+/, '');
+  }
+  try {
+    _id = _.isObject(_id)
+      ? _id
+      : new ObjectId(_id);
+  }
+  catch (e) {
+    console.log(`Unknown _id given: ${_id}, typeof: ${typeof _id}`);
+    _id = false;
+  }
+
+  return _id;
+}
 
 /**
  * Update 3.3.7
@@ -222,16 +238,18 @@ module.exports = async function(db, config, tools, done) {
     const admins = team.data.admins || [];
     const total = members.length + admins.length;
     await Promise.all(admins.map(async (admin) => {
-      return addMember(await submissions.findOne({_id: mongodb.ObjectId(admin._id.toString())}), true);
+      return addMember(await submissions.findOne({_id: idToBson(admin._id.toString())}), true);
     }));
     await Promise.all(members.map(async (member) => {
       let isAdmin = false;
-
+      if (!member || !member._id) {
+        return;
+      }
       if (member._id.toString() === team.owner.toString()) {
         isAdmin = true;
       }
 
-      return addMember(await submissions.findOne({_id: mongodb.ObjectId(member._id.toString())}), isAdmin);
+      return addMember(await submissions.findOne({_id: idToBson(member._id.toString())}), isAdmin);
     }));
 
     // Update the team resource.
