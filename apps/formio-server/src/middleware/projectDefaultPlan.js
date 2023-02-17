@@ -12,6 +12,10 @@ module.exports = (formioServer) => (req, res, next) => {
 
   // If not attempting to set a plan it will default already.
   if (!req.body.hasOwnProperty('plan')) {
+    //child project (stage) must inherit parent`s plan
+    if (req.parentProject && req.parentProject.plan && req.body.type === 'stage') {
+      req.body.plan = req.parentProject.plan;
+    }
     return next();
   }
 
