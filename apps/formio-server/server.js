@@ -154,12 +154,12 @@ module.exports = function(options) {
     noCache: true
   }));
 
-  // Hook each request and add analytics support.
+  // Hook each request and add usage tracking.
   app.use((req, res, next) => {
     // eslint-disable-next-line callback-return
     next();
-    if (app.formio.analytics) {
-      app.formio.analytics.hook(req, res, next);
+    if (app.formio.usageTracking) {
+      app.formio.usageTracking.hook(req, res, next);
     }
   });
 
@@ -183,11 +183,6 @@ module.exports = function(options) {
 
   app.use(require('./src/middleware/requestCache')(requestCache));
 
-  // Mount empty analytics router
-  // and create a promise to wait for formio to get ready
-  let formioAnalyticsReady;
-  const formioAnalyticsReadyPromise = new Promise((resolve) => formioAnalyticsReady = resolve);
-  app.use(require('./src/analytics')(formioAnalyticsReadyPromise));
   // Create the formio server.
   debug.startup('Creating Form.io Core Server');
   app.formio = options.server || require('formio')(config.formio);
@@ -406,21 +401,9 @@ module.exports = function(options) {
     const licenseValidationPromise = license.validate(app);
     licenseValidationPromise.then(() => {
       if (config.formio.hosted) {
-        // For hosted environments, we will connect to Redis and Analyitcs.
-        const RedisInterface = require('./src/util/RedisInterface');
-        const redis = new RedisInterface(config.redis);
-        // Load the analytics hooks.
-        debug.startup('Attaching middleware: Analytics');
-        const analytics = require('./src/analytics/analytics')(redis);
-
-        // Add the redis interface.
-        app.formio.redis = redis;
-
-        // Attach the analytics to the formio server and attempt to connect.
-        app.formio.analytics = analytics;
-
-        // Tell analytics router formioServer is ready.
-        formioAnalyticsReady(app.formio);
+        // Load the usage hooks.
+        debug.startup('Attaching middleware: Usage Tracking');
+        app.formio.usageTracking = require('./src/usage')(app.formio);
       }
     });
 

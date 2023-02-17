@@ -302,49 +302,6 @@ if (getConfig('MONGO_CONFIG')) {
 config.formio.mongoSecret = getConfig('DB_SECRET', 'abc123');
 config.formio.mongoSecretOld = getConfig('DB_SECRET_OLD', false);
 
-if (getConfig('REDIS_SERVICE')) {
-  if (getConfig('REDIS_SERVICE').toLowerCase() === 'local') {
-    if (config.docker) {
-      config.redis = {
-        url: 'redis://redis'
-      };
-    }
-    else {
-      config.redis = {
-        url: 'redis://localhost:6379'
-      };
-    }
-  }
-  else {
-    config.redis = {
-      service: getConfig('REDIS_SERVICE')
-    };
-  }
-}
-else if (getConfig('REDIS_ADDR', getConfig('REDIS_PORT_6379_TCP_ADDR'))) {
-  // This is compatible with docker legacy linking.
-  var addr = getConfig('REDIS_ADDR', getConfig('REDIS_PORT_6379_TCP_ADDR', 'localhost'));
-  var redisPort = getConfig('REDIS_PORT', getConfig('REDIS_PORT_6379_TCP_PORT', 6379));
-  config.redis = {
-    port: redisPort,
-    host: addr,
-    url: `redis://${addr}:${redisPort}`
-  };
-}
-else {
-  config.redis = {
-    service: 'false'
-  };
-}
-
-if (getConfig('REDIS_USE_SSL')) {
-  config.redis.useSSL = true;
-}
-
-if (getConfig('REDIS_PASS')) {
-  config.redis.password = getConfig('REDIS_PASS');
-}
-
 // TODO: Need a better way of setting the formio specific configurations.
 if (getConfig('SENDGRID_PASSWORD')) {
   config.formio.email = {};

@@ -17,6 +17,7 @@ const fetch = require('formio/src/util/fetch');
 const mockery = require('mockery');
 const sinon = require('sinon');
 const { Readable } = require('stream');
+const mongoose = require('mongoose');
 let formio;
 
 function md5(str) {
@@ -321,6 +322,32 @@ describe('Initial Tests', function() {
         emptyDatabase(done);
       });
 
+      before('Drop the hosted usage collection if it exists', (done) => {
+        // Drop the usage collection if it exists
+        const db = app.formio.formio.mongoose.connection.db;
+        db.listCollections({name: 'usage'}).hasNext()
+          .then((result) => result ? db.collection('usage').drop() : Promise.resolve())
+          .then((result) => done())
+          .catch(done);
+      })
+
+      before('Create the hosted usage collection and the compound index', (done) => {
+        const db = app.formio.formio.mongoose.connection.db;
+
+        db.createCollection('usage', {timeseries: {timeField: 'timestamp', metaField: 'metadata'}})
+          .catch((err) => {
+            // we're presuming the error here is MongoDB API compatibility, so we'll try again with a normal collection for tests only
+            console.log("Error while creating timeseries collection:", err);
+            return db.createCollection('usage');
+          })
+          .then((collection) => {
+            return collection.createIndex({ "metadata.project": 1, "timestamp": 1});
+          })
+          .then((result) => {
+            done();
+          })
+      });
+
       formioProject.actions['userRegistrationForm:email'].settings.transport = 'test';
 
       it('Installs the form.io project', function(done) {
@@ -617,6 +644,7 @@ describe('Initial Tests', function() {
     after(function() {
       describe('Project Tests', function() {
         this.retries(4);
+        require('./tests/usage')(app, template, hook);
         require('./tests/middleware')(app, template, hook);
         require('./tests/teams')(app, template, hook);
         require('./tests/ssoTeams')(app, template, hook);

@@ -3,51 +3,9 @@
 const config = require('../../config.js');
 const _ = require('lodash');
 const url = require('url');
-const plans = {
-  basic: {
-    forms: 10,
-    formRequests: 1000,
-    submissionRequests: 1000,
-    emails: 0,
-    pdfDownloads: 10,
-    pdfs: 1,
-    failure: -1
-  },
-  independent: {
-    forms: 25,
-    formRequests: 10000,
-    submissionRequests: 10000,
-    emails: 0,
-    failure: 5,
-    pdfDownloads: 10,
-    pdfs: 1,
-  },
-  team: {
-    forms: 50,
-    submissionRequests: 250000,
-    formRequests: 250000,
-    pdfDownloads: 10,
-    emails: 0,
-    pdfs: 1,
-    failure: 2
-  },
-  trial: {
-    forms: 10,
-    formRequests: 10000,
-    submissionRequests: 10000,
-    emails: 0,
-    failure: 2
-  },
-  commercial: {
-    submissionRequests: 1000000,
-    pdfDownloads: 1000,
-    emails: 1000,
-    pdfs: 25,
-    failure: 1
-  }
-};
-const planNames = Object.keys(plans);
 
+const ALL_PLAN_LIMITS = require('../usage/limits');
+const PLAN_NAMES = Object.keys(ALL_PLAN_LIMITS);
 const debug = {
   plans: require('debug')('formio:plans'),
   getPlan: require('debug')('formio:plans:getPlan'),
@@ -73,7 +31,7 @@ module.exports = function(formioServer) {
     }
 
     // Only allow plans defined within the plans definition.
-    if (project.plan && plans.hasOwnProperty(project.plan)) {
+    if (project.plan && ALL_PLAN_LIMITS.hasOwnProperty(project.plan)) {
       debug.getPlan('has plan');
       debug.getPlan(project.plan);
       return next(null, project.plan, project, currentProject);
@@ -132,7 +90,7 @@ module.exports = function(formioServer) {
         return cb();
       }
 
-      getPlan(req, function(err, plan, project, currentProject) {
+      getPlan(req, async function(err, plan, project, currentProject) {
         currentProject = currentProject || project;
         // Ignore project plans, if not interacting with a project.
         if (!err && !project) {
@@ -148,85 +106,57 @@ module.exports = function(formioServer) {
           return cb();
         }
 
-        const curr = new Date();
-        const limits = plans.hasOwnProperty(plan) ? plans[plan] : plans.basic;
+        const planLimits = ALL_PLAN_LIMITS.hasOwnProperty(plan) ? ALL_PLAN_LIMITS[plan] : ALL_PLAN_LIMITS.basic;
 
-        // Get a count of the forms.
-        formioServer.formio.resources.form.model.countDocuments({
-          project: req.projectId,
-          deleted: {$eq: null}
-        }, (err, forms) => {
+        try {
           // Check the calls made this month.
-          const year = curr.getUTCFullYear();
-          const month = curr.getUTCMonth();
+          const usageMetrics = await formioServer.usageTracking.getUsageMetrics(currentProject._id);
+          if (usageMetrics === undefined) {
+            return cb();
+          }
 
-          formioServer.analytics.getCalls(year, month, null, currentProject._id, function(err, calls) {
-            if (err || (calls === undefined)) {
-              return cb();
-            }
+          // Determine if we've exceeded our counts
+          const path = url.parse(req.url).pathname;
+          const form = /\/project\/[a-f0-9]{24}\/form$/;
+          const formRequests = /\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}$/;
+          const submissionRequests = /\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}\/submission(\/[a-f0-9]{24})?$/;
+          let type;
+          if (submissionRequests.test(path)) {
+            type = 'submissionRequests';
+          }
+          else if (formRequests.test(path) && req.method !== 'DELETE') {
+            type = 'formRequests';
+          }
+          // Don't allow modifying forms if over the form limit
+          else if (formRequests.test(path) && req.method === 'PUT') {
+            type = 'forms';
+          }
+          // Don't allow creating new forms if over limit.
+          else if (form.test(path) && req.method === 'POST') {
+            type = 'forms';
+          }
 
-            const exceeds = (calls >= limits.submissionRequests);
-            const lastChecked = _.get(currentProject, 'billing.checked', 0);
-            const currentCalls = _.get(currentProject, 'billing.calls', 0);
-            const now = Math.floor(Date.now() / 1000);
-            calls.forms = forms;
-
-            // Determine if we've exceeded our counts
-            const path = url.parse(req.url).pathname;
-            const form = /\/project\/[a-f0-9]{24}\/form$/;
-            const formRequests = /\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}$/;
-            const submissionRequests = /\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}\/submission(\/[a-f0-9]{24})?$/;
-            let type;
-            if (submissionRequests.test(path)) {
-              type = 'submissionRequests';
+          if (type && planLimits[type] && usageMetrics[type] >= planLimits[type] && process.env.ENABLE_RESTRICTIONS) {
+            // Form modifications should always fail.
+            if (type === 'forms') {
+              return cb('Limit exceeded. Upgrade your plan.');
             }
-            else if (formRequests.test(path) && req.method !== 'DELETE') {
-              type = 'formRequests';
-            }
-            // Don't allow modifying forms if over the form limit
-            else if (formRequests.test(path) && req.method === 'PUT') {
-              type = 'forms';
-            }
-            // Don't allow creating new forms if over limit.
-            else if (form.test(path) && req.method === 'POST') {
-              type = 'forms';
-            }
-
-            if (type && limits[type] && calls[type] >= limits[type] && process.env.ENABLE_RESTRICTIONS) {
-              // Form modifications should always fail.
-              if (type === 'forms') {
-                // eslint-disable-next-line callback-return
-                cb('Limit exceeded. Upgrade your plan.');
-              }
-              else if (limits.failure > 0) {
-                // Delay the request if over the limit.
-                setTimeout(cb, limits.failure * 1000);
-              }
-              else {
-                // If not a timed failure, fail straight out.
-                // eslint-disable-next-line callback-return
-                cb('Limit exceeded. Upgrade your plan.');
-              }
+            else if (planLimits.failure > 0) {
+              // Delay the request if over the limit.
+              setTimeout(cb, planLimits.failure * 1000);
             }
             else {
-              // eslint-disable-next-line callback-return
-              cb();
+              // If not a timed failure, fail straight out.
+              return cb('Limit exceeded. Upgrade your plan.');
             }
-
-            // If the project has no calls, then we can check every minute, otherwise update every 5 minutes.
-            if ((!currentCalls && ((now - lastChecked) > 60)) || ((now - lastChecked) > 300) || calls.forms !== project.billing.forms) {
-              _.set(currentProject, 'billing.calls', calls.submissionRequests);
-              _.set(currentProject, 'billing.usage', calls);
-              _.set(currentProject, 'billing.exceeds', exceeds);
-              _.set(currentProject, 'billing.checked', now);
-              formioServer.formio.resources.project.model.updateOne({
-                _id: formioServer.formio.mongoose.Types.ObjectId(currentProject._id.toString())
-              }, {$set: {'billing': currentProject.billing}}, (err, result) => {
-                debug.checkRequest('Updated project billing.');
-              });
-            }
-          });
-        });
+          }
+          else {
+            return cb();
+          }
+        }
+        catch (err) {
+          return cb(err);
+        }
       });
     };
   };
@@ -235,7 +165,7 @@ module.exports = function(formioServer) {
    * Returns an array of all the plan types
    */
   const getPlans = function() {
-    return planNames;
+    return PLAN_NAMES;
   };
 
   /**
@@ -289,10 +219,10 @@ module.exports = function(formioServer) {
 
   return {
     checkRequest,
-    getPlan: getPlan,
-    getPlans: getPlans,
-    limits: plans,
-    allowForPlans: allowForPlans,
-    disableForPlans: disableForPlans
+    getPlan,
+    getPlans,
+    limits: ALL_PLAN_LIMITS,
+    allowForPlans,
+    disableForPlans
   };
 };

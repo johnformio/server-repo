@@ -30,13 +30,9 @@ module.exports = app => (mail, req, res, params, setActionItemMessage, cb) => {
       const transport = mail.msgTransport || 'default';
       if (transport === 'default') {
         // If they are using a default transport, then we need to ensure we limit the usage.
-        formioServer.analytics.checkEmail(req, (err) => {
-          if (err) {
-            throw new Error(err.message || err);
-          }
-          formioServer.analytics.recordEmail(req);
-          return;
-        });
+        await formioServer.usageTracking.checkEmail(req);
+        formioServer.usageTracking.recordEmail(req);
+        return;
       }
     }
   };
