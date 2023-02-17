@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-4868: Fixing the wildcard cors to return the correct value for Access-Control-Allow-Origin
  - FIO-6320: Fix access-control-allow-headers issue
  - Made the team upgrade more resilient 
+ - FIO-5889: Remove Redis as a dependency and replace with MongoDB
+ - FIO-6347: made stages inherit parent project plan
 
 ## 8.1.0-rc.2
 ### Changed
