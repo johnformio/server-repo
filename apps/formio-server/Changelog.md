@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased: 8.2.0-rc.1]
 ### Changed
- - Added opt-in environment variables for SAML Passport keypaths
+ - Added opt-in environment variables for SAML Passport key paths
 
 ### Fixed
  - FIO-5613: refactor of webhook action allowing for interpolation of headers and better treatment of before-handled webhooks
@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Made the team upgrade more resilient 
  - FIO-5889: Remove Redis as a dependency and replace with MongoDB
  - FIO-6347: made stages inherit parent project plan
+ - FIO-6162-5540: improved performance when loading a project
 
 ## 8.1.0-rc.2
 ### Changed
