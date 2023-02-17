@@ -72,11 +72,28 @@ function middleware(app) {
             tenantEnabled = _.get(app, 'license.terms.scopes', []).includes('tenant');
           }
           else {
-            result = await utilizationSync(app, `project:${req.projectId}`, {
+            const requestBody = {
               ...getProjectContext(req),
               licenseKey: getLicenseKey(req),
-            });
-            if (result) {
+            };
+
+            const utilizationChecks = await Promise.all([
+              utilizationSync(app, `project:${req.projectId}`, {...requestBody}, '', false),
+              utilizationSync(app, `project:${req.projectId}:formManager`, {
+                ...requestBody,
+                type: 'formManager'
+              }, '', false),
+              utilizationSync(app, `project:${req.projectId}:accessibility`, {
+                ...requestBody,
+                type: 'Accessibility'
+              }, '', false)
+            ]);
+
+            const [projectResult, managerResult, accResult] = utilizationChecks;
+
+            if (projectResult) {
+              result = projectResult;
+
               if (result.error) {
                 res.resource.item.disabled = result.error.message;
               }
@@ -88,20 +105,10 @@ function middleware(app) {
               }
             }
 
-            const managerResult = await utilizationSync(app, `project:${req.projectId}:formManager`, {
-              ...getProjectContext(req),
-              licenseKey: getLicenseKey(req),
-              type: 'formManager'
-            });
             formManagerEnabled = (managerResult && managerResult.error) ? managerResult.error.message : true;
-
-            const accResult = utilization(app, `project:${req.projectId}:accessibility`, {
-              ...getProjectContext(req),
-              licenseKey: getLicenseKey(req),
-              type: 'Accessibility'
-            });
             accessibilityEnabled = accResult && accResult.error ? accResult.error.message : true;
           }
+
           res.resource.item.apiCalls = {
             limit: terms,
             used,

@@ -31,8 +31,8 @@ function base64(data) {
   return Buffer.from(JSON.stringify(data)).toString('base64');
 }
 
-async function utilizationSync(app, cacheKey, body, action = '') {
-  return await utilization(app, cacheKey, body, action, true, true);
+async function utilizationSync(app, cacheKey, body, action = '', clearCache) {
+  return await utilization(app, cacheKey, body, action, _.isBoolean(clearCache) ? clearCache : true, true);
 }
 
 function utilization(app, cacheKey, body, action = '', clear = false, sync = false) {
