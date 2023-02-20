@@ -24,14 +24,16 @@ module.exports = app => {
       if (_.get(form, 'settings.recaptcha.isEnabled')) {
         _.set(form, 'settings.recaptcha.siteKey', _.get(project, 'settings.recaptcha.siteKey'));
       }
+
+      // add project plan to form definition in hosted environments
+      if (config.formio.hosted) {
+        form.plan = project.plan;
+      }
       return form;
     },
     hook: (form, req, next) => {
       if (!form || !form.project) {
         return next(null, form);
-      }
-      if (config.formio.hosted) {
-        form.plan = req.currentProject.plan;
       }
       app.formio.formio.cache.loadProject(req, form.project.toString(), (err, project) => {
         if (err) {
