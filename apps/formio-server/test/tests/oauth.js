@@ -27,7 +27,7 @@ module.exports = function(app, template, hook, eventEmitter) {
     return;
   }
 
-  var ignoreFields = ['config'];
+  var ignoreFields = ['config', 'plan'];
 
   // Makes sure given user has external tokens match the expected ones
   // Does NOT fail if user has more tokens than expected ones
