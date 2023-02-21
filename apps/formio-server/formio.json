@@ -5082,7 +5082,7 @@
                     {
                       "components": [
                         {
-                          "label": "Basic",
+                          "label": "Archived",
                           "action": "custom",
                           "showValidations": false,
                           "theme": "info",

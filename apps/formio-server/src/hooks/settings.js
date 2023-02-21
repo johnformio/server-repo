@@ -212,7 +212,7 @@ module.exports = function(app) {
         if (!action.hasOwnProperty('name') || !premium.includes(action.name)) {
           return true;
         }
-        if (['basic', 'independent'].includes(req.primaryProject.plan)) {
+        if (['basic', 'independent', 'archived'].includes(req.primaryProject.plan)) {
           return false;
         }
 
@@ -241,7 +241,7 @@ module.exports = function(app) {
         return cb(null, transports);
       },
       hasEmailAccess(req) {
-        const noEmailPlans = ['basic'];
+        const noEmailPlans = ['basic', 'archived'];
         return !(req.currentProject && noEmailPlans.includes(req.currentProject.plan));
       },
       path(url, req) {
@@ -624,7 +624,7 @@ module.exports = function(app) {
               }
 
               // Skip teams processing, if this projects plan does not support teams.
-              if (!primaryProject.plan || primaryProject.plan === 'basic' || primaryProject.plan === 'independent') {
+              if (['basic', 'independent', 'archived'].includes(primaryProject.plan)) {
                 return callback(null);
               }
 

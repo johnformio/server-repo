@@ -189,39 +189,9 @@ module.exports = function(server) {
             return cb('Project not found');
           }
         }
-        if (result.plan && result.plan !== 'trial') {
-          cache.projects[id] = result;
-          return cb(null, result);
-        }
 
-        try {
-          const currTime = (new Date()).getTime();
-          const projTime = (new Date(result.trial.toString())).getTime();
-          const delta = Math.ceil(parseInt((currTime - projTime) / 1000));
-          const day = 86400;
-          const remaining = 30 - parseInt(delta / day);
-          const trialDaysRemaining = remaining > 0 ? remaining : 0;
-
-          if (trialDaysRemaining > 0) {
-            cache.projects[id] = result;
-            return cb(null, result);
-          }
-
-          result.set('plan', 'basic');
-          result.save(function(err, response) {
-            if (err) {
-              debug.error(err);
-            }
-
-            cache.projects[id] = response;
-            return cb(null, response);
-          });
-        }
-        catch (e) {
-          debug.error(e);
-          cache.projects[id] = result;
-          return cb(null, result);
-        }
+        cache.projects[id] = result;
+        return cb(null, result);
       });
     },
 
