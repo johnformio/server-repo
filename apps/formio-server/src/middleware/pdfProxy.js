@@ -66,6 +66,7 @@ module.exports = (formio) => {
   router.use(async (req, res) => {
     const options = {
       method: req.method,
+      rejectUnauthorized: false,
       headers: {...req.headers, plan: req.currentProject.plan}
     };
     if (req.method !== 'HEAD' && req.method !== 'GET') {
