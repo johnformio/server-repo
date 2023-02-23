@@ -475,6 +475,7 @@ module.exports = (router, formioServer) => {
                 return res.status(200).send('OK');
               });
             }
+            return res.status(200).send('OK');
           }
           else {
             res.status(400).send();
