@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-6347: made stages inherit parent project plan
  - FIO-6162-5540: improved performance when loading a project
  - FIO-6321: added plan property to the form in hosted environments
+ - FIO-6330: Add middleware to archive projects with expired trial time and restrict Archived projects actions
 
 ## 8.1.0-rc.2
 ### Changed
