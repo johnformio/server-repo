@@ -1,5 +1,6 @@
 'use strict';
 const debug = require('debug')('formio:middleware:checkRequestAllowed');
+const config = require('../../config');
 
 const REQUEST_FOR_ARCHIVED_PROJECT_NOT_ALLOWED_ERROR = 'This is not allowed for an Archived project.';
 
@@ -7,8 +8,8 @@ module.exports = (formio) => {
   const projects = formio.db.collection('projects');
 
   return async (req, res, next) => {
-    // Skip for OPTIONS requests
-    if (req.method === 'OPTIONS') {
+    // Run only on hosted envs, skip for OPTIONS requests
+    if (!config.formio.hosted || req.method === 'OPTIONS') {
       return next();
     }
 
