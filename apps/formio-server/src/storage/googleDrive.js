@@ -191,7 +191,7 @@ const middleware = router => {
       next();
     },
     router.formio.formio.middleware.permissionHandler,
-    router.formio.formio.plans.disableForPlans(['basic', 'independent']),
+    router.formio.formio.plans.disableForPlans(['basic', 'independent', 'archived']),
     function(req, res) {
       router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
         if (err) {
@@ -262,7 +262,7 @@ const middleware = router => {
       next();
     },
     router.formio.formio.middleware.permissionHandler,
-    router.formio.formio.plans.disableForPlans(['basic', 'independent']),
+    router.formio.formio.plans.disableForPlans(['basic', 'independent', 'archived']),
     upload.single('file'),
     function(req, res) {
       router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {

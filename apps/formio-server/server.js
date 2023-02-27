@@ -444,6 +444,10 @@ module.exports = function(options) {
     debug.startup('Attaching middleware: Project Index');
     app.get('/', require('./src/middleware/projectIndex')(app.formio.formio));
 
+    // Check if the request is allowed for the current project
+    debug.startup('Attaching middleware: Check Request Allowed');
+    app.use(app.formio.formio.middleware.checkRequestAllowed);
+
     // Don't allow accessing a project's forms and other if it is remote. Redirect to the remote instead.
     debug.startup('Attaching middleware: Remote Redirect');
     app.use('/project/:projectId', require('./src/middleware/remoteRedirect')(app.formio));

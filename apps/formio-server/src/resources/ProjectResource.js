@@ -157,6 +157,8 @@ module.exports = (router, formioServer) => {
 
   formio.middleware.postCreateLicenseCheck = require('../middleware/postCreateLicenseCheck').middleware(router);
 
+  formio.middleware.checkRequestAllowed = require('../middleware/checkRequestAllowed')(formio);
+
   const hiddenFields = ['deleted', '__v', 'machineName', 'primary'];
   const resource = Resource(
     router,
@@ -183,6 +185,7 @@ module.exports = (router, formioServer) => {
       (req, res, next) => res.sendStatus(405),
     ],
     beforePost: [
+      formio.middleware.checkRequestAllowed,
       require('../middleware/checkPrimaryAccess'),
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       require('../middleware/fetchTemplate'),
@@ -237,6 +240,7 @@ module.exports = (router, formioServer) => {
       projectSettings,
     ],
     beforePut: [
+      formio.middleware.checkRequestAllowed,
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       formio.middleware.licenseUtilization,
       (req, res, next) => {
@@ -388,6 +392,7 @@ module.exports = (router, formioServer) => {
       },
     ],
     beforeDelete: [
+      formio.middleware.checkRequestAllowed,
       require('../middleware/projectProtectAccess')(formio),
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       formio.middleware.licenseUtilization,

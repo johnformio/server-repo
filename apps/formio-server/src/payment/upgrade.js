@@ -33,7 +33,7 @@ module.exports = function(formio) {
         return formio.payment.userHasPaymentInfo(req)
           .then(function(hasPayment) {
             // Allow the manual transition from trial to basic.
-            if (!hasPayment && ['basic', 'trial'].indexOf(req.body.plan) === -1) {
+            if (!hasPayment && ['basic', 'trial', 'archived'].indexOf(req.body.plan) === -1) {
               res.status(400).send('Cannot upgrade project without registered payment info');
               return Q.reject();
             }
@@ -74,7 +74,7 @@ module.exports = function(formio) {
             });
           })
           .then(function() {
-            const plans = ['trial', 'basic', 'independent', 'team', 'commercial'];
+            const plans = ['trial', 'basic', 'independent', 'team', 'commercial', 'archived'];
             const direction = plans.indexOf(project.plan) < plans.indexOf(req.body.plan) ? 'Upgrade' : 'Downgrade';
 
             /* eslint-disable max-len */
