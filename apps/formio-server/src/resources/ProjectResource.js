@@ -6,6 +6,7 @@ const _ = require('lodash');
 const debug = require('debug')('formio:resources:projects');
 const util = require('../util/util');
 const crypto = require('crypto');
+const cors = require('cors');
 
 module.exports = (router, formioServer) => {
   const {formio} = formioServer;
@@ -453,6 +454,7 @@ module.exports = (router, formioServer) => {
   // The portal check endpoint
   router.post(
     '/project/:projectId/portal-check',
+      cors(),
       formio.middleware.tokenHandler,
       (req, res, next) => {
         const origin = req.header('Origin');
