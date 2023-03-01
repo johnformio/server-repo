@@ -10,6 +10,15 @@ module.exports = {
     pdfs: 1,
     failure: -1
   },
+  archived: {
+    forms: 10,
+    formRequests: 0,
+    submissionRequests: 0,
+    emails: 0,
+    pdfDownloads: 0,
+    pdfs: 0,
+    failure: -1
+  },
   independent: {
     forms: 25,
     formRequests: 10000,
