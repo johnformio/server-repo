@@ -54,10 +54,11 @@ module.exports = (formio) => {
           return next(err);
         }
 
-        return res.status(400).send(REQUEST_FOR_ARCHIVED_PROJECT_NOT_ALLOWED_ERROR);
+        return next(REQUEST_FOR_ARCHIVED_PROJECT_NOT_ALLOWED_ERROR);
       });
     }
-
-    return next();
+    else {
+      return next();
+    }
   };
 };
