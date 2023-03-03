@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-6330: Add middleware to archive projects with expired trial time and restrict Archived projects actions
  - Ensure we do not reject the server-to-server call from pdf to server
  - FIO-6444: fix async problem with archived projects
+ - FIO-6422: postgres-settings-knex-raw-error
 
 ## 8.1.0-rc.2
 ### Changed
