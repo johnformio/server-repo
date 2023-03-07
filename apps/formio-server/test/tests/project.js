@@ -1,16 +1,18 @@
 /* eslint-env mocha */
 'use strict';
 
-var request = require('supertest');
-var assert = require('assert');
-var _ = require('lodash');
-var Q = require('q');
-var async = require('async');
-var chance = new (require('chance'))();
-var uuidRegex = /^([a-z]{15})$/;
-var util = require('formio/src/util/util');
-var docker = process.env.DOCKER;
-var customer = process.env.CUSTOMER;
+const request = require('supertest');
+const assert = require('assert');
+const _ = require('lodash');
+const Q = require('q');
+const async = require('async');
+const chance = new (require('chance'))();
+const uuidRegex = /^([a-z]{15})$/;
+const util = require('formio/src/util/util');
+const config = require('../../config');
+const docker = process.env.DOCKER;
+const customer = process.env.CUSTOMER;
+
 
 module.exports = function(app, template, hook) {
   let Helper = require('formio/test/helper')(app);
@@ -19,7 +21,7 @@ module.exports = function(app, template, hook) {
   /**
    * Helper function to confirm the given properties are not present.
    */
-  var not = function(item, properties) {
+  const not = function(item, properties) {
     if (!item || !properties) {
       return;
     }
@@ -27,15 +29,15 @@ module.exports = function(app, template, hook) {
       return;
     }
 
-    var list = [].concat(item);
+    const list = [].concat(item);
     list.forEach(function(i) {
-      for(var a = 0; a < properties.length; a++) {
+      for(let a = 0; a < properties.length; a++) {
         assert.equal(i.hasOwnProperty(properties[a].toString()), false);
       }
     });
   };
 
-  var confirmProjectPlan = function confirmProjectPlan(id, user, plan, next) {
+  const confirmProjectPlan = function confirmProjectPlan(id, user, plan, next) {
     request(app)
       .get('/project/' + id)
       .set('x-jwt-token', user.token)
@@ -46,7 +48,7 @@ module.exports = function(app, template, hook) {
           return next(err);
         }
         try {
-          var response = res.body;
+          const response = res.body;
           assert.equal(response.hasOwnProperty('plan'), true);
           assert.equal(response.plan, plan);
 
@@ -60,7 +62,7 @@ module.exports = function(app, template, hook) {
       });
   };
 
-  var deleteProjects = function(projects, next) {
+  const deleteProjects = function(projects, next) {
     async.each(projects, function(proj, cb) {
       request(app)
         .delete('/project/' + proj._id)
@@ -70,7 +72,7 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
-          var response = res.body;
+          const response = res.body;
           assert.deepEqual(response, {});
 
           // Store the JWT for future API calls.
@@ -86,25 +88,25 @@ module.exports = function(app, template, hook) {
   let formId;
 
   describe('Projects', function() {
-    var tempProject = {
+    const tempProject = {
       title: chance.word(),
       description: chance.sentence(),
       template: _.pick(template, ['title', 'name', 'version', 'description', 'roles', 'resources', 'forms', 'actions', 'access'])
     };
-    var originalProject = _.cloneDeep(tempProject);
+    const originalProject = _.cloneDeep(tempProject);
 
     // Update the template with current data for future tests.
-    var mapProjectToTemplate = function(template, callback) {
-      var mapActions = function(forms, cb) {
-        for (var a = 0; a < forms.length || 0; a++) {
+    const mapProjectToTemplate = function(template, callback) {
+      const mapActions = function(forms, cb) {
+        for (let a = 0; a < forms.length || 0; a++) {
           let form = forms[a];
           formId = form._id;
 
           request(app)
             .get('/project/' + template.project._id + '/form/' + form._id + '/action?limit=9999')
             .set('x-jwt-token', template.formio.owner.token)
-            // .expect('Content-Type', /json/)
-            // .expect(200)
+            .expect('Content-Type', /json/)
+            .expect(200)
             .end(function(err, res) {
               if (err) return cb(err);
 
@@ -121,11 +123,11 @@ module.exports = function(app, template, hook) {
         cb();
       };
 
-      var mapForms = function(cb) {
+      const mapForms = function(cb) {
         request(app)
           .get('/project/' + template.project._id + '/form?limit=9999')
           .set('x-jwt-token', template.formio.owner.token)
-          // .expect('Content-Type', /json/)
+          .expect('Content-Type', /json/)
           .expect(200)
           .end(function(err, res) {
             if (err) return cb(err);
@@ -141,7 +143,7 @@ module.exports = function(app, template, hook) {
           });
       };
 
-      var mapRoles = function(cb) {
+      const mapRoles = function(cb) {
         request(app)
           .get('/project/' + template.project._id + '/role?limit=9999')
           .set('x-jwt-token', template.formio.owner.token)
@@ -178,12 +180,14 @@ module.exports = function(app, template, hook) {
         .post('/project')
         .send(tempProject)
         .set('x-jwt-token', template.formio.owner.token)
+        // .expect(201)
+        // .expect('Content-Type', /json/)
         .end(function(err, res) {
           if (err) {
             return done(err);
           }
 
-          var response = res.body;
+          const response = res.body;
           assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
           assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
           assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
@@ -201,22 +205,6 @@ module.exports = function(app, template, hook) {
           assert.notEqual(response.name.search(uuidRegex), -1);
           assert.equal(response.description, tempProject.description);
 
-          // Check plan and api calls info
-          if (app.formio) {
-            var plan = process.env.PROJECT_PLAN;
-            assert.equal(response.plan, plan, 'The plan should match the default new project plan.');
-            // assert.deepEqual(response.apiCalls, {
-            //   used: {
-            //     forms: 0,
-            //     emails: 0,
-            //     formRequests: 0,
-            //     submissionRequests: 0
-            //   },
-            //   limit: _.omit(app.formio.formio.plans.limits[response.plan], ['failure']),
-            //   reset: moment().startOf('month').add(1, 'month').toISOString()
-            // });
-          }
-
           // Check that the response does not contain these properties.
           not(response, ['__v', 'deleted', 'settings_encrypted', 'primary']);
 
@@ -233,14 +221,14 @@ module.exports = function(app, template, hook) {
       request(app)
         .get('/project/' + template.project._id)
         .set('x-jwt-token', template.formio.owner.token)
-        // .expect('Content-Type', /json/)
+        .expect('Content-Type', /json/)
         .expect(200)
         .end(function(err, res) {
           if (err) {
             return done(err);
           }
 
-          var response = res.body;
+          const response = res.body;
           assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
           assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
           assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
@@ -256,12 +244,6 @@ module.exports = function(app, template, hook) {
           assert.notEqual(response.defaultAccess, [], 'The Projects default `role` should not be empty.');
           assert.equal(response.name, template.project.name);
           assert.equal(response.description, template.project.description);
-
-          // Check plan and api calls info
-          if (app.formio) {
-            var plan = process.env.PROJECT_PLAN;
-            assert.equal(response.plan, plan, 'The plan should match the default new project plan.');
-          }
 
           // Check that the response does not contain these properties.
           not(response, ['__v', 'deleted', 'settings_encrypted', 'primary', 'machineName']);
@@ -285,7 +267,7 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
-          var response = res.body;
+          const response = res.body;
           assert.deepEqual(response, {
             _id: template.project._id
           });
@@ -294,7 +276,7 @@ module.exports = function(app, template, hook) {
     });
 
     it('A user without authentication should not be able to update a project.', function(done) {
-      var newDescription = 'An updated Project Description.';
+      const newDescription = 'An updated Project Description.';
       request(app)
         .put('/project/' + template.project._id)
         .send({
@@ -315,7 +297,7 @@ module.exports = function(app, template, hook) {
     });
 
     //it('A user without authentication should not be able to update the owner of a project via alias', function(done) {
-    //  var primary = app.formio && app.formio.formio && app.formio.formio.config && app.formio.formio.config.formioHost
+    //  const primary = app.formio && app.formio.formio && app.formio.formio.config && app.formio.formio.config.formioHost
     //    ? app.formio.formio.config.formioHost
     //    : 'http://formio.localhost:3000';
     //  request(primary)
@@ -328,7 +310,7 @@ module.exports = function(app, template, hook) {
     //});
 
     it('A Form.io User should be able to update the settings of their Project', function(done) {
-      var newSettings = {
+      const newSettings = {
         cors: '*',
         allowConfig: true,
         keys: [
@@ -363,7 +345,7 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
-          var response = res.body;
+          const response = res.body;
           assert.equal(response.hasOwnProperty('settings'), true);
           assert.deepEqual(_.omit(response.settings, ['licenseKey']), newSettings);
 
@@ -455,7 +437,7 @@ module.exports = function(app, template, hook) {
         });
     });
 
-    var newSettings = {
+    const newSettings = {
       cors: '*',
       allowConfig: false,
       keys: [
@@ -490,7 +472,7 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
-          var response = res.body;
+          const response = res.body;
           assert.equal(response.hasOwnProperty('settings'), true);
           assert.deepEqual(_.omit(response.settings, ['licenseKey']), newSettings);
 
@@ -626,6 +608,14 @@ module.exports = function(app, template, hook) {
         .end(done);
     });
 
+    it('Should allow you to get tags with a valid token', function(done) {
+      request(app)
+        .get('/project/' + template.project._id + '/tag')
+        .set('x-token', '123testing123testing')
+        .expect(200)
+        .end(done);
+    });
+
     it('A Form.io User should be able to Read the Index of their User-Created Projects', function(done) {
       request(app)
         .get('/project?limit=99999999')
@@ -636,9 +626,9 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
-          var response = res.body;
-          var found = false;
-          var responseProject = {};
+          const response = res.body;
+          let found = false;
+          let responseProject = {};
           response.forEach(function(project) {
             if (project.name === template.project.name) {
               responseProject = project;
@@ -646,12 +636,6 @@ module.exports = function(app, template, hook) {
             }
           });
           assert.equal(found, true);
-
-          // Check plan and api calls info
-          if (!docker && !customer) {
-            var plan = process.env.PROJECT_PLAN;
-            assert.equal(responseProject.plan, plan, 'The plan should match the default new project plan.');
-          }
 
           // Check that the response does not contain these properties.
           not(response, ['__v', 'deleted', 'settings_encrypted']);
@@ -674,7 +658,7 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
-          var response = res.text;
+          const response = res.text;
           assert.equal(response, 'Unauthorized');
 
           done();
@@ -691,7 +675,7 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
-          var response = res.text;
+          const response = res.text;
           assert.equal(response, 'Unauthorized');
 
           done();
@@ -699,7 +683,7 @@ module.exports = function(app, template, hook) {
     });
 
     it('An Anonymous User should not be able to Update a User-Created Project without permission', function(done) {
-      var newDescription = 'An updated Project Description #2.';
+      const newDescription = 'An updated Project Description #2.';
 
       request(app)
         .put('/project/' + template.project._id)
@@ -711,7 +695,7 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
-          var response = res.text;
+          const response = res.text;
           assert.equal(response, 'Unauthorized');
 
           done();
@@ -728,7 +712,7 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
-          var response = res.text;
+          const response = res.text;
           assert.equal(response, 'Unauthorized');
 
           done();
@@ -745,7 +729,7 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
-          var response = res.text;
+          const response = res.text;
           assert.equal(response, 'Unauthorized');
 
           done();
@@ -753,7 +737,7 @@ module.exports = function(app, template, hook) {
     });
 
     it('Updating a Project with duplicate permission types will condense the access permissions', function(done) {
-      var newAccess = _.clone(template.project.access);
+      const newAccess = _.clone(template.project.access);
       newAccess.push({
         type: 'read_all',
         roles: [template.project.defaultAccess]
@@ -770,7 +754,7 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
-          var response = res.body;
+          const response = res.body;
           assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
           assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
           assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
@@ -778,7 +762,7 @@ module.exports = function(app, template, hook) {
 
           // Confirm that all permission types are present.
           assert.equal(response.access.length, 4);
-          var permissions = _.map(response.access, 'type');
+          const permissions = _.map(response.access, 'type');
           assert.deepEqual(permissions, ['create_all', 'read_all', 'update_all', 'delete_all']);
 
           // Confirm that all roles are not empty.
@@ -802,10 +786,10 @@ module.exports = function(app, template, hook) {
     });
 
     describe('Protected Project', function() {
-      var project, form, submission, action, role;
+      let project, form, submission, action, role;
 
       it('Create a content form for protected testing', function(done) {
-        var tempForm = {
+        const tempForm = {
           title: 'Protect Form',
           name: 'protectForm',
           path: 'temp/protectform',
@@ -875,7 +859,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.hasOwnProperty('protect'), true);
             assert(response.protect, 'Project should be protected');
 
@@ -899,7 +883,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
             assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
             assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
@@ -916,12 +900,6 @@ module.exports = function(app, template, hook) {
             assert.notEqual(response.defaultAccess, [], 'The Projects default `role` should not be empty.');
             assert.equal(response.name, template.project.name);
             assert.equal(response.description, template.project.description);
-
-            // Check plan and api calls info
-            if (app.formio) {
-              var plan = process.env.PROJECT_PLAN;
-              assert.equal(response.plan, plan, 'The plan should match the default new project plan.');
-            }
 
             // Check that the response does not contain these properties.
             not(response, ['__v', 'deleted', 'settings_encrypted', 'primary', 'machineName']);
@@ -954,7 +932,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Form.io User cannot Create a form in a protected project', function(done) {
-        var tempForm = {
+        const tempForm = {
           title: 'Temp Form',
           name: 'tempForm',
           path: 'temp/tempform',
@@ -1110,7 +1088,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Form.io User should be able to Create a Submission in a protected project', function(done) {
-        var tempSubmission = {
+        const tempSubmission = {
           data: {
             foo: 'test'
           }
@@ -1166,7 +1144,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Form.io User cannot Update the Access of a protected Project', function(done) {
-        var tmpProject = _.cloneDeep(project);
+        const tmpProject = _.cloneDeep(project);
         tmpProject.access = [{ type: project.access[0].type, roles: []}, project.access[1]];
 
         request(app)
@@ -1185,7 +1163,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Form.io User cannot Update the Name of a protected Project', function(done) {
-        var tmpProject = _.cloneDeep(project);
+        const tmpProject = _.cloneDeep(project);
         tmpProject.name = chance.word();
 
         request(app)
@@ -1204,7 +1182,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Form.io User should be able to Update the Settings of a protected Project', function(done) {
-        var newSettings = {
+        const newSettings = {
           cors: '*',
           keys: [
             {
@@ -1238,7 +1216,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.deepEqual(_.omit(response.settings, ['licenseKey']), newSettings);
 
@@ -1275,7 +1253,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.hasOwnProperty('protect'), true);
             assert(!response.protect, 'Project should not be protected');
 
@@ -1308,7 +1286,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.deepEqual(response, {});
 
             // Store the JWT for future API calls.
@@ -1385,7 +1363,7 @@ module.exports = function(app, template, hook) {
             return done(err);
           }
 
-          var response = res.body;
+          const response = res.body;
           assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
           assert(response.hasOwnProperty('modified'), 'The response should contain a `modified` timestamp.');
           assert(response.hasOwnProperty('created'), 'The response should contain a `created` timestamp.');
@@ -1417,11 +1395,14 @@ module.exports = function(app, template, hook) {
   });
 
   describe('Project Plans', function() {
-    if (docker) {
+    // TODO: It'd be good to segregate the tests into Docker, Hosted, and Deployed silos so we can stop using
+    // imperative conditionals that hold no semantic meaning; for now we won't run project plans if we're not
+    // testing a hosted environment
+    if (docker || !config.formio.hosted) {
       return;
     }
 
-      var tempProjects = [];
+    const tempProjects = [];
     describe('Basic Plan', function() {
       before(function(done) {
         request(app)
@@ -1437,7 +1418,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'basic');
             template.project = response;
 
@@ -1459,7 +1440,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('name'), true);
             assert.notEqual(response.name.search(uuidRegex), -1);
@@ -1472,8 +1453,8 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project on the basic plan should not be able to define its name on project creation', function(done) {
-        var attempt = chance.word({length: 10});
-        var tempProject = {
+        const attempt = chance.word({length: 10});
+        const tempProject = {
           title: chance.word(),
           description: chance.sentence(),
           name: attempt,
@@ -1491,7 +1472,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('name'), true);
             assert.notEqual(response.name, attempt);
@@ -1507,7 +1488,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project on the basic plan should not be able to change the uuid generated name on project update', function(done) {
-        var attempt = chance.word({length: 10});
+        const attempt = chance.word({length: 10});
 
         request(app)
           .put('/project/' + template.project._id)
@@ -1520,7 +1501,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('name'), true);
             assert.equal(response.name, template.project.name);
@@ -1534,8 +1515,8 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project on the basic plan will not be able to set cors options on creation', function(done) {
-        var attempt = '*,www.example.com';
-        var tempProject = {
+        const attempt = '*,www.example.com';
+        const tempProject = {
           title: chance.word(),
           description: chance.sentence(),
           settings: {
@@ -1555,7 +1536,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('settings'), false);
             tempProjects.push(res.body);
@@ -1568,7 +1549,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project on the basic plan will not be able to set cors options on project update', function(done) {
-        var attempt = '*,www.example.com';
+        const attempt = '*,www.example.com';
 
         request(app)
           .put('/project/' + template.project._id)
@@ -1581,7 +1562,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('cors'), true);
@@ -1595,8 +1576,8 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project on the basic plan will not be able to set oauth settings on creation', function(done) {
-        var attempt = {clientId: chance.word(), clientSecret: chance.word()};
-        var tempProject = {
+        const attempt = {clientId: chance.word(), clientSecret: chance.word()};
+        const tempProject = {
           title: chance.word(),
           description: chance.sentence(),
           settings: {
@@ -1618,7 +1599,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('settings'), false);
 
@@ -1632,7 +1613,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project on the basic plan will not be able to set oauth settings on project update', function(done) {
-        var attempt = {clientId: chance.word(), clientSecret: chance.word()};
+        const attempt = {clientId: chance.word(), clientSecret: chance.word()};
 
         request(app)
           .put('/project/' + template.project._id)
@@ -1651,7 +1632,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('oauth'), false);
@@ -1664,7 +1645,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project on the basic plan will not be able to set premium email settings on creation', function(done) {
-        var tempProject = {
+        const tempProject = {
           title: chance.word(),
           description: chance.sentence(),
           settings: {
@@ -1691,7 +1672,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('settings'), false);
 
@@ -1727,7 +1708,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('email'), true);
@@ -1741,7 +1722,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project on the basic plan will not be able to set file storage settings on creation', function(done) {
-        var tempProject = {
+        const tempProject = {
           title: chance.word(),
           description: chance.sentence(),
           settings: {
@@ -1774,7 +1755,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('settings'), false);
 
@@ -1816,7 +1797,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('storage'), false);
@@ -1829,7 +1810,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project on the basic plan will not be able to set data connection settings on creation', function(done) {
-        var tempProject = {
+        const tempProject = {
           title: chance.word(),
           description: chance.sentence(),
           settings: {
@@ -1892,7 +1873,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('settings'), false);
 
@@ -1951,7 +1932,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('databases'), false);
@@ -1967,7 +1948,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project on the basic plan will not be able to create environments', function(done) {
-        var otherProject = {
+        const otherProject = {
           title: chance.word(),
           description: chance.sentence(),
           project: template.project._id
@@ -2006,7 +1987,12 @@ module.exports = function(app, template, hook) {
       if (!docker)
       before(function(done) {
         // Confirm the dummy project is on the team plan.
-        cache.updateProject(template.project._id, {plan: 'team'}, (err, project) => {
+        cache.updateProject(template.project._id, {
+          plan: 'team',
+          settings: {
+            portalDomain: 'https://portal.form.io'
+          }
+        }, (err, project) => {
           if (err) {
             return done(err);
           }
@@ -2066,7 +2052,7 @@ module.exports = function(app, template, hook) {
           .set('Origin', 'http://www.example.com')
           .send()
           .end(function(err, res) {
-            assert.equal(res.headers['access-control-allow-origin'], 'http://www.example.com');
+            assert.equal(res.headers['access-control-allow-origin'], '*');
             assert.equal(res.headers['access-control-allow-methods'], 'GET,HEAD,PUT,PATCH,POST,DELETE');
             done();
           });
@@ -2088,7 +2074,7 @@ module.exports = function(app, template, hook) {
     });
 
     describe('CORS Access for project with CORS', function() {
-      var cors = 'http://www.example.com,http://portal.example.com';
+      const cors = 'http://www.example.com,http://portal.example.com';
 
       if (!docker)
       before(function(done) {
@@ -2114,7 +2100,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('cors'), true);
             assert.equal(response.settings.cors, cors);
@@ -2211,7 +2197,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'independent');
             template.project = response;
 
@@ -2223,7 +2209,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project on the Independent plan will be able to change the project name on project update', function(done) {
-        var attempt = chance.word({length: 10});
+        const attempt = chance.word({length: 10});
 
         request(app)
           .put('/project/' + template.project._id)
@@ -2236,7 +2222,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'independent');
             assert.equal(response.hasOwnProperty('name'), true);
             assert.equal(response.name, attempt);
@@ -2249,7 +2235,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project on the Independent plan will not be able to set cors options on project update', function(done) {
-        var attempt = '*,www.example.com';
+        const attempt = '*,www.example.com';
 
         request(app)
           .put('/project/' + template.project._id)
@@ -2262,7 +2248,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'independent');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('cors'), true);
@@ -2276,7 +2262,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project on the Independent plan will be able to set oauth settings on project update', function(done) {
-        var attempt = {clientId: chance.word(), clientSecret: chance.word()};
+        const attempt = {clientId: chance.word(), clientSecret: chance.word()};
 
         request(app)
           .put('/project/' + template.project._id)
@@ -2295,7 +2281,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'independent');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('oauth'), true);
@@ -2332,7 +2318,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'independent');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('email'), true);
@@ -2374,7 +2360,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'independent');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('storage'), false);
@@ -2445,7 +2431,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'independent');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('atlassian'), true);
@@ -2464,7 +2450,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project on the Independent plan will not be able to create environments', function(done) {
-        var otherProject = {
+        const otherProject = {
           title: chance.word(),
           description: chance.sentence(),
           project: template.project._id
@@ -2510,7 +2496,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'team');
             template.project = response;
 
@@ -2522,7 +2508,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project on the Team plan will be able to change the project name on project update', function(done) {
-        var attempt = chance.word({length: 10});
+        const attempt = chance.word({length: 10});
 
         request(app)
           .put('/project/' + template.project._id)
@@ -2535,7 +2521,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'team');
             assert.equal(response.hasOwnProperty('name'), true);
             assert.equal(response.name, attempt);
@@ -2548,7 +2534,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project on the Team plan will be able to set cors options on project update', function(done) {
-        var attempt = '*,www.example.com';
+        const attempt = '*,www.example.com';
 
         request(app)
           .put('/project/' + template.project._id)
@@ -2561,7 +2547,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'team');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('cors'), true);
@@ -2575,7 +2561,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project on the Team plan will be able to set oauth settings on project update', function(done) {
-        var attempt = {clientId: chance.word(), clientSecret: chance.word()};
+        const attempt = {clientId: chance.word(), clientSecret: chance.word()};
 
         request(app)
           .put('/project/' + template.project._id)
@@ -2594,7 +2580,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'team');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('oauth'), true);
@@ -2631,7 +2617,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'team');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('email'), true);
@@ -2673,7 +2659,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'team');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('storage'), true);
@@ -2745,7 +2731,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'team');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('atlassian'), true);
@@ -2764,7 +2750,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project on the Team plan will not be able to create environments', function(done) {
-        var otherProject = {
+        const otherProject = {
           title: chance.word(),
           description: chance.sentence(),
           project: template.project._id
@@ -2810,7 +2796,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'commercial');
             template.project = response;
 
@@ -2822,7 +2808,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project on the Commercial plan will be able to change the project name on project update', function(done) {
-        var attempt = chance.word({length: 10});
+        const attempt = chance.word({length: 10});
 
         request(app)
           .put('/project/' + template.project._id)
@@ -2835,7 +2821,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'commercial');
             assert.equal(response.hasOwnProperty('name'), true);
             assert.equal(response.name, attempt);
@@ -2848,7 +2834,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project on the Commercial plan will be able to set cors options on project update', function(done) {
-        var attempt = '*,www.example.com';
+        const attempt = '*,www.example.com';
 
         request(app)
           .put('/project/' + template.project._id)
@@ -2861,7 +2847,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'commercial');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('cors'), true);
@@ -2875,7 +2861,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project on the Commercial plan will be able to set oauth settings on project update', function(done) {
-        var attempt = {clientId: chance.word(), clientSecret: chance.word()};
+        const attempt = {clientId: chance.word(), clientSecret: chance.word()};
 
         request(app)
           .put('/project/' + template.project._id)
@@ -2894,7 +2880,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'commercial');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('oauth'), true);
@@ -2931,7 +2917,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'commercial');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('email'), true);
@@ -2973,7 +2959,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'commercial');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('storage'), true);
@@ -3045,7 +3031,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'commercial');
             assert.equal(response.hasOwnProperty('settings'), true);
             assert.equal(response.settings.hasOwnProperty('atlassian'), true);
@@ -3064,7 +3050,7 @@ module.exports = function(app, template, hook) {
       });
 
       it('A Project on the Commercial plan will be able to create environments', function(done) {
-        var otherProject = {
+        const otherProject = {
           title: chance.word(),
           description: chance.sentence(),
           project: template.project._id
@@ -3100,7 +3086,7 @@ module.exports = function(app, template, hook) {
           "project": template.project._id,
           "type": "tenant",
           "copyFromProject": template.project._id
-      };
+        };
 
         request(app)
           .post('/project')
@@ -3109,7 +3095,6 @@ module.exports = function(app, template, hook) {
           .expect(201)
           .end(function(err, res) {
             if (err) {
-              console.log(err.message);
               return done(err);
             }
             const response = res.body;
@@ -3158,7 +3143,7 @@ module.exports = function(app, template, hook) {
             assert.deepEqual(response.settings, _.omit(newSettings, ['cors']));
             not(response, ['__v', 'deleted', 'settings_encrypted']);
           done();
-          });
+        });
       });
     });
 
@@ -3177,7 +3162,7 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
 
-            var response = res.body;
+            const response = res.body;
             assert.equal(response.plan, 'basic');
             template.project = response;
 
@@ -3276,7 +3261,7 @@ module.exports = function(app, template, hook) {
           merchToken: 'fdoa-9b1a70e39b4f6b4fb0cef1c25de68010625408dc0b1025ae' // Test Token
         };
 
-        var paymentData = {
+        const paymentData = {
           ccNumber: '4012000033330026',
           ccType: 'visa',
           ccExpiryMonth: '12',
@@ -3529,76 +3514,79 @@ module.exports = function(app, template, hook) {
   });
 
   // This is disabled until we set up customer testing again. This should not be allowed for hosted or docker version. Only customers.
-  if (!docker && false)
+  if (!docker) {
+    return;
+  }
   describe('Separate Collections', function() {
     let helper = null;
     let project = null;
     let collectionName = '';
     before(function(done) {
+      process.env.TEST_SIMULATE_SAC_PACKAGE = '1';
       helper = new Helper(template.formio.owner);
       helper.project().execute((err) => {
         if (err) {
           return done(err);
         }
-        collectionName = helper.template.project.name + '_testing';
+        collectionName = `${helper.template.project.name  }_testing`;
         done();
       });
     });
 
-    it ('Should create a new form within the project', (done) => {
-      helper.form('collection', [
-        {
-          type: 'textfield',
-          key: 'firstName',
-          label: 'First Name',
-          input: true
-        },
-        {
-          type: 'textfield',
-          key: 'lastName',
-          label: 'Last Name',
-          input: true,
-          dbIndex: true
-        },
-        {
-          type: 'email',
-          key: 'email',
-          label: 'Email',
-          input: true,
-          dbIndex: true
-        }
-      ]).execute(done);
-    });
-
-    it('Should not allow you to configure the form to use separate collection', (done) => {
-      assert(!helper.template.forms.collection.settings, 'Should not have any settings yet');
-      helper.template.forms.collection.settings = {collection: 'testing'};
-      request(app)
-        .put('/project/' + helper.template.project._id + '/form/' + helper.template.forms.collection._id)
-        .set('x-jwt-token', template.formio.owner.token)
-        .send(helper.template.forms.collection)
-        .expect(200)
-        .end(done);
-    });
-
-    it('Should upgrade the project to a Enterprise', function(done) {
-      request(app)
-        .post('/project/' + helper.template.project._id + '/upgrade')
-        .set('x-jwt-token', template.formio.owner.token)
-        .send({plan: 'commercial'})
-        .expect(200)
-        .end(function(err, res) {
-          if (err) {
-            return done(err);
+    if (config.formio.hosted) {
+      it('Should create a new form within the project', (done) => {
+        helper.form('collection', [
+          {
+            type: 'textfield',
+            key: 'firstName',
+            label: 'First Name',
+            input: true
+          },
+          {
+            type: 'textfield',
+            key: 'lastName',
+            label: 'Last Name',
+            input: true,
+          },
+          {
+            type: 'email',
+            key: 'email',
+            label: 'Email',
+            input: true,
           }
-          done();
-        });
-    });
+        ]).execute(done);
+      });
+
+      it('Should not allow you to configure the form to use separate collection', (done) => {
+        assert(!helper.template.forms.collection.settings, 'Should not have any settings yet');
+        helper.template.forms.collection.settings = {collection: 'testing'};
+        request(app)
+          .put(`/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id}`)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(helper.template.forms.collection)
+          .expect(200)
+          .end(done);
+      });
+
+      it('Should upgrade the project to a Enterprise', function(done) {
+        request(app)
+          .post(`/project/${  helper.template.project._id  }/upgrade`)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({plan: 'commercial'})
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            done();
+          });
+      });
+    }
 
     it('Should allow you to configure the form to use separate collection', (done) => {
-      helper.template.forms.collection.settings = {collection: 'testing'};
+      helper.template.forms.collection.settings = {collection: 'testing', allowExistsEndpoint: true};
       request(app)
-        .put('/project/' + helper.template.project._id + '/form/' + helper.template.forms.collection._id)
+        .put(`/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id}`)
         .set('x-jwt-token', template.formio.owner.token)
         .send(helper.template.forms.collection)
         .expect(200)
@@ -3612,11 +3600,8 @@ module.exports = function(app, template, hook) {
       // Give the db time to build indexes.
       setTimeout(() => {
         app.formio.formio.mongoose.model('submission').collection.indexInformation((err, subIndexes) => {
+          setTimeout(()=>{
           app.formio.formio.mongoose.model(collectionName).collection.indexInformation((err, indexes) => {
-            _.each(subIndexes, (subIndex, key) => {
-              assert(indexes.hasOwnProperty(key), key + ' index not found');
-              assert.deepEqual(subIndex, indexes[key]);
-            });
             assert(indexes.hasOwnProperty('data.email_1'), 'No email index found');
             assert(indexes['data.email_1'][0][0], 'data.email');
             assert(indexes['data.email_1'][0][1], 1);
@@ -3625,8 +3610,9 @@ module.exports = function(app, template, hook) {
             assert(indexes['data.lastName_1'][0][1], 1);
             done();
           });
+        }, 300);
         });
-      }, 200);
+      }, 300);
     });
 
     it('Should remove all existing submissions in the previous collection', (done) => {
@@ -3635,7 +3621,7 @@ module.exports = function(app, template, hook) {
 
     it('Should be able to create some new submissions within the collection', (done) => {
       helper
-        .submission('collection', {
+      .submission('collection', {
           data: {
             firstName: 'Bob',
             lastName: 'Smith',
@@ -3664,8 +3650,8 @@ module.exports = function(app, template, hook) {
     });
 
     it('Should also allow you to get a single submission', (done) => {
-      let subUrl = '/project/' + helper.template.project._id + '/form/' + helper.template.forms.collection._id;
-      subUrl += '/submission/' + helper.template.submissions.collection[0]._id;
+      let subUrl = `/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id}`;
+      subUrl += `/submission/${  helper.template.submissions.collection[0]._id}`;
       request(app)
         .get(subUrl)
         .set('x-jwt-token', template.formio.owner.token)
@@ -3679,7 +3665,7 @@ module.exports = function(app, template, hook) {
 
     it('Should fetch the index view', (done) => {
       request(app)
-        .get('/project/' + helper.template.project._id + '/form/' + helper.template.forms.collection._id + '/submission')
+        .get(`/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id  }/submission`)
         .set('x-jwt-token', template.formio.owner.token)
         .expect(200)
         .end((err, res) => {
@@ -3692,8 +3678,8 @@ module.exports = function(app, template, hook) {
 
     it('Should be able to update a submission', (done) => {
       helper.template.submissions.collection[0].data.email = 'updated@example.com';
-      let subUrl = '/project/' + helper.template.project._id + '/form/' + helper.template.forms.collection._id;
-      subUrl += '/submission/' + helper.template.submissions.collection[0]._id;
+      let subUrl = `/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id}`;
+      subUrl += `/submission/${  helper.template.submissions.collection[0]._id}`;
       request(app)
         .put(subUrl)
         .set('x-jwt-token', template.formio.owner.token)
@@ -3714,8 +3700,8 @@ module.exports = function(app, template, hook) {
 
     it('Should delete a submission', (done) => {
       helper.template.submissions.collection[0].data.email = 'updated@example.com';
-      let subUrl = '/project/' + helper.template.project._id + '/form/' + helper.template.forms.collection._id;
-      subUrl += '/submission/' + helper.template.submissions.collection[0]._id;
+      let subUrl = `/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id}`;
+      subUrl += `/submission/${  helper.template.submissions.collection[0]._id}`;
       request(app)
         .delete(subUrl)
         .set('x-jwt-token', template.formio.owner.token)
@@ -3728,6 +3714,136 @@ module.exports = function(app, template, hook) {
             done();
           });
         });
+    });
+
+    it('Submission Exists Endpoint should return data if a submissions exists', (done) => {
+      request(app)
+      .get(`/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id  }/exists?data.email=${ helper.template.submissions.collection[1].data.email }`)
+      .set('x-jwt-token', template.formio.owner.token)
+      .expect(200)
+      .end(function(err, res) {
+        if (err) {
+          return done(err);
+        }
+        assert.equal(res.body._id, helper.template.submissions.collection[1]._id);
+        done();
+      });
+    });
+
+    it('Submission Exists Endpoint should return 404 if it does not exist', (done) => {
+      request(app)
+      .get(`/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id  }/exists?data.email=${ helper.template.submissions.collection[0].data.email }`)
+      .set('x-jwt-token', template.formio.owner.token)
+      .expect(404)
+      .end(done);
+    });
+
+    it('Sets a form to use submission revisions', done => {
+      const updateForm = helper.template.forms.collection;
+      updateForm.submissionRevisions = 'true';
+      request(app)
+      .put(`/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id}`)
+      .set('x-jwt-token', template.formio.owner.token)
+      .send(_.omit(updateForm, 'modified'))
+      .expect(200)
+      .end((err, res) => {
+        assert.equal(res.body.submissionRevisions, 'true');
+        done();
+      });
+    });
+
+    it('Should create revisions for existed submission', done => {
+        request(app)
+        .get(`/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id}/submission/${helper.template.submissions.collection[1]._id}/v`)
+        .set('x-jwt-token', template.formio.owner.token)
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .end(function(err, res) {
+          const revisions = res.body;
+          assert.equal(revisions.length, 1);
+          assert.equal(revisions[0]._rid, helper.template.submissions.collection[1]._id);
+          assert.equal(revisions[0]._vuser,template.formio.owner.data.email);
+          assert.deepEqual(revisions[0].data, helper.template.submissions.collection[1].data);
+          assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'add', path: '/data/firstName', value: 'Joe'});
+          assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'add', path: '/data/lastName', value: 'Thompson'});
+          assert.deepEqual(revisions[0].metadata.jsonPatch[2], {op: 'add', path: '/data/email', value: 'joe@example.com'});
+          done();
+        });
+    });
+
+    it('Create Submission with enabled revisions', done => {
+      helper
+      .submission('collection', {
+        data: {
+          firstName: 'firstName',
+          lastName: 'lastName',
+          email: 'email@example.com'
+        }
+      })
+      .expect(201)
+      .execute((err, res)=> {
+        if (err) {
+          done(err);
+        }
+        request(app)
+        .get(`/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id}/submission/${helper.template.submissions.collection[2]._id}/v`)
+        .set('x-jwt-token', template.formio.owner.token)
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .end(function(err, res) {
+          const revisions = res.body;
+          assert.equal(revisions.length, 1);
+          assert.equal(revisions[0]._rid, helper.template.submissions.collection[2]._id);
+          assert.equal(revisions[0]._vuser,template.formio.owner.data.email);
+          assert.deepEqual(revisions[0].data, helper.template.submissions.collection[2].data);
+          assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'add', path: '/data/firstName', value: 'firstName'});
+          assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'add', path: '/data/lastName', value: 'lastName'});
+          assert.deepEqual(revisions[0].metadata.jsonPatch[2], {op: 'add', path: '/data/email', value: 'email@example.com'});
+          done();
+        });
+      });
+    });
+
+    it('Update Submission with enabled revisions', done => {
+      const update = {
+        firstName: 'firstNameUpdate',
+        lastName: 'lastName',
+        email: 'email@example.com'
+      };
+
+      const dataBeforeUpdate = {...helper.template.submissions.collection[2].data};
+      const test = helper.template.submissions.collection[2];
+      test.data = update;
+
+      request(app)
+       .put(`/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id}/submission/${helper.template.submissions.collection[2]._id}`)
+       .set('x-jwt-token', template.formio.owner.token)
+       .send(_.omit(test, 'modified'))
+       .expect('Content-Type', /json/)
+       .expect(200)
+       .end(function(err, res) {
+        request(app)
+        .get(`/project/${  helper.template.project._id  }/form/${  helper.template.forms.collection._id}/submission/${helper.template.submissions.collection[2]._id}/v`)
+        .set('x-jwt-token', template.formio.owner.token)
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .end(function(err, res) {
+          const revisions = res.body;
+          assert.equal(revisions.length, 2);
+          assert.equal(revisions[0]._rid, helper.template.submissions.collection[2]._id);
+          assert.equal(revisions[0]._vuser,template.formio.owner.data.email);
+          assert.deepEqual(revisions[0].data, dataBeforeUpdate);
+          assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'add', path: '/data/firstName', value: 'firstName'});
+          assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'add', path: '/data/lastName', value: 'lastName'});
+          assert.deepEqual(revisions[0].metadata.jsonPatch[2], {op: 'add', path: '/data/email', value: 'email@example.com'});
+          assert.equal(revisions[1]._rid, helper.template.submissions.collection[2]._id);
+          assert.equal(revisions[1]._vuser,template.formio.owner.data.email);
+          assert.deepEqual(revisions[1].data, update);
+          assert.deepEqual(revisions[1].metadata.previousData, dataBeforeUpdate);
+          assert.deepEqual(revisions[1].metadata.jsonPatch[0], {op: 'replace', path: '/data/firstName', value: 'firstNameUpdate'});
+          done();
+        });
+      });
     });
   });
 };

@@ -8,8 +8,16 @@ const Revision = require('./Revision');
 const trackedProperties = ['data', 'state'];
 
 module.exports = class FormRevision extends Revision {
-  constructor(app) {
+  constructor(app, submissionModel) {
     super(app, 'submission', trackedProperties);
+    if (submissionModel) {
+      this.revisionModel = app.formio.formio.mongoose.model(`${submissionModel.modelName}_revisions`,
+      app.formio.formio.schemas.submissionrevision, `${submissionModel.modelName}_revisions`);
+      this.itemModel = submissionModel;
+    }
+    else {
+      this.itemModel = this.app.formio.formio.mongoose.models.submission;
+    }
   }
 
   shouldCreateNewRevision(req, item, loadItem, form) {
@@ -59,8 +67,23 @@ module.exports = class FormRevision extends Revision {
     return this.revisionModel.create(body, done);
  }
 
+ async checkDraft(loadSubmission) {
+  if (loadSubmission && loadSubmission.state === 'draft') {
+    const revisions = await this.revisionModel.find({
+      deleted: {$eq: null},
+      _rid: loadSubmission._id
+    })
+    .sort('-modified')
+    .lean();
+    return loadSubmission = revisions[0] || undefined;
+  }
+  else {
+    return loadSubmission;
+  }
+}
+
  updateRevisionsSet(formId, user, done) {
-  this.app.formio.formio.mongoose.models.submission.find({
+  this.itemModel.find({
     form: formId,
     containRevisions:{$ne: true},
     deleted: {$eq: null}

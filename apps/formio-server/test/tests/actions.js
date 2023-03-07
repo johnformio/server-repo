@@ -3,6 +3,8 @@
 
 const request = require('supertest');
 const assert = require('assert');
+const WebhookListener = require('./fixtures/WebhookListener');
+const config = require("../../config");
 
 const docker = process.env.DOCKER;
 const customer = process.env.CUSTOMER;
@@ -81,188 +83,848 @@ module.exports = (app, template, hook) => {
           });
       });
 
-      it('A project on the basic plan cannot access the /sqlconnector endpoint', (done) => {
-        request(app)
-          .get(`/project/${project._id}/sqlconnector`)
-          .set('x-jwt-token', template.formio.owner.token)
-          .expect('Content-Type', /text/)
-          .expect(402)
-          .end((err, res) => {
-            if (err) {
-              return done(err);
-            }
-
-            const response = res.text;
-            assert.equal(response, 'Payment Required');
-
-            done();
-          });
-      });
-
-      it('A project on the basic plan cannot access the /sqlconnector?format=v2 endpoint', (done) => {
-        request(app)
-          .get(`/project/${project._id}/sqlconnector?format=v2`)
-          .set('x-jwt-token', template.formio.owner.token)
-          .expect('Content-Type', /text/)
-          .expect(402)
-          .end((err, res) => {
-            if (err) {
-              return done(err);
-            }
-
-            const response = res.text;
-            assert.equal(response, 'Payment Required');
-
-            done();
-          });
-      });
-
-      it('Update the project to the independent plan', (done) => {
-        helper
-          .plan('independent')
-          .execute(done);
-      });
-
-      it('A project on the independent plan cannot access the /sqlconnector endpoint', (done) => {
-        request(app)
-          .get(`/project/${project._id}/sqlconnector`)
-          .set('x-jwt-token', template.formio.owner.token)
-          .expect('Content-Type', /text/)
-          .expect(402)
-          .end((err, res) => {
-            if (err) {
-              return done(err);
-            }
-
-            const response = res.text;
-            assert.equal(response, 'Payment Required');
-
-            done();
-          });
-      });
-
-      it('A project on the independent plan cannot access the /sqlconnector?format=v2 endpoint', (done) => {
-        request(app)
-          .get(`/project/${project._id}/sqlconnector?format=v2`)
-          .set('x-jwt-token', template.formio.owner.token)
-          .expect('Content-Type', /text/)
-          .expect(402)
-          .end((err, res) => {
-            if (err) {
-              return done(err);
-            }
-
-            const response = res.text;
-            assert.equal(response, 'Payment Required');
-
-            done();
-          });
-      });
-
-      it('Update the project to the team plan', (done) => {
-        helper
-          .plan('team')
-          .execute(done);
-      });
-
-      it('Add the sqlconnector project settings', (done) => {
-        helper
-          .settings({
-            cors: '*',
-            sqlconnector: {
-              host: 'example.com',
-              type: 'mysql',
-            },
-          })
-          .execute(done);
-      });
-
-      it('A project on the team plan can access the /sqlconnector endpoint', (done) => {
-        request(app)
-          .get(`/project/${project._id}/sqlconnector`)
-          .set('x-jwt-token', template.formio.owner.token)
-          .expect('Content-Type', /json/)
-          .expect(200)
-          .end((err, res) => {
-            if (err) {
-              return done(err);
-            }
-            console.log(res.body);
-
-            const response = res.body;
-            assert(Array.isArray(response));
-            assert.equal(response.length, 5);
-            response.forEach((item) => {
-              assert.deepEqual(['endpoint', 'method', 'query'], Object.keys(item));
-              assert(['POST', 'GET', 'PUT', 'DELETE', 'INDEX'].includes(item.method));
-            });
-
-            done();
-          });
-      });
-
-      it('A project on the team plan can access the /sqlconnector?format=v2 endpoint'  , (done) => {
-        request(app)
-          .get(`/project/${project._id}/sqlconnector?format=v2`)
-          .set('x-jwt-token', template.formio.owner.token)
-          .expect('Content-Type', /json/)
-          .expect(200)
-          .end((err, res) => {
-            if (err) {
-              return done(err);
-            }
-            const response = res.body;
-
-            assert(Array.isArray(response));
-            assert.equal(response.length, 5);
-
-            response.forEach((item) => {
-              assert.deepEqual(['endpoint', 'db', 'method', 'query'], Object.keys(item));
-              assert(['POST', 'GET', 'PUT', 'DELETE', 'INDEX'].includes(item.method));
-              const {primary, table, fields} = sqlConnectorActionSettings.settings;
-              const [param1, param2] = fields;
-              const column1 = param1.column;
-              const column2 = param2.column
-
-
-              switch (item.method) {
-                case 'GET':
-                  if(item.endpoint === '/customers/:id'){
-                    assert.deepEqual(item.query[0], [ 'select * from `'+ table +'` where `'+ primary +'` = ?', 'params.' + primary ] )
-                  } else if (item.endpoint === '/customers') {
-                    assert.deepEqual(item.query[0], [ 'select * from `' + table + '`'])
-                  } else {
-                    assert.fail('Wrong endpoint for get method')
-                  }
-                  break;
-                case 'POST':
-                  assert.equal(item.endpoint, '/' + table);
-                  assert.deepEqual(item.query[0], [ 'insert into `'+ table +'` (`' + column1 + '`, `' + column2 + '`) values (?, ?)',
-                                                    'body.data.' + column1,
-                                                    'body.data.' + column2] );
-                   assert.deepEqual(item.query[1], [ 'select * from `customers` where ' + primary + ' = LAST_INSERT_ID()' ])
-                  break;
-                case 'PUT':
-                  assert.equal(item.endpoint, '/' + table +'/:id');
-                  assert.deepEqual(item.query[0], [ 'update `'+ table +'` set `firstName` = ?, `' + column2 + '` = ? where `' + primary + '` = ?',
-                                                    'body.data.' + column1,
-                                                    'body.data.' + column2,
-                                                    'params.' + primary
-                                                  ] );
-                  assert.deepEqual(item.query[1], [ 'select * from `' + table + '` where `'+ primary +'` = ?', 'params.' + primary])
-                  break;
-                case 'DELETE':
-                  assert.equal(item.endpoint, '/' + table +'/:id');
-                  assert.deepEqual(item.query[0], [ 'delete from `'+ table +'` where `'+ primary +'` = ?', 'params.' + primary ] )
-                  break;
-                default:
-                  assert.fail('Wrong method')
+      if (config.formio.hosted) {
+        it('A project on the basic plan cannot access the /sqlconnector endpoint', (done) => {
+          request(app)
+            .get(`/project/${project._id}/sqlconnector`)
+            .set('x-jwt-token', template.formio.owner.token)
+            .expect('Content-Type', /text/)
+            .expect(402)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
               }
 
-            });
+              const response = res.text;
+              assert.equal(response, 'Payment Required');
 
-            done();
+              done();
+            });
+        });
+
+        it('A project on the basic plan cannot access the /sqlconnector?format=v2 endpoint', (done) => {
+          request(app)
+            .get(`/project/${project._id}/sqlconnector?format=v2`)
+            .set('x-jwt-token', template.formio.owner.token)
+            .expect('Content-Type', /text/)
+            .expect(402)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              const response = res.text;
+              assert.equal(response, 'Payment Required');
+
+              done();
+            });
+        });
+
+        it('Update the project to the independent plan', (done) => {
+          helper
+            .plan('independent')
+            .execute(done);
+        });
+
+        it('A project on the independent plan cannot access the /sqlconnector endpoint', (done) => {
+          request(app)
+            .get(`/project/${project._id}/sqlconnector`)
+            .set('x-jwt-token', template.formio.owner.token)
+            .expect('Content-Type', /text/)
+            .expect(402)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              const response = res.text;
+              assert.equal(response, 'Payment Required');
+
+              done();
+            });
+        });
+
+        it('A project on the independent plan cannot access the /sqlconnector?format=v2 endpoint', (done) => {
+          request(app)
+            .get(`/project/${project._id}/sqlconnector?format=v2`)
+            .set('x-jwt-token', template.formio.owner.token)
+            .expect('Content-Type', /text/)
+            .expect(402)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              const response = res.text;
+              assert.equal(response, 'Payment Required');
+
+              done();
+            });
+        });
+
+        it('Update the project to the team plan', (done) => {
+          helper
+            .plan('team')
+            .execute(done);
+        });
+
+        it('Add the sqlconnector project settings', (done) => {
+          helper
+            .settings({
+              cors: '*',
+              sqlconnector: {
+                host: 'example.com',
+                type: 'mysql',
+              },
+            })
+            .execute(done);
+        });
+
+        it('A project on the team plan can access the /sqlconnector endpoint', (done) => {
+          request(app)
+            .get(`/project/${project._id}/sqlconnector`)
+            .set('x-jwt-token', template.formio.owner.token)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+
+              const response = res.body;
+              assert(Array.isArray(response));
+              assert.equal(response.length, 5);
+              response.forEach((item) => {
+                assert.deepEqual(['endpoint', 'method', 'query'], Object.keys(item));
+                assert(['POST', 'GET', 'PUT', 'DELETE', 'INDEX'].includes(item.method));
+              });
+
+              done();
+            });
+        });
+
+        it('A project on the team plan can access the /sqlconnector?format=v2 endpoint'  , (done) => {
+          request(app)
+            .get(`/project/${project._id}/sqlconnector?format=v2`)
+            .set('x-jwt-token', template.formio.owner.token)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              const response = res.body;
+
+              assert(Array.isArray(response));
+              assert.equal(response.length, 5);
+
+              response.forEach((item) => {
+                assert.deepEqual(['endpoint', 'db', 'method', 'query'], Object.keys(item));
+                assert(['POST', 'GET', 'PUT', 'DELETE', 'INDEX'].includes(item.method));
+                const {primary, table, fields} = sqlConnectorActionSettings.settings;
+                const [param1, param2] = fields;
+                const column1 = param1.column;
+                const column2 = param2.column
+
+
+                switch (item.method) {
+                  case 'GET':
+                    if(item.endpoint === '/customers/:id'){
+                      assert.deepEqual(item.query[0], [ 'select * from `'+ table +'` where `'+ primary +'` = ?', 'params.' + primary ] )
+                    } else if (item.endpoint === '/customers') {
+                      assert.deepEqual(item.query[0], [ 'select * from `' + table + '`'])
+                    } else {
+                      assert.fail('Wrong endpoint for get method')
+                    }
+                    break;
+                  case 'POST':
+                    assert.equal(item.endpoint, '/' + table);
+                    assert.deepEqual(item.query[0], [ 'insert into `'+ table +'` (`' + column1 + '`, `' + column2 + '`) values (?, ?)',
+                                                      'body.data.' + column1,
+                                                      'body.data.' + column2] );
+                     assert.deepEqual(item.query[1], [ 'select * from `customers` where ' + primary + ' = LAST_INSERT_ID()' ])
+                    break;
+                  case 'PUT':
+                    assert.equal(item.endpoint, '/' + table +'/:id');
+                    assert.deepEqual(item.query[0], [ 'update `'+ table +'` set `firstName` = ?, `' + column2 + '` = ? where `' + primary + '` = ?',
+                                                      'body.data.' + column1,
+                                                      'body.data.' + column2,
+                                                      'params.' + primary
+                                                    ] );
+                    assert.deepEqual(item.query[1], [ 'select * from `' + table + '` where `'+ primary +'` = ?', 'params.' + primary])
+                    break;
+                  case 'DELETE':
+                    assert.equal(item.endpoint, '/' + table +'/:id');
+                    assert.deepEqual(item.query[0], [ 'delete from `'+ table +'` where `'+ primary +'` = ?', 'params.' + primary ] )
+                    break;
+                  default:
+                    assert.fail('Wrong method')
+                }
+
+              });
+
+              done();
+            });
+        });
+      }
+    });
+
+    describe('Webhook (Premium)', () => {
+      if (docker) {
+        return;
+      }
+      const helper = new template.Helper(template.formio.owner);
+
+      let webhookForm = {
+        title: 'Webhook Sender',
+        name: 'webhookSender',
+        path: 'webhookSender',
+        type: 'form',
+        access: [],
+        submissionAccess: [
+          {
+            type: "create_own",
+            roles: [
+                "000000000000000000000000"
+            ]
+        },
+        ],
+        components: [
+          {
+            type: 'textfield',
+            key: 'player',
+            inputType: 'text',
+            input: true,
+          },
+
+        ],
+      };
+      let project;
+      let testWebhookUrl;
+      let webhookAction;
+      const webhookListener = new WebhookListener();
+
+      describe('Blocking webhooks', () => {
+        describe('After handled webhooks', () => {
+
+          before('Set up webhook listener', (done) => {
+            // create the webhook listener child process
+            webhookListener.setup(1337, '/player', 201, {records: [{playerId: '123456'}]})
+              .then((config) => {
+                testWebhookUrl = config.url;
+                done();
+              })
           });
+
+          before('Set up the project', (done) => {
+            helper
+              .project()
+              .plan('commercial')
+              .execute(() => {
+                const projectId = helper.template.project._id;
+                // add the public configurations
+                request(app)
+                  .put(`/project/${projectId}`)
+                  .set('x-jwt-token', template.formio.owner.token)
+                  .send({
+                    config: {
+                      myTestConfig: "Hello, world!"
+                    }
+                  })
+                  .expect(200)
+                  .expect("Content-Type", /json/)
+                  .end((err, res) => {
+                    if (err) {
+                      done(err);
+                    }
+                    assert(res.body.hasOwnProperty("config"), 'Test project should have public configurations');
+                    project = res.body;
+                    done();
+                  })
+              });
+          })
+
+          afterEach('Clear in-memory webhook responses', () => {
+            webhookListener.clearReceivedHooks();
+          });
+
+          after('Stop the webhook listener process', () => {
+            webhookListener.stop();
+          });
+
+          it('Should create the form and action for the after handled webhook tests', (done) => {
+            request(app)
+              .post(`/project/${project._id}/form`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send(webhookForm)
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+                webhookForm = res.body;
+                template.formio.owner.token = res.headers['x-jwt-token'];
+                request(app)
+                  .post(`/project/${project._id}/form/${webhookForm._id}/action`)
+                  .set('x-jwt-token', template.formio.owner.token)
+                  .send({
+                    title: 'Test Webhook',
+                    name: 'webhook',
+                    form: webhookForm._id.toString(),
+                    handler: ['after'],
+                    method: ['create', 'update', 'delete'],
+                    priority: 1,
+                    settings: {
+                      url: testWebhookUrl,
+                      username: '',
+                      password: '',
+                      transform: 'payload = { player: payload.submission.data.player, playerId: externalId }',
+                      block: true,
+                      externalIdType: 'fake_baseball',
+                      externalIdPath: 'records[0].playerId',
+                      headers: [
+                        {
+                          header: "x-test-header",
+                          value: "hello, world!"
+                        },
+                        {
+                          header: "x-test-header-data",
+                          value: "{{data.player}}"
+                        },
+                        {
+                          header: "x-test-header-config",
+                          value: "{{config.myTestConfig}}"
+                        },
+                        {
+                          header: "x-test-header-undefined",
+                          value: "{{doesNotExist.foo}}"
+                        }
+                      ]
+                    }
+                  })
+                  .expect('Content-Type', /json/)
+                  .expect(201)
+                  .end((err, res) => {
+                    if (err) {
+                      return done(err);
+                    }
+                    webhookAction = res.body
+                    template.formio.owner.token = res.headers['x-jwt-token'];
+
+                    done();
+                  });
+              });
+          });
+
+          it('Should correctly transform webhook payload', (done) => {
+            request(app)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.deepEqual(webhookListener.hooksReceived[0].body, {player: 'Jason Giambi', playerId: ''});
+                done();
+              });
+          });
+
+          it('Should correctly forward headers', (done) => {
+            request(app)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.equal(webhookListener.hooksReceived[0].headers.hasOwnProperty('x-test-header'), true);
+                assert.equal(webhookListener.hooksReceived[0].headers['x-test-header'], 'hello, world!')
+                done();
+              });
+          });
+
+          it('Should interpolate custom headers from the submission data', (done) => {
+            request(app)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.equal(webhookListener.hooksReceived[0].headers.hasOwnProperty('x-test-header-data'), true);
+                assert.equal(webhookListener.hooksReceived[0].headers['x-test-header-data'], 'Jason Giambi')
+                done();
+              });
+          });
+
+          it('Should interpolate custom headers from the project public configurations', (done) => {
+            request(app)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.equal(webhookListener.hooksReceived[0].headers.hasOwnProperty('x-test-header-config'), true);
+                assert.equal(webhookListener.hooksReceived[0].headers['x-test-header-config'], 'Hello, world!')
+                done();
+              });
+          });
+
+          it('Should interpolate custom headers as `undefined` if they cannot be interpolated', (done) => {
+            request(app)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.equal(webhookListener.hooksReceived[0].headers.hasOwnProperty('x-test-header-undefined'), true);
+                assert.equal(webhookListener.hooksReceived[0].headers['x-test-header-undefined'], 'undefined');
+                done();
+              });
+          });
+
+          it('Should return a submission response that contains externalIds and metadata with webhook response', (done) => {
+            request(app)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.equal(res.body.externalIds[0].id, '123456');
+                assert.deepEqual(res.body.metadata['Test Webhook'], {
+                  records: [
+                    {
+                      playerId: '123456'
+                    }
+                  ]
+                });
+                done();
+              });
+          });
+        });
+
+      describe('Before handled webhooks', () => {
+          before('Set up webhook listener', (done) => {
+            // create the webhook listener child process
+            webhookListener.setup(1337, '/player', 201, {records: [{playerId: '123456'}]})
+              .then((config) => {
+                console.log("Done with setup!");
+                testWebhookUrl = config.url;
+                done();
+              })
+          });
+
+          afterEach('Clear in-memory webhook responses', () => {
+            webhookListener.clearReceivedHooks();
+          });
+
+          after('Stop the webhook listener process', () => {
+            webhookListener.stop();
+          });
+
+          it('Should update the action for the before handled webhook tests', (done) => {
+            request(app)
+              .put(`/project/${project._id}/form/${webhookForm._id}/action/${webhookAction._id}`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                ...webhookAction,
+                settings: {
+                  ...webhookAction.settings,
+                  handler: ['before']
+                }
+              })
+              .expect('Content-Type', /json/)
+              .expect(200)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+                webhookAction = res.body;
+                template.formio.owner.token = res.headers['x-jwt-token'];
+
+                done();
+              });
+          });
+
+          it('Should correctly transform webhook payload', (done) => {
+            request(app)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.deepEqual(webhookListener.hooksReceived[0].body, {player: 'Jason Giambi', playerId: ''});
+                done();
+              });
+          });
+
+          it('Should correctly forward headers', (done) => {
+            request(app)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.equal(webhookListener.hooksReceived[0].headers.hasOwnProperty('x-test-header'), true);
+                assert.equal(webhookListener.hooksReceived[0].headers['x-test-header'], 'hello, world!')
+                done();
+              });
+          });
+
+          it('Should interpolate custom headers from the submission data', (done) => {
+            request(app)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.equal(webhookListener.hooksReceived[0].headers.hasOwnProperty('x-test-header-data'), true);
+                assert.equal(webhookListener.hooksReceived[0].headers['x-test-header-data'], 'Jason Giambi')
+                done();
+              });
+          });
+
+          it('Should interpolate custom headers from the project public configurations', (done) => {
+            request(app)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.equal(webhookListener.hooksReceived[0].headers.hasOwnProperty('x-test-header-config'), true);
+                assert.equal(webhookListener.hooksReceived[0].headers['x-test-header-config'], 'Hello, world!')
+                done();
+              });
+          });
+
+          it('Should interpolate custom headers as `undefined` if they cannot be interpolated', (done) => {
+            request(app)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.equal(webhookListener.hooksReceived[0].headers.hasOwnProperty('x-test-header-undefined'), true);
+                assert.equal(webhookListener.hooksReceived[0].headers['x-test-header-undefined'], 'undefined');
+                done();
+              });
+          });
+
+
+          it('Should return a submission response that contains externalIds and metadata with webhook response', (done) => {
+            request(app)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.equal(res.body.externalIds[0].id, '123456');
+                assert.deepEqual(res.body.metadata['Test Webhook'], {
+                  records: [
+                    {
+                      playerId: '123456'
+                    }
+                  ]
+                });
+                done();
+              });
+          });
+        });
+
+        describe('Webhook with delete request and query parameters in url', () => {
+          before('Set up webhook listener', (done) => {
+            // create the webhook listener child process
+            webhookListener.setup(1337, '/player', 201, {records: [{playerId: '123456'}]})
+              .then((config) => {
+                console.log("Done with setup!");
+                testWebhookUrl = config.url;
+                done();
+              })
+          });
+
+          afterEach('Clear in-memory webhook responses', () => {
+            webhookListener.clearReceivedHooks();
+          });
+
+          after('Stop the webhook listener process', () => {
+            webhookListener.stop();
+          });
+
+          it('Should update the action for the before handled webhook tests', (done) => {
+            request(app)
+              .put(`/project/${project._id}/form/${webhookForm._id}/action/${webhookAction._id}`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                ...webhookAction,
+                settings: {
+                  ...webhookAction.settings,
+                  url: `${testWebhookUrl}?test=1`,
+                  method: 'delete'
+                }
+              })
+              .expect('Content-Type', /json/)
+              .expect(200)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+                webhookAction = res.body;
+                template.users.admin.token = res.headers['x-jwt-token'];
+
+                done();
+              });
+          });
+
+          it('Should build the webhook url with query parameters for delete request correctly', (done) => {
+            request(app)
+              .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(201)
+              .expect('Content-Type', /json/)
+              .end((err, res)=>{
+                if(err){
+                  return done(err)
+                }
+                assert.equal(webhookListener.hooksReceived[0].url, `/player?formId=${webhookForm._id}&test=1`);
+                done()
+              });
+          });
+        });
+      });
+
+      describe('Unsuccessful webhooks without error message parameter but with error data', () => {
+        let testWebhookUrl;
+
+        before('Set up new error-responding listener', (done) => {
+          // create the webhook listener child process
+          webhookListener.setup(1337, '/shouldError', 401, {error: true, myCustomParameter: `The operation 'twas not successful.`})
+            .then((config) => {
+              testWebhookUrl = config.url;
+              done();
+            });
+        })
+
+        afterEach('Clear in-memory webhook responses', () => {
+          webhookListener.clearReceivedHooks();
+        });
+
+        after('Stop the webhook listener process', () => {
+          webhookListener.stop();
+        });
+
+        it('Should transparently pass error object if `message` property does not exist on webhook response', (done) => {
+          request(app)
+            .put(`/project/${project._id}/form/${webhookForm._id}/action/${webhookAction._id}`)
+            .set('x-jwt-token', template.formio.owner.token)
+            .send({
+              ...webhookAction,
+              settings: {
+                ...webhookAction.settings,
+                handler: ['after'],
+                url: testWebhookUrl,
+                method: ""
+              }
+            })
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              webhookAction = res.body;
+              template.formio.owner.token = res.headers['x-jwt-token'];
+              request(app)
+                .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+                .set('x-jwt-token', template.formio.owner.token)
+                .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(401)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+
+                assert.deepEqual(res.body, {error: true, myCustomParameter: `The operation 'twas not successful.`});
+                done();
+              });
+            });
+        });
+      });
+
+      describe('Unsuccessful webhooks without error message parameter and without error data', () => {
+        let testWebhookUrl;
+
+        before('Set up new error-responding listener', (done) => {
+          // create the webhook listener child process
+          webhookListener.setup(1337, '/shouldError', 405)
+            .then((config) => {
+              testWebhookUrl = config.url;
+              done();
+            });
+        })
+
+        afterEach('Clear in-memory webhook responses', () => {
+          webhookListener.clearReceivedHooks();
+        });
+
+        after('Stop the webhook listener process', () => {
+          webhookListener.stop();
+        });
+
+        it('Should transparently pass error status text if `message` property nor object exist on webhook response', (done) => {
+          request(app)
+            .put(`/project/${project._id}/form/${webhookForm._id}/action/${webhookAction._id}`)
+            .set('x-jwt-token', template.formio.owner.token)
+            .send({
+              ...webhookAction,
+              settings: {
+                ...webhookAction.settings,
+                handler: ['after'],
+                url: testWebhookUrl,
+              }
+            })
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              webhookAction = res.body;
+              template.formio.owner.token = res.headers['x-jwt-token'];
+              request(app)
+                .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+                .set('x-jwt-token', template.formio.owner.token)
+                .send({
+                data: {
+                  player: 'Jason Giambi'
+                },
+              })
+              .expect(405)
+              .expect('Content-Type', /json/)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+                assert.deepEqual(res.text, '"Method Not Allowed"');
+                done();
+              });
+            });
+        });
       });
     });
 
@@ -349,7 +1011,7 @@ module.exports = (app, template, hook) => {
           })
           .execute(done);
       });
-/*
+
       it('Should allow you to login as an ldap user', (done) => {
         request(app)
           .post(`/project/${project2._id}/ldap`)
@@ -365,16 +1027,15 @@ module.exports = (app, template, hook) => {
             if (err) {
               return done(err);
             }
-            assert.equal(res.body._id, 'uid=einstein,dc=example,dc=com');
+            assert.equal(res.body._id, 'einstein');
             assert.equal(res.body.roles.length, 1);
             assert.equal(res.body.roles[0], helper2.template.roles.authenticated._id.toString());
-            assert.equal(res.body.data.email, 'einstein@ldap.forumsys.com');
+            assert.equal(res.body.data.mail, 'einstein@ldap.forumsys.com');
             done();
           });
       });
-*/
     });
-  });
+  })
 
   if (!docker)
   describe('x- headers for actions', () => {

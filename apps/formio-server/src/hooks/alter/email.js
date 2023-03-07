@@ -6,7 +6,7 @@ const async = require('async');
 const _ = require('lodash');
 const config = require('../../../config');
 
-module.exports = app => (mail, req, res, params, cb) => {
+module.exports = app => (mail, req, res, params, setActionItemMessage, cb) => {
   const formioServer = app.formio;
   const formio = formioServer.formio;
 
@@ -27,43 +27,11 @@ module.exports = app => (mail, req, res, params, cb) => {
       });
     }
     if (config.formio.hosted) {
-      // Restrict basic and independent plans.
-      if (req && req.primaryProject) {
-        if (formioServer.analytics.isLimitedEmailPlan(req.primaryProject)) {
-          const transport = mail.msgTransport || 'default';
-          // eslint-disable-next-line max-depth
-          if (transport !== 'default' && transport !== 'test') {
-            throw new Error('Plan limited to default transport only.');
-          }
-
-          formioServer.analytics.checkEmail(req, (err) => {
-            if (err) {
-              throw new Error(err.message);
-            }
-
-            mail.html += `
-<table style="margin: 0px;padding: 20px;background-color:#002941;color:white;width:100%;">
-<tbody>
-<tr>
-<td align="center" style="font-size:24px;font-family:sans-serif;">
-  <div style="padding:10px;">Sent using the <a href="https://form.io" style="color:white;">form.io</a> platform</div>
-  <div style=""><img style="height:64px;" src="https://form.io/assets/images/formio-logo.png"></div>
-</td>
-</tr>
-</tbody>
-</table>`;
-
-            formioServer.analytics.recordEmail(req);
-            return;
-          });
-        }
-        else {
-          formioServer.analytics.recordEmail(req);
-          return;
-        }
-      }
-      else {
-        formioServer.analytics.recordEmail(req);
+      const transport = mail.msgTransport || 'default';
+      if (transport === 'default') {
+        // If they are using a default transport, then we need to ensure we limit the usage.
+        await formioServer.usageTracking.checkEmail(req);
+        formioServer.usageTracking.recordEmail(req);
         return;
       }
     }
@@ -112,16 +80,38 @@ module.exports = app => (mail, req, res, params, cb) => {
       });
       const submission = _.get(res.resource, 'item', req.body);
       const downloadPDF = require('../../util/downloadPDF')(formioServer);
-      const response = await downloadPDF(req, project, form, submission);
-      const responseBuffer = await response.buffer();
-      const base64 = responseBuffer.toString('base64');
-      if (mail.transport === 'sendgrid') {
-        attachment = {content: `${base64}`};
+
+      try {
+        const response = await downloadPDF(req, project, form, submission);
+        if (response.status !== 200 || response.ok === false) {
+          const nonFatalAttachmentError = await util.parseUnknownContentResponse(response);
+          setActionItemMessage(
+            'PDF Server returned an error while attempting to attach PDF submission',
+            nonFatalAttachmentError,
+            'error'
+          );
+          return;
+        }
+        const responseBuffer = await response.buffer();
+        const base64 = responseBuffer.toString('base64');
+        if (mail.transport === 'sendgrid') {
+          attachment = {content: `${base64}`};
+        }
+        else {
+          attachment = {
+            path: `data:application/pdf;base64,${base64}`
+          };
+        }
       }
-      else {
-        attachment = {
-          path: `data:application/pdf;base64,${base64}`
-        };
+      catch (err) {
+        // in case PDF throws an error rather than a bad response (e.g. the PDF server is not even configured) we want to
+        // fail non-fatally
+        setActionItemMessage(
+          'Something went wrong while attempting to attach PDF submission',
+          err.message || err,
+          'error'
+        );
+        return;
       }
 
       // Get the file name settings.

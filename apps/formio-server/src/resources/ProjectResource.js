@@ -130,6 +130,10 @@ module.exports = (router, formioServer) => {
   formio.middleware.projectPlanFilter = require('../middleware/projectPlanFilter')(formio);
   formio.middleware.projectDefaultPlan = require('../middleware/projectDefaultPlan')(formioServer);
 
+  // Load the project usage middleware.
+  formio.middleware.projectUsage = require('../middleware/projectUsage')(formioServer);
+  formio.middleware.syncProjectUsage = require('../middleware/syncProjectUsage')(formioServer);
+
   // Load the project index filter middleware.
   formio.middleware.projectIndexFilter = require('../middleware/projectIndexFilter')(formioServer);
 
@@ -153,6 +157,8 @@ module.exports = (router, formioServer) => {
 
   formio.middleware.postCreateLicenseCheck = require('../middleware/postCreateLicenseCheck').middleware(router);
 
+  formio.middleware.checkRequestAllowed = require('../middleware/checkRequestAllowed')(formio);
+
   const hiddenFields = ['deleted', '__v', 'machineName', 'primary'];
   const resource = Resource(
     router,
@@ -171,12 +177,15 @@ module.exports = (router, formioServer) => {
     afterGet: [
       formio.middleware.filterResourcejsResponse(hiddenFields),
       formio.middleware.licenseUtilization,
+      formio.middleware.projectUsage,
+      formio.middleware.syncProjectUsage,
       projectSettings,
     ],
     beforePatch: [
       (req, res, next) => res.sendStatus(405),
     ],
     beforePost: [
+      formio.middleware.checkRequestAllowed,
       require('../middleware/checkPrimaryAccess'),
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       require('../middleware/fetchTemplate'),
@@ -214,6 +223,8 @@ module.exports = (router, formioServer) => {
       formio.middleware.postCreateLicenseCheck,
       require('../middleware/projectTemplate')(formio),
       formio.middleware.filterResourcejsResponse(hiddenFields),
+      formio.middleware.projectUsage,
+      formio.middleware.syncProjectUsage,
       projectSettings,
       formio.middleware.customCrmAction('newproject'),
     ],
@@ -224,9 +235,12 @@ module.exports = (router, formioServer) => {
     afterIndex: [
       formio.middleware.licenseUtilization,
       formio.middleware.filterResourcejsResponse(hiddenFields),
+      formio.middleware.projectUsage,
+      formio.middleware.syncProjectUsage,
       projectSettings,
     ],
     beforePut: [
+      formio.middleware.checkRequestAllowed,
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       formio.middleware.licenseUtilization,
       (req, res, next) => {
@@ -383,6 +397,7 @@ module.exports = (router, formioServer) => {
       },
     ],
     beforeDelete: [
+      formio.middleware.checkRequestAllowed,
       require('../middleware/projectProtectAccess')(formio),
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       formio.middleware.licenseUtilization,

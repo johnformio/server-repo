@@ -99,8 +99,7 @@ module.exports = (router) => {
           param = _knex(path.toString())
           .insert(pairs)
           .returning('*')
-          .toSQL()
-          .toNative();
+          .toSQL();
 
             route.query = [
               [
@@ -212,8 +211,7 @@ module.exports = (router) => {
             .where(primary, primaryComparison)
             .update(pairs)
             .returning('*')
-            .toSQL()
-            .toNative();
+            .toSQL();
 
             route.query = [
               [

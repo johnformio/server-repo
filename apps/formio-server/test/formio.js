@@ -17,6 +17,7 @@ const fetch = require('formio/src/util/fetch');
 const mockery = require('mockery');
 const sinon = require('sinon');
 const { Readable } = require('stream');
+const mongoose = require('mongoose');
 let formio;
 
 function md5(str) {
@@ -71,7 +72,6 @@ const requestMock = sinon.stub()
             licenseId: 'abc123',
           }),
         });
-        break;
       case 'https://api-cert.payeezy.com/v1/transactions':
         const body = JSON.parse(args.body);
         return Promise.resolve({
@@ -84,13 +84,14 @@ const requestMock = sinon.stub()
             card: {
               ...body.credit_card,
             },
+            transaction_tag: '123',
+            validation_status: 'success',
             token: {
               token_type: 'FDToken',
               token_data: { value: body.credit_card.card_number }
             }
           }),
         });
-        break;
       case 'https://github.com/login/oauth/access_token':
         return Promise.resolve({
           ok: true,
@@ -108,7 +109,6 @@ const requestMock = sinon.stub()
             email: null
           }),
         });
-        break;
       case 'https://api.github.com/user/emails':
         return Promise.resolve({
           ok: true,
@@ -118,7 +118,6 @@ const requestMock = sinon.stub()
             email: 'rahatarmanahmed@gmail.com'
           }]),
         });
-        break;
       case 'https://graph.facebook.com/v2.3/oauth/access_token':
         return Promise.resolve({
           ok: true,
@@ -132,7 +131,6 @@ const requestMock = sinon.stub()
             },
           }
         });
-        break;
       case 'https://graph.facebook.com/v2.3/me':
         return Promise.resolve({
           ok: true,
@@ -144,7 +142,6 @@ const requestMock = sinon.stub()
             last_name: 'Ahmed',
           }),
         });
-        break;
       case 'https://api.dropboxapi.com/1/oauth2/token':
         return Promise.resolve({
           ok: true,
@@ -152,7 +149,6 @@ const requestMock = sinon.stub()
             access_token:'accesstoken123'
           }),
         });
-        break;
       case 'https://content.dropboxapi.com/2/files/download':
         return Promise.resolve({
           ok: true,
@@ -163,7 +159,6 @@ const requestMock = sinon.stub()
             get: () => false,
           }
         });
-        break;
       case 'https://content.dropboxapi.com/2/files/upload':
         return Promise.resolve({
           ok: true,
@@ -171,7 +166,6 @@ const requestMock = sinon.stub()
             file: 'abc123',
           }),
         });
-        break;
       case 'https://openIdProvider.com/userInfo.com':
         return Promise.resolve({
           ok: true,
@@ -183,14 +177,13 @@ const requestMock = sinon.stub()
             last_name: 'Ahmed',
           }),
         });
-        break;
       default:
         // Fallback to fetch.
         if (url.includes('localhost')) {
           return fetch(url, args);
         }
         // Don't allow external calls during testing.
-        console.log('Fetch call to ', url);
+        // console.log('Fetch call to', url);
         return Promise.resolve({
           ok: true,
           json: async () => ({})
@@ -327,6 +320,32 @@ describe('Initial Tests', function() {
         process.env.ADMIN_KEY = 'examplekey';
         // Clear the database, reset the schema and perform a fresh install.
         emptyDatabase(done);
+      });
+
+      before('Drop the hosted usage collection if it exists', (done) => {
+        // Drop the usage collection if it exists
+        const db = app.formio.formio.mongoose.connection.db;
+        db.listCollections({name: 'usage'}).hasNext()
+          .then((result) => result ? db.collection('usage').drop() : Promise.resolve())
+          .then((result) => done())
+          .catch(done);
+      })
+
+      before('Create the hosted usage collection and the compound index', (done) => {
+        const db = app.formio.formio.mongoose.connection.db;
+
+        db.createCollection('usage', {timeseries: {timeField: 'timestamp', metaField: 'metadata'}})
+          .catch((err) => {
+            // we're presuming the error here is MongoDB API compatibility, so we'll try again with a normal collection for tests only
+            console.log("Error while creating timeseries collection:", err);
+            return db.createCollection('usage');
+          })
+          .then((collection) => {
+            return collection.createIndex({ "metadata.project": 1, "timestamp": 1});
+          })
+          .then((result) => {
+            done();
+          })
       });
 
       formioProject.actions['userRegistrationForm:email'].settings.transport = 'test';
@@ -625,7 +644,10 @@ describe('Initial Tests', function() {
     after(function() {
       describe('Project Tests', function() {
         this.retries(4);
+        require('./tests/usage')(app, template, hook);
+        require('./tests/middleware')(app, template, hook);
         require('./tests/teams')(app, template, hook);
+        require('./tests/ssoTeams')(app, template, hook);
         require('./tests/sessions')(app, template, hook);
         require('./tests/project')(app, template, hook);
         require('./tests/env')(app, template, hook);

@@ -35,6 +35,7 @@ module.exports = function(router, formioServer) {
       },
     ],
     beforePost: [
+      formio.middleware.checkRequestAllowed,
       formio.middleware.restrictToPlans(['commercial', 'trial']),
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       formio.middleware.tagHandler,
@@ -69,6 +70,7 @@ module.exports = function(router, formioServer) {
         template.revisions = req.body.template.revisions;
         req.templateData = template;
 
+        req.body.template.access = [];
         delete req.body.template.forms;
         delete req.body.template.resources;
         delete req.body.template.actions;
@@ -97,6 +99,7 @@ module.exports = function(router, formioServer) {
       }
     ],
     beforeDelete: [
+      formio.middleware.checkRequestAllowed,
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       formio.middleware.deleteTagHandler
     ],
@@ -148,6 +151,7 @@ module.exports = function(router, formioServer) {
    */
   router.post(
     '/project/:projectId/deploy',
+    formio.middleware.checkRequestAllowed,
     formio.middleware.restrictToPlans(['commercial', 'trial']),
     function(req, res, next) {
       formio.cache.loadCurrentProject(req, (err, project) => {
@@ -215,6 +219,7 @@ module.exports = function(router, formioServer) {
             }
 
             const template = deploy.template;
+            template.access = [];
 
             Object.assign(template, _.pick(project, ['name', 'title', 'description', 'machineName']));
             const alters = hook.alter('templateAlters', {});

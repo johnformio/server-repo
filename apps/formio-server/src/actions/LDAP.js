@@ -206,22 +206,7 @@ module.exports = router => {
 
     checkForLDAPTeams(req, data, user) {
       return new Promise((resolve, reject) => {
-        if (req.currentProject.primary && router.config.ssoTeams) {
-          const userRoles = [];
-          _.map(data.dn.split(','), map => {
-            if (map.indexOf('ou') !== -1) {
-              userRoles.push(map.split('=')[1]);
-            }
-          });
-
-          return router.formio.teams.getSSOTeams(user, userRoles).then((teams) => {
-            teams = teams || [];
-            user.teams = _.map(_.map(teams, '_id'), formio.util.idToString);
-            return resolve(user);
-          },reject);
-        }
-
-        return resolve(user);
+      router.formio.teams.getTeams(user, false, true).then(()=>resolve(user));
       });
     }
 
@@ -277,12 +262,14 @@ module.exports = router => {
               }
               if (err && (['Invalid Credentials'].includes(err) || !this.settings.passthrough)) {
                 debug('Error occurred 1: ', err);
+                auth.close();
                 return res.status(401).send(err);
               }
 
               // If something goes wrong, skip auth and pass through to other login handlers.
               if (err || !data) {
                 debug('No data returned');
+                auth.close();
                 return next();
               }
 
@@ -364,7 +351,9 @@ module.exports = router => {
                   'title',
                   'department',
                   'company',
-                  'manager'
+                  'manager',
+                  'uid',
+                  'uidNumber'
                 ];
 
                 debug('Deleting non-whitelisted fields');
@@ -383,7 +372,8 @@ module.exports = router => {
                   _id: data.uidNumber || data.uid || data.dn, // Try to use numbers but fall back to dn which is guaranteed.
                   data,
                   roles,
-                  project: req.currentProject._id.toString()
+                  project: req.currentProject._id.toString(),
+                  ldap: true
                 };
                 debug('Final user object', user);
 

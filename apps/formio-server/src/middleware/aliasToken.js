@@ -5,6 +5,10 @@ module.exports = app => (req, res, next) => {
     return next();
   }
 
+  if (req.url.match('/manage/view')) {
+    return next();
+  }
+
   const aliasToken = req.query.token;
   delete req.query.token;
 

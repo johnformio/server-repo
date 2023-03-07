@@ -128,6 +128,7 @@ config.formio.reservedForms = [
   'actionItem',
   'tag',
   'upload',
+  'pdf-proxy',
   'config.json',
   'portal-check',
   '2fa\/generate',
@@ -177,7 +178,6 @@ config.formioHost = formioHost;
 config.formio.formioHost = formioHost;
 config.licenseKey = getConfig('LICENSE_KEY');
 config.licenseRemote = getConfig('LICENSE_REMOTE', false);
-config.hostedPDFServer = getConfig('PDF_SERVER', getConfig('FORMIO_FILES_SERVER', ''));
 config.portalSSO = getConfig('PORTAL_SSO', '');
 config.ssoTeams = Boolean(getConfig('SSO_TEAMS', false) || config.portalSSO);
 config.portalSSOLogout = getConfig('PORTAL_SSO_LOGOUT', '');
@@ -302,49 +302,6 @@ if (getConfig('MONGO_CONFIG')) {
 config.formio.mongoSecret = getConfig('DB_SECRET', 'abc123');
 config.formio.mongoSecretOld = getConfig('DB_SECRET_OLD', false);
 
-if (getConfig('REDIS_SERVICE')) {
-  if (getConfig('REDIS_SERVICE').toLowerCase() === 'local') {
-    if (config.docker) {
-      config.redis = {
-        url: 'redis://redis'
-      };
-    }
-    else {
-      config.redis = {
-        url: 'redis://localhost:6379'
-      };
-    }
-  }
-  else {
-    config.redis = {
-      service: getConfig('REDIS_SERVICE')
-    };
-  }
-}
-else if (getConfig('REDIS_ADDR', getConfig('REDIS_PORT_6379_TCP_ADDR'))) {
-  // This is compatible with docker legacy linking.
-  var addr = getConfig('REDIS_ADDR', getConfig('REDIS_PORT_6379_TCP_ADDR', 'localhost'));
-  var redisPort = getConfig('REDIS_PORT', getConfig('REDIS_PORT_6379_TCP_PORT', 6379));
-  config.redis = {
-    port: redisPort,
-    host: addr,
-    url: `redis://${addr}:${redisPort}`
-  };
-}
-else {
-  config.redis = {
-    service: 'false'
-  };
-}
-
-if (getConfig('REDIS_USE_SSL')) {
-  config.redis.useSSL = true;
-}
-
-if (getConfig('REDIS_PASS')) {
-  config.redis.password = getConfig('REDIS_PASS');
-}
-
 // TODO: Need a better way of setting the formio specific configurations.
 if (getConfig('SENDGRID_PASSWORD')) {
   config.formio.email = {};
@@ -394,6 +351,11 @@ const debugFormioConfigVars = getConfig('DEBUG_CONFIG_FORMIO_VARS', 'domain,sche
 sanitized.formio = _.pick(_.clone(config.formio), debugFormioConfigVars);
 
 config.maxBodySize = getConfig('MAX_BODY_SIZE', '25mb');
+
+// Add the getConfig function to the config object so we can get at secrets/environment variables that we don't
+// necessarily want to store in the global-ish config object (mainly we just want to support docker secrets along
+// with process.env)
+config.getConfig = getConfig;
 
 // Only output sanitized data.
 debug.config(sanitized);

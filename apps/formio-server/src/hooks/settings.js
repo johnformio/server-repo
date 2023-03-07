@@ -96,7 +96,7 @@ module.exports = function(app) {
         return false;
       },
       audit(args, event, req) {
-        if (!app.formio.formio.config.audit || !_.get(app, 'license.terms.options.sac', false)) {
+        if (!app.formio.formio.config.audit || !_.get(app, 'license.terms.options.sac', false) || process.env.TEST_SUITE) {
           return false;
         }
         args.unshift(new Date());
@@ -213,7 +213,7 @@ module.exports = function(app) {
         if (!action.hasOwnProperty('name') || !premium.includes(action.name)) {
           return true;
         }
-        if (['basic', 'independent'].includes(req.primaryProject.plan)) {
+        if (['basic', 'independent', 'archived'].includes(req.primaryProject.plan)) {
           return false;
         }
 
@@ -224,23 +224,25 @@ module.exports = function(app) {
         settings = settings || {};
         // Limit independent
         if (req && req.primaryProject) {
-          if (req.primaryProject.plan === 'independent') {
-            transports = [{
-              transport: 'default',
-              title: 'Default (limit 1000 per month)'
-            }];
+          if (config.formio.hosted) {
+            if (req.primaryProject.plan === 'commercial') {
+              transports.push({
+                transport: 'default',
+                title: 'Default (limit 1000 per month)'
+              });
+             }
           }
-          if (req.primaryProject.plan === 'commercial' || req.primaryProject.plan === 'trial') {
+          else if (process.env.DEFAULT_TRANSPORT) {
             transports.push({
               transport: 'default',
-              title: 'Default (limit 1000 per month)'
+              title: 'Default'
             });
-           }
+          }
         }
         return cb(null, transports);
       },
       hasEmailAccess(req) {
-        const noEmailPlans = ['basic'];
+        const noEmailPlans = ['basic', 'archived'];
         return !(req.currentProject && noEmailPlans.includes(req.currentProject.plan));
       },
       path(url, req) {
@@ -623,7 +625,7 @@ module.exports = function(app) {
               }
 
               // Skip teams processing, if this projects plan does not support teams.
-              if (!primaryProject.plan || primaryProject.plan === 'basic' || primaryProject.plan === 'independent') {
+              if (['basic', 'independent', 'archived'].includes(primaryProject.plan)) {
                 return callback(null);
               }
 
@@ -1272,7 +1274,7 @@ module.exports = function(app) {
       },
 
       templateImportSteps: (steps, install, template) => {
-        const _install = install({
+        const projectEntity = {
           createOnly: !template.primary,
           model: formioServer.formio.resources.project.model,
           valid: entity => {
@@ -1288,16 +1290,15 @@ module.exports = function(app) {
 
             return done();
           }
-        });
+        };
+
         const project = {};
         const projectKeys = ['title', 'name', 'tag', 'description', 'machineName'];
-
         project[template.machineName || template.name || 'export'] = _.pick(template, projectKeys);
-
         project[template.machineName || template.name || 'export'].primary = !!template.isPrimary;
+        steps.unshift(async.apply(install(projectEntity), template, project));
 
-        steps.unshift(async.apply(_install, template, project));
-
+        // TODO: this may be better in the project entity's transform() method so we can install project entity in one fell swoop
         const _importAccess = (template, items, done) => {
           formioServer.formio.cache.loadCache.load(template._id, (err, project) => {
             if (err) {
@@ -1764,6 +1765,7 @@ module.exports = function(app) {
         return query;
       },
       getSubmissionModel: require('../util/util').getSubmissionModel,
+      getSubmissionRevisionModel: require('../util/util').getSubmissionRevisionModel,
       formRoutes: require('./alter/formRoutes')(app),
       submissionRoutes: require('./alter/submissionRoutes')(app),
       worker: require('./alter/worker')(app),

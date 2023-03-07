@@ -8,14 +8,11 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME:
       MONGO_INITDB_ROOT_PASSWORD:
-  redis:
-    image: redis
   formio:
     image: formio/formio-enterprise
     restart: always
     links:
       - mongo
-      - redis
     ports:
       - "3000:80"
     environment:

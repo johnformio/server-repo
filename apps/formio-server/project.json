@@ -45,6 +45,7 @@
           "key": "email",
           "label": "Email",
           "inputType": "email",
+          "hideLabel": true,
           "input": true,
           "validate": {
           "required": true
@@ -57,6 +58,7 @@
           "type": "password",
           "persistent": true,
           "protected": true,
+          "hideLabel": true,
           "suffix": "",
           "prefix": "",
           "placeholder": "Password",
@@ -116,115 +118,6 @@
           "key": "html",
           "type": "htmlelement",
           "tag": "p"
-        }
-      ],
-      "access": [
-        {
-          "type": "read_all",
-          "roles": [
-            "authenticated",
-            "anonymous"
-          ]
-        }
-      ],
-      "submissionAccess": [
-        {
-          "type": "create_own",
-          "roles": [
-            "anonymous",
-            "authenticated"
-          ]
-        }
-      ]
-    },
-    "resetPassword": {
-      "title": "Reset Password",
-      "type": "form",
-      "name": "resetPassword",
-      "path": "resetpass",
-      "display": "form",
-      "tags": [],
-      "components": [
-        {
-          "input": true,
-          "tableView": true,
-          "inputType": "email",
-          "label": "Email",
-          "key": "email",
-          "placeholder": "Enter your user email",
-          "prefix": "",
-          "suffix": "",
-          "defaultValue": "",
-          "protected": false,
-          "unique": false,
-          "persistent": true,
-          "type": "email",
-          "conditional": {
-            "show": false,
-            "when": null,
-            "eq": ""
-          },
-          "validate": {
-            "required": true
-          }
-        },
-        {
-          "input": true,
-          "tableView": false,
-          "inputType": "password",
-          "label": "Password",
-          "key": "password",
-          "placeholder": "Enter your new password",
-          "prefix": "",
-          "suffix": "",
-          "protected": true,
-          "persistent": true,
-          "type": "password",
-          "conditional": {
-            "show": false,
-            "when": null,
-            "eq": ""
-          },
-          "validate": {
-            "required": true,
-            "minLength": 8
-          }
-        },
-        {
-          "input": true,
-          "tableView": false,
-          "inputType": "password",
-          "label": "Verify Password",
-          "key": "verifyPassword",
-          "placeholder": "Enter your password again",
-          "prefix": "",
-          "suffix": "",
-          "protected": true,
-          "persistent": true,
-          "type": "password",
-          "conditional": {
-            "show": false,
-            "when": null,
-            "eq": ""
-          },
-          "validate": {
-            "required": true,
-            "custom": "valid = (input == '{{ password }}') ? true : 'Passwords must match.';"
-          }
-        },
-        {
-          "input": true,
-          "label": "Submit",
-          "tableView": false,
-          "key": "submit",
-          "size": "md",
-          "leftIcon": "",
-          "rightIcon": "",
-          "block": false,
-          "action": "submit",
-          "disableOnInvalid": true,
-          "theme": "primary",
-          "type": "button"
         }
       ],
       "access": [

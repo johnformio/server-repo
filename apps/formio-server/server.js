@@ -2,7 +2,6 @@
 
 require('dotenv').config();
 const express = require('express');
-const helmet = require('helmet');
 const _ = require('lodash');
 const bodyParser = require('body-parser');
 const favicon = require('serve-favicon');
@@ -22,6 +21,7 @@ const debug = {
 };
 const RequestCache = require('./src/util/requestCache');
 var BoxSDK = require('box-node-sdk');
+const util = require('./src/util/util');
 
 module.exports = function(options) {
   options = options || {};
@@ -108,12 +108,9 @@ module.exports = function(options) {
         res.set('Content-Type', 'application/javascript; charset=UTF-8');
         res.send(
           contents.replace(
-            /var hostedPDFServer = '';|var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false|var whitelabel = false;/gi,
+            /var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false|var whitelabel = false;/gi,
             (matched) => {
-              if (config.hostedPDFServer && matched.includes('var hostedPDFServer')) {
-                return `var hostedPDFServer = '${config.hostedPDFServer}';`;
-              }
-              else if (config.portalSSO && matched.includes('var sso =')) {
+              if (config.portalSSO && matched.includes('var sso =')) {
                 return `var sso = '${config.portalSSO}';`;
               }
               else if (config.ssoTeams && matched.includes('var ssoTeamsEnabled =')) {
@@ -157,12 +154,12 @@ module.exports = function(options) {
     noCache: true
   }));
 
-  // Hook each request and add analytics support.
+  // Hook each request and add usage tracking.
   app.use((req, res, next) => {
     // eslint-disable-next-line callback-return
     next();
-    if (app.formio.analytics) {
-      app.formio.analytics.hook(req, res, next);
+    if (app.formio.usageTracking) {
+      app.formio.usageTracking.hook(req, res, next);
     }
   });
 
@@ -201,6 +198,30 @@ module.exports = function(options) {
 
   // Attach the formio-server config.
   app.formio.config = _.omit(config, 'formio');
+
+  // Mount PDF server proxy
+  app.use('/pdf-proxy', [
+    (req, res, next) => {
+      const regex = /^\/pdf\/[\w\d]+\/file\/[\w\d-]+\.(html|pdf)$/; // regex for '/pdf/:project/file/:file.html | pdf' path
+      if ((req.method === 'GET' && regex.test(req.path)) || req.method === 'OPTIONS') {
+        req.bypass = true;
+        return next();
+      }
+      next();
+    },
+    app.formio.formio.middleware.tokenHandler,
+    app.formio.formio.middleware.params,
+    (req, res, next) => {
+      if (req.bypass) {
+        return next();
+      }
+      if (!req.user && !req.isAdmin) {
+        return res.sendStatus(401);
+      }
+      next();
+    },
+    require('./src/middleware/pdfProxy')(app.formio.formio),
+  ]);
 
   // Import the OAuth providers
   debug.startup('Attaching middleware: OAuth Providers');
@@ -256,17 +277,7 @@ module.exports = function(options) {
     }
   ]);
 
-  // Load projects and roles.
-  debug.startup('Attaching middleware: Project & Roles Loader');
-  app.use(require('./src/middleware/loadProjectContexts')(app.formio.formio));
-
-  // Set the project query middleware for filtering disabled projects
-  app.use(require('./src/middleware/projectQueryLimits'));
-
-   // Check project status
-  app.use(require('./src/middleware/projectUtilization')(app));
-
-   // CORS Support
+  // CORS Support
   debug.startup('Attaching middleware: CORS');
   var corsMiddleware = require('./src/middleware/corsOptions')(app);
   var corsRoute = cors(corsMiddleware);
@@ -277,6 +288,16 @@ module.exports = function(options) {
     }
     corsRoute(req, res, next);
   });
+
+  // Load projects and roles.
+  debug.startup('Attaching middleware: Project & Roles Loader');
+  app.use(require('./src/middleware/loadProjectContexts')(app.formio.formio));
+
+  // Set the project query middleware for filtering disabled projects
+  app.use(require('./src/middleware/projectQueryLimits'));
+
+   // Check project status
+  app.use(require('./src/middleware/projectUtilization')(app));
 
   debug.startup('Attaching middleware: CSP');
   if (app.portalEnabled) {
@@ -308,6 +329,11 @@ module.exports = function(options) {
     app.formio.formio.middleware.tokenHandler,
     app.formio.formio.middleware.params,
     app.formio.formio.middleware.permissionHandler,
+    (req, res, next) => {
+      app.formio.formio.cache.loadCurrentForm(req, (err, currentForm) => {
+        return util.getSubmissionRevisionModel(app.formio.formio, req, currentForm, false, next);
+      });
+    },
     require('./src/middleware/submissionChangeLog')(app),
   ];
 
@@ -372,25 +398,17 @@ module.exports = function(options) {
 
     // Kick off license validation process
     debug.startup('Checking License');
-    license.validate(app).then(() => {
+    const licenseValidationPromise = license.validate(app);
+    licenseValidationPromise.then(() => {
       if (config.formio.hosted) {
-        // For hosted environments, we will connect to Redis and Analyitcs.
-        const RedisInterface = require('./src/util/RedisInterface');
-        const redis = new RedisInterface(config.redis);
-        // Load the analytics hooks.
-        debug.startup('Attaching middleware: Analytics');
-        const analytics = require('./src/analytics/analytics')(redis);
-
-        // Add the redis interface.
-        app.formio.redis = redis;
-
-        // Attach the analytics to the formio server and attempt to connect.
-        app.formio.analytics = analytics;
-
-        // Use the routes.
-        app.use(require('./src/analytics')(app.formio));
+        // Load the usage hooks.
+        debug.startup('Attaching middleware: Usage Tracking');
+        app.formio.usageTracking = require('./src/usage')(app.formio);
       }
     });
+
+    debug.startup('Attaching middleware: License Terms');
+    app.use(require('./src/middleware/attachLicenseTerms')(licenseValidationPromise, app));
 
     debug.startup('Attaching middleware: Cache');
     app.formio.formio.cache = _.assign(app.formio.formio.cache, require('./src/cache/cache')(app.formio));
@@ -425,6 +443,10 @@ module.exports = function(options) {
     // Respond with default server information.
     debug.startup('Attaching middleware: Project Index');
     app.get('/', require('./src/middleware/projectIndex')(app.formio.formio));
+
+    // Check if the request is allowed for the current project
+    debug.startup('Attaching middleware: Check Request Allowed');
+    app.use(app.formio.formio.middleware.checkRequestAllowed);
 
     // Don't allow accessing a project's forms and other if it is remote. Redirect to the remote instead.
     debug.startup('Attaching middleware: Remote Redirect');
@@ -469,7 +491,7 @@ module.exports = function(options) {
           config: project.config,
           public: project.public
         })};
-        window.APP_BRANDING = false;
+        window.APP_BRANDING = true;
       `;
     };
 
@@ -539,14 +561,16 @@ module.exports = function(options) {
     // Mount the error logging middleware.
     debug.startup('Attaching middleware: Error Handler');
     app.use((err, req, res, next) => {
-      /* eslint-disable no-console */
+      // delegate to the default Express error handler when the headers have already been sent to the client
+      if (res.headersSent) {
+        return next(err);
+      }
       console.log('Uncaught exception:');
       if (err) {
         console.log(err);
         console.log(err.stack);
       }
-      /* eslint-enable no-console */
-      res.status(400).send(typeof err === 'string' ? {message: err} : err);
+      res.status(err.status ? err.status : 400).send(typeof err === 'string' ? {message: err} : err);
     });
 
     debug.startup('Attaching middleware: File Storage');

@@ -5,7 +5,8 @@ const crypto = require('crypto');
 const config = require('../../config');
 const keygenerator = require('keygenerator');
 const debug = {
-  decrypt: require('debug')('formio:util:decrypt')
+  decrypt: require('debug')('formio:util:decrypt'),
+  db: require('debug')('formio:db'),
 };
 
 const defaultSaltLength = 40;
@@ -177,11 +178,70 @@ const Utils = {
         return next(`${collectionName} is a reserved collection name.`);
       }
 
-      // Set the submission model.
+      // Set the submission model. Mongoose does not automatically create a collection upon establishing a model, (see
+      // https://mongoosejs.com/docs/api/model.html#model_Model-createCollection), so we'll call init() to create the model
+      // if it has indexes or prepare it to be created upon an initial submission
+      debug.db(`Setting submission model to ${collectionName} from submission schema and creating a collection`);
       req.submissionModel = formio.mongoose.model(collectionName, formio.schemas.submission, collectionName, init);
+      req.submissionModel.init((err) => {
+        if (err) {
+          return next(err);
+        }
+        return next(null, req.submissionModel);
+      });
+    });
+  },
+  getSubmissionRevisionModel: (formio, req, form, init, next) => {
+    if (!form) {
+      return next('No form provided');
+    }
+
+    // No collection provided.
+    if (!form.settings || !form.settings.collection) {
+      return next();
+    }
+
+    // Disable for hosted projects
+    if (config.formio.hosted) {
+      return next();
+    }
+
+    // Return if the submission model is already established.
+    if (req.submissionRevisionModel) {
+      return next(null, req.submissionRevisionModel);
+    }
+
+    // Load the project in context.
+    formio.cache.loadCache.load(req.projectId, (err, project) => {
+      if (err) {
+        delete form.settings.collection;
+        return next(err);
+      }
+
+      if (!project) {
+        delete form.settings.collection;
+        return next('No project found');
+      }
+
+      if (project.plan !== 'commercial') {
+        delete form.settings.collection;
+        return next('Only Enterprise projects can set different form collections.');
+      }
+
+      // Get the project name.
+      const projectName = project.name.replace(/[^A-Za-z0-9]+/g, '');
+      if (!projectName) {
+        return next('Invalid project name');
+      }
+
+      // Set the collection name.
+      const collectionName = `${projectName}_${form.settings.collection.replace(/[^A-Za-z0-9]+/g, '')}_revisions`;
+
+      // Set the submission revision model.
+      req.submissionRevisionModel = formio.mongoose.model(collectionName, formio.schemas.submissionrevision, collectionName, init);
 
       // Establish a model using the schema.
-      return next(null, req.submissionModel);
+      return next(null, req.submissionRevisionModel);
     });
   },
   getComponentDataByPath: (path, data) => {
@@ -191,8 +251,33 @@ const Utils = {
       }, data);
     }
 
-    return Array.isArray(data) ? data.map(item => item[path]) : data[path];
+    return Array.isArray(data) ? data.map(item => _.get(item, path)) : _.get(data, path);
   },
+  transform: (obj, predicate) => {
+    return Object.keys(obj).reduce((acc, key) => {
+      if (predicate(key, obj[key])) {
+          acc[key] = obj[key];
+      }
+      return acc;
+    }, {});
+  },
+  parseUnknownContentResponse: (response) => {
+    const contentType = response.headers.get("content-type");
+    const contentLength = Number(response.headers.get("content-length"));
+
+    if (contentLength > 0) {
+      if (contentType.includes('application/json')) {
+        return response.json();
+      }
+      else {
+        return response.text();
+      }
+    }
+    return {};
+  },
+  isEmptyObject(object) {
+    return !!object && _.isEmpty(object) && object.constructor === Object;
+  }
 };
 
 module.exports = Utils;

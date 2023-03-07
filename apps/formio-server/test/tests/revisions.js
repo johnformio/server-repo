@@ -6,6 +6,7 @@ var assert = require('assert');
 var _ = require('lodash');
 var async = require('async');
 var util = require('formio/src/util/util');
+const config = require('../../config');
 
 module.exports = (app, template, hook) => {
   const helper = new template.Helper(template.formio.owner);
@@ -688,173 +689,175 @@ module.exports = (app, template, hook) => {
       });
     });
 
-    it('does not create a revision for basic plans', done => {
-      form.components[0].prefix = 'basic';
-      helper
-        .plan('basic')
-        .execute(() => {
-          helper.updateForm(form, (err, result) => {
-            if (err) {
-              return done(err);
-            }
-            helper.getFormRevisions(form, (err, result) => {
+    if (config.formio.hosted) {
+      it('does not create a revision for basic plans', done => {
+        form.components[0].prefix = 'basic';
+        helper
+          .plan('basic')
+          .execute(() => {
+            helper.updateForm(form, (err, result) => {
               if (err) {
                 return done(err);
               }
-              assert.equal(result.length, 5);
-              assert.equal(result[0].components.length, 2);
-              assert.equal(result[0]._vid, 1);
-              assert.equal(result[0]._rid, form._id);
-              assert.equal(result[0].name, form.name);
-              assert(result[0].hasOwnProperty('machineName') === false);
-              assert.equal(result[0].revisionId, result[0]._id);
-              assert.equal(result[1].components.length, 3);
-              assert.equal(result[1]._vid, 2);
-              assert.equal(result[1]._rid, form._id);
-              assert.equal(result[1].name, form.name);
-              assert(result[1].hasOwnProperty('machineName') === false);
-              assert.equal(result[1].revisionId, result[1]._id);
-              assert.equal(result[2].components.length, 4);
-              assert.equal(result[2]._vid, 3);
-              assert.equal(result[2]._rid, form._id);
-              assert.equal(result[2].name, form.name);
-              assert(result[2].hasOwnProperty('machineName') === false);
-              assert.equal(result[2].revisionId, result[2]._id);
-              assert.equal(result[3].components.length, 4);
-              assert.equal(result[3]._vid, 4);
-              assert.equal(result[3]._rid, form._id);
-              assert.equal(result[3].name, form.name);
-              assert(result[3].hasOwnProperty('machineName') === false);
-              assert.equal(result[3].revisionId, result[3]._id);
-              assert.equal(result[4].components.length, 4);
-              assert.equal(result[4]._vid, 5);
-              assert.equal(result[4]._rid, form._id);
-              assert.equal(result[4].name, form.name);
-              assert(result[4].hasOwnProperty('machineName') === false);
-              assert.equal(result[4].revisionId, result[4]._id);
-              done();
+              helper.getFormRevisions(form, (err, result) => {
+                if (err) {
+                  return done(err);
+                }
+                assert.equal(result.length, 5);
+                assert.equal(result[0].components.length, 2);
+                assert.equal(result[0]._vid, 1);
+                assert.equal(result[0]._rid, form._id);
+                assert.equal(result[0].name, form.name);
+                assert(result[0].hasOwnProperty('machineName') === false);
+                assert.equal(result[0].revisionId, result[0]._id);
+                assert.equal(result[1].components.length, 3);
+                assert.equal(result[1]._vid, 2);
+                assert.equal(result[1]._rid, form._id);
+                assert.equal(result[1].name, form.name);
+                assert(result[1].hasOwnProperty('machineName') === false);
+                assert.equal(result[1].revisionId, result[1]._id);
+                assert.equal(result[2].components.length, 4);
+                assert.equal(result[2]._vid, 3);
+                assert.equal(result[2]._rid, form._id);
+                assert.equal(result[2].name, form.name);
+                assert(result[2].hasOwnProperty('machineName') === false);
+                assert.equal(result[2].revisionId, result[2]._id);
+                assert.equal(result[3].components.length, 4);
+                assert.equal(result[3]._vid, 4);
+                assert.equal(result[3]._rid, form._id);
+                assert.equal(result[3].name, form.name);
+                assert(result[3].hasOwnProperty('machineName') === false);
+                assert.equal(result[3].revisionId, result[3]._id);
+                assert.equal(result[4].components.length, 4);
+                assert.equal(result[4]._vid, 5);
+                assert.equal(result[4]._rid, form._id);
+                assert.equal(result[4].name, form.name);
+                assert(result[4].hasOwnProperty('machineName') === false);
+                assert.equal(result[4].revisionId, result[4]._id);
+                done();
+              });
             });
           });
-        });
-    });
-
-    it('does not save a draft for basic plans', done => {
-      helper.putFormDraft(form, (err, result) => {
-        assert.equal(result.status, 402);
-        assert.equal(result.text, 'Payment Required. Project must be on an Enterprise plan.');
-        done();
       });
-    });
 
-    it('does not create a revision for independent plans', done => {
-      form.components[0].prefix = 'independent';
-      helper
-        .plan('independent')
-        .execute(() => {
-          helper.updateForm(form, (err, result) => {
-            helper.getFormRevisions(result, (err, result) => {
-              if (err) {
-                return done(err);
-              }
-              assert.equal(result.length, 5);
-              assert.equal(result[0].components.length, 2);
-              assert.equal(result[0]._vid, 1);
-              assert.equal(result[0]._rid, form._id);
-              assert.equal(result[0].name, form.name);
-              assert(result[0].hasOwnProperty('machineName') === false);
-              assert.equal(result[0].revisionId, result[0]._id);
-              assert.equal(result[1].components.length, 3);
-              assert.equal(result[1]._vid, 2);
-              assert.equal(result[1]._rid, form._id);
-              assert.equal(result[1].name, form.name);
-              assert(result[1].hasOwnProperty('machineName') === false);
-              assert.equal(result[1].revisionId, result[1]._id);
-              assert.equal(result[2].components.length, 4);
-              assert.equal(result[2]._vid, 3);
-              assert.equal(result[2]._rid, form._id);
-              assert.equal(result[2].name, form.name);
-              assert(result[2].hasOwnProperty('machineName') === false);
-              assert.equal(result[2].revisionId, result[2]._id);
-              assert.equal(result[3].components.length, 4);
-              assert.equal(result[3]._vid, 4);
-              assert.equal(result[3]._rid, form._id);
-              assert.equal(result[3].name, form.name);
-              assert(result[3].hasOwnProperty('machineName') === false);
-              assert.equal(result[3].revisionId, result[3]._id);
-              assert.equal(result[4].components.length, 4);
-              assert.equal(result[4]._vid, 5);
-              assert.equal(result[4]._rid, form._id);
-              assert.equal(result[4].name, form.name);
-              assert(result[4].hasOwnProperty('machineName') === false);
-              assert.equal(result[4].revisionId, result[4]._id);
-              done();
+      it('does not save a draft for basic plans', done => {
+        helper.putFormDraft(form, (err, result) => {
+          assert.equal(result.status, 402);
+          assert.equal(result.text, 'Payment Required. Project must be on an Enterprise plan.');
+          done();
+        });
+      });
+
+      it('does not create a revision for independent plans', done => {
+        form.components[0].prefix = 'independent';
+        helper
+          .plan('independent')
+          .execute(() => {
+            helper.updateForm(form, (err, result) => {
+              helper.getFormRevisions(result, (err, result) => {
+                if (err) {
+                  return done(err);
+                }
+                assert.equal(result.length, 5);
+                assert.equal(result[0].components.length, 2);
+                assert.equal(result[0]._vid, 1);
+                assert.equal(result[0]._rid, form._id);
+                assert.equal(result[0].name, form.name);
+                assert(result[0].hasOwnProperty('machineName') === false);
+                assert.equal(result[0].revisionId, result[0]._id);
+                assert.equal(result[1].components.length, 3);
+                assert.equal(result[1]._vid, 2);
+                assert.equal(result[1]._rid, form._id);
+                assert.equal(result[1].name, form.name);
+                assert(result[1].hasOwnProperty('machineName') === false);
+                assert.equal(result[1].revisionId, result[1]._id);
+                assert.equal(result[2].components.length, 4);
+                assert.equal(result[2]._vid, 3);
+                assert.equal(result[2]._rid, form._id);
+                assert.equal(result[2].name, form.name);
+                assert(result[2].hasOwnProperty('machineName') === false);
+                assert.equal(result[2].revisionId, result[2]._id);
+                assert.equal(result[3].components.length, 4);
+                assert.equal(result[3]._vid, 4);
+                assert.equal(result[3]._rid, form._id);
+                assert.equal(result[3].name, form.name);
+                assert(result[3].hasOwnProperty('machineName') === false);
+                assert.equal(result[3].revisionId, result[3]._id);
+                assert.equal(result[4].components.length, 4);
+                assert.equal(result[4]._vid, 5);
+                assert.equal(result[4]._rid, form._id);
+                assert.equal(result[4].name, form.name);
+                assert(result[4].hasOwnProperty('machineName') === false);
+                assert.equal(result[4].revisionId, result[4]._id);
+                done();
+              });
             });
           });
-        });
-    });
-
-    it('does not save a draft for independent plans', done => {
-      helper.putFormDraft(form, (err, result) => {
-        assert.equal(result.status, 402);
-        assert.equal(result.text, 'Payment Required. Project must be on an Enterprise plan.');
-        done();
       });
-    });
 
-    it('does not create a revision for team pro plans', done => {
-      form.components[0].prefix = 'team';
-      helper
-        .plan('team')
-        .execute(() => {
-          helper.updateForm(form, (err, result) => {
-            helper.getFormRevisions(result, (err, result) => {
-              if (err) {
-                return done(err);
-              }
-              assert.equal(result.length, 5);
-              assert.equal(result[0].components.length, 2);
-              assert.equal(result[0]._vid, 1);
-              assert.equal(result[0]._rid, form._id);
-              assert.equal(result[0].name, form.name);
-              assert(result[0].hasOwnProperty('machineName') === false);
-              assert.equal(result[0].revisionId, result[0]._id);
-              assert.equal(result[1].components.length, 3);
-              assert.equal(result[1]._vid, 2);
-              assert.equal(result[1]._rid, form._id);
-              assert.equal(result[1].name, form.name);
-              assert(result[1].hasOwnProperty('machineName') === false);
-              assert.equal(result[1].revisionId, result[1]._id);
-              assert.equal(result[2].components.length, 4);
-              assert.equal(result[2]._vid, 3);
-              assert.equal(result[2]._rid, form._id);
-              assert.equal(result[2].name, form.name);
-              assert(result[2].hasOwnProperty('machineName') === false);
-              assert.equal(result[2].revisionId, result[2]._id);
-              assert.equal(result[3].components.length, 4);
-              assert.equal(result[3]._vid, 4);
-              assert.equal(result[3]._rid, form._id);
-              assert.equal(result[3].name, form.name);
-              assert(result[3].hasOwnProperty('machineName') === false);
-              assert.equal(result[3].revisionId, result[3]._id);
-              assert.equal(result[4].components.length, 4);
-              assert.equal(result[4]._vid, 5);
-              assert.equal(result[4]._rid, form._id);
-              assert.equal(result[4].name, form.name);
-              assert(result[4].hasOwnProperty('machineName') === false);
-              assert.equal(result[4].revisionId, result[4]._id);
-              done();
+      it('does not save a draft for independent plans', done => {
+        helper.putFormDraft(form, (err, result) => {
+          assert.equal(result.status, 402);
+          assert.equal(result.text, 'Payment Required. Project must be on an Enterprise plan.');
+          done();
+        });
+      });
+
+      it('does not create a revision for team pro plans', done => {
+        form.components[0].prefix = 'team';
+        helper
+          .plan('team')
+          .execute(() => {
+            helper.updateForm(form, (err, result) => {
+              helper.getFormRevisions(result, (err, result) => {
+                if (err) {
+                  return done(err);
+                }
+                assert.equal(result.length, 5);
+                assert.equal(result[0].components.length, 2);
+                assert.equal(result[0]._vid, 1);
+                assert.equal(result[0]._rid, form._id);
+                assert.equal(result[0].name, form.name);
+                assert(result[0].hasOwnProperty('machineName') === false);
+                assert.equal(result[0].revisionId, result[0]._id);
+                assert.equal(result[1].components.length, 3);
+                assert.equal(result[1]._vid, 2);
+                assert.equal(result[1]._rid, form._id);
+                assert.equal(result[1].name, form.name);
+                assert(result[1].hasOwnProperty('machineName') === false);
+                assert.equal(result[1].revisionId, result[1]._id);
+                assert.equal(result[2].components.length, 4);
+                assert.equal(result[2]._vid, 3);
+                assert.equal(result[2]._rid, form._id);
+                assert.equal(result[2].name, form.name);
+                assert(result[2].hasOwnProperty('machineName') === false);
+                assert.equal(result[2].revisionId, result[2]._id);
+                assert.equal(result[3].components.length, 4);
+                assert.equal(result[3]._vid, 4);
+                assert.equal(result[3]._rid, form._id);
+                assert.equal(result[3].name, form.name);
+                assert(result[3].hasOwnProperty('machineName') === false);
+                assert.equal(result[3].revisionId, result[3]._id);
+                assert.equal(result[4].components.length, 4);
+                assert.equal(result[4]._vid, 5);
+                assert.equal(result[4]._rid, form._id);
+                assert.equal(result[4].name, form.name);
+                assert(result[4].hasOwnProperty('machineName') === false);
+                assert.equal(result[4].revisionId, result[4]._id);
+                done();
+              });
             });
           });
-        });
-    });
-
-    it('does not save a draft for team pro plans', done => {
-      helper.putFormDraft(form, (err, result) => {
-        assert.equal(result.status, 402);
-        assert.equal(result.text, 'Payment Required. Project must be on an Enterprise plan.');
-        done();
       });
-    });
+
+      it('does not save a draft for team pro plans', done => {
+        helper.putFormDraft(form, (err, result) => {
+          assert.equal(result.status, 402);
+          assert.equal(result.text, 'Payment Required. Project must be on an Enterprise plan.');
+          done();
+        });
+      });
+    }
 
     it('creates a revision for commercial plans', done => {
       form.components[0].prefix = 'commercial';
@@ -1419,4 +1422,3 @@ module.exports = (app, template, hook) => {
   });
 });
 };
-

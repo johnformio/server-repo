@@ -71,7 +71,7 @@ const middleware = router => {
       next();
     },
     router.formio.formio.middleware.permissionHandler,
-    router.formio.formio.plans.disableForPlans(['basic', 'independent']),
+    router.formio.formio.plans.disableForPlans(['basic', 'independent', 'archived']),
     function(req, res) {
       const fileName = req.body.name || req.query.name;
 

@@ -1,5 +1,6 @@
 'use strict';
 const _ = require('lodash');
+const config = require("../../../config");
 module.exports = app => {
   const loadFormAlter = {
     alter: (project, form) => {
@@ -22,6 +23,11 @@ module.exports = app => {
       // Add recaptcha site keys.
       if (_.get(form, 'settings.recaptcha.isEnabled')) {
         _.set(form, 'settings.recaptcha.siteKey', _.get(project, 'settings.recaptcha.siteKey'));
+      }
+
+      // add project plan to form definition in hosted environments
+      if (config.formio.hosted) {
+        form.plan = project.plan;
       }
       return form;
     },

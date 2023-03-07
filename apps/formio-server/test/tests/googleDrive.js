@@ -5,6 +5,7 @@ const request = require('supertest');
 const assert = require('assert');
 const docker = process.env.DOCKER;
 const _ = require('lodash');
+const config = require('../../config');
 
 module.exports = function(app, template, hook) {
   describe('Google Drive Tests', function() {
@@ -39,44 +40,45 @@ module.exports = function(app, template, hook) {
           email: 'testUser@example.com',
           password: 'password'
         };
-
-        it('A project on the basic plan can not set Google Drive settings', function(done) {
-          request(app)
-            .put('/project/' + template.project._id)
-            .set('x-jwt-token', template.formio.owner.token)
-            .send({
-              settings: {
-                cors: '*',
-                google: {
-                  clientId: 'CLIENT_ID',
-                  cskey: 'CLIENT_SECRET',
-                  refreshtoken: 'REFRESH'
-                },
-                storage: {
-                  googleDrive: true,
+        if (config.formio.hosted) {
+          it('A project on the basic plan can not set Google Drive settings', function(done) {
+            request(app)
+              .put('/project/' + template.project._id)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                settings: {
+                  cors: '*',
+                  google: {
+                    clientId: 'CLIENT_ID',
+                    cskey: 'CLIENT_SECRET',
+                    refreshtoken: 'REFRESH'
+                  },
+                  storage: {
+                    googleDrive: true,
+                  }
                 }
-              }
-            })
-            .expect('Content-Type', /json/)
-            .expect(200)
-            .end(function(err, res) {
-              if (err) {
-                return done(err);
-              }
+              })
+              .expect('Content-Type', /json/)
+              .expect(200)
+              .end(function(err, res) {
+                if (err) {
+                  return done(err);
+                }
 
-              var response = res.body;
-              assert.equal(response.plan, 'basic');
-              assert.equal(response.hasOwnProperty('settings'), true);
-              assert.deepEqual(_.omit(response.settings, ['licenseKey']), {cors: '*'});
+                var response = res.body;
+                assert.equal(response.plan, 'basic');
+                assert.equal(response.hasOwnProperty('settings'), true);
+                assert.deepEqual(_.omit(response.settings, ['licenseKey']), {cors: '*'});
 
-              template.project = response;
+                template.project = response;
 
-              // Store the JWT for future API calls.
-              template.formio.owner.token = res.headers['x-jwt-token'];
+                // Store the JWT for future API calls.
+                template.formio.owner.token = res.headers['x-jwt-token'];
 
-              done();
-            });
-        });
+                done();
+              });
+          });
+        }
 
         it('Registers an authenticated user', function(done)  {
           request(app)
