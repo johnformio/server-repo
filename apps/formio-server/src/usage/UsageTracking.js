@@ -10,6 +10,19 @@ const {ensureValueIsString, determineRequestUsageType} = require('./util');
 
 const TTL = process.env.USAGE_CACHE_TTL || 60;
 
+function loadPrimaryProjectFromCache(cache, req) {
+  return new Promise((resolve, reject) => {
+    cache.loadPrimaryProject(req, (err, primaryProject) => {
+      if (err) {
+        reject(err);
+      }
+      else {
+        resolve(primaryProject);
+      }
+    });
+  });
+}
+
 class UsageTracking {
   constructor(formio) {
     this._cache = new NodeCache({stdTTL: TTL});
@@ -17,6 +30,7 @@ class UsageTracking {
     this._db = formio.formio.mongoose.connection.db;
     this._formModel = formio.formio.resources.form.model;
     this._projectCache = formio.formio.cache;
+    this._plans = formio.formio.plans;
   }
 
   async _getCurrentFormCount(projectId) {
@@ -144,7 +158,15 @@ class UsageTracking {
 
   async checkEmail(req) {
     const {emails} = await this.getUsageMetrics(req.projectId);
-    if (emails >= this._formio.plans.limits[req.primaryProject.plan].email) {
+    let plan;
+    if (req.primaryProject && req.primaryProject.plan) {
+      plan = req.primaryProject.plan;
+    }
+    else {
+      const primaryProject = await loadPrimaryProjectFromCache(this._projectCache, req);
+      plan = primaryProject.plan;
+    }
+    if (emails >= this._plans.limits[plan].email) {
       throw new Error('Over email limit');
     }
     return emails;
