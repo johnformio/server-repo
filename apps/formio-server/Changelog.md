@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-6444: fix async problem with archived projects
  - FIO-6422: postgres-settings-knex-raw-error
  - fixed pdf proxy removing content-type header
+ - FIO-6472: fix issue where project upgrades/downgrades were failing
 
 ## 8.1.0-rc.2
 ### Changed
