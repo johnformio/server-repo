@@ -74,7 +74,7 @@ module.exports = function(formio) {
             });
           })
           .then(function() {
-            const plans = ['trial', 'basic', 'independent', 'team', 'commercial', 'archived'];
+            const plans = ['archived', 'trial', 'basic', 'independent', 'team', 'commercial'];
             const direction = plans.indexOf(project.plan) < plans.indexOf(req.body.plan) ? 'Upgrade' : 'Downgrade';
 
             /* eslint-disable max-len */
