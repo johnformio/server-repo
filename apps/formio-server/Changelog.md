@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-6422: postgres-settings-knex-raw-error
  - fixed pdf proxy removing content-type header
  - FIO-6472: fix issue where project upgrades/downgrades were failing
+ - Fixed CORS error(s) on the portal-check endpoint
 
 ## 8.1.0-rc.2
 ### Changed
