@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - fixed pdf proxy removing content-type header
  - FIO-6472: fix issue where project upgrades/downgrades were failing
  - Fixed CORS error(s) on the portal-check endpoint
+ - FIO-6327: /portal-check endpoint will sometimes hang the req/res cycle
 
 ## 8.1.0-rc.2
 ### Changed
