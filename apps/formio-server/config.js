@@ -192,6 +192,7 @@ config.formio.hosted = false;
 
 config.whitelabel = Boolean(getConfig('WHITELABEL'), false);
 config.onlyPrimaryWriteAccess = Boolean(getConfig('ONLY_PRIMARY_WRITE_ACCESS', false));
+config.AccessControlMaxAge = getConfig('ACCESS_CONTROL_MAX_AGE', 600);
 
 const getMaxOldSpace = () => {
   const nodeOptions = getConfig('NODE_OPTIONS', '');
