@@ -23,10 +23,6 @@ function middleware(app) {
       next = () => { };
     }
 
-    if (config.formio.hosted) {
-      return next();
-    }
-
     // Bypass the main formio project that hosts the licenses.
     if (_.get(req, 'currentProject.name') === 'formio') {
       return next();
@@ -45,15 +41,10 @@ function middleware(app) {
 
     const endpoint = `${req.method} ${req.route.path}`;
     const remote = _.get(app, 'license.remote', false);
-
-    // Skip license utilization checks for remote non get project.
-    if (remote && endpoint !== 'GET /project/:projectId' && endpoint !== 'POST /project') {
-      return next();
-    }
-
     let result = null;
 
     try {
+      let projectContext;
       switch (endpoint) {
         case 'GET /project/:projectId':
           // Don't check utilization for formio project.
@@ -125,12 +116,13 @@ function middleware(app) {
             res.status(400).send('Cannot create stages or tenants in formio project. Please create a new project.');
             break;
           }
+          projectContext = getProjectContext(req, true);
           if (remote) {
-            result = req.body.project ? await remoteUtilization(app) : await remoteUtilization(app, {strict: true});
+            result = await remoteUtilization(app, projectContext);
           }
           else {
             result = await utilizationSync(app, `project:create`, {
-              ...getProjectContext(req, true),
+              ...projectContext,
               licenseKey: getLicenseKey(req),
             });
           }
@@ -142,10 +134,16 @@ function middleware(app) {
           if (_.get(req, 'primaryProject.name') === 'formio') {
             break;
           }
-          result = utilization(app, `project:${req.projectId}`, {
-            ...getProjectContext(req),
-            licenseKey: getLicenseKey(req),
-          });
+          projectContext = getProjectContext(req);
+          if (remote) {
+            result = await remoteUtilization(app, projectContext);
+          }
+          else {
+            result = utilization(app, `project:${req.projectId}`, {
+              ...projectContext,
+              licenseKey: getLicenseKey(req),
+            });
+          }
           break;
 
         // Disable project utilization when deleting a project
@@ -153,6 +151,9 @@ function middleware(app) {
           if (_.get(req, 'primaryProject.name') === 'formio') {
             res.status(400).send('Cannot delete the formio project.');
             break;
+          }
+          if (remote) {
+            return;
           }
           utilization(app, `project:${req.projectId}`, {
             ...getProjectContext(req),
