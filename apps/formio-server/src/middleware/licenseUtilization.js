@@ -153,7 +153,7 @@ function middleware(app) {
             break;
           }
           if (remote) {
-            return;
+            return next();
           }
           utilization(app, `project:${req.projectId}`, {
             ...getProjectContext(req),
