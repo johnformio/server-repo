@@ -215,7 +215,11 @@ function checkLastUtilizationTime(req) {
 
 async function getNumberOfExistingProjects(formio, project = null) {
   const projectQuery = {deleted: null, project: null, name: {$ne: 'formio'}};
-  if (project) {
+  if (
+    project &&
+    project.projectId &&
+    formio.mongoose.Types.ObjectId.isValid(project.projectId)
+  ) {
     projectQuery.type = project.type;
     projectQuery.project = formio.util.ObjectId(project.projectId);
   }
