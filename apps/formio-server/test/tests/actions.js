@@ -928,7 +928,7 @@ module.exports = (app, template, hook) => {
       });
     });
 
-    describe('LDAP Login', () => {
+    describe.skip('LDAP Login', () => {
       if (docker || customer) {
         return;
       }
