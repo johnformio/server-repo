@@ -213,8 +213,17 @@ function checkLastUtilizationTime(req) {
   return false;
 }
 
-async function getNumberOfExistingProjects(formio) {
-  return await formio.resources.project.model.count({deleted: {'$eq': null}, project: null}) - 1;
+async function getNumberOfExistingProjects(formio, project = null) {
+  const projectQuery = {deleted: null, project: null, name: {$ne: 'formio'}};
+  if (
+    project &&
+    project.projectId &&
+    formio.mongoose.Types.ObjectId.isValid(project.projectId)
+  ) {
+    projectQuery.type = project.type;
+    projectQuery.project = formio.util.ObjectId(project.projectId);
+  }
+  return await formio.resources.project.model.count(projectQuery);
 }
 
 function getRemoteLicenseData(app) {
@@ -224,17 +233,26 @@ function getRemoteLicenseData(app) {
   });
 }
 
-async function remoteUtilization(app, flag) {
+async function remoteUtilization(app, project) {
   const licenseData = getRemoteLicenseData(app);
-  const numberOfProjects = await getNumberOfExistingProjects(app.formio.formio);
-  if (flag && flag.strict && licenseData.terms.projectsNumberLimit && numberOfProjects >= licenseData.terms.projectsNumberLimit) {
-    return {error: new Error(`Exceeded the allowed number of projects. Max number of your projects is ${licenseData.terms.projectsNumberLimit}. You have ${numberOfProjects} projects.`)};
-  }
- else if (licenseData.terms.projectsNumberLimit && numberOfProjects > licenseData.terms.projectsNumberLimit) {
-    return {error: new Error(`Exceeded the allowed number of projects. Max number of your projects is ${licenseData.terms.projectsNumberLimit}. You have ${numberOfProjects} projects.`)};
-  }
   if (licenseData.exp && licenseData.exp <= parseInt(Date.now() / 1000)) {
     return {error: new Error('License is expired.')};
+  }
+  const numberOfProjects = await getNumberOfExistingProjects(app.formio.formio, project);
+  let projectLimit;
+  switch (project.type) {
+    case 'project':
+      projectLimit = licenseData.terms.projectsNumberLimit;
+      break;
+    case 'tenant':
+      projectLimit = licenseData.terms.tenants;
+      break;
+    case 'stage':
+      projectLimit = licenseData.terms.stages;
+      break;
+  }
+  if (projectLimit && numberOfProjects >= projectLimit) {
+    return {error: new Error(`Exceeded the allowed number of ${project.type}s. Max number of your ${project.type}s is ${projectLimit}. You have ${numberOfProjects} ${project.type}s.`)};
   }
 }
 
