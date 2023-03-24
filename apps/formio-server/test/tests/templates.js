@@ -284,6 +284,159 @@ module.exports = function(app, template, hook) {
 
         });
     });
+
+    describe('Projects with orphaned revisions', function() {
+      let project = {
+        framework: "custom",
+        title: "Brendan's Happy Time Fun Land",
+        stageTitle: "Live",
+        settings: {
+            cors: "*"
+        }
+      };
+      let formWithRevisionsDisabled, formWithNestedFormAndOrphanedRevision;
+      before(() => {
+        process.env.ADMIN_KEY = 'examplekey';
+      });
+
+      it('Should create the project', (done) => {
+        request(app)
+          .post('/project')
+          .set('x-admin-key', process.env.ADMIN_KEY)
+          .send(project)
+          .expect(201)
+          .expect('Content-Type', /json/)
+          .end((err, res) => {
+            if (err) {
+              done(err);
+            }
+            assert(res.body.hasOwnProperty('access'), 'Created project should have access property');
+            assert(res.body.hasOwnProperty('created'), 'Created project should have created at property');
+            assert(res.body.hasOwnProperty('type'), 'Created project should have type property');
+            assert.equal(res.body.type, 'project');
+            project = res.body;
+
+            done();
+          });
+      });
+
+      it('Should create a form with revisions disabled', (done) => {
+        request(app)
+          .post(`/project/${project._id}/form`)
+          .set('x-admin-key', process.env.ADMIN_KEY)
+          .send({
+            "title": "Form With Revisions Disabled",
+            "type": "form",
+            "name": "formWithRevisionsDisabled",
+            "path": "formWithRevisionsDisabled",
+            "display": "form",
+            "tags": [],
+            "settings": {},
+            "components": [
+              {
+                "label": "Name",
+                "tableView": true,
+                "key": "name",
+                "type": "textfield",
+                "input": true
+              },
+              {
+                "type": "button",
+                "label": "Submit",
+                "key": "submit",
+                "disableOnInvalid": true,
+                "input": true,
+                "tableView": false
+              }
+            ],
+            "properties": {},
+            "controller": "",
+            "submissionRevisions": "",
+            "revisions": ""
+          })
+          .expect(201)
+          .end((err, res) => {
+            if (err) {
+              done(err);
+            }
+            assert(res.body.hasOwnProperty('_id'), 'Created form should have _id property');
+            assert(res.body.hasOwnProperty('type'), 'Created form should have type property');
+            assert.equal(res.body.type, 'form');
+            formWithRevisionsDisabled = res.body;
+
+            done();
+          });
+      });
+
+      it('Should create a form pointing at a form with revisions disabled but include an orphaned revision in its nested component', (done) => {
+        request(app)
+          .post(`/project/${project._id}/form`)
+          .set('x-admin-key', process.env.ADMIN_KEY)
+          .send({
+            "title": "Form With Nested Form and Revision",
+            "type": "form",
+            "name": "formWithNestedFormAndRevision",
+            "path": "formWithNestedFormAndRevision",
+            "display": "form",
+            "tags": [],
+            "settings": {},
+            "components": [
+              {
+                "label": "Nested Form",
+                "tableView": true,
+                "form": formWithRevisionsDisabled._id,
+                "revision": "1",
+                "useOriginalRevision": false,
+                "key": "nestedForm",
+                "type": "form",
+                "input": true
+              },
+              {
+                "type": "button",
+                "label": "Submit",
+                "key": "submit",
+                "disableOnInvalid": true,
+                "input": true,
+                "tableView": false
+              }
+            ],
+            "properties": {},
+            "controller": "",
+            "submissionRevisions": ""
+          })
+          .expect(201)
+          .end((err, res) => {
+            if (err) {
+              done(err);
+            }
+            assert(res.body.hasOwnProperty('_id'), 'Created form should have _id property');
+            assert(res.body.hasOwnProperty('type'), 'Created form should have type property');
+            assert.equal(res.body.type, 'form');
+            formWithNestedFormAndOrphanedRevision = res.body;
+
+            done();
+          });
+      });
+
+      it('Should export the project correctly', (done) => {
+        request(app)
+          .get(`/project/${project._id}/export`)
+          .set('x-admin-key', process.env.ADMIN_KEY)
+          .expect(200)
+          .expect('Content-Type', /json/)
+          .end((err, res) => {
+            if (err) {
+              done(err);
+            }
+            assert.equal(res.body.title, "Brendan's Happy Time Fun Land");
+            assert(res.body.hasOwnProperty('forms'), 'The created template has forms');
+            assert(res.body.hasOwnProperty('resources'), 'The created template has resources');
+            assert(res.body.forms.hasOwnProperty('formWithRevisionsDisabled'), 'The created template includes the first form');
+            assert(res.body.forms.hasOwnProperty('formWithNestedFormAndRevision'), 'The created template includes the second form');
+            done();
+          });
+      })
+    });
   });
 
   describe('formAndResourceWithController Template', function() {
@@ -534,5 +687,5 @@ module.exports = function(app, template, hook) {
           done();
         });
     });
-  })
+  });
 };
