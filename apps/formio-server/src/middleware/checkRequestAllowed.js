@@ -24,7 +24,7 @@ module.exports = (formio) => {
       return next();
     }
 
-    // Don't allow any POST, PUT, PATCH or DELETE requests for an archived project
+    // Don't allow any POST, PUT, PATCH or DELETE requests for an archived project, except for requests to delete the project
     if (primaryProject.plan === 'archived' && req.method !== 'GET'
      && !(req.method === 'DELETE' && /^\/project\/[a-f0-9]{24}$/.test(req.originalUrl))
      ) {
