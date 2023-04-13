@@ -52,7 +52,7 @@
     "dotenv": "^16.0.0",
     "express": "^4.17.1",
     "express-cache-controller": "^1.1.0",
-    "formio": "3.1.0-rc.3",
+    "formio": "3.1.0-rc.4",
     "formio-workers": "1.17.0-rc.2",
     "formiojs": "4.15.0-rc.19",
     "googleapis": "^105.0.0",
