@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
  - FIO-6579: add tests for template exporting
  - FIO-6627: Removed case-sensitivity for Teams emails
+ - FIO-6613: fixed an issue where 0 value is not shown in the Submission
 
 ## 8.1.0-rc.4
 ### Fixed
