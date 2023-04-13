@@ -448,10 +448,6 @@ module.exports = function(options) {
     debug.startup('Attaching middleware: Check Request Allowed');
     app.use(app.formio.formio.middleware.checkRequestAllowed);
 
-    // Don't allow accessing a project's forms and other if it is remote. Redirect to the remote instead.
-    debug.startup('Attaching middleware: Remote Redirect');
-    app.use('/project/:projectId', require('./src/middleware/remoteRedirect')(app.formio));
-
     app.post('/project/:projectId/import', app.formio.formio.middleware.licenseUtilization);
 
     // Mount formio at /project/:projectId.
