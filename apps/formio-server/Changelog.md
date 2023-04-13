@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-6579: add tests for template exporting
  - FIO-6627: Removed case-sensitivity for Teams emails
  - FIO-6613: fixed an issue where 0 value is not shown in the Submission
+ - FIO-6513: Removing the remote redirect which causes infinite loops.
+ - FIO-6509: remove file token from server2server
+ - FIO-6417: Fixes archived project upgrade and adds tests for archived plan
+ - FIO-6404: Add db update script to fix Date\Time values stored as string instead of ISODate format
 
 ## 8.1.0-rc.4
 ### Fixed
