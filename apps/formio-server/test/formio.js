@@ -439,6 +439,9 @@ describe('Initial Tests', function() {
                 else if (form.name === 'user') {
                   template.formio.userResource = form;
                 }
+                else if (form.name === 'admin') {
+                  template.formio.adminResource = form;
+                }
                 else if (form.name === 'team') {
                   template.formio.teamResource = form;
                 }

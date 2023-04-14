@@ -1861,7 +1861,8 @@ module.exports = function(app) {
         return handlers;
       },
       roleQuery(query, req) {
-        const projectId = req.projectId || (req.params ? req.params.projectId : undefined) || req._id;
+        const projectId = req.projectId || (req.params ? req.params.projectId : undefined) || req._id
+        || _.get(req, 'token.project._id') || _.get(req, 'token.form.project');
         query.project = formioServer.formio.util.idToBson(projectId);
         return query;
       },

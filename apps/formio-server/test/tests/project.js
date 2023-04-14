@@ -1275,6 +1275,170 @@ module.exports = function(app, template, hook) {
       });
     });
 
+    describe('Primary write access configuration', () => {
+      before(async () => {
+        // Create and admin user for formio project
+        const adminCreateRes = await request(app)
+        .post(`/project/${template.formio.primary._id}/form/${template.formio.adminResource._id}/submission`)
+          .send({
+            data: {
+              email: template.users.admin.data.email,
+              password: template.users.admin.data.password
+            }
+          })
+          .set('x-jwt-token', template.formio.owner.token);
+
+        const admin = adminCreateRes.body;
+
+        assert.ok(admin._id);
+        assert.ok(admin.data);
+        assert.equal(admin.data.email, template.users.admin.data.email);
+        assert.equal(admin.roles.length, 1);
+        assert.equal(admin.project, template.formio.primary._id);
+
+        template.users.admin._id = admin._id;
+
+        // Update login action for Login form to include Admin resource
+        const actionsRes = await request(app)
+          .get(`/project/${template.formio.primary._id}/form/${template.formio.formLogin._id}/action`)
+          .set('x-jwt-token', template.formio.owner.token);
+
+        const actions = actionsRes.body;
+
+        assert.ok(actions.length);
+
+        const loginAction = actions.find(action => action.name === 'login');
+
+        assert.ok(loginAction._id);
+        assert.ok(loginAction.settings.resources);
+
+        const actionUpdateRes = await request(app)
+          .put(`/project/${template.formio.primary._id}/form/${template.formio.formLogin._id}/action/${loginAction._id}`)
+          .send({
+            settings: {
+              ...loginAction.settings,
+              resources: [
+                ...loginAction.settings.resources,
+                template.formio.adminResource._id
+              ]
+            }
+          })
+          .set('x-jwt-token', template.formio.owner.token);
+
+        const updatedAction = actionUpdateRes.body;
+
+        assert.equal(updatedAction._id, loginAction._id);
+        assert.ok(updatedAction.settings.resources.some(res => res === template.formio.adminResource._id));
+
+        // log in as admin user
+        const loginRes = await request(app)
+          .post(`/project/${template.formio.primary._id}/user/login`)
+          .send({
+            data: {
+              email: template.users.admin.data.email,
+              password: template.users.admin.data.password
+            }
+          });
+
+        const login = loginRes.body;
+
+        assert.equal(login.data.email, template.users.admin.data.email);
+        // Store the JWT for future API calls.
+        template.users.admin.token = loginRes.headers['x-jwt-token'];
+
+        // Activate ONLY_PRIMARY_WRITE_ACCESS configuration
+        config.onlyPrimaryWriteAccess = true;
+      });
+
+      it('Should allow admin user to create new project', done => {
+        request(app)
+          .post('/project')
+          .set('x-jwt-token', template.users.admin.token)
+          .send({
+            framework: 'custom',
+            title: 'Test Project',
+            stageTitle: 'Live',
+            settings: {
+              cors: '*'
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            const project = res.body;
+
+            assert.ok(project._id);
+            assert.equal(project.title, 'Test Project');
+            assert.equal(project.owner, template.users.admin._id);
+
+            done();
+          });
+      });
+
+      it('Should allow admin user to create new team', done => {
+        request(app)
+          .post('/team')
+          .set('x-jwt-token', template.users.admin.token)
+          .send({
+            data: {
+              name: 'Test Team'
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            const team = res.body;
+
+            assert.ok(team._id);
+            assert.equal(team.owner, template.users.admin._id);
+
+            done();
+          });
+      });
+
+      it('Should not allow non-admin user to create new project', done => {
+       request(app)
+        .post('/project')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send({
+          framework: 'custom',
+          title: 'Test Project',
+          stageTitle: 'Live',
+          settings: {
+            cors: '*'
+          }
+        })
+        .expect(403)
+        .end(done);
+      });
+
+      it('Should not allow non-admin user to create new team', done => {
+        request(app)
+        .post('/team')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send({
+          data: {
+            name: 'Test Team'
+          }
+        })
+        .expect(403)
+        .end(done);
+      });
+
+      after(() => {
+        // Deactivate ONLY_PRIMARY_WRITE_ACCESS configuration
+        config.onlyPrimaryWriteAccess = false;
+      });
+    });
+
     if (!docker) {
       it('A Form.io User should be able to Delete their Project without explicit permissions', function (done) {
         request(app)
