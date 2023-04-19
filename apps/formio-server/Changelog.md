@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-6509: remove file token from server2server
  - FIO-6417: Fixes archived project upgrade and adds tests for archived plan
  - FIO-6404: Add db update script to fix Date\Time values stored as string instead of ISODate format
+ - FIO-5979: added the ability for browsers to cache CORS
 
 ## 8.1.0-rc.4
 ### Fixed
