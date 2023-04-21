@@ -1987,33 +1987,30 @@ module.exports = function(app, template, hook) {
           const importTemplate = {
             template: {
               version: '2.0.0',
-              forms: {
+              forms: {},
+              resources: {
                 '01': {
                   title: '01',
-                  type: 'form',
+                  type: 'resource',
                   name: '01',
                   path: '01',
-                  display: 'form',
                   components: []
                 },
                 '02': {
                   title: '02',
-                  type: 'form',
+                  type: 'resource',
                   name: '02',
                   path: '02',
-                  display: 'form',
                   components: []
                 },
                 '03': {
                   title: '03',
-                  type: 'form',
+                  type: 'resource',
                   name: '03',
                   path: '03',
-                  display: 'form',
                   components: []
                 }
               },
-              resources: {},
               excludeAccess: true
             }
           };
@@ -2039,30 +2036,17 @@ module.exports = function(app, template, hook) {
         it('Project template importing should detect new forms and import template successfully', function(done){
           const prevEnableRestrictions = config.enableRestrictions;
           config.enableRestrictions = true;
-          const resourceKeyFromTemplate = Object.keys(template.resources)[0];
+          const resourceKeyFromTemplate = Object.keys(template.resources)[1];
+          const resourceKeyFromTemplate2 = Object.keys(template.resources)[2];
+          const resourceKeyFromTemplate3 = Object.keys(template.resources)[3];
           const importTemplate = {
             template: {
               version: '2.0.0',
-              forms: {
-                '01': {
-                  title: '01',
-                  type: 'form',
-                  name: '01',
-                  path: '01',
-                  display: 'form',
-                  components: []
-                },
-                '02': {
-                  title: '02',
-                  type: 'form',
-                  name: '02',
-                  path: '02',
-                  display: 'form',
-                  components: []
-                }
-              },
+              forms: {},
               resources: {
-                [resourceKeyFromTemplate]: template.resources[resourceKeyFromTemplate]
+                [resourceKeyFromTemplate]: template.resources[resourceKeyFromTemplate],
+                [resourceKeyFromTemplate2]: template.resources[resourceKeyFromTemplate2],
+                [resourceKeyFromTemplate3]: template.resources[resourceKeyFromTemplate3]
               },
               excludeAccess: true
             }
