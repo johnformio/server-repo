@@ -149,7 +149,7 @@ module.exports = function(app, template, hook) {
           .set('x-jwt-token', template.formio.owner.token)
           // .expect('Content-Type', /json/)
           // .expect(200)
-          // 
+          //
           .end(function(err, res) {
             if (err) return cb(err);
 
@@ -1977,7 +1977,113 @@ module.exports = function(app, template, hook) {
             assert.equal(emailAction, -1);
             done();
           })
-      })
+      });
+
+      // Only applicable for hosted env with enabled restrictions
+      if (config.formio.hosted) {
+        it('Project template importing should return error if exceeding plan limit', function(done){
+          const prevEnableRestrictions = config.enableRestrictions;
+          config.enableRestrictions = true;
+          const importTemplate = {
+            template: {
+              version: '2.0.0',
+              forms: {
+                '01': {
+                  title: '01',
+                  type: 'form',
+                  name: '01',
+                  path: '01',
+                  display: 'form',
+                  components: []
+                },
+                '02': {
+                  title: '02',
+                  type: 'form',
+                  name: '02',
+                  path: '02',
+                  display: 'form',
+                  components: []
+                },
+                '03': {
+                  title: '03',
+                  type: 'form',
+                  name: '03',
+                  path: '03',
+                  display: 'form',
+                  components: []
+                }
+              },
+              resources: {},
+              excludeAccess: true
+            }
+          };
+
+          request(app)
+            .post('/project/' + template.project._id + '/import')
+            .set('x-jwt-token', template.formio.owner.token)
+            .send(importTemplate)
+            .expect('Content-Type', /text\/html/)
+            .expect(400)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              assert.equal(res.text, 'Limit exceeded. Upgrade your plan.');
+
+              config.enableRestrictions = prevEnableRestrictions;
+              done();
+            });
+        });
+
+        it('Project template importing should detect new forms and import template successfully', function(done){
+          const prevEnableRestrictions = config.enableRestrictions;
+          config.enableRestrictions = true;
+          const resourceKeyFromTemplate = Object.keys(template.resources)[0];
+          const importTemplate = {
+            template: {
+              version: '2.0.0',
+              forms: {
+                '01': {
+                  title: '01',
+                  type: 'form',
+                  name: '01',
+                  path: '01',
+                  display: 'form',
+                  components: []
+                },
+                '02': {
+                  title: '02',
+                  type: 'form',
+                  name: '02',
+                  path: '02',
+                  display: 'form',
+                  components: []
+                }
+              },
+              resources: {
+                [resourceKeyFromTemplate]: template.resources[resourceKeyFromTemplate]
+              },
+              excludeAccess: true
+            }
+          };
+
+          request(app)
+            .post('/project/' + template.project._id + '/import')
+            .set('x-jwt-token', template.formio.owner.token)
+            .send(importTemplate)
+            .expect('Content-Type', /text/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              config.enableRestrictions = prevEnableRestrictions;
+              done();
+            });
+        });
+      }
 
       after(function(done) {
         deleteProjects(tempProjects, done);
