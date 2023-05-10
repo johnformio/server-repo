@@ -24,7 +24,7 @@ function provideFormsWithDefaultAccess(targetForms, sourceForms, roles) {
         submissionAccess: mergeAccess(form.submissionAccess, sourceForms[formKey].submissionAccess)
       }};
     }
-    // otherwise provide a default
+    // otherwise provide a default//
     // TODO: grabbed this from bootstrapFormAccess, good candidate for a constant
     const defaultFormAccess = [{type: 'read_all', roles: Object.keys(roles)}];
     return {...acc, [formKey]: {...form, access: [...defaultFormAccess], submissionAccess: []}};
