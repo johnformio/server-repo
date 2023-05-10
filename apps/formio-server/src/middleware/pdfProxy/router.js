@@ -26,29 +26,25 @@ module.exports = (formioServer) => {
         if (err) {
           return next(err);
         }
-        if (config.formio.hosted) {
-          // Hosted projects use the x-file-token for pdf server communication.
-          if (req.currentProject.settings && req.currentProject.settings.filetoken) {
-            req.headers["x-file-token"] = req.currentProject.settings.filetoken;
-          }
 
-          // It is a problem if the environment variable is not set in hosted. We do not want them to be able to point
-          // to arbitrary pdf servers if they are on our hosted environments.
-          if (!req.pdfServer) {
-            return next('No PDF_SERVER environment configuration.');
-          }
+        // Set the license key header for authorization.
+        req.headers["x-license-key"] = process.env.LICENSE_KEY;
+
+        // It is a problem if the environment variable is not set in hosted. We do not want them to be able to point
+        // to arbitrary pdf servers if they are on our hosted environments.
+        if (!req.pdfServer && config.formio.hosted) {
+          return next('No PDF_SERVER environment configuration.');
         }
-        else {
-          // Set the license key header for authorization.
-          req.headers["x-license-key"] = process.env.LICENSE_KEY;
 
-          // Always use the environment variable. If it does not exist, then we can try the project settings.
-          if (!req.pdfServer && req.currentProject.settings && req.currentProject.settings.pdfserver) {
-            req.pdfServer = req.currentProject.settings.pdfserver;
-          }
+        // Always use the environment variable. If it does not exist, then we can try the project settings.
+        if (!req.pdfServer && req.currentProject.settings && req.currentProject.settings.pdfserver) {
+          req.pdfServer = req.currentProject.settings.pdfserver;
         }
         return next();
       });
+    }
+    else {
+      return next();
     }
   });
 
@@ -75,7 +71,7 @@ module.exports = (formioServer) => {
     const options = {
       method: req.method,
       rejectUnauthorized: false,
-      headers: {...req.headers, plan: req.currentProject.plan}
+      headers: req.headers
     };
     if (req.currentProject && req.currentProject.plan) {
       options.headers.plan = req.currentProject.plan;
