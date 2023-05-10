@@ -788,6 +788,118 @@ module.exports = function(app, template, hook) {
         });
     });
 
+    describe('Stages', () => {
+      const stagesIds = [];
+
+      it('Should create stage using default template when copying from empty stage', async () => {
+        const defaultTemplate = require('formio/src/templates/default.json');
+        const stageTitle = chance.word();
+
+        // Create stage
+        const stageCreateRes = await request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            stageTitle,
+            title: chance.word(),
+            name: chance.word(),
+            type: 'stage',
+            project: template.project._id,
+            copyFromProject: 'empty',
+            framework: 'custom'
+          });
+
+        const stage = stageCreateRes.body;
+
+        assert.ok(stage._id);
+        assert.equal(stage.project, template.project._id);
+        assert.equal(stage.stageTitle, stageTitle);
+        assert.notEqual(stage.title, stageTitle);
+
+        stagesIds.push(stage._id);
+
+        // Export stage template to compare with default template
+        const exportStageRes = await request(app)
+          .get(`/project/${stage._id}/export`)
+          .set('x-jwt-token', template.formio.owner.token);
+
+        const exportedStage = exportStageRes.body;
+
+        assert.ok(exportedStage.version);
+        assert.ok(exportedStage.title);
+        assert.deepEqual(Object.keys(exportedStage.roles).sort(), Object.keys(defaultTemplate.roles).sort());
+        assert.deepEqual(Object.keys(exportedStage.resources).sort(), Object.keys(defaultTemplate.resources).sort());
+        assert.deepEqual(Object.keys(exportedStage.forms).sort(), Object.keys(defaultTemplate.forms).sort());
+        assert.deepEqual(Object.keys(exportedStage.actions).sort(), Object.keys(defaultTemplate.actions).sort());
+        assert.deepEqual(exportedStage.access, defaultTemplate.access);
+      });
+
+      it('Should create stage using project template when copying from existing stage', async () => {
+        const stageTitle = chance.word();
+
+        // Create stage
+        const stageCreateRes = await request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            stageTitle,
+            title: chance.word(),
+            name: chance.word(),
+            type: 'stage',
+            project: template.project._id,
+            copyFromProject: template.project._id,
+            framework: 'custom'
+          });
+
+        const stage = stageCreateRes.body;
+
+        assert.ok(stage._id);
+        assert.equal(stage.project, template.project._id);
+        assert.equal(stage.stageTitle, stageTitle);
+        assert.notEqual(stage.title, stageTitle);
+
+        stagesIds.push(stage._id);
+
+        // Export project template
+        const exportProjectRes = await request(app)
+          .get(`/project/${template.project._id}/export`)
+          .set('x-jwt-token', template.formio.owner.token);
+
+        const exportedProject = exportProjectRes.body;
+
+        assert.ok(exportedProject.version);
+        assert.ok(exportedProject.title);
+        assert.ok(exportedProject.roles);
+        assert.ok(exportedProject.resources);
+        assert.ok(exportedProject.forms);
+        assert.ok(exportedProject.actions);
+        assert.ok(exportedProject.access);
+
+        // Export stage template to compare with project template
+        const exportStageRes = await request(app)
+          .get(`/project/${stage._id}/export`)
+          .set('x-jwt-token', template.formio.owner.token);
+
+        const exportedStage = exportStageRes.body;
+
+        assert.ok(exportedStage.version);
+        assert.ok(exportedStage.title);
+        assert.deepEqual(Object.keys(exportedStage.roles).sort(), Object.keys(exportedProject.roles).sort());
+        assert.deepEqual(Object.keys(exportedStage.resources).sort(), Object.keys(exportedProject.resources).sort());
+        assert.deepEqual(Object.keys(exportedStage.forms).sort(), Object.keys(exportedProject.forms).sort());
+        assert.deepEqual(Object.keys(exportedStage.actions).sort(), Object.keys(exportedProject.actions).sort());
+        assert.deepEqual(exportedStage.access, exportedProject.access);
+      });
+
+      after(async () => {
+        // Delete created stages
+        await Promise.all(stagesIds.map(stageId => request(app)
+          .delete(`/project/${stageId}`)
+          .set("x-jwt-token", template.formio.owner.token)
+        ));
+      });
+    });
+
     describe('Protected Project', function() {
       let project, form, submission, action, role;
 

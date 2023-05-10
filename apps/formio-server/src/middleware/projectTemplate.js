@@ -123,7 +123,7 @@ module.exports = function(formio) {
     // New environments should copy their primary project template.
     else if ('project' in project && project.project) {
       if (req.body.hasOwnProperty('copyFromProject') && req.body.copyFromProject === 'empty') {
-        return importTemplate(_.cloneDeep(formio.templates['empty']));
+        return importTemplate(_.cloneDeep(formio.templates['default']));
       }
 
       let projectId = project.project;
