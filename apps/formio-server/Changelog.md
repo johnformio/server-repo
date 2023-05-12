@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased: 8.1.0-rc.10]
+### Fixed
+ - FIO-6835: Fixing api server crash with the pdf-proxy middleware.
+
 ## 8.1.0-rc.9
 ### Changed
  - Updated formio@3.1.0-rc.10
