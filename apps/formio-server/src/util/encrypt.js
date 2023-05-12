@@ -126,7 +126,7 @@ module.exports = (formioServer) => {
 
           // Handle array-based components.
           if (parent && Encryptor.arrayBasedComponent(parent)) {
-            _.get(submission.data, pathParts.join('.')).forEach((row) => {
+            _.get(submission.data, pathParts.join('.'), []).forEach((row) => {
               row[component.key] = Encryptor.getValue(project, operation, row[component.key], req.primaryProject ? req.primaryProject.plan : '');
             });
           }
@@ -146,7 +146,10 @@ module.exports = (formioServer) => {
         });
 
         next();
-      }).catch(next);
+      }).catch((err)=>{
+        console.log(err.message);
+        next();
+      });
     },
 
     handle: (req, res, next) => {
