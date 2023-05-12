@@ -267,7 +267,9 @@ module.exports = function(options) {
   debug.startup('Attaching middleware: Status');
   console.log(`Server version: ${packageJson.version}`);
   app.get('/status', [
-    cors(),
+    cors({
+      maxAge: config.AccessControlMaxAge
+    }),
     (req, res) => {
       res.json({
         version: packageJson.version,

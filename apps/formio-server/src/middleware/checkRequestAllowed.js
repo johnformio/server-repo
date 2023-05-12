@@ -1,6 +1,7 @@
 'use strict';
 const debug = require('debug')('formio:middleware:checkRequestAllowed');
 const config = require('../../config');
+const {ObjectId} = require('formio/src/util/util');
 
 const REQUEST_FOR_ARCHIVED_PROJECT_NOT_ALLOWED_ERROR = 'This is not allowed for an Archived project.';
 
@@ -8,15 +9,15 @@ module.exports = (formio) => {
   const projects = formio.db.collection('projects');
 
   return async (req, res, next) => {
-    // Run only on hosted envs, skip for OPTIONS requests
-    if (!config.formio.hosted || req.method === 'OPTIONS') {
+    //// Run only on hosted envs, skip for OPTIONS and plan upgrade requests
+    if (!config.formio.hosted || req.method === 'OPTIONS' || req.path.endsWith('/upgrade')) {
       return next();
     }
 
     const primaryProject = await new Promise((resolve) =>
       req.primaryProject
-      ? resolve(req.primaryProject)
-      : formio.cache.loadPrimaryProject(req, (_, project) => resolve(project))
+        ? resolve(req.primaryProject)
+        : formio.cache.loadPrimaryProject(req, (_, project) => resolve(project))
     );
 
     // Skip if the request doesn't contain any project information
@@ -45,7 +46,7 @@ module.exports = (formio) => {
       // If the trial time has ended, archive the project
       debug(`Archiving project ${primaryProject._id}`);
       projects.updateOne({
-        _id: primaryProject._id
+        _id: ObjectId(primaryProject._id)
       }, {
         $set: {'plan': 'archived'}
       }, function(err) {

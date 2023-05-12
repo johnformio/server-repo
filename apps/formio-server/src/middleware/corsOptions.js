@@ -1,5 +1,6 @@
 'use strict';
 const _ = require('lodash');
+const config = require('../../config');
 
 /**
  * Provides CORS capabilities.
@@ -8,21 +9,25 @@ const _ = require('lodash');
  */
 module.exports = function(router) {
   return function(req, callback) {
-    let whitelist = [
-      'https://form.io',
-      'https://api.form.io',
-      'https://cdn.form.io',
-      'https://test-form.io',
-      'https://develop-form.io',
-      'https://portal.form.io',
-      'https://portal.test-form.io',
-      'https://portal.develop-form.io',
-      'https://next.form.io',
-      'https://alpha.form.io',
-      'https://beta.form.io',
-      'https://classic.form.io',
-      'https://edge.form.io',
-    ];
+    let whitelist = [];
+    if (config.formio.hosted) {
+      whitelist = [
+        'https://form.io',
+        'https://api.form.io',
+        'https://cdn.form.io',
+        'https://test-form.io',
+        'https://develop-form.io',
+        'https://portal.form.io',
+        'https://portal.test-form.io',
+        'https://portal.develop-form.io',
+        'https://next.form.io',
+        'https://alpha.form.io',
+        'https://beta.form.io',
+        'https://classic.form.io',
+        'https://edge.form.io',
+      ];
+    }
+
     const pass = {
       origin: true
     };
@@ -66,7 +71,7 @@ module.exports = function(router) {
     }
 
     // Load the project settings.
-    router.formio.formio.hook.settings(req, function(err, settings) {
+    router.formio.formio.hook.alter('parentProjectSettings', req, function(err, settings) {
       if (err) {
         if (err === 'Project not found') {
           return callback(null, pass);
@@ -82,6 +87,11 @@ module.exports = function(router) {
       // Build the list of supported domains.
       const cors = settings.cors || '*';
       whitelist = whitelist.concat(cors.split(/[\s,]+/));
+
+      if (settings.appOrigin) {
+        whitelist.push(settings.appOrigin);
+      }
+
       if (whitelist.indexOf(req.header('Origin')) !== -1) {
         return callback(null, pass);
       }

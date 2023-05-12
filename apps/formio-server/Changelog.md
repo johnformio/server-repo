@@ -4,7 +4,41 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 8.1.0-rc.5]
+## 8.1.0-rc.9
+### Changed
+ - Updated formio@3.1.0-rc.10
+
+## 8.1.0-rc.8
+### Changed
+ - Updated formio-app@8.1.0-rc.8
+ - Updated formiojs@4.15.0-rc.22
+ - Updated @formio/premium@1.19.0-rc.8
+ - Updated formio@3.1.0-rc.9
+ - Updated formio-workers@1.17.0-rc.5
+
+### Fixed
+ - FIO-6417: Fixes archived project upgrade and adds tests for archived plan
+
+## 8.1.0-rc.7
+### Changed
+ - Updated formio-app@8.1.0-rc.6
+ - Updated formiojs@4.15.0-rc.21
+ - Updated @formio/premium@1.19.0-rc.7
+ - Updated formio@3.1.0-rc.8
+ - Updated formio-workers@1.17.0-rc.4
+
+## 8.1.0-rc.6
+### Changed
+ - Updated formio@3.1.0-rc.7
+
+## 8.1.0-rc.5
+### Changed
+ - Updated formio-app@8.1.0-rc.5
+ - Updated formiojs@4.15.0-rc.20
+ - Updated @formio/premium@1.19.0-rc.6
+ - Updated formio@3.1.0-rc.6
+ - Updated formio-workers@1.17.0-rc.3
+
 ### Added
  - FIO-6579: add tests for template exporting
  - FIO-6627: Removed case-sensitivity for Teams emails
@@ -13,6 +47,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-6509: remove file token from server2server
  - FIO-6417: Fixes archived project upgrade and adds tests for archived plan
  - FIO-6404: Add db update script to fix Date\Time values stored as string instead of ISODate format
+ - FIO-5979: added the ability for browsers to cache CORS
 
 ## 8.1.0-rc.4
 ### Fixed
