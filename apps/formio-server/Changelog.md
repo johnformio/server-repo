@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased: 8.1.0-rc.10]
 ### Fixed
  - FIO-6835: Fixing api server crash with the pdf-proxy middleware.
+ - FIO-6662: Fixing issue where the session on login would not work if your database is using readSecondary for replica sets
 
 ## 8.1.0-rc.9
 ### Changed
