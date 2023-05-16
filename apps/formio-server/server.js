@@ -70,11 +70,16 @@ module.exports = function(options) {
   // Create the app server.
   debug.startup('Creating application server');
 
-  if (config.sslKey && config.sslCert) {
-    app.server = require('https').createServer({
-      key: config.sslKey,
-      cert: config.sslCert
-    }, app);
+  if (config.sslEnabled) {
+    if (config.sslKey && config.sslCert) {
+      app.server = require('https').createServer({
+        key: config.sslKey,
+        cert: config.sslCert
+      }, app);
+    }
+    else {
+      throw new Error("SSL is enabled, but its configuration is not complete. Check your SSL_KEY and SSL_CERT environment variables.");
+    }
   }
   else {
     app.server = require('http').createServer(app);
