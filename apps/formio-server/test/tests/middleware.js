@@ -3,6 +3,7 @@
 const assert = require('assert');
 
 const attachLicenseMiddleware = require('../../src/middleware/attachLicenseTerms');
+const pdfProxyMiddleware = require('../../src/middleware/pdfProxy');
 
 module.exports = (app, template, hook) => {
   describe('Middleware unit tests', () => {
@@ -43,6 +44,23 @@ module.exports = (app, template, hook) => {
 
           await middleware(req, res, next);
           assert(_.isEmpty(req));
+        });
+      });
+    });
+
+    describe('pdfProxy Middeleware', () => {
+      describe('Middleware creation', () => {
+        let middleware;
+        beforeEach(() => {
+          middleware = pdfProxyMiddleware(app.formio);
+        });
+
+        it('Should return a function', function() {
+          assert(typeof middleware === 'function');
+        });
+
+        it('Should accept three arguments', function() {
+          assert(middleware.length === 3);
         });
       });
     });

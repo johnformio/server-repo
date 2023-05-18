@@ -24,9 +24,12 @@ module.exports = (formioServer) => {
     if (req.projectId) {
       loadProjectContexts(formio)(req, res, (err) => {
         if (err) {
-          return next(err);
+          return next(err.message || err);
         }
 
+        if (!req.currentProject) {
+          return next('No project found.');
+        }
         // Set the license key header for authorization.
         req.headers["x-license-key"] = process.env.LICENSE_KEY;
 
@@ -37,10 +40,11 @@ module.exports = (formioServer) => {
         }
 
         // Always use the environment variable. If it does not exist, then we can try the project settings.
+
         if (!req.pdfServer && req.currentProject.settings && req.currentProject.settings.pdfserver) {
           req.pdfServer = req.currentProject.settings.pdfserver;
         }
-        return next();
+        next();
       });
     }
     else {
