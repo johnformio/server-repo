@@ -65,8 +65,7 @@ module.exports = (formioServer) => {
 
     req.query.format = req.query.format || 'pdf';
     const pdfProject = req.query.project || project._id.toString();
-    const fileId = req.params.fileId || 'pdf';
-    const url = `${req.pdfServer}/pdf/${pdfProject}/file/${fileId}/download`;
+    const url = `${req.pdfServer}/pdf/${pdfProject}/download`;
     const globalPdfSettings = _.get(project, 'settings.pdf', {});
     const qs = new URLSearchParams({...req.query, project: req.params.projectId || req.currentProject._id.toString()});
     return fetch(`${url}?${qs}`, {
