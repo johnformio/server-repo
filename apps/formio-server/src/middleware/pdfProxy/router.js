@@ -109,7 +109,7 @@ module.exports = (formioServer) => {
     }
   });
 
-  router.use((err, req, res, next) => {
+  router.use((err, req, res) => {
     require('cors')()(req, res, () => res.status(400).send(err.message));
   });
 
