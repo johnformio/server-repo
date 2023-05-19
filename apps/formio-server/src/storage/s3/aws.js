@@ -2,10 +2,13 @@
 const AWS = require('aws-sdk');
 
 const getAWS = function(settings = {}) {
-  const config = {
-    accessKeyId: settings.AWSAccessKeyId,
-    secretAccessKey: settings.AWSSecretKey
-  };
+  const config = {};
+  if (settings.AWSAccessKeyId) {
+    config.accessKeyId = settings.AWSAccessKeyId;
+  }
+  if (settings.AWSSecretKey) {
+    config.secretAccessKey = settings.AWSSecretKey;
+  }
   if (settings.region) {
     config.region = settings.region;
   }
