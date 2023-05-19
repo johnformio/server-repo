@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## 8.1.0-rc.9
 ### Changed
  - Updated formio@3.1.0-rc.10
- 
+
 ## 8.1.0-rc.8
 ### Changed
  - Updated formio-app@8.1.0-rc.8

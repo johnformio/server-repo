@@ -147,7 +147,7 @@ module.exports = (formioServer) => {
 
         next();
       }).catch((err)=>{
-        console.log(err.message);
+        console.warn(err.message);
         next();
       });
     },
