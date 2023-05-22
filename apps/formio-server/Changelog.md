@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-6835: Fixing api server crash with the pdf-proxy middleware.
  - FIO-6662: Fixing issue where the session on login would not work if your database is using readSecondary for replica sets
  - FIO-6631: Do not require the secret keys for configuring S3 connection.
+ - FIO-6774 Fixed the display of encrypted fields
 
 ## 8.1.0-rc.9
 ### Changed
