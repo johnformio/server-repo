@@ -14,11 +14,6 @@ module.exports = function(app) {
       });
     },
     require('../../submissionChangeLog')(app),
-    // (req, res, next) => {
-    //   // Remove /changelog from url, so request will go to download endpoint
-    //   req.url = req.url.replace('/changelog', '');
-    //   next();
-    // },
     (req, res, next) => {
       req.url = `/pdf-proxy/${req.url}`;
       return next();

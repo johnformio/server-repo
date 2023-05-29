@@ -287,6 +287,25 @@ module.exports = function(options) {
   debug.startup('Attaching middleware: API Key Handler');
   app.use(require('./src/middleware/apiKey')(app.formio.formio));
 
+  app.get('/project/:projectId/form/:formId/submission/:submissionId/changelog',
+    require('./src/middleware/apiKey')(app.formio.formio),
+    require('./src/middleware/remoteToken')(app),
+    app.formio.formio.middleware.alias,
+    require('./src/middleware/aliasToken')(app),
+    app.formio.formio.middleware.tokenHandler,
+    app.formio.formio.middleware.params,
+    app.formio.formio.middleware.permissionHandler,
+    (req, res, next) => {
+      app.formio.formio.cache.loadCurrentForm(req, (err, currentForm) => {
+        return util.getSubmissionRevisionModel(app.formio.formio, req, currentForm, false, next);
+      });
+    },
+    require('./src/middleware/submissionChangeLog')(app),
+    (req, res) => {
+     res.send(req.changelog);
+    }
+  );
+
   app.get('/project/:projectId/form/:formId/submission/:submissionId/esign', (req, res, next) => {
     const {submissionId, projectId} = req.params;
     app.formio.formio.resources.submission.model.findById(submissionId).exec().then((submission) => {
