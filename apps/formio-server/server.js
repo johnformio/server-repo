@@ -25,7 +25,7 @@ module.exports = function(options) {
   options = options || {};
   var q = Q.defer();
 
-  // Create cache for requests
+  // Create cache for requests//
   const requestCache = new RequestCache();
 
   // Use the express application.
