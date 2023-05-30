@@ -1,13 +1,19 @@
-"use strict";
-const express = require("express");
-const fetch = require("node-fetch");
+'use strict';
+
+const express = require('express');
+const fetch = require('node-fetch');
 const _ = require('lodash');
-const config = require("../../config");
-const loadProjectContexts = require("./loadProjectContexts");
+const config = require('../../../config');
+const loadProjectContexts = require('../loadProjectContexts');
+const download = require('../download');
+
 const PDF_SERVER = process.env.PDF_SERVER || process.env.FORMIO_FILES_SERVER;
-module.exports = (formio) => {
+
+module.exports = (formioServer) => {
+  const formio = formioServer.formio;
   const router = express.Router();
-  router.use(express.json());
+
+  router.use(express.raw({type: '*/*', limit: '50mb'}));
 
   router.use((req, res, next) => {
     req.pdfServer = PDF_SERVER;
@@ -56,14 +62,16 @@ module.exports = (formio) => {
   router.use((req, res, next) => {
     const headers = {};
     _.merge(headers,
-      _.pick(req.headers, 'accept', 'content-type', 'accept-encoding', 'accept-language'),
+      _.pick(req.headers, 'host', 'accept', 'content-type', 'accept-encoding', 'accept-language'),
       _.pickBy(req.headers, (_, h) => h.startsWith('x-'))
     );
     req.headers = headers;
     next();
   });
 
-  router.use(async (req, res) => {
+  router.get('/project/:projectId/form/:formId/submission/:submissionId/download', download(formioServer));
+
+  router.use(async (req, res, next) => {
     const options = {
       method: req.method,
       rejectUnauthorized: false,
@@ -72,11 +80,12 @@ module.exports = (formio) => {
     if (req.currentProject && req.currentProject.plan) {
       options.headers.plan = req.currentProject.plan;
     }
-    if (req.method !== 'HEAD' && req.method !== 'GET') {
-      options.body = JSON.stringify(req.body);
-    }
+
     const resultUrl = `${req.pdfServer}${req.path}`;
     try {
+      if (req.method !== 'HEAD' && req.method !== 'GET') {
+        options.body = req.body;
+      }
       const response = await fetch(resultUrl, options);
       const headers = Object.fromEntries(response.headers.entries());
 
@@ -96,8 +105,13 @@ module.exports = (formio) => {
       res.end(await response.buffer());
     }
     catch (err) {
-      require('cors')()(req, res, () => res.status(400).send(err.message));
+      return next(err);
     }
   });
+
+  router.use((err, req, res) => {
+    require('cors')()(req, res, () => res.status(400).send(err.message));
+  });
+
   return router;
 };

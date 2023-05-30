@@ -10,8 +10,6 @@ const Q = require('q');
 const cacheControl = require('express-cache-controller');
 const {v4: uuidv4} = require('uuid');
 const fs = require('fs');
-const multipart = require('connect-multiparty');
-const os = require('os');
 const license = require('./src/util/license');
 const audit = require('./src/util/audit');
 const cors = require('cors');
@@ -27,7 +25,7 @@ module.exports = function(options) {
   options = options || {};
   var q = Q.defer();
 
-  // Create cache for requests
+  // Create cache for requests//
   const requestCache = new RequestCache();
 
   // Use the express application.
@@ -204,30 +202,6 @@ module.exports = function(options) {
   // Attach the formio-server config.
   app.formio.config = _.omit(config, 'formio');
 
-  // Mount PDF server proxy
-  app.use('/pdf-proxy', [
-    (req, res, next) => {
-      const regex = /^\/pdf\/[\w\d]+\/file\/[\w\d-]+\.(html|pdf)$/; // regex for '/pdf/:project/file/:file.html | pdf' path
-      if ((req.method === 'GET' && regex.test(req.path)) || req.method === 'OPTIONS') {
-        req.bypass = true;
-        return next();
-      }
-      next();
-    },
-    app.formio.formio.middleware.tokenHandler,
-    app.formio.formio.middleware.params,
-    (req, res, next) => {
-      if (req.bypass) {
-        return next();
-      }
-      if (!req.user && !req.isAdmin) {
-        return res.sendStatus(401);
-      }
-      next();
-    },
-    require('./src/middleware/pdfProxy')(app.formio.formio),
-  ]);
-
   // Import the OAuth providers
   debug.startup('Attaching middleware: OAuth Providers');
   app.formio.formio.oauth = require('./src/oauth/oauth')(app.formio.formio);
@@ -267,6 +241,10 @@ module.exports = function(options) {
 
     next();
   });
+
+  // Attach PDF proxy router and backward compatibility endpoints for it
+  debug.startup('Attaching middleware: PDF proxy');
+  require('./src/middleware/pdfProxy')(app);
 
   // Status response.
   debug.startup('Attaching middleware: Status');
@@ -314,21 +292,7 @@ module.exports = function(options) {
   debug.startup('Attaching middleware: API Key Handler');
   app.use(require('./src/middleware/apiKey')(app.formio.formio));
 
-  // Download a submission pdf.
-  debug.startup('Attaching middleware: PDF Download');
-
-  const downloadPDF = [
-    require('./src/middleware/apiKey')(app.formio.formio),
-    require('./src/middleware/remoteToken')(app),
-    app.formio.formio.middleware.alias,
-    require('./src/middleware/aliasToken')(app),
-    app.formio.formio.middleware.tokenHandler,
-    app.formio.formio.middleware.params,
-    app.formio.formio.middleware.permissionHandler,
-    require('./src/middleware/download')(app.formio)
-  ];
-
-  const changeLog = [
+  app.get('/project/:projectId/form/:formId/submission/:submissionId/changelog',
     require('./src/middleware/apiKey')(app.formio.formio),
     require('./src/middleware/remoteToken')(app),
     app.formio.formio.middleware.alias,
@@ -342,25 +306,11 @@ module.exports = function(options) {
       });
     },
     require('./src/middleware/submissionChangeLog')(app),
-  ];
-
-  app.get('/project/:projectId/form/:formId/submission/:submissionId/download/changelog',
-  ...changeLog,
-  require('./src/middleware/download')(app.formio)
+    (req, res) => {
+     res.send(req.changelog);
+    }
   );
 
-  app.get('/project/:projectId/:formAlias/submission/:submissionId/download', downloadPDF);
-  app.get('/project/:projectId/form/:formId/submission/:submissionId/download', downloadPDF);
-  app.get('/project/:projectId/:formAlias/submission/:submissionId/download/:fileId', downloadPDF);
-  app.get('/project/:projectId/form/:formId/submission/:submissionId/download/:fileId', downloadPDF);
-
-  app.get('/project/:projectId/form/:formId/submission/:submissionId/changelog',
-  ...changeLog,
-  (req, res, next) => {
-     res.send(req.changelog);
-  });
-
-  app.post('/project/:projectId/form/:formId/download', downloadPDF);
   app.get('/project/:projectId/form/:formId/submission/:submissionId/esign', (req, res, next) => {
     const {submissionId, projectId} = req.params;
     app.formio.formio.resources.submission.model.findById(submissionId).exec().then((submission) => {
@@ -380,21 +330,6 @@ module.exports = function(options) {
       // return res.status(200).send(submission.data.esign.id);
     });
   });
-
-  debug.startup('Attaching middleware: PDF Upload');
-  const uploadPDF = [
-    require('./src/middleware/remoteToken')(app),
-    require('./src/middleware/aliasToken')(app),
-    app.formio.formio.middleware.tokenHandler,
-    app.formio.formio.middleware.params,
-    app.formio.formio.middleware.permissionHandler,
-    multipart({
-      autoFiles: true,
-      uploadDir: os.tmpdir(),
-    }),
-    require('./src/middleware/upload')(app.formio)
-  ];
-  app.post('/project/:projectId/upload', uploadPDF);
 
   var hooks = _.merge(require('./src/hooks/settings')(app), options.hooks);
 
