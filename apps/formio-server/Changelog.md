@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased: 8.1.0-rc.12]
+### Changed
+ - FIO-6253: PDF proxy endpoint now handles PDF upload and download requests
+
 ## 8.1.0-rc.11
 ### Changed
  - Updated formio-app@8.1.0-rc.10
