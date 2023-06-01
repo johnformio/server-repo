@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-6559: added live project to count stages limit
  - FIO-5979: Enable ability for browsers to cache CORS
  - FIO-6273: added clean up for portal folder before copying build to formio-enterprise
+ - FIO-6887: fixed an issue where form manager is always available on onPremise env despite of license configuration
 
 ## 8.1.0-rc.12
 ### Changed
