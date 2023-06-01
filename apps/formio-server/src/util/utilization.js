@@ -215,6 +215,7 @@ function checkLastUtilizationTime(req) {
 
 async function getNumberOfExistingProjects(formio, project = null) {
   const projectQuery = {deleted: null, project: null, name: {$ne: 'formio'}};
+  const liveProjectQuery = {deleted: null, project: null, name: {$ne: 'formio'}};
   if (
     project &&
     project.projectId &&
@@ -222,8 +223,14 @@ async function getNumberOfExistingProjects(formio, project = null) {
   ) {
     projectQuery.type = project.type;
     projectQuery.project = formio.util.ObjectId(project.projectId);
+    liveProjectQuery._id = formio.util.ObjectId(project.projectId);
   }
-  return await formio.resources.project.model.count(projectQuery);
+  return await formio.resources.project.model.count({
+    $or: [
+      projectQuery,
+      liveProjectQuery
+    ]
+  });
 }
 
 function getRemoteLicenseData(app) {
