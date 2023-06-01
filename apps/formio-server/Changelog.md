@@ -4,7 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 8.1.0-rc.13]
+## 8.1.0-rc.13
+### Changed
+ - Updated formio-app@8.1.0-rc.12
+ - Updated formiojs@4.15.0-rc.25
+ - Updated @formio/premium@1.19.0-rc.11
+ - Updated formio@3.1.0-rc.13
+ - Updated formio-workers@1.17.0-rc.8
+
 ### Fixed
  - FIO-6559: added live project to count stages limit
  - FIO-5979: Enable ability for browsers to cache CORS
