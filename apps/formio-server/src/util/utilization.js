@@ -131,7 +131,7 @@ function utilization(app, cacheKey, body, action = '', clear = false, sync = fal
       utilization = {error: new Error('Invalid response')};
     }
     lastUtilizationTime = Date.now();
-    responseCache.set(cacheKey, utilization);
+    responseCache.set(cacheKey, utilization, CACHE_TIME);
     return utilization;
   }).catch((err) => {
     // License server is down or request timeout exceed
@@ -141,7 +141,7 @@ function utilization(app, cacheKey, body, action = '', clear = false, sync = fal
       return {licenseServerError: true, ...body};
     }
     const response = {error: err};
-    responseCache.set(cacheKey, response);
+    responseCache.set(cacheKey, response, CACHE_TIME);
     requestCache.del(cacheKey);
     return response;
   });
