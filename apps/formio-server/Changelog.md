@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased: 8.1.0-rc.13]
+### Fixed
+ - FIO-6559: added live project to count stages limit
+ - FIO-5979: Enable ability for browsers to cache CORS
+ - FIO-6273: added clean up for portal folder before copying build to formio-enterprise
+
 ## 8.1.0-rc.12
 ### Changed
  - Updated formio-app@8.1.0-rc.11
