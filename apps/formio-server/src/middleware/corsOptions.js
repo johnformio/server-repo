@@ -29,6 +29,7 @@ module.exports = function(router) {
     }
 
     const pass = {
+      maxAge: 600,
       origin: true
     };
     const fail = {
