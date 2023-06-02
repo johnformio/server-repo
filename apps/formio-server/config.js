@@ -10,27 +10,24 @@ var debug = {
 const secrets = {};
 if (process.env.DOCKER_SECRETS || process.env.DOCKER_SECRET) {
   try {
-    debug.config('Loading Docker Secrets');
-    const secretDir = process.env.DOCKER_SECRETS_PATH || '/run/secrets';
+    debug.config("Loading Docker Secrets");
+    const secretDir = process.env.DOCKER_SECRETS_PATH || "/run/secrets";
     if (fs.existsSync(secretDir)) {
       const files = fs.readdirSync(secretDir);
       if (files && files.length) {
-        files.forEach(file => {
+        files.forEach((file) => {
           const fullPath = path.join(secretDir, file);
           const key = file;
-          const data = fs
-            .readFileSync(fullPath, "utf8")
-            .toString()
-            .trim();
+          const data = fs.readFileSync(fullPath, "utf8").toString().trim();
 
           secrets[key] = data;
         });
-        debug.config('Docker Secrets Loaded');
+        debug.config("Docker Secrets Loaded");
       }
     }
   }
   catch (err) {
-    debug.config('Cannot load Docker Secrets', err);
+    debug.config("Cannot load Docker Secrets", err);
   }
 }
 

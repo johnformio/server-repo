@@ -1,7 +1,5 @@
 'use strict';
 
-const debug = require('debug')('formio:middleware:projectModified');
-
 module.exports = function(formio) {
   /**
    * Formio Middleware to change the modified date of a project if the project definition has changed..

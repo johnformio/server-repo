@@ -5,7 +5,6 @@
 /* eslint-disable no-case-declarations */
 
 const _ = require('lodash');
-const config = require('../../config');
 const {
   utilization,
   utilizationSync,
@@ -16,7 +15,6 @@ const {
 const getProjectContext = require('../util/getProjectContext');
 
 function middleware(app) {
-  const formio = app.formio.formio;
   return async (req, res, next) => {
     // Don't put default in function definition as it breaks express.
     if (!next) {
