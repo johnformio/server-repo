@@ -4,7 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 8.1.0-rc.14]
+## 8.1.0-rc.14
+### Changed
+ - Updated formio-app@8.1.0-rc.13
+ - Updated formio@3.1.0-rc.14
+
 ### Fixed
  - FIO-6840: Add case-insensitive index to schema
 
