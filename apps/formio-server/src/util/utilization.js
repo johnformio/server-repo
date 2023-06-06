@@ -114,7 +114,6 @@ function utilization(app, cacheKey, body = {}, action = '', clear = false, sync 
       body: JSON.stringify(body),
       qs,
       ...requestOptions
-
     });
 
   debug(`License Check: ${cacheKey}`);
