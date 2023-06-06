@@ -87,8 +87,6 @@ module.exports = (router) => {
       case 'create':
         try {
           route.method = 'POST';
-          debug.getExpressRoute('data:');
-          debug.getExpressRoute(data);
 
           const pairs = {};
           for (const [column, value] of Object.entries(data)) {
@@ -197,9 +195,6 @@ module.exports = (router) => {
         try {
           route.method = 'PUT';
           route.endpoint += '/:id';
-
-          debug.getExpressRoute('data:');
-          debug.getExpressRoute(data);
 
           const pairs = {};
           for (const [column, value] of Object.entries(data)) {

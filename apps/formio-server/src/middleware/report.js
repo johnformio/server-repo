@@ -350,7 +350,6 @@ module.exports = function(formioServer) {
 
   // Use post to crete aggregation criteria.
   router.post('/', function(req, res, next) {
-    debug.report('POST', req.body);
     report(req, res, next, req.body);
   });
 
