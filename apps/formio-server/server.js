@@ -417,7 +417,8 @@ module.exports = function(options) {
      */
     const appVariables = function(project) {
       return `
-        window.LICENSE_ENABLED = true;
+        window.ON_PREMISE= ${!config.formio.hosted};
+        window.LICENSE_ENABLED = ${project.formManagerEnabled};
         window.VPAT_ENABLED = ${_.get(app, 'license.terms.options.vpat') && (config.vpat || _.get(project, 'config.vpat', '').toLowerCase()==='true')};
         window.SAC_ENABLED = ${_.get(app, 'license.terms.options.sac') && (config.sac || _.get(project, 'config.sac', '').toLowerCase()==='true')};
         window.PROJECT = ${JSON.stringify({
