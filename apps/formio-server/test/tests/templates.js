@@ -308,7 +308,7 @@ module.exports = function(app, template, hook) {
           .expect('Content-Type', /json/)
           .end((err, res) => {
             if (err) {
-              return done(err);
+              done(err);
             }
             assert(res.body.hasOwnProperty('access'), 'Created project should have access property');
             assert(res.body.hasOwnProperty('created'), 'Created project should have created at property');
@@ -357,7 +357,7 @@ module.exports = function(app, template, hook) {
           .expect(201)
           .end((err, res) => {
             if (err) {
-              return done(err);
+              done(err);
             }
             assert(res.body.hasOwnProperty('_id'), 'Created form should have _id property');
             assert(res.body.hasOwnProperty('type'), 'Created form should have type property');
@@ -407,7 +407,7 @@ module.exports = function(app, template, hook) {
           .expect(201)
           .end((err, res) => {
             if (err) {
-              return done(err);
+              done(err);
             }
             assert(res.body.hasOwnProperty('_id'), 'Created form should have _id property');
             assert(res.body.hasOwnProperty('type'), 'Created form should have type property');
@@ -426,7 +426,7 @@ module.exports = function(app, template, hook) {
           .expect('Content-Type', /json/)
           .end((err, res) => {
             if (err) {
-              return done(err);
+              done(err);
             }
             assert.equal(res.body.title, "Brendan's Happy Time Fun Land");
             assert(res.body.hasOwnProperty('forms'), 'The created template has forms');
@@ -569,7 +569,7 @@ module.exports = function(app, template, hook) {
         .expect('Content-Type', /json/)
         .end((err, res) => {
           if (err) {
-            return done(err);
+            done(err);
           }
           assert(res.body.hasOwnProperty('access'), 'Created project should have access property');
           assert(res.body.hasOwnProperty('created'), 'Created project should have created at property');
@@ -593,7 +593,7 @@ module.exports = function(app, template, hook) {
         .expect('Content-Type', /json/)
         .end((err, res) => {
           if (err) {
-            return done(err);
+            done(err);
           }
           project = res.body;
           // get the roles
@@ -604,7 +604,7 @@ module.exports = function(app, template, hook) {
             .expect('Content-Type', /json/)
             .end((err, res) => {
               if (err) {
-                return done(err);
+                done(err);
               }
               roles = res.body;
               const mappedProjectAccess = project.access.map((access) => mapRoleIdsToRoleNames(access, roles));
@@ -627,7 +627,7 @@ module.exports = function(app, template, hook) {
         .expect('Content-Type', /json/)
         .end((err, res) => {
           if (err) {
-            return done(err);
+            done(err);
           }
 
           const forms = res.body;
@@ -661,7 +661,7 @@ module.exports = function(app, template, hook) {
         .expect('Content-Type', /json/)
         .end((err, res) => {
           if (err) {
-            return done(err);
+            done(err);
           }
 
           const forms = res.body.filter((item) => item.type === 'form');
