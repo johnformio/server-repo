@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased: 8.1.0-rc.15]
+## Fixed
+ - Revert "FIO-6559: added live project to count stages limit"
+ - FIO-6729: removed logs of POST bodies and data
+ 
 ## 8.1.0-rc.14
 ### Changed
  - Updated formio-app@8.1.0-rc.13
