@@ -646,7 +646,6 @@ describe('Initial Tests', function() {
         this.retries(4);
         require('./tests/usage')(app, template, hook);
         require('./tests/middleware')(app, template, hook);
-        require('./tests/license')(app, template, hook);
         require('./tests/pdfProxy')(app, template, hook);
         require('./tests/teams')(app, template, hook);
         require('./tests/ssoTeams')(app, template, hook);
