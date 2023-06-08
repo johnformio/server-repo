@@ -14,6 +14,7 @@ const util = require('formio/src/util/util');
 const config = require('../../config');
 const docker = process.env.DOCKER;
 const customer = process.env.CUSTOMER;
+const portalSecret = process.env.PORTAL_SECRET;
 
 
 module.exports = function(app, template, hook) {
@@ -3819,6 +3820,85 @@ module.exports = function(app, template, hook) {
             not(response, ['__v', 'deleted', 'settings_encrypted']);
           done();
         });
+      });
+
+      it('Should create default forms and resources when creating remote stage', function(done) {
+        request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            title: 'Project for connecting remote',
+            stageTitle: 'Live',
+            settings: {
+              cors: "*",
+              remoteSecret: portalSecret
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, response) {
+            if (err) {
+              return done(err);
+            }
+
+            const project = response.body;
+
+            request(app)
+              .get(`/project/${project._id}/access/remote`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .expect('Content-Type', /text/)
+              .expect(200)
+              .end((err, response) => {
+                if (err) {
+                  return done(err);
+                }
+
+                const remoteToken = response.text;
+                assert.notEqual(remoteToken.length, 0);
+                const remoteStage = {
+                  name: chance.word(),
+                  owner: project.owner,
+                  project: project._id,
+                  settings: {
+                    cors: '*',
+                    remoteSecret: portalSecret
+                  },
+                  title: 'remote stage',
+                  type: 'stage'
+                }
+
+                request(app)
+                  .post('/project/')
+                  .set('x-remote-token', remoteToken)
+                  .send(remoteStage)
+                  .expect('Content-Type', /json/)
+                  .expect(201)
+                  .end(function(err, response) {
+                    if (err) {
+                      return done(err);
+                    }
+
+                    const remoteProject = response.body;
+
+                    request(app)
+                      .get(`/project/${remoteProject._id}/form`)
+                      .set('x-remote-token', remoteToken)
+                      .expect('Content-Type', /json/)
+                      .expect(200)
+                      .end(function(err, response) {
+                        if (err) {
+                          return done(err);
+                        }
+
+                        const forms = response.body;
+                        const defaultFormsLength = 5;
+
+                        assert.equal(forms.length, defaultFormsLength);
+                        done();
+                      })
+                  })
+              });
+          });
       });
     });
 
