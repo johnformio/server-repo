@@ -121,7 +121,8 @@ module.exports = function(formio) {
       return importTemplate(template);
     }
     // New environments should copy their primary project template.
-    else if ('project' in project && project.project) {
+    // If primary project is comming from remote just use default template.
+    else if ('project' in project && project.project && !_.get(req, 'body.settings.remoteStage', false)) {
       if (req.body.hasOwnProperty('copyFromProject') && req.body.copyFromProject === 'empty') {
         return importTemplate(_.cloneDeep(formio.templates['empty']));
       }
