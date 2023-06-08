@@ -497,7 +497,6 @@ const Teams = {
       deleted: {$eq: null}
     };
 
-    debug.teamProjects(query);
     const projects = await Teams.projectModel().find(query).lean().exec();
     const response = [];
     _.each(projects, function(project) {
