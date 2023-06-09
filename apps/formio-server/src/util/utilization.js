@@ -39,7 +39,6 @@ function utilization(app, cacheKey, body = {}, action = '', clear = false, sync 
   if (licenseConfig.remote) {
     return sync ? Promise.resolve(null) : null;
   }
-  const isHostedFMCheck = !!projectUrl && _.endsWith(cacheKey, 'formManager:hosted');
   // Add the action to the cacheKey.
   if (action) {
     cacheKey += action.replace(/\//g, ':');
@@ -49,9 +48,6 @@ function utilization(app, cacheKey, body = {}, action = '', clear = false, sync 
 
   // Incremenet the number of requests since last request.
   const numRequests = requestCount.get(cacheKey);
-  if (!isHostedFMCheck) {
-    body.numRequests = numRequests ? (numRequests + 1) : 1;
-  }
   requestCount.set(cacheKey, numRequests, CACHE_TIME);
 
   // If they wish to clear, then do that here.
@@ -75,7 +71,22 @@ function utilization(app, cacheKey, body = {}, action = '', clear = false, sync 
     return sync ? cachedRequest : null;
   }
 
-  if (!isHostedFMCheck) {
+  const requestOptions =  {
+    timeout: 30000,
+    rejectUnauthorized: false,
+  };
+
+  let licenseServerRequest = Promise.resolve();
+  const isHostedFMCheck = !!projectUrl && _.endsWith(cacheKey, 'formManager:hosted');
+
+  if (isHostedFMCheck) {
+    licenseServerRequest = fetch(`${licenseServer}/check/manager?project=${projectUrl}`, {
+      method: 'get',
+      ...requestOptions
+    });
+  }
+  else {
+    body.numRequests = numRequests ? (numRequests + 1) : 1;
     const onPremiseScopes = ['apiServer', 'pdfServer', 'project', 'tenant', 'stage', 'remoteStage', 'formManager', 'accessibility', 'submissionServer'];
 
     // If on premise and not scoped for on premise, skip check.
@@ -96,25 +107,15 @@ function utilization(app, cacheKey, body = {}, action = '', clear = false, sync 
     if (body.remoteStage) {
       body.type = 'remoteStage';
     }
-  }
 
-  const requestOptions =  {
-    timeout: 30000,
-    rejectUnauthorized: false,
-  };
-
-  const licenseServerRequest = isHostedFMCheck
-    ? fetch(`${licenseServer}/check/manager?project=${projectUrl}`, {
-      method: 'get',
-
-    })
-    : fetch(`${licenseServer}/utilization${action}`, {
+    licenseServerRequest = fetch(`${licenseServer}/utilization${action}`, {
       method: 'post',
       headers: {'content-type': 'application/json'},
       body: JSON.stringify(body),
       qs,
       ...requestOptions
     });
+  }
 
   debug(`License Check: ${cacheKey}`);
   cachedRequest = licenseServerRequest.then(async (response) => {
