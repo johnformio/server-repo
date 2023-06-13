@@ -499,13 +499,11 @@ module.exports = function(app) {
       },
 
       isAdmin(isAdmin, req) {
-        // Allow admin key to act as admin.
-        if (process.env.ADMIN_KEY && process.env.ADMIN_KEY === req.headers['x-admin-key']) {
-          app.formio.formio.log('Admin Key', req);
+        // Allow super admins to have admin access.
+        if (util.isSuperAdmin(req)) {
           req.adminKey = true;
           return true;
         }
-
         // Allow remote team admins to have admin access.
         if (req.remotePermission && ['admin', 'owner', 'team_admin'].indexOf(req.remotePermission) !== -1) {
           return true;

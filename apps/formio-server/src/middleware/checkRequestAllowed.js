@@ -2,6 +2,7 @@
 const debug = require('debug')('formio:middleware:checkRequestAllowed');
 const config = require('../../config');
 const {ObjectId} = require('formio/src/util/util');
+const {isSuperAdmin} = require('../util/util');
 
 const REQUEST_FOR_ARCHIVED_PROJECT_NOT_ALLOWED_ERROR = 'This is not allowed for an Archived project.';
 
@@ -26,7 +27,7 @@ module.exports = (formio) => {
     }
 
     // Don't allow any POST, PUT, PATCH or DELETE requests for an archived project
-    if (primaryProject.plan === 'archived' && req.method !== 'GET') {
+    if (primaryProject.plan === 'archived' && req.method !== 'GET' && !isSuperAdmin(req)) {
       debug(`Blocking ${req.method} : ${req.originalUrl} for archived project ${primaryProject._id}`);
       return res.status(400).send(REQUEST_FOR_ARCHIVED_PROJECT_NOT_ALLOWED_ERROR);
     }
