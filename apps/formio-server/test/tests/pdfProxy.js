@@ -201,5 +201,74 @@ module.exports = function(app, template, hook) {
           done();
         });
     });
+
+    it('Should proxy file fetch with subdomain project alias', (done) => {
+      request(app)
+        .get(`/pdf-proxy/pdf/${projectId}/file/${fileId}`)
+        .set('Host', `${projectName}.test.form.io`)
+        .set(`x-jwt-token`, template.formio.owner.token)
+        .expect(200)
+        .expect('Content-Type', 'application/pdf')
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+          assert(res.body.equals(pdfFile));
+          done();
+        });
+    });
+
+    it('Should proxy PDF upload with subdomain project alias', (done) => {
+      request(app)
+        .post(`/upload`)
+        .set('Host', `${projectName}.test.form.io`)
+        .set(`x-jwt-token`, template.formio.owner.token)
+        .attach('file', pdfFile, 'file.pdf')
+        .expect(200)
+        .expect('Content-Type', 'application/json; charset=utf-8')
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+
+          assert(res.body.hasOwnProperty('path'));
+          assert(res.body.hasOwnProperty('file'));
+          assert(res.body.hasOwnProperty('formfields'));
+          done();
+        });
+    });
+
+    it('Should proxy PDF download with subdomain project alias', (done) => {
+      request(app)
+        .get(`/form/${formId}/submission/${submissionId}/download`)
+        .set('Host', `${projectName}.test.form.io`)
+        .set(`x-jwt-token`, template.formio.owner.token)
+        .expect(200)
+        .expect('Content-Type', 'application/pdf')
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+          assert(res.body.equals(pdfFile));
+          done();
+        });
+    });
+
+    it('Should proxy submission changelog download with subdomain project alias', (done) => {
+      request(app)
+        .get(`/form/${formId}/submission/${submissionId}/download/changelog`)
+        .set('Host', `${projectName}.test.form.io`)
+        .set(`x-jwt-token`, template.formio.owner.token)
+        .expect(200)
+        .expect('Content-Type', 'application/pdf')
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+
+          assert(res.body.equals(pdfFile));
+          done();
+        });
+    });
   });
 };

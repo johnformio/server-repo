@@ -1,6 +1,11 @@
 'use strict';
 
 module.exports = function(app) {
+  // Handle subdomain project aliases
+  app.all('/project/:projectId/pdf-proxy/*', (req, res, next) => {
+    req.url = req.url.replace(`/project/${req.params.projectId}`, '');
+    return next();
+  });
   // Mount backward compatibility endpoints
   require('./rewrite/upload')(app);
   require('./rewrite/changelog')(app);
