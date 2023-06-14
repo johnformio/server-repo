@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 8.1.0-rc.16]
+## 8.1.0-rc.16
+### Changed
+ - Updated formio-app@8.1.0-rc.15
+ - Updated formiojs@4.15.0-rc.27
+ - Updated formio@3.1.0-rc.16
+ - Updated formio-workers@1.17.0-rc.10
+
 ### Fixed
  - Fix Archived Plan
  - FIO-6979: fix pdf proxy with subdomain alises not found
