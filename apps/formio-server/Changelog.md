@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased: 8.1.0-rc.16]
 ### Fixed
  - Fix Archived Plan
+ - FIO-6979: fix pdf proxy with subdomain alises not found
 
 ## 8.1.0-rc.15
 ### Changed
