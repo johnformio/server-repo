@@ -62,7 +62,7 @@ module.exports = (formioServer) => {
   router.use((req, res, next) => {
     const headers = {};
     _.merge(headers,
-      _.pick(req.headers, 'host', 'accept', 'content-type', 'accept-encoding', 'accept-language'),
+      _.pick(req.headers, 'accept', 'content-type', 'accept-encoding', 'accept-language'),
       _.pickBy(req.headers, (_, h) => h.startsWith('x-'))
     );
     req.headers = headers;
