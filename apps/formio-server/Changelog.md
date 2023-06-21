@@ -19,10 +19,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Updated formio@3.1.0
  - Updated formio-workers@1.17.0
 
-## [Unreleased: 8.1.0]
-### Changed
- - Official Release
-
 ## 8.1.0-rc.16
 ### Changed
  - Updated formio-app@8.1.0-rc.15
