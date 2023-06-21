@@ -25,7 +25,7 @@
   },
   "cache": "1550086650",
   "main": "./main.js",
-  "version": "8.1.0",
+  "version": "8.1.1-rc.1",
   "schema": "3.3.16",
   "portalVersion": "8.1.1-rc.1",
   "dependencies": {
