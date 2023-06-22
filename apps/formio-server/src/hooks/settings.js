@@ -1844,7 +1844,7 @@ module.exports = function(app) {
               });
             }
 
-            // Save the updated permissions.
+            // Save the updated permissions.//
             formioServer.formio.cache.updateProject(projectId, {
               access: project.access
             }, (err) => {
