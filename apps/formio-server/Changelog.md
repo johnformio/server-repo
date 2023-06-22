@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased: 8.2.0-rc.1]
+### Fixed
+ - FIO-6960: fixed pdf proxy for e2e ssl
+   
 ## 8.1.1-rc.1
 ### Changed
  - Updated formio-app@8.1.1-rc.1
