@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased: 8.2.0-rc.1]
 ### Fixed
  - FIO-6960: fixed pdf proxy for e2e ssl
+ - FIO-6947: made licenseId available in formio-app for license server requests
    
 ## 8.1.1-rc.1
 ### Changed
