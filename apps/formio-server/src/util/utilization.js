@@ -31,15 +31,14 @@ function base64(data) {
   return Buffer.from(JSON.stringify(data)).toString('base64');
 }
 
-async function utilizationSync(app, cacheKey, body, action = '', clearCache) {
-  return await utilization(app, cacheKey, body, action, _.isBoolean(clearCache) ? clearCache : true, true);
+async function utilizationSync(app, cacheKey, body, action = '', clearCache, projectUrl) {
+  return await utilization(app, cacheKey, body, action, _.isBoolean(clearCache) ? clearCache : true, true, projectUrl);
 }
 
-function utilization(app, cacheKey, body, action = '', clear = false, sync = false) {
+function utilization(app, cacheKey, body = {}, action = '', clear = false, sync = false, projectUrl = '') {
   if (licenseConfig.remote) {
     return sync ? Promise.resolve(null) : null;
   }
-
   // Add the action to the cacheKey.
   if (action) {
     cacheKey += action.replace(/\//g, ':');
@@ -49,7 +48,6 @@ function utilization(app, cacheKey, body, action = '', clear = false, sync = fal
 
   // Incremenet the number of requests since last request.
   const numRequests = requestCount.get(cacheKey);
-  body.numRequests = numRequests ? (numRequests + 1) : 1;
   requestCount.set(cacheKey, numRequests, CACHE_TIME);
 
   // If they wish to clear, then do that here.
@@ -73,36 +71,54 @@ function utilization(app, cacheKey, body, action = '', clear = false, sync = fal
     return sync ? cachedRequest : null;
   }
 
-  const onPremiseScopes = ['apiServer', 'pdfServer', 'project', 'tenant', 'stage', 'remoteStage', 'formManager', 'accessibility', 'submissionServer'];
+  const requestOptions =  {
+    timeout: 30000,
+    rejectUnauthorized: false,
+  };
 
-  // If on premise and not scoped for on premise, skip check.
-  if (!onPremiseScopes.includes(body.type)) {
-    return sync ? Promise.resolve(body) : body;
+  let licenseServerRequest = Promise.resolve();
+  const isHostedFMCheck = !!projectUrl && _.endsWith(cacheKey, 'formManager:hosted');
+
+  if (isHostedFMCheck) {
+    licenseServerRequest = fetch(`${licenseServer}/check/manager?project=${projectUrl}`, {
+      method: 'get',
+      ...requestOptions
+    });
   }
+  else {
+    body.numRequests = numRequests ? (numRequests + 1) : 1;
+    const onPremiseScopes = ['apiServer', 'pdfServer', 'project', 'tenant', 'stage', 'remoteStage', 'formManager', 'accessibility', 'submissionServer'];
 
-  // Enable turning off req
-  if (process.env.SKIP_FORM_LICENSING && ['formRequest', 'submissionRequest'].includes(body.type)) {
-    return sync ? Promise.resolve(body) : body;
-  }
+    // If on premise and not scoped for on premise, skip check.
+    if (!onPremiseScopes.includes(body.type)) {
+      return sync ? Promise.resolve(body) : body;
+    }
 
-  // Tell server to return a hash.
-  qs.hash = 1;
-  // Timestamp required for hash
-  body.timestamp = Date.now() - 6000;
+    // Enable turning off req
+    if (process.env.SKIP_FORM_LICENSING && ['formRequest', 'submissionRequest'].includes(body.type)) {
+      return sync ? Promise.resolve(body) : body;
+    }
 
-  if (body.remoteStage) {
-    body.type = 'remoteStage';
+    // Tell server to return a hash.
+    qs.hash = 1;
+    // Timestamp required for hash
+    body.timestamp = Date.now() - 6000;
+
+    if (body.remoteStage) {
+      body.type = 'remoteStage';
+    }
+
+    licenseServerRequest = fetch(`${licenseServer}/utilization${action}`, {
+      method: 'post',
+      headers: {'content-type': 'application/json'},
+      body: JSON.stringify(body),
+      qs,
+      ...requestOptions
+    });
   }
 
   debug(`License Check: ${cacheKey}`);
-  cachedRequest = fetch(`${licenseServer}/utilization${action}`, {
-    method: 'post',
-    headers: {'content-type': 'application/json'},
-    body: JSON.stringify(body),
-    timeout: 30000,
-    qs,
-    rejectUnauthorized: false,
-  }).then(async (response) => {
+  cachedRequest = licenseServerRequest.then(async (response) => {
     responseCache.del(cacheKey);
     requestCache.del(cacheKey);
     if (!response.ok) {
@@ -127,11 +143,11 @@ function utilization(app, cacheKey, body, action = '', clear = false, sync = fal
     else {
       app.utilizationCheckSucceed();
     }
-    if (!utilization.error && utilization.hash !== md5(base64(body))) {
+    if (!isHostedFMCheck && !utilization.error && utilization.hash !== md5(base64(body))) {
       utilization = {error: new Error('Invalid response')};
     }
     lastUtilizationTime = Date.now();
-    responseCache.set(cacheKey, utilization);
+    responseCache.set(cacheKey, utilization, CACHE_TIME);
     return utilization;
   }).catch((err) => {
     // License server is down or request timeout exceed
@@ -141,7 +157,7 @@ function utilization(app, cacheKey, body, action = '', clear = false, sync = fal
       return {licenseServerError: true, ...body};
     }
     const response = {error: err};
-    responseCache.set(cacheKey, response);
+    responseCache.set(cacheKey, response, CACHE_TIME);
     requestCache.del(cacheKey);
     return response;
   });

@@ -277,7 +277,13 @@ const Utils = {
   },
   isEmptyObject(object) {
     return !!object && _.isEmpty(object) && object.constructor === Object;
-  }
+  },
+  isSuperAdmin(req) {
+    // Allow admin key to act as admin.
+    if (process.env.ADMIN_KEY && process.env.ADMIN_KEY === req.headers['x-admin-key']) {
+      return true;
+    }
+},
 };
 
 module.exports = Utils;

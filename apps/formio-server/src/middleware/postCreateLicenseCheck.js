@@ -3,7 +3,6 @@
 const _ = require('lodash');
 const config = require('../../config');
 const {
-  utilization,
   utilizationSync,
   getLicenseKey,
 } = require('../util/utilization');
@@ -22,12 +21,23 @@ function middleware(app) {
           return next();
         }
 
-        next();
+        const utilizationContext = {
+          ...getProjectContext(req, false, res, true, app),
+          licenseKey: getLicenseKey(req),
+        };
 
-        return await utilizationSync(app, `project:create`, {
-            ...getProjectContext(req, false, res, true, app),
-            licenseKey: getLicenseKey(req),
-        });
+        await utilizationSync(app, `project:create`, utilizationContext);
+
+        const itemId = res.resource.item._id;
+        if (itemId) {
+          // need to set form manager status for newly created project
+          await utilizationSync(app, `project:${itemId}:formManager`, {
+            ...utilizationContext,
+            type: 'formManager'
+          });
+        }
+
+        next();
     };
 }
 

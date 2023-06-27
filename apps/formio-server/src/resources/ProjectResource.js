@@ -321,6 +321,11 @@ module.exports = (router, formioServer) => {
           req.body.machineName = '';
         }
 
+        // forbid changing CORS settings for tenants.
+        if (req.body.type === 'tenant' && req.body.settings.cors) {
+          delete req.body.settings.cors;
+        }
+
         next();
       },
       // Don't allow modifying a primary project id.

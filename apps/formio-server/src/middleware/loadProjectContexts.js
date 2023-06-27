@@ -16,6 +16,7 @@ module.exports = (formio) => (req, res, next) => {
   const promises = [
     new Promise((resolve, reject) => {
       formio.cache.loadCurrentProject(req, function(err, currentProject) {
+        // TODO: why do we not resolve with an error here (or reject)?
         if (err || !currentProject) {
           return resolve();
         }
@@ -56,4 +57,3 @@ module.exports = (formio) => (req, res, next) => {
 
   Promise.all(promises).then(() => next());
 };
-

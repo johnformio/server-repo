@@ -16,7 +16,6 @@ const {
 const getProjectContext = require('../util/getProjectContext');
 
 function middleware(app) {
-  const formio = app.formio.formio;
   return async (req, res, next) => {
     // Don't put default in function definition as it breaks express.
     if (!next) {
@@ -162,14 +161,30 @@ function middleware(app) {
           break;
 
         case 'GET /project/:projectId/manage':
-          if (remote) {
-            break;
+          let fmEnabled = false;
+
+          if (config.formio.hosted) {
+            const fmForHostedResult = await utilizationSync(app, `project:${req.projectId}:formManager:hosted`, null, null, false, `${req.protocol}://${req.get('host')}`);
+            fmEnabled = !!(fmForHostedResult && fmForHostedResult.enabled);
           }
-          utilization(app, `project:${req.projectId}:formManager`, {
-            ...getProjectContext(req, res),
-            licenseKey: getLicenseKey(req),
-            type: 'formManager'
-          });
+          else if (remote) {
+            fmEnabled = _.get(app, 'license.terms.scopes', []).includes('formManager');
+          }
+          else {
+            const fmResult = await utilizationSync(app, `project:${req.projectId}:formManager`, {
+              ...getProjectContext(req, false, res),
+              licenseKey: getLicenseKey(req),
+              type: 'formManager'
+            });
+
+            if (fmResult) {
+              fmEnabled = !fmResult.error;
+            }
+          }
+
+          if (req.currentProject) {
+            req.currentProject.formManagerEnabled = fmEnabled;
+          }
           break;
 
         case 'POST /project/:projectId/import':

@@ -152,6 +152,7 @@ jobs:
           at:
             build
       - run: git clone --depth 1 git@github.com:formio/formio-enterprise.git
+      - run: rm -rf formio-enterprise/portal
       - run: cp -r build/* formio-enterprise/
       - run:
           name: Commit
