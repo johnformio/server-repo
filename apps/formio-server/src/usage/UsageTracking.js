@@ -37,6 +37,14 @@ class UsageTracking {
     return this._formModel.countDocuments({project: projectId, deleted: {$eq: null}});
   }
 
+  async getCountOfNewForms(projectId, template) {
+    const forms = await this._formModel.find({project: projectId, deleted: {$eq: null}});
+
+    return Object.keys(template)
+      .filter(formName => !forms.find(form => form.name === formName))
+      .length;
+  }
+
   /**
    * Aggregate the number of requests made by type for the given project and time range.
    *

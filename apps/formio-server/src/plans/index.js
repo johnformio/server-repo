@@ -120,6 +120,7 @@ module.exports = function(formioServer) {
           const form = /\/project\/[a-f0-9]{24}\/form$/;
           const formRequests = /\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}$/;
           const submissionRequests = /\/project\/[a-f0-9]{24}\/form\/[a-f0-9]{24}\/submission(\/[a-f0-9]{24})?$/;
+          const importRequest = /\/project\/[a-f0-9]{24}\/import$/;
           let type;
           if (submissionRequests.test(path)) {
             type = 'submissionRequests';
@@ -135,8 +136,11 @@ module.exports = function(formioServer) {
           else if (form.test(path) && req.method === 'POST') {
             type = 'forms';
           }
+          else if (importRequest.test(path) && req.method === 'POST') {
+            type = 'import';
+          }
 
-          if (type && planLimits[type] && usageMetrics[type] >= planLimits[type] && process.env.ENABLE_RESTRICTIONS) {
+          if (type && planLimits[type] && usageMetrics[type] >= planLimits[type] && config.enableRestrictions) {
             // Form modifications should always fail.
             if (type === 'forms') {
               return cb('Limit exceeded. Upgrade your plan.');
@@ -148,6 +152,18 @@ module.exports = function(formioServer) {
             else {
               // If not a timed failure, fail straight out.
               return cb('Limit exceeded. Upgrade your plan.');
+            }
+          }
+          else if (type === 'import' && config.enableRestrictions) {
+            const countOfNewForms = await formioServer.usageTracking.getCountOfNewForms(currentProject._id, {
+              ..._.get(req, 'body.template.forms', {}),
+              ..._.get(req, 'body.template.resources', {})
+            });
+            if (usageMetrics['forms'] + countOfNewForms > planLimits['forms']) {
+              return cb('Limit exceeded. Upgrade your plan.');
+            }
+            else {
+              return cb();
             }
           }
           else {
