@@ -345,6 +345,21 @@ module.exports = function(app) {
         if (!token.jti || token.sessionKey) {
           return cb(null, token);
         }
+        const returnToken = () => {
+          return cb(null, {
+            ...token,
+            form: {
+              _id: req.session.form ? req.session.form.toString() : '',
+              project: req.session.project ? req.session.project.toString() : '',
+            },
+            project: {
+              _id: req.session.project ? req.session.project.toString() : '',
+            },
+          });
+        };
+        if (req.session) {
+          return returnToken();
+        }
         return formioServer.formio.mongoose.models.session.findById(token.jti)
           .then((session) => {
             if (!session) {
@@ -352,17 +367,7 @@ module.exports = function(app) {
             }
 
             req.session = session.toObject();
-
-            cb(null, {
-              ...token,
-              form: {
-                _id: req.session.form ? req.session.form.toString() : '',
-                project: req.session.project ? req.session.project.toString() : '',
-              },
-              project: {
-                _id: req.session.project ? req.session.project.toString() : '',
-              },
-            });
+            return returnToken();
           });
       },
 
@@ -494,13 +499,11 @@ module.exports = function(app) {
       },
 
       isAdmin(isAdmin, req) {
-        // Allow admin key to act as admin.
-        if (process.env.ADMIN_KEY && process.env.ADMIN_KEY === req.headers['x-admin-key']) {
-          app.formio.formio.log('Admin Key', req);
+        // Allow super admins to have admin access.
+        if (util.isSuperAdmin(req)) {
           req.adminKey = true;
           return true;
         }
-
         // Allow remote team admins to have admin access.
         if (req.remotePermission && ['admin', 'owner', 'team_admin'].indexOf(req.remotePermission) !== -1) {
           return true;

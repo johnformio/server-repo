@@ -1,13 +1,19 @@
-"use strict";
-const express = require("express");
-const fetch = require("node-fetch");
+'use strict';
+
+const express = require('express');
+const fetch = require('node-fetch');
 const _ = require('lodash');
-const config = require("../../config");
-const loadProjectContexts = require("./loadProjectContexts");
+const config = require('../../../config');
+const loadProjectContexts = require('../loadProjectContexts');
+const download = require('../download');
+
 const PDF_SERVER = process.env.PDF_SERVER || process.env.FORMIO_FILES_SERVER;
-module.exports = (formio) => {
+
+module.exports = (formioServer) => {
+  const formio = formioServer.formio;
   const router = express.Router();
-  router.use(express.json());
+
+  router.use(express.raw({type: '*/*', limit: '50mb'}));
 
   router.use((req, res, next) => {
     req.pdfServer = PDF_SERVER;
@@ -18,9 +24,12 @@ module.exports = (formio) => {
     if (req.projectId) {
       loadProjectContexts(formio)(req, res, (err) => {
         if (err) {
-          return next(err);
+          return next(err.message || err);
         }
 
+        if (!req.currentProject) {
+          return next('No project found.');
+        }
         // Set the license key header for authorization.
         req.headers["x-license-key"] = process.env.LICENSE_KEY;
 
@@ -31,10 +40,11 @@ module.exports = (formio) => {
         }
 
         // Always use the environment variable. If it does not exist, then we can try the project settings.
+
         if (!req.pdfServer && req.currentProject.settings && req.currentProject.settings.pdfserver) {
           req.pdfServer = req.currentProject.settings.pdfserver;
         }
-        return next();
+        next();
       });
     }
     else {
@@ -59,7 +69,9 @@ module.exports = (formio) => {
     next();
   });
 
-  router.use(async (req, res) => {
+  router.get('/project/:projectId/form/:formId/submission/:submissionId/download', download(formioServer));
+
+  router.use(async (req, res, next) => {
     const options = {
       method: req.method,
       rejectUnauthorized: false,
@@ -68,11 +80,12 @@ module.exports = (formio) => {
     if (req.currentProject && req.currentProject.plan) {
       options.headers.plan = req.currentProject.plan;
     }
-    if (req.method !== 'HEAD' && req.method !== 'GET') {
-      options.body = JSON.stringify(req.body);
-    }
+
     const resultUrl = `${req.pdfServer}${req.path}`;
     try {
+      if (req.method !== 'HEAD' && req.method !== 'GET') {
+        options.body = req.body;
+      }
       const response = await fetch(resultUrl, options);
       const headers = Object.fromEntries(response.headers.entries());
 
@@ -92,8 +105,13 @@ module.exports = (formio) => {
       res.end(await response.buffer());
     }
     catch (err) {
-      require('cors')()(req, res, () => res.status(400).send(err.message));
+      return next(err);
     }
   });
+
+  router.use((err, req, res) => {
+    require('cors')()(req, res, () => res.status(400).send(err.message));
+  });
+
   return router;
 };

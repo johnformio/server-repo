@@ -4,6 +4,127 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased: 8.2.0-rc.1]
+### Fixed
+ - FIO-6960: fixed pdf proxy for e2e ssl
+ - FIO-6947: made licenseId available in formio-app for license server requests
+   
+## 8.1.1-rc.1
+### Changed
+ - Updated formio-app@8.1.1-rc.1
+ - Updated formiojs@4.15.1-rc.1
+ - Updated formio@3.1.1-rc.1
+ - Updated formio-workers@1.17.1-rc.1
+
+## 8.1.0
+### Changed
+ - Official Release
+ - Updated formio-app@8.1.0
+ - Updated formiojs@4.15.0
+ - Updated @formio/premium@1.19.0
+ - Updated formio@3.1.0
+ - Updated formio-workers@1.17.0
+
+## 8.1.0-rc.16
+### Changed
+ - Updated formio-app@8.1.0-rc.15
+ - Updated formiojs@4.15.0-rc.27
+ - Updated formio@3.1.0-rc.16
+ - Updated formio-workers@1.17.0-rc.10
+
+### Fixed
+ - Fix Archived Plan
+ - FIO-6979: fix pdf proxy with subdomain alises not found
+
+## 8.1.0-rc.15
+### Changed
+ - Updated formio-app@8.1.0-rc.14
+ - Updated formiojs@4.15.0-rc.26
+ - Updated @formio/premium@1.19.0-rc.12
+ - Updated formio@3.1.0-rc.15
+ - Updated formio-workers@1.17.0-rc.9
+
+## Fixed
+ - Revert "FIO-6559: added live project to count stages limit"
+ - FIO-6729: removed logs of POST bodies and data
+ 
+## 8.1.0-rc.14
+### Changed
+ - Updated formio-app@8.1.0-rc.13
+ - Updated formio@3.1.0-rc.14
+
+### Fixed
+ - FIO-6840: Add case-insensitive index to schema
+
+## 8.1.0-rc.13
+### Changed
+ - Updated formio-app@8.1.0-rc.12
+ - Updated formiojs@4.15.0-rc.25
+ - Updated @formio/premium@1.19.0-rc.11
+ - Updated formio@3.1.0-rc.13
+ - Updated formio-workers@1.17.0-rc.8
+
+### Fixed
+ - FIO-6559: added live project to count stages limit
+ - FIO-5979: Enable ability for browsers to cache CORS
+ - FIO-6273: added clean up for portal folder before copying build to formio-enterprise
+ - FIO-6887: fixed an issue where form manager is always available on onPremise env despite of license configuration
+
+## 8.1.0-rc.12
+### Changed
+ - Updated formio-app@8.1.0-rc.11
+ - Updated formiojs@4.15.0-rc.24
+ - Updated formio@3.1.0-rc.12
+ - Updated formio-workers@1.17.0-rc.7
+
+### Changed
+ - FIO-6253: PDF proxy endpoint now handles PDF upload and download requests
+
+## 8.1.0-rc.11
+### Changed
+ - Updated formio-app@8.1.0-rc.10
+ - Updated formiojs@4.15.0-rc.23
+ - Updated @formio/premium@1.19.0-rc.10
+ - Updated formio@3.1.0-rc.11
+ - Updated formio-workers@1.17.0-rc.6
+
+### Fixed
+ - FIO-6855: Load SSL_KEY and SSL_CERT optionally from a file path rather than a string value
+
+## 8.1.0-rc.10
+### Changed
+ - Updated formio-app@8.1.0-rc.9
+ - Updated @formio/premium@1.19.0-rc.9
+
+### Fixed
+ - FIO-6835: Fixing api server crash with the pdf-proxy middleware.
+ - FIO-6662: Fixing issue where the session on login would not work if your database is using readSecondary for replica sets
+ - FIO-6631: Do not require the secret keys for configuring S3 connection.
+ - FIO-6774 Fixed the display of encrypted fields
+
+## 8.1.0-rc.9
+### Changed
+ - Updated formio@3.1.0-rc.10
+
+## 8.1.0-rc.8
+### Changed
+ - Updated formio-app@8.1.0-rc.8
+ - Updated formiojs@4.15.0-rc.22
+ - Updated @formio/premium@1.19.0-rc.8
+ - Updated formio@3.1.0-rc.9
+ - Updated formio-workers@1.17.0-rc.5
+
+### Fixed
+ - FIO-6417: Fixes archived project upgrade and adds tests for archived plan
+
+## 8.1.0-rc.7
+### Changed
+ - Updated formio-app@8.1.0-rc.6
+ - Updated formiojs@4.15.0-rc.21
+ - Updated @formio/premium@1.19.0-rc.7
+ - Updated formio@3.1.0-rc.8
+ - Updated formio-workers@1.17.0-rc.4
+
 ## 8.1.0-rc.6
 ### Changed
  - Updated formio@3.1.0-rc.7
@@ -24,6 +145,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-6509: remove file token from server2server
  - FIO-6417: Fixes archived project upgrade and adds tests for archived plan
  - FIO-6404: Add db update script to fix Date\Time values stored as string instead of ISODate format
+ - FIO-5979: added the ability for browsers to cache CORS
 
 ## 8.1.0-rc.4
 ### Fixed

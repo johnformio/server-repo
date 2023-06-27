@@ -47,6 +47,18 @@ const getConfig = (key, defaultValue) => {
   return defaultValue;
 };
 
+// We need this for backwards compatibility, e.g. legacy customers passing string cert/key values
+const processFilePathOrValue = (filePathOrValue) => {
+  try {
+    // Attempt to read the file if it exists.
+    return fs.readFileSync(filePathOrValue, 'utf-8');
+  }
+  catch (err) {
+    // File doesn't exist or something went wrong, attempt to utilize as a string/boolean value
+    return filePathOrValue;
+  }
+};
+
 var config = {formio: {}};
 var protocol = getConfig('PROTOCOL', 'https');
 var project = getConfig('PROJECT', 'formio');
@@ -166,8 +178,13 @@ config.formio.protocol = protocol;
 config.formio.baseUrl = domain + (port !== 80 ? `:${port}` : '');
 config.port = port;
 config.host = host;
-config.sslKey = getConfig('SSL_KEY', false);
-config.sslCert = getConfig('SSL_CERT', false);
+
+// Configure SSL settings as either file paths or string values
+config.sslEnabled = getConfig('ENABLE_SSL', false);
+const sslKey = getConfig('SSL_KEY', false);
+const sslCert = getConfig('SSL_CERT', false);
+config.sslKey = sslKey ? processFilePathOrValue(sslKey) : false;
+config.sslCert = sslCert ? processFilePathOrValue(sslCert) : false;
 
 config.project = project;
 config.plan = plan;
@@ -186,6 +203,8 @@ config.vpat = Boolean(getConfig('VPAT', false));
 config.twoFactorAuthAppName = getConfig('TWO_FACTOR_AUTHENTICATION_APP_NAME', 'Form.io');
 config.licenseServer = getConfig('LICENSE_SERVER', 'https://license.form.io');
 config.formio.defaultEmailSource= getConfig('DEFAULT_EMAIL_SOURCE', 'no-reply@example.com');
+config.pdfproject = getConfig('FORMIO_PDF_PROJECT', 'https://pdf.form.io');
+config.pdfprojectApiKey = getConfig('FORMIO_PDF_APIKEY');
 
 config.enableOauthM2M = getConfig('OAUTH_M2M_ENABLED', false);
 config.formio.hosted = false;

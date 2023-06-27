@@ -10,8 +10,6 @@ const Q = require('q');
 const cacheControl = require('express-cache-controller');
 const {v4: uuidv4} = require('uuid');
 const fs = require('fs');
-const multipart = require('connect-multiparty');
-const os = require('os');
 const license = require('./src/util/license');
 const audit = require('./src/util/audit');
 const cors = require('cors');
@@ -27,7 +25,7 @@ module.exports = function(options) {
   options = options || {};
   var q = Q.defer();
 
-  // Create cache for requests
+  // Create cache for requests//
   const requestCache = new RequestCache();
 
   // Use the express application.
@@ -70,11 +68,16 @@ module.exports = function(options) {
   // Create the app server.
   debug.startup('Creating application server');
 
-  if (config.sslKey && config.sslCert) {
-    app.server = require('https').createServer({
-      key: config.sslKey,
-      cert: config.sslCert
-    }, app);
+  if (config.sslEnabled) {
+    if (config.sslKey && config.sslCert) {
+      app.server = require('https').createServer({
+        key: config.sslKey,
+        cert: config.sslCert
+      }, app);
+    }
+    else {
+      throw new Error("SSL is enabled, but its configuration is not complete. Check your SSL_KEY and SSL_CERT environment variables.");
+    }
   }
   else {
     app.server = require('http').createServer(app);
@@ -108,7 +111,7 @@ module.exports = function(options) {
         res.set('Content-Type', 'application/javascript; charset=UTF-8');
         res.send(
           contents.replace(
-            /var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false|var whitelabel = false;/gi,
+            /var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false|var licenseId = '';|var whitelabel = false;/gi,
             (matched) => {
               if (config.portalSSO && matched.includes('var sso =')) {
                 return `var sso = '${config.portalSSO}';`;
@@ -130,6 +133,9 @@ module.exports = function(options) {
               }
               else if (config.enableOauthM2M && matched.includes('var oAuthM2MEnabled')) {
                 return 'var oAuthM2MEnabled = true;';
+              }
+              else if (!config.formio.hosted && app.license && app.license.licenseId && matched.includes('var licenseId')) {
+                return `var licenseId = '${app.license.licenseId}'`;
               }
               return matched;
             }
@@ -199,30 +205,6 @@ module.exports = function(options) {
   // Attach the formio-server config.
   app.formio.config = _.omit(config, 'formio');
 
-  // Mount PDF server proxy
-  app.use('/pdf-proxy', [
-    (req, res, next) => {
-      const regex = /^\/pdf\/[\w\d]+\/file\/[\w\d-]+\.(html|pdf)$/; // regex for '/pdf/:project/file/:file.html | pdf' path
-      if ((req.method === 'GET' && regex.test(req.path)) || req.method === 'OPTIONS') {
-        req.bypass = true;
-        return next();
-      }
-      next();
-    },
-    app.formio.formio.middleware.tokenHandler,
-    app.formio.formio.middleware.params,
-    (req, res, next) => {
-      if (req.bypass) {
-        return next();
-      }
-      if (!req.user && !req.isAdmin) {
-        return res.sendStatus(401);
-      }
-      next();
-    },
-    require('./src/middleware/pdfProxy')(app.formio.formio),
-  ]);
-
   // Import the OAuth providers
   debug.startup('Attaching middleware: OAuth Providers');
   app.formio.formio.oauth = require('./src/oauth/oauth')(app.formio.formio);
@@ -263,13 +245,15 @@ module.exports = function(options) {
     next();
   });
 
+  // Attach PDF proxy router and backward compatibility endpoints for it
+  debug.startup('Attaching middleware: PDF proxy');
+  require('./src/middleware/pdfProxy')(app);
+
   // Status response.
   debug.startup('Attaching middleware: Status');
   console.log(`Server version: ${packageJson.version}`);
   app.get('/status', [
-    cors({
-      maxAge: config.AccessControlMaxAge
-    }),
+    cors(),
     (req, res) => {
       res.json({
         version: packageJson.version,
@@ -309,21 +293,7 @@ module.exports = function(options) {
   debug.startup('Attaching middleware: API Key Handler');
   app.use(require('./src/middleware/apiKey')(app.formio.formio));
 
-  // Download a submission pdf.
-  debug.startup('Attaching middleware: PDF Download');
-
-  const downloadPDF = [
-    require('./src/middleware/apiKey')(app.formio.formio),
-    require('./src/middleware/remoteToken')(app),
-    app.formio.formio.middleware.alias,
-    require('./src/middleware/aliasToken')(app),
-    app.formio.formio.middleware.tokenHandler,
-    app.formio.formio.middleware.params,
-    app.formio.formio.middleware.permissionHandler,
-    require('./src/middleware/download')(app.formio)
-  ];
-
-  const changeLog = [
+  app.get('/project/:projectId/form/:formId/submission/:submissionId/changelog',
     require('./src/middleware/apiKey')(app.formio.formio),
     require('./src/middleware/remoteToken')(app),
     app.formio.formio.middleware.alias,
@@ -337,25 +307,11 @@ module.exports = function(options) {
       });
     },
     require('./src/middleware/submissionChangeLog')(app),
-  ];
-
-  app.get('/project/:projectId/form/:formId/submission/:submissionId/download/changelog',
-  ...changeLog,
-  require('./src/middleware/download')(app.formio)
+    (req, res) => {
+     res.send(req.changelog);
+    }
   );
 
-  app.get('/project/:projectId/:formAlias/submission/:submissionId/download', downloadPDF);
-  app.get('/project/:projectId/form/:formId/submission/:submissionId/download', downloadPDF);
-  app.get('/project/:projectId/:formAlias/submission/:submissionId/download/:fileId', downloadPDF);
-  app.get('/project/:projectId/form/:formId/submission/:submissionId/download/:fileId', downloadPDF);
-
-  app.get('/project/:projectId/form/:formId/submission/:submissionId/changelog',
-  ...changeLog,
-  (req, res, next) => {
-     res.send(req.changelog);
-  });
-
-  app.post('/project/:projectId/form/:formId/download', downloadPDF);
   app.get('/project/:projectId/form/:formId/submission/:submissionId/esign', (req, res, next) => {
     const {submissionId, projectId} = req.params;
     app.formio.formio.resources.submission.model.findById(submissionId).exec().then((submission) => {
@@ -375,21 +331,6 @@ module.exports = function(options) {
       // return res.status(200).send(submission.data.esign.id);
     });
   });
-
-  debug.startup('Attaching middleware: PDF Upload');
-  const uploadPDF = [
-    require('./src/middleware/remoteToken')(app),
-    require('./src/middleware/aliasToken')(app),
-    app.formio.formio.middleware.tokenHandler,
-    app.formio.formio.middleware.params,
-    app.formio.formio.middleware.permissionHandler,
-    multipart({
-      autoFiles: true,
-      uploadDir: os.tmpdir(),
-    }),
-    require('./src/middleware/upload')(app.formio)
-  ];
-  app.post('/project/:projectId/upload', uploadPDF);
 
   var hooks = _.merge(require('./src/hooks/settings')(app), options.hooks);
 
@@ -479,7 +420,8 @@ module.exports = function(options) {
      */
     const appVariables = function(project) {
       return `
-        window.LICENSE_ENABLED = true;
+        window.ON_PREMISE= ${!config.formio.hosted};
+        window.LICENSE_ENABLED = ${project.formManagerEnabled};
         window.VPAT_ENABLED = ${_.get(app, 'license.terms.options.vpat') && (config.vpat || _.get(project, 'config.vpat', '').toLowerCase()==='true')};
         window.SAC_ENABLED = ${_.get(app, 'license.terms.options.sac') && (config.sac || _.get(project, 'config.sac', '').toLowerCase()==='true')};
         window.PROJECT = ${JSON.stringify({
