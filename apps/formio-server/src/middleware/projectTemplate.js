@@ -24,7 +24,7 @@ function provideFormsWithDefaultAccess(targetForms, sourceForms, roles) {
         submissionAccess: mergeAccess(form.submissionAccess, sourceForms[formKey].submissionAccess)
       }};
     }
-    // otherwise provide a default
+    // otherwise provide a default//
     // TODO: grabbed this from bootstrapFormAccess, good candidate for a constant
     const defaultFormAccess = [{type: 'read_all', roles: Object.keys(roles)}];
     return {...acc, [formKey]: {...form, access: [...defaultFormAccess], submissionAccess: []}};
@@ -124,7 +124,7 @@ module.exports = function(formio) {
     // If primary project is comming from remote just use default template.
     else if ('project' in project && project.project && !_.get(req, 'body.settings.remoteStage', false)) {
       if (req.body.hasOwnProperty('copyFromProject') && req.body.copyFromProject === 'empty') {
-        return importTemplate(_.cloneDeep(formio.templates['empty']));
+        return importTemplate(_.cloneDeep(formio.templates['default']));
       }
 
       let projectId = project.project;
