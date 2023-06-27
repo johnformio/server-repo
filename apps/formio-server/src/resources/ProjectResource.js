@@ -228,6 +228,7 @@ module.exports = (router, formioServer) => {
       formio.middleware.syncProjectUsage,
       projectSettings,
       formio.middleware.customCrmAction('newproject'),
+      require('../middleware/projectCreatePdfInfo'),
     ],
     beforeIndex: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),

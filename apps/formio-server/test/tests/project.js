@@ -8,6 +8,7 @@ const Q = require('q');
 const async = require('async');
 const chance = new (require('chance'))();
 const moment = require('moment');
+const nock = require('nock');
 const {ObjectId} = require('formio/src/util/util');
 const uuidRegex = /^([a-z]{15})$/;
 const util = require('formio/src/util/util');
@@ -15,7 +16,6 @@ const config = require('../../config');
 const docker = process.env.DOCKER;
 const customer = process.env.CUSTOMER;
 const portalSecret = process.env.PORTAL_SECRET;
-
 
 module.exports = function(app, template, hook) {
   let Helper = require('formio/test/helper')(app);
@@ -179,6 +179,33 @@ module.exports = function(app, template, hook) {
       });
     };
 
+    // It should create a submission in Info form of PDF Management project
+    // when new project is created
+    const pdfInfoSubmissions = [];
+    if (config.formio.hosted) {
+      nock(config.pdfproject, {
+        reqheaders: {
+          'x-token': (apiKey) => apiKey === config.pdfprojectApiKey
+        }
+      })
+        .persist()
+        .post('/info/submission', (body) => {
+          assert(body.data.hasOwnProperty('project'), 'PDF info submission request should have #project property');
+          assert(body.data.hasOwnProperty('lastConversion'), 'PDF info submission request should have #lastConversion property');
+          assert(body.data.hasOwnProperty('token'), 'PDF info submission request should have #token property');
+          assert(body.data.hasOwnProperty('host'), 'PDF info submission request should have #host property');
+
+          assert.equal(body.data.plan, 'basic', 'PDF info submission request #plan property should be equal to "basic"');
+          assert.equal(body.data.forms, '0', 'PDF info submission request #forms property should be equal to "0"');
+          assert.equal(body.data.submissions, '0', 'PDF info submission request #submissions property should be equal to "0"');
+          assert.equal(body.data.status, 'active', 'PDF info submission request #status property should be equal to "active"');
+
+          pdfInfoSubmissions.push(body.data);
+          return true;
+        })
+        .reply(200);
+    }
+
     it('A Form.io User should be able to create a project from a template', function(done) {
       request(app)
         .post('/project')
@@ -216,6 +243,12 @@ module.exports = function(app, template, hook) {
 
           // Store the JWT for future API calls.
           template.formio.owner.token = res.headers['x-jwt-token'];
+
+          // Check if PDF info submission was created
+          if (config.formio.hosted) {
+            const projectInfo = pdfInfoSubmissions.find(s => s.project === response._id);
+            assert(projectInfo, 'Should create a submission in Info form of PDF Management project after new project is created');
+          }
 
           mapProjectToTemplate(template, done);
         });
