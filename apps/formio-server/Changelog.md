@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
  - FIO-6960: fixed pdf proxy for e2e ssl
  - FIO-6947: made licenseId available in formio-app for license server requests
+ - FIO-6769: Use default template when creating empty stage
+ - FIO-6566: added plan limit check for template importing
    
 ## 8.1.1-rc.1
 ### Changed
