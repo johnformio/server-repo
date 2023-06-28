@@ -4,7 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 8.2.0-rc.1]
+## 8.2.0-rc.1
+### Changed
+ - Updated formio-app@8.2.0-rc.1
+ - Updated formiojs@4.16.0-rc.2
+ - Updated @formio/premium@1.20.0-rc.1
+ - Updated formio@3.2.0-rc.1
+ - Updated formio-workers@1.18.0-rc.1
+
 ### Fixed
  - FIO-6960: fixed pdf proxy for e2e ssl
  - FIO-6947: made licenseId available in formio-app for license server requests
