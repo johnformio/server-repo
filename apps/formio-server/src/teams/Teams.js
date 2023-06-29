@@ -334,13 +334,12 @@ const Teams = {
 
     try {
       // Use a case-insensitive collation query
-      userData = await Teams.submissionModel().find(query).collationss({locale: 'en', strength: 2}).where('data.email').equals(email);
+      userData = await Teams.submissionModel().find(query).collation({locale: 'en', strength: 2}).where('data.email').equals(email);
     }
     catch (error) {
       // Fallback to regex if the collation query fails
       query['data.email'] = {
-        $regex: new RegExp(_.escapeRegExp(email)
-          , 'i')
+        $regex: new RegExp(_.escapeRegExp(email), 'i'),
       };
 
       userData = await Teams.submissionModel().find(query);
