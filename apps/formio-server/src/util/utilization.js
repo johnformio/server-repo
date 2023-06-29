@@ -36,7 +36,8 @@ async function utilizationSync(app, cacheKey, body, action = '', clearCache, pro
 }
 
 function utilization(app, cacheKey, body = {}, action = '', clear = false, sync = false, projectUrl = '') {
-  if (licenseConfig.remote) {
+  const isHostedFMCheck = !!projectUrl && _.endsWith(cacheKey, 'formManager:hosted');
+  if (!isHostedFMCheck && licenseConfig.remote) {
     return sync ? Promise.resolve(null) : null;
   }
   // Add the action to the cacheKey.
@@ -77,7 +78,6 @@ function utilization(app, cacheKey, body = {}, action = '', clear = false, sync 
   };
 
   let licenseServerRequest = Promise.resolve();
-  const isHostedFMCheck = !!projectUrl && _.endsWith(cacheKey, 'formManager:hosted');
 
   if (isHostedFMCheck) {
     licenseServerRequest = fetch(`${licenseServer}/check/manager?project=${projectUrl}`, {
