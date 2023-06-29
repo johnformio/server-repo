@@ -228,6 +228,7 @@ module.exports = (router, formioServer) => {
       formio.middleware.syncProjectUsage,
       projectSettings,
       formio.middleware.customCrmAction('newproject'),
+      require('../middleware/projectCreatePdfInfo'),
     ],
     beforeIndex: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
@@ -319,6 +320,11 @@ module.exports = (router, formioServer) => {
         // Reset the machine name so that it will regenerate.
         if (req.body.name !== req.currentProject.name) {
           req.body.machineName = '';
+        }
+
+        // forbid changing CORS settings for tenants.
+        if (req.body.type === 'tenant' && req.body.settings.cors) {
+          delete req.body.settings.cors;
         }
 
         next();

@@ -324,7 +324,10 @@ const Teams = {
       project: memberResource.project,
       form: memberResource._id,
       deleted: {$eq: null},
-      'data.email': email
+      'data.email': {
+        $regex: new RegExp(email),
+        $options: 'i'
+      }
     };
 
     if (admin) {
@@ -494,7 +497,6 @@ const Teams = {
       deleted: {$eq: null}
     };
 
-    debug.teamProjects(query);
     const projects = await Teams.projectModel().find(query).lean().exec();
     const response = [];
     _.each(projects, function(project) {
@@ -550,7 +552,10 @@ const Teams = {
       form: memberResource._id,
       deleted: {$eq: null},
       'data.team._id': team._id,
-      'data.email': user.data.email
+      'data.email': {
+        $regex: new RegExp(user.data.email),
+        $options: 'i'
+      }
     }).lean().exec();
   },
 
@@ -596,7 +601,10 @@ const Teams = {
       project: userResource.project,
       form: userResource._id,
       deleted: {$eq: null},
-      'data.email': member.data.email
+      'data.email': {
+        $regex: new RegExp(member.data.email),
+        $options: 'i'
+      }
     }).lean().exec();
   },
 

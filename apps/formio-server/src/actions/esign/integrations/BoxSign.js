@@ -3,7 +3,7 @@
 var BoxSDK = require('box-node-sdk');
 const _ = require('lodash');
 const LOG_EVENT = 'BoxSign:';
-module.exports = (app) => {
+module.exports = () => {
     const log = (...args) => console.log(LOG_EVENT, ...args);
 
     const authenticateToBox = (config) => {

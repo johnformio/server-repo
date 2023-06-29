@@ -1,13 +1,19 @@
-"use strict";
-const express = require("express");
-const fetch = require("node-fetch");
+'use strict';
+
+const express = require('express');
+const fetch = require('node-fetch');
 const _ = require('lodash');
-const config = require("../../config");
-const loadProjectContexts = require("./loadProjectContexts");
+const config = require('../../../config');
+const loadProjectContexts = require('../loadProjectContexts');
+const download = require('../download');
+
 const PDF_SERVER = process.env.PDF_SERVER || process.env.FORMIO_FILES_SERVER;
-module.exports = (formio) => {
+
+module.exports = (formioServer) => {
+  const formio = formioServer.formio;
   const router = express.Router();
-  router.use(express.json());
+
+  router.use(express.raw({type: '*/*', limit: '50mb'}));
 
   router.use((req, res, next) => {
     req.pdfServer = PDF_SERVER;
@@ -18,31 +24,31 @@ module.exports = (formio) => {
     if (req.projectId) {
       loadProjectContexts(formio)(req, res, (err) => {
         if (err) {
-          return next(err);
+          return next(err.message || err);
         }
-        if (config.formio.hosted) {
-          // Hosted projects use the x-file-token for pdf server communication.
-          if (req.currentProject.settings && req.currentProject.settings.filetoken) {
-            req.headers["x-file-token"] = req.currentProject.settings.filetoken;
-          }
 
-          // It is a problem if the environment variable is not set in hosted. We do not want them to be able to point
-          // to arbitrary pdf servers if they are on our hosted environments.
-          if (!req.pdfServer) {
-            return next('No PDF_SERVER environment configuration.');
-          }
+        if (!req.currentProject) {
+          return next('No project found.');
         }
-        else {
-          // Set the license key header for authorization.
-          req.headers["x-license-key"] = process.env.LICENSE_KEY;
+        // Set the license key header for authorization.
+        req.headers["x-license-key"] = process.env.LICENSE_KEY;
 
-          // Always use the environment variable. If it does not exist, then we can try the project settings.
-          if (!req.pdfServer && req.currentProject.settings && req.currentProject.settings.pdfserver) {
-            req.pdfServer = req.currentProject.settings.pdfserver;
-          }
+        // It is a problem if the environment variable is not set in hosted. We do not want them to be able to point
+        // to arbitrary pdf servers if they are on our hosted environments.
+        if (!req.pdfServer && config.formio.hosted) {
+          return next('No PDF_SERVER environment configuration.');
         }
-        return next();
+
+        // Always use the environment variable. If it does not exist, then we can try the project settings.
+
+        if (!req.pdfServer && req.currentProject.settings && req.currentProject.settings.pdfserver) {
+          req.pdfServer = req.currentProject.settings.pdfserver;
+        }
+        next();
       });
+    }
+    else {
+      return next();
     }
   });
 
@@ -63,17 +69,23 @@ module.exports = (formio) => {
     next();
   });
 
-  router.use(async (req, res) => {
+  router.get('/project/:projectId/form/:formId/submission/:submissionId/download', download(formioServer));
+
+  router.use(async (req, res, next) => {
     const options = {
       method: req.method,
       rejectUnauthorized: false,
-      headers: {...req.headers, plan: req.currentProject.plan}
+      headers: req.headers
     };
-    if (req.method !== 'HEAD' && req.method !== 'GET') {
-      options.body = JSON.stringify(req.body);
+    if (req.currentProject && req.currentProject.plan) {
+      options.headers.plan = req.currentProject.plan;
     }
+
     const resultUrl = `${req.pdfServer}${req.path}`;
     try {
+      if (req.method !== 'HEAD' && req.method !== 'GET') {
+        options.body = req.body;
+      }
       const response = await fetch(resultUrl, options);
       const headers = Object.fromEntries(response.headers.entries());
 
@@ -93,8 +105,13 @@ module.exports = (formio) => {
       res.end(await response.buffer());
     }
     catch (err) {
-      require('cors')()(req, res, () => res.status(400).send(err.message));
+      return next(err);
     }
   });
+
+  router.use((err, req, res) => {
+    require('cors')()(req, res, () => res.status(400).send(err.message));
+  });
+
   return router;
 };

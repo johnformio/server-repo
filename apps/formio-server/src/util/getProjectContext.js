@@ -18,6 +18,7 @@ module.exports = (req, isNew, res = null, postCreate = false, app = null) => {
                 context.name = res.resource.item.name;
                 context.remote = _.get(app, 'license.remote', false);
                 context.projectType = res.resource.item.type;
+                context.stageId = 'none';
             }
             else {
                 context.projectId = req.primaryProject ? req.primaryProject._id : ((req.body && req.body.project) ? req.body.project : 'new');
@@ -26,6 +27,7 @@ module.exports = (req, isNew, res = null, postCreate = false, app = null) => {
                 context.name = req.currentProject && !isNew ? req.currentProject.name : req.body.name;
                 context.remote = req.currentProject && !isNew ? !!req.currentProject.remote : false;
                 context.projectType = req.currentProject && !isNew ? req.currentProject.type : req.body.type;
+                context.stageId = 'none';
             }
             break;
         case 'stage':
@@ -64,6 +66,8 @@ module.exports = (req, isNew, res = null, postCreate = false, app = null) => {
             if (postCreate) {
                 context.environmentId = app.environmentId;
                 context.projectId = res.resource.item._id;
+                context.tenantId = 'none';
+                context.stageId = 'none';
                 context.title = res.resource.item.title;
                 context.name = res.resource.item.name;
                 context.remote = _.get(app, 'license.remote', false);
@@ -75,6 +79,8 @@ module.exports = (req, isNew, res = null, postCreate = false, app = null) => {
                 context.name = req.currentProject ? req.currentProject.name : req.body.name;
                 context.remote = req.currentProject ? !!req.currentProject.remote : false;
                 context.projectType = req.currentProject ? req.currentProject.type : req.body.type;
+                context.tenantId = 'none';
+                context.stageId = 'none';
             }
     }
 

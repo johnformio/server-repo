@@ -84,12 +84,13 @@ module.exports = app => models => {
     project: 1,
     deleted: 1
   });
+  // Add the case sensitive index for MongoDB-compliant APIs
   models.submission.schema.index({
     form: 1,
     project: 1,
     'data.email': 1,
     deleted: 1
-  });
+  }, {collation: {locale: 'en', strength: 2}});
 
   // Add additional models.
   return _.assign(models, require('../../models/models')(app.formio, models));

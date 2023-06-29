@@ -649,6 +649,7 @@ describe('Initial Tests', function() {
         this.retries(4);
         require('./tests/usage')(app, template, hook);
         require('./tests/middleware')(app, template, hook);
+        require('./tests/pdfProxy')(app, template, hook);
         require('./tests/teams')(app, template, hook);
         require('./tests/ssoTeams')(app, template, hook);
         require('./tests/sessions')(app, template, hook);
@@ -679,6 +680,7 @@ describe('Initial Tests', function() {
         require('./tests/dropbox')(app, template, hook);
         require('./tests/report')(app, template, hook);
         require('./tests/actions')(app, template, hook);
+        require('./tests/pdfProxy')(app, template, hook);
         require('./tests/revisions')(app, template, hook);
         require('./tests/group-permissions')(app, template, hook);
         require('formio/test/templates')(app, template, hook);

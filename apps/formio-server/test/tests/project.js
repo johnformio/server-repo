@@ -7,12 +7,15 @@ const _ = require('lodash');
 const Q = require('q');
 const async = require('async');
 const chance = new (require('chance'))();
+const moment = require('moment');
+const nock = require('nock');
+const {ObjectId} = require('formio/src/util/util');
 const uuidRegex = /^([a-z]{15})$/;
 const util = require('formio/src/util/util');
 const config = require('../../config');
 const docker = process.env.DOCKER;
 const customer = process.env.CUSTOMER;
-
+const portalSecret = process.env.PORTAL_SECRET;
 
 module.exports = function(app, template, hook) {
   let Helper = require('formio/test/helper')(app);
@@ -149,6 +152,7 @@ module.exports = function(app, template, hook) {
           .set('x-jwt-token', template.formio.owner.token)
           // .expect('Content-Type', /json/)
           // .expect(200)
+          //
           .end(function(err, res) {
             if (err) return cb(err);
 
@@ -174,6 +178,33 @@ module.exports = function(app, template, hook) {
         callback();
       });
     };
+
+    // It should create a submission in Info form of PDF Management project
+    // when new project is created
+    const pdfInfoSubmissions = [];
+    if (config.formio.hosted) {
+      nock(config.pdfproject, {
+        reqheaders: {
+          'x-token': (apiKey) => apiKey === config.pdfprojectApiKey
+        }
+      })
+        .persist()
+        .post('/info/submission', (body) => {
+          assert(body.data.hasOwnProperty('project'), 'PDF info submission request should have #project property');
+          assert(body.data.hasOwnProperty('lastConversion'), 'PDF info submission request should have #lastConversion property');
+          assert(body.data.hasOwnProperty('token'), 'PDF info submission request should have #token property');
+          assert(body.data.hasOwnProperty('host'), 'PDF info submission request should have #host property');
+
+          assert.equal(body.data.plan, 'basic', 'PDF info submission request #plan property should be equal to "basic"');
+          assert.equal(body.data.forms, '0', 'PDF info submission request #forms property should be equal to "0"');
+          assert.equal(body.data.submissions, '0', 'PDF info submission request #submissions property should be equal to "0"');
+          assert.equal(body.data.status, 'active', 'PDF info submission request #status property should be equal to "active"');
+
+          pdfInfoSubmissions.push(body.data);
+          return true;
+        })
+        .reply(200);
+    }
 
     it('A Form.io User should be able to create a project from a template', function(done) {
       request(app)
@@ -212,6 +243,12 @@ module.exports = function(app, template, hook) {
 
           // Store the JWT for future API calls.
           template.formio.owner.token = res.headers['x-jwt-token'];
+
+          // Check if PDF info submission was created
+          if (config.formio.hosted) {
+            const projectInfo = pdfInfoSubmissions.find(s => s.project === response._id);
+            assert(projectInfo, 'Should create a submission in Info form of PDF Management project after new project is created');
+          }
 
           mapProjectToTemplate(template, done);
         });
@@ -783,6 +820,118 @@ module.exports = function(app, template, hook) {
 
           done();
         });
+    });
+
+    describe('Stages', () => {
+      const stagesIds = [];
+
+      it('Should create stage using default template when copying from empty stage', async () => {
+        const defaultTemplate = require('formio/src/templates/default.json');
+        const stageTitle = chance.word();
+
+        // Create stage
+        const stageCreateRes = await request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            stageTitle,
+            title: chance.word(),
+            name: chance.word(),
+            type: 'stage',
+            project: template.project._id,
+            copyFromProject: 'empty',
+            framework: 'custom'
+          });
+
+        const stage = stageCreateRes.body;
+
+        assert.ok(stage._id);
+        assert.equal(stage.project, template.project._id);
+        assert.equal(stage.stageTitle, stageTitle);
+        assert.notEqual(stage.title, stageTitle);
+
+        stagesIds.push(stage._id);
+
+        // Export stage template to compare with default template
+        const exportStageRes = await request(app)
+          .get(`/project/${stage._id}/export`)
+          .set('x-jwt-token', template.formio.owner.token);
+
+        const exportedStage = exportStageRes.body;
+
+        assert.ok(exportedStage.version);
+        assert.ok(exportedStage.title);
+        assert.deepEqual(Object.keys(exportedStage.roles).sort(), Object.keys(defaultTemplate.roles).sort());
+        assert.deepEqual(Object.keys(exportedStage.resources).sort(), Object.keys(defaultTemplate.resources).sort());
+        assert.deepEqual(Object.keys(exportedStage.forms).sort(), Object.keys(defaultTemplate.forms).sort());
+        assert.deepEqual(Object.keys(exportedStage.actions).sort(), Object.keys(defaultTemplate.actions).sort());
+        assert.deepEqual(exportedStage.access, defaultTemplate.access);
+      });
+
+      it('Should create stage using project template when copying from existing stage', async () => {
+        const stageTitle = chance.word();
+
+        // Create stage
+        const stageCreateRes = await request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            stageTitle,
+            title: chance.word(),
+            name: chance.word(),
+            type: 'stage',
+            project: template.project._id,
+            copyFromProject: template.project._id,
+            framework: 'custom'
+          });
+
+        const stage = stageCreateRes.body;
+
+        assert.ok(stage._id);
+        assert.equal(stage.project, template.project._id);
+        assert.equal(stage.stageTitle, stageTitle);
+        assert.notEqual(stage.title, stageTitle);
+
+        stagesIds.push(stage._id);
+
+        // Export project template
+        const exportProjectRes = await request(app)
+          .get(`/project/${template.project._id}/export`)
+          .set('x-jwt-token', template.formio.owner.token);
+
+        const exportedProject = exportProjectRes.body;
+
+        assert.ok(exportedProject.version);
+        assert.ok(exportedProject.title);
+        assert.ok(exportedProject.roles);
+        assert.ok(exportedProject.resources);
+        assert.ok(exportedProject.forms);
+        assert.ok(exportedProject.actions);
+        assert.ok(exportedProject.access);
+
+        // Export stage template to compare with project template
+        const exportStageRes = await request(app)
+          .get(`/project/${stage._id}/export`)
+          .set('x-jwt-token', template.formio.owner.token);
+
+        const exportedStage = exportStageRes.body;
+
+        assert.ok(exportedStage.version);
+        assert.ok(exportedStage.title);
+        assert.deepEqual(Object.keys(exportedStage.roles).sort(), Object.keys(exportedProject.roles).sort());
+        assert.deepEqual(Object.keys(exportedStage.resources).sort(), Object.keys(exportedProject.resources).sort());
+        assert.deepEqual(Object.keys(exportedStage.forms).sort(), Object.keys(exportedProject.forms).sort());
+        assert.deepEqual(Object.keys(exportedStage.actions).sort(), Object.keys(exportedProject.actions).sort());
+        assert.deepEqual(exportedStage.access, exportedProject.access);
+      });
+
+      after(async () => {
+        // Delete created stages
+        await Promise.all(stagesIds.map(stageId => request(app)
+          .delete(`/project/${stageId}`)
+          .set("x-jwt-token", template.formio.owner.token)
+        ));
+      });
     });
 
     describe('Protected Project', function() {
@@ -1567,6 +1716,678 @@ module.exports = function(app, template, hook) {
     }
 
     const tempProjects = [];
+
+    describe('Archived Plan', () => {
+      let originalProject;
+
+      const testForm = {
+        title: chance.word(),
+        name: chance.word(),
+        path: chance.word(),
+        type: 'form',
+        components: [
+          {
+            label: 'Text Field',
+            key: 'textField',
+            type: 'textfield',
+            input: true
+          }
+        ]
+      };
+
+      const testResource = {
+        title: chance.word(),
+        name: chance.word(),
+        path: chance.word(),
+        type: 'resource',
+        components: [
+          {
+            label: 'Text Field',
+            key: 'textField',
+            type: 'textfield',
+            input: true
+          }
+        ]
+      };
+
+      const testSubmission = {
+        data: {
+          textField: 'Test Submission'
+        },
+        metadata: {}
+      };
+
+      const testAction = {
+        data: {
+          priority: 0,
+          name: "email",
+          title: "Email",
+          settings: {
+            transport: "default",
+            from: "no-reply@example.com",
+            replyTo: "",
+            emails: ["test@example.com"],
+            sendEach: false,
+            cc: [""],
+            bcc: [""],
+            subject: "New submission for {{ form.title }}.",
+            template: "https://pro.formview.io/assets/email.html",
+            message: "{{ submission(data, form.components) }}",
+            renderingMethod: "dynamic",
+            attachFiles: false,
+            attachPDF: false,
+          },
+          handler: ["after"],
+          method: ["create"],
+          condition: {
+            field: {},
+            eq: "",
+            value: "",
+            custom: "",
+          },
+          submit: true,
+        },
+        metadata: {}
+      };
+
+      before(async () => {
+        // Store original project for future restore
+        originalProject = _.cloneDeep(template.project);
+        // Create test stage
+        const stageTitle = chance.word();
+        const stageCreateRes = await request(app)
+          .post('/project')
+          .send({
+            title: chance.word(),
+            type: "stage",
+            project: template.project._id,
+            copyFromProject: "empty",
+            name: chance.word(),
+            stageTitle,
+            settings: {
+              cors: "*",
+            },
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(201);
+
+        const stage = stageCreateRes.body;
+
+        assert.equal(stage.stageTitle, stageTitle);
+        assert.equal(stage.type, 'stage');
+
+        template.stage = stage;
+
+        // Create a couple of teams
+        const team1Name = chance.word();
+        const team1CreateRes = await request(app)
+          .post('/team')
+          .send({
+            data: {
+              name: team1Name
+            }
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(201);
+
+        const team1 = team1CreateRes.body;
+
+        assert.ok(team1._id);
+        assert.equal(team1.data.name, team1Name);
+
+        template.team1 = team1;
+
+        const team2Name = chance.word();
+        const team2CreateRes = await request(app)
+          .post('/team')
+          .send({
+            data: {
+              name: team2Name
+            }
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(201);
+
+        const team2 = team2CreateRes.body;
+
+        assert.ok(team2._id);
+        assert.equal(team2.data.name, team2Name);
+
+        template.team2 = team2;
+
+        // Create form
+        const formCreateRes = await request(app)
+          .post(`/project/${template.project._id}/form`)
+          .send(testForm)
+          .set('x-jwt-token', template.formio.owner.token);
+
+        const form = formCreateRes.body;
+
+        assert.ok(form._id);
+        assert.equal(form.title, testForm.title);
+        assert.equal(form.name, testForm.name);
+
+        template.forms[testForm.name] = form;
+
+        // Create resource
+        const resourceCreateRes = await request(app)
+          .post(`/project/${template.project._id}/form`)
+          .send(testResource)
+          .set('x-jwt-token', template.formio.owner.token);
+
+        const resource = resourceCreateRes.body;
+
+        assert.ok(resource._id);
+        assert.equal(resource.title, testResource.title);
+        assert.equal(resource.name, testResource.name);
+
+        template.resources[testResource.name] = resource;
+
+        // Create submission
+        if (!template.submissions) {
+          template.submissions = {};
+        }
+
+        const submissionCreateRes = await request(app)
+          .post(`/project/${template.project._id}/form/${form._id}/submission`)
+          .send(testSubmission)
+          .set('x-jwt-token', template.formio.owner.token);
+
+        const submission = submissionCreateRes.body;
+
+        assert.ok(submission._id);
+        assert.deepEqual(submission.data, testSubmission.data);
+
+        template.submissions[form._id] = submission;
+
+        // Update project to set trial plan and assign to team1
+        const projectUpdateRes = await request(app)
+          .put(`/project/${template.project._id}`)
+          .send({
+            access: [ ...template.project.access, { type: 'team_read', roles: [template.team1._id] }],
+            plan: 'trial'
+          })
+          .set('x-jwt-token', template.formio.owner.token);
+
+        const project = projectUpdateRes.body;
+
+        assert.equal(project.plan, 'trial');
+        assert.ok(project.access.some(({ type, roles }) => type === 'team_read' && roles[0] === team1._id));
+
+        template.project = project;
+
+        // Store the JWT for future API calls.
+        template.formio.owner.token = projectUpdateRes.headers['x-jwt-token'];
+      });
+
+      it('Should archive project when trial time ends', async () => {
+        // Set project trial time to be expired
+        const monthAgo = moment().subtract(1, 'month').toDate();
+        const projectUpdateRes = await request(app)
+          .put(`/project/${template.project._id}`)
+          .send({
+            trial: monthAgo
+          })
+          .set('x-jwt-token', template.formio.owner.token);
+
+        const updatedProject = projectUpdateRes.body;
+
+        assert.equal(updatedProject.plan, 'trial');
+        assert.equal(updatedProject.trial, monthAgo.toISOString());
+
+        // Do a GET request to trigger trial time expiration check
+        await request(app)
+          .get(`/project/${template.project._id}`)
+          .set('x-jwt-token', template.formio.owner.token)
+
+        // Check the project got archived
+        const projectRes = await request(app)
+          .get(`/project/${template.project._id}`)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200);
+
+        const project = projectRes.body;
+
+        assert.equal(project.plan, 'archived');
+
+        template.project = project;
+        app.formio.formio.cache.deleteProjectCache(template.project);
+      });
+
+      it('Should not allow to create new stage', done => {
+        request(app)
+          .post("/project")
+          .send({
+            title: "New stage",
+            type: "stage",
+            project: template.project._id,
+            copyFromProject: "empty",
+            name: "new-stage",
+            stageTitle: "New stage",
+            settings: {
+              cors: "*",
+            },
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(400)
+          .expect('This is not allowed for an Archived project.')
+          .end(done);
+      });
+
+      it('Should not allow to delete existing stage', done => {
+        request(app)
+          .delete(`/project/${template.stage._id}`)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(400)
+          .expect('This is not allowed for an Archived project.')
+          .end(done);
+      });
+
+      it('Should not allow to update project settings', done => {
+        request(app)
+          .put(`/project/${template.project._id}`)
+          .send({
+            settings: {
+              allowConfig: true,
+            },
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(400)
+          .expect('This is not allowed for an Archived project.')
+          .end(done);
+      });
+
+      it('Should not allow to add team', done => {
+        request(app)
+          .put(`/project/${template.project._id}`)
+          .send({
+            access: [ ...template.project.access, { type: 'team_write', roles: [template.team2._id] }],
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(400)
+          .expect('This is not allowed for an Archived project.')
+          .end(done);
+      });
+
+      it('Should not allow to remove team', done => {
+        request(app)
+          .put(`/project/${template.project._id}`)
+          .send({
+            access: [ ...template.project.access, { type: 'team_read', roles: [] }],
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(400)
+          .expect('This is not allowed for an Archived project.')
+          .end(done);
+      });
+
+      it('Should not allow to change project access', done => {
+        request(app)
+          .put(`/project/${template.project._id}`)
+          .send({
+            access: [
+              ...template.project.access,
+              { type: 'create_all', roles: [template.roles['anonymous']._id] },
+              { type: 'read_all', roles: [template.roles['anonymous']._id] },
+              { type: 'update_all', roles: [template.roles['anonymous']._id] },
+              { type: 'delete_all', roles: [template.roles['anonymous']._id] }
+            ],
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(400)
+          .expect('This is not allowed for an Archived project.')
+          .end(done);
+      });
+
+      it('Should not allow to create new form', done => {
+        request(app)
+          .post(`/project/${template.project._id}/form`)
+          .send(testForm)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(400)
+          .expect('This is not allowed for an Archived project.')
+          .end(done);
+      });
+
+      it('Should not allow to create new resource', done => {
+        request(app)
+          .post(`/project/${template.project._id}/form`)
+          .send(testResource)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(400)
+          .expect('This is not allowed for an Archived project.')
+          .end(done);
+      });
+
+      it('Should not allow to update form', done => {
+        request(app)
+          .put(`/project/${template.project._id}/form/${template.forms[testForm.name]._id}`)
+          .send({
+            ...testForm,
+            title: 'Updated Form Title'
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(400)
+          .expect('This is not allowed for an Archived project.')
+          .end(done);
+      });
+
+      it('Should not allow to update resource', done => {
+        request(app)
+          .put(`/project/${template.project._id}/form/${template.resources[testResource.name]._id}`)
+          .send({
+            ...testResource,
+            title: 'Updated Resource Title'
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(400)
+          .expect('This is not allowed for an Archived project.')
+          .end(done);
+      });
+
+      it('Should not allow to delete form', done => {
+        request(app)
+          .delete(`/project/${template.project._id}/form/${template.forms[testForm.name]._id}`)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(400)
+          .expect('This is not allowed for an Archived project.')
+          .end(done);
+      });
+
+      it('Should not allow to create new form submission', done => {
+        request(app)
+          .post(`/project/${template.project._id}/form/${template.forms[testForm.name]._id}/submission`)
+          .send({
+            data: {
+              textField: 'New Submission'
+            }
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(400)
+          .expect('This is not allowed for an Archived project.')
+          .end(done);
+      });
+
+      it('Should not allow to create new resource submission', done => {
+        request(app)
+          .post(`/project/${template.project._id}/form/${template.resources[testResource.name]._id}/submission`)
+          .send({
+            data: {
+              textField: 'New Submission'
+            }
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(400)
+          .expect('This is not allowed for an Archived project.')
+          .end(done);
+      });
+
+      it('Should not allow to update submission', done => {
+        const formId = template.forms[testForm.name]._id;
+
+        request(app)
+          .put(`/project/${template.project._id}/form/${formId}/submission/${template.submissions[formId]._id}`)
+          .send({
+            data: {
+              textField: 'New Submission'
+            }
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(400)
+          .expect('This is not allowed for an Archived project.')
+          .end(done);
+      });
+
+      it('Should not allow to delete submission', done => {
+        const formId = template.forms[testForm.name]._id;
+
+        request(app)
+          .delete(`/project/${template.project._id}/form/${formId}/submission/${template.submissions[formId]._id}`)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(400)
+          .expect('This is not allowed for an Archived project.')
+          .end(done);
+      });
+
+      it('Should not allow to create form action', done => {
+        const formId = template.forms[testForm.name]._id;
+
+        request(app)
+          .post(`/project/${template.project._id}/form/${formId}/action`)
+          .send(testAction)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(400)
+          .expect('This is not allowed for an Archived project.')
+          .end(done);
+      });
+
+      it('Should not allow to change form access', done => {
+        const form = template.forms[testForm.name];
+
+        request(app)
+          .put(`/project/${template.project._id}/form/${form._id}`)
+          .send({
+            access: [
+              ...form.access,
+              { type: 'create_own', roles: [template.roles['anonymous']._id] },
+              { type: 'read_own', roles: [template.roles['anonymous']._id] },
+              { type: 'update_own', roles: [template.roles['anonymous']._id] },
+              { type: 'delete_own', roles: [template.roles['anonymous']._id] }
+            ]
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(400)
+          .expect('This is not allowed for an Archived project.')
+          .end(done);
+      });
+
+      it('Should not allow to enable form revisions', done => {
+        const formId = template.forms[testForm.name]._id;
+
+        request(app)
+          .put(`/project/${template.project._id}/form/${formId}`)
+          .send({
+            revisions: 'current'
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(400)
+          .expect('This is not allowed for an Archived project.')
+          .end(done);
+      });
+
+      it('Should not allow to enable form submission revisions', done => {
+        const formId = template.forms[testForm.name]._id;
+
+        request(app)
+          .put(`/project/${template.project._id}/form/${formId}`)
+          .send({
+            submissionRevisions: 'true'
+          })
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(400)
+          .expect('This is not allowed for an Archived project.')
+          .end(done);
+      });
+
+      it('Should allow OPTIONS requests', async () => {
+        const testFormId = template.forms[testForm.name]._id;
+
+        // Project
+        await request(app)
+          .options(`/project/${template.project._id}`)
+          .set('x-jwt-token', template.formio.owner.token);
+
+        // Form
+        await request(app)
+          .options(`/project/${template.project._id}/form/${testFormId}`)
+          .set('x-jwt-token', template.formio.owner.token);
+
+        // Submission
+        await request(app)
+          .options(`/project/${template.project._id}/form/${testFormId}/submission/${template.submissions[testFormId]._id}`)
+          .set('x-jwt-token', template.formio.owner.token);
+      });
+
+      it('Should allow to get project', done => {
+        request(app)
+          .get(`/project/${template.project._id}`)
+          .set('x-jwt-token', template.formio.owner.token)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            const project = res.body;
+
+            assert.equal(project._id, template.project._id);
+            assert.equal(project.type, 'project');
+            assert.equal(project.plan, 'archived');
+
+            done();
+          });
+      });
+
+      it('Should allow to get form', done => {
+        const formId = template.forms[testForm.name]._id;
+
+        request(app)
+          .get(`/project/${template.project._id}/form/${formId}`)
+          .set('x-jwt-token', template.formio.owner.token)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            const form = res.body;
+
+            assert.equal(form._id, formId);
+            assert.equal(form.type, 'form');
+
+            done();
+          });
+      });
+
+      it('Should allow to get resource', done => {
+        const resourceId = template.resources[testResource.name]._id;
+
+        request(app)
+          .get(`/project/${template.project._id}/form/${resourceId}`)
+          .set('x-jwt-token', template.formio.owner.token)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            const resource = res.body;
+
+            assert.equal(resource._id, resourceId);
+            assert.equal(resource.type, 'resource');
+
+            done();
+          });
+      });
+
+      it('Should allow to get submission', done => {
+        const formId = template.forms[testForm.name]._id;
+        const submissionId = template.submissions[formId]._id;
+
+        request(app)
+          .get(`/project/${template.project._id}/form/${formId}/submission/${submissionId}`)
+          .set('x-jwt-token', template.formio.owner.token)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            const submission = res.body;
+
+            assert.equal(submission._id, submissionId);
+            assert.equal(submission.form, formId);
+            assert.ok(submission.data);
+
+            done();
+          });
+      });
+
+      it('Should allow to export project', done => {
+        request(app)
+          .get(`/project/${template.project._id}/export`)
+          .set('x-jwt-token', template.formio.owner.token)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            const projectExport = res.body;
+
+            assert.ok(projectExport.version);
+            assert.ok(projectExport.title);
+            assert.ok(projectExport.name);
+            assert.ok(projectExport.access);
+            assert.ok(projectExport.forms);
+            assert.ok(projectExport.resources);
+            assert.ok(projectExport.roles);
+
+            assert.ok(
+              projectExport.forms[testForm.name] &&
+              projectExport.forms[testForm.name].name === testForm.name,
+              'Should have previously created form'
+            );
+            assert.ok(
+              projectExport.resources[testResource.name] &&
+              projectExport.resources[testResource.name].name === testResource.name,
+              'Should have previously created resource'
+            );
+
+            done();
+          });
+      });
+
+      after(async () => {
+        const db = app.formio.formio.mongoose.connection.db;
+
+        // Restore the project
+        await db.collection('projects').updateOne({
+          _id: ObjectId(template.project._id)
+        }, {
+          $set: _.omit(originalProject, '_id')
+        });
+
+        app.formio.formio.cache.deleteProjectCache(template.project);
+
+        // Delete created stage
+        await request(app)
+          .delete(`/project/${template.stage._id}`)
+          .set('x-jwt-token', template.formio.owner.token);
+
+        delete template.stage;
+
+        // Delete created teams
+        await request(app)
+          .delete(`/team/${template.team1._id}`)
+          .set('x-jwt-token', template.formio.owner.token);
+
+        delete template.team1;
+
+        await request(app)
+          .delete(`/team/${template.team2._id}`)
+          .set('x-jwt-token', template.formio.owner.token);
+
+        delete template.team2;
+
+        // Delete created form
+        await request(app)
+          .delete(`/project/${template.project._id}/form/${template.forms[testForm.name]._id}`)
+          .set('x-jwt-token', template.formio.owner.token);
+
+        delete template.forms[testForm.name];
+      });
+    });
+
     describe('Basic Plan', function() {
       before(function(done) {
         request(app)
@@ -2140,7 +2961,97 @@ module.exports = function(app, template, hook) {
             assert.equal(emailAction, -1);
             done();
           })
-      })
+      });
+
+      // Only applicable for hosted env with enabled restrictions
+      if (config.formio.hosted) {
+        it('Project template importing should return error if exceeding plan limit', function(done){
+          const prevEnableRestrictions = config.enableRestrictions;
+          config.enableRestrictions = true;
+          const importTemplate = {
+            template: {
+              version: '2.0.0',
+              forms: {},
+              resources: {
+                '01': {
+                  title: '01',
+                  type: 'resource',
+                  name: '01',
+                  path: '01',
+                  components: []
+                },
+                '02': {
+                  title: '02',
+                  type: 'resource',
+                  name: '02',
+                  path: '02',
+                  components: []
+                },
+                '03': {
+                  title: '03',
+                  type: 'resource',
+                  name: '03',
+                  path: '03',
+                  components: []
+                }
+              },
+              excludeAccess: true
+            }
+          };
+
+          request(app)
+            .post('/project/' + template.project._id + '/import')
+            .set('x-jwt-token', template.formio.owner.token)
+            .send(importTemplate)
+            .expect('Content-Type', /text\/html/)
+            .expect(400)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              assert.equal(res.text, 'Limit exceeded. Upgrade your plan.');
+
+              config.enableRestrictions = prevEnableRestrictions;
+              done();
+            });
+        });
+
+        it('Project template importing should detect new forms and import template successfully', function(done){
+          const prevEnableRestrictions = config.enableRestrictions;
+          config.enableRestrictions = true;
+          const resourceKeyFromTemplate = Object.keys(template.resources)[1];
+          const resourceKeyFromTemplate2 = Object.keys(template.resources)[2];
+          const resourceKeyFromTemplate3 = Object.keys(template.resources)[3];
+          const importTemplate = {
+            template: {
+              version: '2.0.0',
+              forms: {},
+              resources: {
+                [resourceKeyFromTemplate]: template.resources[resourceKeyFromTemplate],
+                [resourceKeyFromTemplate2]: template.resources[resourceKeyFromTemplate2],
+                [resourceKeyFromTemplate3]: template.resources[resourceKeyFromTemplate3]
+              },
+              excludeAccess: true
+            }
+          };
+
+          request(app)
+            .post('/project/' + template.project._id + '/import')
+            .set('x-jwt-token', template.formio.owner.token)
+            .send(importTemplate)
+            .expect('Content-Type', /text/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              config.enableRestrictions = prevEnableRestrictions;
+              done();
+            });
+        });
+      }
 
       after(function(done) {
         deleteProjects(tempProjects, done);
@@ -3241,9 +4152,155 @@ module.exports = function(app, template, hook) {
             const emailAction = _.findIndex(res.body, action=> action.name === 'email')
             assert.notEqual(emailAction, -1);
             done();
-          })
+          });
+      });
 
-      })
+      it('Create tenant', function(done) {
+        const tenantTemplate = {
+          "title": "tenantTemplateTest",
+          "project": template.project._id,
+          "type": "tenant",
+          "copyFromProject": template.project._id
+        };
+
+        request(app)
+          .post('/project')
+          .send(tenantTemplate)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            const response = res.body;
+            assert.equal(response.type, 'tenant');
+            assert.equal(response.project, template.project._id);
+            template.tenant = response;
+            done();
+          });
+      });
+
+      it('Should not be able to update CORS settings for tenant', function(done) {
+        const newSettings = {
+          cors: 'https://mysecuredomain.com,http://test-mysecuredomain.com',
+          allowConfig: false,
+          keys: [
+            {
+              name: 'Test Key',
+              key: '123testing123testing'
+            }
+          ],
+          email: {
+            smtp: {
+              host: 'example.com',
+              auth: {
+                user: 'test',
+                pass: 'test1234567890'
+              }
+            }
+          }
+        };
+        request(app)
+          .put(`/project/${  template.tenant._id}`)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            ...template.tenant,
+            settings: newSettings
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            const response = res.body;
+            assert.equal(response.hasOwnProperty('settings'), true);
+            assert.deepEqual(response.settings, _.omit(newSettings, ['cors']));
+            not(response, ['__v', 'deleted', 'settings_encrypted']);
+          done();
+        });
+      });
+
+      if (portalSecret) {
+        it('Should create default forms and resources when creating remote stage', function(done) {
+          request(app)
+            .post('/project')
+            .set('x-jwt-token', template.formio.owner.token)
+            .send({
+              title: 'Project for connecting remote',
+              stageTitle: 'Live',
+              settings: {
+                cors: "*",
+                remoteSecret: portalSecret
+              }
+            })
+            .expect('Content-Type', /json/)
+            .expect(201)
+            .end(function(err, response) {
+              if (err) {
+                return done(err);
+              }
+
+              const project = response.body;
+
+              request(app)
+                .get(`/project/${project._id}/access/remote`)
+                .set('x-jwt-token', template.formio.owner.token)
+                .expect('Content-Type', /text/)
+                .expect(200)
+                .end(function(err, response) {
+                  if (err) {
+                    return done(err);
+                  }
+
+                  const remoteToken = response.text;
+                  assert.notEqual(remoteToken.length, 0);
+                  const remoteStage = {
+                    name: chance.word(),
+                    owner: project.owner,
+                    project: project._id,
+                    settings: {
+                      cors: '*',
+                      remoteSecret: portalSecret
+                    },
+                    title: 'remote stage',
+                    type: 'stage'
+                  }
+
+                  request(app)
+                    .post('/project/')
+                    .set('x-remote-token', remoteToken)
+                    .send(remoteStage)
+                    .expect('Content-Type', /json/)
+                    .expect(201)
+                    .end(function(err, response) {
+                      if (err) {
+                        return done(err);
+                      }
+
+                      const remoteProject = response.body;
+
+                      request(app)
+                        .get(`/project/${remoteProject._id}/form`)
+                        .set('x-remote-token', remoteToken)
+                        .expect('Content-Type', /json/)
+                        .expect(200)
+                        .end(function(err, response) {
+                          if (err) {
+                            return done(err);
+                          }
+
+                          const forms = response.body;
+                          const defaultFormsLength = 5;
+
+                          assert.equal(forms.length, defaultFormsLength);
+                          done();
+                        })
+                    })
+                });
+            });
+        });
+      }
     });
 
     describe('Upgrading Plans', function() {
@@ -3401,6 +4458,55 @@ module.exports = function(app, template, hook) {
             });
           });
       });
+
+      if (!docker)
+      it('Should upgrade project plan to commercial for archived project', async () => {
+        // Set project plan to archived
+        const projectUpdateRes = await request(app)
+          .put(`/project/${template.project._id}`)
+          .send({
+            plan: 'archived'
+          })
+          .set('x-jwt-token', template.formio.owner.token);
+
+        const updatedProject = projectUpdateRes.body;
+
+        assert.equal(updatedProject.plan, 'archived');
+
+        // Upgrade project plan to commercial
+        await request(app)
+          .post(`/project/${template.project._id}/upgrade`)
+          .send({ plan: 'commercial' })
+          .set('x-jwt-token', template.formio.owner.token);
+
+        // Check the plan has changed
+        const projectRes = await request(app)
+          .get(`/project/${template.project._id}`)
+          .set('x-jwt-token', template.formio.owner.token);
+
+        const project = projectRes.body;
+
+        assert.equal(project.plan, 'commercial');
+      });
+
+      if (!docker)
+      it('Should downgrade project plan to basic', async () => {
+        // Downgrade project plan to basic
+        await request(app)
+          .post(`/project/${template.project._id}/upgrade`)
+          .send({ plan: 'basic' })
+          .set('x-jwt-token', template.formio.owner.token);
+
+        // Check the plan has changed
+        const projectRes = await request(app)
+          .get(`/project/${template.project._id}`)
+          .set('x-jwt-token', template.formio.owner.token);
+
+        const project = projectRes.body;
+
+        assert.equal(project.plan, 'basic');
+      });
+
 /*
       if (!docker)
       it('Upgrading to independent with a registered payment method should work', function(done) {

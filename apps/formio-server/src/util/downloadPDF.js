@@ -2,13 +2,9 @@
 const _ = require('lodash');
 const Promise = require('bluebird');
 const fetch = require('formio/src/util/fetch');
-const {getLicenseKey} = require('./utilization');
-const {getPDFUrls} = require('./pdf');
 const util = require('./util');
 const processChangeLogData = require('./processChangeLogData');
 
-const BoxSDK = require('box-node-sdk');
-const PDF_SERVER = process.env.PDF_SERVER || process.env.FORMIO_FILES_SERVER;
 module.exports = (formioServer) => {
   const formio = formioServer.formio;
   const encrypt = require('./encrypt')(formioServer);
@@ -60,62 +56,21 @@ module.exports = (formioServer) => {
       await new Promise((resolve) => encrypt.encryptDecrypt(req, submission, 'decrypt', resolve));
     }
 
-    const pdfUrls = getPDFUrls(req.currentProject);
-
-    if (req.query.from) {
-      pdfUrls.local = req.query.from;
-      delete req.query.from;
-    }
-
     if (req.changelog && req.changelog.length > 0) {
       processChangeLogData(req.changelog, form, submission);
     }
 
-    // Create the headers object
-    const headers = {
-      'x-license-key': getLicenseKey(req),
-      'content-type': 'application/json',
-      'x-host': util.baseUrl(formio, req)
-    };
+    req.headers['content-type'] = 'application/json';
+    req.headers['x-host'] = util.baseUrl(formio, req);
 
-    // Pass along the auth token to files server
-    if (req.token) {
-      if (req.token.user && req.token.form) {
-        headers['x-jwt-token'] = formio.auth.getToken({
-          form: req.token.form,
-          user: req.token.user,
-          project: req.token.project,
-          jti: req.token.jti
-        });
-      }
-      else {
-        headers['x-jwt-token'] = formio.auth.getToken(_.omit(req.token, 'allow'));
-      }
-    }
-
-    const pdfSrc = _.get(form, 'settings.pdf.src');
-    let url = null;
-
-    // If they do not provide any PDF_SERVER definition, then we will use the project configuration.
-    if (!PDF_SERVER && pdfSrc && !req.query.project && !req.params.fileId) {
-      // If settings.pdf.src is available, and no custom settings were supplied, use it
-      url = `${pdfSrc}/download`;
-
-      // Use pdf as default format
-      req.query.format = req.query.format || 'pdf';
-    }
-    else {
-      // Otherwise, fall back to old behavior
-      const pdfProject = req.query.project || project._id.toString();
-      const fileId = req.params.fileId || 'pdf';
-      url = `${pdfUrls.local}/pdf/${pdfProject}/file/${fileId}/download`;
-    }
-
+    req.query.format = req.query.format || 'pdf';
+    const pdfProject = req.query.project || project._id.toString();
+    const url = `${req.pdfServer}/pdf/${pdfProject}/download`;
     const globalPdfSettings = _.get(project, 'settings.pdf', {});
     const qs = new URLSearchParams({...req.query, project: req.params.projectId || req.currentProject._id.toString()});
     return fetch(`${url}?${qs}`, {
       method: 'POST',
-      headers: headers,
+      headers: req.headers,
       rejectUnauthorized: false,
       body: JSON.stringify({
         form,
