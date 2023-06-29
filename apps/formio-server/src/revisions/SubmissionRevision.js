@@ -26,7 +26,17 @@ module.exports = class FormRevision extends Revision {
     }
 
     const loadItemData = loadItem && loadItem.data ? loadItem.data : {};
+    _.forIn(loadItemData, (value, key) => {
+      if (value instanceof Date) {
+        loadItemData[key] = value.toISOString();
+      }
+    });
     const reqDate = req.body.data;
+    _.forIn(reqDate, (value, key) => {
+      if (value instanceof Date) {
+        reqDate[key] = value.toISOString();
+      }
+    });
     try {
       const patch = jsonPatch.compare(loadItemData, reqDate)
       .map((operation) => {
