@@ -172,8 +172,8 @@ const updatePath = (path, formComponents) => {
 };
 
 const createSubmissionRow = (entityValue, previousValue, fieldPath, changes, revision, form) => {
-  entityValue = entityValue===false || entityValue? entityValue : ' ';
-  previousValue = previousValue===false || previousValue? previousValue : ' ';
+  entityValue = entityValue === false || entityValue === 0 || entityValue ? entityValue : '';
+  previousValue = previousValue === false || previousValue === 0 || previousValue ? previousValue : '';
 
   Object.assign( changes, {
   [`revisionId${rowNumber}`]: revision._id,

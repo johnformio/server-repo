@@ -1003,8 +1003,9 @@ module.exports = (app, template, hook) => {
    // const helper = new template.Helper(template.formio.owner);
     let form;
     let formWithInitiallyDisabledRevision;
+    let submissionRevisionChangelogForm;
     let submission;
-    let submissionWithInitiallyDisabledRevision;
+    let submissionWithInitiallyDisabledRevision; 
     const data = {
       fname: 'joe',
       lname: 'test'
@@ -1144,11 +1145,75 @@ module.exports = (app, template, hook) => {
             type: 'textfield'
           }
         ])
+        .form('submissionRevisionChangelogForm', [ 
+          { 
+            input: true, 
+            tableView: false, 
+            inputFormat: 'plain',
+            label: 'number1', 
+            key: 'number1', 
+            requireDecimal: false,
+            placeholder: '', 
+            prefix: '', 
+            suffix: '', 
+            multiple: false, 
+            defaultValue: '', 
+            protected: false, 
+            unique: false, 
+            persistent: true, 
+            validate: { 
+              required: true, 
+              minLength: '', 
+              maxLength: '', 
+              pattern: '', 
+              custom: '', 
+              customPrivate: false 
+            }, 
+            conditional: { 
+              show: '', 
+              when: null, 
+              eq: '' 
+            }, 
+            type: 'number', 
+          },  
+          { 
+            input: true, 
+            tableView: false, 
+            inputFormat: 'plain',
+            label: 'number2', 
+            key: 'number2', 
+            requireDecimal: false,
+            placeholder: '', 
+            prefix: '', 
+            suffix: '', 
+            multiple: false, 
+            defaultValue: '', 
+            protected: false, 
+            unique: false, 
+            persistent: true, 
+            validate: { 
+              required: true, 
+              minLength: '', 
+              maxLength: '', 
+              pattern: '', 
+              custom: '', 
+              customPrivate: false 
+            }, 
+            conditional: { 
+              show: '', 
+              when: null, 
+              eq: '' 
+            }, 
+            type: 'number', 
+          } 
+        ]) 
         .execute(function() {
           form = helper.getForm('submissionRevisionForm');
           formWithInitiallyDisabledRevision = helper.getForm('submissionRevisionUpdateForm');
+          submissionRevisionChangelogForm = helper.getForm('submissionRevisionChangelogForm');
           assert(typeof form === 'object');
           assert(typeof formWithInitiallyDisabledRevision === 'object');
+          assert(typeof submissionRevisionChangelogForm === 'object');
           done();
         });
     });
@@ -1420,5 +1485,51 @@ module.exports = (app, template, hook) => {
       done();
     });
   });
-});
+   
+  it('0 is shown in the Submission Revisions Changelog', done => { 
+    submissionRevisionChangelogForm.submissionRevisions = 'true';
+    submissionRevisionChangelogForm.components.push();
+    helper.updateForm(submissionRevisionChangelogForm, (err, result) => {
+      assert.equal(result.submissionRevisions, 'true');
+      const data = {
+        number1: 0,
+        number2: 25,
+      }
+      helper.createSubmission('submissionRevisionChangelogForm', {
+        data
+      }, (err, result) => {
+        if (err) {
+          done(err);
+        }
+        submission = result;
+        assert.deepEqual(submission.data, data);
+        assert.deepEqual(submission.containRevisions, true);
+        submission.data.number1 = 80;
+        submission.data.number2 = 0;
+        helper.updateSubmission(submission,
+        (err, res) => {
+          if (err) {
+            done(err);
+          }
+          submission = res;
+          helper.getSubmissionRevisions(submissionRevisionChangelogForm, submission,
+          (err, revisions) => {
+            if (err) {
+              done(err);
+            }
+            helper.getSubmissionRevisionChangeLog(submissionRevisionChangelogForm, submission, revisions[1]._id,
+              (err, results) => {
+                if (err) { 
+                  done(err); 
+                }
+                assert.equal(results.data.number2, 0);
+                assert.equal(results.metadata.previousData.number1, 0);
+                done();
+              });
+          });
+        });
+      });
+    });
+  }); 
+}); 
 };
