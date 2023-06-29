@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased: 8.2.0-rc.2]
 ### Changed
  - [Snyk] Security upgrade box-node-sdk from 2.10.0 to 3.0.0
+
+### Fixed
+ - FIO-6613: fixed an issue where 0 value is not shown in the Submission change log
+ - FIO-6574: fixed an issue where datetime component shows up in Submission change log.
    
 ## 8.2.0-rc.1
 ### Changed
