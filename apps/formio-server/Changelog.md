@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased: 8.2.0-rc.2]
 ### Changed
  - [Snyk] Security upgrade box-node-sdk from 2.10.0 to 3.0.0
+ - FIO-6840: update email tokens query
 
 ### Fixed
  - FIO-6613: fixed an issue where 0 value is not shown in the Submission change log
