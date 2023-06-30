@@ -191,19 +191,32 @@ module.exports = app => (mail, req, res, params, setActionItemMessage, cb) => {
         };
 
         // Set the username field to the email address this is getting sent to.
-        query[ssoToken.field] = {
-          $regex: new RegExp(`^${formio.util.escapeRegExp(mail.to)}$`),
-          $options: 'i'
-        };
+        query[ssoToken.field] = mail.to;
 
         // Find the submission.
         formio.resources.submission.model
           .findOne(query)
+          .collation({locale: 'en', strength: 2})
           .lean()
           .select('_id, form')
           .exec(function(err, submission) {
-            ssoToken.submission = (err || !submission) ? null : submission;
-            nextToken();
+            if (err) {
+              // Presume that the error comes from our database not supporting case-insensitive collation indexing/querying
+              // (e.g. DocumentDB) and retry as a case-insensitive regex search
+              // TODO: this could be factored to a standalone util function
+              query[ssoToken.field] = {
+                $regex: new RegExp(`^${formio.util.escapeRegExp(mail.to)}$`),
+                $options: 'i'
+              };
+              formio.resources.model.findOne(query).lean().exec(function(err, submission) {
+                ssoToken.submission = (err || !submission) ? null : submission;
+                nextToken();
+              });
+            }
+            else {
+              ssoToken.submission = !submission ? null : submission;
+              nextToken();
+            }
           });
       });
     }, () => {

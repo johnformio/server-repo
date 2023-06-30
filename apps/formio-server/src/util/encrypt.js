@@ -1,7 +1,7 @@
 'use strict';
 
-const keygenerator = require('keygenerator');
 const _ = require('lodash');
+const keygenerator = require('keygenerator');
 const eachSeries = require('async/eachSeries');
 const util = require('./util');
 
