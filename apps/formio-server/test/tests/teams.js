@@ -1344,6 +1344,106 @@ module.exports = function(app, template, hook) {
             done();
           });
       });
+
+      it("Should register user with special characters in email", done => {
+        const tempPassword = chance.word({ length: 8 });
+        const specialSymbols = "+-._~!$&'*=";
+        const email = `test${specialSymbols}${chance.email()}`;
+
+        template.formio.user4 = {
+          data: {
+            name: chance.word({ length: 10 }),
+            email: email,
+          },
+        };
+
+        getVerificationToken()
+          .then((token) => {
+            template.formio.user4.token = token;
+            return verifyUser(template.formio.user4, done);
+          })
+          .then((user) => {
+            template.formio.user4 = _.cloneDeep(user);
+            done();
+          });
+
+        request(app)
+          .post(
+            "/project/" +
+              template.formio.project._id +
+              "/form/" +
+              template.formio.formRegister._id +
+              "/submission"
+          )
+          .send(template.formio.user4)
+          .expect(201)
+          .expect("Content-Type", /json/)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            const user = res.body;
+
+            assert.ok(user._id);
+            assert.ok(user.data);
+            assert.equal(user.data.email, email);
+
+            template.formio.user4 = user;
+            template.formio.user4.data.password = tempPassword;
+          });
+      });
+
+      it("Should allow user with special characters in email to be added to a team", done => {
+        request(app)
+          .post("/team/" + template.team1._id + "/member")
+          .set("x-jwt-token", template.formio.teamAdmin.token)
+          .send({
+            data: {
+              userId: template.formio.user4._id,
+              email: template.formio.user4.data.email,
+              admin: false,
+            },
+          })
+          .expect("Content-Type", /json/)
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            const submission = res.body;
+
+            assert.ok(submission._id);
+            assert.ok(submission.data);
+            assert.equal(submission.data.email, template.formio.user4.data.email);
+            assert.equal(submission.data.team._id, template.team1._id);
+
+            // Store the JWT for future API calls.
+            template.formio.teamAdmin.token = res.headers["x-jwt-token"];
+
+            done();
+          });
+      });
+
+      it("Should return the teams of the user with special characters in email", done => {
+        request(app)
+          .get("/team/all")
+          .set("x-jwt-token", template.formio.user4.token)
+          .expect("Content-Type", /json/)
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            const userTeams = res.body;
+            assert.equal(userTeams.length, 1);
+            assert.equal(userTeams[0]._id, template.team1._id);
+
+            done();
+          });
+      });
     });
 
     describe('Multi Team Tests', function() {

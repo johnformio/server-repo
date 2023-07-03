@@ -324,17 +324,26 @@ const Teams = {
       project: memberResource.project,
       form: memberResource._id,
       deleted: {$eq: null},
-      'data.email': {
-        $regex: new RegExp(email),
-        $options: 'i'
-      }
     };
 
     if (admin) {
       query['data.admin'] = true;
     }
 
-    const userData = await Teams.submissionModel().find(query);
+    let userData;
+
+    try {
+      // Use a case-insensitive collation query
+      userData = await Teams.submissionModel().find(query).collation({locale: 'en', strength: 2}).where('data.email').equals(email);
+    }
+    catch (error) {
+      // Fallback to regex if the collation query fails
+      query['data.email'] = {
+        $regex: new RegExp(_.escapeRegExp(email), 'i'),
+      };
+
+      userData = await Teams.submissionModel().find(query);
+    }
 
     const teamsIds= userData.reduce((idList, currentItem)=>{
       if (currentItem.data && currentItem.data.team && currentItem.data.team._id) {
