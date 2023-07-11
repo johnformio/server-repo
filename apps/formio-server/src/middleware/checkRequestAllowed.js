@@ -26,8 +26,10 @@ module.exports = (formio) => {
       return next();
     }
 
-    // Don't allow any POST, PUT, PATCH or DELETE requests for an archived project
-    if (primaryProject.plan === 'archived' && req.method !== 'GET' && !isSuperAdmin(req)) {
+    // Don't allow any POST, PUT, PATCH or DELETE requests for an archived project, except for requests to delete the project
+    if (primaryProject.plan === 'archived' && req.method !== 'GET' && !isSuperAdmin(req)
+     && !(req.method === 'DELETE' && ( req.originalUrl === '/' || /^\/project\/[a-f0-9]{24}$/.test(req.originalUrl)) && req.currentProject.type !== 'stage')
+     ) {
       debug(`Blocking ${req.method} : ${req.originalUrl} for archived project ${primaryProject._id}`);
       return res.status(400).send(REQUEST_FOR_ARCHIVED_PROJECT_NOT_ALLOWED_ERROR);
     }

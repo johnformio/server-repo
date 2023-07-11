@@ -3053,6 +3053,19 @@ module.exports = function(app, template, hook) {
         });
       }
 
+      it('Should be able to delete archived projects', function(done) {
+        tempProjects[0].plan = 'archived';
+        request(app)
+        .delete('/project/' + tempProjects[0]._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect(200)
+          .end(function(err, res){
+            if (err) {
+              return done(err);
+            }
+            done();
+          })
+      });
       after(function(done) {
         deleteProjects(tempProjects, done);
       });
