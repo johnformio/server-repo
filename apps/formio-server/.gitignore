@@ -15,4 +15,4 @@ build
 dist
 portal
 
-yarn.lock
+package-lock.json
