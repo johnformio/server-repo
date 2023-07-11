@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-6613: fixed an issue where 0 value is not shown in the Submission change log
  - FIO-6574: fixed an issue where datetime component shows up in Submission change log.
  - FIO-6857: Fixes team invitation not appearing for users which emails contain special characters
+ - FIO-6649: Fixes an issue with SSO users being unable to create teams with Only_Primary_Write_Access enabled
  - Bump json-schema and jsprim in /test/licenseShim
    
 ## 8.2.0-rc.1
