@@ -1,7 +1,10 @@
 'use strict';
 
+const debug = require('debug')('formio:pdfproxy');
+
 const rewriteDownload = (req, res, next) => {
   req.url = `/pdf-proxy/${req.url}`;
+  debug('Rewrote URL to ', req.url);
   next();
 };
 

@@ -6,6 +6,7 @@ const _ = require('lodash');
 const config = require('../../../config');
 const loadProjectContexts = require('../loadProjectContexts');
 const download = require('../download');
+const debug = require('debug')('formio:pdfproxy');
 
 const PDF_SERVER = process.env.PDF_SERVER || process.env.FORMIO_FILES_SERVER;
 
@@ -16,7 +17,9 @@ module.exports = (formioServer) => {
   router.use(express.raw({type: '*/*', limit: '50mb'}));
 
   router.use((req, res, next) => {
+    debug('Using the PDF proxy');
     req.pdfServer = PDF_SERVER;
+    debug('PDF Server set to ', req.pdfServer);
     const params = formio.util.getUrlParams(req.url);
     if (params.pdf) {
       req.projectId = params.pdf;
