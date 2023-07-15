@@ -87,7 +87,12 @@ module.exports = (formioServer) => {
     const resultUrl = `${req.pdfServer}${req.path}`;
     try {
       if (req.method !== 'HEAD' && req.method !== 'GET') {
-        options.body = req.body;
+        if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
+          options.body = JSON.stringify(req.body);
+        }
+        else {
+          options.body = Buffer.isBuffer(req.body) ? req.body : JSON.stringify(req.body);
+        }
       }
       const response = await fetch(resultUrl, options);
       const headers = Object.fromEntries(response.headers.entries());
