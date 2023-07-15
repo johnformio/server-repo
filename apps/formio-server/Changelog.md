@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-6649: Fixes an issue with SSO users being unable to create teams with Only_Primary_Write_Access enabled
  - FIO-6611: Added ability to delete archived projects in SaaS
  - Bump json-schema and jsprim in /test/licenseShim
+ - FIO-7095: JSON POST requests from PDF proxy now stringify the body
    
 ## 8.2.0-rc.1
 ### Changed
