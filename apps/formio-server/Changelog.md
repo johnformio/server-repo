@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 8.2.0-rc.2]
+## 8.2.0-rc.2
+### Changed
+ - Updated formio-app@8.2.0-rc.2
+ - Updated formiojs@4.16.0-rc.5
+ - Updated formio@3.2.0-rc.2
+ - Updated formio-workers@1.18.0-rc.2
+
 ### Changed
  - [Snyk] Security upgrade box-node-sdk from 2.10.0 to 3.0.0
  - FIO-6840: update email tokens query
