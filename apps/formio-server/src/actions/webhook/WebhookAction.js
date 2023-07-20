@@ -449,14 +449,14 @@ module.exports = (router) => {
 
         // Use either the method specified in settings or the request method.
         const reqMethod = (settings.method || req.method).toLowerCase();
-          if (reqMethod === 'delete') {
+        if (reqMethod === 'delete') {
           const parsedUrl = new URL(url);
           const query = parsedUrl.search;
 
           if (query) {
-          const queryParams = Object.fromEntries(new URLSearchParams(query));
-          req.params = {...req.params, ...queryParams};
-          url = url.replace(query, '');
+            const queryParams = Object.fromEntries(new URLSearchParams(query));
+            req.params = {...req.params, ...queryParams};
+            url = url.replace(query, '');
           }
         }
 
