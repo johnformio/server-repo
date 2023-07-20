@@ -1,5 +1,6 @@
 'use strict';
-const AWS = require('aws-sdk');
+const AWS = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 
 const getAWS = function(settings = {}) {
   const config = {};
@@ -34,8 +35,6 @@ const getUrl = function(options = {}) {
           Bucket: options.settings.bucket,
           Key: options.file.path,
           ContentType: options.file.type,
-          Expires: options.file.expiresin,
-          ACL: options.settings.acl || 'private'
         };
 
         switch (options.settings.encryption) {
@@ -50,8 +49,9 @@ const getUrl = function(options = {}) {
         if ((options.settings.encryption === 'kms') && options.settings.kmsKey) {
           putConfig.SSEKMSKeyId = options.settings.kmsKey;
         }
-
-        aws.getSignedUrl('putObject', putConfig, (err, result) => err ? reject(err) : resolve(result));
+        getSignedUrl(aws, new AWS.PutObjectCommand(putConfig))
+        .then((result) => resolve(result))
+        .catch((err) => reject(err));
       }
       else {
         // Use the legacy manually signed upload url.
@@ -59,11 +59,13 @@ const getUrl = function(options = {}) {
       }
     }
     else {
-      aws.getSignedUrl('getObject', {
+      const getObjectCommand = new AWS.GetObjectCommand({
         Bucket: options.bucket,
         Key: options.key,
-        Expires: +options.settings.expiration,
-      }, (err, result) => err ? reject(err) : resolve(result));
+      });
+      getSignedUrl(aws, getObjectCommand)
+      .then((result) => resolve(result))
+      .catch((err) => reject(err));
     }
   });
 };
