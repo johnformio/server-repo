@@ -447,13 +447,17 @@ module.exports = (router) => {
           }
         });
 
-        const parsedUrl = new URL(url);
-        const query = parsedUrl.search;
+        // Use either the method specified in settings or the request method.
+        const reqMethod = (settings.method || req.method).toLowerCase();
+          if (reqMethod === 'delete') {
+          const parsedUrl = new URL(url);
+          const query = parsedUrl.search;
 
-        if (query) {
-         const queryParams = Object.fromEntries(new URLSearchParams(query));
-         req.params = {...req.params, ...queryParams};
-         url = url.replace(query, '');
+          if (query) {
+          const queryParams = Object.fromEntries(new URLSearchParams(query));
+          req.params = {...req.params, ...queryParams};
+          url = url.replace(query, '');
+          }
         }
 
         // Check for infinite loop webhook action
@@ -511,8 +515,6 @@ module.exports = (router) => {
         }
         setActionItemMessage('Transform payload done');
 
-        // Use either the method specified in settings or the request method.
-        const reqMethod = (settings.method || req.method).toLowerCase();
         const options = {
           method: reqMethod,
           rejectUnauthorized: false, // allow self-signed certs
