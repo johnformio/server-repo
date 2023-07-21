@@ -1,7 +1,5 @@
 'use strict';
 
-/* eslint camelcase: 0 */
-const crypto = require('crypto');
 const _ = require('lodash');
 const fetch = require('formio/src/util/fetch');
 const util = require('formio/src/util/util');

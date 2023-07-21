@@ -5,7 +5,6 @@
 /* eslint-disable no-case-declarations */
 
 const _ = require('lodash');
-const config = require('../../config');
 const {
   utilization,
   utilizationSync,

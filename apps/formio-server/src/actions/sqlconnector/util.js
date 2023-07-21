@@ -56,9 +56,6 @@ module.exports = (router) => {
     debug.getExpressRoute('type:');
     debug.getExpressRoute(type);
 
-    function isMysql() {
-      return type === 'mysql';
-    }
     function isPostgresql() {
       return type === 'postgres';
     }
