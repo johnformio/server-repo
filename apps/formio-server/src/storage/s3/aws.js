@@ -1,6 +1,6 @@
 'use strict';
 const AWS = require('@aws-sdk/client-s3');
-const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+const {getSignedUrl} = require("@aws-sdk/s3-request-presigner");
 
 const getAWS = function(settings = {}) {
   const config = {};
