@@ -15,13 +15,10 @@ if (process.env.DOCKER_SECRETS || process.env.DOCKER_SECRET) {
     if (fs.existsSync(secretDir)) {
       const files = fs.readdirSync(secretDir);
       if (files && files.length) {
-        files.forEach(file => {
+        files.forEach((file) => {
           const fullPath = path.join(secretDir, file);
           const key = file;
-          const data = fs
-            .readFileSync(fullPath, "utf8")
-            .toString()
-            .trim();
+          const data = fs.readFileSync(fullPath, 'utf8').toString().trim();
 
           secrets[key] = data;
         });

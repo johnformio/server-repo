@@ -41,29 +41,36 @@ jobs:
     docker:
       - image: cimg/node:lts
     steps:
-    - checkout
-    - run:
-        name: Install awscli
-        command: |
-          sudo apt-get update
-          sudo apt install -y awscli
-    - attach_workspace:
-        at:
-          .
-    - run:
-        name: Download Portal
-        command: |
-          aws s3 cp s3://formio-app-releases/$(node -e "console.log(require('./package.json').portalVersion)").tgz portal.tgz
-          mkdir -p build/portal
-          tar -zxvf portal.tgz -C build/portal
-    - persist_to_workspace:
-        root: build
-        paths:
-        - portal
+      - checkout
+      - run:
+          name: Install awscli
+          command: |
+            sudo apt-get update
+            sudo apt install -y awscli
+      - attach_workspace:
+          at: .
+      - run:
+          name: Download Portal
+          command: |
+            aws s3 cp s3://formio-app-releases/$(node -e "console.log(require('./package.json').portalVersion)").tgz portal.tgz
+            mkdir -p build/portal
+            tar -zxvf portal.tgz -C build/portal
+      - persist_to_workspace:
+          root: build
+          paths:
+            - portal
 
   test:
     environment:
       MONGO: "mongodb://localhost:27017/formio"
+      FILTER_ACCESS: "false"
+      TEST_SUITE: 1
+      PROTOCOL: "http"
+      PROJECT_PLAN: "trial"
+      DROPBOX_CLIENTID: "client123"
+      DROPBOX_CLIENTSECRET: "clientsecret123"
+      PORTAL_ENABLED: "false"
+      JWT_SECRET: "123secret123"
     docker:
       - image: cimg/node:lts
       - image: circleci/mongo:4.4
@@ -94,8 +101,7 @@ jobs:
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
       - attach_workspace:
-          at:
-            build
+          at: build
       - run:
           name: Setup hostnames
           command: |
@@ -149,8 +155,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at:
-            build
+          at: build
       - run: git clone --depth 1 git@github.com:formio/formio-enterprise.git
       - run: rm -rf formio-enterprise/portal
       - run: cp -r build/* formio-enterprise/
