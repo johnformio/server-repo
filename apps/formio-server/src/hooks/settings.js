@@ -65,6 +65,9 @@ module.exports = function(app) {
         if (req.method === 'POST' && alias.match(/\/validate$/)) {
           return alias.replace(/\/validate$/, '');
         }
+        else if (req.url.includes('/pdf-proxy')) {
+          return false;
+        }
         else {
           return alias;
         }
@@ -286,6 +289,10 @@ module.exports = function(app) {
           req.url === '/'
           && (req.hasOwnProperty('projectId') === false || req.projectId === undefined || req.projectId === '')
         ) {
+          return true;
+        }
+
+        if (req.url.includes('/pdf-proxy')) {
           return true;
         }
 

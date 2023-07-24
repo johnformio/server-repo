@@ -200,6 +200,7 @@ config.vpat = Boolean(getConfig('VPAT', false));
 config.twoFactorAuthAppName = getConfig('TWO_FACTOR_AUTHENTICATION_APP_NAME', 'Form.io');
 config.licenseServer = getConfig('LICENSE_SERVER', 'https://license.form.io');
 config.formio.defaultEmailSource= getConfig('DEFAULT_EMAIL_SOURCE', 'no-reply@example.com');
+config.pdfServer = getConfig('PDF_SERVER') || getConfig('FORMIO_FILES_SERVER');
 config.pdfproject = getConfig('FORMIO_PDF_PROJECT', 'https://pdf.form.io');
 config.pdfprojectApiKey = getConfig('FORMIO_PDF_APIKEY');
 
