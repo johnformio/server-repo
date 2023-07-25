@@ -264,8 +264,11 @@ module.exports = function(app) {
         if (req.url.indexOf(`/project/${req.projectId}/manage`) === 0) {
           return true;
         }
+        if (req.url.includes('/pdf-proxy')) {
+          return true;
+        }
 
-       if (req.headers['x-jwt-token'] && req.user) {
+        if (req.headers['x-jwt-token'] && req.user) {
           const whitelist2fa = ['/2fa/generate', '/2fa/represent', '/2fa/turn-on', '/2fa/turn-off'];
           const url = req.url.split('?')[0];
           const is2fa = _.some(whitelist2fa, (path) => {
@@ -279,7 +282,7 @@ module.exports = function(app) {
           if (is2fa) {
             return true;
           }
-       }
+        }
 
         if (req.method !== 'GET') {
           return false;
@@ -289,10 +292,6 @@ module.exports = function(app) {
           req.url === '/'
           && (req.hasOwnProperty('projectId') === false || req.projectId === undefined || req.projectId === '')
         ) {
-          return true;
-        }
-
-        if (req.url.includes('/pdf-proxy')) {
           return true;
         }
 
