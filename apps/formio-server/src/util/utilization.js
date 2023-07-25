@@ -37,6 +37,8 @@ async function utilizationSync(app, cacheKey, body, action = '', clearCache, pro
 
 function utilization(app, cacheKey, body = {}, action = '', clear = false, sync = false, projectUrl = '') {
   const isHostedFMCheck = !!projectUrl && _.endsWith(cacheKey, 'formManager:hosted');
+  debug(`FM Check: ${isHostedFMCheck}`);
+  debug(`FM Project URL: ${projectUrl}`);
   if (!isHostedFMCheck && licenseConfig.remote) {
     return sync ? Promise.resolve(null) : null;
   }
@@ -150,6 +152,7 @@ function utilization(app, cacheKey, body = {}, action = '', clear = false, sync 
     responseCache.set(cacheKey, utilization, CACHE_TIME);
     return utilization;
   }).catch((err) => {
+    debug(`Utilization Error: ${err}`);
     // License server is down or request timeout exceed
     if (err.code === 'ECONNREFUSED' || err.type === 'aborted') {
       app.utilizationCheckFailed();
