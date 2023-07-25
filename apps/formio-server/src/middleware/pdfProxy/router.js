@@ -98,6 +98,9 @@ module.exports = (formioServer) => {
       if (req.method !== 'HEAD' && req.method !== 'GET') {
         options.body = req.body;
       }
+      if (req.url.includes('/download')) {
+        options.body = JSON.stringify(req.body);
+      }
       const response = await fetch(resultUrl, options);
       const headers = Object.fromEntries(response.headers.entries());
 
