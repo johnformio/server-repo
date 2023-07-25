@@ -772,15 +772,12 @@ module.exports = function(app, template, hook) {
               getSignedUrl(s3, new AWS.GetObjectCommand({
                 Bucket: file.bucket,
                 Key: file.key
-              }), function(err, url) {
-                if (err) {
-                  done(err);
-                }
+              })).then(url => {
                 if (!docker && !customer) {
                   assert.equal(res.body.url.replace(/Expires=[0-9]*/, ''), url.replace(/Expires=[0-9]*/, ''));
                 }
                 done();
-              });
+              }).catch(err => done(err));
             });
         });
 
@@ -1116,15 +1113,12 @@ module.exports = function(app, template, hook) {
               getSignedUrl(s3, new AWS.GetObjectCommand({
                 Bucket: file.bucket,
                 Key: file.key
-              }), function(err, url) {
-                if (err) {
-                  done(err);
-                }
+              })).then(url => {
                 if (!docker && !customer) {
                   assert.equal(res.body.url.replace(/Expires=[0-9]*/, ''), url.replace(/Expires=[0-9]*/, ''));
                 }
                 done();
-              });
+              }).catch(err => done(err));
             });
         });
 
