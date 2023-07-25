@@ -156,10 +156,12 @@ module.exports = function(app) {
       );
 
       try {
-        debug('Attempting to drop some indexes...');
-        await Promise.all(
-          indexesToDrop.map((indexName) => submissionModel.collection.dropIndex(indexName))
-        );
+        if (indexesToDrop.length > 0) {
+          debug('Attempting to drop some indexes...');
+          await Promise.all(
+            indexesToDrop.map((indexName) => submissionModel.collection.dropIndex(indexName))
+          );
+        }
       }
       catch (err) {
         // I don't think we want to fail the op if there's just a drop error

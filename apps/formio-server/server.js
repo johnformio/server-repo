@@ -432,6 +432,7 @@ module.exports = function(options) {
           public: project.public
         })};
         window.APP_BRANDING = true;
+        window.LICENSE_SERVER = '${config.licenseServer}';
       `;
     };
 

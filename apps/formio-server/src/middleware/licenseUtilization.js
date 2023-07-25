@@ -5,6 +5,7 @@
 /* eslint-disable no-case-declarations */
 
 const _ = require('lodash');
+const debug = require('debug')('formio:licenseUtilization');
 const {
   utilization,
   utilizationSync,
@@ -164,7 +165,8 @@ function middleware(app) {
           let fmEnabled = false;
 
           if (config.formio.hosted) {
-            const fmForHostedResult = await utilizationSync(app, `project:${req.projectId}:formManager:hosted`, null, null, false, `${req.protocol}://${req.get('host')}`);
+            const fmForHostedResult = await utilizationSync(app, `project:${req.projectId}:formManager:hosted`, null, null, false, `${req.protocol}://${req.get(':authority') || req.get('host')}`);
+            debug(`FM For Hosted Result: ${JSON.stringify(fmForHostedResult)}`);
             fmEnabled = !!(fmForHostedResult && fmForHostedResult.enabled);
           }
           else if (remote) {

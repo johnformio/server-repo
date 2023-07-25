@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-7060: Fixing the pdf-proxy to download and authenticate correctly
  - FIO-7103: fixed an issue where the webhook action would strip query parameters
  - FIO-7136, FIO-7137: Fixed issues with pdf-proxy authentication.
+ - FIO-6981: replace deprecated azure storage dependency
+ - FIO 7084: Synchronize indexes for submission collections
+ - FIO-7006: added authority header to resolve host and logs to check errors and result
 
 ## 8.2.0-rc.2
 ### Changed
