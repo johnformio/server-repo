@@ -1,5 +1,5 @@
 'use strict';
-const storage = require('azure-storage');
+const storage = require('@azure/storage-blob');
 const _ = require('lodash');
 const debug = {
   startup: require('debug')('formio:startup')
@@ -26,30 +26,22 @@ async function getUrl(options = {}) {
   startDate.setMinutes(startDate.getMinutes() - 100);
 
   // Get token
-  const perms = storage.BlobUtilities.SharedAccessPermissions;
-  const service = storage.createBlobService(options.settings.connectionString);
+  const perms = options.method === 'POST' ? storage.BlobSASPermissions.parse("c") : storage.BlobSASPermissions.parse("r");
+  const service = storage.BlobServiceClient.fromConnectionString(options.settings.connectionString);
   const directory = options.settings.startsWith || '';
   const fileName = _.get(options, 'file.name', options.fileName);
+  const blobName = _.trim(`${_.trim(directory, '/')}/${_.trim(fileName, '/')}`, '/');
 
-  const token = service.generateSharedAccessSignature(
-    options.settings.container,
-    _.trim(`${_.trim(directory, '/')}/${_.trim(fileName, '/')}`, '/'),
-    {
-      AccessPolicy: {
-        Permissions: (options.method === 'POST') ? perms.CREATE : perms.READ,
-        Start: startDate,
-        Expiry: expiryDate
-      }
-    }
-  );
+  const token = storage.generateBlobSASQueryParameters({
+    containerName: options.settings.container,
+    blobName: blobName,
+    permissions: perms,
+    startsOn: startDate,
+    expiresOn: expiryDate
+  }, service.credential).toString();
 
   // Get URL
-  const url = service.getUrl(
-    options.settings.container,
-    _.trim(`${_.trim(directory, '/')}/${_.trim(fileName, '/')}`, '/'),
-    token,
-    true
-  );
+  const url = `${service.url}${options.settings.container}/${blobName}?${token}`;
 
   if (!token || !url) {
     throw new Error('Invalid request.');
