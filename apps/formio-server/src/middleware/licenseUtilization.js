@@ -13,6 +13,7 @@ const {
   remoteUtilization
 } = require('../util/utilization');
 const getProjectContext = require('../util/getProjectContext');
+const config = require('../../config');
 
 function middleware(app) {
   return async (req, res, next) => {

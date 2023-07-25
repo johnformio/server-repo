@@ -5,21 +5,15 @@ const fetch = require('node-fetch');
 const _ = require('lodash');
 const config = require('../../../config');
 const loadProjectContexts = require('../loadProjectContexts');
-const download = require('../download');
-const debug = require('debug')('formio:pdfproxy');
-
-const PDF_SERVER = process.env.PDF_SERVER || process.env.FORMIO_FILES_SERVER;
+const proxy = require('./proxy');
 
 module.exports = (formioServer) => {
   const formio = formioServer.formio;
   const router = express.Router();
-
+  const downloadPDF = require('../../util/downloadPDF')(formioServer);
   router.use(express.raw({type: '*/*', limit: '50mb'}));
 
   router.use((req, res, next) => {
-    debug('Using the PDF proxy');
-    req.pdfServer = PDF_SERVER;
-    debug('PDF Server set to ', req.pdfServer);
     const params = formio.util.getUrlParams(req.url);
     if (params.pdf) {
       req.projectId = params.pdf;
@@ -33,20 +27,8 @@ module.exports = (formioServer) => {
         if (!req.currentProject) {
           return next('No project found.');
         }
-        // Set the license key header for authorization.
-        req.headers["x-license-key"] = process.env.LICENSE_KEY;
 
-        // It is a problem if the environment variable is not set in hosted. We do not want them to be able to point
-        // to arbitrary pdf servers if they are on our hosted environments.
-        if (!req.pdfServer && config.formio.hosted) {
-          return next('No PDF_SERVER environment configuration.');
-        }
-
-        // Always use the environment variable. If it does not exist, then we can try the project settings.
-
-        if (!req.pdfServer && req.currentProject.settings && req.currentProject.settings.pdfserver) {
-          req.pdfServer = req.currentProject.settings.pdfserver;
-        }
+        proxy.authenticate(req, req.currentProject);
         next();
       });
     }
@@ -72,7 +54,34 @@ module.exports = (formioServer) => {
     next();
   });
 
-  router.get('/project/:projectId/form/:formId/submission/:submissionId/download', download(formioServer));
+  router.get('/project/:projectId/form/:formId/submission/:submissionId/download', async (req, res) => {
+    const project = req.currentProject;
+    if (!project) {
+      return res.status(400).send('No project found.');
+    }
+    const formId = req.query.form || formio.cache.getCurrentFormId(req);
+    const form = await formio.cache.loadFormAsync(req, null, formId);
+    let submission;
+    if (req.subId) {
+      submission = req.query.submissionRevision? await formio.cache.loadSubmissionRevisionAsync(req)
+        : await formio.cache.loadCurrentSubmissionAsync(req);
+    }
+    else {
+      submission = req.body;
+    }
+    downloadPDF(req, project, form, submission)
+        .then(async (response) => {
+          if (response.ok) {
+            res.append('Content-Type', response.headers.get('content-type'));
+            res.append('Content-Length', response.headers.get('content-length'));
+            return response.body.pipe(res);
+          }
+          else {
+            return res.status(response.status).send(await response.text());
+          }
+        })
+        .catch((err) => res.status(400).send(err.message || err));
+  });
 
   router.use(async (req, res, next) => {
     const options = {
@@ -87,12 +96,7 @@ module.exports = (formioServer) => {
     const resultUrl = `${req.pdfServer}${req.path}`;
     try {
       if (req.method !== 'HEAD' && req.method !== 'GET') {
-        if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
-          options.body = JSON.stringify(req.body);
-        }
-        else {
-          options.body = Buffer.isBuffer(req.body) ? req.body : JSON.stringify(req.body);
-        }
+        options.body = req.body;
       }
       const response = await fetch(resultUrl, options);
       const headers = Object.fromEntries(response.headers.entries());
@@ -115,10 +119,6 @@ module.exports = (formioServer) => {
     catch (err) {
       return next(err);
     }
-  });
-
-  router.use((err, req, res) => {
-    require('cors')()(req, res, () => res.status(400).send(err.message));
   });
 
   return router;

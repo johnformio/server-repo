@@ -245,10 +245,6 @@ module.exports = function(options) {
     next();
   });
 
-  // Attach PDF proxy router and backward compatibility endpoints for it
-  debug.startup('Attaching middleware: PDF proxy');
-  require('./src/middleware/pdfProxy')(app);
-
   // Status response.
   debug.startup('Attaching middleware: Status');
   console.log(`Server version: ${packageJson.version}`);
@@ -355,6 +351,10 @@ module.exports = function(options) {
 
     debug.startup('Attaching middleware: Cache');
     app.formio.formio.cache = _.assign(app.formio.formio.cache, require('./src/cache/cache')(app.formio));
+
+      // Attach PDF proxy router and backward compatibility endpoints for it
+    debug.startup('Attaching middleware: PDF proxy');
+    require('./src/middleware/pdfProxy')(app);
 
     // The formio app sanity endpoint.
     debug.startup('Attaching middleware: Health Check');

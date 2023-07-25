@@ -737,6 +737,107 @@ module.exports = (app, template, hook) => {
           });
         });
 
+        describe('Webhook with query parameters in Request URL', () => {
+          before('Set up webhook listener', (done) => {
+            // create the webhook listener child process
+            webhookListener.setup(1337, '/player', 201, {records: [{playerId: '123456'}]})
+              .then((config) => {
+                console.log("Done with setup!");
+                testWebhookUrl = config.url;
+                done();
+              })
+          });
+  
+          afterEach('Clear in-memory webhook responses', () => {
+            webhookListener.clearReceivedHooks();
+          });
+  
+          after('Stop the webhook listener process', () => {
+            webhookListener.stop();
+          });
+  
+          it('The Webhook feature should not strip off parameters from the Request URL due POST request', (done) => {
+            request(app)
+              .put(`/project/${project._id}/form/${webhookForm._id}/action/${webhookAction._id}`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                ...webhookAction,
+                settings: {
+                  ...webhookAction.settings,
+                  url: `${testWebhookUrl}?test=1`,
+                  method: 'post',
+                }
+              })
+              .expect('Content-Type', /json/)
+              .expect(200)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+                webhookAction = res.body;
+                template.users.admin.token = res.headers['x-jwt-token'];
+  
+                request(app)
+                .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+                .set('x-jwt-token', template.formio.owner.token)
+                .send({
+                  data: {
+                    player: 'Jason Giambi'
+                  },
+                })
+                .expect(201)
+                .expect('Content-Type', /json/)
+                .end((err, res)=>{
+                  if(err){
+                    return done(err)
+                  }
+                  assert.equal(webhookListener.hooksReceived[1].url, `/player?test=1`);
+                  done();
+                });
+              });
+          });
+
+          it('The Webhook feature should not strip off parameters from the Request URL due PUT request', (done) => {
+            request(app)
+              .put(`/project/${project._id}/form/${webhookForm._id}/action/${webhookAction._id}`)
+              .set('x-jwt-token', template.formio.owner.token)
+              .send({
+                ...webhookAction,
+                settings: {
+                  ...webhookAction.settings,
+                  method: 'put',
+                }
+              })
+              .expect('Content-Type', /json/)
+              .expect(200)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+                webhookAction = res.body;
+                template.users.admin.token = res.headers['x-jwt-token'];
+  
+                request(app)
+                .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+                .set('x-jwt-token', template.formio.owner.token)
+                .send({
+                  data: {
+                    player: 'Jason Giambi'
+                  },
+                })
+                .expect(201)
+                .expect('Content-Type', /json/)
+                .end((err, res)=>{
+                  if(err){
+                    return done(err)
+                  }
+                  assert.equal(webhookListener.hooksReceived[0].url, `/player?test=1`);
+                  done();
+                });
+              });
+          });
+        });  
+
         describe('Webhook with delete request and query parameters in url', () => {
           before('Set up webhook listener', (done) => {
             // create the webhook listener child process

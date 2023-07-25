@@ -18,7 +18,7 @@ if (process.argv.length > 2) {
 }
 
 webhookServer.post(path, async (req, res) => {
-  const hookData = { recievedAt: Date(), headers: req.headers, body: req.body };
+  const hookData = { recievedAt: Date(), headers: req.headers, body: req.body, url: req.url };
   if (!response) {
     res.sendStatus(responseCode);
   }
@@ -31,6 +31,12 @@ webhookServer.post(path, async (req, res) => {
 
 webhookServer.get(path, (req, res) => {
   res.send(JSON.stringify(hooksRecieved));
+});
+
+webhookServer.put(path, async (req, res) => {
+  const hookData = { recievedAt: Date(), headers: req.headers, body: req.body, url: req.url };
+  res.send();
+  process.send(hookData);
 });
 
 webhookServer.delete(path, async (req, res) => {

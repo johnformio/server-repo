@@ -4,12 +4,19 @@ const Promise = require('bluebird');
 const fetch = require('formio/src/util/fetch');
 const util = require('./util');
 const processChangeLogData = require('./processChangeLogData');
+const proxy = require('../middleware/pdfProxy/proxy');
 
 module.exports = (formioServer) => {
   const formio = formioServer.formio;
   const encrypt = require('./encrypt')(formioServer);
   Promise.promisifyAll(formio.cache, {context: formio.cache});
   return async (req, project, form, submission) => {
+    proxy.authenticate(req, project);
+
+    if (submission.data.esign && submission.data.esign.fileId) {
+      return require('./downloadEsign')()(project, submission);
+    }
+
     // Swap in form components from earlier revision, if applicable
     if (form.revisions === 'original') {
       const submissionFormRevisionId = submission._frid ? submission._frid.toString() : submission._fvid;

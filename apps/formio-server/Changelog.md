@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased: 8.2.0-rc.3]
+### Fixed
+ - FIO-7060: Fixing the pdf-proxy to download and authenticate correctly
+ - FIO-7103: fixed an issue where the webhook action would strip query parameters
+ - FIO-7136, FIO-7137: Fixed issues with pdf-proxy authentication.
+
 ## 8.2.0-rc.2
 ### Changed
  - Updated formio-app@8.2.0-rc.2

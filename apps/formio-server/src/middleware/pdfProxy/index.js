@@ -15,6 +15,12 @@ module.exports = function(app) {
   app.use('/pdf-proxy', [
     // Mount auth bypass middleware
     require('./bypass'),
+    (req, res, next) => {
+      if (req.headers['x-admin-key'] === process.env.ADMIN_KEY) {
+        req.isAdmin = true;
+      }
+      next();
+    },
     require('../apiKey')(app.formio.formio),
     require('../remoteToken')(app),
     require('../aliasToken')(app),
