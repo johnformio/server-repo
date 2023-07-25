@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-6981: replace deprecated azure storage dependency
  - FIO 7084: Synchronize indexes for submission collections
  - FIO-7006: added authority header to resolve host and logs to check errors and result
+ - Fixed pdf proxy not stringifying request body for pdf download 
 
 ## 8.2.0-rc.2
 ### Changed
