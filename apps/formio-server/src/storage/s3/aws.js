@@ -35,6 +35,7 @@ const getUrl = function(options = {}) {
           Bucket: options.settings.bucket,
           Key: options.file.path,
           ContentType: options.file.type,
+          ACL: options.settings.acl || 'private'
         };
 
         switch (options.settings.encryption) {
@@ -49,7 +50,7 @@ const getUrl = function(options = {}) {
         if ((options.settings.encryption === 'kms') && options.settings.kmsKey) {
           putConfig.SSEKMSKeyId = options.settings.kmsKey;
         }
-        getSignedUrl(aws, new AWS.PutObjectCommand(putConfig))
+        getSignedUrl(aws, new AWS.PutObjectCommand(putConfig), {expiresIn: options.file.expiresIn})
         .then((result) => resolve(result))
         .catch((err) => reject(err));
       }
@@ -63,7 +64,7 @@ const getUrl = function(options = {}) {
         Bucket: options.bucket,
         Key: options.key,
       });
-      getSignedUrl(aws, getObjectCommand)
+      getSignedUrl(aws, getObjectCommand, {expiresIn: +options.settings.expiration})
       .then((result) => resolve(result))
       .catch((err) => reject(err));
     }
