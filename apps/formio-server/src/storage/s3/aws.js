@@ -24,51 +24,46 @@ const getAWS = function(settings = {}) {
   return new AWS.S3(config);
 };
 
-const getUrl = function(options = {}) {
-  return new Promise((resolve, reject) => {
-    const aws = getAWS(options.settings);
+const getUrl = async function(options = {}) {
+  const aws = getAWS(options.settings);
 
-    if (options.method === 'PUT') {
-      // If they have encryption or the region provided, then this will create a signed url.
-      if ((options.settings.encryption || options.settings.region) && options.settings.bucket) {
-        const putConfig = {
-          Bucket: options.settings.bucket,
-          Key: options.file.path,
-          ContentType: options.file.type,
-          ACL: options.settings.acl || 'private'
-        };
+  if (options.method === 'PUT') {
+    // If they have encryption or the region provided, then this will create a signed url.
+    if ((options.settings.encryption || options.settings.region) && options.settings.bucket) {
+      const putConfig = {
+        Bucket: options.settings.bucket,
+        Key: options.file.path,
+        ContentType: options.file.type,
+        ACL: options.settings.acl || 'private'
+      };
 
-        switch (options.settings.encryption) {
-          case 'aes':
-            putConfig.ServerSideEncryption = 'AES256';
-            break;
-          case 'kms':
-            putConfig.ServerSideEncryption = 'aws:kms';
-            break;
-        }
-
-        if ((options.settings.encryption === 'kms') && options.settings.kmsKey) {
-          putConfig.SSEKMSKeyId = options.settings.kmsKey;
-        }
-        getSignedUrl(aws, new AWS.PutObjectCommand(putConfig), {expiresIn: options.file.expiresIn})
-        .then((result) => resolve(result))
-        .catch((err) => reject(err));
+      switch (options.settings.encryption) {
+        case 'aes':
+          putConfig.ServerSideEncryption = 'AES256';
+          break;
+        case 'kms':
+          putConfig.ServerSideEncryption = 'aws:kms';
+          break;
       }
-      else {
-        // Use the legacy manually signed upload url.
-        return resolve();
+
+      if ((options.settings.encryption === 'kms') && options.settings.kmsKey) {
+        putConfig.SSEKMSKeyId = options.settings.kmsKey;
       }
+
+      return getSignedUrl(aws, new AWS.PutObjectCommand(putConfig), {expiresIn: options.file.expiresIn});
     }
     else {
-      const getObjectCommand = new AWS.GetObjectCommand({
-        Bucket: options.bucket,
-        Key: options.key,
-      });
-      getSignedUrl(aws, getObjectCommand, {expiresIn: +options.settings.expiration})
-      .then((result) => resolve(result))
-      .catch((err) => reject(err));
+      // Use the legacy manually signed upload url.
+      return Promise.resolve();
     }
-  });
+  }
+  else {
+    const getObjectCommand = new AWS.GetObjectCommand({
+      Bucket: options.bucket,
+      Key: options.key,
+    });
+    return getSignedUrl(aws, getObjectCommand);
+  }
 };
 
 module.exports = getUrl;
