@@ -50,7 +50,11 @@ const getUrl = async function(options = {}) {
         putConfig.SSEKMSKeyId = options.settings.kmsKey;
       }
 
-      return getSignedUrl(aws, new AWS.PutObjectCommand(putConfig), {expiresIn: options.file.expiresIn});
+      return getSignedUrl(
+        aws,
+        new AWS.PutObjectCommand(putConfig),
+        {expiresIn: options.file.expiresIn}
+      );
     }
     else {
       // Use the legacy manually signed upload url.
@@ -62,7 +66,11 @@ const getUrl = async function(options = {}) {
       Bucket: options.bucket,
       Key: options.key,
     });
-    return getSignedUrl(aws, getObjectCommand);
+    return getSignedUrl(
+      aws,
+      getObjectCommand,
+      (options.settings.expiration ? {expiresIn: +options.settings.expiration} : {})
+    );
   }
 };
 
