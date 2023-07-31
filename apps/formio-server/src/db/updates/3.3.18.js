@@ -19,6 +19,7 @@ const debug = require('debug')('formio:db');
  * @param done
  */
 module.exports = async function(db, config, tools, done) {
+  done();
   try {
     const EXCLUDED_COLLECTIONS = [
       'actionitems',
@@ -76,6 +77,4 @@ module.exports = async function(db, config, tools, done) {
   catch (err) {
     debug('Error during schema update 3.3.18:', err.message || err);
   }
-
-  done();
 }
