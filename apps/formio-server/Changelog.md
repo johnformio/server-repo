@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
  - [Snyk] Security upgrade box-node-sdk from 2.10.0 to 3.0.0
  - FIO-6840: update email tokens query
+ - FIO-7006: updated check for hosted form manager
 
 ### Fixed
  - FIO-6613: fixed an issue where 0 value is not shown in the Submission change log
