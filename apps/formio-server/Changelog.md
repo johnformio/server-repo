@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 8.2.0-rc.4]
+## 8.2.0-rc.4
+### Changed
+ - Updated formio-app@8.2.0-rc.4
+ - Updated formiojs@4.16.0-rc.8
+ - Updated formio@3.2.0-rc.4
+ - Updated formio-workers@1.18.0-rc.4
+
 ### Fixed
  - FIO-6577: fixed an issue where unable to create a new stage for tenants If the stage limit exceeded for parent project
 
