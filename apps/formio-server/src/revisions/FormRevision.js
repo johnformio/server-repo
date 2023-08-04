@@ -1,14 +1,16 @@
 'use strict';
-
 const _ = require('lodash');
-
 const Revision = require('./Revision');
+const config = require('../../config');
 
 const trackedProperties = ['components', 'settings', 'tags', 'properties', 'controller'];
-
 module.exports = class FormRevision extends Revision {
   constructor(app) {
     super(app, 'form', trackedProperties);
+  }
+
+  revisionsAllowed(req) {
+    return super.revisionsAllowed(req) || (this.checkRevisionPlan(req.primaryProject.plan) && config.formio.hosted);
   }
 
   shouldCreateNewRevision(req, item, loadItem) {

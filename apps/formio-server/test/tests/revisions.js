@@ -16,6 +16,12 @@ module.exports = (app, template, hook) => {
   describe('Form Revisions', () => {
     before((done) => {
       process.env.ADMIN_KEY = process.env.ADMIN_KEY || 'examplekey';
+      process.env.TEST_SIMULATE_SAC_PACKAGE = '1';
+      done();
+    });
+
+    after((done) => {
+      process.env.TEST_SIMULATE_SAC_PACKAGE = '0';
       done();
     });
 
@@ -157,7 +163,25 @@ module.exports = (app, template, hook) => {
         });
       });
     });
-
+    
+    if  (!config.formio.hosted) {
+      it('Should not create a new revision if sac is disabled', done => {
+        process.env.TEST_SIMULATE_SAC_PACKAGE = '0';
+        form.components[0].tableView = false;
+        helper.updateForm(form, (err, result) => {
+          helper.getFormRevisions(result, (err, result) => {
+            if (err) {
+              return done(err);
+            }
+            // 1 revision is left from prev test
+            assert.equal(result.length, 1);
+            process.env.TEST_SIMULATE_SAC_PACKAGE = '1';
+            done();
+          });
+        });
+      });
+    }
+  
     it('Creates a new revision when a form is updated', done => {
       form.components.push({
         input: true,
@@ -1014,6 +1038,12 @@ module.exports = (app, template, hook) => {
 
     before((done) => {
       process.env.ADMIN_KEY = process.env.ADMIN_KEY || 'examplekey';
+      process.env.TEST_SIMULATE_SAC_PACKAGE = '1';
+      done();
+    });
+
+    after((done) => {
+      process.env.TEST_SIMULATE_SAC_PACKAGE = '0';
       done();
     });
 
@@ -1279,257 +1309,312 @@ module.exports = (app, template, hook) => {
       });
     });
 
-    it('Update submission with disabled revisions', done => {
-      const nawData = {
-        fname: 'joe1',
-        lname: 'test1'
-      };
-      submissionWithInitiallyDisabledRevision.data = nawData;
-      helper.updateSubmission( submissionWithInitiallyDisabledRevision,
+    if (config.formio.hosted) {
+      it('Sets a form to use submission revisions', done => {
+        form.submissionRevisions = 'true';
+        form.components.push();
+        helper.updateForm(form, (err, result) => {
+          assert.equal(result.submissionRevisions, 'true');
+          done();
+        });
+      });
+
+      it('Should not create revisions in hosted env if submission revisions are enabled', done => {
+        helper.createSubmission('submissionRevisionForm', {
+          data,
+        },
         (err, result) => {
           if (err) {
             done(err);
           }
-          submissionWithInitiallyDisabledRevision = result;
-          assert.deepEqual(submissionWithInitiallyDisabledRevision.data, nawData);
-          assert.deepEqual(submissionWithInitiallyDisabledRevision.containRevisions, true);
-          helper.getSubmissionRevisions(formWithInitiallyDisabledRevision, submissionWithInitiallyDisabledRevision,
+          submission = result;
+          assert.deepEqual(submission.data, data);
+          assert.deepEqual(!!submission.containRevisions, false);
+          helper.getSubmissionRevisions(form, submission,
           (err, revisions) => {
             if (err) {
               done(err);
             }
-            assert.equal(revisions.length, 2);
-            assert.equal(revisions[0]._rid, submissionWithInitiallyDisabledRevision._id);
+            assert.equal(revisions.length, 0);
+            done();
+          });
+        });
+      });
+    }
+
+    if (!config.formio.hosted) {
+      it('Update submission with disabled revisions', done => {
+        const nawData = {
+          fname: 'joe1',
+          lname: 'test1'
+        };
+        submissionWithInitiallyDisabledRevision.data = nawData;
+        helper.updateSubmission( submissionWithInitiallyDisabledRevision,
+          (err, result) => {
+            if (err) {
+              done(err);
+            }
+            submissionWithInitiallyDisabledRevision = result;
+            assert.deepEqual(submissionWithInitiallyDisabledRevision.data, nawData);
+            assert.deepEqual(submissionWithInitiallyDisabledRevision.containRevisions, true);
+            helper.getSubmissionRevisions(formWithInitiallyDisabledRevision, submissionWithInitiallyDisabledRevision,
+            (err, revisions) => {
+              if (err) {
+                done(err);
+              }
+              assert.equal(revisions.length, 2);
+              assert.equal(revisions[0]._rid, submissionWithInitiallyDisabledRevision._id);
+              assert.equal(revisions[0]._vuser, helper.owner.data.email);
+              assert.deepEqual(revisions[0].data, data);
+              assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'add', path: '/data/fname', value: 'joe'});
+              assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'add', path: '/data/lname', value: 'test'});
+
+              assert.equal(revisions[1]._rid, submissionWithInitiallyDisabledRevision._id);
+              assert.equal(revisions[1]._vuser, helper.owner.data.email);
+              assert.deepEqual(revisions[1].data, nawData);
+              assert.deepEqual(revisions[1].metadata.jsonPatch[1], {op: 'replace', path: '/data/fname', value: 'joe1'});
+              assert.deepEqual(revisions[1].metadata.jsonPatch[0], {op: 'replace', path: '/data/lname', value: 'test1'});
+
+              done();
+            });
+          });
+      });
+
+      it('Sets a form to use submission revisions', done => {
+        form.submissionRevisions = 'true';
+        form.components.push();
+        helper.updateForm(form, (err, result) => {
+          assert.equal(result.submissionRevisions, 'true');
+          done();
+        });
+      });
+
+      it('Does not Create submission with wrong data', done => {
+        helper.createSubmission('submissionRevisionForm', {
+          data: {},
+        }, helper.owner, [/application\/json/, 400], (err, result) => {
+          assert.equal(result.name, 'ValidationError');
+          done();
+        });
+      });
+
+      it('Create submission with enabled revisions', done => {
+        helper.createSubmission('submissionRevisionForm', {
+          data,
+        },
+        (err, result) => {
+          if (err) {
+            done(err);
+          }
+          submission = result;
+          assert.deepEqual(submission.data, data);
+          assert.deepEqual(submission.containRevisions, true);
+          helper.getSubmissionRevisions(form, submission,
+          (err, revisions) => {
+            if (err) {
+              done(err);
+            }
+
+            assert.equal(revisions.length, 1);
+            assert.equal(revisions[0]._rid, submission._id);
             assert.equal(revisions[0]._vuser, helper.owner.data.email);
             assert.deepEqual(revisions[0].data, data);
             assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'add', path: '/data/fname', value: 'joe'});
             assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'add', path: '/data/lname', value: 'test'});
-
-            assert.equal(revisions[1]._rid, submissionWithInitiallyDisabledRevision._id);
-            assert.equal(revisions[1]._vuser, helper.owner.data.email);
-            assert.deepEqual(revisions[1].data, nawData);
-            assert.deepEqual(revisions[1].metadata.jsonPatch[1], {op: 'replace', path: '/data/fname', value: 'joe1'});
-            assert.deepEqual(revisions[1].metadata.jsonPatch[0], {op: 'replace', path: '/data/lname', value: 'test1'});
+            submissionRevisions = revisions;
 
             done();
           });
         });
-    });
-
-    it('Sets a form to use submission revisions', done => {
-      form.submissionRevisions = 'true';
-      form.components.push();
-      helper.updateForm(form, (err, result) => {
-        assert.equal(result.submissionRevisions, 'true');
-        done();
       });
-    });
 
-    it('Does not Create submission with wrong data', done => {
-      helper.createSubmission('submissionRevisionForm', {
-        data: {},
-      }, helper.owner, [/application\/json/, 400], (err, result) => {
-        assert.equal(result.name, 'ValidationError');
-        done();
+      it('Does not Create a new revision without update data', done => {
+        helper.updateSubmission(submission,
+        (err, result) => {
+          if (err) {
+            done(err);
+          }
+          helper.getSubmissionRevisions(form, submission, (err, revisions) => {
+            if (err) {
+              done(err);
+            }
+
+            assert.equal(revisions.length, 1);
+            assert.equal(revisions[0]._rid, submission._id);
+            assert.equal(revisions[0]._vuser, helper.owner.data.email);
+            assert.deepEqual(revisions[0].data, data);
+            assert.equal(revisions[0].metadata.jsonPatch.length, 2);
+            assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'add', path: '/data/fname', value: 'joe'});
+            assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'add', path: '/data/lname', value: 'test'});
+
+            done();
+          });
+        });
       });
-    });
 
-    it('Create submission with enabled revisions', done => {
-      helper.createSubmission('submissionRevisionForm', {
-        data,
-      },
-      (err, result) => {
-        if (err) {
-          done(err);
-        }
-        submission = result;
-        assert.deepEqual(submission.data, data);
-        assert.deepEqual(submission.containRevisions, true);
-        helper.getSubmissionRevisions(form, submission,
-        (err, revisions) => {
+      it('Create a new revision when update data', done => {
+        submission.data.fname = 'Joe';
+        submission._vnote = 'vnote';
+        helper.updateSubmission(submission,
+        (err, result) => {
+          if (err) {
+            done(err);
+          }
+          helper.getSubmissionRevisions(form, submission, (err, revisions) => {
+            if (err) {
+              done(err);
+            }
+
+            assert.equal(revisions.length, 2);
+            assert.equal(revisions[0]._rid, submission._id);
+            assert.equal(revisions[0]._vuser, helper.owner.data.email);
+            assert.deepEqual(revisions[0].data, data);
+            assert.equal(revisions[0].metadata.jsonPatch.length, 2);
+            assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'add', path: '/data/lname', value: 'test'});
+            assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'add', path: '/data/fname', value: 'joe'});
+
+            assert.equal(revisions[1]._rid, submission._id);
+            assert.equal(revisions[1]._vuser, helper.owner.data.email);
+            assert.deepEqual(revisions[1].data, {fname: 'Joe', lname: data.lname});
+            assert.equal(revisions[1].metadata.jsonPatch.length, 1);
+            assert.deepEqual(revisions[1].metadata.jsonPatch[0], {op: 'replace', path: '/data/fname', value: 'Joe'});
+            assert.deepEqual(revisions[1].metadata.previousData, data);
+            assert.equal(revisions[1]._vnote, 'vnote');
+
+            submissionRevisions = revisions;
+
+            done();
+          });
+        });
+      });
+
+      it('Does not Create a new revision when sac is disabled', done => {
+        process.env.TEST_SIMULATE_SAC_PACKAGE = '0';
+        submission.data.fname = 'Tom';
+        helper.updateSubmission(submission,
+        (err, result) => {
+          if (err) {
+            done(err);
+          }
+          helper.getSubmissionRevisions(form, submission, (err, revisions) => {
+            if (err) {
+              done(err);
+            }
+
+            assert.equal(revisions.length, 2);
+            process.env.TEST_SIMULATE_SAC_PACKAGE = '1';
+            done();
+          });
+        });
+      });
+
+      it('Get submission revision by Id', done => {
+        helper.getSubmissionRevision(form, submission, submissionRevisions[1]._id, (err, result) => {
           if (err) {
             done(err);
           }
 
-          assert.equal(revisions.length, 1);
-          assert.equal(revisions[0]._rid, submission._id);
-          assert.equal(revisions[0]._vuser, helper.owner.data.email);
-          assert.deepEqual(revisions[0].data, data);
-          assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'add', path: '/data/fname', value: 'joe'});
-          assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'add', path: '/data/lname', value: 'test'});
-          submissionRevisions = revisions;
+          assert.equal(result._rid, submission._id);
+          assert.equal(result._vuser, helper.owner.data.email);
+          assert.deepEqual(result.data, {fname: 'Joe', lname: data.lname});
+          assert.equal(result.metadata.jsonPatch.length, 1);
+          assert.deepEqual(result.metadata.jsonPatch[0], {op: 'replace', path: '/data/fname', value: 'Joe'});
+          assert.deepEqual(result.metadata.previousData, data);
+          assert.equal(result._vnote, 'vnote');
 
           done();
         });
       });
-  });
 
-  it('Does not Create a new revision without update data', done => {
-    helper.updateSubmission(submission,
-    (err, result) => {
-      if (err) {
-        done(err);
-      }
-      helper.getSubmissionRevisions(form, submission, (err, revisions) => {
-        if (err) {
-          done(err);
-        }
-
-        assert.equal(revisions.length, 1);
-        assert.equal(revisions[0]._rid, submission._id);
-        assert.equal(revisions[0]._vuser, helper.owner.data.email);
-        assert.deepEqual(revisions[0].data, data);
-        assert.equal(revisions[0].metadata.jsonPatch.length, 2);
-        assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'add', path: '/data/fname', value: 'joe'});
-        assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'add', path: '/data/lname', value: 'test'});
-
-        done();
-      });
-    });
-  });
-
-  it('Create a new revision when update data', done => {
-    submission.data.fname = 'Joe';
-    submission._vnote = 'vnote';
-    helper.updateSubmission(submission,
-    (err, result) => {
-      if (err) {
-        done(err);
-      }
-      helper.getSubmissionRevisions(form, submission, (err, revisions) => {
-        if (err) {
-          done(err);
-        }
-
-        assert.equal(revisions.length, 2);
-        assert.equal(revisions[0]._rid, submission._id);
-        assert.equal(revisions[0]._vuser, helper.owner.data.email);
-        assert.deepEqual(revisions[0].data, data);
-        assert.equal(revisions[0].metadata.jsonPatch.length, 2);
-        assert.deepEqual(revisions[0].metadata.jsonPatch[1], {op: 'add', path: '/data/lname', value: 'test'});
-        assert.deepEqual(revisions[0].metadata.jsonPatch[0], {op: 'add', path: '/data/fname', value: 'joe'});
-
-        assert.equal(revisions[1]._rid, submission._id);
-        assert.equal(revisions[1]._vuser, helper.owner.data.email);
-        assert.deepEqual(revisions[1].data, {fname: 'Joe', lname: data.lname});
-        assert.equal(revisions[1].metadata.jsonPatch.length, 1);
-        assert.deepEqual(revisions[1].metadata.jsonPatch[0], {op: 'replace', path: '/data/fname', value: 'Joe'});
-        assert.deepEqual(revisions[1].metadata.previousData, data);
-        assert.equal(revisions[1]._vnote, 'vnote');
-
-        submissionRevisions = revisions;
-
-        done();
-      });
-    });
-  });
-
-  it('Get submission revision by Id', done => {
-    helper.getSubmissionRevision(form, submission, submissionRevisions[1]._id, (err, result) => {
-      if (err) {
-        done(err);
-      }
-
-      assert.equal(result._rid, submission._id);
-      assert.equal(result._vuser, helper.owner.data.email);
-      assert.deepEqual(result.data, {fname: 'Joe', lname: data.lname});
-      assert.equal(result.metadata.jsonPatch.length, 1);
-      assert.deepEqual(result.metadata.jsonPatch[0], {op: 'replace', path: '/data/fname', value: 'Joe'});
-      assert.deepEqual(result.metadata.previousData, data);
-      assert.equal(result._vnote, 'vnote');
-
-      done();
-    });
-  });
-
-  it('Get submission change log', done => {
-    helper.getSubmissionChangeLog(form, submission, (err, results) => {
-      if (err) {
-        done(err);
-      }
-
-      assert.equal(results.length, 2);
-
-      const revision0 = results.find((revision)=> revision._id === submissionRevisions[0]._id);
-      const revision1 = results.find((revision)=> revision._id === submissionRevisions[1]._id);
-
-      assert.equal(revision0._vuser, submissionRevisions[0]._vuser);
-      assert.deepEqual(revision0.data, submissionRevisions[0].data);
-      assert.equal(revision0.metadata.jsonPatch.length, submissionRevisions[0].metadata.jsonPatch.length);
-      assert.deepEqual(revision0.metadata.jsonPatch[0], submissionRevisions[0].metadata.jsonPatch[0]);
-      assert.deepEqual(revision0.metadata.jsonPatch[1], submissionRevisions[0].metadata.jsonPatch[1]);
-
-      assert.equal(revision1._vuser, submissionRevisions[1]._vuser);
-      assert.deepEqual(revision1.data, submissionRevisions[1].data);
-      assert.equal(revision1.metadata.jsonPatch.length, submissionRevisions[1].metadata.jsonPatch.length);
-      assert.deepEqual(revision1.metadata.jsonPatch[0], submissionRevisions[1].metadata.jsonPatch[0]);
-      assert.deepEqual(revision1.metadata.previousData, submissionRevisions[1].metadata.previousData);
-
-      done();
-    });
-  });
-
-  it('Get submission revision change log', done => {
-    helper.getSubmissionRevisionChangeLog(form, submission, submissionRevisions[1]._id, (err, result) => {
-      if (err) {
-        done(err);
-      }
-
-      assert.equal(result._id, submissionRevisions[1]._id);
-      assert.equal(result._vuser, submissionRevisions[1]._vuser);
-      assert.deepEqual(result.data, submissionRevisions[1].data);
-      assert.equal(result.metadata.jsonPatch.length, submissionRevisions[1].metadata.jsonPatch.length);
-      assert.deepEqual(result.metadata.jsonPatch[0], submissionRevisions[1].metadata.jsonPatch[0]);
-      assert.deepEqual(result.metadata.previousData, submissionRevisions[1].metadata.previousData);
-
-      done();
-    });
-  });
-   
-  it('0 is shown in the Submission Revisions Changelog', done => { 
-    submissionRevisionChangelogForm.submissionRevisions = 'true';
-    submissionRevisionChangelogForm.components.push();
-    helper.updateForm(submissionRevisionChangelogForm, (err, result) => {
-      assert.equal(result.submissionRevisions, 'true');
-      const data = {
-        number1: 0,
-        number2: 25,
-      }
-      helper.createSubmission('submissionRevisionChangelogForm', {
-        data
-      }, (err, result) => {
-        if (err) {
-          done(err);
-        }
-        submission = result;
-        assert.deepEqual(submission.data, data);
-        assert.deepEqual(submission.containRevisions, true);
-        submission.data.number1 = 80;
-        submission.data.number2 = 0;
-        helper.updateSubmission(submission,
-        (err, res) => {
+      it('Get submission change log', done => {
+        helper.getSubmissionChangeLog(form, submission, (err, results) => {
           if (err) {
             done(err);
           }
-          submission = res;
-          helper.getSubmissionRevisions(submissionRevisionChangelogForm, submission,
-          (err, revisions) => {
+
+          assert.equal(results.length, 2);
+
+          const revision0 = results.find((revision)=> revision._id === submissionRevisions[0]._id);
+          const revision1 = results.find((revision)=> revision._id === submissionRevisions[1]._id);
+
+          assert.equal(revision0._vuser, submissionRevisions[0]._vuser);
+          assert.deepEqual(revision0.data, submissionRevisions[0].data);
+          assert.equal(revision0.metadata.jsonPatch.length, submissionRevisions[0].metadata.jsonPatch.length);
+          assert.deepEqual(revision0.metadata.jsonPatch[0], submissionRevisions[0].metadata.jsonPatch[0]);
+          assert.deepEqual(revision0.metadata.jsonPatch[1], submissionRevisions[0].metadata.jsonPatch[1]);
+
+          assert.equal(revision1._vuser, submissionRevisions[1]._vuser);
+          assert.deepEqual(revision1.data, submissionRevisions[1].data);
+          assert.equal(revision1.metadata.jsonPatch.length, submissionRevisions[1].metadata.jsonPatch.length);
+          assert.deepEqual(revision1.metadata.jsonPatch[0], submissionRevisions[1].metadata.jsonPatch[0]);
+          assert.deepEqual(revision1.metadata.previousData, submissionRevisions[1].metadata.previousData);
+
+          done();
+        });
+      });
+
+      it('Get submission revision change log', done => {
+        helper.getSubmissionRevisionChangeLog(form, submission, submissionRevisions[1]._id, (err, result) => {
+          if (err) {
+            done(err);
+          }
+
+          assert.equal(result._id, submissionRevisions[1]._id);
+          assert.equal(result._vuser, submissionRevisions[1]._vuser);
+          assert.deepEqual(result.data, submissionRevisions[1].data);
+          assert.equal(result.metadata.jsonPatch.length, submissionRevisions[1].metadata.jsonPatch.length);
+          assert.deepEqual(result.metadata.jsonPatch[0], submissionRevisions[1].metadata.jsonPatch[0]);
+          assert.deepEqual(result.metadata.previousData, submissionRevisions[1].metadata.previousData);
+
+          done();
+        });
+      });
+      
+      it('0 is shown in the Submission Revisions Changelog', done => { 
+        submissionRevisionChangelogForm.submissionRevisions = 'true';
+        submissionRevisionChangelogForm.components.push();
+        helper.updateForm(submissionRevisionChangelogForm, (err, result) => {
+          assert.equal(result.submissionRevisions, 'true');
+          const data = {
+            number1: 0,
+            number2: 25,
+          }
+          helper.createSubmission('submissionRevisionChangelogForm', {
+            data
+          }, (err, result) => {
             if (err) {
               done(err);
             }
-            helper.getSubmissionRevisionChangeLog(submissionRevisionChangelogForm, submission, revisions[1]._id,
-              (err, results) => {
-                if (err) { 
-                  done(err); 
+            submission = result;
+            assert.deepEqual(submission.data, data);
+            assert.deepEqual(submission.containRevisions, true);
+            submission.data.number1 = 80;
+            submission.data.number2 = 0;
+            helper.updateSubmission(submission,
+            (err, res) => {
+              if (err) {
+                done(err);
+              }
+              submission = res;
+              helper.getSubmissionRevisions(submissionRevisionChangelogForm, submission,
+              (err, revisions) => {
+                if (err) {
+                  done(err);
                 }
-                assert.equal(results.data.number2, 0);
-                assert.equal(results.metadata.previousData.number1, 0);
-                done();
+                helper.getSubmissionRevisionChangeLog(submissionRevisionChangelogForm, submission, revisions[1]._id,
+                  (err, results) => {
+                    if (err) { 
+                      done(err); 
+                    }
+                    assert.equal(results.data.number2, 0);
+                    assert.equal(results.metadata.previousData.number1, 0);
+                    done();
+                  });
               });
+            });
           });
         });
       });
-    });
-  }); 
-}); 
+    }
+  });
 };

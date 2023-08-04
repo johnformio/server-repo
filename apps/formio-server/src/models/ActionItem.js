@@ -1,0 +1,83 @@
+'use strict';
+
+module.exports = function(formio) {
+  /**
+   * The Schema for ActionItems.
+   *
+   * @type {exports.Schema}
+   */
+  const ActionItemSchema = new formio.mongoose.Schema({
+    title: {
+      type: String,
+      required: true
+    },
+    form: {
+      type: formio.mongoose.Schema.Types.ObjectId,
+      ref: 'form',
+      index: true,
+      required: true
+    },
+    submission: {
+      type: formio.mongoose.Schema.Types.ObjectId,
+      ref: 'submission',
+      index: true,
+      required: false
+    },
+    action: {
+      type: String,
+      required: true
+    },
+    handler: {
+      type: String,
+      required: true
+    },
+    method: {
+      type: String,
+      required: true
+    },
+    project: {
+      type: formio.mongoose.Schema.Types.ObjectId,
+      ref: 'project',
+      index: true,
+      required: true
+    },
+    state: {
+      type: String,
+      enum: ['new', 'inprogress', 'complete', 'error'],
+      required: true,
+      default: 'new',
+      description: 'The current status of this event.',
+    },
+    messages: {
+      type: []
+    },
+    data: {
+      type: formio.mongoose.Schema.Types.Mixed
+    }
+  });
+
+  // eslint-disable-next-line new-cap
+  const model = formio.BaseModel({
+    schema: ActionItemSchema
+  });
+
+  try {
+    model.schema.index({created: 1}, {expireAfterSeconds: 2592000});
+  }
+  catch (err) {
+    console.log(err.message);
+  }
+  try {
+    model.schema.index({_ts: 1}, {expireAfterSeconds: 2592000});
+  }
+  catch (err) {
+    console.log(err.message);
+  }
+
+  // Add indexes to speed up the action items pages.
+  model.schema.index({state: 1, deleted: 1, modified: -1, project: 1});
+  model.schema.index({handler: 1, deleted: 1, modified: -1, project: 1});
+  model.schema.index({handler: 1, method: 1, deleted: 1, modified: -1, project: 1});
+
+  return model;
+};
