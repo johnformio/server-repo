@@ -187,6 +187,10 @@ const Utils = {
         if (err) {
           return next(err);
         }
+        // Set custom submissions collection to be used by default if the request is related to submissions
+        if (req.path.includes('/submission')) {
+          req.model = req.submissionModel;
+        }
         return next(null, req.submissionModel);
       });
     });
