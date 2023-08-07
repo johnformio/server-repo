@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased: 8.2.0-rc.6]
+### Fixed
+ - Use mongodb features to determine if collation should be used
+ - FIO-6601: Fixes submissions retrieval from custom submission collection
+ - FIO-7166: Use mongodb features to determine if collation should be used
+   
 ## 8.2.0-rc.5
 ### Changed
  - Updated formio-app@8.2.0-rc.6
