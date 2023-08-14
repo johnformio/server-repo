@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
  - FIO-7132 fixed error for pdfDownload Changelog
+ - Fix for 7 vulnerabilities
+ - Security upgrade jose and mongodb
 
 ## 8.2.0-rc.7
 ### Changed
