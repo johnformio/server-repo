@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
  - FIO-6982: update major version dependency for passport-saml-metadata
 
+### Fixed
+ - FIO-7132 fixed error for pdfDownload Changelog
+
 ## 8.2.0-rc.7
 ### Changed
  - Updated formio-app@8.2.0-rc.8
