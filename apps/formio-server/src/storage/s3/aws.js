@@ -33,9 +33,11 @@ const getUrl = async function(options = {}) {
       const putConfig = {
         Bucket: options.settings.bucket,
         Key: options.file.path,
-        ContentType: options.file.type,
-        ACL: options.settings.acl || 'private'
+        ContentType: options.file.type
       };
+      if (options.settings && options.settings.acl) {
+        putConfig.ACL = options.settings.acl;
+      }
 
       switch (options.settings.encryption) {
         case 'aes':
