@@ -19,6 +19,7 @@ const debug = require('debug')('formio:db');
  * @param done
  */
 module.exports = async function(db, config, tools, done) {
+  done();
   try {
     const EXCLUDED_COLLECTIONS = [
       'actionitems',
@@ -60,6 +61,7 @@ module.exports = async function(db, config, tools, done) {
           index.key.hasOwnProperty("project") &&
           index.key.hasOwnProperty("form") &&
           index.key.hasOwnProperty("data.email") &&
+          config.mongoFeatures.collation &&
           !index.collation
         ) {
           debug(`Dropping vanilla index ${index.name} from collection ${collectionName}`);
@@ -76,6 +78,4 @@ module.exports = async function(db, config, tools, done) {
   catch (err) {
     debug('Error during schema update 3.3.18:', err.message || err);
   }
-
-  done();
 }

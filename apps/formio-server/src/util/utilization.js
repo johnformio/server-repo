@@ -240,7 +240,12 @@ async function getNumberOfExistingProjects(formio, project = null) {
     formio.mongoose.Types.ObjectId.isValid(project.projectId)
   ) {
     projectQuery.type = project.type;
-    projectQuery.project = formio.util.ObjectId(project.projectId);
+    if (project.tenantId === 'none' || project.tenantId === 'new') {
+      projectQuery.project = formio.util.ObjectId(project.projectId);
+    }
+    else {
+      projectQuery.project = formio.util.ObjectId(project.tenantId);
+    }
   }
   return await formio.resources.project.model.count(projectQuery);
 }

@@ -825,7 +825,7 @@ module.exports = router => {
                     redirectURI: self.settings.redirectURI,
                     state: state,
                     scope: oauthSettings.scope || provider.scope,
-                    logoutURI: oauthSettings.logoutURI || null,
+                    logoutURI: oauthSettings.logout || null,
                   };
                   if (provider.display) {
                     component.oauth.display = provider.display;
