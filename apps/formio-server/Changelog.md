@@ -4,7 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 8.3.0-rc.1]
+## 8.3.0-rc.1
+### Changed
+ - Updated formio-app@8.3.0-rc.1
+ - Updated formiojs@4.17.0-rc.2
+ - Updated @formio/premium@1.21.0-rc.1
+ - Updated formio@3.3.0-rc.1
+ - Updated formio-workers@1.19.0-rc.1
+
 ### Changed
  - FIO-6982: update major version dependency for passport-saml-metadata
 
