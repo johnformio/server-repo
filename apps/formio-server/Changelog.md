@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased: 8.3.0-rc.2]
+## Fixed
+ - FIO-7227: update mocked request object to include a path
+   
 ## 8.3.0-rc.1
 ### Changed
  - Updated formio-app@8.3.0-rc.1
@@ -11,8 +15,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Updated @formio/premium@1.21.0-rc.1
  - Updated formio@3.3.0-rc.1
  - Updated formio-workers@1.19.0-rc.1
-
-### Changed
  - FIO-6982: update major version dependency for passport-saml-metadata
 
 ### Fixed
