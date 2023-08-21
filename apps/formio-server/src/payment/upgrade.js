@@ -72,35 +72,6 @@ module.exports = function(formio) {
                 servers: billing.servers
               }
             });
-          })
-          .then(function() {
-            const plans = ['archived', 'trial', 'basic', 'independent', 'team', 'commercial'];
-            const direction = plans.indexOf(project.plan) < plans.indexOf(req.body.plan) ? 'Upgrade' : 'Downgrade';
-
-            /* eslint-disable max-len */
-            const emailSettings = {
-              override: true,
-              transport: 'default',
-              from: 'no-reply@form.io',
-              emails: ['payment@form.io'],
-              subject: `Project ${direction} Notification`,
-              message: `<p>A project has been ${direction.toLowerCase()}d from <strong>{{project.plan}}</strong> to <strong>{{newPlan}}</strong>.</p>` +
-                `<p><ul>` +
-                `<li>Username: {{user.data.name}}</li>` +
-                `<li>Name: {{user.data.fullName}}</li>` +
-                `<li>Email: {{user.data.email}}</li>` +
-                `<li>User ID: {{user._id}}</li><br>` +
-                `<li>Project Title: {{project.title}}</li>` +
-                `<li>Old Plan: {{project.plan}}</li>` +
-                `<li>New Plan: {{newPlan}}</li>` +
-                `<li>Project ID: {{project._id}}</li>` +
-                `<li>API Servers: {{servers.api}}</li>` +
-                `<li>PDF Servers: {{servers.pdf}}</li>` +
-                `</ul></p>`
-            };
-            /* eslint-enable max-len */
-            const params = {project: project, user: req.user, newPlan: req.body.plan, servers: billing.servers};
-            return Q.ninvoke(emailer, 'send', req, res, emailSettings, params);
           });
       })
       .then(function(response) {
