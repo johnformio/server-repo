@@ -1,15 +1,17 @@
 'use strict';
 const _ = require('lodash');
-const Promise = require('bluebird');
 const fetch = require('formio/src/util/fetch');
 const util = require('./util');
 const processChangeLogData = require('./processChangeLogData');
 const proxy = require('../middleware/pdfProxy/proxy');
+const {promisify} = require('util');
 
 module.exports = (formioServer) => {
   const formio = formioServer.formio;
   const encrypt = require('./encrypt')(formioServer);
-  Promise.promisifyAll(formio.cache, {context: formio.cache});
+  const loadSubFormsAsync = promisify(formio.cache.loadSubForms);
+  const loadSubSubmissionsAsync = promisify(formio.cache.loadSubSubmissions);
+
   return async (req, project, form, submission) => {
     proxy.authenticate(req, project);
 
@@ -22,22 +24,21 @@ module.exports = (formioServer) => {
       const submissionFormRevisionId = submission._frid ? submission._frid.toString() : submission._fvid;
       if (submissionFormRevisionId !== form._vid) {
         let result;
+        const formRevisionModel = formio.resources.formrevision.model;
+
         if (submissionFormRevisionId.length === 24) {
-          result = await Promise.promisify(formio.resources.formrevision.model.findOne, {
-            context: formio.resources.formrevision.model
-          })({
+          result = await formRevisionModel.findOne({
             _id: formio.util.idToBson(submissionFormRevisionId),
           });
         }
         else {
-          result = await Promise.promisify(formio.resources.formrevision.model.findOne, {
-            context: formio.resources.formrevision.model
-          })({
+          result = await formRevisionModel.findOne({
             project: project._id,
             _rid: formio.util.idToBson(form._id),
             _vid: parseInt(submissionFormRevisionId),
           });
         }
+        // TODO: Check if 'toObject()' call is needed
         if (result) {
           form.components = result.toObject().components;
           form.settings = result.toObject().settings;
@@ -46,10 +47,10 @@ module.exports = (formioServer) => {
     }
 
     // Speed up performance by loading all subforms inline to the form
-    await formio.cache.loadSubFormsAsync(form, req);
+    await loadSubFormsAsync(form, req);
 
     // Load all subform submissions
-    await formio.cache.loadSubSubmissionsAsync(form, submission, req);
+    await loadSubSubmissionsAsync(form, submission, req);
 
     // Remove protected fields
     formio.util.removeProtectedFields(form, 'download', submission);
