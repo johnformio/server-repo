@@ -331,7 +331,7 @@ module.exports = (changelog, form, submission) => {
       revision.metadata.jsonPatch.forEach((change, index) => {
         if (Array.isArray(change.value)) {
           change.value.forEach((val, valIndex) => {
-            if (typeof val === 'object') {
+            if (typeof val === 'object' && !_.isNull(val)) {
               if (val.value && val.path) {
                 Object.assign(changes, {
                   entityValue: val.value,

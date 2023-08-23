@@ -4,6 +4,51 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 8.3.0-rc.2
+### Changed
+ - Updated formio-app@8.3.0-rc.2
+ - Updated formiojs@4.17.0-rc.3
+ - Updated @formio/premium@1.21.0-rc.2
+ - Updated formio@3.3.0-rc.2
+ - Updated formio-workers@1.19.0-rc.2
+ - FIO-6859: migrate-aws-sdk-to-v3
+
+## Fixed
+ - FIO-7227: update mocked request object to include a path
+ - FIO-7151: removed email action for project plan upgrade
+
+## 8.3.0-rc.1
+### Changed
+ - Updated formio-app@8.3.0-rc.1
+ - Updated formiojs@4.17.0-rc.2
+ - Updated @formio/premium@1.21.0-rc.1
+ - Updated formio@3.3.0-rc.1
+ - Updated formio-workers@1.19.0-rc.1
+ - FIO-6982: update major version dependency for passport-saml-metadata
+
+### Fixed
+ - FIO-7132 fixed error for pdfDownload Changelog
+ - Fix for 7 vulnerabilities
+ - Security upgrade jose and mongodb
+ - FIO-5042: Removing URI from UserData
+
+## 8.2.0-rc.7
+### Changed
+ - Updated formio-app@8.2.0-rc.8
+ - Updated formiojs@4.16.0-rc.9
+ - Updated formio@3.2.0-rc.7
+ - Updated formio-workers@1.18.0-rc.5
+
+## 8.2.0-rc.6
+### Changed
+ - Updated formio-app@8.2.0-rc.7
+ - Updated formio@3.2.0-rc.6
+
+### Fixed
+ - Use mongodb features to determine if collation should be used
+ - FIO-6601: Fixes submissions retrieval from custom submission collection
+ - FIO-7166: Use mongodb features to determine if collation should be used
+   
 ## 8.2.0-rc.5
 ### Changed
  - Updated formio-app@8.2.0-rc.6

@@ -291,7 +291,7 @@ module.exports = function (app, template, hook) {
             }
             assert.equal(res.body.settings.collection, "textField");
             resourceId = res.body._id;
-            const mockReq = { projectId: project._id, params: {} };
+            const mockReq = { projectId: project._id, params: {}, path: '' };
             getSubmissionModel(
               app.formio.formio,
               mockReq,
@@ -322,7 +322,7 @@ module.exports = function (app, template, hook) {
             if (err) {
               return done(err);
             }
-            const mockReq = { projectId: project._id, params: {} };
+            const mockReq = { projectId: project._id, path: '', params: {} };
             getSubmissionModel(
               app.formio.formio,
               mockReq,

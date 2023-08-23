@@ -4,7 +4,8 @@
 var request = require('supertest');
 var assert = require('assert');
 var CryptoJS = require('crypto-js');
-var AWS = require('aws-sdk');
+const AWS = require('@aws-sdk/client-s3');
+const {getSignedUrl} = require("@aws-sdk/s3-request-presigner");
 var docker = process.env.DOCKER;
 var customer = process.env.CUSTOMER;
 var _ = require('lodash');
@@ -768,18 +769,15 @@ module.exports = function(app, template, hook) {
                 accessKeyId: template.project.settings.storage.s3.AWSAccessKeyId,
                 secretAccessKey: template.project.settings.storage.s3.AWSSecretKey
               });
-              s3.getSignedUrl('getObject', {
+              getSignedUrl(s3, new AWS.GetObjectCommand({
                 Bucket: file.bucket,
                 Key: file.key
-              }, function(err, url) {
-                if (err) {
-                  done(err);
-                }
+              })).then(url => {
                 if (!docker && !customer) {
                   assert.equal(res.body.url.replace(/Expires=[0-9]*/, ''), url.replace(/Expires=[0-9]*/, ''));
                 }
                 done();
-              });
+              }).catch(err => done(err));
             });
         });
 
@@ -1112,18 +1110,15 @@ module.exports = function(app, template, hook) {
                 accessKeyId: template.project.settings.storage.s3.AWSAccessKeyId,
                 secretAccessKey: template.project.settings.storage.s3.AWSSecretKey
               });
-              s3.getSignedUrl('getObject', {
+              getSignedUrl(s3, new AWS.GetObjectCommand({
                 Bucket: file.bucket,
                 Key: file.key
-              }, function(err, url) {
-                if (err) {
-                  done(err);
-                }
+              })).then(url => {
                 if (!docker && !customer) {
                   assert.equal(res.body.url.replace(/Expires=[0-9]*/, ''), url.replace(/Expires=[0-9]*/, ''));
                 }
                 done();
-              });
+              }).catch(err => done(err));
             });
         });
 
