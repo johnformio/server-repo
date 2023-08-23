@@ -748,6 +748,21 @@ module.exports = function(app, template, hook) {
     });
 
     describe('Deployments', () => {
+      before((done) => {
+        if (!config.formio.hosted) {
+          process.env.TEST_SIMULATE_SAC_PACKAGE = '1';
+        }
+
+        done();
+      });
+  
+      after((done) => {
+        if (!config.formio.hosted) {
+          process.env.TEST_SIMULATE_SAC_PACKAGE = '0';
+        }
+
+        done();
+      });
       let env1, env2, form, formWithEnabledRevisions, formRevisions, parentForm, resource, resourceWithEnabledRevisions, resourceRevisions, parentRecourse, action, role, tag, _export;
 
       it('Create Environment 1', done => {

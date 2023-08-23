@@ -164,13 +164,14 @@ module.exports = (app, template, hook) => {
       });
     });
     
-    if  (!config.formio.hosted) {
+    if (!config.formio.hosted) {
       it('Should not create a new revision if sac is disabled', done => {
         process.env.TEST_SIMULATE_SAC_PACKAGE = '0';
         form.components[0].tableView = false;
         helper.updateForm(form, (err, result) => {
           helper.getFormRevisions(result, (err, result) => {
             if (err) {
+              process.env.TEST_SIMULATE_SAC_PACKAGE = '1';
               return done(err);
             }
             // 1 revision is left from prev test
