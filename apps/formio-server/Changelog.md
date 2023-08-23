@@ -4,10 +4,19 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 8.3.0-rc.2]
+## 8.3.0-rc.2
+### Changed
+ - Updated formio-app@8.3.0-rc.2
+ - Updated formiojs@4.17.0-rc.3
+ - Updated @formio/premium@1.21.0-rc.2
+ - Updated formio@3.3.0-rc.2
+ - Updated formio-workers@1.19.0-rc.2
+ - FIO-6859: migrate-aws-sdk-to-v3
+
 ## Fixed
  - FIO-7227: update mocked request object to include a path
-   
+ - FIO-7151: removed email action for project plan upgrade
+
 ## 8.3.0-rc.1
 ### Changed
  - Updated formio-app@8.3.0-rc.1
