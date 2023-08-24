@@ -750,14 +750,14 @@ module.exports = function(app, template, hook) {
     describe('Deployments', () => {
       let env1, env2, form, formWithEnabledRevisions, formRevisions, parentForm, resource, resourceWithEnabledRevisions, resourceRevisions, parentRecourse, action, role, tag, _export;
 
-      before((done) => {
+      before(done => {
         if (!config.formio.hosted) {
           process.env.TEST_SIMULATE_SAC_PACKAGE = '1';
         }
         done();
       });
   
-      after((done) => {
+      after(done => {
         if (!config.formio.hosted) {
           process.env.TEST_SIMULATE_SAC_PACKAGE = '0';
         }
