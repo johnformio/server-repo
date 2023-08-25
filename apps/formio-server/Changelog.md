@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased: 8.3.0-rc.4]
+### Fixed
+ - Hotfix: Fix production issue that is crashing the hosted server
+   
 ## 8.3.0-rc.2
 ### Changed
  - Updated formio-app@8.3.0-rc.2
