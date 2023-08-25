@@ -4,13 +4,10 @@ const fetch = require('formio/src/util/fetch');
 const util = require('./util');
 const processChangeLogData = require('./processChangeLogData');
 const proxy = require('../middleware/pdfProxy/proxy');
-const {promisify} = require('util');
 
 module.exports = (formioServer) => {
   const formio = formioServer.formio;
   const encrypt = require('./encrypt')(formioServer);
-  const loadSubFormsAsync = promisify(formio.cache.loadSubForms);
-  const loadSubSubmissionsAsync = promisify(formio.cache.loadSubSubmissions);
 
   return async (req, project, form, submission) => {
     proxy.authenticate(req, project);
@@ -38,7 +35,7 @@ module.exports = (formioServer) => {
             _vid: parseInt(submissionFormRevisionId),
           });
         }
-        // TODO: Check if 'toObject()' call is needed
+
         if (result) {
           form.components = result.toObject().components;
           form.settings = result.toObject().settings;
@@ -47,10 +44,10 @@ module.exports = (formioServer) => {
     }
 
     // Speed up performance by loading all subforms inline to the form
-    await loadSubFormsAsync(form, req);
+    await formio.cache.loadSubFormsAsync(form, req);
 
     // Load all subform submissions
-    await loadSubSubmissionsAsync(form, submission, req);
+    await formio.cache.loadSubSubmissionsAsync(form, submission, req);
 
     // Remove protected fields
     formio.util.removeProtectedFields(form, 'download', submission);
