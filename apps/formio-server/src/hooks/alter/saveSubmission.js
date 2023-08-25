@@ -47,7 +47,7 @@ module.exports = (app) => async (req, settings) => {
 
   if (updatePassword) {
     if (!_.get(submission.data, newPasswordField)) {
-      throw generateError(403, 'New password not provided');
+      throw generateError(400, 'New password not provided');
     }
 
     const newPasswordHash = _.get(body.data, newPasswordField);

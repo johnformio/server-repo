@@ -29,14 +29,14 @@ module.exports = (app) => (req, actionName, settingsForm) => {
           validate: {
             required: true,
           },
-          customConditional: 'show = data.passwordProtectedUpdate',
+          customConditional: 'show = data.settings && data.settings.passwordProtectedUpdate',
         },
         {
           label: 'Update password',
           key: 'updatePassword',
           type: 'checkbox',
           input: true,
-          customConditional: 'show = data.passwordProtectedUpdate',
+          customConditional: 'show = data.settings && data.settings.passwordProtectedUpdate',
         },
         {
           type: 'select',
@@ -52,7 +52,7 @@ module.exports = (app) => (req, actionName, settingsForm) => {
           validate: {
             required: true,
           },
-          customConditional: 'show = data.updatePassword',
+          customConditional: 'show = data.settings && data.settings.updatePassword',
         },
       ]);
     }
