@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
  - Hotfix: Fix production issue that is crashing the hosted server
  - Fix tests for 6889
+ - Revert "FIO-6859: migrate-aws-sdk-to-v3"
    
 ## 8.3.0-rc.2
 ### Changed
