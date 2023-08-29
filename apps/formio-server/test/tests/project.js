@@ -183,9 +183,9 @@ module.exports = function(app, template, hook) {
     // when new project is created
     const pdfInfoSubmissions = [];
     if (config.formio.hosted) {
-      nock(config.pdfproject, {
+      nock(config.pdfProject, {
         reqheaders: {
-          'x-token': (apiKey) => apiKey === config.pdfprojectApiKey
+          'x-token': (apiKey) => apiKey === config.pdfProjectApiKey
         }
       })
         .persist()

@@ -29,6 +29,49 @@ module.exports = (app, template, hook) => {
       }]
     }
     const usageTracking = app.formio.usageTracking;
+    const pdfProjectApiKey = 'testPdfProjectApiKey';
+    const pdfProjectReq = {
+      title: "Test PDF Project",
+      type: "project",
+      plan: "commercial",
+      settings: {
+        keys: [
+          {
+            name: 'testApiKey',
+            key: pdfProjectApiKey
+          }
+        ]
+      }
+    }
+    const pdfProjectForms = require('./fixtures/pdfProjectForms.json');
+
+    before('Set up test PDF project', async () => {
+      let {body: pdfProject} = await request(app)
+        .post('/project')
+        .query({skipPdfInfo: true})
+        .set('x-jwt-token', template.formio.owner.token)
+        .send(pdfProjectReq)
+        .expect(201);
+
+      await request(app)
+        .post(`/${pdfProject.name}/form`)
+        .set('x-token', pdfProjectApiKey)
+        .send(pdfProjectForms.pdf)
+        .expect(201);
+      await request(app)
+        .post(`/${pdfProject.name}/form`)
+        .set('x-token', pdfProjectApiKey)
+        .send(pdfProjectForms.info)
+        .expect(201);
+      await request(app)
+        .post(`/${pdfProject.name}/form`)
+        .set('x-token', pdfProjectApiKey)
+        .send(pdfProjectForms.purchase)
+        .expect(201);
+
+      config.pdfProject = `${config.host}:${config.port}/${pdfProject.name}`;
+      config.pdfProjectApiKey = pdfProjectApiKey;
+    });
 
     before('Create the test project and a test form', (done) => {
       request(app)

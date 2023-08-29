@@ -16,12 +16,19 @@ module.exports = async (req, res, next) => {
     return next();
   }
 
+  // Allows to use local PDF project.
+  // To use PDF project you need to create it first
+  // And make it possible you need to skip PDF info creating for this project
+  if (req.query.skipPdfInfo) {
+    return next();
+  }
+
   const headers = {
-    'x-token': config.pdfprojectApiKey,
+    'x-token': config.pdfProjectApiKey,
     'Content-Type': 'application/json'
   };
   try {
-    await fetch(`${config.pdfproject}/info/submission`, {
+    await fetch(`${config.pdfProject}/info/submission`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
