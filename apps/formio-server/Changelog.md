@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Hotfix: Fix production issue that is crashing the hosted server
  - Fix tests for 6889
  - Revert "FIO-6859: migrate-aws-sdk-to-v3"
+ - FIO-7180: fixed an issue when print to PDF does not show uploaded images
    
 ## 8.3.0-rc.2
 ### Changed
