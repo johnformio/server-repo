@@ -19,7 +19,7 @@ module.exports = class Revision {
   revisionsAllowed(req) {
     return this.checkRevisionPlan(req.primaryProject.plan) &&
       !config.formio.hosted &&
-      ((this.app.license && !this.app.license.licenseServerError && this.app.license.terms && _.get(this.app, 'license.terms.options.sac', false)) || process.env.TEST_SIMULATE_SAC_PACKAGE === '1');
+      (this.app.license && !this.app.license.licenseServerError && _.get(req, 'licenseTerms.options.sac', false));
   }
 
   shouldCreateNewRevision(req, item, loadItem, form) {
