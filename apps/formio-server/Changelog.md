@@ -4,12 +4,18 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 8.3.0-rc.4]
+## [Unreleased: 8.4.0-rc.1]
 ### Fixed
  - Hotfix: Fix production issue that is crashing the hosted server
  - Fix tests for 6889
  - Revert "FIO-6859: migrate-aws-sdk-to-v3"
  - FIO-7180: fixed an issue when print to PDF does not show uploaded images
+ - FIO-7149: fixed issue with getting settings for primary admin
+ - FIO-7180: fixed an issue when print to PDF does not show uploaded images
+
+### Added
+ - FIO-3820: Ability to delete files inside the Storage Services
+ - FIO-6493: reporting ui related changes
    
 ## 8.3.0-rc.2
 ### Changed
