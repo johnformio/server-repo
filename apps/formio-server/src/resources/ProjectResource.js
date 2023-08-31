@@ -44,7 +44,7 @@ module.exports = (router, formioServer) => {
 
   const projectSettings = (req, res, next) => {
     // Allow admin key
-    if (req.adminKey || (req.apiKey && req.isAdmin)) {
+    if (req.adminKey || req.isAdmin) {
       decryptSettings(res);
       formioServer.formio.audit('PROJECT_SETTINGS', req);
       return next();
