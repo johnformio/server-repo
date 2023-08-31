@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Revert "FIO-6859: migrate-aws-sdk-to-v3"
  - FIO-7180: fixed an issue when print to PDF does not show uploaded images
  - FIO-7149: fixed issue with getting settings for primary admin
- - FIO-7180: fixed an issue when print to PDF does not show uploaded images
+ - FIO-7229: fixed an issue where stages did not inherit parent project plan in hosted env
+ - FIO-7123 FIO-7124 FIO-7048: made form revisons and action logs available for onPremise only when sac is enabled and added sac functionality disabling in the from when sac is not enabled for license
 
 ### Added
  - FIO-3820: Ability to delete files inside the Storage Services
