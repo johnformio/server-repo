@@ -40,12 +40,22 @@ module.exports = function(formio) {
 
             billing.servers = _merge(billing.servers, req.body.servers);
 
-            return formio.resources.project.model.updateOne({
-              _id: formio.util.idToBson(req.projectId)
+            // update plan for all stages
+            return formio.resources.project.model.updateMany({
+              project: formio.util.idToBson(req.projectId),
+              type: 'stage'
             }, {
               plan: req.body.plan,
-              billing
-            });
+            })
+              .then(() => {
+                // upgrade plan for project itself
+                return formio.resources.project.model.updateOne({
+                  _id: formio.util.idToBson(req.projectId)
+                }, {
+                  plan: req.body.plan,
+                  billing
+                });
+              });
           })
           .then(function(rawResponse) {
             if (rawResponse.modifiedCount) {

@@ -849,6 +849,7 @@ module.exports = function(app, template, hook) {
         assert.equal(stage.project, template.project._id);
         assert.equal(stage.stageTitle, stageTitle);
         assert.notEqual(stage.title, stageTitle);
+        assert.equal(stage.plan, template.project.plan, 'Stage should inherit parent project plan.')
 
         stagesIds.push(stage._id);
 
@@ -891,6 +892,7 @@ module.exports = function(app, template, hook) {
         assert.equal(stage.project, template.project._id);
         assert.equal(stage.stageTitle, stageTitle);
         assert.notEqual(stage.title, stageTitle);
+        assert.equal(stage.plan, template.project.plan, 'Stage should inherit parent project plan.')
 
         stagesIds.push(stage._id);
 
@@ -1816,6 +1818,7 @@ module.exports = function(app, template, hook) {
 
         assert.equal(stage.stageTitle, stageTitle);
         assert.equal(stage.type, 'stage');
+        assert.equal(stage.plan, template.project.plan, 'Stage should inherit parent project plan');
 
         template.stage = stage;
 
@@ -2359,13 +2362,6 @@ module.exports = function(app, template, hook) {
 
         app.formio.formio.cache.deleteProjectCache(template.project);
 
-        // Delete created stage
-        await request(app)
-          .delete(`/project/${template.stage._id}`)
-          .set('x-jwt-token', template.formio.owner.token);
-
-        delete template.stage;
-
         // Delete created teams
         await request(app)
           .delete(`/team/${template.team1._id}`)
@@ -2426,6 +2422,7 @@ module.exports = function(app, template, hook) {
             }
 
             const response = res.body;
+
             assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('name'), true);
             assert.notEqual(response.name.search(uuidRegex), -1);
@@ -2436,7 +2433,7 @@ module.exports = function(app, template, hook) {
             done();
           });
       });
-
+      
       it('A Project on the basic plan should not be able to define its name on project creation', function(done) {
         const attempt = chance.word({length: 10});
         const tempProject = {
@@ -3921,6 +3918,36 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      it('New Stage should inherit parent project plan', function(done) {
+        request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            title: chance.word(),
+            type: 'stage',
+            project: template.project._id,
+            copyFromProject: 'empty',
+            name: chance.word(),
+            stageTitle: chance.word(),
+            settings: {
+              cors: '*',
+            },
+          })
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+  
+            const stage = res.body;
+            assert.equal(stage.plan, 'commercial');
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+  
+            done();
+          });
+      })
+  
       it('A Project on the Commercial plan will be able to set cors options on project update', function(done) {
         const attempt = '*,www.example.com';
 
@@ -4342,7 +4369,6 @@ module.exports = function(app, template, hook) {
           });
       });
 
-
       it('Anonymous users should not be allowed to upgrade a project', function(done) {
         request(app)
           .post('/project/' + template.project._id + '/upgrade')
@@ -4500,6 +4526,12 @@ module.exports = function(app, template, hook) {
         const project = projectRes.body;
 
         assert.equal(project.plan, 'commercial');
+
+        //stage project plan should be updated as well
+        const stageRes = await request(app)
+          .get(`/project/${template.stage._id}`)
+          .set('x-jwt-token', template.formio.owner.token);
+        assert.equal(stageRes.body.plan, 'commercial');
       });
 
       if (!docker)
@@ -4518,6 +4550,13 @@ module.exports = function(app, template, hook) {
         const project = projectRes.body;
 
         assert.equal(project.plan, 'basic');
+
+        //stage project plan should be updated as well
+        const stageRes = await request(app)
+          .get(`/project/${template.stage._id}`)
+          .set('x-jwt-token', template.formio.owner.token);
+
+        assert.equal(stageRes.body.plan, 'basic');
       });
 
 /*
