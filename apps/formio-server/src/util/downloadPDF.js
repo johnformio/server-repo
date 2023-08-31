@@ -2,7 +2,6 @@
 const _ = require('lodash');
 const Promise = require('bluebird');
 const fetch = require('formio/src/util/fetch');
-const util = require('./util');
 const processChangeLogData = require('./processChangeLogData');
 const proxy = require('../middleware/pdfProxy/proxy');
 
@@ -68,7 +67,21 @@ module.exports = (formioServer) => {
     }
 
     req.headers['content-type'] = 'application/json';
-    req.headers['x-host'] = util.baseUrl(formio, req);
+
+    // Pass along the auth token to files server
+    if (req.token) {
+      if (req.token.user && req.token.form) {
+        req.headers['x-jwt-token'] = formio.auth.getToken({
+          form: req.token.form,
+          user: req.token.user,
+          project: req.token.project,
+          jti: req.token.jti
+        });
+      }
+      else {
+        req.headers['x-jwt-token'] = formio.auth.getToken(_.omit(req.token, 'allow'));
+      }
+    }
 
     req.query.format = req.query.format || 'pdf';
     const pdfProject = req.query.project || project._id.toString();
