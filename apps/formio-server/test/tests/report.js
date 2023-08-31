@@ -30,24 +30,28 @@ module.exports = function(app, template, hook) {
         });
     });
 
-    it('Should not allow $lookup in aggregation.', function(done) {
+    it('Should allow $lookup in aggregation.', function(done) {
       request(app)
         .get('/project/' + template.project._id + '/report')
         .set('x-jwt-token', template.users.admin.token)
         .set('x-query', JSON.stringify([{
-          '$lookup': {}
+          '$lookup': { 
+            from: 'submissions',
+            localField: 'data.email',
+            foreignField: 'data.email',
+            as: 'email'
+          }
         }]))
-        .expect(400)
+        .expect(200)
         .end(function (err, res) {
           if (err) {
             return done(err);
           }
-          assert(res.text, 'Disallowed stage used in aggregation.');
           done();
         });
     });
 
-    it('Should not allow $project with anything other than integers in aggregation.', function(done) {
+    it('Should allow $project not only with integers in aggregation.', function(done) {
       request(app)
         .get('/project/' + template.project._id + '/report')
         .set('x-jwt-token', template.users.admin.token)
@@ -58,17 +62,16 @@ module.exports = function(app, template, hook) {
             owner: 'test'
           }
         }]))
-        .expect(400)
+        .expect(200)
         .end(function (err, res) {
           if (err) {
             return done(err);
           }
-          assert(res.text, 'Disallowed stage used in aggregation.');
           done();
         });
     });
 
-    it('Should allow $project with only integers in aggregation.', function(done) {
+    it('Should allow $project with integers in aggregation.', function(done) {
       request(app)
         .get('/project/' + template.project._id + '/report')
         .set('x-jwt-token', template.users.admin.token)
@@ -173,22 +176,24 @@ module.exports = function(app, template, hook) {
         });
     });
 
-    it('Should not allow $lookup in aggregation after other stages.', function(done) {
+    it('Should $lookup in aggregation after other stages.', function(done) {
       request(app)
         .get('/project/' + template.project._id + '/report')
         .set('x-jwt-token', template.users.admin.token)
-        .set('x-query', JSON.stringify([{
-          '$match': {},
-          '$limit': {},
-          '$skip': {},
-          '$lookup': {}
-        }]))
-        .expect(400)
+        .set('x-query', JSON.stringify([
+          {'$match': {}},
+          {'$lookup': { 
+            from: 'submissions',
+            localField: 'data.email',
+            foreignField: 'data.email',
+            as: 'email',
+          }}
+        ]))
+        .expect(200)
         .end(function (err, res) {
           if (err) {
             return done(err);
           }
-          assert(res.text, 'Disallowed stage used in aggregation.');
           done();
         });
     });

@@ -2279,6 +2279,10 @@ module.exports = function(app) {
       formRevisionModel() {
         return formioServer.formio.mongoose.models.formrevision;
       },
+
+      includeReports() {
+        return !config.formio.hosted && _.get(app, 'license.terms.options.reporting', false);
+      }
     }
   };
 };

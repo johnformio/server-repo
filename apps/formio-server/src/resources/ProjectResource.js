@@ -222,7 +222,7 @@ module.exports = (router, formioServer) => {
     ],
     afterPost: [
       formio.middleware.postCreateLicenseCheck,
-      require('../middleware/projectTemplate')(formio),
+      require('../middleware/projectTemplate')(formio, router),
       formio.middleware.filterResourcejsResponse(hiddenFields),
       formio.middleware.projectUsage,
       formio.middleware.syncProjectUsage,
@@ -346,7 +346,7 @@ module.exports = (router, formioServer) => {
       projectSettings,
     ],
     afterPut: [
-      require('../middleware/projectTemplate')(formio),
+      require('../middleware/projectTemplate')(formio, router),
       formio.middleware.filterResourcejsResponse(hiddenFields),
       projectSettings,
       formio.middleware.customCrmAction('updateproject'),

@@ -111,7 +111,7 @@ module.exports = function(options) {
         res.set('Content-Type', 'application/javascript; charset=UTF-8');
         res.send(
           contents.replace(
-            /var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false|var licenseId = '';|var whitelabel = false;/gi,
+            /var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false|var licenseId = '';|var reportingUI = false;|var whitelabel = false;/gi,
             (matched) => {
               if (config.portalSSO && matched.includes('var sso =')) {
                 return `var sso = '${config.portalSSO}';`;
@@ -133,6 +133,9 @@ module.exports = function(options) {
               }
               else if (config.enableOauthM2M && matched.includes('var oAuthM2MEnabled')) {
                 return 'var oAuthM2MEnabled = true;';
+              }
+              else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.reporting && matched.includes('var reportingUI')) {
+                return 'var reportingUI = true;';
               }
               else if (!config.formio.hosted && app.license && app.license.licenseId && matched.includes('var licenseId')) {
                 return `var licenseId = '${app.license.licenseId}'`;
@@ -256,6 +259,15 @@ module.exports = function(options) {
         schema: packageJson.schema,
         environmentId: app.environmentId
       });
+    }
+  ]);
+
+  // made reportingui configuration form available for import
+  app.get('/reportingui/config', [
+    cors(),
+    (req, res) => {
+      const reportingUIForm = require('./reportingUI.json').resources.reportingui;
+      res.json(reportingUIForm);
     }
   ]);
 
