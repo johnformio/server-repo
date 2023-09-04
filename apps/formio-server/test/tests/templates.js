@@ -3,6 +3,7 @@
 const request = require('supertest');
 const assert = require('assert');
 const _ = require('lodash');
+const config = require('../../config');
 const formioUtils = require('formiojs/utils').default;
 
 module.exports = function(app, template, hook) {
@@ -645,7 +646,7 @@ module.exports = function(app, template, hook) {
     });
 
     it('Should grant default form level access and submission access to forms whose names are not included in the default template', (done) => {
-      console.log(3333, process.env.LICENSE_KEY, process.env.LICENSE_REMOTE);
+      console.log(3333, config.formio.hosted, JSON.stringify(process.env.LICENSE_KEY), process.env.LICENSE_REMOTE);
       const defaultTemplateJSON = formio.templates['default'];
       const defaultForms = _.cloneDeep(defaultTemplateJSON.forms);
       const defaultResources = _.cloneDeep(defaultTemplateJSON.resources);
