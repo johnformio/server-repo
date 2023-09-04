@@ -646,7 +646,6 @@ module.exports = function(app, template, hook) {
     });
 
     it('Should grant default form level access and submission access to forms whose names are not included in the default template', (done) => {
-      console.log(3333, config.formio.hosted, JSON.stringify(process.env.LICENSE_KEY), process.env.LICENSE_REMOTE);
       const defaultTemplateJSON = formio.templates['default'];
       const defaultForms = _.cloneDeep(defaultTemplateJSON.forms);
       const defaultResources = _.cloneDeep(defaultTemplateJSON.resources);
@@ -673,8 +672,8 @@ module.exports = function(app, template, hook) {
             const mappedFormAccess = form.access.map((access) => mapRoleIdsToRoleNames(access, roles));
             const mappedFormSubmissionAccess = form.submissionAccess.map((access) => mapRoleIdsToRoleNames(access, roles));
             if (!matchingProjectForm) {
-              assert.deepEqual(mappedFormAccess, defaultFormAccess);
-              assert.deepEqual(mappedFormSubmissionAccess, defaultSubmissionAccess);
+              assert.deepEqual(mappedFormAccess, defaultFormAccess, `1 Error in form ${form.path}`);
+              assert.deepEqual(mappedFormSubmissionAccess, defaultSubmissionAccess, `2 Error in form ${form.path}`);
             }
           });
           resources.forEach((resource) => {
@@ -682,8 +681,8 @@ module.exports = function(app, template, hook) {
             const mappedFormAccess = resource.access.map((access) => mapRoleIdsToRoleNames(access, roles));
             const mappedFormSubmissionAccess = resource.submissionAccess.map((access) => mapRoleIdsToRoleNames(access, roles));
             if (!matchingProjectForm) {
-              assert.deepEqual(mappedFormAccess, defaultFormAccess);
-              assert.deepEqual(mappedFormSubmissionAccess, defaultSubmissionAccess);
+              assert.deepEqual(mappedFormAccess, defaultFormAccess, `1 Error in resource ${resource.path}`);
+              assert.deepEqual(mappedFormSubmissionAccess, defaultSubmissionAccess, `2 Error in resource ${resource.path}`);
             }
           });
           done();
