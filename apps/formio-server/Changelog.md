@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased: 8.4.0-rc.1]
+### Changed
+ - [Snyk] Upgrade acorn from 8.8.2 to 8.10.0
+ - [Snyk] Upgrade dotenv from 16.0.3 to 16.3.1
+ - [Snyk] Security upgrade @node-saml/node-saml from 4.0.4 to 4.0.5
+   
 ### Fixed
  - Hotfix: Fix production issue that is crashing the hosted server
  - Fix tests for 6889
