@@ -538,7 +538,11 @@ module.exports = function(app, template, hook) {
 
       it('An export should match an import', function() {
         assert.equal(exportData.version, '2.0.0');
-        assert.deepEqual(_.omit(exportData, ['version', 'tag', 'access']), _.omit(testTemplate, ['version', 'tag', 'access']));
+        const expectedTemplateResult = _.omit(testTemplate, ['version', 'tag', 'access']);
+        if (app.formio.formio.hook.alter('includeReports')) {
+          expectedTemplateResult.reports = {};
+        }
+        assert.deepEqual(_.omit(exportData, ['version', 'tag', 'access']), expectedTemplateResult);
       });
     });
 

@@ -826,7 +826,7 @@ module.exports = function(app, template, hook) {
       const stagesIds = [];
 
       it('Should create stage using default template when copying from empty stage', async () => {
-        const defaultTemplate = require('formio/src/templates/default.json');
+        const defaultTemplate = app.formio.formio.templates.default;
         const stageTitle = chance.word();
 
         // Create stage
