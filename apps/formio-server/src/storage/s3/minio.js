@@ -32,31 +32,21 @@ const getUrl = function(options = {}) {
   return new Promise((resolve, reject) => {
     const minio = getMinio(options.settings);
 
-    switch (options.method) {
-      case "PUT":
-        minio.presignedPutObject(
-          options.settings.bucket,
-          options.file.path,
-          options.file.expiresin,
-          (err, result) => err ? reject(err) : resolve(result)
-        );
-        break;
-      case "DELETE":
-        minio.removeObject(
-          options.settings.bucket,
-          options.key,
-          {},
-          (err, result) => err ? reject(err) : resolve(result)
-        );
-        break;
-
-      default:
-        minio.presignedGetObject(
-          options.bucket,
-          options.key,
-          24*60*60,
-          (err, result) => err ? reject(err) : resolve(result)
-        );
+    if (options.method === 'PUT') {
+      minio.presignedPutObject(
+        options.settings.bucket,
+        options.file.path,
+        options.file.expiresin,
+        (err, result) => err ? reject(err) : resolve(result)
+      );
+    }
+    else {
+      minio.presignedGetObject(
+        options.bucket,
+        options.key,
+        24*60*60,
+        (err, result) => err ? reject(err) : resolve(result)
+      );
     }
   });
 };
