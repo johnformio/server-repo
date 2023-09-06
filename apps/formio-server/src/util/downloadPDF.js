@@ -11,6 +11,7 @@ module.exports = (formioServer) => {
   Promise.promisifyAll(formio.cache, {context: formio.cache});
   return async (req, project, form, submission) => {
     proxy.authenticate(req, project);
+    proxy.updateHeadersForPdfRequest(req, formio);
 
     if (submission.data.esign && submission.data.esign.fileId) {
       return require('./downloadEsign')()(project, submission);
