@@ -491,7 +491,7 @@ module.exports = function(app, template, hook) {
           if (err) {
             return done(err);
           }
-
+          firstProject.plan = 'commercial';
           done();
         });
     });
@@ -501,7 +501,7 @@ module.exports = function(app, template, hook) {
         title: chance.word(),
         description: chance.sentence(),
         name: chance.word(),
-        project: firstProject._id
+        project: firstProject._id,
       };
       request(app)
         .post('/project')
@@ -541,8 +541,7 @@ module.exports = function(app, template, hook) {
 
           // Check plan and api calls info
           if (app.formio) {
-            var plan = process.env.PROJECT_PLAN;
-            assert.equal(response.plan, plan, 'The plan should match the default new project plan.');
+            assert.equal(response.plan, firstProject.plan, 'The stage plan should match the parent project plan.');
           }
 
           // Check that the response does not contain these properties.
@@ -695,8 +694,7 @@ module.exports = function(app, template, hook) {
 
         // Check plan and api calls info
         if (app.formio) {
-          var plan = process.env.PROJECT_PLAN;
-          assert.equal(response.plan, plan, 'The plan should match the default new project plan.');
+          assert.equal(response.plan, firstProject.plan, 'The stage plan should match the parent project plan.');
         }
 
         // Check that the response does not contain these properties.
