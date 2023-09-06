@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-7123 FIO-7124 FIO-7048: made form revisons and action logs available for onPremise only when sac is enabled and added sac functionality disabling in the from when sac is not enabled for license
  - FIO-6493: added reporting-ui form to default template once the license is validated and fixed formio-server test
  - fixed project plan tests for hosted env
+ - FIO-7297: Fixes permission denied error when creating a stage while admin key is provided for authentication
 
 ### Added
  - FIO-3820: Ability to delete files inside the Storage Services
