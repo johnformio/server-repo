@@ -1,7 +1,9 @@
 'use strict';
 const _ = require('lodash');
-const AWS = require('@aws-sdk/client-s3');
-const {getSignedUrl} = require("@aws-sdk/s3-request-presigner");
+const formatUrl = require("@aws-sdk/util-format-url").formatUrl;
+const createRequest = require("@aws-sdk/util-create-request").createRequest;
+const {S3Client, GetObjectCommand, PutObjectCommand} = require('@aws-sdk/client-s3');
+const {getSignedUrl, S3RequestPresigner} = require("@aws-sdk/s3-request-presigner");
 
 const getAWS = function(settings = {}) {
   const config = {};
@@ -21,7 +23,7 @@ const getAWS = function(settings = {}) {
   }
 
   // Return the AWS.S3 object.
-  return new AWS.S3(config);
+  return new S3Client(config);
 };
 
 const getUrl = async function(options = {}) {
@@ -52,11 +54,24 @@ const getUrl = async function(options = {}) {
         putConfig.SSEKMSKeyId = options.settings.kmsKey;
       }
 
-      return getSignedUrl(
+      const request = await createRequest(
         aws,
-        new AWS.PutObjectCommand(putConfig),
-        {expiresIn: options.file.expiresin}
+        new PutObjectCommand(putConfig),
       );
+
+      const signer = new S3RequestPresigner({
+        ...aws.config,
+      });
+
+      const presigned = await signer.presign(
+        request,
+        {
+          expiresIn: options.file.expiresin
+        }
+      );
+      const presignedUrl = formatUrl(presigned);
+
+      return presignedUrl;
     }
     else {
       // Use the legacy manually signed upload url.
@@ -64,7 +79,7 @@ const getUrl = async function(options = {}) {
     }
   }
   else {
-    const getObjectCommand = new AWS.GetObjectCommand({
+    const getObjectCommand = new GetObjectCommand({
       Bucket: options.bucket,
       Key: options.key,
     });
