@@ -825,6 +825,10 @@ module.exports = function(app, template, hook) {
     describe('Stages', () => {
       const stagesIds = [];
 
+      before(() => {
+        process.env.ADMIN_KEY = chance.word();
+      });
+
       it('Should create stage using default template when copying from empty stage', async () => {
         const defaultTemplate = require('formio/src/templates/default.json');
         const stageTitle = chance.word();
@@ -927,7 +931,42 @@ module.exports = function(app, template, hook) {
         assert.deepEqual(exportedStage.access, exportedProject.access);
       });
 
+      it('Should create stage when admin key provided', done => {
+        const newStage = {
+          stageTitle: chance.word(),
+          title: chance.word(),
+          name: chance.word(),
+          type: 'stage',
+          project: template.project._id,
+          copyFromProject: template.project._id,
+          framework: 'custom'
+        };
+
+        request(app)
+          .post('/project')
+          .set('x-admin-key', process.env.ADMIN_KEY)
+          .send(newStage)
+          .expect(201)
+          .expect('Content-Type', /json/)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            const stage = res.body;
+
+            assert.ok(stage._id);
+            assert.equal(stage.type, 'stage');
+            assert.equal(stage.project, template.project._id);
+            assert.equal(stage.stageTitle, newStage.stageTitle);
+            assert.equal(stage.title, newStage.title);
+
+            done();
+          });
+      });
+
       after(async () => {
+        delete process.env.ADMIN_KEY;
         // Delete created stages
         await Promise.all(stagesIds.map(stageId => request(app)
           .delete(`/project/${stageId}`)
