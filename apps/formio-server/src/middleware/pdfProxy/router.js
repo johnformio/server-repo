@@ -2,8 +2,6 @@
 
 const express = require('express');
 const fetch = require('node-fetch');
-const _ = require('lodash');
-const util =require('./../../util/util');
 const config = require('../../../config');
 const loadProjectContexts = require('../loadProjectContexts');
 const proxy = require('./proxy');
