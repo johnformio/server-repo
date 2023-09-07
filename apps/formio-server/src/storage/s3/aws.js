@@ -65,9 +65,7 @@ const getUrl = async function(options = {}) {
 
       const presigned = await signer.presign(
         request,
-        {
-          expiresIn: options.file.expiresin
-        }
+        {expiresIn: options.file.expiresin}
       );
       const presignedUrl = formatUrl(presigned);
 
