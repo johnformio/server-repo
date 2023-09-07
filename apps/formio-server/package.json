@@ -25,9 +25,9 @@
   },
   "cache": "1550086650",
   "main": "./main.js",
-  "version": "8.4.0-rc.2",
+  "version": "8.4.0-rc.3",
   "schema": "3.3.18",
-  "portalVersion": "8.4.0-rc.2",
+  "portalVersion": "8.4.0-rc.3",
   "dependencies": {
     "@azure/storage-blob": "12.15.0",
     "@braintree/sanitize-url": "^6.0.0",
