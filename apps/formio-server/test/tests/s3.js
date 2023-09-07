@@ -4,7 +4,7 @@
 var request = require('supertest');
 var assert = require('assert');
 var CryptoJS = require('crypto-js');
-const AWS = require('@aws-sdk/client-s3');
+const {S3Client, GetObjectCommand} = require('@aws-sdk/client-s3');
 const {getSignedUrl} = require("@aws-sdk/s3-request-presigner");
 var docker = process.env.DOCKER;
 var customer = process.env.CUSTOMER;
@@ -765,14 +765,17 @@ module.exports = function(app, template, hook) {
               if (err) {
                 return done(err);
               }
-              var s3 = new AWS.S3({
-                accessKeyId: template.project.settings.storage.s3.AWSAccessKeyId,
-                secretAccessKey: template.project.settings.storage.s3.AWSSecretKey
+              var s3 = new S3Client({
+                region: 'us-east-1',
+                credentials: {
+                  accessKeyId: template.project.settings.storage.s3.AWSAccessKeyId,
+                  secretAccessKey: template.project.settings.storage.s3.AWSSecretKey
+                }
               });
-              getSignedUrl(s3, new AWS.GetObjectCommand({
+              getSignedUrl(s3, new GetObjectCommand({
                 Bucket: file.bucket,
                 Key: file.key
-              })).then(url => {
+              }, {expiresIn: +template.project.settings.storage.s3.expiration})).then(url => {
                 if (!docker && !customer) {
                   assert.equal(res.body.url.replace(/Expires=[0-9]*/, ''), url.replace(/Expires=[0-9]*/, ''));
                 }
@@ -1106,14 +1109,17 @@ module.exports = function(app, template, hook) {
               if (err) {
                 return done(err);
               }
-              var s3 = new AWS.S3({
-                accessKeyId: template.project.settings.storage.s3.AWSAccessKeyId,
-                secretAccessKey: template.project.settings.storage.s3.AWSSecretKey
+              var s3 = new S3Client({
+                region: 'us-east-1',
+                credentials: {
+                  accessKeyId: template.project.settings.storage.s3.AWSAccessKeyId,
+                  secretAccessKey: template.project.settings.storage.s3.AWSSecretKey
+                }
               });
-              getSignedUrl(s3, new AWS.GetObjectCommand({
+              getSignedUrl(s3, new GetObjectCommand({
                 Bucket: file.bucket,
                 Key: file.key
-              })).then(url => {
+              }, {expiresIn: +template.project.settings.storage.s3.expiration})).then(url => {
                 if (!docker && !customer) {
                   assert.equal(res.body.url.replace(/Expires=[0-9]*/, ''), url.replace(/Expires=[0-9]*/, ''));
                 }
