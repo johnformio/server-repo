@@ -1185,9 +1185,9 @@
     lodash "^4.17.21"
     node-fetch "^2.6.1"
 
-"@formio/premium@github:formio/premium#v1.21.0-rc.2":
-  version "1.21.0-rc.2"
-  resolved "git+ssh://git@github.com/formio/premium.git#a915f6e93c6368e19ae5369918125849be326981"
+"@formio/premium@github:formio/premium#v1.21.0-rc.3":
+  version "1.21.0-rc.3"
+  resolved "git+ssh://git@github.com/formio/premium.git#52135c193ab7c5a1cb0295ef622711a8efb2f49b"
   dependencies:
     "@juggle/resize-observer" "^3.4.0"
     "@zxing/library" "^0.18.6"
@@ -1366,6 +1366,23 @@
   version "4.0.4"
   resolved "https://registry.yarnpkg.com/@node-saml/node-saml/-/node-saml-4.0.4.tgz#472a6b17021a0c9d8261964bf6e1dd686ae2d515"
   integrity sha512-oybUBWBYVsHGckQxzyzlpRM4E2iuW3I2Ok/J9SwlotdmjvmZxSo6Ub74D9wltG8C9daJZYI57uy+1UK4FtcGXA==
+  dependencies:
+    "@types/debug" "^4.1.7"
+    "@types/passport" "^1.0.11"
+    "@types/xml-crypto" "^1.4.2"
+    "@types/xml-encryption" "^1.2.1"
+    "@types/xml2js" "^0.4.11"
+    "@xmldom/xmldom" "^0.8.6"
+    debug "^4.3.4"
+    xml-crypto "^3.0.1"
+    xml-encryption "^3.0.2"
+    xml2js "^0.5.0"
+    xmlbuilder "^15.1.1"
+
+"@node-saml/node-saml@^4.0.5":
+  version "4.0.5"
+  resolved "https://registry.yarnpkg.com/@node-saml/node-saml/-/node-saml-4.0.5.tgz#039e387095b54639b06df62b1b4a6d8941c6d907"
+  integrity sha512-J5DglElbY1tjOuaR1NPtjOXkXY5bpUhDoKVoeucYN98A3w4fwgjIOPqIGcb6cQsqFq2zZ6vTCeKn5C/hvefSaw==
   dependencies:
     "@types/debug" "^4.1.7"
     "@types/passport" "^1.0.11"
@@ -2049,6 +2066,11 @@ acorn@8.7.0:
   version "8.7.0"
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-8.7.0.tgz#90951fde0f8f09df93549481e5fc141445b791cf"
   integrity sha512-V/LGr1APy+PXIwKebEWrkZPwoeoF+w1jiOBUmuxuiUIaOHtob8Qc9BTrYo7VuI5fR8tqsy+buA2WFooR5olqvQ==
+
+acorn@^8.10.0:
+  version "8.10.0"
+  resolved "https://registry.yarnpkg.com/acorn/-/acorn-8.10.0.tgz#8be5b3907a67221a81ab23c7889c4c5526b62ec5"
+  integrity sha512-F0SAmZ8iUtS//m8DmCTA0jlh6TDKkHQyK6xc6V4KDTyZKA9dnvX9/3sRTVQrWm79glUAZbnmmNcdYwUIHWVybw==
 
 acorn@^8.5.0, acorn@^8.7.0, acorn@^8.7.1, acorn@^8.8.0:
   version "8.8.2"
@@ -4062,17 +4084,17 @@ formidable@^2.1.2:
     once "^1.4.0"
     qs "^6.11.0"
 
-formio-workers@1.19.0-rc.2:
-  version "1.19.0-rc.2"
-  resolved "https://registry.yarnpkg.com/formio-workers/-/formio-workers-1.19.0-rc.2.tgz#55394b1508c0c293ca7ef2de27adbb87e0be3218"
-  integrity sha512-g/EbHTuKay6NrmoU/sbcoNM83i0tjswzjA8DLsisaQRRw4/BAkabbvjkoLh2VUbpN24DzJjvomodkZS6rx6p/A==
+formio-workers@1.20.0-rc.2:
+  version "1.20.0-rc.2"
+  resolved "https://registry.yarnpkg.com/formio-workers/-/formio-workers-1.20.0-rc.2.tgz#05a0b5145caba7a18ed76358bff2c58f3af5a920"
+  integrity sha512-RC93XPLXj7alI9zLngQ1GDU8f8lBW2e7ssGnF/1ZHiGVdMkw9kie7DH6Cv92lRlEEUpHK0bE4eft4hAVyIentg==
   dependencies:
     aws-serverless-express "^3.4.0"
     body-parser "^1.19.1"
     core-js "^3.19.3"
     dotenv "^10.0.0"
     express "^4.17.1"
-    formiojs "4.17.0-rc.3"
+    formiojs "4.18.0-rc.1"
     lodash "^4.17.21"
     method-override "^3.0.0"
     moment "^2.29.1"
@@ -4081,10 +4103,10 @@ formio-workers@1.19.0-rc.2:
     nunjucks-date-filter "^0.1.1"
     vm2 "^3.9.5"
 
-formio@3.3.0-rc.2:
-  version "3.3.0-rc.2"
-  resolved "https://registry.yarnpkg.com/formio/-/formio-3.3.0-rc.2.tgz#3d2eb9b485f9fd18b98aa90f3a1ddc3462840489"
-  integrity sha512-UDkUqt4xZPwVwcIiK7aC7DR0vMY2tWUXGAtzo/ws44xqZ6bD4uLkuDzzPw7+8KMgWP91/DDGu/q36UGxqsT4VA==
+formio@3.4.0-rc.2:
+  version "3.4.0-rc.2"
+  resolved "https://registry.yarnpkg.com/formio/-/formio-3.4.0-rc.2.tgz#afd84b3cdcd9aa2f963cdc53043b1e2162192c19"
+  integrity sha512-nQe+QMYkXOnhzhjVfZFHAlaJ8hUcvKQZrxaqRTMv1LWaS14OfiKJvg7mb/X0JKQ56B24ApMPE0VD9u8kYRe3jA==
   dependencies:
     "@azure/ms-rest-nodeauth" "^3.1.1"
     "@formio/node-fetch-http-proxy" "^1.1.0"
@@ -4107,8 +4129,8 @@ formio@3.3.0-rc.2:
     expose-gc "^1.0.0"
     express "^4.18.2"
     fast-json-patch "^3.1.1"
-    formio-workers "1.19.0-rc.2"
-    formiojs "4.17.0-rc.3"
+    formio-workers "1.20.0-rc.2"
+    formiojs "4.18.0-rc.1"
     fs-extra "^10.1.0"
     html-entities "^2.3.3"
     jsonwebtoken "^9.0.0"
@@ -4133,10 +4155,10 @@ formio@3.3.0-rc.2:
     vanilla-text-mask "^5.1.1"
     vm2 "^3.9.9"
 
-formiojs@4.17.0-rc.3:
-  version "4.17.0-rc.3"
-  resolved "https://registry.yarnpkg.com/formiojs/-/formiojs-4.17.0-rc.3.tgz#19bd70468c46debe37dc62f437b4b955ead2cee3"
-  integrity sha512-glbzfX7yJPUM0eAogXpjrHhJO/AQlCCjwWieHzH+hXuHKVkFDiZRHz+HpTU9HKZCZCJuvROPZEihKTvGcZWRKw==
+formiojs@4.18.0-rc.1:
+  version "4.18.0-rc.1"
+  resolved "https://registry.yarnpkg.com/formiojs/-/formiojs-4.18.0-rc.1.tgz#509406616c826f0575362b279e4f6afa3521d58b"
+  integrity sha512-JBYAU2Sjdu0i+y388UFg5Uj/ZHkAIRErNOLnQSf6XMWLCqtHHAkVhEKbfCvqBJvgBQ5CBIV4JfROEoVK5QKIzg==
   dependencies:
     "@formio/bootstrap3" "2.12.3"
     "@formio/choices.js" "10.2.0"
