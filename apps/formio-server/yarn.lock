@@ -136,7 +136,7 @@
     "@aws-sdk/util-utf8" "3.295.0"
     tslib "^2.5.0"
 
-"@aws-sdk/client-s3@^3.178.0":
+"@aws-sdk/client-s3@^3.405.0":
   version "3.405.0"
   resolved "https://registry.yarnpkg.com/@aws-sdk/client-s3/-/client-s3-3.405.0.tgz#c63b14bc8c8b6b8ed3164e36a5f93649ae5401e8"
   integrity sha512-+LK6OCbKplR51zBZAtK/+RxaPsXcEklsA1+mmUA3M1h4KHl6GMiK5r/D9dlKht5DRntmmjCn3SI99QbfckqKXg==

@@ -71,7 +71,10 @@ const getUrl = async function(options = {}) {
       );
       const presignedUrl = formatUrl(presigned);
 
-      return presignedUrl;
+      return {
+        url: presignedUrl,
+        headers: presigned.headers,
+      };
     }
     else {
       // Use the legacy manually signed upload url.

@@ -89,7 +89,8 @@ const middleware = function(router) {
       acl: project.settings.storage.s3.acl || 'private',
       policy: policy,
       'Content-Type': file.type,
-      filename: file.name
+      filename: file.name,
+      headers: signedUrl.headers
     };
     /* eslint-enable new-cap */
 
