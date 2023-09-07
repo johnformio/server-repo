@@ -1185,9 +1185,9 @@
     lodash "^4.17.21"
     node-fetch "^2.6.1"
 
-"@formio/premium@github:formio/premium#v1.21.0-rc.3":
-  version "1.21.0-rc.3"
-  resolved "git+ssh://git@github.com/formio/premium.git#52135c193ab7c5a1cb0295ef622711a8efb2f49b"
+"@formio/premium@github:formio/premium#v1.22.0-rc.1":
+  version "1.22.0-rc.1"
+  resolved "git+ssh://git@github.com/formio/premium.git#7d917a31c563b24cc389479a880ead88ac8e3276"
   dependencies:
     "@juggle/resize-observer" "^3.4.0"
     "@zxing/library" "^0.18.6"
