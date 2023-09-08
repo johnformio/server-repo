@@ -1,31 +1,28 @@
 /* eslint-disable max-depth */
 'use strict';
-const {VM} = require('vm2');
+const {Isolate} = require('isolated-vm');
+const vmUtil = require('formio/src/util/vmUtil');
 const moment = require('moment');
 const _ = require('lodash');
 module.exports = app => (context, form) => {
   if (form && form.module) {
     if (typeof form.module === 'string') {
       try {
-        let vm = new VM({
+        const isolate = new Isolate({memoryLimit: 8});
+        const context = isolate.createContextSync();
+        vmUtil.transferSync('formModule', null, context);
+        vmUtil.transferSync('form', form, context);
+        vmUtil.freezeSync('moment', moment, context);
+        vmUtil.freezeSync('_', _, context);
+
+        const formModule = context.evalSync(`formModule = ${form.module}`, {
           timeout: 250,
-          sandbox: {
-            formModule: null,
-            form,
-          },
-          fixAsync: true,
-          eval: false,
+          copy: true
         });
 
-        vm.freeze(moment, 'moment');
-        vm.freeze(_, '_');
-
-        const formModule = vm.run(`formModule = ${form.module}`);
         if (formModule) {
           form.module = formModule;
         }
-
-        vm = null;
       }
       catch (err) {
         // eslint-disable-next-line no-console
