@@ -43,6 +43,7 @@ module.exports = function(formio) {
             }
           }
           else if (req.isAdmin) {
+            _.set(req, 'body.owner', project.owner || null);
             return resolve(project);
           }
           return reject({status: 403, err: 'Permission Denied'});

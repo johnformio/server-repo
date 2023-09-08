@@ -960,6 +960,7 @@ module.exports = function(app, template, hook) {
             assert.equal(stage.project, template.project._id);
             assert.equal(stage.stageTitle, newStage.stageTitle);
             assert.equal(stage.title, newStage.title);
+            assert.equal(stage.owner, template.project.owner);
 
             done();
           });
@@ -2472,7 +2473,7 @@ module.exports = function(app, template, hook) {
             done();
           });
       });
-      
+
       it('A Project on the basic plan should not be able to define its name on project creation', function(done) {
         const attempt = chance.word({length: 10});
         const tempProject = {
@@ -3977,16 +3978,16 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
-  
+
             const stage = res.body;
             assert.equal(stage.plan, 'commercial');
             // Store the JWT for future API calls.
             template.formio.owner.token = res.headers['x-jwt-token'];
-  
+
             done();
           });
       })
-  
+
       it('A Project on the Commercial plan will be able to set cors options on project update', function(done) {
         const attempt = '*,www.example.com';
 
