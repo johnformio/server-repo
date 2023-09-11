@@ -54,25 +54,22 @@ const getUrl = async function(options = {}) {
         putConfig.SSEKMSKeyId = options.settings.kmsKey;
       }
 
-      const request = await createRequest(
-        aws,
-        new PutObjectCommand(putConfig),
-      );
-
-      const signer = new S3RequestPresigner({
-        ...aws.config,
-      });
-
-      const presigned = await signer.presign(
-        request,
-        {expiresIn: options.file.expiresin}
-      );
+      // https://github.com/aws/aws-sdk-js-v3/issues/1576
+      // https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-s3-request-presigner/
+      // Create an AWS SDK request object for uploading an object to S3
+      const request = await createRequest(aws, new PutObjectCommand(putConfig));
+      
+      // Instantiate an S3RequestPresigner object using AWS SDK configuration
+      const signer = new S3RequestPresigner({...aws.config});
+      
+      // Generate a presigned request object with specified expiration time
+      const presigned = await signer.presign(request, {expiresIn: options.file.expiresin});
+      
+      // Format into presigned URL
       const presignedUrl = formatUrl(presigned);
-
-      return {
-        url: presignedUrl,
-        headers: presigned.headers,
-      };
+      
+      // Return the presigned URL and headers object
+      return {url: presignedUrl, headers: presigned.headers};
     }
     else {
       // Use the legacy manually signed upload url.
@@ -80,10 +77,7 @@ const getUrl = async function(options = {}) {
     }
   }
   else {
-    const getObjectCommand = new GetObjectCommand({
-      Bucket: options.bucket,
-      Key: options.key,
-    });
+    const getObjectCommand = new GetObjectCommand({Bucket: options.bucket, Key: options.key});
     return getSignedUrl(
       aws,
       getObjectCommand,
