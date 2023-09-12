@@ -242,15 +242,7 @@ module.exports = function(app) {
         settings = settings || {};
         // Limit independent
         if (req && req.primaryProject) {
-          if (config.formio.hosted) {
-            if (req.primaryProject.plan === 'commercial') {
-              transports.push({
-                transport: 'default',
-                title: 'Default (limit 1000 per month)'
-              });
-             }
-          }
-          else if (process.env.DEFAULT_TRANSPORT) {
+          if (!config.formio.hosted && process.env.DEFAULT_TRANSPORT) {
             transports.push({
               transport: 'default',
               title: 'Default'
