@@ -2,8 +2,8 @@
 
 const fetch = require('formio/src/util/fetch');
 const _ = require('lodash');
-const {Isolate} = require('isolated-vm');
-const vmUtil = require('formio/src/util/vmUtil');
+const vmUtil = require('formio-workers/vmUtil');
+const {Isolate} = require('formio-workers/vmUtil');
 
 const {isEmptyObject} = require('../../util/util');
 const {

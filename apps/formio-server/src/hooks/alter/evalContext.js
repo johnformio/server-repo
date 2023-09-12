@@ -1,7 +1,7 @@
 /* eslint-disable max-depth */
 'use strict';
-const {Isolate} = require('isolated-vm');
-const vmUtil = require('formio/src/util/vmUtil');
+const vmUtil = require('formio-workers/vmUtil');
+const {Isolate} = require('formio-workers/vmUtil');
 const moment = require('moment');
 const _ = require('lodash');
 module.exports = app => (context, form) => {
