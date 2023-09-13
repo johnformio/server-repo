@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased: 8.4.0-rc.4]
 ### Changed
  - FIO-7297: Fixes no owner assigned to stage created with admin key
+ - FIO-7350: added support for addFields aggregation operator (alternative to set) to provide reports loading when DocumentDB is used
    
 ## 8.4.0-rc.3
 ### Changed
