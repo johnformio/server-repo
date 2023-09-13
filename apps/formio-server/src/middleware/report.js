@@ -106,7 +106,7 @@ module.exports = function(formioServer) {
       const filterStages = function() {
         // Ensure there are no disallowed stages in the aggregation.
         // We may want to include additional stages but better to start with less.
-        const allowedStages = ['$match', '$limit', '$sort', '$skip', '$group', '$unwind', '$lookup', '$project', '$set'];
+        const allowedStages = ['$match', '$limit', '$sort', '$skip', '$group', '$unwind', '$lookup', '$project', '$set', '$addFields'];
         /* eslint-disable */
         for (let i in filter) {
           let stage = filter[i];
