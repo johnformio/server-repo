@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+[Unreleased: 8.4.0-rc.6]
+### Fixes
+ - bugfix: add descriptive error message to worker failure
+   
 ## 8.4.0-rc.5
 ### Changed
  - Updated formio-app@8.4.0-rc.5
@@ -17,8 +21,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Updated formiojs@4.18.0-rc.2
  - Updated formio@3.4.0-rc.3
  - Updated formio-workers@1.20.0-rc.3
-
-### Changed
  - FIO-7297: Fixes no owner assigned to stage created with admin key
  - FIO-7350: added support for addFields aggregation operator (alternative to set) to provide reports loading when DocumentDB is used
    
