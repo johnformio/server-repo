@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased: 8.4.0-rc.6]
 ### Fixes
  - bugfix: add descriptive error message to worker failure
+ - FIO-7340-7357: fixed language/wording in reporting ui config form and removed default values
    
 ## 8.4.0-rc.5
 ### Changed
