@@ -4103,10 +4103,10 @@ formio-workers@1.20.0-rc.4:
     nunjucks-date-filter "^0.1.1"
     vm2 "^3.9.5"
 
-formio@3.4.0-rc.4:
-  version "3.4.0-rc.4"
-  resolved "https://registry.yarnpkg.com/formio/-/formio-3.4.0-rc.4.tgz#310047b4104a58b384e999c3f86cd9acec8761b9"
-  integrity sha512-TEA+Yzw4o8ZZbaN3w75BOnz0RgZJqLu0hBQxPwcNL0Czjh4fw9SItG5yZ+Xdq4thqgA7f4dr0g4moy5zqx2QuA==
+formio@3.4.0-rc.5:
+  version "3.4.0-rc.5"
+  resolved "https://registry.yarnpkg.com/formio/-/formio-3.4.0-rc.5.tgz#2c1462328384ce8312fa23871140aafdcb299bce"
+  integrity sha512-8kJCRWyDpriQuKz10z0ZoV1Mnh9u/beEKncALN6qBXInk5kcyMfCw7/KSLVGD3sJpqs0t81VNOyFxe3uv5gUFQ==
   dependencies:
     "@azure/ms-rest-nodeauth" "^3.1.1"
     "@formio/node-fetch-http-proxy" "^1.1.0"

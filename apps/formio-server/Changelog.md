@@ -4,7 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 8.4.0-rc.6]
+## 8.4.0-rc.6
+### Changed
+ - Updated formio-app@8.4.0-rc.6
+ - Updated formio@3.4.0-rc.5
+
 ### Fixes
  - bugfix: add descriptive error message to worker failure
  - FIO-7340-7357: fixed language/wording in reporting ui config form and removed default values
