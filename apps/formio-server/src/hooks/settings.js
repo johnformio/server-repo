@@ -240,7 +240,6 @@ module.exports = function(app) {
 
       emailTransports(transports, settings, req, cb) {
         settings = settings || {};
-        // Limit independent
         if (req && req.primaryProject) {
           if (!config.formio.hosted && process.env.DEFAULT_TRANSPORT) {
             transports.push({
