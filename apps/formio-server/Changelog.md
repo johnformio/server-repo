@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased: 8.4.0-rc.7]
+### Changed
+ - [Snyk] Security upgrade mongodb from 4.16.0 to 4.17.0
+ - [Snyk] Upgrade @braintree/sanitize-url from 6.0.2 to 6.0.4
+ - [Snyk] Upgrade qrcode from 1.5.1 to 1.5.3
+ - Bump mongoose from 6.10.4 to 6.12.0
+ - Bump word-wrap from 1.2.3 to 1.2.5
+   
 ## 8.4.0-rc.6
 ### Changed
  - Updated formio-app@8.4.0-rc.6
