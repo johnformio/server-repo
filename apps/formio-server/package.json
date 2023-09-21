@@ -58,7 +58,6 @@
     "googleapis": "^105.0.0",
     "helmet": "^5.0.2",
     "is-url": "^1.2.4",
-    "jira-connector": "^3.0.2",
     "jose": "^4.14.4",
     "jsonwebtoken": "^9.0.0",
     "keygenerator": "^1.0.4",
