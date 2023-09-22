@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - [Snyk] Upgrade qrcode from 1.5.1 to 1.5.3
  - Bump mongoose from 6.10.4 to 6.12.0
  - Bump word-wrap from 1.2.3 to 1.2.5
- - FIO 7323: Fix issue involving Azure and PDF email attachments
+ - FIO-7323: Fix issue involving Azure and PDF email attachments
+ - FIO-5728 checking for unique email when adding user to team
    
 ## 8.4.0-rc.6
 ### Changed
