@@ -1,6 +1,6 @@
 'use strict';
 
-const kickbox = require('kickbox');
+const fetch = require('formio/src/util/fetch');
 const _ = require('lodash');
 
 module.exports = function(project, component, path, req, res, next) {
@@ -25,15 +25,12 @@ module.exports = function(project, component, path, req, res, next) {
   }
 
   // Verify the email with kickbox.
-  const verification = kickbox.client(project.settings.kickbox.apikey).kickbox();
-  verification.verify(email, function(err, response) {
-    if (err) {
-      return res.status(400).json(`Kickbox.io - ${err.message}`);
-    }
+  fetch(`https://api.kickbox.com/v2/verify?email=${email}&apikey=${project.settings.kickbox.apikey}`)
+  .then(response => response.json()).then(data => {
     const msgEnd = 'Please provide a different email address.';
-    if (response.body && response.body.result) {
-      if (response.body.result === 'undeliverable') {
-        switch (response.body.reason) {
+    if (data && data.result) {
+      if (data.result === 'undeliverable') {
+        switch (data.reason) {
           case 'rejected_email':
             return res.status(400).send(`${email} was rejected. ${msgEnd}`);
           case 'invalid_domain':
@@ -44,11 +41,13 @@ module.exports = function(project, component, path, req, res, next) {
             return res.status(400).send(`${email} was rejected. ${msgEnd}`);
         }
       }
-      else if ((response.body.result === 'risky') && response.body.disposable) {
+      else if ((data.result === 'risky') && data.disposable) {
         return res.status(400).send(`${email} is an invalid email address. ${msgEnd}`);
       }
     }
-
     return next();
+  })
+  .catch(err => {
+    return res.status(400).json(`Kickbox.io - ${err.message}`);
   });
 };
