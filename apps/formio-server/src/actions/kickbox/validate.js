@@ -33,6 +33,7 @@ module.exports = function(project, component, path, req, res, next) {
       if (data.result === 'undeliverable') {
         switch (data.reason) {
           case 'rejected_email':
+            res.setHeader('Content-Type', 'application/json');
             return res.status(400).send(`${escapeHtml(email)} was rejected. ${msgEnd}`);
           case 'invalid_domain':
             return res.status(400).send(`${escapeHtml(email)} is not a valid domain. ${msgEnd}`);
