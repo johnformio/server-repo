@@ -2,8 +2,6 @@
 
 const express = require('express');
 const fetch = require('node-fetch');
-const _ = require('lodash');
-const util =require('./../../util/util');
 const config = require('../../../config');
 const loadProjectContexts = require('../loadProjectContexts');
 const proxy = require('./proxy');
@@ -46,13 +44,7 @@ module.exports = (formioServer) => {
 
   // Keep only essential and user defined headers
   router.use((req, res, next) => {
-    const headers = {};
-    headers['x-host'] = util.baseUrl(formio, req);
-    _.merge(headers,
-      _.pick(req.headers, 'accept', 'content-type', 'accept-encoding', 'accept-language'),
-      _.pickBy(req.headers, (_, h) => h.startsWith('x-'))
-    );
-    req.headers = headers;
+    proxy.updateHeadersForPdfRequest(req, formio);
     next();
   });
 
