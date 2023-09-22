@@ -534,7 +534,7 @@ const Teams = {
       project: memberResource.project,
       form: memberResource._id,
       deleted: {$eq: null},
-      'data.team._id': team._id
+      'data.team._id': Teams.util().idToBson(team._id)
     }).lean().exec();
   },
 
