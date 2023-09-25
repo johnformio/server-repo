@@ -31,7 +31,7 @@ function provideFormsWithDefaultAccess(targetForms, sourceForms, roles) {
   }, {});
 }
 
-module.exports = function(formio) {
+module.exports = function(formio, app) {
   const hook = require('formio/src/util/hook')(formio);
   return function(req, res, next) {
     // If we are creating a project without a template, use the default template.
@@ -52,8 +52,9 @@ module.exports = function(formio) {
       return res.status(400).send('No project found.');
     }
 
+    const defaultTemplateName = 'default';
     // The project template they wish to use.
-    const template = req.template || 'default';
+    const template = req.template || defaultTemplateName;
 
     // Method to import the template.
     const importTemplate = function(template) {
@@ -91,7 +92,7 @@ module.exports = function(formio) {
       };
 
       if (template.excludeAccess) {
-        const defaultTemplate = _.cloneDeep(formio.templates['default']);
+        const defaultTemplate = _.cloneDeep(formio.templates[defaultTemplateName]);
         template = {
           ...template,
           access: mergeAccess(template.access, defaultTemplate.access),
@@ -114,7 +115,6 @@ module.exports = function(formio) {
         importTemplateToProject(template, _project, alters);
       }
     };
-
     // Allow external templates.
     if (typeof template === 'object') {
       // Import the template.
@@ -140,7 +140,7 @@ module.exports = function(formio) {
         }, function(err, template) {
           if (err) {
             // If something went wrong, just import the default template instead.
-            return importTemplate(_.cloneDeep(formio.templates['default']));
+            return importTemplate(_.cloneDeep(formio.templates[defaultTemplateName]));
           }
           return importTemplate(template);
         });
@@ -148,8 +148,9 @@ module.exports = function(formio) {
     }
     // Check for template that is already provided.
     else if ((typeof template === 'string') && formio.templates.hasOwnProperty(template)) {
+      const templateObj = _.cloneDeep(formio.templates[template]);
       // Import the template.
-      return importTemplate(_.cloneDeep(formio.templates[template]));
+      return importTemplate(templateObj);
     }
     else {
       // Unknown template.

@@ -67,7 +67,7 @@ module.exports = app => routes => {
     after(req, res, item, next) {
       if (
         item.revisions &&
-        formRevision.checkRevisionPlane(req.primaryProject.plan)
+        formRevision.revisionsAllowed(req)
       ) {
         return formRevision.createVersion(item, getRequestUser(req), req.body._vnote, (err, revision) => {
           revision.revisionId = revision._id;
@@ -108,10 +108,15 @@ module.exports = app => routes => {
     // Don't allow editing drafts if not on enterprise plan.
     if (
       ['PUT'].includes(req.method) &&
-      !formRevision.checkRevisionPlane(req.primaryProject.plan) &&
+      !formRevision.revisionsAllowed(req) &&
       req.url.endsWith('/draft')
     ) {
-      return res.status(402).send('Payment Required. Project must be on an Enterprise plan.');
+      if (!formRevision.checkRevisionPlan(req.primaryProject.plan)) {
+        return res.status(402).send('Payment Required. Project must be on an Enterprise plan.');
+      }
+      else {
+        return res.status(403).send('Form Revisions are not a part of your license.');
+      }
     }
     next();
   });

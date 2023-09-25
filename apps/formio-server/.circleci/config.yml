@@ -73,7 +73,7 @@ jobs:
       JWT_SECRET: "123secret123"
     docker:
       - image: cimg/node:lts
-      - image: circleci/mongo:4.4
+      - image: circleci/mongo:5.0
     steps:
       - checkout
       - restore_cache:

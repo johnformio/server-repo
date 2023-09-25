@@ -106,25 +106,14 @@ module.exports = function(formioServer) {
       const filterStages = function() {
         // Ensure there are no disallowed stages in the aggregation.
         // We may want to include additional stages but better to start with less.
-        const allowedStages = ['$match', '$limit', '$sort', '$skip', '$group', '$unwind'];
+        const allowedStages = ['$match', '$limit', '$sort', '$skip', '$group', '$unwind', '$lookup', '$project', '$set', '$addFields'];
         /* eslint-disable */
         for (let i in filter) {
           let stage = filter[i];
           let includeStage = false;
           for (let key in stage) {
             // Only allow boolean values for $project
-            if (key === '$project') {
-              for (let param in stage[key]) {
-                if (!['number', 'boolean'].includes((typeof stage[key][param]))) {
-                  return true;
-                }
-              }
-              includeStage = true;
-            }
-            else if (key === '$match') {
-              _.merge(query, stage[key]);
-            }
-            else if (key === '$limit') {
+            if (key === '$limit') {
               limitStage = stage;
             }
             else if (key === '$skip') {
@@ -287,6 +276,17 @@ module.exports = function(formioServer) {
           return next(err);
         }
 
+        // Add prestages for lookup
+        _.each(stages, stage => {
+          const lookupSettings = stage.$lookup;
+
+          if (lookupSettings && _.isObject(lookupSettings)) {
+            lookupSettings.pipeline = _.isArray(lookupSettings.pipeline)
+              ? preStage.concat(lookupSettings.pipeline)
+              : preStage;
+          }
+        });
+
         // Add the prestages to the beginning of the stages.
         stages = preStage.concat(stages);
         res.setHeader('Content-Type', 'application/json');
@@ -343,7 +343,7 @@ module.exports = function(formioServer) {
               .pipe(JSONStream.stringify())
               .pipe(res);
           })
-        ).catch((err) => res.send(400).send(err.message));
+        ).catch((err) => res.status(400).send(err.message));
       });
     });
   };

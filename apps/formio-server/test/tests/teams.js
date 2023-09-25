@@ -292,6 +292,27 @@ module.exports = function(app, template, hook) {
         });
       });
 
+      it('The Team Owner should not be able to add Formio user with duplicate email', (done) => {
+        request(app)
+        .post(`/team/${template.team1._id}/member`)
+        .set('x-jwt-token', template.formio.teamAdmin.token)
+        .send({
+          data: {
+            userId: template.formio.user1._id,
+            email: template.formio.user1.data.email,
+            admin: false
+          }
+        })
+        .expect('Content-Type', /text/)
+        .expect(400)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+          done();
+        });
+      });
+
       it('The Team Owner should be able to add an outside user', (done) => {
         request(app)
         .post('/team/' + template.team1._id + '/member')
@@ -305,6 +326,27 @@ module.exports = function(app, template, hook) {
         })
         .expect('Content-Type', /json/)
         .expect(200)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+          done();
+        });
+      });
+
+      it('The Team Owner should not be able to add an outside user with duplicate email', (done) => {
+        request(app)
+        .post('/team/' + template.team1._id + '/member')
+        .set('x-jwt-token', template.formio.teamAdmin.token)
+        .send({
+          data: {
+            userId: template.users.user1._id,
+            email: template.users.user1.data.email,
+            admin: false
+          }
+        })
+        .expect('Content-Type', /text/)
+        .expect(400)
         .end(function(err, res) {
           if (err) {
             return done(err);

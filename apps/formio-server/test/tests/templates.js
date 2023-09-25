@@ -3,6 +3,7 @@
 const request = require('supertest');
 const assert = require('assert');
 const _ = require('lodash');
+const config = require('../../config');
 const formioUtils = require('formiojs/utils').default;
 
 module.exports = function(app, template, hook) {
@@ -537,7 +538,11 @@ module.exports = function(app, template, hook) {
 
       it('An export should match an import', function() {
         assert.equal(exportData.version, '2.0.0');
-        assert.deepEqual(_.omit(exportData, ['version', 'tag', 'access']), _.omit(testTemplate, ['version', 'tag', 'access']));
+        const expectedTemplateResult = _.omit(testTemplate, ['version', 'tag', 'access']);
+        if (app.formio.formio.hook.alter('includeReports')) {
+          expectedTemplateResult.reports = {};
+        }
+        assert.deepEqual(_.omit(exportData, ['version', 'tag', 'access']), expectedTemplateResult);
       });
     });
 
@@ -671,8 +676,8 @@ module.exports = function(app, template, hook) {
             const mappedFormAccess = form.access.map((access) => mapRoleIdsToRoleNames(access, roles));
             const mappedFormSubmissionAccess = form.submissionAccess.map((access) => mapRoleIdsToRoleNames(access, roles));
             if (!matchingProjectForm) {
-              assert.deepEqual(mappedFormAccess, defaultFormAccess);
-              assert.deepEqual(mappedFormSubmissionAccess, defaultSubmissionAccess);
+              assert.deepEqual(mappedFormAccess, defaultFormAccess, `1 Error in form ${form.path}`);
+              assert.deepEqual(mappedFormSubmissionAccess, defaultSubmissionAccess, `2 Error in form ${form.path}`);
             }
           });
           resources.forEach((resource) => {
@@ -680,8 +685,8 @@ module.exports = function(app, template, hook) {
             const mappedFormAccess = resource.access.map((access) => mapRoleIdsToRoleNames(access, roles));
             const mappedFormSubmissionAccess = resource.submissionAccess.map((access) => mapRoleIdsToRoleNames(access, roles));
             if (!matchingProjectForm) {
-              assert.deepEqual(mappedFormAccess, defaultFormAccess);
-              assert.deepEqual(mappedFormSubmissionAccess, defaultSubmissionAccess);
+              assert.deepEqual(mappedFormAccess, defaultFormAccess, `1 Error in resource ${resource.path}`);
+              assert.deepEqual(mappedFormSubmissionAccess, defaultSubmissionAccess, `2 Error in resource ${resource.path}`);
             }
           });
           done();

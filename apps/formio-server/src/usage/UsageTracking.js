@@ -163,31 +163,6 @@ class UsageTracking {
     const usageMetrics = await this._aggregateFromDbAndSetCache(projectId, queryStart, queryEnd);
     return usageMetrics;
   }
-
-  async checkEmail(req) {
-    const {emails} = await this.getUsageMetrics(req.projectId);
-    let plan;
-    if (req.primaryProject && req.primaryProject.plan) {
-      plan = req.primaryProject.plan;
-    }
-    else {
-      const primaryProject = await loadPrimaryProjectFromCache(this._projectCache, req);
-      plan = primaryProject.plan;
-    }
-    if (emails >= this._plans.limits[plan].email) {
-      throw new Error('Over email limit');
-    }
-    return emails;
-  }
-
-  recordEmail(req) {
-    if (!req.projectId) {
-      return;
-    }
-
-    const projectId = req.projectId;
-    this._insertRequestDocument(projectId, 'emails');
-  }
 }
 
 module.exports = UsageTracking;

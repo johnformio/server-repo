@@ -11,6 +11,7 @@ const {VM} = require('vm2');
 const {ClientCredentials} = require('simple-oauth2');
 const moment = require('moment');
 const config = require('../../config');
+const ActionLogger = require('../actions/ActionLogger');
 
 module.exports = function(app) {
   const formioServer = app.formio;
@@ -54,6 +55,20 @@ module.exports = function(app) {
       init: require('./on/init')(app),
       formRequest: require('./on/formRequest')(app),
       validateEmail: require('./on/validateEmail')(app),
+    },
+    performAsync: {
+      logAction(req, res, action, handler, method) {
+        const allowLogs = _.get(req.currentForm, 'settings.logs', false) &&
+          ((config.formio.hosted && ['trial', 'commercial'].includes(req.primaryProject.plan)) ||
+          (!config.formio.hosted && app.license && !app.license.licenseServerError && app.license.terms && _.get(app, 'license.terms.options.sac', false)));
+
+        if (allowLogs) {
+          return new ActionLogger(app.formio, req, res, action, handler, method).log();
+        }
+        else {
+          return Promise.resolve(false);
+        }
+      },
     },
     alter: {
       formio: require('./alter/formio')(app),
@@ -225,17 +240,8 @@ module.exports = function(app) {
 
       emailTransports(transports, settings, req, cb) {
         settings = settings || {};
-        // Limit independent
         if (req && req.primaryProject) {
-          if (config.formio.hosted) {
-            if (req.primaryProject.plan === 'commercial') {
-              transports.push({
-                transport: 'default',
-                title: 'Default (limit 1000 per month)'
-              });
-             }
-          }
-          else if (process.env.DEFAULT_TRANSPORT) {
+          if (!config.formio.hosted && process.env.DEFAULT_TRANSPORT) {
             transports.push({
               transport: 'default',
               title: 'Default'
@@ -1890,17 +1896,6 @@ module.exports = function(app) {
         });
         return schema;
       },
-      actionItemSchema(schema) {
-        schema.add({
-          project: {
-            type: formioServer.formio.mongoose.Schema.Types.ObjectId,
-            ref: 'project',
-            index: true,
-            required: true
-          }
-        });
-        return schema;
-      },
       actionItem(actionItem, req) {
         actionItem.project = req.projectId;
         return actionItem;
@@ -2279,6 +2274,10 @@ module.exports = function(app) {
       formRevisionModel() {
         return formioServer.formio.mongoose.models.formrevision;
       },
+
+      includeReports() {
+        return !config.formio.hosted && _.get(app, 'license.terms.options.reporting', false);
+      }
     }
   };
 };

@@ -17,7 +17,7 @@ class Service {
         .then((response) => response.ok ? response.json() : null)
         .then((body) => {
           if (!body) {
-            return reject('Invalid response.');
+            return reject('Invalid response from worker url.');
           }
           resolve(body);
         });

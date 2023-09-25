@@ -825,8 +825,12 @@ module.exports = function(app, template, hook) {
     describe('Stages', () => {
       const stagesIds = [];
 
+      before(() => {
+        process.env.ADMIN_KEY = chance.word();
+      });
+
       it('Should create stage using default template when copying from empty stage', async () => {
-        const defaultTemplate = require('formio/src/templates/default.json');
+        const defaultTemplate = app.formio.formio.templates.default;
         const stageTitle = chance.word();
 
         // Create stage
@@ -849,6 +853,7 @@ module.exports = function(app, template, hook) {
         assert.equal(stage.project, template.project._id);
         assert.equal(stage.stageTitle, stageTitle);
         assert.notEqual(stage.title, stageTitle);
+        assert.equal(stage.plan, template.project.plan, 'Stage should inherit parent project plan.')
 
         stagesIds.push(stage._id);
 
@@ -891,6 +896,7 @@ module.exports = function(app, template, hook) {
         assert.equal(stage.project, template.project._id);
         assert.equal(stage.stageTitle, stageTitle);
         assert.notEqual(stage.title, stageTitle);
+        assert.equal(stage.plan, template.project.plan, 'Stage should inherit parent project plan.')
 
         stagesIds.push(stage._id);
 
@@ -925,7 +931,43 @@ module.exports = function(app, template, hook) {
         assert.deepEqual(exportedStage.access, exportedProject.access);
       });
 
+      it('Should create stage when admin key provided', done => {
+        const newStage = {
+          stageTitle: chance.word(),
+          title: chance.word(),
+          name: chance.word(),
+          type: 'stage',
+          project: template.project._id,
+          copyFromProject: template.project._id,
+          framework: 'custom'
+        };
+
+        request(app)
+          .post('/project')
+          .set('x-admin-key', process.env.ADMIN_KEY)
+          .send(newStage)
+          .expect(201)
+          .expect('Content-Type', /json/)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            const stage = res.body;
+
+            assert.ok(stage._id);
+            assert.equal(stage.type, 'stage');
+            assert.equal(stage.project, template.project._id);
+            assert.equal(stage.stageTitle, newStage.stageTitle);
+            assert.equal(stage.title, newStage.title);
+            assert.equal(stage.owner, template.project.owner);
+
+            done();
+          });
+      });
+
       after(async () => {
+        delete process.env.ADMIN_KEY;
         // Delete created stages
         await Promise.all(stagesIds.map(stageId => request(app)
           .delete(`/project/${stageId}`)
@@ -1816,6 +1858,7 @@ module.exports = function(app, template, hook) {
 
         assert.equal(stage.stageTitle, stageTitle);
         assert.equal(stage.type, 'stage');
+        assert.equal(stage.plan, template.project.plan, 'Stage should inherit parent project plan');
 
         template.stage = stage;
 
@@ -2359,13 +2402,6 @@ module.exports = function(app, template, hook) {
 
         app.formio.formio.cache.deleteProjectCache(template.project);
 
-        // Delete created stage
-        await request(app)
-          .delete(`/project/${template.stage._id}`)
-          .set('x-jwt-token', template.formio.owner.token);
-
-        delete template.stage;
-
         // Delete created teams
         await request(app)
           .delete(`/team/${template.team1._id}`)
@@ -2426,6 +2462,7 @@ module.exports = function(app, template, hook) {
             }
 
             const response = res.body;
+
             assert.equal(response.plan, 'basic');
             assert.equal(response.hasOwnProperty('name'), true);
             assert.notEqual(response.name.search(uuidRegex), -1);
@@ -3921,6 +3958,36 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      it('New Stage should inherit parent project plan', function(done) {
+        request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            title: chance.word(),
+            type: 'stage',
+            project: template.project._id,
+            copyFromProject: 'empty',
+            name: chance.word(),
+            stageTitle: chance.word(),
+            settings: {
+              cors: '*',
+            },
+          })
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            const stage = res.body;
+            assert.equal(stage.plan, 'commercial');
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      })
+
       it('A Project on the Commercial plan will be able to set cors options on project update', function(done) {
         const attempt = '*,www.example.com';
 
@@ -4342,7 +4409,6 @@ module.exports = function(app, template, hook) {
           });
       });
 
-
       it('Anonymous users should not be allowed to upgrade a project', function(done) {
         request(app)
           .post('/project/' + template.project._id + '/upgrade')
@@ -4500,6 +4566,12 @@ module.exports = function(app, template, hook) {
         const project = projectRes.body;
 
         assert.equal(project.plan, 'commercial');
+
+        //stage project plan should be updated as well
+        const stageRes = await request(app)
+          .get(`/project/${template.stage._id}`)
+          .set('x-jwt-token', template.formio.owner.token);
+        assert.equal(stageRes.body.plan, 'commercial');
       });
 
       if (!docker)
@@ -4518,6 +4590,13 @@ module.exports = function(app, template, hook) {
         const project = projectRes.body;
 
         assert.equal(project.plan, 'basic');
+
+        //stage project plan should be updated as well
+        const stageRes = await request(app)
+          .get(`/project/${template.stage._id}`)
+          .set('x-jwt-token', template.formio.owner.token);
+
+        assert.equal(stageRes.body.plan, 'basic');
       });
 
 /*

@@ -44,7 +44,7 @@ module.exports = (router, formioServer) => {
 
   const projectSettings = (req, res, next) => {
     // Allow admin key
-    if (req.adminKey || (req.apiKey && req.isAdmin)) {
+    if (req.adminKey || req.isAdmin) {
       decryptSettings(res);
       formioServer.formio.audit('PROJECT_SETTINGS', req);
       return next();
@@ -222,7 +222,7 @@ module.exports = (router, formioServer) => {
     ],
     afterPost: [
       formio.middleware.postCreateLicenseCheck,
-      require('../middleware/projectTemplate')(formio),
+      require('../middleware/projectTemplate')(formio, router),
       formio.middleware.filterResourcejsResponse(hiddenFields),
       formio.middleware.projectUsage,
       formio.middleware.syncProjectUsage,
@@ -346,7 +346,7 @@ module.exports = (router, formioServer) => {
       projectSettings,
     ],
     afterPut: [
-      require('../middleware/projectTemplate')(formio),
+      require('../middleware/projectTemplate')(formio, router),
       formio.middleware.filterResourcejsResponse(hiddenFields),
       projectSettings,
       formio.middleware.customCrmAction('updateproject'),

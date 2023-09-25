@@ -4,12 +4,77 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 8.3.0-rc.4]
+## [Unreleased: 8.4.0-rc.7]
+### Changed
+ - [Snyk] Security upgrade mongodb from 4.16.0 to 4.17.0
+ - [Snyk] Upgrade @braintree/sanitize-url from 6.0.2 to 6.0.4
+ - [Snyk] Upgrade qrcode from 1.5.1 to 1.5.3
+ - Bump mongoose from 6.10.4 to 6.12.0
+ - Bump word-wrap from 1.2.3 to 1.2.5
+ - FIO-7323: Fix issue involving Azure and PDF email attachments
+ - FIO-5728 checking for unique email when adding user to team
+   
+## 8.4.0-rc.6
+### Changed
+ - Updated formio-app@8.4.0-rc.6
+ - Updated formio@3.4.0-rc.5
+
+### Fixes
+ - bugfix: add descriptive error message to worker failure
+ - FIO-7340-7357: fixed language/wording in reporting ui config form and removed default values
+   
+## 8.4.0-rc.5
+### Changed
+ - Updated formio-app@8.4.0-rc.5
+ - Updated formiojs@4.18.0-rc.3
+ - Updated formio@3.4.0-rc.4
+ - Updated formio-workers@1.20.0-rc.4
+
+## 8.4.0-rc.4
+### Changed
+ - Updated formio-app@8.4.0-rc.4
+ - Updated formiojs@4.18.0-rc.2
+ - Updated formio@3.4.0-rc.3
+ - Updated formio-workers@1.20.0-rc.3
+ - FIO-7297: Fixes no owner assigned to stage created with admin key
+ - FIO-7350: added support for addFields aggregation operator (alternative to set) to provide reports loading when DocumentDB is used
+   
+## 8.4.0-rc.3
+### Changed
+ - Updated formio-app@8.4.0-rc.3
+
+## 8.4.0-rc.2
+### Changed
+ - Updated formio-app@8.4.0-rc.2
+ - Updated @formio/premium@1.22.0-rc.1
+
+## 8.4.0-rc.1
+### Changed
+ - Updated formio-app@8.4.0-rc.1
+ - Updated @formio/premium@1.21.0-rc.3
+ - Updated formio@3.4.0-rc.2
+ - Updated formio-workers@1.20.0-rc.2
+
+### Changed
+ - [Snyk] Upgrade acorn from 8.8.2 to 8.10.0
+ - [Snyk] Upgrade dotenv from 16.0.3 to 16.3.1
+ - [Snyk] Security upgrade @node-saml/node-saml from 4.0.4 to 4.0.5
+   
 ### Fixed
  - Hotfix: Fix production issue that is crashing the hosted server
  - Fix tests for 6889
  - Revert "FIO-6859: migrate-aws-sdk-to-v3"
  - FIO-7180: fixed an issue when print to PDF does not show uploaded images
+ - FIO-7149: fixed issue with getting settings for primary admin
+ - FIO-7229: fixed an issue where stages did not inherit parent project plan in hosted env
+ - FIO-7123 FIO-7124 FIO-7048: made form revisons and action logs available for onPremise only when sac is enabled and added sac functionality disabling in the from when sac is not enabled for license
+ - FIO-6493: added reporting-ui form to default template once the license is validated and fixed formio-server test
+ - fixed project plan tests for hosted env
+ - FIO-7297: Fixes permission denied error when creating a stage while admin key is provided for authentication
+
+### Added
+ - FIO-3820: Ability to delete files inside the Storage Services
+ - FIO-6493: reporting ui related changes
    
 ## 8.3.0-rc.2
 ### Changed
