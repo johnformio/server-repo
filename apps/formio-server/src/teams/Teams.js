@@ -357,12 +357,16 @@ const Teams = {
         deleted: {$eq: null}
     });
 
-    const membership = userData.map(item => {
+    const membership = userData.reduce((teams, item) => {
       const id = item.data.team._id;
       const data = teamsData.find((team)=>team._id.toString() === id.toString());
-      item.data.team = data;
-      return item;
-    });
+
+      if (data) {
+        item.data.team = data;
+        teams.push(item);
+      }
+      return teams;
+    }, []);
 
     for (const member of membership) {
       const members = await Teams.getMembers(member.data.team);
