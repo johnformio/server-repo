@@ -29,6 +29,10 @@
   "schema": "3.3.18",
   "portalVersion": "8.4.0-rc.6",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.405.0",
+    "@aws-sdk/s3-request-presigner": "^3.405.0",
+    "@aws-sdk/util-create-request": "^3.398.0",
+    "@aws-sdk/util-format-url": "^3.398.0",
     "@azure/storage-blob": "12.15.0",
     "@braintree/sanitize-url": "^6.0.4",
     "@formio/premium": "github:formio/premium#v1.22.0-rc.1",
@@ -39,7 +43,6 @@
     "acorn": "^8.10.0",
     "adal-node": "^0.2.3",
     "async": "^3.2.2",
-    "aws-sdk": "^2.1354.0",
     "bcrypt": "^5.0.1",
     "body-parser": "^1.19.0",
     "box-node-sdk": "^3.0.0",

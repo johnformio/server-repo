@@ -54,11 +54,11 @@ const middleware = function(router) {
     }
   );
 
-  const uploadResponse = function(project, file, signedUrl) {
+  const uploadResponse = function(project, file, presigned) {
     const bucketUrl = project.settings.storage.s3.bucketUrl || `https://${project.settings.storage.s3.bucket}.s3.amazonaws.com`;
 
     const response = {
-      signed: signedUrl !== bucketUrl ? signedUrl : null,
+      signed: presigned.url !== bucketUrl ? presigned.url : null,
       minio: project.settings.storage.s3.minio,
       url: bucketUrl,
       bucket: project.settings.storage.s3.bucket
@@ -89,7 +89,8 @@ const middleware = function(router) {
       acl: project.settings.storage.s3.acl || 'private',
       policy: policy,
       'Content-Type': file.type,
-      filename: file.name
+      filename: file.name,
+      headers: presigned.headers
     };
     /* eslint-enable new-cap */
 
@@ -128,7 +129,7 @@ const middleware = function(router) {
         file.path = _.trim(`${_.trim(file.dir, '/')}/${_.trim(file.name, '/')}`, '/');
 
         getUrl({project, method: 'PUT', file}).then(
-          url => res.send(uploadResponse(project, file, url)),
+          result => res.send(uploadResponse(project, file, result)),
           err => res.status(400).send(err.message));
       });
     }
