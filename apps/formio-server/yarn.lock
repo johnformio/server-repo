@@ -6342,13 +6342,6 @@ keygenerator@^1.0.4:
   resolved "https://registry.yarnpkg.com/keygenerator/-/keygenerator-1.0.4.tgz#4ac884827cbf3b153636bb5425efe5831f9fe8ad"
   integrity sha512-TIiaKqI5BNF8fKxOmwfvhEXgC5w0Lyh8iuUfjlYEOAvCc1zpti4G40oYA6Lf5UlOJBHmIvZGFOSXn7dUutN62g==
 
-kickbox@^2.0.4:
-  version "2.0.4"
-  resolved "https://registry.yarnpkg.com/kickbox/-/kickbox-2.0.4.tgz#8aee3c70ead835b80eb7374a4338c1bce3ec4961"
-  integrity sha512-qprEfo8LAHLb+iWoEQ2tA7uPFnfq0rf3A0mHK6ndcejGtEwWgPnzT8BqSoTEUEEs/+TW6eQQLzLTB5CpFJ9UtQ==
-  dependencies:
-    request "2.x.x"
-
 kind-of@^6.0.2:
   version "6.0.3"
   resolved "https://registry.yarnpkg.com/kind-of/-/kind-of-6.0.3.tgz#07c05034a6c349fa06e24fa35aa76db4580ce4dd"
@@ -8012,7 +8005,7 @@ regexp.prototype.flags@^1.2.0, regexp.prototype.flags@^1.4.3:
     define-properties "^1.1.3"
     functions-have-names "^1.2.2"
 
-request@2.x.x, request@^2.88.0:
+request@^2.88.0:
   version "2.88.2"
   resolved "https://registry.yarnpkg.com/request/-/request-2.88.2.tgz#d73c918731cb5a87da047e207234146f664d12b3"
   integrity sha512-MsvtOrfG9ZcrOwAW+Qi+F6HbD0CWXEh9ou77uOb7FM2WPhwT7smM833PzanhJLsgXjN89Ir6V2PczXNnMpwKhw==
