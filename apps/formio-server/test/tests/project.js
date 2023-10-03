@@ -3214,6 +3214,47 @@ module.exports = function(app, template, hook) {
               done();
             });
         });
+
+        it ('Project creation should exceed limit with huge template', function(done) {
+          const prevEnableRestrictions = config.enableRestrictions;
+          config.enableRestrictions = true;
+          const forms = Array.apply(null, Array(15)).map(() => {
+            const name = chance.word();
+            return {
+              title: name,
+              type: 'form',
+              name,
+              path: name,
+              components: [],
+            }
+          });
+          const importTemplate = {
+            version: '2.0.0',
+            forms,
+            resource: {},
+            excludeAccess: true,
+          };
+
+          request(app)
+            .post('/project')
+            .set('x-jwt-token', template.formio.owner.token)
+            .send({
+              title: chance.word(),
+              template: importTemplate,
+            })
+            .expect('Content-Type', /text\/html/)
+            .expect(400)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              assert.equal(res.text, 'Limit exceeded. Upgrade your plan.');
+
+              config.enableRestrictions = prevEnableRestrictions;
+              done();
+            })
+        });
       }
 
       it('Should be able to delete archived projects', function(done) {

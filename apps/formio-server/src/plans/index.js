@@ -105,8 +105,21 @@ module.exports = function(formioServer) {
 
       getPlan(req, async function(err, plan, project, currentProject) {
         currentProject = currentProject || project;
-        // Ignore project plans, if not interacting with a project.
+        const planLimits = ALL_PLAN_LIMITS.hasOwnProperty(plan) ? ALL_PLAN_LIMITS[plan] : ALL_PLAN_LIMITS.basic;
         if (!err && !project) {
+          if (!req.body.template) {
+            return cb();
+          }
+
+          const forms = {
+            ..._.get(req, 'body.template.forms', {}),
+            ..._.get(req, 'body.template.resources', {}),
+          };
+
+          if (Object.keys(forms).length > planLimits['forms'] && config.enableRestrictions) {
+            return cb('Limit exceeded. Upgrade your plan.');
+          }
+
           return cb();
         }
 
@@ -118,8 +131,6 @@ module.exports = function(formioServer) {
         if (currentProject.hasOwnProperty('name') && project.name && project.name === 'formio') {
           return cb();
         }
-
-        const planLimits = ALL_PLAN_LIMITS.hasOwnProperty(plan) ? ALL_PLAN_LIMITS[plan] : ALL_PLAN_LIMITS.basic;
 
         try {
           // Check the calls made this month.
