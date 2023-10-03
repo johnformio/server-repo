@@ -6,11 +6,14 @@ const assert = require('assert');
 const async = require('async');
 const _each = require('lodash/each');
 const ObjectID = require('mongodb').ObjectId;
+
 const config = require('../../config');
+const { decrypt } = require('../../src/util/util');
 
 module.exports = function(app, template, hook) {
   let Helper = require('formio/test/helper')(app);
   const cache = require('../../src/cache/cache')(app.formio);
+  const Encryptor = require ('../../src/util/encrypt')(app.formio);
 
   describe('Encrypted Fields', function() {
     let tempForm;
@@ -78,30 +81,6 @@ module.exports = function(app, template, hook) {
         ]
       }
     ];
-
-    after((done) => {
-      delete template.forms.encryptedFields;
-      let deleteUrls = [];
-      _each(submissions, (submission) => {
-        deleteUrls.push(hook.alter('url', '/form', template) + '/' + tempForm._id + '/submission/' + submission._id);
-      });
-
-      deleteUrls.push(hook.alter('url', '/form', template) + '/' + tempForm._id);
-
-      // Cleanup shop.
-      async.eachSeries(deleteUrls, (url, next) => {
-        request(app)
-          .delete(url)
-          .set('x-jwt-token', template.formio.owner.token)
-          .end(function(err, res) {
-            if (err) {
-              return next(err);
-            }
-
-            next();
-          });
-      }, done);
-    });
 
     let getForm = (encrypted) => {
       encrypted = encrypted || false;
@@ -687,9 +666,54 @@ module.exports = function(app, template, hook) {
           });
         });
       });
+
+      after((done) => {
+        delete template.forms.encryptedFields;
+        let deleteUrls = [];
+        _each(submissions, (submission) => {
+          deleteUrls.push(hook.alter('url', '/form', template) + '/' + tempForm._id + '/submission/' + submission._id);
+        });
+
+        deleteUrls.push(hook.alter('url', '/form', template) + '/' + tempForm._id);
+
+        // Cleanup shop.
+        async.eachSeries(deleteUrls, (url, next) => {
+          request(app)
+            .delete(url)
+            .set('x-jwt-token', template.formio.owner.token)
+            .end(function(err, res) {
+              if (err) {
+                return next(err);
+              }
+
+              next();
+            });
+        }, done);
+      });
     }
-    after('Disable the Sac Package', () => {
+
+    let oldDbSecret;
+    before('Sets the DB_SECRET variable', () => {
+      oldDbSecret = config.formio.mongoSecret;
+      config.formio.mongoSecret = 'MY_DB_SECRET_VALUE';
+    });
+
+    it('A project with no encryption secret key setting should fall back to the DB_SECRET variable', (done) => {
+      const projectWithNoSecretKey = {
+        settings: {}
+      };
+      const data = 'Hello, world!';
+      const encrypted = Encryptor.getValue(projectWithNoSecretKey, 'encrypt', data, 'commercial');
+      assert.notEqual(encrypted, 'Hello world!');
+      const decrypted = decrypt('MY_DB_SECRET_VALUE', encrypted);
+      assert.equal(decrypted, 'Hello, world!');
+      done();
+    });
+
+    after('Disable the Sac Package and reset DB_SECRET', () => {
       process.env.TEST_SIMULATE_SAC_PACKAGE = false;
-    })
+      config.formio.mongoSecret = oldDbSecret;
+    });
   });
+
 };
