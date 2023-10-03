@@ -183,27 +183,30 @@ module.exports = function(app, template, hook) {
     // when new project is created
     const pdfInfoSubmissions = [];
     if (config.formio.hosted) {
-      nock(config.pdfProject, {
-        reqheaders: {
-          'x-token': (apiKey) => apiKey === config.pdfProjectApiKey
-        }
-      })
-        .persist()
-        .post('/info/submission', (body) => {
-          assert(body.data.hasOwnProperty('project'), 'PDF info submission request should have #project property');
-          assert(body.data.hasOwnProperty('lastConversion'), 'PDF info submission request should have #lastConversion property');
-          assert(body.data.hasOwnProperty('token'), 'PDF info submission request should have #token property');
-          assert(body.data.hasOwnProperty('host'), 'PDF info submission request should have #host property');
-
-          assert.equal(body.data.plan, 'basic', 'PDF info submission request #plan property should be equal to "basic"');
-          assert.equal(body.data.forms, '0', 'PDF info submission request #forms property should be equal to "0"');
-          assert.equal(body.data.submissions, '0', 'PDF info submission request #submissions property should be equal to "0"');
-          assert.equal(body.data.status, 'active', 'PDF info submission request #status property should be equal to "active"');
-
-          pdfInfoSubmissions.push(body.data);
-          return true;
+      before((done) => {
+        nock(config.pdfProject, {
+          reqheaders: {
+            'x-token': (apiKey) => apiKey === config.pdfProjectApiKey
+          }
         })
-        .reply(200);
+          .persist()
+          .post('/info/submission', (body) => {
+            assert(body.data.hasOwnProperty('project'), 'PDF info submission request should have #project property');
+            assert(body.data.hasOwnProperty('lastConversion'), 'PDF info submission request should have #lastConversion property');
+            assert(body.data.hasOwnProperty('token'), 'PDF info submission request should have #token property');
+            assert(body.data.hasOwnProperty('host'), 'PDF info submission request should have #host property');
+
+            assert.equal(body.data.plan, 'basic', 'PDF info submission request #plan property should be equal to "basic"');
+            assert.equal(body.data.forms, '0', 'PDF info submission request #forms property should be equal to "0"');
+            assert.equal(body.data.submissions, '0', 'PDF info submission request #submissions property should be equal to "0"');
+            assert.equal(body.data.status, 'active', 'PDF info submission request #status property should be equal to "active"');
+
+            pdfInfoSubmissions.push(body.data);
+            return true;
+          })
+          .reply(200);
+        done();
+      });
     }
 
     it('A Form.io User should be able to create a project from a template', function(done) {
@@ -1759,6 +1762,117 @@ module.exports = function(app, template, hook) {
 
     const tempProjects = [];
 
+    before((done) => {
+      process.env.ADMIN_KEY = 'examplekey';
+      done();
+    });
+
+    describe('X-ADMIN-KEY', () => {
+      let prevProjectPlan = process.env.PROJECT_PLAN;
+      let projectForUpdate;
+
+      before((done) => {
+        process.env.PROJECT_PLAN = 'trial';
+        done();
+      });
+
+      it('User should be able to provide plan during project creation using x-admin-token', (done) => {
+        const attempt = chance.word({length: 10});
+        const tempProject = {
+          title: chance.word(),
+          description: chance.sentence(),
+          name: attempt,
+          plan: 'commercial',
+        };
+
+        request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-admin-key', process.env.ADMIN_KEY)
+          .send(tempProject)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            assert.equal(res.body.plan, 'commercial');
+            done();
+          });
+      });
+
+      it('A Registered user should not be able to provide plan during project creation', (done) => {
+        const attempt = chance.word({length: 10});
+        const tempProject = {
+          title: chance.word(),
+          description: chance.sentence(),
+          name: attempt,
+          plan: 'commercial',
+        };
+
+        request(app)
+          .post('/project')
+          .set('x-jwt-token', template.formio.owner.token)
+          .send(tempProject)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            assert.equal(res.body.plan, 'trial');
+            projectForUpdate = res.body;
+            done();
+          });
+      });
+
+      it('A Registered user should not be able to provide plan during project updating', (done) => {
+        request(app)
+          .put(`/project/${projectForUpdate._id}`)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            plan: 'commercial',
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            assert.equal(res.body.plan, 'trial');
+            done();
+          });
+      });
+
+      it('User should be able to provide plan during project updating using x-admin-token', (done) => {
+        request(app)
+          .put(`/project/${projectForUpdate._id}`)
+          .set('x-jwt-token', template.formio.owner.token)
+          .set('x-admin-key', process.env.ADMIN_KEY)
+          .send({
+            plan: 'commercial',
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            assert.equal(res.body.plan, 'commercial');
+            done();
+          });
+      });
+
+      after((done) => {
+        process.env.PROJECT_PLAN = prevProjectPlan;
+        done();
+      });
+    });
+
     describe('Archived Plan', () => {
       let originalProject;
 
@@ -2425,12 +2539,24 @@ module.exports = function(app, template, hook) {
     });
 
     describe('Basic Plan', function() {
+      let initialEnvProjectPlan;
+      let initialFormioConfigProjectPlan;
+
+      before((done) => {
+        initialEnvProjectPlan = process.env.PROJECT_PLAN;
+        initialFormioConfigProjectPlan = app.formio.config.plan;
+        process.env.PROJECT_PLAN = 'basic';
+        app.formio.config.plan = 'basic';
+        done();
+      });
+
       before(function(done) {
         request(app)
           .put('/project/' + template.project._id)
           .send({
             plan: 'basic'
           })
+          .set('x-admin-key', process.env.ADMIN_KEY)
           .set('x-jwt-token', template.formio.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
@@ -3103,8 +3229,15 @@ module.exports = function(app, template, hook) {
             done();
           })
       });
+
       after(function(done) {
         deleteProjects(tempProjects, done);
+      });
+
+      after((done) => {
+        process.env.PROJECT_PLAN = initialEnvProjectPlan;
+        app.formio.config.plan = initialFormioConfigProjectPlan;
+        done();
       });
     });
 
@@ -3314,6 +3447,7 @@ module.exports = function(app, template, hook) {
           .send({
             plan: 'independent'
           })
+          .set('x-admin-key', process.env.ADMIN_KEY)
           .set('x-jwt-token', template.formio.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
@@ -3613,6 +3747,7 @@ module.exports = function(app, template, hook) {
           .send({
             plan: 'team'
           })
+          .set('x-admin-key', process.env.ADMIN_KEY)
           .set('x-jwt-token', template.formio.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
@@ -3913,6 +4048,7 @@ module.exports = function(app, template, hook) {
           .send({
             plan: 'commercial'
           })
+          .set('x-admin-key', process.env.ADMIN_KEY)
           .set('x-jwt-token', template.formio.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
@@ -4390,6 +4526,7 @@ module.exports = function(app, template, hook) {
           .send({
             plan: 'basic'
           })
+          .set('x-admin-key', process.env.ADMIN_KEY)
           .set('x-jwt-token', template.formio.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
@@ -4546,6 +4683,7 @@ module.exports = function(app, template, hook) {
           .send({
             plan: 'archived'
           })
+          .set('x-admin-key', process.env.ADMIN_KEY)
           .set('x-jwt-token', template.formio.owner.token);
 
         const updatedProject = projectUpdateRes.body;
@@ -4807,6 +4945,11 @@ module.exports = function(app, template, hook) {
           });
       });
       */
+    });
+
+    after((done) => {
+      delete process.env.ADMIN_KEY;
+      done();
     });
   });
 

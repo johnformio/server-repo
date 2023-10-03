@@ -4,6 +4,7 @@ const config = require('../../config.js');
 const _ = require('lodash');
 const url = require('url');
 
+const {isSuperAdmin} = require('../util/util');
 const ALL_PLAN_LIMITS = require('../usage/limits');
 const PLAN_NAMES = Object.keys(ALL_PLAN_LIMITS);
 const debug = {
@@ -15,8 +16,9 @@ const debug = {
 };
 
 module.exports = function(formioServer) {
-  const basePlan = formioServer.config.plan || 'commercial';
-  debug.plans(`Base Plan: ${basePlan}`);
+  const getBasePlan = () => formioServer.config.plan || 'commercial';
+
+  debug.plans(`Base Plan: ${getBasePlan()}`);
 
   /**
    * After loading, determine the plan from the project
@@ -39,8 +41,8 @@ module.exports = function(formioServer) {
 
     // Default the project to the basePlan plan if not defined in the plans.
     debug.getPlan('using default');
-    debug.getPlan(basePlan);
-    return next(null, basePlan, project, currentProject);
+    debug.getPlan(getBasePlan());
+    return next(null, getBasePlan(), project, currentProject);
   };
 
   /**
@@ -64,8 +66,19 @@ module.exports = function(formioServer) {
         });
       }
 
-      // Allow admins to set plan.
-      if (req.body.plan && req.isAdmin) {
+      // Allow admins to set plan on deployed env.
+      if (!config.formio.hosted && req.body.plan && req.isAdmin) {
+        return next(null, req.body.plan);
+      }
+
+      // Allow admin with x-admin-token to set plan on hosted env.
+      if (config.formio.hosted && req.body.plan && isSuperAdmin(req)) {
+        return next(null, req.body.plan);
+      }
+    }
+
+    if (req.method === 'PUT' && req.projectId && !req.formId) {
+      if (config.formio.hosted && req.body.plan && isSuperAdmin(req)) {
         return next(null, req.body.plan);
       }
     }
@@ -73,7 +86,7 @@ module.exports = function(formioServer) {
     // Ignore project plans, if not interacting with a project.
     if (!req.projectId) {
       debug.getPlan('No project given.');
-      return next(null, basePlan);
+      return next(null, getBasePlan());
     }
 
     formioServer.formio.cache.loadCurrentProject(req, function(err, currentProject) {

@@ -13,6 +13,11 @@ const config = require('../../config');
 
 module.exports = function(app, template, hook) {
   describe('S3 Tests', function() {
+    before((done) => {
+      process.env.ADMIN_KEY = 'examplekey';
+      done();
+    });
+
     describe('Basic Plan', function() {
       before(function(done) {
         request(app)
@@ -20,6 +25,7 @@ module.exports = function(app, template, hook) {
           .send({
             plan: 'basic'
           })
+          .set('x-admin-key', config.formio.hosted ? process.env.ADMIN_KEY : '')
           .set('x-jwt-token', template.formio.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
@@ -270,6 +276,7 @@ module.exports = function(app, template, hook) {
           .send({
             plan: 'independent'
           })
+          .set('x-admin-key', config.formio.hosted ? process.env.ADMIN_KEY : '')
           .set('x-jwt-token', template.formio.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
@@ -522,6 +529,7 @@ module.exports = function(app, template, hook) {
           .send({
             plan: 'team'
           })
+          .set('x-admin-key', config.formio.hosted ? process.env.ADMIN_KEY : '')
           .set('x-jwt-token', template.formio.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
@@ -864,6 +872,7 @@ module.exports = function(app, template, hook) {
           .send({
             plan: 'commercial'
           })
+          .set('x-admin-key', config.formio.hosted ? process.env.ADMIN_KEY : '')
           .set('x-jwt-token', template.formio.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
@@ -1199,6 +1208,11 @@ module.exports = function(app, template, hook) {
             });
         });
       });
+    });
+
+    after((done) => {
+      delete process.env.ADMIN_KEY;
+      done();
     });
   });
 };
