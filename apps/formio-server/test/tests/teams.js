@@ -1853,6 +1853,20 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      it('Make sure that the deleted team does not cause server-side errors', (done) => {
+        request(app)
+          .get(`/team/${template.team3._id}`)
+          .set('x-jwt-token', template.formio.user4.token)
+          .expect('Content-Type', /text/)
+          .expect(404)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            done();
+          });
+      });
+
       it('Should allow user1 to add a team he is a member of to a project they own.', (done) => {
         var teamAccess = {type: 'team_read', roles: [template.team1._id]};
         request(app)

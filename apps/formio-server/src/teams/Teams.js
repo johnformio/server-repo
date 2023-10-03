@@ -721,6 +721,10 @@ const Teams = {
   teamAccessHandler(admin) {
     return async function(req, res, next) {
       const team = await Teams.getTeam(req.params.teamId);
+
+      if (!team) {
+        return res.status(404).send('Could not find the team');
+      }
       if (team.project.toString() !== req.user.project.toString()) {
         return res.sendStatus(401);
       }
