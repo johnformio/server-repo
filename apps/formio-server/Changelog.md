@@ -4,7 +4,16 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 8.4.0-rc.7]
+## [Unreleased: 8.5.0-rc.1]
+### Changed
+ - FIO-7328: replace kickbox verify with node-fetch
+ - FIO-7349: Fixes an issue where server crashes when user tries to load a view page of the deleted team
+ - FIO-6566: fixed issue with exceeding project plan limit
+ - FIO-7290: fixed ability set project plan without x-admin-key
+ - FIO-5728: checking for unique email when adding user to team
+ - FIO-7236: move to deprecate random keygen
+ 
+## 8.4.0-rc.7
 ### Changed
  - [Snyk] Security upgrade mongodb from 4.16.0 to 4.17.0
  - [Snyk] Upgrade @braintree/sanitize-url from 6.0.2 to 6.0.4
