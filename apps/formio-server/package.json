@@ -31,6 +31,7 @@
   "dependencies": {
     "@azure/storage-blob": "12.15.0",
     "@braintree/sanitize-url": "^6.0.0",
+    "@formio/lodash": "^0.1.0",
     "@formio/premium": "github:formio/premium#v1.21.0-rc.2",
     "@node-saml/node-saml": "^4.0.3",
     "@types/qrcode": "^1.4.1",
@@ -93,6 +94,7 @@
     "tldjs": "^2.3.1",
     "traverse": "^0.6.6",
     "uuid": "^8.3.2",
+    "vm-utils": "https://github.com/formio/vm-utils.git#1.0.0",
     "vm2": "^3.9.18",
     "xml2js": "^0.6.0",
     "xss": "^1.0.10"

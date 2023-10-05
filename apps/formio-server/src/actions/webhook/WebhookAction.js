@@ -2,8 +2,8 @@
 
 const fetch = require('formio/src/util/fetch');
 const _ = require('lodash');
-const vmUtil = require('formio-workers/vmUtil');
-const {Isolate} = require('formio-workers/vmUtil');
+const vmUtil = require('vm-utils');
+const {Isolate} = require('vm-utils');
 
 const {isEmptyObject} = require('../../util/util');
 const {
@@ -502,11 +502,13 @@ module.exports = (router) => {
               req.currentProject.config : {},
               context
             );
-
-            payload = await context.eval(`${settings.transform} \n return payload;`, {
+            // Assign transfromed data to payload variable in sandbox
+            await context.eval(settings.transform, {
               timeout: 500,
               copy: true
             });
+            // Retrieve payload
+            payload = await context.eval(`payload`, {copy: true, timeout: 500});
           }
           catch (err) {
             setActionItemMessage('Webhook transform failed', err, 'error');

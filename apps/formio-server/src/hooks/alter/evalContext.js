@@ -1,7 +1,7 @@
 /* eslint-disable max-depth */
 'use strict';
-const vmUtil = require('formio-workers/vmUtil');
-const {Isolate} = require('formio-workers/vmUtil');
+const vmUtil = require('vm-utils');
+const {Isolate} = require('vm-utils');
 const moment = require('moment');
 const _ = require('lodash');
 module.exports = app => (context, form) => {
@@ -10,18 +10,17 @@ module.exports = app => (context, form) => {
       try {
         const isolate = new Isolate({memoryLimit: 8});
         const context = isolate.createContextSync();
-        vmUtil.transferSync('formModule', null, context);
-        vmUtil.transferSync('form', form, context);
-        vmUtil.freezeSync('moment', moment, context);
-        vmUtil.freezeSync('_', _, context);
 
-        const formModule = context.evalSync(`formModule = ${form.module}`, {
+        // Transfers function in the way it will be owned by sandbox isolate
+        vmUtil.transferFnSync('serialize', serialize, context);
+
+        const formModule = context.evalSync(`serialize(${form.module})`, {
           timeout: 250,
           copy: true
         });
 
         if (formModule) {
-          form.module = formModule;
+          form.module = deserialize(formModule);
         }
       }
       catch (err) {
@@ -40,3 +39,41 @@ module.exports = app => (context, form) => {
   }
   return context;
 };
+
+// Applies callback to each property recursivly
+// But not traversing serialized functions which have fn and source properties
+const mapValuesDeep = (v, callback) => (
+  _.isObject(v) && _.intersection(Object.keys(v), ['fn', 'source']).length === 0
+    ? _.mapValues(v, v => mapValuesDeep(v, callback))
+    : callback(v)
+)
+
+// Deeply replaces each function in object
+// With an object like { fn: true, source 'some function code'}
+// It's needed because when function is created inside sandbox
+// It's not possible to easily get it back to parent environment 
+const serialize = (obj) => {
+  return JSON.parse(JSON.stringify(obj, (key, value) => {
+    if (typeof value === 'function') {
+      return {
+        fn: true,
+        source: value.toString()
+      }
+    }
+    return value;
+  }))
+}
+
+// The opposite of `serialize` function
+// Replaces all serialized functions with actuall functions
+// Wrapped in IIFE
+const deserialize = (obj) => {
+  return mapValuesDeep(obj,
+    (value) => {
+      if (value.fn) {
+        return eval(`(...args) => (${value.source})(...args)`); 
+      }
+      return value;
+    }
+  );
+}
