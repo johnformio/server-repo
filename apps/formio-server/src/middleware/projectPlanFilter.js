@@ -110,6 +110,10 @@ module.exports = function(formio) {
         return next(err || 'Project plan not found.');
       }
 
+      if (config.formio.hosted && req.body.plan !== plan) {
+        req.body.plan = plan;
+      }
+
       switch (plan.toString()) {
         case 'commercial':
         case 'team':

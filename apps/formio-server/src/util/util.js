@@ -287,7 +287,15 @@ const Utils = {
     if (process.env.ADMIN_KEY && process.env.ADMIN_KEY === req.headers['x-admin-key']) {
       return true;
     }
-},
+  },
+  escapeHtml(unsafeText) {
+    return unsafeText
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&apos;");
+  }
 };
 
 module.exports = Utils;

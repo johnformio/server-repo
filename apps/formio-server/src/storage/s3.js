@@ -18,7 +18,7 @@ async function getUrl(options = {}) {
   }
 
   options.bucket = options.bucket || _.get(options, 'file.bucket');
-  options.key = options.key  || _.get(options, 'file.key');
+  options.key    = options.key    || _.get(options, 'file.key');
 
   const _getUrl = options.settings.minio ? minio : aws;
   const url = await _getUrl(options);
@@ -54,43 +54,11 @@ const middleware = function(router) {
     }
   );
 
-  router.delete('/project/:projectId/form/:formId/file/:fileName',
-  router.formio.formio.middleware.tokenHandler,
-  function(req, res, next) {
-    if (!req.projectId && req.params.projectId) {
-      req.projectId = req.params.projectId;
-    }
-    if (req.params.fileName) {
-      req.fileName = req.params.fileName;
-    }
-
-    if (!req.formId && req.params.formId) {
-      req.formId = req.params.formId;
-    }
-    next();
-  },
-  router.formio.formio.middleware.permissionHandler,
-  router.formio.formio.plans.disableForPlans(['basic', 'independent', 'archived']),
-  function(req, res) {
-    router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
-      if (err) {
-        return res.status(400).send('Project not found.');
-      }
-
-      var key = _.get(req, 'query.key') || req.fileName;
-
-      getUrl({project, bucket: req.query.bucket, key, method: 'DELETE'}).then(
-        url => res.send({url}),
-        err => res.status(400).json(err.message || 'File Delete Error.'));
-    });
-  }
-);
-
-  const uploadResponse = function(project, file, signedUrl) {
+  const uploadResponse = function(project, file, presigned) {
     const bucketUrl = project.settings.storage.s3.bucketUrl || `https://${project.settings.storage.s3.bucket}.s3.amazonaws.com`;
 
     const response = {
-      signed: signedUrl !== bucketUrl ? signedUrl : null,
+      signed: presigned.url !== bucketUrl ? presigned.url : null,
       minio: project.settings.storage.s3.minio,
       url: bucketUrl,
       bucket: project.settings.storage.s3.bucket
@@ -121,7 +89,8 @@ const middleware = function(router) {
       acl: project.settings.storage.s3.acl || 'private',
       policy: policy,
       'Content-Type': file.type,
-      filename: file.name
+      filename: file.name,
+      headers: presigned.headers
     };
     /* eslint-enable new-cap */
 
@@ -160,7 +129,7 @@ const middleware = function(router) {
         file.path = _.trim(`${_.trim(file.dir, '/')}/${_.trim(file.name, '/')}`, '/');
 
         getUrl({project, method: 'PUT', file}).then(
-          url => res.send(uploadResponse(project, file, url)),
+          result => res.send(uploadResponse(project, file, result)),
           err => res.status(400).send(err.message));
       });
     }

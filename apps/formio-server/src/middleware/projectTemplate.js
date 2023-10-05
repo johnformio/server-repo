@@ -1,9 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
-const config = require('../../config');
 const debug = require('debug')('formio:middleware:projectTemplate');
-const reportingUIform = require('./../../reportingUI.json');
 
 function mergeAccess(targetAccess, sourceAccess) {
   // merge access; ensure unique entries by using Map/Set
@@ -150,11 +148,7 @@ module.exports = function(formio, app) {
     }
     // Check for template that is already provided.
     else if ((typeof template === 'string') && formio.templates.hasOwnProperty(template)) {
-      let templateObj = _.cloneDeep(formio.templates[template]);
-      if (template === defaultTemplateName && !config.formio.hosted && _.get(app, 'license.terms.options.reporting', false)) {
-        // add the reporting form
-        templateObj = _.merge(templateObj, _.cloneDeep(reportingUIform));
-      }
+      const templateObj = _.cloneDeep(formio.templates[template]);
       // Import the template.
       return importTemplate(templateObj);
     }

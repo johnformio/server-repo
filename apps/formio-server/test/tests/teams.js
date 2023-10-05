@@ -1,4 +1,4 @@
-/* eslint-env mocha */
+ /* eslint-env mocha */
 'use strict';
 
 var request = require('supertest');
@@ -168,6 +168,41 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      it('Register another Formio User 4', function(done) {
+        let tempPassword = 'test12345';
+        template.formio.user4 = {
+          data: {
+            'name': chance.word({ length: 10 }),
+            'email': chance.email(),
+          }
+        }
+
+        getVerificationToken()
+          .then((token) => {
+            template.formio.user4.token = token;
+            return verifyUser(template.formio.user4, done);
+          })
+          .then((user) => {
+            template.formio.user4 = _.cloneDeep(user);
+            done();
+          });
+
+        request(app)
+          .post('/project/' + template.formio.project._id + '/form/' + template.formio.formRegister._id + '/submission')
+          .send(template.formio.user4)
+          .expect(201)
+          .expect('Content-Type', /json/)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            const response = res.body;
+            template.formio.user4 = response;
+            template.formio.user4.data.password = tempPassword;
+          });
+      });
+
       it('A Formio User should be able to access the Team Form', function(done) {
           request(app)
             .get('/project/' + template.formio.project._id + '/form/' + template.formio.teamResource._id)
@@ -292,6 +327,27 @@ module.exports = function(app, template, hook) {
         });
       });
 
+      it('The Team Owner should not be able to add Formio user with duplicate email', (done) => {
+        request(app)
+        .post(`/team/${template.team1._id}/member`)
+        .set('x-jwt-token', template.formio.teamAdmin.token)
+        .send({
+          data: {
+            userId: template.formio.user1._id,
+            email: template.formio.user1.data.email,
+            admin: false
+          }
+        })
+        .expect('Content-Type', /text/)
+        .expect(400)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+          done();
+        });
+      });
+
       it('The Team Owner should be able to add an outside user', (done) => {
         request(app)
         .post('/team/' + template.team1._id + '/member')
@@ -305,6 +361,27 @@ module.exports = function(app, template, hook) {
         })
         .expect('Content-Type', /json/)
         .expect(200)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+          done();
+        });
+      });
+
+      it('The Team Owner should not be able to add an outside user with duplicate email', (done) => {
+        request(app)
+        .post('/team/' + template.team1._id + '/member')
+        .set('x-jwt-token', template.formio.teamAdmin.token)
+        .send({
+          data: {
+            userId: template.users.user1._id,
+            email: template.users.user1.data.email,
+            admin: false
+          }
+        })
+        .expect('Content-Type', /text/)
+        .expect(400)
         .end(function(err, res) {
           if (err) {
             return done(err);
@@ -1252,7 +1329,7 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      it('A Form.io Team member should be able to remove themselves from the Team', function(done) {
+       it('A Form.io Team member should be able to remove themselves from the Team', function(done) {
         request(app)
           .post('/team/' + template.team1._id + '/leave')
           .set('x-jwt-token', template.formio.user1.token)
@@ -1506,6 +1583,35 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      it('Create another Team 3', function(done) {
+        request(app)
+          .post('/team')
+          .set('x-jwt-token', template.formio.teamAdmin.token)
+          .send({
+            data: {
+              name: chance.word(),
+              members: []
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            var response = res.body;
+
+            // Store the JWT for future API calls.
+            template.formio.teamAdmin.token = res.headers['x-jwt-token'];
+
+            // Store the team reference for later.
+            template.team3 = response;
+
+            done();
+          });
+      });
+
       it('A Team Owner should not be able to edit a team they do not own', function(done) {
         request(app)
           .put('/team/' + template.team1._id)
@@ -1654,6 +1760,31 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      it('Should allow user4 to be added to a team', (done) => {
+        request(app)
+          .post('/team/' + template.team3._id + '/member')
+          .set('x-jwt-token', template.formio.teamAdmin.token)
+          .send({
+            data: {
+              userId: template.formio.user4._id,
+              email: template.formio.user4.data.email,
+              admin: false
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            // Store the JWT for future API calls.
+            template.formio.teamAdmin.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
       it('Should allow user1 to accept this team.', (done) => {
         template.formio.user1.metadata = {
           teams: [template.team1._id.toString()]
@@ -1668,6 +1799,70 @@ module.exports = function(app, template, hook) {
               return done(err);
             }
             template.formio.user1.token = res.headers['x-jwt-token'];
+            done();
+          });
+      });
+
+      it('Should allow user4 to accept this team.', (done) => {
+        template.formio.user4.metadata = {
+          teams: [template.team3._id.toString()]
+        };
+        request(app)
+          .put('/project/' + template.formio.project._id + '/form/' + template.formio.userResource._id + '/submission/' + template.formio.user4._id)
+          .set('x-jwt-token', template.formio.user4.token)
+          .send(template.formio.user4)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            template.formio.user4.token = res.headers['x-jwt-token'];
+            done();
+          });
+      });
+
+      it('A Team Owner should be able to delete a team they do own', function(done) {
+        request(app)
+          .delete('/team/' + template.team3._id)
+          .set('x-jwt-token', template.formio.teamAdmin.token)
+          .expect('Content-Type', /text/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            // Store the JWT for future API calls.
+            template.formio.teamAdmin.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('Make sure that user who is a member of the deleted team does not cause server-side errors', (done) => {
+        request(app)
+          .get('/team/all')
+          .set('x-jwt-token', template.formio.user4.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            done();
+          });
+      });
+
+      it('Make sure that the deleted team does not cause server-side errors', (done) => {
+        request(app)
+          .get(`/team/${template.team3._id}`)
+          .set('x-jwt-token', template.formio.user4.token)
+          .expect('Content-Type', /text/)
+          .expect(404)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
             done();
           });
       });

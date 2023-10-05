@@ -176,7 +176,7 @@ module.exports = function(app, template, hook) {
         });
     });
 
-    it('Should $lookup in aggregation after other stages.', function(done) {
+    it('Should allow $lookup in aggregation after other stages.', function(done) {
       request(app)
         .get('/project/' + template.project._id + '/report')
         .set('x-jwt-token', template.users.admin.token)
@@ -213,6 +213,25 @@ module.exports = function(app, template, hook) {
           }
 
           assert.equal(res.body.length, count);
+          done();
+        });
+    });
+
+    it('Should allow $addFields in aggregation.', function(done) {
+      count = (count > 0) ? (count - 1) : 1;
+      request(app)
+        .get('/project/' + template.project._id + '/report')
+        .set('x-jwt-token', template.users.admin.token)
+        .set('x-query', JSON.stringify([{
+          '$addFields': {test: 123}
+        }]))
+        .expect(200)
+        .end(function (err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          assert.equal(res.body[0].test, 123);
           done();
         });
     });
