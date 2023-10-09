@@ -3,7 +3,6 @@
 const fetch = require('formio/src/util/fetch');
 const _ = require('lodash');
 const vmUtil = require('vm-utils');
-const {Isolate} = require('vm-utils');
 
 const {isEmptyObject} = require('../../util/util');
 const {
@@ -491,7 +490,7 @@ module.exports = (router) => {
         setActionItemMessage('Transforming payload');
         if (settings.transform) {
           try {
-            const isolate = new Isolate({memoryLimit: 8});
+            const isolate = vmUtil.newIsolate();
             const context = await isolate.createContext();
             await vmUtil.transfer('externalId', externalId, context);
             await vmUtil.transfer('payload', payload, context);
