@@ -1,4 +1,7 @@
 'use strict';
+const _ = require('lodash');
+
+const util = require('../../util/util');
 const config = require('../../../config');
 module.exports = {
     authenticate: (req, project) => {
@@ -17,5 +20,14 @@ module.exports = {
         if (!req.pdfServer && project.settings && project.settings.pdfserver) {
             req.pdfServer = project.settings.pdfserver;
         }
+    },
+    updateHeadersForPdfRequest(req, formio) {
+        const headers = {};
+        headers['x-host'] = util.baseUrl(formio, req);
+        _.merge(headers,
+            _.pick(req.headers, 'accept', 'content-type', 'accept-encoding', 'accept-language'),
+            _.pickBy(req.headers, (_, h) => h.startsWith('x-')),
+        );
+        req.headers = headers;
     }
 };

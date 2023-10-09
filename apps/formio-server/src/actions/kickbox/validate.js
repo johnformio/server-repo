@@ -1,7 +1,8 @@
 'use strict';
 
-const kickbox = require('kickbox');
+const fetch = require('formio/src/util/fetch');
 const _ = require('lodash');
+const {escapeHtml} = require('../../util/util');
 
 module.exports = function(project, component, path, req, res, next) {
   if (!_.has(req.body, `data.${path}`)) {
@@ -25,30 +26,30 @@ module.exports = function(project, component, path, req, res, next) {
   }
 
   // Verify the email with kickbox.
-  const verification = kickbox.client(project.settings.kickbox.apikey).kickbox();
-  verification.verify(email, function(err, response) {
-    if (err) {
-      return res.status(400).json(`Kickbox.io - ${err.message}`);
-    }
+  fetch(`https://api.kickbox.com/v2/verify?email=${email}&apikey=${project.settings.kickbox.apikey}`)
+  .then(response => response.json()).then(data => {
     const msgEnd = 'Please provide a different email address.';
-    if (response.body && response.body.result) {
-      if (response.body.result === 'undeliverable') {
-        switch (response.body.reason) {
+    if (data && data.result) {
+      res.setHeader('Content-Type', 'text/plain');
+      if (data.result === 'undeliverable') {
+        switch (data.reason) {
           case 'rejected_email':
-            return res.status(400).send(`${email} was rejected. ${msgEnd}`);
+            return res.status(400).send(`${escapeHtml(email)} was rejected. ${msgEnd}`);
           case 'invalid_domain':
-            return res.status(400).send(`${email} is not a valid domain. ${msgEnd}`);
+            return res.status(400).send(`${escapeHtml(email)} is not a valid domain. ${msgEnd}`);
           case 'invalid_smtp':
-            return res.status(400).send(`${email} is not a valid mail server. ${msgEnd}`);
+            return res.status(400).send(`${escapeHtml(email)} is not a valid mail server. ${msgEnd}`);
           default:
-            return res.status(400).send(`${email} was rejected. ${msgEnd}`);
+            return res.status(400).send(`${escapeHtml(email)} was rejected. ${msgEnd}`);
         }
       }
-      else if ((response.body.result === 'risky') && response.body.disposable) {
-        return res.status(400).send(`${email} is an invalid email address. ${msgEnd}`);
+      else if ((data.result === 'risky') && data.disposable) {
+        return res.status(400).send(`${escapeHtml(email)} is an invalid email address. ${msgEnd}`);
       }
     }
-
     return next();
+  })
+  .catch(err => {
+    return res.status(400).json(`Kickbox.io - ${err.message}`);
   });
 };

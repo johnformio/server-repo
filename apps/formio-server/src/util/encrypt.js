@@ -1,9 +1,9 @@
 'use strict';
 
 const _ = require('lodash');
-const keygenerator = require('keygenerator');
 const eachSeries = require('async/eachSeries');
 const util = require('./util');
+const config = require('../../config');
 
 module.exports = (formioServer) => {
   const Encryptor = {
@@ -58,31 +58,14 @@ module.exports = (formioServer) => {
       return !_.isEmpty(req.encryptedComponents);
     },
 
-    getProjectSecret: (req) => {
+    loadProject: (req) => {
       return new Promise((resolve, reject) => {
         formioServer.formio.cache.loadCurrentProject(req, (err, project) => {
           if (err) {
             return reject(err);
           }
 
-          if (_.get(project, 'settings.secret', '')) {
-            return resolve(project);
-          }
-
-          // Update the request cached item.
-          _.set(project, 'settings.secret', keygenerator._());
-
-          // Create a secret key.
-          formioServer.formio.cache.updateCurrentProject(req, {
-            settings: {
-              secret: project.settings.secret
-            }
-          }, (err, project) => {
-            if (err) {
-              return reject(err);
-            }
-            return resolve(project);
-          });
+          resolve(project);
         });
       });
     },
@@ -99,7 +82,7 @@ module.exports = (formioServer) => {
       }
 
       // Return the value.
-      const result = util[operation](project.settings.secret, data);
+      const result = util[operation](project.settings.secret || config.formio.mongoSecret, data);
       if (!result) {
         return data;
       }
@@ -109,7 +92,7 @@ module.exports = (formioServer) => {
     },
 
     encryptDecrypt: (req, submission, operation, next) => {
-      Encryptor.getProjectSecret(req).then((project) => {
+      Encryptor.loadProject(req).then((project) => {
         _.each(req.encryptedComponents, (component, path) => {
           let parent = null;
           const pathParts = path.split('.');

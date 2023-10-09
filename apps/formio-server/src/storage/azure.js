@@ -32,18 +32,6 @@ async function getUrl(options = {}) {
   const fileName = _.get(options, 'file.name', options.fileName);
   const blobName = _.trim(`${_.trim(directory, '/')}/${_.trim(fileName, '/')}`, '/');
 
-  // delete blob from storage
-  if (options.method === 'DELETE') {
-    const containerClient = await service.getContainerClient(_.get(options, 'settings.container'));
-    const deleteResponse = await containerClient.deleteBlob(options.fileName);
-
-    if (deleteResponse.errorCode) {
-      throw new Error(`Delete File Error ${deleteResponse.errorCode}`);
-    }
-
-    return options.fileName;
-  }
-
   const token = storage.generateBlobSASQueryParameters({
     containerName: options.settings.container,
     blobName: blobName,
@@ -59,7 +47,7 @@ async function getUrl(options = {}) {
     throw new Error('Invalid request.');
   }
 
-  return ({url, pathFile: blobName});
+  return url;
 }
 
 const middleware = router => {
@@ -77,14 +65,15 @@ const middleware = router => {
     router.formio.formio.middleware.permissionHandler,
     router.formio.formio.plans.disableForPlans(['basic', 'independent', 'archived']),
     function(req, res) {
-      const fileName = req.body.name || req.query.key || req.query.name;
+      const fileName = req.body.name || req.query.name;
+
       router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
         if (err) {
           return res.status(400).send('Project not found.');
         }
 
         getUrl({project, fileName, method: req.method}).then(
-          (data) => res.json(data),
+          url => res.send({url}),
           err => res.status(400).send(err.message));
       });
     }
@@ -95,8 +84,6 @@ const middleware = router => {
   router.get('/project/:projectId/form/:formId/storage/azure', ...routes);
   debug.startup('Attaching middleware: Azure Storage POST');
   router.post('/project/:projectId/form/:formId/storage/azure', ...routes);
-  debug.startup('Attaching middleware: Azure Storage DELETE');
-  router.delete('/project/:projectId/form/:formId/storage/azure', ...routes);
 };
 
 module.exports = {

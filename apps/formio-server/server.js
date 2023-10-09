@@ -356,6 +356,9 @@ module.exports = function(options) {
         debug.startup('Attaching middleware: Usage Tracking');
         app.formio.usageTracking = require('./src/usage')(app.formio);
       }
+      else {
+        require('./src/util/configureDefaultProjectTemplate')(app);
+      }
     });
 
     debug.startup('Attaching middleware: License Terms');

@@ -4,7 +4,8 @@
 var request = require('supertest');
 var assert = require('assert');
 var CryptoJS = require('crypto-js');
-var AWS = require('aws-sdk');
+const {S3Client, GetObjectCommand} = require('@aws-sdk/client-s3');
+const {getSignedUrl} = require("@aws-sdk/s3-request-presigner");
 var docker = process.env.DOCKER;
 var customer = process.env.CUSTOMER;
 var _ = require('lodash');
@@ -12,6 +13,11 @@ const config = require('../../config');
 
 module.exports = function(app, template, hook) {
   describe('S3 Tests', function() {
+    before((done) => {
+      process.env.ADMIN_KEY = 'examplekey';
+      done();
+    });
+
     describe('Basic Plan', function() {
       before(function(done) {
         request(app)
@@ -19,6 +25,7 @@ module.exports = function(app, template, hook) {
           .send({
             plan: 'basic'
           })
+          .set('x-admin-key', config.formio.hosted ? process.env.ADMIN_KEY : '')
           .set('x-jwt-token', template.formio.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
@@ -269,6 +276,7 @@ module.exports = function(app, template, hook) {
           .send({
             plan: 'independent'
           })
+          .set('x-admin-key', config.formio.hosted ? process.env.ADMIN_KEY : '')
           .set('x-jwt-token', template.formio.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
@@ -521,6 +529,7 @@ module.exports = function(app, template, hook) {
           .send({
             plan: 'team'
           })
+          .set('x-admin-key', config.formio.hosted ? process.env.ADMIN_KEY : '')
           .set('x-jwt-token', template.formio.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
@@ -764,22 +773,22 @@ module.exports = function(app, template, hook) {
               if (err) {
                 return done(err);
               }
-              var s3 = new AWS.S3({
-                accessKeyId: template.project.settings.storage.s3.AWSAccessKeyId,
-                secretAccessKey: template.project.settings.storage.s3.AWSSecretKey
+              var s3 = new S3Client({
+                region: 'us-east-1',
+                credentials: {
+                  accessKeyId: template.project.settings.storage.s3.AWSAccessKeyId,
+                  secretAccessKey: template.project.settings.storage.s3.AWSSecretKey
+                }
               });
-              s3.getSignedUrl('getObject', {
+              getSignedUrl(s3, new GetObjectCommand({
                 Bucket: file.bucket,
                 Key: file.key
-              }, function(err, url) {
-                if (err) {
-                  done(err);
-                }
+              }, {expiresIn: +template.project.settings.storage.s3.expiration})).then(url => {
                 if (!docker && !customer) {
                   assert.equal(res.body.url.replace(/Expires=[0-9]*/, ''), url.replace(/Expires=[0-9]*/, ''));
                 }
                 done();
-              });
+              }).catch(err => done(err));
             });
         });
 
@@ -863,6 +872,7 @@ module.exports = function(app, template, hook) {
           .send({
             plan: 'commercial'
           })
+          .set('x-admin-key', config.formio.hosted ? process.env.ADMIN_KEY : '')
           .set('x-jwt-token', template.formio.owner.token)
           .expect('Content-Type', /json/)
           .expect(200)
@@ -1108,22 +1118,22 @@ module.exports = function(app, template, hook) {
               if (err) {
                 return done(err);
               }
-              var s3 = new AWS.S3({
-                accessKeyId: template.project.settings.storage.s3.AWSAccessKeyId,
-                secretAccessKey: template.project.settings.storage.s3.AWSSecretKey
+              var s3 = new S3Client({
+                region: 'us-east-1',
+                credentials: {
+                  accessKeyId: template.project.settings.storage.s3.AWSAccessKeyId,
+                  secretAccessKey: template.project.settings.storage.s3.AWSSecretKey
+                }
               });
-              s3.getSignedUrl('getObject', {
+              getSignedUrl(s3, new GetObjectCommand({
                 Bucket: file.bucket,
                 Key: file.key
-              }, function(err, url) {
-                if (err) {
-                  done(err);
-                }
+              }, {expiresIn: +template.project.settings.storage.s3.expiration})).then(url => {
                 if (!docker && !customer) {
                   assert.equal(res.body.url.replace(/Expires=[0-9]*/, ''), url.replace(/Expires=[0-9]*/, ''));
                 }
                 done();
-              });
+              }).catch(err => done(err));
             });
         });
 
@@ -1198,6 +1208,11 @@ module.exports = function(app, template, hook) {
             });
         });
       });
+    });
+
+    after((done) => {
+      delete process.env.ADMIN_KEY;
+      done();
     });
   });
 };

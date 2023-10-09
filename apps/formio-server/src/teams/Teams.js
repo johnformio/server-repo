@@ -357,12 +357,16 @@ const Teams = {
         deleted: {$eq: null}
     });
 
-    const membership = userData.map(item => {
+    const membership = userData.reduce((teams, item) => {
       const id = item.data.team._id;
       const data = teamsData.find((team)=>team._id.toString() === id.toString());
-      item.data.team = data;
-      return item;
-    });
+
+      if (data) {
+        item.data.team = data;
+        teams.push(item);
+      }
+      return teams;
+    }, []);
 
     for (const member of membership) {
       const members = await Teams.getMembers(member.data.team);
@@ -534,7 +538,7 @@ const Teams = {
       project: memberResource.project,
       form: memberResource._id,
       deleted: {$eq: null},
-      'data.team._id': team._id
+      'data.team._id': Teams.util().idToBson(team._id)
     }).lean().exec();
   },
 
@@ -717,6 +721,10 @@ const Teams = {
   teamAccessHandler(admin) {
     return async function(req, res, next) {
       const team = await Teams.getTeam(req.params.teamId);
+
+      if (!team) {
+        return res.status(404).send('Could not find the team');
+      }
       if (team.project.toString() !== req.user.project.toString()) {
         return res.sendStatus(401);
       }

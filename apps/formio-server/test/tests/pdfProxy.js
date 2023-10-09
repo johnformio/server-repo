@@ -4,6 +4,8 @@
 const nock = require('nock');
 const request = require('supertest');
 const assert = require('assert');
+const sinon = require('sinon');
+const downloadPDF = require('../../src/util/downloadPDF');
 
 module.exports = function(app, template, hook) {
   describe('PDF Proxy tests', () => {
@@ -22,25 +24,25 @@ module.exports = function(app, template, hook) {
 
     before(() => {
       nock(pdfServer)
-      .persist()
+        .persist()
 
-      .get(`/pdf/${projectId}/file/${fileId}`)
-      .reply(200, pdfFile, {'Content-Type': 'application/pdf', 'Content-Length': pdfFile.length})
+        .get(`/pdf/${projectId}/file/${fileId}`)
+        .reply(200, pdfFile, {'Content-Type': 'application/pdf', 'Content-Length': pdfFile.length})
 
-      .post(`/pdf/${projectId}/file/pdf/download`, (body) => body.form && body.submission)
-      .query((qs) => qs.format && qs.project)
-      .reply(200, pdfFile, {'Content-Type': 'application/pdf', 'Content-Length': pdfFile.length})
+        .post(`/pdf/${projectId}/file/pdf/download`, (body) => body.form && body.submission)
+        .query((qs) => qs.format && qs.project)
+        .reply(200, pdfFile, {'Content-Type': 'application/pdf', 'Content-Length': pdfFile.length})
 
-      .post(`/pdf/${projectId}/download`, (body) => body.form && body.submission)
-      .query((qs) => qs.format && qs.project)
-      .reply(200, pdfFile, {'Content-Type': 'application/pdf', 'Content-Length': pdfFile.length})
+        .post(`/pdf/${projectId}/download`, (body) => body.form && body.submission)
+        .query((qs) => qs.format && qs.project)
+        .reply(200, pdfFile, {'Content-Type': 'application/pdf', 'Content-Length': pdfFile.length})
 
-      .post(`/pdf/${projectId}/file`, )
-      .reply(
-        200,
-        JSON.stringify({path: "somepath", file: "somepath", formfields: {}}),
-        {'Content-Type': 'application/json'}
-      );
+        .post(`/pdf/${projectId}/file`, )
+        .reply(
+          200,
+          JSON.stringify({path: "somepath", file: "somepath", formfields: {}}),
+          {'Content-Type': 'application/json'}
+        );
     });
 
     it('Will not error out if there is no projectId', (done) => {
@@ -269,6 +271,62 @@ module.exports = function(app, template, hook) {
           assert(res.body.equals(pdfFile));
           done();
         });
+    });
+
+    describe('PDF Request Header Construction', () => {
+      const req = {
+        headers: {
+          host: 'http://localhost:3000'
+        },
+        query: {},
+        params: {
+          projectId
+        }
+      };
+      const project = {
+        _id: projectId,
+        title: "Dummy Project",
+        name: "dummyProject",
+        type: "project",
+        config: {},
+        settings: {
+          cors: "*",
+          appOrigin: "http://localhost:3000",
+        },
+      };
+      const form = {
+        _id: formId,
+        title: "Dummy Form",
+        name: "dummyForm",
+        path: "dummyform",
+        type: "form",
+        components: [
+          {
+            label: "Text Field",
+            applyMaskOn: "change",
+            tableView: true,
+            key: "textField",
+            type: "textfield",
+            input: true,
+          },
+        ],
+      };
+      const submission = {
+        _id: submissionId,
+        data: {
+          textField: "Hello, world!"
+        }
+      };
+
+      it('Should strip the host header when making the request to the PDF server when downloadPDF is called directly', (done) => {
+        const downloadPDFFn = downloadPDF(app.formio);
+        downloadPDFFn(req, project, form, submission)
+          .then(() => {
+            assert(!!req.headers.host === false);
+            done();
+          })
+          .catch(done)
+      });
     });
   });
 };

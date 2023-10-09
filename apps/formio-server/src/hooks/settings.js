@@ -103,6 +103,8 @@ module.exports = function(app) {
       configFormio: require('./alter/configFormio'),
       loadRevision: require('./alter/loadRevision')(app),
       parentProjectSettings: require('./alter/parentProjectSettings')(app),
+      actionSettingsForm: require('./alter/actionSettingsForm')(app),
+      saveSubmission: require('./alter/saveSubmission')(app),
       schemaIndex(index) {
         index.project = 1;
         return index;
@@ -240,17 +242,8 @@ module.exports = function(app) {
 
       emailTransports(transports, settings, req, cb) {
         settings = settings || {};
-        // Limit independent
         if (req && req.primaryProject) {
-          if (config.formio.hosted) {
-            if (req.primaryProject.plan === 'commercial') {
-              transports.push({
-                transport: 'default',
-                title: 'Default (limit 1000 per month)'
-              });
-             }
-          }
-          else if (process.env.DEFAULT_TRANSPORT) {
+          if (!config.formio.hosted && process.env.DEFAULT_TRANSPORT) {
             transports.push({
               transport: 'default',
               title: 'Default'
