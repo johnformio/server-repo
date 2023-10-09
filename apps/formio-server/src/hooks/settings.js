@@ -8,7 +8,6 @@ const fs = require('fs');
 const log = require('debug')('formio:log');
 const util = require('../util/util');
 const vmUtil = require('vm-utils');
-const {Isolate} = require('vm-utils');
 const {ClientCredentials} = require('simple-oauth2');
 const moment = require('moment');
 const config = require('../../config');
@@ -1543,7 +1542,7 @@ module.exports = function(app) {
           req.currentProject.settings.tokenParse
         ) {
           try {
-            const isolate = new Isolate({memoryLimit: 8});
+            const isolate = vmUtil.newIsolate();
             const context = isolate.createContextSync();
             vmUtil.transferSync('token', decoded, context);
             vmUtil.transferSync('roles', req.currentProject.roles, context);

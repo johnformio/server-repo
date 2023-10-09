@@ -1,14 +1,12 @@
 /* eslint-disable max-depth */
 'use strict';
 const vmUtil = require('vm-utils');
-const {Isolate} = require('vm-utils');
-const moment = require('moment');
 const _ = require('lodash');
 module.exports = app => (context, form) => {
   if (form && form.module) {
     if (typeof form.module === 'string') {
       try {
-        const isolate = new Isolate({memoryLimit: 8});
+        const isolate = vmUtil.newIsolate();
         const context = isolate.createContextSync();
 
         // Transfers function in the way it will be owned by sandbox isolate
