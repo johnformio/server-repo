@@ -1111,37 +1111,7 @@
                 "required": true
               },
               "key": "availableColumns",
-              "logic": [{
-                  "name": "disable",
-                  "trigger": {
-                    "type": "simple",
-                    "simple": {
-                      "show": true,
-                      "conjunction": "all",
-                      "conditions": [{
-                        "component": "allColumnsAvailable",
-                        "operator": "isEqual",
-                        "value": "true"
-                      }]
-                    }
-                  },
-                  "actions": [{
-                      "name": "clean",
-                      "type": "customAction",
-                      "customAction": "instance.resetValue();"
-                    },
-                    {
-                      "name": "disable",
-                      "type": "property",
-                      "property": {
-                        "label": "Disabled",
-                        "value": "disabled",
-                        "type": "boolean"
-                      },
-                      "state": true
-                    }
-                  ]
-                },
+              "logic": [
                 {
                   "name": "clear Columns",
                   "trigger": {
@@ -1194,7 +1164,7 @@
               "multiple": true,
               "dataSrc": "custom",
               "data": {
-                "custom": "values = data.allColumnsAvailable ? data.columnsList : utils.reporting.getAvailableColumnsAsOptions(data.availableColumns, data.columnsList);"
+                "custom": "values = utils.reporting.getAvailableColumnsAsOptions(data.availableColumns, data.columnsList);"
               },
               "valueProperty": "value",
               "refreshOn": "availableColumns",

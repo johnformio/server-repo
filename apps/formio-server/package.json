@@ -36,6 +36,7 @@
     "@azure/storage-blob": "12.15.0",
     "@braintree/sanitize-url": "^6.0.4",
     "@formio/premium": "github:formio/premium#v1.22.0-rc.1",
+    "@formio/reporting": "github:formio/reporting#1.0.0-rc.4",
     "@node-saml/node-saml": "^4.0.5",
     "@types/qrcode": "^1.4.1",
     "@types/speakeasy": "^2.0.6",
