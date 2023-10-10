@@ -43,7 +43,7 @@ module.exports = app => (context, form) => {
 function mapValuesDeep(v, callback) {
   return _.isObject(v) && _.intersection(Object.keys(v), ['fn', 'source']).length === 0
     ? _.mapValues(v, v => mapValuesDeep(v, callback))
-    : callback(v)
+    : callback(v);
 }
 
 // Deeply replaces each function in object
