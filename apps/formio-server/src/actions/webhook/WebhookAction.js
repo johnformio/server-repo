@@ -490,7 +490,7 @@ module.exports = (router) => {
         setActionItemMessage('Transforming payload');
         if (settings.transform) {
           try {
-            const isolate = vmUtil.newIsolate();
+            const isolate = vmUtil.getIsolate();
             const context = await isolate.createContext();
             await vmUtil.transfer('externalId', externalId, context);
             await vmUtil.transfer('payload', payload, context);

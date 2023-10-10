@@ -6,7 +6,7 @@ module.exports = app => (context, form) => {
   if (form && form.module) {
     if (typeof form.module === 'string') {
       try {
-        const isolate = vmUtil.newIsolate();
+        const isolate = vmUtil.getIsolate();
         const context = isolate.createContextSync();
 
         // Transfers function in the way it will be owned by sandbox isolate

@@ -1535,7 +1535,7 @@ module.exports = function(app) {
           req.currentProject.settings.tokenParse
         ) {
           try {
-            const isolate = vmUtil.newIsolate();
+            const isolate = vmUtil.getIsolate();
             const context = isolate.createContextSync();
             vmUtil.transferSync('token', decoded, context);
             vmUtil.transferSync('roles', req.currentProject.roles, context);
