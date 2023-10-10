@@ -40,36 +40,36 @@ module.exports = app => (context, form) => {
 
 // Applies callback to each property recursivly
 // But not traversing serialized functions which have fn and source properties
-const mapValuesDeep = (v, callback) => (
-  _.isObject(v) && _.intersection(Object.keys(v), ['fn', 'source']).length === 0
+function mapValuesDeep(v, callback) {
+  return _.isObject(v) && _.intersection(Object.keys(v), ['fn', 'source']).length === 0
     ? _.mapValues(v, v => mapValuesDeep(v, callback))
     : callback(v)
-)
+}
 
 // Deeply replaces each function in object
 // With an object like { fn: true, source 'some function code'}
 // It's needed because when function is created inside sandbox
-// It's not possible to easily get it back to parent environment 
-const serialize = (obj) => {
+// It's not possible to easily get it back to parent environment
+function serialize(obj) {
   return JSON.parse(JSON.stringify(obj, (key, value) => {
     if (typeof value === 'function') {
       return {
         fn: true,
         source: value.toString()
-      }
+      };
     }
     return value;
-  }))
+  }));
 }
 
 // The opposite of `serialize` function
 // Replaces all serialized functions with actuall functions
 // Wrapped in IIFE
-const deserialize = (obj) => {
+function deserialize(obj) {
   return mapValuesDeep(obj,
     (value) => {
       if (value.fn) {
-        return eval(`(...args) => (${value.source})(...args)`); 
+        return eval(`(...args) => (${value.source})(...args)`);
       }
       return value;
     }

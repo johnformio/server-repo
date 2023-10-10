@@ -5,8 +5,6 @@ const debug = require('debug')('formio:payment:upgrade');
 const _merge = require('lodash/merge');
 
 module.exports = function(formio) {
-  const emailer = require('formio/src/util/email')(formio);
-
   return function(req, res, next) {
     new Promise((resolve, reject) => {
       if (!req.body) {
