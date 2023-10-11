@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-7290: fixed ability set project plan without x-admin-key
  - FIO-5728: checking for unique email when adding user to team
  - FIO-7236: move to deprecate random keygen
+ - FIO-7397: fixed server validation errors for reporting ui config form
  
 ## 8.4.0-rc.7
 ### Changed
