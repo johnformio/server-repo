@@ -1139,6 +1139,10 @@ module.exports = (app, template, hook) => {
     });
 
     describe('SaveSubmission Protected Update', () => {
+      before(() => {
+        template.originalProject = structuredClone(template.project);
+      });
+
       const textFieldInitialValue = chance.word();
       const textFieldUpdateValue = chance.word();
       const passwordValue = chance.word();
@@ -1420,6 +1424,10 @@ module.exports = (app, template, hook) => {
           .expect(200)
           .end(done);
       });
+    });
+
+    after(() => {
+      template.project = structuredClone(template.originalProject);
     });
   });
 
