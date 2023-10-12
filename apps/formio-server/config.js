@@ -256,15 +256,12 @@ config.formio.maxOldSpace = getMaxOldSpace();
 
 config.enableOauthM2M = getConfig('OAUTH_M2M_ENABLED', false);
 
-// Payeezy fields
-config.payeezy = {
-  keyId: getConfig('PAYEEZY_KEY_ID'),
-  host: getConfig('PAYEEZY_HOST', 'api.payeezy.com'),
-  endpoint: getConfig('PAYEEZY_ENDPOINT', '/v1/transactions'),
-  gatewayId: getConfig('PAYEEZY_GATEWAY_ID'),
-  gatewayPassword: getConfig('PAYEEZY_GATEWAY_PASSWORD'),
-  hmacKey: getConfig('PAYEEZY_HMAC_KEY'),
-  merchToken: getConfig('PAYEEZY_TOKEN'),
+// Configure Fortis settings.
+config.fortis = {
+  userId: getConfig('FORTIS_USER_ID'),
+  userAPIKey: getConfig('FORTIS_USER_API_KEY'),
+  endpoint: getConfig('FORTIS_ENDPOINT', 'https://api.sandbox.fortis.tech/v1/transactions/cc/auth-only/keyed'),
+  developerId: getConfig('FORTIS_DEV_ID')
 };
 
 // Using docker, support legacy linking and network links.

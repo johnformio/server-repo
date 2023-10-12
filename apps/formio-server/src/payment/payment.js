@@ -22,12 +22,12 @@ module.exports = function(app, formio) {
     next();
   };
 
-  app.post('/payeezy',
-    formio.middleware.tokenHandler,
-    doNotAllowNewAccounts,
-    require('../middleware/userProject')(formio),
-    require('./payeezy')(app.formio.config, formio)
-  );
+  app.post('/gateway',
+  formio.middleware.tokenHandler,
+  doNotAllowNewAccounts,
+  require('../middleware/userProject')(formio),
+  require('./gateway')(app.formio.config, formio)
+);
 
   app.post('/project/:projectId/upgrade',
     formio.middleware.tokenHandler,
@@ -47,7 +47,7 @@ module.exports = function(app, formio) {
 
     return Q(formio.resources.form.model.findOne({
       project: projectId,
-      name: process.env.PAYEEZY_FORM || 'paymentAuthorization'
+      name: process.env.PAYMENT_FORM || 'paymentAuthorization'
     }))
     .then(function(form) {
       if (!form) {

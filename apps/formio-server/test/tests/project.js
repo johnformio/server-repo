@@ -4664,19 +4664,16 @@ module.exports = function(app, template, hook) {
 
       if (!docker)
       it('Saving a payment method', function(done) {
-        app.formio.config.payeezy = {
-          keyId: 'lFGgmH7ibDkNdCV6LiSbFdmSFXtIVncD', // Test Key
-          host: 'api-cert.payeezy.com',
-          endpoint: '/v1/transactions',
-          gatewayId: 'AJ1234-01',
-          gatewayPassword: '12345678901234567890123456789012',
-          hmacKey: '0efeeaf6f21fdd71e5076dea683b3a11614972d7d8e798d42624b8f999597355', // Test Secret
-          merchToken: 'fdoa-9b1a70e39b4f6b4fb0cef1c25de68010625408dc0b1025ae' // Test Token
+        app.formio.config.fortis = {
+          userId: '11ee62159e8669aa9c22b6a1',
+          userAPIKey: '11ee62356fc99e4686188771',
+          endpoint: 'https://api.sandbox.fortis.tech/v1/transactions/cc/auth-only/keyed',
+          developerId: 'IFoNlX7Z'
         };
 
         const paymentData = {
-          ccNumber: '4012000033330026',
-          ccType: 'visa',
+          ccNumber: '5454545454545454',
+          ccType: 'MasterCard',
           ccExpiryMonth: '12',
           ccExpiryYear: '30',
           cardholderName: 'FORMIO Test Account',
@@ -4684,7 +4681,7 @@ module.exports = function(app, template, hook) {
         };
 
         request(app)
-          .post('/payeezy')
+          .post('/gateway')
           .set('x-jwt-token', template.formio.owner.token)
           .send({
             data: paymentData
@@ -4700,12 +4697,11 @@ module.exports = function(app, template, hook) {
               return app.formio.formio.resources.submission.model.findOne({form: form._id, owner: util.ObjectId(template.formio.owner._id)});
             })
             .then(function(submission) {
-              assert.equal(submission.data.ccNumber, '************0026', 'Only the last 4 digits of the cc number should be stored.');
+              assert.equal(submission.data.ccNumber, '5454', 'Only the last 4 digits of the cc number should be stored.');
               assert.equal(submission.data.ccExpiryMonth, '12', 'The expiration month should be stored.');
               assert.equal(submission.data.ccExpiryYear, '30', 'The expiration year should be stored.');
               assert.equal(submission.data.cardholderName, 'FORMIO Test Account', 'The cardholder name should be stored.');
-              assert(submission.data.token.token_data.value.substr(-4) === '0026', 'The transarmor token should have the same last 4 digits as CC number.');
-              assert(submission.data.hasOwnProperty('transactionTag'), 'The submission should store the transactionTag');
+              assert.equal(submission.data.transactionStatus, '102', 'The submission should store the transactionStatus');
               assert.equal(submission.data.securityCode, undefined, 'The security card should not be stored.');
 
               done();
