@@ -24,8 +24,8 @@ module.exports = (router, formioServer) => {
     };
   };
 
-  const decryptSettings = (res, noAdmin) => {
-    if (!res || !res.resource || !res.resource.item) {
+  const decryptSettings = (req, res, next, noAdmin) => {
+    if (!_.get(res, 'resource.item') || formio.hook.alter('rawDataAccess', req, next)) {
       return;
     }
     // Merge all results into an array, to handle the cases with multiple results.
@@ -45,19 +45,19 @@ module.exports = (router, formioServer) => {
   const projectSettings = (req, res, next) => {
     // Allow admin key
     if (req.adminKey || req.isAdmin) {
-      decryptSettings(res);
+      decryptSettings(req, res, next);
       formioServer.formio.audit('PROJECT_SETTINGS', req);
       return next();
     }
     // Allow project owners.
     if (req.token && req.projectOwner && (req.token.user._id === req.projectOwner)) {
-      decryptSettings(res);
+      decryptSettings(req, res, next);
       formioServer.formio.audit('PROJECT_SETTINGS', req);
       return next();
     }
     // Allow team admins on remote
     else if (req.remotePermission && ['admin', 'owner', 'team_admin'].includes(req.remotePermission)) {
-      decryptSettings(res);
+      decryptSettings(req, res, next);
       formioServer.formio.audit('PROJECT_SETTINGS', req);
       return next();
     }
@@ -69,7 +69,7 @@ module.exports = (router, formioServer) => {
           const writeAccess = getProjectAccess(project.access, 'team_write');
           const roles = _.map(req.user.teams, formio.util.idToString);
           const isAdmin = _.intersection(adminAccess, roles).length !== 0;
-          decryptSettings(res, !isAdmin);
+          decryptSettings(req, res, next, !isAdmin);
           if (isAdmin) {
             formioServer.formio.audit('PROJECT_SETTINGS', req);
             return next();
