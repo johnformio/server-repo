@@ -2,7 +2,7 @@
 
 const fetch = require('formio/src/util/fetch');
 const _ = require('lodash');
-const {NodeVM, VMScript} = require('vm2');
+const vmUtil = require('vm-utils');
 
 const {isEmptyObject} = require('../../util/util');
 const {
@@ -316,7 +316,7 @@ module.exports = (router) => {
      * @param next
      *   The callback function to execute upon completion.
      */
-    resolve(handler, method, req, res, next, setActionItemMessage) {
+    async resolve(handler, method, req, res, next, setActionItemMessage) {
       const settings = this.settings || {};
       const submission = getSubmission(req, res);
       const externalId = getExternalId(submission, settings);
@@ -489,25 +489,25 @@ module.exports = (router) => {
         // Allow user scripts to transform the payload.
         setActionItemMessage('Transforming payload');
         if (settings.transform) {
-          const script = new VMScript(
-            `${settings.transform} \n module.exports = payload;`
-          );
           try {
-            payload = new NodeVM({
+            const isolate = vmUtil.getIsolate();
+            const context = await isolate.createContext();
+            await vmUtil.transfer('externalId', externalId, context);
+            await vmUtil.transfer('payload', payload, context);
+            await vmUtil.transfer('headers', headers, context);
+            await vmUtil.transfer(
+              'config',
+              req.currentProject && req.currentProject.hasOwnProperty('config') ?
+              req.currentProject.config : {},
+              context
+            );
+            // Assign transfromed data to payload variable in sandbox
+            await context.eval(settings.transform, {
               timeout: 500,
-              sandbox: _.cloneDeep({
-                externalId,
-                payload,
-                headers,
-                config:
-                  req.currentProject &&
-                  req.currentProject.hasOwnProperty('config')
-                    ? req.currentProject.config
-                    : {},
-              }),
-              eval: false,
-              fixAsync: true,
-            }).run(script);
+              copy: true
+            });
+            // Retrieve payload
+            payload = await context.eval(`payload`, {copy: true, timeout: 500});
           }
           catch (err) {
             setActionItemMessage('Webhook transform failed', err, 'error');
