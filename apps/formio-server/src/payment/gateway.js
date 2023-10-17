@@ -41,7 +41,7 @@ module.exports = function(config, formio) {
             "save_account_title": "Testing Account",
             "customer_id": "123123123",
             "cvv": "123",
-            "description": `Formio Test Payment for ${portalUser.fullName} ${userId} ${portalUser.email}`
+            "description": `Formio Test Payment ${userId} ${portalUser.email}`
           };
       }
 
@@ -55,7 +55,7 @@ module.exports = function(config, formio) {
         "customer_id": userId,
         "cvv": data.securityCode,
         "auto_decline_cvv_override": true,
-        "description": `Formio Payment for ${portalUser.fullName} ${userId} ${portalUser.email}`
+        "description": `PaymentAuth: ${userId} ${portalUser.email}`
       };
     };
 
@@ -183,7 +183,7 @@ module.exports = function(config, formio) {
               ccExpiryYear: data.ccExpiryYear,
               ccType: data.ccType,
               transactionTag: transaction.data.auth_code,
-              transactionStatus: transaction.data.status_code.toString(),
+              transactionStatus: transaction.data.status_code === 102 ? 'approved' : 'declined',
               transactionId: transaction.data.id,
             };
 
