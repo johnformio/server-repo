@@ -91,6 +91,55 @@ module.exports = function(app, template, hook) {
 
   let formId;
 
+  describe('Checking validation during project creation', function() {
+    const testProject = {
+      title: chance.word(),
+      description: chance.word(),
+      name: 'trainingProject',
+      plan: 'commercial',
+    };
+
+    before((done) => {
+      request(app)
+        .post('/project')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send(testProject)
+        .expect(201)
+        .end(done)
+    });
+
+    it('Should not create project with the same name', function(done) {
+      request(app)
+        .post('/project')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send(testProject)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+          assert.equal(res.text, 'project validation failed: name: The Project name must be unique.');
+          done();
+         });
+    });
+
+
+    it('Should not create project with non-valid project name', function(done) {
+      testProject.name = "training project"
+      request(app)
+        .post('/project')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send(testProject)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+          assert.equal(res.text, 'project validation failed: name: A Project domain name may only contain letters, numbers, and hyphens (but cannot start or end with a hyphen)')
+          done();
+        });
+    });
+
+  })
+
   describe('Projects', function() {
     const tempProject = {
       title: chance.word(),
