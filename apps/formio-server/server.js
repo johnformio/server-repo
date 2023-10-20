@@ -301,25 +301,6 @@ module.exports = function(options) {
   debug.startup('Attaching middleware: API Key Handler');
   app.use(require('./src/middleware/apiKey')(app.formio.formio));
 
-  app.get('/project/:projectId/form/:formId/submission/:submissionId/changelog',
-    require('./src/middleware/apiKey')(app.formio.formio),
-    require('./src/middleware/remoteToken')(app),
-    app.formio.formio.middleware.alias,
-    require('./src/middleware/aliasToken')(app),
-    app.formio.formio.middleware.tokenHandler,
-    app.formio.formio.middleware.params,
-    app.formio.formio.middleware.permissionHandler,
-    (req, res, next) => {
-      app.formio.formio.cache.loadCurrentForm(req, (err, currentForm) => {
-        return util.getSubmissionRevisionModel(app.formio.formio, req, currentForm, false, next);
-      });
-    },
-    require('./src/middleware/submissionChangeLog')(app),
-    (req, res) => {
-     res.send(req.changelog);
-    }
-  );
-
   app.get('/project/:projectId/form/:formId/submission/:submissionId/esign', (req, res, next) => {
     const {submissionId, projectId} = req.params;
     app.formio.formio.resources.submission.model.findById(submissionId).exec().then((submission) => {
@@ -346,7 +327,6 @@ module.exports = function(options) {
   debug.startup('Initializing Form.io Core');
   app.formio.init(hooks).then(function(formio) {
     debug.startup('Done initializing Form.io Core');
-
     // Kick off license validation process
     debug.startup('Checking License');
     const licenseValidationPromise = license.validate(app);
@@ -363,6 +343,32 @@ module.exports = function(options) {
 
     debug.startup('Attaching middleware: License Terms');
     app.use(require('./src/middleware/attachLicenseTerms')(licenseValidationPromise, app));
+
+    app.get('/project/:projectId/form/:formId/submission/:submissionId/changelog',
+      (req, res, next) => {
+        if (config.formio.hosted || !_.get(req, 'licenseTerms.options.sac', false)) {
+          res.sendStatus(403);
+          return;
+        }
+        return next();
+      },
+      require('./src/middleware/apiKey')(app.formio.formio),
+      require('./src/middleware/remoteToken')(app),
+      app.formio.formio.middleware.alias,
+      require('./src/middleware/aliasToken')(app),
+      app.formio.formio.middleware.tokenHandler,
+      app.formio.formio.middleware.params,
+      app.formio.formio.middleware.permissionHandler,
+      (req, res, next) => {
+        app.formio.formio.cache.loadCurrentForm(req, (err, currentForm) => {
+          return util.getSubmissionRevisionModel(app.formio.formio, req, currentForm, false, next);
+        });
+      },
+      require('./src/middleware/submissionChangeLog')(app),
+      (req, res) => {
+        res.send(req.changelog);
+      }
+    );
 
     debug.startup('Attaching middleware: Cache');
     app.formio.formio.cache = _.assign(app.formio.formio.cache, require('./src/cache/cache')(app.formio));
