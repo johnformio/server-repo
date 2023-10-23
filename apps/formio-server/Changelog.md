@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO 7239: add support for AWS S3 multipart uploads
  - FIO-7371: Adds hook that would allow to retrieve raw DB data
  - FIO-7391: refactored reporting-ui configuration form
+ - FIO-7423: Failed to search current payment info in server
  
 ## 8.4.0-rc.7
 ### Changed
