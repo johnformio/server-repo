@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - hotfix for failing tests
  - FIO 7239: add support for AWS S3 multipart uploads
  - FIO-7371: Adds hook that would allow to retrieve raw DB data
- - 
+ - FIO-7391: refactored reporting-ui configuration form
  
 ## 8.4.0-rc.7
 ### Changed
