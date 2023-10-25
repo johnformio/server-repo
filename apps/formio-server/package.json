@@ -62,7 +62,6 @@
     "googleapis": "^105.0.0",
     "helmet": "^5.0.2",
     "is-url": "^1.2.4",
-    "isolated-vm": "^4.6.0",
     "jose": "^4.14.4",
     "jsonwebtoken": "^9.0.0",
     "keygenerator": "^1.0.4",
@@ -95,7 +94,7 @@
     "tldjs": "^2.3.1",
     "traverse": "^0.6.6",
     "uuid": "^8.3.2",
-    "vm-utils": "https://github.com/formio/vm-utils.git#1.0.0-rc.1",
+    "vm2": "^3.9.18",
     "xml2js": "^0.6.0",
     "xss": "^1.0.10"
   },
