@@ -101,6 +101,7 @@ module.exports = function(formioServer) {
 
       let stages = [];
       let preStage = [];
+      const accessCheckQuerySettings = {};
       let limitStage = null;
       let skipStage = null;
       const filterStages = function() {
@@ -143,12 +144,13 @@ module.exports = function(formioServer) {
       const protectedFields = {};
 
       // Ensure the project is always set to the project in context.
-      query.project = formio.util.idToBson(req.projectId);
+      query.project = accessCheckQuerySettings.project = formio.util.idToBson(req.projectId);
 
       const getForms = function(formsNext) {
         // Make sure to not include deleted submissions.
         if (!req.query.deleted) {
           query.deleted = {$eq: null};
+          accessCheckQuerySettings.excludeDeleted = true;
         }
 
         if (req.isAdmin && !query.form) {
@@ -218,10 +220,16 @@ module.exports = function(formioServer) {
           // If they do not provide a form limit, it should at least be the forms.
           if (!query.form) {
             query.form = {$in: forms};
+            accessCheckQuerySettings.forms = forms;
           }
 
           preStage = [{'$match': query}];
           if (!req.isAdmin) {
+            accessCheckQuerySettings.userRoles = userRoles;
+            accessCheckQuerySettings.readAllForms = readAllForms;
+            accessCheckQuerySettings.readOwnForms = readOwnForms;
+            const owner = accessCheckQuerySettings.owner = formio.util.idToBson(req.user._id);
+
             preStage = preStage.concat([
               {
                 '$addFields': {
@@ -255,7 +263,7 @@ module.exports = function(formioServer) {
                       form: {
                         '$in': readOwnForms
                       },
-                      owner: formio.util.idToBson(req.user._id)
+                      owner
                     },
                     {
                       hasAccess: true
@@ -270,20 +278,124 @@ module.exports = function(formioServer) {
         });
       };
 
+      // required for DBs that do not support multiple join conditions and uncorrelated subquery for lookup operator (e.g. DocumentDB)
+      const getLookupPostStage = function(lookupResultingField) {
+        const {
+          project,
+          excludeDeleted,
+          forms,
+          userRoles,
+          readAllForms,
+          readOwnForms,
+          owner,
+        } = accessCheckQuerySettings;
+        const filterConditions = [];
+
+        if (project) {
+          filterConditions.push({
+            $eq: ['$$item.project', project],
+          });
+        }
+
+        if (excludeDeleted) {
+          filterConditions.push({
+            $eq: ['$$item.deleted', null],
+          });
+        }
+
+        if (forms) {
+          filterConditions.push({
+            $in: ['$$item.form', forms],
+          });
+        }
+
+        if (userRoles) {
+          filterConditions.push({
+            $or: [
+              {
+                $in: ['$$item.form', readAllForms || []],
+              },
+              {
+                $and: [
+                  {
+                    $in: ['$$item.form', readOwnForms || []],
+                  },
+                  {
+                    $eq: ['$$item.owner', owner],
+                  },
+                ],
+              },
+              {
+                $gt: [
+                  {
+                    $size: {
+                      $setIntersection: [
+                        userRoles,
+                        {
+                          $reduce: {
+                            input: '$$item.access',
+                            initialValue: [],
+                            in: {
+                              $concatArrays: ['$$value', '$$this.resources'],
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                  0,
+                ],
+              },
+            ],
+          });
+        }
+
+        return {
+          $addFields: {
+            [`${lookupResultingField}`]: {
+              $filter: {
+                input: `$${lookupResultingField}`,
+                as: 'item',
+                cond: {
+                  $and: filterConditions,
+                },
+              },
+            },
+          },
+        };
+      };
+
       // Get all forms in a project.
       getForms(function(err) {
         if (err) {
           return next(err);
         }
+        // check if poststage (instead of prestages) with access check are required as lookup with pipeline is not supported by DocumentDB.
+        const requireLookupPostStage = _.some(stages, stage => stage.$lookup && !stage.$lookup.pipeline)
+          && !_.some(stages, stage => stage.$lookup && _.isArray(stage.$lookup.pipeline));
 
-        // Add prestages for lookup
-        _.each(stages, stage => {
+        const initialStages = stages;
+        stages = [];
+
+        // Add prestages/poststage for lookup
+        _.each(initialStages, stage => {
           const lookupSettings = stage.$lookup;
 
-          if (lookupSettings && _.isObject(lookupSettings)) {
-            lookupSettings.pipeline = _.isArray(lookupSettings.pipeline)
-              ? preStage.concat(lookupSettings.pipeline)
-              : preStage;
+          if (lookupSettings && _.isPlainObject(lookupSettings) ) {
+            if (!requireLookupPostStage) {
+              lookupSettings.pipeline = _.isArray(lookupSettings.pipeline)
+                ? preStage.concat(lookupSettings.pipeline)
+                : preStage;
+
+              stages.push(stage);
+            }
+            else {
+              stages.push(stage);
+              stages.push(getLookupPostStage(lookupSettings.as));
+            }
+          }
+          else {
+            stages.push(stage);
           }
         });
 

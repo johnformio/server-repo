@@ -28,27 +28,28 @@ const getMinio = function(settings = {}) {
   return client;
 };
 
-const getUrl = function(options = {}) {
+const getMinioPresignedPutUrl = function(s3Settings, file) {
   return new Promise((resolve, reject) => {
-    const minio = getMinio(options.settings);
-
-    if (options.method === 'PUT') {
-      minio.presignedPutObject(
-        options.settings.bucket,
-        options.file.path,
-        options.file.expiresin,
-        (err, result) => err ? reject(err) : resolve(result)
-      );
-    }
-    else {
-      minio.presignedGetObject(
-        options.bucket,
-        options.key,
-        24*60*60,
-        (err, result) => err ? reject(err) : resolve(result)
-      );
-    }
+    const minio = getMinio(s3Settings);
+    minio.presignedPutObject(
+      s3Settings.bucket,
+      file.path,
+      file.expiresin,
+      (err, result) => err ? reject(err) : resolve({url: result, headers: {}})
+    );
   });
 };
 
-module.exports = getUrl;
+function getMinioPresignedGetUrl(s3Settings, bucket, key) {
+  return new Promise((resolve, reject) => {
+    const minio = getMinio(s3Settings);
+    minio.presignedGetObject(
+      bucket,
+      key,
+      24*60*60,
+      (err, result) => err ? reject(err) : resolve(result)
+    );
+  });
+}
+
+module.exports = {getMinioPresignedPutUrl, getMinioPresignedGetUrl};

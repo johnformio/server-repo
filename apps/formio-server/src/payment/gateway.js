@@ -30,262 +30,51 @@ module.exports = function(config, formio) {
       portalUser.fullName = 'Formiotest Name';
     }
 
+    const buildRequest = () => {
+      if (process.env.TEST_SUITE) {
+        return  {
+            "save_account": true,
+            "exp_date": "0924",
+            "account_holder_name": "Test Account Name",
+            "account_number": "5454545454545454",
+            "transaction_amount": 1,
+            "save_account_title": "Testing Account",
+            "customer_id": "123123123",
+            "cvv": "123",
+            "description": `Formio Test Payment ${userId} ${portalUser.email}`
+          };
+      }
+
+      return {
+        "save_account": true,
+        "exp_date": `${data.ccExpiryMonth}${data.ccExpiryYear}`,
+        "account_holder_name": data.cardholderName,
+        "account_number": data.ccNumber,
+        "transaction_amount": 1,
+        "save_account_title": portalUser.fullName,
+        "customer_id": userId,
+        "cvv": data.securityCode,
+        "auto_decline_cvv_override": true,
+        "description": `PaymentAuth: ${userId} ${portalUser.email}`
+      };
+    };
+
     // Send an authorize transaction.
     /* eslint-disable new-cap */
-    const sendAuthTxn = function(next) {
-      const userNameParts = portalUser.fullName.split(' ');
-      const paymentApi = config.tpro3.api;
-      const customerRequest = {
-        request:
-          {
-            authentication:
-              {
-                user:
-                  {
-                    gateway: config.tpro3.gateway,
-                    emailaddress: config.tpro3.useremail,
-                    password: config.tpro3.password,
-                    application: 'Portal Formio',
-                    version: '1.0'
-                  }
-              },
-            content:{
-              update:
-                {
-                  customer:
-                    {
-                      name: data.companyName ? data.companyName : `${portalUser.name}-${userId}`,
-                      displayname: data.companyName ? data.companyName : portalUser.fullName,
-                      '@refname': 'customer'
-                    },
-                },
-              if: [
-                {
-                  create: {
-                    customer: {
-                      name: data.companyName ? data.companyName : `${portalUser.name}-${userId}`,
-                      displayname: data.companyName ? data.companyName : portalUser.fullName,
-                      '@refname': 'customer'
-                    }
-                  },
-                  '@condition': `{!customer.responsestatus!} != 'success'`
-                }
-              ],
-              '@continueonfailure': true
-            }
-          }
-      };
-      const buildRequest = (sessionId, content) => {
-        return {
-          request:
-            {
-              authentication:
-                {
-                  sessionId: sessionId
-                },
-              content: content
-            }
-        };
-      };
-      const uniqueNum = Math.floor(Math.random() * 1000) + 1;
-      return fetch(paymentApi, {
-        method: 'post',
-        mode: 'cors',
-        dataType: "json",
-        body: JSON.stringify(customerRequest),
-      })
-        .then((response) => {
-          if (process.env.TEST_SUITE) {
-            return response.ok;
-          }
-          return response.ok ? response.text() : null;
-        })
-        .then((customerResponse) => {
-          if (process.env.TEST_SUITE) {
-            return next({
-              cardholdernumber: `${data.ccNumber}`,
-              cartype: data.ccType,
-              cardholdername: data.cardholderName,
-              expiresmonth: data.ccExpiryMonth,
-              expiresyear: data.ccExpiryYear,
-              cvv: data.securityCode,
-              '@responsestatus': 'success'
-            });
-          }
-          const customer = JSON.parse(decodeURIComponent(customerResponse));
-          if (!customer.response || !customer.response.content) {
-            return res.status(400).json({message: JSON.stringify(customer.response)});
-          }
-          const customerId = customer.response.content.create ? customer.response.content.create.customer.id : customer.response.content.update.customer.id;
-          const sessionId = customer.response.authentication.sessionid;
-          const contactContent = {
-            update:
-              {
-                contact:
-                  {
-                    name: portalUser.name,
-                    customer: customerId,
-                    contacttype: 'billing',
-                    companyname: data.companyName ? data.companyName : portalUser.fullName,
-                    firstname: userNameParts[0],
-                    lastname: userNameParts[1] ? userNameParts[1] : '',
-                    email1: portalUser.email,
-                    '@refname': 'contact'
-                  }
-              },
-            if: [
-              {
-                create:
-                  {
-                    contact:
-                      {
-                        name: portalUser.name,
-                        customer: customerId,
-                        contacttype: 'billing',
-                        companyname: data.companyName ? data.companyName : portalUser.fullName,
-                        firstname: userNameParts[0],
-                        lastname: userNameParts[1] ? userNameParts[1] : '',
-                        email1: portalUser.email,
-                        '@refname': 'contact'
-                      }
-                  },
-                '@condition': `{!contact.responsestatus!} != 'success'`
-              },
-            ],
-            '@continueonfailure': true
-          };
-          fetch(paymentApi, {
-            method: 'post',
-            mode: 'cors',
-            dataType: "json",
-            body: JSON.stringify(buildRequest(sessionId, contactContent)),
-          })
-            .then((contactRequest) => contactRequest.ok ? contactRequest.text() : null)
-            .then((contactResponse) => {
-              const contact = JSON.parse(decodeURIComponent(contactResponse));
-              const contactId = contact.response.content.create ? contact.response.content.create.contact.id : contact.response.content.update.contact.id;
-              const salesContent = {
-                create: {
-                  salesdocument:
-                    {
-                      salesdocumenttype: 'Sales Invoice',
-                      name: `${portalUser.name}-${userId}-${uniqueNum}`,
-                      customer: customerId,
-                      dueon: new Date(),
-                      lineitems: {
-                        lineitem:
-                          [
-                            {
-                              itemdisplayname: 'Pre authorization',
-                              itemname: '001',
-                              price: '0',
-                              quantity: '1'
-                            },
-                          ]
-                      },
-                      subtotals:
-                        {
-                          subtotal:
-                            []
-                        },
-                    }
-                },
-                '@continueonfailure': true
-              };
-              fetch(paymentApi, {
-                method: 'post',
-                mode: 'cors',
-                dataType: "json",
-                body: JSON.stringify(buildRequest(sessionId, salesContent)),
-              })
-                .then((salesRequest) => salesRequest.ok ? salesRequest.text() : null)
-                .then((salesResponse) => {
-                  const saledocument = JSON.parse(decodeURIComponent(salesResponse));
-                  const saledocumentId = saledocument.response.content.create ? saledocument.response.content.create.salesdocument.id : saledocument.response.content.update.salesdocument.id;
-                  const transactionContent = {
-                    create: {
-                      transaction: {
-                        account: config.tpro3.account, // Account for CC -
-                        amount: '0.00',
-                        salesdocument: saledocumentId,
-                        transactiontype: 'Verify',
-                        description: `Formio Pre Authorization - ${portalUser.name}:${userId}`,
-                        customer: customerId,
-                        contact: contactId,
-                        creditcard: {
-                          keyed: {
-                            cardholdernumber: `${data.ccNumber}`,
-                            cardholdername: data.cardholderName,
-                            expiresmonth: data.ccExpiryMonth,
-                            expiresyear: data.ccExpiryYear,
-                            cvv: data.securityCode
-                          }
-                        },
-                        '@refname': 'auth'
-                      }
-                    },
-                    if:[
-                      {
-                        delete:
-                          {
-                            salesdocument:
-                              {
-                                id: saledocumentId
-                              }
-                          },
-                        '@condition': `{!auth.responsestatus!} != 'success'`
-                      }
-                    ],
-                    '@continueonfailure': true
-                  };
-                  fetch(paymentApi, {
-                    method: 'post',
-                    mode: 'cors',
-                    dataType: "json",
-                    body: JSON.stringify(buildRequest(sessionId, transactionContent)),
-                  }).then((transactionRequest) => transactionRequest.ok ? transactionRequest.text() : null)
-                    .then((transactionResponse) => {
-                      const transaction = JSON.parse(decodeURIComponent(transactionResponse));
-                      const storeContent = {
-                        update: {
-                          storedaccount: {
-                            name: `${portalUser.name} ${data.ccNumber.replace(data.ccNumber.substring(0, 12), "***")}`, customer: customerId, contact: contactId, creditcard: {
-                              keyed: {
-                                cardholdernumber: `${data.ccNumber}`, cardholdername: data.cardholderName, expiresmonth: data.ccExpiryMonth, expiresyear: data.ccExpiryYear, cvv: data.securityCode
-                              }
-                            },
-                            '@refname': 'store'
-                          }
-                        },
-                        if: [
-                          {
-                            create: {
-                              storedaccount: {
-                                name: `${portalUser.name} ${data.ccNumber.replace(data.ccNumber.substring(0, 12), "***")}`, customer: customerId, contact: contactId, creditcard: {
-                                  keyed: {
-                                    cardholdernumber: `${data.ccNumber}`, cardholdername: data.cardholderName, expiresmonth: data.ccExpiryMonth, expiresyear: data.ccExpiryYear, cvv: data.securityCode
-                                  }
-                                }
-                              }
-                            },
-                            '@condition': `{!store.responsestatus!} != 'success'`
-                          }
-                        ],
-                        '@continueonfailure': true
-                      };
-                      fetch(paymentApi, {
-                        method: 'post',
-                        mode: 'cors',
-                        dataType: "json",
-                        body: JSON.stringify(buildRequest(sessionId, storeContent)),
-                      }).then((stored) => stored.ok ? stored.text() : null)
-                        .then(() => {
-                          next(transaction.response.content.create.transaction);
-                        });
-                    });
-                });
-            });
-        });
+    const sendAuthTxn = async (next) => {
+      const paymentApi = `${config.fortis.endpoint}`;
+      const txn = await fetch(paymentApi, {
+        headers: {
+          "user-id": config.fortis.userId,
+          "user-api-key": config.fortis.userAPIKey,
+          "Content-Type": "application/json",
+          "developer-id": config.fortis.developerId,
+          "Accept": "application/json"
+        },
+        method: 'POST',
+        body: JSON.stringify(buildRequest())
+      }).then((response) => response.json());
+      next(txn);
     };
     /* eslint-enable new-cap */
 
@@ -338,48 +127,64 @@ module.exports = function(config, formio) {
           txn.metadata.requestCount++;
 
           sendAuthTxn((transaction) => {
-            if (process.env.TEST_SUITE) {
+            if (process.env.TEST_SUITE && transaction && transaction.data) {
               txn.data = {
-                cardholderName: transaction.cardholdername,
+                cardholderName: transaction.data.cardholdername,
                 // Replace all but last 4 digits with *'s
-                ccNumber: transaction.cardholdernumber.replace(/^.{12}/g, ''),
+                ccNumber: transaction.data.last_four,
                 ccExpiryMonth: data.ccExpiryMonth,
                 ccExpiryYear: data.ccExpiryYear, // TODO: Change the value from 2 digits to 4 i.e 2023
-                cardType: transaction.ccType,
+                ccType: data.ccType,
                 transactionTag: 'O1', // TODO: Add Text field in the Transactions Record Resource
-                transactionStatus: 'success', // TODO: Add Text field in the Transactions Record Resource
-                transactionId: '00132', // TODO: Add Text field in the Transactions Record Resource
+                transactionStatus: transaction.data.status_code.toString(), // TODO: Add Text field in the Transactions Record Resource
+                transactionId: transaction.data.id, // TODO: Add Text field in the Transactions Record Resource
               };
               txn.save();
-              return res.sendStatus(200);
+              if (transaction.data.status_code === 102) {
+                return res.sendStatus(200);
+              }
+              else {
+                return res.status(400).send(`Transaction Failed: ${transaction.data.serviceErros}  ${transaction.data.verbiage}`);
+              }
             }
-            if (transaction && transaction['@responsestatus'] !== 'success') {
+            if (!transaction || !transaction.data) {
+              if (transaction.meta && transaction.meta.errors) {
+                let message = '';
+                for (const error in transaction.meta.errors) {
+                  message += `${error}: ${transaction.meta.errors[error][0]}`;
+                }
+                return res.status(400).send(`Transaction Failed: ${message}`);
+              }
+              return res.status(400).send('Transaction Failed');
+            }
+            if (transaction.data.status_code !== 102) {
               // Update the transaction record.
               txn.metadata.failures++;
               txn.markModified('metadata');
               txn.save();
               res.status(400);
-              if (transaction.errors && transaction.errors.error) {
-                return res.send(`Transaction Failed: ${transaction.errors.error.description.replace(/\+/g, ' ')}: code: ${transaction.errors.error.number}`);
+              if (transaction.data.serviceErros) {
+                return res.send(`Transaction Failed:  ${transaction.data.serviceErros}  ${transaction.data.verbiage}  ${transaction.data.status_code}`);
               }
-              return res.send(`Transaction Failed: ${transaction.errors.error.description.replace(/\+/g, ' ')}`);
+              return res.send(`Transaction Failed: ${transaction.data.verbiage}  ${transaction.data.status_code}`);
             }
 
-            if (!transaction.id) {
+            if (!transaction.data.id) {
+              txn.save();
               res.status(400);
               return res.send('Card Information Missing in the transaction');
             }
 
             txn.data = {
-              cardholderName: transaction.accountholder.replace(/\+/g, ' '),
+              cardholderName: transaction.data.account_holder_name,
               // Replace all but last 4 digits with *'s
-              ccNumber: transaction.hash.replace(/#/g, '*'),
+              ccNumber: transaction.data.last_four,
               ccExpiryMonth: data.ccExpiryMonth,
-              ccExpiryYear: data.ccExpiryYear, // TODO: Change the value from 2 digits to 4 i.e 2023
-              cardType: transaction['cardtype.name'],
-              transactionTag: transaction.authorizationcode, // TODO: Add Text field in the Transactions Record Resource
-              transactionStatus: transaction['@responsestatus'], // TODO: Add Text field in the Transactions Record Resource
-              transactionId: transaction.id, // TODO: Add Text field in the Transactions Record Resource
+              ccExpiryYear: data.ccExpiryYear,
+              ccType: data.ccType,
+              transactionTag: transaction.data.auth_code,
+              transactionStatus: transaction.data.status_code === 102 ? 'approved' : 'declined',
+              transactionId: transaction.data.id,
             };
 
             // Update the transaction record.

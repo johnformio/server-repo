@@ -106,18 +106,20 @@ module.exports = function(router, formioServer) {
     beforeIndex: [
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       function(req, res, next) {
+        const query = hook.alter('rawDataAccess', req, next) ? {} : {chunk: {$ne: true}};
+
         req.modelQuery = req.modelQuery || req.model || this.model;
-        req.modelQuery = req.modelQuery.find({chunk: {$ne: true}});
+        req.modelQuery = req.modelQuery.find(query);
 
         req.countQuery = req.countQuery || req.model || this.model;
-        req.countQuery = req.countQuery.find({chunk: {$ne: true}});
+        req.countQuery = req.countQuery.find(query);
 
         next();
       },
       formio.middleware.tagHandler,
       (req, res, next) => {
         // Remove tag contents to speed up index requests.
-        if (!req.query.full) {
+        if (!req.query.full && !hook.alter('rawDataAccess', req, next)) {
           req.modelQuery.select({template: 0});
           req.countQuery.select({template: 0});
         }
