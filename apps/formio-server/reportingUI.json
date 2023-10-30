@@ -735,8 +735,8 @@
                       "currentWidth": 6
                     }
                   ],
-                  "key": "columns1",
-                  "customConditional": "show = row.operator === 'divide'",
+                  "key": "divideArgs",
+                  "customConditional": "show = utils.reporting.showAggregationOperatorArg(instance.component.key, row.operator);",
                   "type": "columns",
                   "input": false,
                   "tableView": false
@@ -799,7 +799,7 @@
                         "tableView": false,
                         "dataSrc": "custom",
                         "data": {
-                          "custom": "values = utils.reporting.getDateDiffUnitOptions();"
+                          "custom": "values = utils.reporting.getDateDiffUnitOptions(row.operator);"
                         },
                         "valueProperty": "value",
                         "validate": {
@@ -817,8 +817,8 @@
                       "currentWidth": 4
                     }
                   ],
-                  "key": "columns2",
-                  "customConditional": "show = row.operator === 'dateDiff'",
+                  "key": "dateDiffArgs",
+                  "customConditional": "show = utils.reporting.showAggregationOperatorArg(instance.component.key, row.operator);",
                   "type": "columns",
                   "input": false,
                   "tableView": false
@@ -1029,7 +1029,7 @@
                     "required": true
                   },
                   "key": "argument",
-                  "customConditional": "show = row.operator && !_.includes(['count'], row.operator);",
+                  "customConditional": "show = utils.reporting.showGroupOperatorArg(row.operator);",
                   "type": "select",
                   "input": true
                 },

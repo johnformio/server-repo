@@ -155,7 +155,7 @@ module.exports = function(config, formio) {
                 }
                 return res.status(400).send(`Transaction Failed: ${message}`);
               }
-              return res.status(400).send('Transaction Failed');
+              return res.status(400).send(`Transaction Failed ${transaction}`);
             }
             if (transaction.data.status_code !== 102) {
               // Update the transaction record.
