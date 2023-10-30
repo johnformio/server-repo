@@ -51,7 +51,7 @@ module.exports = function(config, formio) {
         "account_holder_name": data.cardholderName,
         "account_number": data.ccNumber,
         "transaction_amount": 1,
-        "save_account_title": portalUser.fullName,
+        "save_account_title": portalUser.fullName || portalUser.email,
         "customer_id": userId,
         "cvv": data.securityCode,
         "auto_decline_cvv_override": true,
@@ -144,7 +144,7 @@ module.exports = function(config, formio) {
                 return res.sendStatus(200);
               }
               else {
-                return res.status(400).send(`Transaction Failed: ${transaction.data.serviceErros}  ${transaction.data.verbiage}`);
+                return res.status(400).send(`Transaction Failed: ${transaction.data.serviceErrors}  ${transaction.data.verbiage}`);
               }
             }
             if (!transaction || !transaction.data) {
@@ -155,7 +155,7 @@ module.exports = function(config, formio) {
                 }
                 return res.status(400).send(`Transaction Failed: ${message}`);
               }
-              return res.status(400).send(`Transaction Failed ${transaction}`);
+              return res.status(400).send(`Transaction Failed ${transaction.details}`);
             }
             if (transaction.data.status_code !== 102) {
               // Update the transaction record.
@@ -163,8 +163,8 @@ module.exports = function(config, formio) {
               txn.markModified('metadata');
               txn.save();
               res.status(400);
-              if (transaction.data.serviceErros) {
-                return res.send(`Transaction Failed:  ${transaction.data.serviceErros}  ${transaction.data.verbiage}  ${transaction.data.status_code}`);
+              if (transaction.data.serviceErrors) {
+                return res.send(`Transaction Failed:  ${transaction.data.serviceErrors}  ${transaction.data.verbiage}  ${transaction.data.status_code}`);
               }
               return res.send(`Transaction Failed: ${transaction.data.verbiage}  ${transaction.data.status_code}`);
             }
