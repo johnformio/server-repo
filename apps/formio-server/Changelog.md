@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-7391: refactored reporting-ui configuration form
  - FIO-7423: Failed to search current payment info in server
  - FIO-7423: Transaction Failed message user with no names
+ - FIO-7460: Fix error during project creation
  
 ## 8.4.0-rc.7
 ### Changed
