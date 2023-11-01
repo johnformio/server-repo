@@ -3,13 +3,14 @@
 const _ = require('lodash');
 const CryptoJS = require('crypto-js');
 
-const {getMinioPresignedGetUrl, getMinioPresignedPutUrl} = require('./minio');
+const {getMinioPresignedGetUrl, getMinioPresignedPutUrl, removeMinioObject} = require('./minio');
 const {
   getAWSPresignedGetUrl,
   getAWSPresignedPutUrl,
   getAWSPresignedMultipartUrls,
   completeAWSMultipartUpload,
-  abortAWSMultipartUpload
+  abortAWSMultipartUpload,
+  removeAWSObject,
 } = require('./aws');
 const debug = {
   startup: require('debug')('formio:startup')
@@ -29,6 +30,14 @@ function getPresignedGetUrl(s3Settings, bucket, key) {
     return getMinioPresignedGetUrl(s3Settings, bucket, key);
   }
   return getAWSPresignedGetUrl(s3Settings, bucket, key);
+}
+
+function removeFile(s3Settings, bucket, key) {
+  if (s3Settings.minio) {
+    return removeMinioObject(s3Settings, bucket, key);
+  }
+
+  return removeAWSObject(s3Settings, bucket, key);
 }
 
 function getPresignedMultipartUrls(s3Settings, file) {
@@ -120,6 +129,25 @@ const middleware = function(router) {
       if (!req.projectId && req.params.projectId) {
         req.projectId = req.params.projectId;
       }
+      if (!req.formId && req.params.formId) {
+        req.formId = req.params.formId;
+      }
+      next();
+    },
+    router.formio.formio.middleware.permissionHandler,
+    router.formio.formio.plans.disableForPlans(['basic', 'independent', 'archived']),
+  ];
+
+  const beforeFileDelete = [
+    router.formio.formio.middleware.tokenHandler,
+    function(req, res, next) {
+      if (!req.projectId && req.params.projectId) {
+        req.projectId = req.params.projectId;
+      }
+      if (req.params.fileName) {
+        req.fileName = req.params.fileName;
+      }
+
       if (!req.formId && req.params.formId) {
         req.formId = req.params.formId;
       }
@@ -222,6 +250,27 @@ const middleware = function(router) {
         const payload = req.body;
         const response = await abortMultipartUpload(s3Settings, payload);
         res.json(response);
+      }
+      catch (err) {
+        return res.status(400).send(err.message || err);
+      }
+    }
+  );
+
+  router.delete('/project/:projectId/form/:formId/storage/s3',
+    ...beforeFileDelete,
+    async function(req, res) {
+      try {
+        const project = await loadProject(req);
+        const s3Settings = getS3Settings(project);
+
+        if (!req.query.bucket || !req.query.key) {
+          throw new Error('Need both bucket and key to GET file from S3');
+        }
+
+        const key = _.get(req, 'query.key') || req.fileName;
+        await removeFile(s3Settings, req.query.bucket, key);
+        return res.sendStatus(200);
       }
       catch (err) {
         return res.status(400).send(err.message || err);

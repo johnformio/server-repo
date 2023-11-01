@@ -177,10 +177,21 @@ function abortAWSMultipartUpload(s3Settings, payload) {
   return client.send(command);
 }
 
+async function removeAWSObject(s3Settings, bucket, key) {
+  const client = getS3Client(s3Settings);
+  const deleteConfig = {
+    Bucket: bucket,
+    Key: key,
+  };
+
+  return await client.send(new DeleteObjectCommand(deleteConfig));
+}
+
 module.exports = {
   getAWSPresignedPutUrl,
   getAWSPresignedGetUrl,
   getAWSPresignedMultipartUrls,
   completeAWSMultipartUpload,
-  abortAWSMultipartUpload
+  abortAWSMultipartUpload,
+  removeAWSObject,
 };
