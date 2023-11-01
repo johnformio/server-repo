@@ -7,7 +7,7 @@ const async = require('async');
 const fs = require('fs');
 const log = require('debug')('formio:log');
 const util = require('../util/util');
-const {VM} = require('vm2');
+const vmUtil = require('vm-utils');
 const {ClientCredentials} = require('simple-oauth2');
 const moment = require('moment');
 const config = require('../../config');
@@ -103,6 +103,7 @@ module.exports = function(app) {
       configFormio: require('./alter/configFormio'),
       loadRevision: require('./alter/loadRevision')(app),
       parentProjectSettings: require('./alter/parentProjectSettings')(app),
+      rawDataAccess: require('./alter/rawDataAccess'),
       actionSettingsForm: require('./alter/actionSettingsForm')(app),
       saveSubmission: require('./alter/saveSubmission')(app),
       schemaIndex(index) {
@@ -1535,15 +1536,15 @@ module.exports = function(app) {
           req.currentProject.settings.tokenParse
         ) {
           try {
-            const data = (new VM({
+            const isolate = vmUtil.getIsolate();
+            const context = isolate.createContextSync();
+            vmUtil.transferSync('token', decoded, context);
+            vmUtil.transferSync('roles', req.currentProject.roles, context);
+
+            const data = context.evalSync(req.currentProject.settings.tokenParse, {
               timeout: 500,
-              sandbox: _.cloneDeep({
-                token: decoded,
-                roles: req.currentProject.roles
-              }),
-              eval: false,
-              fixAsync: true
-            })).run(req.currentProject.settings.tokenParse);
+              copy: true
+            });
             if (!data.hasOwnProperty('user')) {
               throw new Error('User not defined on data.');
             }
