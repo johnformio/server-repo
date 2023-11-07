@@ -95,7 +95,7 @@
     "tldjs": "^2.3.1",
     "traverse": "^0.6.6",
     "uuid": "^8.3.2",
-    "vm-utils": "https://github.com/formio/vm-utils.git#main",
+    "vm-utils": "https://github.com/formio/vm-utils.git#1.0.0-rc.1",
     "xml2js": "^0.6.0",
     "xss": "^1.0.10"
   },
