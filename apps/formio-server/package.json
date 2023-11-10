@@ -26,7 +26,7 @@
   "cache": "1550086650",
   "main": "./main.js",
   "version": "8.4.0-rc.10",
-  "schema": "3.3.18",
+  "schema": "3.3.19",
   "portalVersion": "8.4.0-rc.10",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.405.0",
