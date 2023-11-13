@@ -51,7 +51,7 @@
     "chance": "^1.1.8",
     "connect-multiparty": "^2.2.0",
     "cors": "^2.8.5",
-    "crypto-js": "^4.1.1",
+    "crypto-js": "^4.2.0",
     "debug": "^4.3.2",
     "dotenv": "^16.3.1",
     "express": "^4.17.1",
