@@ -142,6 +142,10 @@ module.exports = function(app) {
             });
           }
 
+          req.hasSacPackage = _.get(app, 'license.terms.options.sac', false);
+          req.flattenedComponents = formioServer.formio.util.flattenComponents(form.components, true);
+          encrypt.hasEncryptedComponents(req);
+
           if (!submissionModel) {
             return cb();
           }
