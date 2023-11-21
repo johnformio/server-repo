@@ -2008,6 +2008,23 @@ module.exports = function(app) {
       },
 
       /**
+       * A hook to expose the update system on system load.
+       *
+       * @param configFormsUpdates {Object}
+       *   The publicly available updates.
+       */
+      getConfigFormsUpdates(configFormsUpdates) {
+        if (!_.isPlainObject(configFormsUpdates)) {
+          configFormsUpdates = {};
+        }
+
+        const _files = require('../db/configFormsUpdates/index.js');
+        _.assign(configFormsUpdates, _files || {});
+
+        return configFormsUpdates;
+      },
+
+      /**
        * A hook to expose the update file paths.
        *
        * @param name {String}
