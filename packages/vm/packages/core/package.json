@@ -1,0 +1,42 @@
+{
+    "name": "@formio/vm",
+    "version": "0.0.1",
+    "main": "index.js",
+    "license": "MIT",
+    "dependencies": {
+        "debug": "^4.3.4",
+        "dotenv": "^16.3.1",
+        "express": "^4.18.2",
+        "formiojs": "^4.18.0-rc.6",
+        "lodash": "^4.17.21",
+        "method-override": "^3.0.0",
+        "moment": "^2.29.4",
+        "moment-timezone": "^0.5.43",
+        "nunjucks": "^3.2.4",
+        "nunjucks-date-filter": "^0.1.1"
+    },
+    "scripts": {
+        "start:locked": "node --experimental-permission --allow-fs-read=/Users/brendanjbond/Projects/formio-dev/formio-vm/ build/index.js",
+        "start": "node build/index.js",
+        "build": "tsc && yarn copy-files",
+        "copy-files": "cp src/workers/macros/*.html build/workers/macros"
+    },
+    "devDependencies": {
+        "@types/debug": "^4.1.10",
+        "@types/express": "^4.17.20",
+        "@types/lodash": "^4.14.200",
+        "@types/method-override": "^0.0.35",
+        "@types/node": "^20.8.9",
+        "@types/nunjucks": "^3.2.6",
+        "eslint": ">=7.0.0",
+        "eslint-config-prettier": "^9.0.0",
+        "eslint-config-standard": "^17.1.0",
+        "eslint-plugin-import": "^2.25.2",
+        "eslint-plugin-n": "^15.0.0 || ^16.0.0 ",
+        "eslint-plugin-promise": "^6.0.0",
+        "nodemon": "^3.0.1",
+        "ts-node": "^10.9.1",
+        "tsc": "^2.0.4",
+        "typescript": "^5.2.2"
+    }
+}
