@@ -163,7 +163,7 @@ module.exports = (app, template, hook) => {
         });
       });
     });
-    
+
     if (!config.formio.hosted) {
       it('Should not create a new revision if sac is disabled', done => {
         process.env.TEST_SIMULATE_SAC_PACKAGE = '0';
@@ -182,7 +182,7 @@ module.exports = (app, template, hook) => {
         });
       });
     }
-  
+
     it('Creates a new revision when a form is updated', done => {
       form.components.push({
         input: true,
@@ -1022,6 +1022,58 @@ module.exports = (app, template, hook) => {
         });
       });
     });
+
+    it('Doesn\'t clear/modify data that was submitted with an older form revision and doesn\'t exist on the' +
+      ' current one', (done) => {
+      form.revisions = 'current';
+      helper.updateForm(form, (err, result) => {
+        assert.equal(result.revisions, 'current');
+        const data = {
+          fname: 'Name',
+          lname: 'Name',
+          mname: 'Name',
+          pname: 'Name'
+        };
+        helper.createSubmission('revisionForm', {
+          data,
+          _fvid: 3
+        }, helper.owner, [/application\/json/, 400], (err, result) => {
+          assert.deepEqual(result.data, data);
+          form.components = form.components.slice(0, 2);
+
+          const submission = result;
+
+          helper.updateForm(form, (err, result) => {
+            if (err) {
+              return done(err);
+            }
+            assert.equal(result.length, 4);
+            assert.equal(result[0].components.length, 3);
+            assert.equal(result[0]._vid, 4);
+
+            submission.data.fname = 'Name1';
+            submission.data.lname = 'Name1';
+            submission.data.mname = 'Name1';
+            submission.data.pname = 'Name1';
+
+            helper.updateSubmission(submission, (err, result) => {
+              if (err) {
+                return done(err);
+              }
+
+              assert.deepEqual(result.data, {
+                fname: 'Name1',
+                lname: 'Name1',
+                mname: 'Name1',
+                pname: 'Name',
+              });
+              done();
+            });
+          });
+        });
+      });
+
+    });
   });
 
   describe('Submission Revisions', () => {
@@ -1030,7 +1082,7 @@ module.exports = (app, template, hook) => {
     let formWithInitiallyDisabledRevision;
     let submissionRevisionChangelogForm;
     let submission;
-    let submissionWithInitiallyDisabledRevision; 
+    let submissionWithInitiallyDisabledRevision;
     const data = {
       fname: 'joe',
       lname: 'test'
@@ -1176,68 +1228,68 @@ module.exports = (app, template, hook) => {
             type: 'textfield'
           }
         ])
-        .form('submissionRevisionChangelogForm', [ 
-          { 
-            input: true, 
-            tableView: false, 
+        .form('submissionRevisionChangelogForm', [
+          {
+            input: true,
+            tableView: false,
             inputFormat: 'plain',
-            label: 'number1', 
-            key: 'number1', 
+            label: 'number1',
+            key: 'number1',
             requireDecimal: false,
-            placeholder: '', 
-            prefix: '', 
-            suffix: '', 
-            multiple: false, 
-            defaultValue: '', 
-            protected: false, 
-            unique: false, 
-            persistent: true, 
-            validate: { 
-              required: true, 
-              minLength: '', 
-              maxLength: '', 
-              pattern: '', 
-              custom: '', 
-              customPrivate: false 
-            }, 
-            conditional: { 
-              show: '', 
-              when: null, 
-              eq: '' 
-            }, 
-            type: 'number', 
-          },  
-          { 
-            input: true, 
-            tableView: false, 
+            placeholder: '',
+            prefix: '',
+            suffix: '',
+            multiple: false,
+            defaultValue: '',
+            protected: false,
+            unique: false,
+            persistent: true,
+            validate: {
+              required: true,
+              minLength: '',
+              maxLength: '',
+              pattern: '',
+              custom: '',
+              customPrivate: false
+            },
+            conditional: {
+              show: '',
+              when: null,
+              eq: ''
+            },
+            type: 'number',
+          },
+          {
+            input: true,
+            tableView: false,
             inputFormat: 'plain',
-            label: 'number2', 
-            key: 'number2', 
+            label: 'number2',
+            key: 'number2',
             requireDecimal: false,
-            placeholder: '', 
-            prefix: '', 
-            suffix: '', 
-            multiple: false, 
-            defaultValue: '', 
-            protected: false, 
-            unique: false, 
-            persistent: true, 
-            validate: { 
-              required: true, 
-              minLength: '', 
-              maxLength: '', 
-              pattern: '', 
-              custom: '', 
-              customPrivate: false 
-            }, 
-            conditional: { 
-              show: '', 
-              when: null, 
-              eq: '' 
-            }, 
-            type: 'number', 
-          } 
-        ]) 
+            placeholder: '',
+            prefix: '',
+            suffix: '',
+            multiple: false,
+            defaultValue: '',
+            protected: false,
+            unique: false,
+            persistent: true,
+            validate: {
+              required: true,
+              minLength: '',
+              maxLength: '',
+              pattern: '',
+              custom: '',
+              customPrivate: false
+            },
+            conditional: {
+              show: '',
+              when: null,
+              eq: ''
+            },
+            type: 'number',
+          }
+        ])
         .execute(function() {
           form = helper.getForm('submissionRevisionForm');
           formWithInitiallyDisabledRevision = helper.getForm('submissionRevisionUpdateForm');
@@ -1570,8 +1622,8 @@ module.exports = (app, template, hook) => {
           done();
         });
       });
-      
-      it('0 is shown in the Submission Revisions Changelog', done => { 
+
+      it('0 is shown in the Submission Revisions Changelog', done => {
         submissionRevisionChangelogForm.submissionRevisions = 'true';
         submissionRevisionChangelogForm.components.push();
         helper.updateForm(submissionRevisionChangelogForm, (err, result) => {
@@ -1604,8 +1656,8 @@ module.exports = (app, template, hook) => {
                 }
                 helper.getSubmissionRevisionChangeLog(submissionRevisionChangelogForm, submission, revisions[1]._id,
                   (err, results) => {
-                    if (err) { 
-                      done(err); 
+                    if (err) {
+                      done(err);
                     }
                     assert.equal(results.data.number2, 0);
                     assert.equal(results.metadata.previousData.number1, 0);
