@@ -5,16 +5,16 @@ import {
     parentPort,
 } from 'node:worker_threads';
 
-const instantiateWorker = (task: string, data: any) => {
+import { template } from './template';
+import { TemplateData, TemplateFn } from '../../types';
+
+export const instantiateTemplateWorker = (data: TemplateData) => {
     if (isMainThread) {
         return new Promise((resolve, reject) => {
             try {
                 const worker = new Worker(__filename, {
                     workerData: JSON.parse(
-                        JSON.stringify({
-                            task,
-                            data,
-                        })
+                        JSON.stringify({ data, task: './template.js' })
                     ),
                 });
                 worker.on('message', (output) => {
@@ -35,7 +35,7 @@ const instantiateWorker = (task: string, data: any) => {
         });
     } else {
         throw new Error(
-            'instantiateWorker should not be called from a worker thread.'
+            'instantiateTemplateWorker should not be called from a worker thread.'
         );
     }
 };
@@ -43,8 +43,8 @@ const instantiateWorker = (task: string, data: any) => {
 if (!isMainThread) {
     import(workerData.task)
         .then((module) => {
-            const { task } = module.default;
-            return task(workerData.data);
+            const { template }: { template: TemplateFn } = module.default;
+            return template(workerData.data);
         })
         .then((output: any) => {
             parentPort?.postMessage(
@@ -54,5 +54,3 @@ if (!isMainThread) {
             );
         });
 }
-
-export default instantiateWorker;

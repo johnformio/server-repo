@@ -9,7 +9,7 @@ function isErrorLike(obj: any): obj is ErrorLike {
 
 export function evaluateError(err: unknown) {
     if (err instanceof Error || isErrorLike(err)) {
-        return `${err.message}\n${err.stack}`;
+        return `${err.message}\n${err.stack || ''}`;
     } else if (typeof err === 'string') {
         return err;
     } else {

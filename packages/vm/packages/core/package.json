@@ -7,19 +7,19 @@
         "debug": "^4.3.4",
         "dotenv": "^16.3.1",
         "express": "^4.18.2",
-        "formiojs": "^4.18.0-rc.6",
+        "formiojs": "^4.17.3",
         "lodash": "^4.17.21",
         "method-override": "^3.0.0",
-        "moment": "^2.29.4",
         "moment-timezone": "^0.5.43",
         "nunjucks": "^3.2.4",
         "nunjucks-date-filter": "^0.1.1"
     },
     "scripts": {
+        "clean": "rm -rf build",
         "start:locked": "node --experimental-permission --allow-fs-read=/Users/brendanjbond/Projects/formio-dev/formio-vm/ build/index.js",
-        "start": "node build/index.js",
-        "build": "tsc && yarn copy-files",
-        "copy-files": "cp src/workers/macros/*.html build/workers/macros"
+        "start": "node build/server.js",
+        "build": "yarn clean && tsc && yarn copy-files",
+        "copy-files": "cp src/core/Templator/macros/*.html build/core/Templator/macros && cp .env build/"
     },
     "devDependencies": {
         "@types/debug": "^4.1.10",

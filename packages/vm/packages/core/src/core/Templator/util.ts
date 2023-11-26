@@ -1,5 +1,3 @@
-'use strict';
-
 import _ from 'lodash';
 import moment from 'moment';
 const FormioUtils = require('formiojs/utils').default;
@@ -14,6 +12,7 @@ export function isAutoAddress(data: any, component: any, path?: string) {
     }
     return !addressData.mode || addressData.mode === 'autocomplete';
 }
+
 export function flattenComponentsForRender(data: any, components: any) {
     const flattened: any = {};
     FormioUtils.eachComponent(

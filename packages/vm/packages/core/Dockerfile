@@ -1,7 +1,11 @@
 FROM node:21-alpine
 
 COPY ./build /src
-COPY ./node_modules /src/node_modules
+COPY package.json /src
+COPY yarn.lock /src
 WORKDIR /src
+RUN yarn
 
-ENTRYPOINT [ "node", "--experimental-permission", "--allow-fs-read=/src/", "index.js" ]
+EXPOSE 3005
+
+ENTRYPOINT [ "node", "--experimental-permission", "--allow-fs-read=/src/", "server.js" ]

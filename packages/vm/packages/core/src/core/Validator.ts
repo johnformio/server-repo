@@ -1,29 +1,26 @@
-'use strict';
 import _ from 'lodash';
-import debug from 'debug';
 
-import { evaluateInVm } from './evaluateInVm';
+import { evaluateInVm } from '.';
 import { Formio } from './Formio';
-import { Form, Submission } from './types';
 
-const validatorLog = debug('vm:validator');
+import { Form, Submission } from '../types';
 
 export class Validator {
-    form: {
-        components: any[];
-        module?: any;
-    };
+    form: Form;
     token?: string;
     constructor(form: Form, token?: string, decodedToken?: string) {
         this.form = form;
         this.token = token;
 
         const self = this;
-        const evalContext =
-            Formio.Components.components.component.prototype.evalContext;
+        const { evalContext } =
+            Formio.Components.components.component.prototype;
         Formio.Components.components.component.prototype.evalContext =
             function (additional: any) {
-                return evalContext.call(this, self.evalContext(additional));
+                return evalContext.call(
+                    this,
+                    self.getAddtlEvalContext(additional)
+                );
             };
 
         // Change Formio.getToken to return the server decoded token.
@@ -33,13 +30,14 @@ export class Validator {
         };
     }
 
-    evalContext(context: any) {
+    getAddtlEvalContext(context: any) {
         context = context || {};
-        context.form = this.form;
-        const form = context.form;
+        const form = (context.form = this.form);
         if (form.module && typeof form.module === 'string') {
             try {
-                let formModule = null;
+                let formModule: {
+                    options?: { form?: { evalContext?: any } };
+                } | null = null;
                 const writableContext = {
                     formModule: null,
                     form,
@@ -54,6 +52,7 @@ export class Validator {
                     {
                         timeout: 250,
                         microtaskMode: 'afterEvaluate',
+                        includeLibs: false,
                     }
                 );
                 if (formModule) {
@@ -63,6 +62,8 @@ export class Validator {
                 console.warn(err);
             }
             if (
+                form.module &&
+                typeof form.module !== 'string' &&
                 form.module.options &&
                 form.module.options.form &&
                 form.module.options.form.evalContext
@@ -87,21 +88,18 @@ export class Validator {
      */
     /* eslint-disable max-statements */
     async validate(submission: Submission) {
-        validatorLog('Starting validation');
+        // log('Starting validation', 'validator');
 
         // Skip validation if no data is provided.
         if (!submission.data) {
-            validatorLog('No data, skipping validation');
+            // log('No data, skipping validation', 'validator');
             return { error: null };
         }
 
-        const unsets: any[] = [];
+        const unsets: { key: string; data: JSON }[] = [];
         const conditionallyInvisibleComponents: any[] = [];
         const emptyData = _.isEmpty(submission.data);
         let unsetsEnabled = false;
-
-        // TODO: figure out what to do with recaptcah validation
-        // const { validateReCaptcha } = this;
 
         // Create the form, then check validity.
         const form = await Formio.createForm(this.form, {
@@ -200,7 +198,7 @@ export class Validator {
                 submission.data = emptyData ? {} : form.data;
             }
             const visibleComponents = (form.getComponents() || []).map(
-                (comp: any) => comp.component
+                (comp: { component: JSON }) => comp.component
             );
             return { error: null, data: submission.data, visibleComponents };
         }
@@ -219,6 +217,7 @@ export class Validator {
         return {
             data: submission.data,
             error: { name: 'ValidationError', details },
+            visibleComponents: null,
         };
     }
 }
