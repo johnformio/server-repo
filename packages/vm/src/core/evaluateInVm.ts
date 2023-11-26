@@ -7,12 +7,7 @@ import moment from 'moment';
 import { utils } from './Formio';
 
 interface EvaluateInVmOptions extends RunningCodeInNewContextOptions {
-    includeLibs?: {
-        lodash: boolean;
-        moment: boolean;
-        util: boolean;
-        jsonLogic: boolean;
-    };
+    includeLibs: boolean;
 }
 
 const evaluatorLog = debug('vm:evaluator');
@@ -32,15 +27,18 @@ export function evaluateInVm<
     options: EvaluateInVmOptions
 ) {
     const writableContext = writable;
-    const readableContext = options.includeLibs
-        ? Object.freeze({
-              ...readable,
-              ...(options.includeLibs.moment ? {moment} : {}),
-              ...(options.includeLibs.lodash ? {_} : {}),
-              ...(options.includeLibs.jsonLogic ? {jsonLogic: utils.jsonLogic} : {}),
-              ...(options.includeLibs.util ? {util: utils, utils} : {}),
-          })
-        : Object.freeze(readable);
+    const readableContext = Object.freeze({
+        ...readable,
+        ...(options.includeLibs
+            ? {
+                  moment,
+                  _,
+                  jsonLogic: utils.jsonLogic,
+                  util: utils,
+                  utils,
+              }
+            : {}),
+    });
     const context = { ...writableContext, ...readableContext };
 
     if (isPotentiallyMalicious(code)) {
