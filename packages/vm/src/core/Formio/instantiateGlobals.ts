@@ -1,7 +1,7 @@
 try {
     globalThis.navigator = { userAgent: '' };
 } catch (e) {
-    Object.defineProperty(globalThis, 'navigator', { userAgent: '' });
+    Object.defineProperty(globalThis, 'navigator', { userAgent: '' } as any);
 }
 globalThis.Text = class {};
 globalThis.HTMLElement = class {};
