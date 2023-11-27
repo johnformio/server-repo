@@ -3,11 +3,12 @@ import dotenv from 'dotenv';
 import https from 'https';
 import fs from 'fs';
 
-import { initConfig } from './config';
-import { evaluateError } from './core';
-import { evaluate, validate, template } from './lib';
+import { evaluateError } from '../core';
+import { evaluate, validate, template } from '../lib';
+import { config } from './config';
+import { authenticate } from './authenticate';
 
-import { Form, Submission } from './types';
+import { Form, Submission } from '../types';
 
 interface ValidateRequest extends Request {
     body: {
@@ -66,6 +67,7 @@ dotenv.config();
 const app = express();
 
 app.use(express.json({ limit: '32mb' }));
+app.use(authenticate);
 
 app.post('/evaluate', async (req, res) => {
     try {
@@ -109,49 +111,35 @@ app.post('/validate', async (req, res) => {
     }
 });
 
-app.post(
-    '/template',
-    // TODO: add authorization middleware
-    async (req, res) => {
-        try {
-            const payload = req.body;
-            const result = await template(payload, false);
-            res.status(200).json(result);
-        } catch (err: unknown) {
-            res.status(400).send(evaluateError(err));
-        }
-    }
-);
-
-const { sslEnabled, sslCert, sslKey, port } = initConfig();
-if (sslEnabled) {
+app.post('/template', async (req, res) => {
     try {
-        if (!sslKey) {
-            throw new Error('TLS/SSL is enabled but no key was provided.');
-        }
-        if (!sslCert) {
-            throw new Error(
-                'TLS/SSL is enabled but no certificate was provided.'
-            );
-        }
+        const payload = req.body;
+        const result = await template(payload, false);
+        res.status(200).json(result);
+    } catch (err: unknown) {
+        res.status(400).send(evaluateError(err));
+    }
+});
+
+try {
+    if (config.sslEnabled) {
+        const { port, sslKey, sslCert } = config;
         const httpsOptions = {
             key: fs.readFileSync(sslKey),
             cert: fs.readFileSync(sslCert),
         };
 
-        const httpsServer = https.createServer(httpsOptions, app);
-
-        httpsServer.listen(port, () => {
+        https.createServer(httpsOptions, app).listen(port, () => {
             console.log(`Formio VM listening on port ${port} over HTTPS...`);
         });
-    } catch (err: unknown) {
-        const message = evaluateError(err);
-        console.error('There was a problem creating the HTTPS server:');
-        console.error(message);
-        process.exit(1);
+    } else {
+        const { port } = config;
+        app.listen(port, () =>
+            console.log(`Form.io VM listening on port ${port}...`)
+        );
     }
-} else {
-    app.listen(port, () =>
-        console.log(`Form.io VM listening on port ${port}...`)
-    );
+} catch (err: unknown) {
+    const message = evaluateError(err);
+    console.error(message);
+    process.exit(1);
 }
