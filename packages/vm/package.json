@@ -16,10 +16,10 @@
     },
     "scripts": {
         "clean": "rm -rf build",
-        "start:locked": "node --experimental-permission --allow-fs-read=/Users/brendanjbond/Projects/formio-dev/formio-vm/ build/index.js",
-        "start": "node build/server.js",
-        "build": "yarn clean && tsc && yarn copy-files",
-        "copy-files": "cp src/core/Templator/macros/*.html build/core/Templator/macros && cp .env build/",
+        "start:locked": "DOTENV_CONFIG_PATH=./.env node --experimental-permission --allow-fs-read=/Users/brendanjbond/Projects/formio-dev/formio-vm/ build/server/index.js",
+        "start": "DOTENV_CONFIG_PATH=./.env node build/server.js",
+        "build": "npm run clean && tsc && npm run copy-files",
+        "copy-files": "cp src/core/Templator/macros/*.html build/core/Templator/macros/",
         "prepare": "husky install"
     },
     "devDependencies": {
