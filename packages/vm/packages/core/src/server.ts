@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import https from 'https';
 import fs from 'fs';
 
+import { initConfig } from './config';
 import { evaluateError } from './core';
 import { evaluate, validate, template } from './lib';
 
@@ -63,11 +64,6 @@ function isStringHeader(
 
 dotenv.config();
 const app = express();
-const port = process.env.PORT || 3005;
-const sslEnabled =
-    process.env.ENABLE_SSL === 'true' ||
-    process.env.ENABLE_SSL === '1' ||
-    false;
 
 app.use(express.json({ limit: '32mb' }));
 
@@ -127,17 +123,20 @@ app.post(
     }
 );
 
+const { sslEnabled, sslCert, sslKey, port } = initConfig();
 if (sslEnabled) {
     try {
-        if (!process.env.SSL_KEY) {
-            throw new Error('TLS/SSL is enabled but no SSL_KEY was provided.');
+        if (!sslKey) {
+            throw new Error('TLS/SSL is enabled but no key was provided.');
         }
-        if (!process.env.SSL_CERT) {
-            throw new Error('TLS/SSL is enabled but no SSL_CERT was provided.');
+        if (!sslCert) {
+            throw new Error(
+                'TLS/SSL is enabled but no certificate was provided.'
+            );
         }
         const httpsOptions = {
-            key: fs.readFileSync(process.env.SSL_KEY),
-            cert: fs.readFileSync(process.env.SSL_CERT),
+            key: fs.readFileSync(sslKey),
+            cert: fs.readFileSync(sslCert),
         };
 
         const httpsServer = https.createServer(httpsOptions, app);
