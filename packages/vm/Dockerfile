@@ -8,4 +8,4 @@ RUN yarn
 
 EXPOSE 3005
 
-ENTRYPOINT [ "node", "--experimental-permission", "--allow-fs-read=/src/", "server.js" ]
+ENTRYPOINT [ "node", "--experimental-permission", "--allow-fs-read=/src/", "server/index.js" ]
