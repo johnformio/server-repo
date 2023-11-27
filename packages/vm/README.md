@@ -1,6 +1,6 @@
 # @formio/vm
 
-> A hybrid library/server for executing untrusted JavaScript from Form.io forms on the NodeJS runtime.
+> A hybrid library and REST API for executing untrusted JavaScript from Form.io forms on the NodeJS runtime.
 
 ## TODO
 
