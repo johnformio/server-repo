@@ -4,3 +4,4 @@ build
 *.log
 perf-testing
 .env
+.husky
