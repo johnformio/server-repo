@@ -1,5 +1,7 @@
 import express, { Request } from 'express';
 import dotenv from 'dotenv';
+import https from 'https';
+import fs from 'fs';
 
 import { evaluateError } from './core';
 import { evaluate, validate, template } from './lib';
@@ -62,6 +64,11 @@ function isStringHeader(
 dotenv.config();
 const app = express();
 const port = process.env.PORT || 3005;
+const sslEnabled =
+    process.env.ENABLE_SSL === 'true' ||
+    process.env.ENABLE_SSL === '1' ||
+    false;
+
 app.use(express.json({ limit: '32mb' }));
 
 app.post('/evaluate', async (req, res) => {
@@ -120,4 +127,32 @@ app.post(
     }
 );
 
-app.listen(port, () => console.log(`Example app listening on port ${port}!`));
+if (sslEnabled) {
+    try {
+        if (!process.env.SSL_KEY) {
+            throw new Error('TLS/SSL is enabled but no SSL_KEY was provided.');
+        }
+        if (!process.env.SSL_CERT) {
+            throw new Error('TLS/SSL is enabled but no SSL_CERT was provided.');
+        }
+        const httpsOptions = {
+            key: fs.readFileSync(process.env.SSL_KEY),
+            cert: fs.readFileSync(process.env.SSL_CERT),
+        };
+
+        const httpsServer = https.createServer(httpsOptions, app);
+
+        httpsServer.listen(port, () => {
+            console.log(`Formio VM listening on port ${port} over HTTPS...`);
+        });
+    } catch (err: unknown) {
+        const message = evaluateError(err);
+        console.error('There was a problem creating the HTTPS server:');
+        console.error(message);
+        process.exit(1);
+    }
+} else {
+    app.listen(port, () =>
+        console.log(`Form.io VM listening on port ${port}...`)
+    );
+}
