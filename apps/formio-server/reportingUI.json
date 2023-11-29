@@ -27,6 +27,15 @@
           "input": false,
           "tableView": false,
           "components": [{
+              "html": "<p style=\"text-align:right;\"><span class=\"text-small\"><i>v{{form.properties.version}}</i></span></p>",
+              "label": "Content",
+              "customClass": "text-muted",
+              "refreshOnChange": false,
+              "key": "version1",
+              "type": "content",
+              "input": false,
+              "tableView": false
+            }, {
               "html": "<p><span class=\"text-big\"><strong>Report Setup - Basic Settings</strong></span></p>",
               "label": "Report Setup - Basic Settings",
               "refreshOnChange": false,
@@ -226,6 +235,15 @@
           "input": false,
           "tableView": false,
           "components": [{
+              "html": "<p style=\"text-align:right;\"><span class=\"text-small\"><i>v{{form.properties.version}}</i></span></p>",
+              "label": "Content",
+              "customClass": "text-muted",
+              "refreshOnChange": false,
+              "key": "version2",
+              "type": "content",
+              "input": false,
+              "tableView": false
+            }, {
               "html": "<p><span class=\"text-big\"><strong>Report Setup - Source Forms&nbsp;</strong></span></p><p>A report can aggregate Submission Data submitted against one or more Forms. Many times, Reports aggregate data from multiple Forms which allow a singular Report UI to visualize connected data stemming from multiple Form Sources.&nbsp;</p>",
               "label": "Basic Report Settings",
               "refreshOnChange": false,
@@ -501,6 +519,15 @@
           "input": false,
           "tableView": false,
           "components": [{
+              "html": "<p style=\"text-align:right;\"><span class=\"text-small\"><i>v{{form.properties.version}}</i></span></p>",
+              "label": "Content",
+              "customClass": "text-muted",
+              "refreshOnChange": false,
+              "key": "version3",
+              "type": "content",
+              "input": false,
+              "tableView": false
+            }, {
               "html": "<p><span class=\"text-big\"><strong>Report Setup - Calculated Columns</strong></span></p><p>Here you can add additional columns to the Report Grid that do not exist in the the Data Source Forms. These columns` value(s) will be calculated based on the fields of the Data Source Forms.&nbsp;</p>",
               "label": "Basic Reporting Settings",
               "refreshOnChange": false,
@@ -877,6 +904,15 @@
           "input": false,
           "tableView": false,
           "components": [{
+              "html": "<p style=\"text-align:right;\"><span class=\"text-small\"><i>v{{form.properties.version}}</i></span></p>",
+              "label": "Content",
+              "customClass": "text-muted",
+              "refreshOnChange": false,
+              "key": "version4",
+              "type": "content",
+              "input": false,
+              "tableView": false
+            }, {
               "html": "<p><span class=\"text-big\"><strong>Report Setup - Aggregated Columns</strong></span></p><p>You can create an <strong>aggregated report</strong> that groups the selected Forms' submissions by one or several fields (e.g. department ID or employee ID). Using the UI below, select the fields that will be used as criteria for the grouping. Then, add columns to your Reporting Grid that will be calculated per group based on the existing selected Forms fields or the Grid Calculated Extra Fields.&nbsp;</p><p><strong>Please note that only Aggregated Columns will be available to display in the Reporting Grid for Aggregated Reports.</strong></p>",
               "label": "Content",
               "refreshOnChange": false,
@@ -1070,6 +1106,15 @@
           "input": false,
           "tableView": false,
           "components": [{
+              "html": "<p style=\"text-align:right;\"><span class=\"text-small\"><i>v{{form.properties.version}}</i></span></p>",
+              "label": "Content",
+              "customClass": "text-muted",
+              "refreshOnChange": false,
+              "key": "version5",
+              "type": "content",
+              "input": false,
+              "tableView": false
+            }, {
               "html": "<p><span class=\"text-big\"><strong>Report Setup - Columns&nbsp;</strong></span></p><p>Use the UI below to choose which columns are available to the end user of the Report. Then, select which columns the end user has available by default. The end user will start out with the default columns shown visually, with an option to choose which of the available columns they wish to see based on their requirements at runtime.&nbsp;</p>",
               "label": "Basic Reporting Settings",
               "refreshOnChange": false,
@@ -1111,20 +1156,18 @@
                 "required": true
               },
               "key": "availableColumns",
-              "logic": [
-                {
-                  "name": "clear Columns",
-                  "trigger": {
-                    "type": "javascript",
-                    "javascript": "result = data.reportType?.typeChanged;"
-                  },
-                  "actions": [{
-                    "name": "clear",
-                    "type": "customAction",
-                    "customAction": "instance.resetValue();"
-                  }]
-                }
-              ],
+              "logic": [{
+                "name": "clear Columns",
+                "trigger": {
+                  "type": "javascript",
+                  "javascript": "result = data.reportType?.typeChanged;"
+                },
+                "actions": [{
+                  "name": "clear",
+                  "type": "customAction",
+                  "customAction": "instance.resetValue();"
+                }]
+              }],
               "type": "datagrid",
               "input": true,
               "components": [{
@@ -1204,6 +1247,15 @@
           "input": false,
           "tableView": false,
           "components": [{
+              "html": "<p style=\"text-align:right;\"><span class=\"text-small\"><i>v{{form.properties.version}}</i></span></p>",
+              "label": "Content",
+              "customClass": "text-muted",
+              "refreshOnChange": false,
+              "key": "version6",
+              "type": "content",
+              "input": false,
+              "tableView": false
+            }, {
               "html": "<p><span class=\"text-big\"><strong>Control Panel - Basic Settings</strong></span></p><p>In addition to the Report Grid, a Control Panel can be enabled and customized here. This includes a Columns Selection UI, customized Filters, and Actions that can be performed on rows which are selected in the grid.&nbsp;</p>",
               "label": "Basic Reporting Settings",
               "refreshOnChange": false,
@@ -1322,6 +1374,15 @@
           "input": false,
           "tableView": false,
           "components": [{
+              "html": "<p style=\"text-align:right;\"><span class=\"text-small\"><i>v{{form.properties.version}}</i></span></p>",
+              "label": "Content",
+              "customClass": "text-muted",
+              "refreshOnChange": false,
+              "key": "version7",
+              "type": "content",
+              "input": false,
+              "tableView": false
+            }, {
               "html": "<p><span class=\"text-big\"><strong>Control Panel - Filters</strong></span></p><p>Filters enable end users of this report to view any subset of data needed at runtime. Customize Filters for your Report Below.&nbsp;</p>",
               "label": "Basic Reporting Settings",
               "refreshOnChange": false,
@@ -1471,6 +1532,15 @@
           "input": false,
           "tableView": false,
           "components": [{
+              "html": "<p style=\"text-align:right;\"><span class=\"text-small\"><i>v{{form.properties.version}}</i></span></p>",
+              "label": "Content",
+              "customClass": "text-muted",
+              "refreshOnChange": false,
+              "key": "version8",
+              "type": "content",
+              "input": false,
+              "tableView": false
+            }, {
               "html": "<p><span class=\"text-big\"><strong>Control Panel - Actions</strong></span></p><p>Enable end users of the Report to execute actions on rows which are selected within the Report Grid. Select a default Action, or create any customized Action to meet bespoke requirements by entering custom Javascript below.&nbsp;</p>",
               "label": "Basic Reporting Settings",
               "refreshOnChange": false,
@@ -1599,7 +1669,9 @@
         "type": "read_all",
         "roles": ["administrator", "authenticated", "anonymous"]
       }],
-      "properties": {},
+      "properties": {
+        "version": "1.0.0"
+      },
       "controller": "instance.submissionReady.then((subm) => {\n  instance.emit('formsSet');\n});\n",
       "submissionRevisions": ""
     }

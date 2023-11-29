@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-7423: Failed to search current payment info in server
  - FIO-7423: Transaction Failed message user with no names
  - FIO-7460: Fix error during project creation
+ - FIO-7538: Update vm-utils to 1.0.0-rc.1
+ - FIO-7319: fixed an issue where submission changelog is available when sac is disabled and for hosted
+ - Revert "Merge pull request #1363 from formio/isolated-vm"
  
 ## 8.4.0-rc.7
 ### Changed

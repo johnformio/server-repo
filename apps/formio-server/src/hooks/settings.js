@@ -7,7 +7,7 @@ const async = require('async');
 const fs = require('fs');
 const log = require('debug')('formio:log');
 const util = require('../util/util');
-const vmUtil = require('vm-utils');
+const {VM} = require('vm2');
 const {ClientCredentials} = require('simple-oauth2');
 const moment = require('moment');
 const config = require('../../config');
@@ -1536,15 +1536,15 @@ module.exports = function(app) {
           req.currentProject.settings.tokenParse
         ) {
           try {
-            const isolate = vmUtil.getIsolate();
-            const context = isolate.createContextSync();
-            vmUtil.transferSync('token', decoded, context);
-            vmUtil.transferSync('roles', req.currentProject.roles, context);
-
-            const data = context.evalSync(req.currentProject.settings.tokenParse, {
+            const data = (new VM({
               timeout: 500,
-              copy: true
-            });
+              sandbox: _.cloneDeep({
+                token: decoded,
+                roles: req.currentProject.roles
+              }),
+              eval: false,
+              fixAsync: true
+            })).run(req.currentProject.settings.tokenParse);
             if (!data.hasOwnProperty('user')) {
               throw new Error('User not defined on data.');
             }
@@ -2005,6 +2005,23 @@ module.exports = function(app) {
         // Add the private updates to the original file list and continue.
         files = files.concat(_files);
         next(null, files);
+      },
+
+      /**
+       * A hook to expose the update system on system load.
+       *
+       * @param configFormsUpdates {Object}
+       *   The publicly available updates.
+       */
+      getConfigFormsUpdates(configFormsUpdates) {
+        if (!_.isPlainObject(configFormsUpdates)) {
+          configFormsUpdates = {};
+        }
+
+        const _files = require('../db/configFormsUpdates/index.js');
+        _.assign(configFormsUpdates, _files || {});
+
+        return configFormsUpdates;
       },
 
       /**
