@@ -3,6 +3,7 @@
 const _ = require('lodash');
 const debug = require('debug')('formio:action:sqlconnector');
 const fetch = require('formio/src/util/fetch');
+const config = require('../../../config');
 
 module.exports = (router) => {
   const Action = router.formio.Action;
@@ -60,6 +61,9 @@ module.exports = (router) => {
    */
   class SQLConnector extends Action {
     static info(req, res, next) {
+      if (config.formio.hosted) {
+        return next(null);
+      }
       next(null, hook.alter('actionInfo', {
         name: 'sqlconnector',
         title: 'SQL Connector',
