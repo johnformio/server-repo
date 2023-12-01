@@ -392,11 +392,11 @@ const middleware = router => {
             return res.status(400).send('Google Drive Settings not configured. Please go to Data Connections');
         }
 
-        const {id, fileName} = req.query;
+        const {id, name} = req.query;
 
         authenticate(settings)
           .then((drive) => {
-            debug(`Deleting a ${fileName} from Google Drive`);
+            debug(`Deleting a ${name} from Google Drive`);
 
             const originalWindow = global.window;
             global.window = undefined;
@@ -413,7 +413,7 @@ const middleware = router => {
               }
 
               else {
-                debug(`Deleted a file ${fileName} from Google Drive.`);
+                debug(`Deleted a file ${name} from Google Drive.`);
                 res.sendStatus(200);
               }
             });
