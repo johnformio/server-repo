@@ -91,6 +91,7 @@ module.exports = function(app, template, hook) {
 
   let formId;
 
+  if (!config.formio.hosted)
   describe('Checking validation during project creation', function() {
     const testProject = {
       title: chance.word(),
@@ -122,7 +123,6 @@ module.exports = function(app, template, hook) {
          });
     });
 
-
     it('Should not create project with non-valid project name', function(done) {
       testProject.name = "training project"
       request(app)
@@ -137,7 +137,6 @@ module.exports = function(app, template, hook) {
           done();
         });
     });
-
   })
 
   describe('Projects', function() {
