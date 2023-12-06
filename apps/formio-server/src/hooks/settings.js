@@ -142,16 +142,19 @@ module.exports = function(app) {
             });
           }
 
-          req.hasSacPackage = _.get(app, 'license.terms.options.sac', false);
           req.flattenedComponents = formioServer.formio.util.flattenComponents(form.components, true);
-          encrypt.hasEncryptedComponents(req);
+          const hasEncrypted = encrypt.hasEncryptedComponents(req);
+
+          const decryptSecret = _.get(app, 'license.terms.options.sac', false) && hasEncrypted
+            ? req.currentProject.settings.secret || config.formio.secret
+            : null;
 
           if (!submissionModel) {
-            return cb();
+            return cb(null, decryptSecret);
           }
 
           req.submissionModel = submissionModel;
-          return cb();
+          return cb(null, decryptSecret);
         });
       },
 
