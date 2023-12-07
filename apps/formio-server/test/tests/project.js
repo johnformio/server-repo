@@ -5343,6 +5343,132 @@ module.exports = function(app, template, hook) {
     });
   });
 
+  describe('Form Defaults', function() {
+    const helper = new Helper(template.formio.owner);
+    const formDefaultsSetting = {
+      submissionRevisions: 'true',
+      settings: {
+        theme: 'Darkly',
+        showCheckboxBackground: true,
+        layout: 'Landscape'
+      },
+      access: [],
+      submissionAccess: [],
+      tags: [
+        'test'
+      ],
+      controller: 'console.log(111);'
+    }
+
+    before((done) => {
+      helper.project().execute((err) => {
+        if (err) {
+          return done(err);
+        }
+
+        const roles = helper.template.roles;
+
+        if (!_.isEmpty(roles)) {
+            formDefaultsSetting.access.push({
+              'roles': [
+                roles.authenticated?._id
+              ],
+              'type': 'read_all'
+            });
+
+            formDefaultsSetting.submissionAccess.push({
+              'roles': [
+                roles.authenticated?._id,
+                roles.administrator?._id
+              ],
+              'type': 'create_all'
+            });
+        }
+        done();
+      });
+    });
+
+    it('Should save formDefaults settings for the project', (done) => {
+      request(app)
+        .put('/project/' + helper.template.project._id)
+        .set('x-jwt-token', template.formio.owner.token)
+        .send({formDefaults: formDefaultsSetting })
+        .expect(200)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+          assert.deepEqual(res.body.formDefaults, formDefaultsSetting);
+          done();
+        });
+    });
+
+    it('Should create a form with default settings configured for project', (done) => {
+      helper.form('test1', [
+        {
+          type: 'textfield',
+          key: 'firstName',
+          label: 'First Name',
+          input: true
+        }       
+      ]).execute((err) => {
+        if (err) {
+          done(err);
+        }
+
+        const test1Form = helper.template.forms.test1;
+
+        _.each(formDefaultsSetting, (value, key) => {
+          assert.deepEqual(test1Form[key], value, `Form must have default setting ${key} equal to ${JSON.stringify(value)}`)
+        })
+
+        done();
+      })
+    });
+
+    it('Default form settings should not override existing access settings set for access types', (done) => {
+      const roles = helper.template.roles;
+      const form2AccessSettings =  {
+        access: [{
+          roles: [
+            roles.anonymous?._id,
+          ],
+          type: 'read_all'
+        }],
+        submissionAccess: [{
+          roles: [
+            roles.authenticated?._id,
+          ],
+          type: 'read_all'
+        }],
+      };
+
+      helper.form(
+        'test2', 
+        [
+          {
+            type: 'textfield',
+            key: 'firstName',
+            label: 'First Name',
+            input: true
+          }       
+        ],
+        form2AccessSettings
+      ).execute((err) => {
+        if (err) {
+          done(err);
+        }
+        const test2Form = helper.template.forms.test2;
+        const access = test2Form.access;
+        const submissionAccess = test2Form.submissionAccess;
+
+        assert.deepEqual(access, form2AccessSettings.access, 'Access settings must be not everriden by formDefauls');
+        assert.deepEqual(submissionAccess, [...form2AccessSettings.submissionAccess, ...formDefaultsSetting.submissionAccess], 'Submission Access settings must be not everriden by formDefauls');
+
+        done();
+      })
+    });
+  });
   // This is disabled until we set up customer testing again. This should not be allowed for hosted or docker version. Only customers.
   if (!docker || config.formio.hosted) {
     return;

@@ -3,6 +3,7 @@
 const _ = require('lodash');
 const FormRevision = require('../../revisions/FormRevision');
 const SubmissionRevision = require('../../revisions/SubmissionRevision');
+const addFormDefaults = require('../../util/addFormDefaults');
 
 module.exports = app => routes => {
   const loadFormAlter = require('../../hooks/alter/loadForm')(app).alter;
@@ -131,12 +132,7 @@ module.exports = app => routes => {
         return next();
       }
 
-      const formDefaults = project.formDefaults || {};
-      Object.keys(formDefaults).forEach((key) => {
-        if (!req.body[key] && formDefaults[key]) {
-          req.body[key] = formDefaults[key];
-        }
-      });
+      addFormDefaults(req.body, project.formDefaults);
 
       next();
     });
@@ -159,12 +155,7 @@ module.exports = app => routes => {
         return next();
       }
 
-      const formDefaults = project.formDefaults || {};
-      Object.keys(formDefaults).forEach((key) => {
-        if (!req.body[key] && formDefaults[key]) {
-          req.body[key] = formDefaults[key];
-        }
-      });
+      addFormDefaults(req.body, project.formDefaults);
 
       next();
     });
