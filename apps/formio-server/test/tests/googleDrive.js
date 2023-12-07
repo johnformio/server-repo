@@ -218,9 +218,26 @@ module.exports = function(app, template, hook) {
               done();
             });
         });
+
+        it('A project on the basic plan can not delete Google Drive file', function(done) {
+          request(app)
+            .delete('/project/' + template.project._id + '/form/' + template.forms.uploadFormDrive._id + '/storage/gdrive?id=test&name=test')
+            .set('x-jwt-token', template.formio.owner.token)
+            .expect(402)
+            .expect('Content-Type', /text/)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              template.formio.owner.token = res.headers['x-jwt-token'];
+
+              done();
+            });
+        });
       });
 
-      describe('S3 teardown', function() {
+      describe('Google Driver teardown', function() {
         it('Deletes the upload form', function(done) {
           request(app)
             .delete('/project/' + template.project._id + '/form/' + template.forms.uploadFormDrive._id)
@@ -464,9 +481,27 @@ module.exports = function(app, template, hook) {
               done();
             });
         });
+
+        it('Allows delete file from Google Drive for users with permission', function(done) {
+          request(app)
+            .delete('/project/' + template.project._id + '/form/' + template.forms.uploadFormDrive._id + '/storage/gdrive?id=test&name=test')
+            .set('x-jwt-token', template.formio.owner.token)
+            .expect(400)
+            .expect('Content-Type', /text\/html/)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+              assert.equal(res.text, 'Bad request from Google Drive.');
+
+              template.formio.owner.token = res.headers['x-jwt-token'];
+
+              done();
+            });
+        });
       });
 
-      describe('S3 teardown', function() {
+      describe('Google Drive teardown', function() {
         it('Deletes the upload form', function(done) {
           request(app)
             .delete('/project/' + template.project._id + '/form/' + template.forms.uploadFormDrive._id)

@@ -1561,6 +1561,24 @@ module.exports = (app, template, hook) => {
         });
       });
 
+      it('Should not be able to get changelog when sac is disabled', done => {
+        process.env.TEST_SIMULATE_SAC_PACKAGE = '0';
+        request(app)
+          .get(`/project/${helper.template.project._id}/form/${form._id}/submission/${submission._id}/changelog`)
+          .send()
+          .set('x-jwt-token', helper.owner.token)
+          .expect('Content-Type', /text\/plain/)
+          .expect(403)
+          .end((err, res) => {
+            if (err) {
+              process.env.TEST_SIMULATE_SAC_PACKAGE = '1';
+              return done(err);
+            }
+            process.env.TEST_SIMULATE_SAC_PACKAGE = '1';
+            done();
+          });
+      });
+
       it('Get submission revision by Id', done => {
         helper.getSubmissionRevision(form, submission, submissionRevisions[1]._id, (err, result) => {
           if (err) {
