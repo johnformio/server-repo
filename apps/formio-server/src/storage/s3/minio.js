@@ -52,4 +52,16 @@ function getMinioPresignedGetUrl(s3Settings, bucket, key) {
   });
 }
 
-module.exports = {getMinioPresignedPutUrl, getMinioPresignedGetUrl};
+function removeMinioObject(s3Settings, bucket, key) {
+  return new Promise((resolve, reject) => {
+    const minio = getMinio(s3Settings);
+    minio.removeObject(
+      bucket,
+      key,
+      {},
+      (err, result) => err ? reject(err) : resolve(result)
+    );
+  });
+}
+
+module.exports = {getMinioPresignedPutUrl, getMinioPresignedGetUrl, removeMinioObject};
