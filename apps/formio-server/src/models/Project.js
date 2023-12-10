@@ -199,6 +199,11 @@ module.exports = function(router) {
         description: 'The stage title.',
         maxlength: 63,
       },
+      defaultStage: {
+        type: String,
+        description: 'The project Id of the Stage set to be default navigation when user click on project view.',
+        default: null,
+      },
     })
   });
   /* eslint-enable new-cap, max-len */
