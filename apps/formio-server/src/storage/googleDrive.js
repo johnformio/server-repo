@@ -355,6 +355,76 @@ const middleware = router => {
       });
     }
   );
+
+  router.delete('/project/:projectId/form/:formId/storage/gdrive',
+    router.formio.formio.middleware.tokenHandler,
+    function(req, res, next) {
+      if (!req.projectId && req.params.projectId) {
+        req.projectId = req.params.projectId;
+      }
+      if (!req.formId && req.params.formId) {
+        req.formId = req.params.formId;
+      }
+      next();
+    },
+    router.formio.formio.middleware.permissionHandler,
+    router.formio.formio.plans.disableForPlans(['basic', 'independent', 'archived']),
+    function(req, res) {
+      router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
+        if (err) {
+          debug(err);
+          return res.status(400).send('Project not found.');
+        }
+
+        const {settings} = project;
+
+        if (!settings.storage) {
+          settings.storage = {};
+        }
+
+        if (
+          !settings.storage.googleDrive
+          || !settings.google
+          || !settings.google.clientId
+          || !settings.google.cskey
+          || !settings.google.refreshtoken
+          ) {
+            return res.status(400).send('Google Drive Settings not configured. Please go to Data Connections');
+        }
+
+        const {id, name} = req.query;
+
+        authenticate(settings)
+          .then((drive) => {
+            debug(`Deleting a ${name} from Google Drive`);
+
+            const originalWindow = global.window;
+            global.window = undefined;
+
+            drive.files.delete({
+              fileId: id
+            }, (err, file) => {
+              // Move back the global window
+              global.window = originalWindow;
+
+              if (err) {
+                debug(err);
+                return res.status(400).send('Invalid response.');
+              }
+
+              else {
+                debug(`Deleted a file ${name} from Google Drive.`);
+                res.sendStatus(200);
+              }
+            });
+          })
+          .catch(err => {
+            debug(err);
+            res.status(400).send('Bad request from Google Drive.');
+          });
+      });
+    }
+  );
 };
 
 module.exports = {

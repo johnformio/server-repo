@@ -10,6 +10,7 @@ const getProjectContext = require('../util/getProjectContext');
 
 function middleware(app) {
     return async (req, res, next) => {
+      try {
         // Don't put default in function definition as it breaks express.
 
         if (config.formio.hosted) {
@@ -36,8 +37,11 @@ function middleware(app) {
             type: 'formManager'
           });
         }
-
-        next();
+         return next();
+      }
+      catch (err) {
+        return res.status(400).send(err.message);
+      }
     };
 }
 

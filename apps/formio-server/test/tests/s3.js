@@ -152,6 +152,13 @@ module.exports = function(app, template, hook) {
                   template.roles.administrator._id.toString(),
                   template.roles.authenticated._id.toString()
                 ]
+              },
+              {
+                type: 'delete_all',
+                roles: [
+                  template.roles.administrator._id.toString(),
+                  template.roles.authenticated._id.toString()
+                ]
               }
             ],
             components: [
@@ -214,6 +221,23 @@ module.exports = function(app, template, hook) {
             .post('/project/' + template.project._id + '/form/' + template.forms.uploadForm._id + '/storage/s3')
             .set('x-jwt-token', template.users.tempUser.token)
             .send(file)
+            .expect(402)
+            .expect('Content-Type', /text/)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              template.users.tempUser.token = res.headers['x-jwt-token'];
+
+              done();
+            });
+        });
+
+        it('A project on the basic plan can not delete s3 file', function(done) {
+          request(app)
+            .delete('/project/' + template.project._id + '/form/' + template.forms.uploadForm._id + '/storage/s3?bucket=testbucket&key=test')
+            .set('x-jwt-token', template.users.tempUser.token)
             .expect(402)
             .expect('Content-Type', /text/)
             .end(function(err, res) {
@@ -478,6 +502,23 @@ module.exports = function(app, template, hook) {
                 done();
               });
           });
+
+          it('A project on the independent plan can not delete s3 file', function(done) {
+            request(app)
+              .delete('/project/' + template.project._id + '/form/' + template.forms.uploadForm._id + '/storage/s3?bucket=testbucket&key=upload/myfile.doc')
+              .set('x-jwt-token', template.users.tempUser.token)
+              .expect(402)
+              .expect('Content-Type', /text/)
+              .end(function(err, res) {
+                if (err) {
+                  return done(err);
+                }
+
+                template.users.tempUser.token = res.headers['x-jwt-token'];
+
+                done();
+              });
+          });
         }
       });
 
@@ -652,6 +693,13 @@ module.exports = function(app, template, hook) {
                   template.roles.administrator._id.toString(),
                   template.roles.authenticated._id.toString()
                 ]
+              },
+              {
+                type: 'delete_all',
+                roles: [
+                  template.roles.administrator._id.toString(),
+                  template.roles.authenticated._id.toString()
+                ]
               }
             ],
             components: [
@@ -792,6 +840,26 @@ module.exports = function(app, template, hook) {
             });
         });
 
+        it('Allows access to delete s3 file for users with permission', function(done) {
+          request(app)
+            .delete('/project/' + template.project._id + '/form/' + template.forms.uploadForm._id + '/storage/s3?bucket=testbucket&key=test')
+            .set('x-jwt-token', template.users.tempUser.token)
+            .expect(400)
+            .expect('Content-Type', /text/)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              assert.equal(res.text, 'The AWS Access Key Id you provided does not exist in our records.');
+
+
+              template.users.tempUser.token = res.headers['x-jwt-token'];
+
+              done();
+            });
+        });
+
         it('Does not allows access to s3 signing POSTs for users without permission', function(done) {
           var file = {
             name: 'myfile.doc',
@@ -819,6 +887,22 @@ module.exports = function(app, template, hook) {
               if (err) {
                 return done(err);
               }
+              done();
+            });
+        });
+
+        it('Does not allows access to delete s3 file for users without permission', function(done) {
+          request(app)
+            .delete('/project/' + template.project._id + '/form/' + template.forms.uploadForm._id + '/storage/s3?bucket=testbucket&key=upload/myfile.doc')
+            .expect(401)
+            .expect('Content-Type', /text/)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              template.users.tempUser.token = res.headers['x-jwt-token'];
+
               done();
             });
         });
@@ -997,6 +1081,13 @@ module.exports = function(app, template, hook) {
                   template.roles.administrator._id.toString(),
                   template.roles.authenticated._id.toString()
                 ]
+              },
+              {
+                type: 'delete_all',
+                roles: [
+                  template.roles.administrator._id.toString(),
+                  template.roles.authenticated._id.toString()
+                ]
               }
             ],
             components: [
@@ -1137,6 +1228,26 @@ module.exports = function(app, template, hook) {
             });
         });
 
+        it('Allows access to delete s3 file for users with permission', function(done) {
+          request(app)
+            .delete('/project/' + template.project._id + '/form/' + template.forms.uploadForm._id + '/storage/s3?bucket=testbucket&key=test')
+            .set('x-jwt-token', template.users.tempUser.token)
+            .expect(400)
+            .expect('Content-Type', /text/)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              assert.equal(res.text, 'The AWS Access Key Id you provided does not exist in our records.');
+
+
+              template.users.tempUser.token = res.headers['x-jwt-token'];
+
+              done();
+            });
+        });
+
         it('Does not allows access to s3 signing POSTs for users without permission', function(done) {
           var file = {
             name: 'myfile.doc',
@@ -1164,6 +1275,22 @@ module.exports = function(app, template, hook) {
               if (err) {
                 return done(err);
               }
+              done();
+            });
+        });
+
+        it('Does not allows access to delete s3 file for users without permission', function(done) {
+          request(app)
+            .delete('/project/' + template.project._id + '/form/' + template.forms.uploadForm._id + '/storage/s3?bucket=testbucket&key=upload/myfile.doc')
+            .expect(401)
+            .expect('Content-Type', /text/)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              template.users.tempUser.token = res.headers['x-jwt-token'];
+
               done();
             });
         });

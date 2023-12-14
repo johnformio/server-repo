@@ -103,6 +103,7 @@ module.exports = function(app) {
       configFormio: require('./alter/configFormio'),
       loadRevision: require('./alter/loadRevision')(app),
       parentProjectSettings: require('./alter/parentProjectSettings')(app),
+      rawDataAccess: require('./alter/rawDataAccess'),
       actionSettingsForm: require('./alter/actionSettingsForm')(app),
       saveSubmission: require('./alter/saveSubmission')(app),
       rehydrateValidatedSubmissionData: require('./alter/rehydrateValidatedSubmissionData')(app),
@@ -2005,6 +2006,23 @@ module.exports = function(app) {
         // Add the private updates to the original file list and continue.
         files = files.concat(_files);
         next(null, files);
+      },
+
+      /**
+       * A hook to expose the update system on system load.
+       *
+       * @param configFormsUpdates {Object}
+       *   The publicly available updates.
+       */
+      getConfigFormsUpdates(configFormsUpdates) {
+        if (!_.isPlainObject(configFormsUpdates)) {
+          configFormsUpdates = {};
+        }
+
+        const _files = require('../db/configFormsUpdates/index.js');
+        _.assign(configFormsUpdates, _files || {});
+
+        return configFormsUpdates;
       },
 
       /**

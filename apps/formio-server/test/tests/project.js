@@ -9,6 +9,7 @@ const async = require('async');
 const chance = new (require('chance'))();
 const moment = require('moment');
 const nock = require('nock');
+const {createHmac} = require('node:crypto');
 const {ObjectId} = require('formio/src/util/util');
 const uuidRegex = /^([a-z]{15})$/;
 const util = require('formio/src/util/util');
@@ -89,6 +90,54 @@ module.exports = function(app, template, hook) {
   };
 
   let formId;
+
+  if (!config.formio.hosted)
+  describe('Checking validation during project creation', function() {
+    const testProject = {
+      title: chance.word(),
+      description: chance.word(),
+      name: 'trainingProject',
+      plan: 'commercial',
+    };
+
+    before((done) => {
+      request(app)
+        .post('/project')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send(testProject)
+        .expect(201)
+        .end(done)
+    });
+
+    it('Should not create project with the same name', function(done) {
+      request(app)
+        .post('/project')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send(testProject)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+          assert.equal(res.text, 'project validation failed: name: The Project name must be unique.');
+          done();
+         });
+    });
+
+    it('Should not create project with non-valid project name', function(done) {
+      testProject.name = "training project"
+      request(app)
+        .post('/project')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send(testProject)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+          assert.equal(res.text, 'project validation failed: name: A Project domain name may only contain letters, numbers, and hyphens (but cannot start or end with a hyphen)')
+          done();
+        });
+    });
+  })
 
   describe('Projects', function() {
     const tempProject = {
@@ -823,6 +872,309 @@ module.exports = function(app, template, hook) {
 
           done();
         });
+    });
+
+    describe('Raw data access', () => {
+      const adminKey = chance.string({ length: 36 });
+      const hashedAdminKey = createHmac('sha256', adminKey).digest('hex');
+
+      const apiKey = chance.string({ length: 30 });
+      const hashedApiKey = createHmac('sha256', apiKey).digest('hex');
+
+      before(() => {
+        process.env.ADMIN_KEY = adminKey;
+      });
+
+      it('Before: Should add API Key to project settings', done => {
+        request(app)
+          .put(`/project/${template.project._id}`)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({settings: {
+            keys: [
+              {
+                name: chance.word(),
+                key: apiKey,
+              },
+            ]
+          }})
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            const project = res.body;
+
+            assert.ok(project.settings, 'Project should have settings');
+            assert.ok(project.settings.keys, 'Project should have "keys" field in settings');
+            assert.ok(
+              Array.isArray(project.settings.keys) &&
+              project.settings.keys.length,
+              'Project should have at least one API Key in settings'
+            );
+            assert.ok(project.settings.keys.some(({key}) => key === apiKey), 'Project should have API Key set in settings');
+
+            template.project = project;
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('Before: Should create an administrator user', done => {
+        request(app)
+          .post(`/project/${template.forms.adminRegister.project}/form/${template.forms.adminRegister._id}/submission`)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({
+            data: {
+              'email': template.users.admin.data.email,
+              'password': template.users.admin.data.password
+            }
+          })
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            const submission = res.body;
+
+            assert.ok(submission.hasOwnProperty('_id'), 'Submission should have "_id" field returned');
+            assert.ok(submission.data.hasOwnProperty('email'), 'Submission should have "email" field returned');
+            assert.equal(submission.data.email, template.users.admin.data.email);
+            assert.ok(!submission.data.hasOwnProperty('password'), 'Submission should not have "password" field returned');
+            assert.ok(res.headers.hasOwnProperty('x-jwt-token'), 'Response should have "x-jwt-token" header returned');
+            assert.equal(submission.roles[0].toString(), template.roles.administrator._id.toString());
+
+            template.users.admin._id = submission._id;
+            template.users.admin.form = submission.form;
+            // Store the JWT for future API calls.
+            template.users.admin.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('Should retrieve all project fields when Admin Key and valid x-raw-data-access header provided', done => {
+        request(app)
+          .get('/project/' + template.project._id)
+          .set('x-admin-key', process.env.ADMIN_KEY)
+          .set('x-raw-data-access', hashedAdminKey)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            const project = res.body;
+
+            assert.ok(project.hasOwnProperty('__v'), 'Project should have "__v" field returned');
+            assert.ok(project.hasOwnProperty('deleted'), 'Project should have "deleted" field returned');
+            assert.ok(project.hasOwnProperty('machineName'), 'Project should have "machineName" field returned');
+            assert.ok(project.hasOwnProperty('primary'), 'Project should have "primary" field returned');
+            assert.ok(project.hasOwnProperty('settings_encrypted'), 'Project should have "settings_encrypted" field returned');
+
+            done();
+          });
+      });
+
+      it('Should retrieve all project fields when API Key and valid x-raw-data-access header provided', done => {
+        request(app)
+          .get('/project/' + template.project._id)
+          .set('x-token', apiKey)
+          .set('x-raw-data-access', hashedApiKey)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            const project = res.body;
+
+            assert.ok(project.hasOwnProperty('__v'), 'Project should have "__v" field returned');
+            assert.ok(project.hasOwnProperty('deleted'), 'Project should have "deleted" field returned');
+            assert.ok(project.hasOwnProperty('machineName'), 'Project should have "machineName" field returned');
+            assert.ok(project.hasOwnProperty('primary'), 'Project should have "primary" field returned');
+            assert.ok(project.hasOwnProperty('settings_encrypted'), 'Project should have "settings_encrypted" field returned');
+
+            done();
+          });
+      });
+
+      it('Should not retrieve all project fields when only Admin Key provided', done => {
+        request(app)
+          .get('/project/' + template.project._id)
+          .set('x-admin-key', process.env.ADMIN_KEY)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            const project = res.body;
+
+            assert.ok(!project.hasOwnProperty('__v'), 'Project should not have "__v" field returned');
+            assert.ok(!project.hasOwnProperty('deleted'), 'Project should not have "deleted" field returned');
+            assert.ok(!project.hasOwnProperty('machineName'), 'Project should not have "machineName" field returned');
+            assert.ok(!project.hasOwnProperty('primary'), 'Project should not have "primary" field returned');
+            assert.ok(!project.hasOwnProperty('settings_encrypted'), 'Project should not have "settings_encrypted" field returned');
+
+            done();
+          });
+      });
+
+      it('Should not retrieve all project fields when only API Key provided', done => {
+        request(app)
+          .get('/project/' + template.project._id)
+          .set('x-token', apiKey)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            const project = res.body;
+
+            assert.ok(!project.hasOwnProperty('__v'), 'Project should not have "__v" field returned');
+            assert.ok(!project.hasOwnProperty('deleted'), 'Project should not have "deleted" field returned');
+            assert.ok(!project.hasOwnProperty('machineName'), 'Project should not have "machineName" field returned');
+            assert.ok(!project.hasOwnProperty('primary'), 'Project should not have "primary" field returned');
+            assert.ok(!project.hasOwnProperty('settings_encrypted'), 'Project should not have "settings_encrypted" field returned');
+
+            done();
+          });
+      });
+
+      it('Should return error when Admin user JWT token and valid x-raw-data-access header provided', done => {
+        request(app)
+          .get('/project/' + template.project._id)
+          .set('x-jwt-token', template.users.admin.token)
+          .set('x-raw-data-access', hashedApiKey)
+          .expect('Content-Type', /json/)
+          .expect(400)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            const error = res.body;
+
+            assert.ok(error.hasOwnProperty('message'), 'Error should have "message" field returned');
+            assert.equal(error.message, 'API Key or Admin Key are required for raw data access.');
+
+            done();
+          });
+      });
+
+      it('Should return error when Admin Key and invalid x-raw-data-access header provided', done => {
+        request(app)
+          .get('/project/' + template.project._id)
+          .set('x-admin-key', adminKey)
+          .set('x-raw-data-access', chance.string({length: 36}))
+          .expect('Content-Type', /json/)
+          .expect(400)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            const error = res.body;
+
+            assert.ok(error.hasOwnProperty('message'), 'Error should have "message" field returned');
+            assert.equal(error.message, 'Invalid raw data access header provided.');
+
+            done();
+          });
+      });
+
+      it('Should return error when API Key and invalid x-raw-data-access header provided', done => {
+        request(app)
+          .get('/project/' + template.project._id)
+          .set('x-token', apiKey)
+          .set('x-raw-data-access', chance.string({length: 30}))
+          .expect('Content-Type', /json/)
+          .expect(400)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            const error = res.body;
+
+            assert.ok(error.hasOwnProperty('message'), 'Error should have "message" field returned');
+            assert.equal(error.message, 'Invalid raw data access header provided.');
+
+            done();
+          });
+      });
+
+      it('After: Should remove API Key from project settings', done => {
+        const projectApiKeys = _.get(template.project, 'settings.keys');
+
+        if (!projectApiKeys || !Array.isArray(projectApiKeys) || !projectApiKeys.length) {
+          return done(new Error('Project should have at least one API Key in settings'));
+        }
+
+        request(app)
+          .put(`/project/${template.project._id}`)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({settings: {
+            keys: projectApiKeys.filter(({key}) => key !== apiKey)
+          }})
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            const project = res.body;
+
+            assert.ok(project.settings, 'Project should have settings');
+            assert.ok(project.settings.keys, 'Project should have "keys" field in settings');
+            assert.ok(Array.isArray(project.settings.keys), 'Project settings "keys" field should be an Array');
+            assert.ok(!project.settings.keys.find(({key}) => key === apiKey), 'Project should not have API Key set in settings');
+
+            template.project = project;
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          });
+      });
+
+      it('After: Should delete administrator user', done => {
+        request(app)
+          .delete(`/project/${template.forms.adminRegister.project}/form/${template.users.admin.form}/submission/${template.users.admin._id}`)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            delete template.users.admin._id;
+            delete template.users.admin.form;
+            delete template.users.admin.token;
+
+            // Store the JWT for future API calls.
+            template.formio.owner.token = res.headers['x-jwt-token'];
+
+            done();
+          })
+      });
+
+      after(() => {
+        delete process.env.ADMIN_KEY;
+      });
     });
 
     describe('Stages', () => {
@@ -4664,19 +5016,16 @@ module.exports = function(app, template, hook) {
 
       if (!docker)
       it('Saving a payment method', function(done) {
-        app.formio.config.payeezy = {
-          keyId: 'lFGgmH7ibDkNdCV6LiSbFdmSFXtIVncD', // Test Key
-          host: 'api-cert.payeezy.com',
-          endpoint: '/v1/transactions',
-          gatewayId: 'AJ1234-01',
-          gatewayPassword: '12345678901234567890123456789012',
-          hmacKey: '0efeeaf6f21fdd71e5076dea683b3a11614972d7d8e798d42624b8f999597355', // Test Secret
-          merchToken: 'fdoa-9b1a70e39b4f6b4fb0cef1c25de68010625408dc0b1025ae' // Test Token
+        app.formio.config.fortis = {
+          userId: '11ee62159e8669aa9c22b6a1',
+          userAPIKey: '11ee62356fc99e4686188771',
+          endpoint: 'https://api.sandbox.fortis.tech/v1/transactions/cc/auth-only/keyed',
+          developerId: 'IFoNlX7Z'
         };
 
         const paymentData = {
-          ccNumber: '4012000033330026',
-          ccType: 'visa',
+          ccNumber: '5454545454545454',
+          ccType: 'MasterCard',
           ccExpiryMonth: '12',
           ccExpiryYear: '30',
           cardholderName: 'FORMIO Test Account',
@@ -4684,7 +5033,7 @@ module.exports = function(app, template, hook) {
         };
 
         request(app)
-          .post('/payeezy')
+          .post('/gateway')
           .set('x-jwt-token', template.formio.owner.token)
           .send({
             data: paymentData
@@ -4700,12 +5049,11 @@ module.exports = function(app, template, hook) {
               return app.formio.formio.resources.submission.model.findOne({form: form._id, owner: util.ObjectId(template.formio.owner._id)});
             })
             .then(function(submission) {
-              assert.equal(submission.data.ccNumber, '************0026', 'Only the last 4 digits of the cc number should be stored.');
+              assert.equal(submission.data.ccNumber, '5454', 'Only the last 4 digits of the cc number should be stored.');
               assert.equal(submission.data.ccExpiryMonth, '12', 'The expiration month should be stored.');
               assert.equal(submission.data.ccExpiryYear, '30', 'The expiration year should be stored.');
               assert.equal(submission.data.cardholderName, 'FORMIO Test Account', 'The cardholder name should be stored.');
-              assert(submission.data.token.token_data.value.substr(-4) === '0026', 'The transarmor token should have the same last 4 digits as CC number.');
-              assert(submission.data.hasOwnProperty('transactionTag'), 'The submission should store the transactionTag');
+              assert.equal(submission.data.transactionStatus, '102', 'The submission should store the transactionStatus');
               assert.equal(submission.data.securityCode, undefined, 'The security card should not be stored.');
 
               done();
@@ -4994,6 +5342,132 @@ module.exports = function(app, template, hook) {
     });
   });
 
+  describe('Form Defaults', function() {
+    const helper = new Helper(template.formio.owner);
+    const formDefaultsSetting = {
+      submissionRevisions: 'true',
+      settings: {
+        theme: 'Darkly',
+        showCheckboxBackground: true,
+        layout: 'Landscape'
+      },
+      access: [],
+      submissionAccess: [],
+      tags: [
+        'test'
+      ],
+      controller: 'console.log(111);'
+    }
+
+    before((done) => {
+      helper.project().execute((err) => {
+        if (err) {
+          return done(err);
+        }
+
+        const roles = helper.template.roles;
+
+        if (!_.isEmpty(roles)) {
+            formDefaultsSetting.access.push({
+              'roles': [
+                roles.authenticated?._id
+              ],
+              'type': 'read_all'
+            });
+
+            formDefaultsSetting.submissionAccess.push({
+              'roles': [
+                roles.authenticated?._id,
+                roles.administrator?._id
+              ],
+              'type': 'create_all'
+            });
+        }
+        done();
+      });
+    });
+
+    it('Should save formDefaults settings for the project', (done) => {
+      request(app)
+        .put('/project/' + helper.template.project._id)
+        .set('x-jwt-token', template.formio.owner.token)
+        .send({formDefaults: formDefaultsSetting })
+        .expect(200)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+          assert.deepEqual(res.body.formDefaults, formDefaultsSetting);
+          done();
+        });
+    });
+
+    it('Should create a form with default settings configured for project', (done) => {
+      helper.form('test1', [
+        {
+          type: 'textfield',
+          key: 'firstName',
+          label: 'First Name',
+          input: true
+        }       
+      ]).execute((err) => {
+        if (err) {
+          done(err);
+        }
+
+        const test1Form = helper.template.forms.test1;
+
+        _.each(formDefaultsSetting, (value, key) => {
+          assert.deepEqual(test1Form[key], value, `Form must have default setting ${key} equal to ${JSON.stringify(value)}`)
+        })
+
+        done();
+      })
+    });
+
+    it('Default form settings should not override existing access settings set for access types', (done) => {
+      const roles = helper.template.roles;
+      const form2AccessSettings =  {
+        access: [{
+          roles: [
+            roles.anonymous?._id,
+          ],
+          type: 'read_all'
+        }],
+        submissionAccess: [{
+          roles: [
+            roles.authenticated?._id,
+          ],
+          type: 'read_all'
+        }],
+      };
+
+      helper.form(
+        'test2', 
+        [
+          {
+            type: 'textfield',
+            key: 'firstName',
+            label: 'First Name',
+            input: true
+          }       
+        ],
+        form2AccessSettings
+      ).execute((err) => {
+        if (err) {
+          done(err);
+        }
+        const test2Form = helper.template.forms.test2;
+        const access = test2Form.access;
+        const submissionAccess = test2Form.submissionAccess;
+
+        assert.deepEqual(access, form2AccessSettings.access, 'Access settings must be not everriden by formDefauls');
+        assert.deepEqual(submissionAccess, [...form2AccessSettings.submissionAccess, ...formDefaultsSetting.submissionAccess], 'Submission Access settings must be not everriden by formDefauls');
+
+        done();
+      })
+    });
+  });
   // This is disabled until we set up customer testing again. This should not be allowed for hosted or docker version. Only customers.
   if (!docker || config.formio.hosted) {
     return;
