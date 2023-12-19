@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-7510: Revert "Merge pull request #1363 from formio/isolated-vm"
  - FIO-7423: Fortis Payment transaction error per description
  - Bump ecma version to 2022
+ - Revert FIO-7125
    
  
 ## 8.4.0-rc.7
