@@ -57,8 +57,7 @@ module.exports = (formioServer) => {
     const form = await formio.cache.loadFormAsync(req, null, formId);
     let submission;
     if (req.subId) {
-      submission = req.query.submissionRevision
-        ? await formio.cache.loadSubmissionRevisionAsync(req)
+      submission = req.query.submissionRevision? await formio.cache.loadSubmissionRevisionAsync(req)
         : await formio.cache.loadCurrentSubmissionAsync(req);
     }
     else {

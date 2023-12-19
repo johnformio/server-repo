@@ -104,8 +104,6 @@ module.exports = function(app) {
       loadRevision: require('./alter/loadRevision')(app),
       parentProjectSettings: require('./alter/parentProjectSettings')(app),
       rawDataAccess: require('./alter/rawDataAccess'),
-      actionSettingsForm: require('./alter/actionSettingsForm')(app),
-      saveSubmission: require('./alter/saveSubmission')(app),
       schemaIndex(index) {
         index.project = 1;
         return index;

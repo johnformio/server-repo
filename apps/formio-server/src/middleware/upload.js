@@ -1,16 +1,19 @@
 'use strict';
 const fetch = require('formio/src/util/fetch');
+const {promisify} = require('util');
 const _ = require('lodash');
-const {unlink} = require('fs/promises');
-const {createReadStream} = require('fs');
+const Promise = require('bluebird');
+const fs = require('fs');
 const {getLicenseKey} = require('../util/utilization');
 const {getPDFUrls} = require('../util/pdf');
 const debug = require('debug')('formio:pdf:upload');
 const FormData = require('form-data');
 
+const unlinkAsync = promisify(fs.unlink);
+
 const tryUnlinkAsync = async filepath => {
   try {
-    return await unlink(filepath);
+    return await unlinkAsync(filepath);
   }
   catch (err) {
     return err;
@@ -20,6 +23,7 @@ const tryUnlinkAsync = async filepath => {
 module.exports = (formioServer) => async (req, res, next) => {
   debug('Starting pdf upload');
   const formio = formioServer.formio;
+  Promise.promisifyAll(formio.cache, {context: formio.cache});
 
   try {
     // Load project
@@ -58,7 +62,7 @@ module.exports = (formioServer) => async (req, res, next) => {
       debug('POST: ' + `${pdfUrls.local}/pdf/${pdfProject}/file`);
       debug(`Filepath: ${  req.files.file.path}`);
       const form = new FormData();
-      form.append('file', createReadStream(req.files.file.path), {
+      form.append('file', fs.createReadStream(req.files.file.path), {
         filename: req.files.file.name,
         contentType: req.files.file.type,
         size: req.files.file.size,
