@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-7423: Fortis Payment transaction error per description
  - Bump ecma version to 2022
  - Revert FIO-7125
+ - FIO-7549: evaluate axios upgrades and CVE resolution
    
  
 ## 8.4.0-rc.7
