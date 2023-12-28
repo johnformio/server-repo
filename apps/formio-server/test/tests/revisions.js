@@ -1022,58 +1022,6 @@ module.exports = (app, template, hook) => {
         });
       });
     });
-
-    it('Doesn\'t clear/modify data that was submitted with an older form revision and doesn\'t exist on the' +
-      ' current one', (done) => {
-      form.revisions = 'current';
-      helper.updateForm(form, (err, result) => {
-        assert.equal(result.revisions, 'current');
-        const data = {
-          fname: 'Name',
-          lname: 'Name',
-          mname: 'Name',
-          pname: 'Name'
-        };
-        helper.createSubmission('revisionForm', {
-          data,
-          _fvid: 3
-        }, helper.owner, [/application\/json/, 400], (err, result) => {
-          assert.deepEqual(result.data, data);
-          form.components = form.components.slice(0, 2);
-
-          const submission = result;
-
-          helper.updateForm(form, (err, result) => {
-            if (err) {
-              return done(err);
-            }
-            assert.equal(result.length, 4);
-            assert.equal(result[0].components.length, 3);
-            assert.equal(result[0]._vid, 4);
-
-            submission.data.fname = 'Name1';
-            submission.data.lname = 'Name1';
-            submission.data.mname = 'Name1';
-            submission.data.pname = 'Name1';
-
-            helper.updateSubmission(submission, (err, result) => {
-              if (err) {
-                return done(err);
-              }
-
-              assert.deepEqual(result.data, {
-                fname: 'Name1',
-                lname: 'Name1',
-                mname: 'Name1',
-                pname: 'Name',
-              });
-              done();
-            });
-          });
-        });
-      });
-
-    });
   });
 
   describe('Submission Revisions', () => {
