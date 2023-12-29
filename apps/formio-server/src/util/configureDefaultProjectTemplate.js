@@ -1,7 +1,7 @@
 
 'use strict';
 const config = require('../../config');
-const reportingUITemplate = require('../../reportingUI.json');
+const reportingUITemplate = require('@formio/reporting/reportConfigTemplate.json');
 const _ = require('lodash');
 
 module.exports = function(app) {

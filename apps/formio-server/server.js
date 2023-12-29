@@ -266,7 +266,7 @@ module.exports = function(options) {
   app.get('/reportingui/config', [
     cors(),
     (req, res) => {
-      const reportingUIForm = require('./reportingUI.json').resources.reportingui;
+      const reportingUIForm = require('@formio/reporting/reportConfigTemplate.json').resources.reportingui;
       res.json(reportingUIForm);
     }
   ]);
