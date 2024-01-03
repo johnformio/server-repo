@@ -1,5 +1,6 @@
 'use strict';
 const _ = require('lodash');
+const Promise = require('bluebird');
 const fetch = require('formio/src/util/fetch');
 const processChangeLogData = require('./processChangeLogData');
 const proxy = require('../middleware/pdfProxy/proxy');
@@ -7,7 +8,7 @@ const proxy = require('../middleware/pdfProxy/proxy');
 module.exports = (formioServer) => {
   const formio = formioServer.formio;
   const encrypt = require('./encrypt')(formioServer);
-
+  Promise.promisifyAll(formio.cache, {context: formio.cache});
   return async (req, project, form, submission) => {
     proxy.authenticate(req, project);
     proxy.updateHeadersForPdfRequest(req, formio);
@@ -21,21 +22,22 @@ module.exports = (formioServer) => {
       const submissionFormRevisionId = submission._frid ? submission._frid.toString() : submission._fvid;
       if (submissionFormRevisionId !== form._vid) {
         let result;
-        const formRevisionModel = formio.resources.formrevision.model;
-
         if (submissionFormRevisionId.length === 24) {
-          result = await formRevisionModel.findOne({
+          result = await Promise.promisify(formio.resources.formrevision.model.findOne, {
+            context: formio.resources.formrevision.model
+          })({
             _id: formio.util.idToBson(submissionFormRevisionId),
           });
         }
         else {
-          result = await formRevisionModel.findOne({
+          result = await Promise.promisify(formio.resources.formrevision.model.findOne, {
+            context: formio.resources.formrevision.model
+          })({
             project: project._id,
             _rid: formio.util.idToBson(form._id),
             _vid: parseInt(submissionFormRevisionId),
           });
         }
-
         if (result) {
           form.components = result.toObject().components;
           form.settings = result.toObject().settings;

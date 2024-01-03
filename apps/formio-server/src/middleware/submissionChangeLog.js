@@ -1,6 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
+const config = require('../../config');
 
 module.exports = function(app) {
   const getLog = (data) => {
@@ -8,6 +9,10 @@ module.exports = function(app) {
   };
 
   return function(req, res, next) {
+    if (config.formio.hosted || !_.get(req, 'licenseTerms.options.sac', false)) {
+      return next();
+    }
+
     const util = app.formio.formio.util;
     //
     const submissionRevisionModel = req.submissionRevisionModel ? req.submissionRevisionModel : app.formio.formio.mongoose.models.submissionrevision;
