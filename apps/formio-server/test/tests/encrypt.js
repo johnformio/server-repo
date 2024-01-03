@@ -389,7 +389,7 @@ module.exports = function (app, template, hook) {
           })
           .end((err, res) => {
             if (err) {
-              return done;
+              return done(err);
             }
             assert(res.body, 'Form was created');
             formId = form.body._id;
