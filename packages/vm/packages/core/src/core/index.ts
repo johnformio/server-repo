@@ -1,4 +1,9 @@
-import { evaluateInVm } from './evaluateInVm';
+import evaluate from './evaluate';
 import { evaluateError } from './util';
+import evaluateProcess from './evaluateProcess';
 
-export { evaluateInVm, evaluateError };
+export {
+  evaluate,
+  evaluateError,
+  evaluateProcess,
+};
