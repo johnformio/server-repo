@@ -129,7 +129,13 @@ module.exports = function(app) {
 
         return args;
       },
+      decrypt(req, cipherbuffer) {
+        const secret = _.get(app, 'license.terms.options.sac', false)
+          ? req.currentProject.settings.secret || config.formio.secret
+          : null;
 
+        return secret ? util.decrypt(secret, cipherbuffer) : cipherbuffer;
+      },
       export(req, query, form, exporter, cb) {
         util.getSubmissionModel(formioServer.formio, req, form, true, (err, submissionModel) => {
           if (err) {
@@ -143,18 +149,14 @@ module.exports = function(app) {
           }
 
           req.flattenedComponents = formioServer.formio.util.flattenComponents(form.components, true);
-          const hasEncrypted = encrypt.hasEncryptedComponents(req);
-
-          const decryptSecret = _.get(app, 'license.terms.options.sac', false) && hasEncrypted
-            ? req.currentProject.settings.secret || config.formio.secret
-            : null;
+          encrypt.hasEncryptedComponents(req);
 
           if (!submissionModel) {
-            return cb(null, decryptSecret);
+            return cb();
           }
 
           req.submissionModel = submissionModel;
-          return cb(null, decryptSecret);
+          return cb();
         });
       },
 
