@@ -130,8 +130,9 @@ module.exports = function(app) {
         return args;
       },
       decrypt(req, cipherbuffer) {
-        const secret = _.get(app, 'license.terms.options.sac', false)
-          ? req.currentProject.settings.secret || config.formio.secret
+        const currentProject = formioServer.formio.cache.currentProject(req);
+        const secret = currentProject && _.get(app, 'license.terms.options.sac', false)
+          ? currentProject.settings.secret || config.formio.secret
           : null;
 
         return secret ? util.decrypt(secret, cipherbuffer) : cipherbuffer;
