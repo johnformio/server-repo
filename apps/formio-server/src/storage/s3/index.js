@@ -13,7 +13,8 @@ const {
   removeAWSObject,
 } = require('./aws');
 const debug = {
-  startup: require('debug')('formio:startup')
+  startup: require('debug')('formio:startup'),
+  s3: require('debug')('formio:s3')
 };
 
 const {MB_IN_BYTES} = require('./constants');
@@ -69,46 +70,58 @@ function getPresignedPutUrl(s3Settings, file) {
 }
 
 function getUploadResponse(s3Settings, file, signedUrl, headers, uploadId, partSizeActual) {
-  const bucketUrl = s3Settings.bucketUrl || `https://${s3Settings.bucket}.s3.amazonaws.com`;
+  try {
+    const bucketUrl = s3Settings.bucketUrl || `https://${s3Settings.bucket}.s3.amazonaws.com`;
 
-  const response = {
-    signed: signedUrl,
-    minio: s3Settings.minio,
-    url: bucketUrl,
-    bucket: s3Settings.bucket,
-    uploadId,
-    key: file.path,
-    partSizeActual
-  };
+    const response = {
+      signed: signedUrl,
+      minio: s3Settings.minio,
+      url: bucketUrl,
+      bucket: s3Settings.bucket,
+      uploadId,
+      key: file.path,
+      partSizeActual
+    };
 
-  const policy = Buffer.from(JSON.stringify({
-    expiration: file.expiration,
-    conditions: [
-      {'bucket': s3Settings.bucket},
-      ['starts-with', '$key', file.dir],
-      {'acl': s3Settings.acl || 'private'},
-      ['starts-with', '$Content-Type', ''],
-      ['starts-with', '$filename', ''],
-      ['content-length-range', 0, s3Settings.maxSize || (100 * 1024 * 1024)]
-    ]
-  })).toString('base64');
+    const policy = Buffer.from(JSON.stringify({
+      expiration: file.expiration,
+      conditions: [
+        {'bucket': s3Settings.bucket},
+        ['starts-with', '$key', file.dir],
+        {'acl': s3Settings.acl || 'private'},
+        ['starts-with', '$Content-Type', ''],
+        ['starts-with', '$filename', ''],
+        ['content-length-range', 0, s3Settings.maxSize || (100 * 1024 * 1024)]
+      ]
+    })).toString('base64');
 
-  response.data = {
-    key: file.dir,
-    signature: CryptoJS.HmacSHA1(
+    response.data = {
+      key: file.dir,
+      acl: s3Settings.acl || 'private',
       policy,
-      s3Settings.AWSSecretKey
-    ).toString(CryptoJS.enc.Base64),
-    AWSAccessKeyId: s3Settings.AWSAccessKeyId,
-    acl: s3Settings.acl || 'private',
-    policy,
-    'Content-Type': file.type,
-    filename: file.name,
-    headers,
-  };
+      'Content-Type': file.type,
+      filename: file.name,
+      headers,
+    };
 
-  // Return the response to the client.
-  return response;
+    if (!_.isNil(s3Settings.AWSSecretKey)) {
+      response.data.signature = CryptoJS.HmacSHA1(
+        policy,
+        s3Settings.AWSSecretKey
+      ).toString(CryptoJS.enc.Base64);
+    }
+
+    if (!_.isNil(s3Settings.AWSAccessKeyId)) {
+      response.data.AWSAccessKeyId = s3Settings.AWSAccessKeyId;
+    }
+
+    // Return the response to the client.
+    return response;
+  }
+  catch (err) {
+    debug.s3(err);
+    throw new Error('Failed to get upload response');
+  }
 }
 
 const middleware = function(router) {
