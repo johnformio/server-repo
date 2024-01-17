@@ -576,9 +576,11 @@ module.exports = router => {
       var getUserTeams = function(user) {
         return new Promise((resolve) => {
           if (req.currentProject.primary && config.ssoTeams) {
-            formio.teams.getSSOTeams(user).then((teams) => {
+            const userRoles = user.data?.groups || [];
+            formio.teams.getSSOTeams(user, userRoles).then((teams) => {
               teams = teams || [];
               user.teams = _.map(_.map(teams, '_id'), formio.util.idToString);
+              user.sso = true;
               return resolve(user);
             }).catch(() => resolve(user));
           }
