@@ -104,14 +104,14 @@ function getUploadResponse(s3Settings, file, signedUrl, headers, uploadId, partS
       headers,
     };
 
-    if (!_.isNil(s3Settings.AWSSecretKey)) {
+    if (!_.isNil(s3Settings.AWSSecretKey) && s3Settings.AWSSecretKey !== '') {
       response.data.signature = CryptoJS.HmacSHA1(
         policy,
         s3Settings.AWSSecretKey
       ).toString(CryptoJS.enc.Base64);
     }
 
-    if (!_.isNil(s3Settings.AWSAccessKeyId)) {
+    if (!_.isNil(s3Settings.AWSAccessKeyId) && s3Settings.AWSSecretKey !== '') {
       response.data.AWSAccessKeyId = s3Settings.AWSAccessKeyId;
     }
 
