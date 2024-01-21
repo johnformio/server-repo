@@ -104,6 +104,7 @@ module.exports = function(app) {
       loadRevision: require('./alter/loadRevision')(app),
       parentProjectSettings: require('./alter/parentProjectSettings')(app),
       rawDataAccess: require('./alter/rawDataAccess'),
+      rehydrateValidatedSubmissionData: require('./alter/rehydrateValidatedSubmissionData')(app),
       schemaIndex(index) {
         index.project = 1;
         return index;

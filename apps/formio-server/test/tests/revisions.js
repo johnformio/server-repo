@@ -163,7 +163,7 @@ module.exports = (app, template, hook) => {
         });
       });
     });
-    
+
     if (!config.formio.hosted) {
       it('Should not create a new revision if sac is disabled', done => {
         process.env.TEST_SIMULATE_SAC_PACKAGE = '0';
@@ -182,7 +182,7 @@ module.exports = (app, template, hook) => {
         });
       });
     }
-  
+
     it('Creates a new revision when a form is updated', done => {
       form.components.push({
         input: true,
@@ -1030,7 +1030,7 @@ module.exports = (app, template, hook) => {
     let formWithInitiallyDisabledRevision;
     let submissionRevisionChangelogForm;
     let submission;
-    let submissionWithInitiallyDisabledRevision; 
+    let submissionWithInitiallyDisabledRevision;
     const data = {
       fname: 'joe',
       lname: 'test'
@@ -1176,68 +1176,68 @@ module.exports = (app, template, hook) => {
             type: 'textfield'
           }
         ])
-        .form('submissionRevisionChangelogForm', [ 
-          { 
-            input: true, 
-            tableView: false, 
+        .form('submissionRevisionChangelogForm', [
+          {
+            input: true,
+            tableView: false,
             inputFormat: 'plain',
-            label: 'number1', 
-            key: 'number1', 
+            label: 'number1',
+            key: 'number1',
             requireDecimal: false,
-            placeholder: '', 
-            prefix: '', 
-            suffix: '', 
-            multiple: false, 
-            defaultValue: '', 
-            protected: false, 
-            unique: false, 
-            persistent: true, 
-            validate: { 
-              required: true, 
-              minLength: '', 
-              maxLength: '', 
-              pattern: '', 
-              custom: '', 
-              customPrivate: false 
-            }, 
-            conditional: { 
-              show: '', 
-              when: null, 
-              eq: '' 
-            }, 
-            type: 'number', 
-          },  
-          { 
-            input: true, 
-            tableView: false, 
+            placeholder: '',
+            prefix: '',
+            suffix: '',
+            multiple: false,
+            defaultValue: '',
+            protected: false,
+            unique: false,
+            persistent: true,
+            validate: {
+              required: true,
+              minLength: '',
+              maxLength: '',
+              pattern: '',
+              custom: '',
+              customPrivate: false
+            },
+            conditional: {
+              show: '',
+              when: null,
+              eq: ''
+            },
+            type: 'number',
+          },
+          {
+            input: true,
+            tableView: false,
             inputFormat: 'plain',
-            label: 'number2', 
-            key: 'number2', 
+            label: 'number2',
+            key: 'number2',
             requireDecimal: false,
-            placeholder: '', 
-            prefix: '', 
-            suffix: '', 
-            multiple: false, 
-            defaultValue: '', 
-            protected: false, 
-            unique: false, 
-            persistent: true, 
-            validate: { 
-              required: true, 
-              minLength: '', 
-              maxLength: '', 
-              pattern: '', 
-              custom: '', 
-              customPrivate: false 
-            }, 
-            conditional: { 
-              show: '', 
-              when: null, 
-              eq: '' 
-            }, 
-            type: 'number', 
-          } 
-        ]) 
+            placeholder: '',
+            prefix: '',
+            suffix: '',
+            multiple: false,
+            defaultValue: '',
+            protected: false,
+            unique: false,
+            persistent: true,
+            validate: {
+              required: true,
+              minLength: '',
+              maxLength: '',
+              pattern: '',
+              custom: '',
+              customPrivate: false
+            },
+            conditional: {
+              show: '',
+              when: null,
+              eq: ''
+            },
+            type: 'number',
+          }
+        ])
         .execute(function() {
           form = helper.getForm('submissionRevisionForm');
           formWithInitiallyDisabledRevision = helper.getForm('submissionRevisionUpdateForm');
@@ -1588,8 +1588,8 @@ module.exports = (app, template, hook) => {
           done();
         });
       });
-      
-      it('0 is shown in the Submission Revisions Changelog', done => { 
+
+      it('0 is shown in the Submission Revisions Changelog', done => {
         submissionRevisionChangelogForm.submissionRevisions = 'true';
         submissionRevisionChangelogForm.components.push();
         helper.updateForm(submissionRevisionChangelogForm, (err, result) => {
@@ -1622,8 +1622,8 @@ module.exports = (app, template, hook) => {
                 }
                 helper.getSubmissionRevisionChangeLog(submissionRevisionChangelogForm, submission, revisions[1]._id,
                   (err, results) => {
-                    if (err) { 
-                      done(err); 
+                    if (err) {
+                      done(err);
                     }
                     assert.equal(results.data.number2, 0);
                     assert.equal(results.metadata.previousData.number1, 0);
