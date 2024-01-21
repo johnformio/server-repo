@@ -20,7 +20,8 @@ module.exports = (router, formioServer) => {
     // Migrate "public" settings into an accessible "virtual" property.
     project.public = {
       formModule: _.get(project, 'settings.formModule', ''),
-      custom: _.get(project, 'settings.custom', {})
+      custom: _.get(project, 'settings.custom', {}),
+      defaultStage: _.get(project, 'settings.defaultStage', ''),
     };
   };
 

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-7397: fixed server validation errors for reporting ui config form
  - FIO-7167: Isolated vm
  - FIO-7423: Fortis Payment Gateway Feature
+ - FIO-7551: Revert "FIO-7423: Fortis Payment Gateway Feature" 
  - FIO-7400: fixed an issue where lookup operator with pipeline gives an уrror in DocumentDB
  - hotfix for failing tests
  - FIO 7239: add support for AWS S3 multipart uploads
@@ -27,6 +28,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-7319: fixed an issue where submission changelog is available when sac is disabled and for hosted
  - Revert "Merge pull request #1363 from formio/isolated-vm"
  - FIO-7413: removed SQL Connector action from hosted platform
+ - FIO-7492: Default Stage Feature
+ - FIO-7621: Fixes tests failing on hosted environment
+ - FIO-7536: added default form settings
+ - FIO-3820: added ability to remove file from storage
+ - FIO-7482: added the db update script for reportingui forms
+ - [Snyk] Security upgrade crypto-js from 4.1.1 to 4.2.0
+ - FIO-7542: Pin node image to node 18
+ - FIO-7423: Transaction Failed empty message FIXED
+ - FIO-7510: Revert "Merge pull request #1363 from formio/isolated-vm"
+ - FIO-7423: Fortis Payment transaction error per description
+ - Bump ecma version to 2022
+ - Revert FIO-7125
+ - FIO-7549: evaluate axios upgrades and CVE resolution
+   
  
 ## 8.4.0-rc.7
 ### Changed

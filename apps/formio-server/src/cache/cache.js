@@ -10,7 +10,6 @@ const _ = require('lodash');
 
 const debug = {
   loadProject: require('debug')('formio:cache:loadProject'),
-  loadSubmissionRevisionAsync: require('debug')('formio:cache:loadSubmissionRevisionAsync'),
   error: require('debug')('formio:error')
 };
 
@@ -284,49 +283,6 @@ module.exports = function(server) {
         }
         return cb(null, result);
       });
-    },
-
-    async loadSubmissionRevisionAsync(req) {
-      const submissionRevisionId = req.query.submissionRevision;
-
-      if (!submissionRevisionId) {
-        const err = new Error('No submission revision id provided');
-        debug.loadSubmissionRevisionAsync(err);
-        throw err;
-      }
-
-      if (!req.params.formId) {
-        const err = new Error('No form id provided');
-        debug.loadSubmissionRevisionAsync(err);
-        throw err;
-      }
-
-      const cache = this.cache(req);
-
-      if (cache.submissionRevisions[submissionRevisionId]) {
-        debug.loadSubmissionRevisionAsync(`Cache hit: ${submissionRevisionId}`);
-        return cache.submissionRevisions[submissionRevisionId];
-      }
-
-      debug.loadSubmissionRevisionAsync(`Searching for form: ${req.params.formId}, and submission: ${submissionRevisionId}`);
-
-      const query = {
-        _id: util.idToBson(submissionRevisionId),
-        form: req.params.formId, deleted: {$eq: null}
-      };
-
-      const submissionRevisionModel = req.submissionRevisionModel || formio.resources.submissionrevision.model;
-
-      const revision = await submissionRevisionModel.findOne(formio.hook.alter('submissionQuery', query, req)).lean().exec();
-
-      if (!revision) {
-        debug.loadSubmissionRevisionAsync('No submission found for the given query.');
-        return null;
-      }
-      // Updating cache with found submission revision
-      cache.submissionRevisions[submissionRevisionId] = revision;
-
-      return revision;
     }
   };
 

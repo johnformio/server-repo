@@ -104,8 +104,6 @@ module.exports = function(app) {
       loadRevision: require('./alter/loadRevision')(app),
       parentProjectSettings: require('./alter/parentProjectSettings')(app),
       rawDataAccess: require('./alter/rawDataAccess'),
-      actionSettingsForm: require('./alter/actionSettingsForm')(app),
-      saveSubmission: require('./alter/saveSubmission')(app),
       rehydrateValidatedSubmissionData: require('./alter/rehydrateValidatedSubmissionData')(app),
       schemaIndex(index) {
         index.project = 1;
@@ -130,7 +128,14 @@ module.exports = function(app) {
 
         return args;
       },
+      decrypt(req, cipherbuffer) {
+        const currentProject = formioServer.formio.cache.currentProject(req);
+        const secret = currentProject && _.get(app, 'license.terms.options.sac', false)
+          ? currentProject.settings.secret || config.formio.secret
+          : null;
 
+        return secret ? util.decrypt(secret, cipherbuffer) : cipherbuffer;
+      },
       export(req, query, form, exporter, cb) {
         util.getSubmissionModel(formioServer.formio, req, form, true, (err, submissionModel) => {
           if (err) {
@@ -142,6 +147,9 @@ module.exports = function(app) {
               return value.map(item => _.get(item, 'data.email', ''));
             });
           }
+
+          req.flattenedComponents = formioServer.formio.util.flattenComponents(form.components, true);
+          encrypt.hasEncryptedComponents(req);
 
           if (!submissionModel) {
             return cb();
