@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import evaluate from '../evaluate';
+import { evaluate } from '../evaluate';
 
 describe('Test evaluate', () => {
   it('should evaluate simple code with lodash', async () => {
@@ -54,5 +54,14 @@ describe('Test evaluate', () => {
       code: 'a.b + c',
     });
     expect(result).to.equal(3);
+  });
+
+  it('should evaluate code with nunjucks', async () => {
+    const result = await evaluate({
+      deps: ['nunjucks'],
+      data: {},
+      code: 'nunjucks.renderString("Hello {{ name }}", { name: "World" })',
+    });
+    expect(result).to.equal('Hello World');
   });
 });

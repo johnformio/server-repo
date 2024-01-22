@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import evaluateProcess from '../evaluateProcess';
+import { evaluateProcess } from '../evaluateProcess';
 
 const formWithNested = {
   components: [

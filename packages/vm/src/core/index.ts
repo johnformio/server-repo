@@ -1,9 +1,4 @@
-import evaluate from './evaluate';
-import { evaluateError } from './util';
-import evaluateProcess from './evaluateProcess';
-
-export {
-  evaluate,
-  evaluateError,
-  evaluateProcess,
-};
+export { evaluate, evaluateSync } from './evaluate';
+export { evaluateError } from './util';
+export { evaluateProcess } from './evaluateProcess';
+export { renderEmail } from './renderEmail';

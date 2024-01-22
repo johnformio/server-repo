@@ -1,4 +1,4 @@
-import evaluate from './evaluate';
+import { evaluate } from './evaluate';
 
 const code = `
 root = new RootShim(context.form, context.submission);
@@ -22,7 +22,7 @@ export type EvaluateProcessorsResult = {
   data: any;
 }
 
-export default async function evaluateProcess(options: EvaluateProcessorsOptions): Promise<EvaluateProcessorsResult> {
+export async function evaluateProcess(options: EvaluateProcessorsOptions): Promise<EvaluateProcessorsResult> {
   const evaluateContext = {
     form: options.form,
     components: options.form.components,

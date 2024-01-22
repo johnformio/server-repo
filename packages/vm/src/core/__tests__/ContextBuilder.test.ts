@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import ContextBuilder from '../ContextBuider';
 import { Context } from 'isolated-vm';
+import * as core from '@formio/core'
 
 describe('Test ContextBuilder', () => {
   let context: Context = null as any;
@@ -10,6 +11,7 @@ describe('Test ContextBuilder', () => {
       .withLodash()
       .withMoment()
       .withCore()
+      .withNunjucks()
       .build();
     
     expect(context).to.be.an('object');
@@ -29,5 +31,10 @@ describe('Test ContextBuilder', () => {
   it('should evaluate core', () => {
     const result = context.evalSync('FormioCore.isEmpty(null)');
     expect(result).to.equal(true);
+  });
+
+  it('should evaluate code with nunjucks', () => {
+    const result = context.evalSync('nunjucks.renderString("Hello {{ name }}", { name: "World" })');
+    expect(result).to.equal('Hello World');
   });
 });
