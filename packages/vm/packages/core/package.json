@@ -1,13 +1,21 @@
 {
     "name": "@formio/vm",
-    "version": "0.0.1",
+    "version": "0.0.4",
     "main": "build/index.js",
-    "license": "MIT",
+    "license": "OSL-3.0",
+    "files": [
+        "build",
+        "package.json",
+        "yarn.lock",
+        "README.md",
+        "LICENSE.txt"
+    ],
     "dependencies": {
         "@formio/core": "^1.2.0",
         "debug": "^4.3.4",
         "dotenv": "^16.3.1",
         "express": "^4.18.2",
+        "formiojs": "^4.18.0",
         "isolated-vm": "^4.6.0",
         "lodash": "^4.17.21",
         "moment": "^2.29.4",
@@ -17,11 +25,10 @@
     },
     "scripts": {
         "test": "mocha -r ts-node/register -b -t 0 'src/**/__tests__/*.test.ts'",
-        "clean": "rm -rf build",
-        "start:locked": "DOTENV_CONFIG_PATH=./.env node --experimental-permission --allow-fs-read=/Users/brendanjbond/Projects/formio-dev/formio-vm/ build/server/index.js",
         "start": "DOTENV_CONFIG_PATH=./.env node build/server.js",
+        "clean": "rm -rf build",
         "build": "npm run clean && tsc",
-        "dist": "rm -rf dist && npm run build && mkdir dist && cp -r build/core dist/core && cp -r build/lib dist/lib && cp package.json dist/package.json && cp yarn.lock dist/yarn.lock",
+        "prepack": "npm run build && rm -rf build/server && rm -rf build/core/__tests__",
         "prepare": "husky install"
     },
     "devDependencies": {

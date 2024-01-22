@@ -1,0 +1,47 @@
+import fs from 'fs';
+
+export const nunjucksCode = fs.readFileSync('./node_modules/nunjucks/browser/nunjucks.min.js', 'utf8');
+export const nunjucksDateFilterCode = fs.readFileSync('./node_modules/nunjucks-date-filter/index.js', 'utf8')
+  // Remove 'use strict' and require statements
+  .replace(`'use strict';`, '')
+  .replace(/^.+require.+$/gm, '')
+  // Remove module.exports
+  .replace(`module.exports = dateFilter;`, '')
+  .replaceAll(`module.exports.`, '');
+
+console.log(nunjucksDateFilterCode);
+
+export const nunjucksEnvironmentCode = `
+// Configure nunjucks to not watch any files
+const environment = nunjucks.configure([], {
+  watch: false,
+  autoescape: false,
+});
+
+environment.addFilter('is_string', (obj) => _.isString(obj));
+
+environment.addFilter('is_array', (obj) => _.isArray(obj));
+
+environment.addFilter('is_object', (obj) => _.isPlainObject(obj));
+
+environment.addFilter('date', dateFilter);
+
+environment.addFilter('submissionTable', (obj, components, formInstance) => {
+  const view = submissionTableHtml ?? util.renderFormSubmission(obj, components);
+  return new nunjucks.runtime.SafeString(view);
+});
+
+environment.addFilter('componentValue', (obj, key, components) => {
+  const compValue = util.renderComponentValue(obj, key, components);
+  return new nunjucks.runtime.SafeString(compValue.value);
+});
+
+environment.addFilter('componentLabel', (key, components) => {
+  if (!components.hasOwnProperty(key)) {
+    return key;
+  }
+
+  const component = components[key];
+  return component.label || component.placeholder || component.key;
+});
+`;

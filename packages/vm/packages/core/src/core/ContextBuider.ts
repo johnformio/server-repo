@@ -1,53 +1,33 @@
-import fs from 'fs';
 import { Isolate, Context } from 'isolated-vm';
 import { instanceShimCode } from './InstanceShim';
-
-const lodashCode = fs.readFileSync('./node_modules/lodash/lodash.min.js', 'utf8');
-const momentCode = fs.readFileSync('./node_modules/moment/min/moment.min.js', 'utf8');
-const coreCode = fs.readFileSync('./node_modules/@formio/core/dist/formio.core.min.js', 'utf8');
-const globalCode = `
-var Text              = class {};
-var HTMLElement       = class {};
-var HTMLCanvasElement = class {};
-var navigator         = {userAgent: ''};
-var document          = {
-  createElement: () => ({}),
-  cookie: '',
-  getElementsByTagName: () => [],
-  documentElement: {
-    style: [],
-    firstElementChild: {appendChild: () => {}}
-  }
-};
-var window = {addEventListener: () => {}, Event: function() {}, navigator: global.navigator};
-var btoa = (str) => {
-  return (str instanceof Buffer) ?
-    str.toString('base64') :
-    Buffer.from(str.toString(), 'binary').toString('base64');
-};
-//var setTimeout = () => {};
-var self = global;
-`;
+import { lodashCode } from './deps/lodash';
+import { momentCode } from './deps/moment';
+import { polyfillCode, aliasesCode, coreCode } from './deps/core';
+import { nunjucksCode, nunjucksDateFilterCode, nunjucksEnvironmentCode } from './deps/nunjucks';
+import { nunjucksUtilsCode } from './deps/nunjucks-utils';
 
 // Dependency name corresponds to list of libraries to load when that dependency is requested
 const dependeciesMap: Record<string, string[]> = {
   lodash: [lodashCode],
   moment: [momentCode],
-  core: [globalCode, coreCode],
+  core: [polyfillCode, coreCode, aliasesCode],
   instanceShim: [instanceShimCode],
+  nunjucks: [
+    nunjucksCode,
+    nunjucksDateFilterCode,
+    nunjucksEnvironmentCode,
+    nunjucksUtilsCode
+  ],
 };
 
 class ContextBuilder {
-  private _isolate: Isolate;
   private deps: string[] = [];
 
   static fromDefaultIsolate(): ContextBuilder {
     return new ContextBuilder(new Isolate({ memoryLimit: 128 }));
   }
 
-  constructor(isolate: any) {
-    this._isolate = isolate;
-  }
+  constructor(private isolate: any) {}
 
   withDependency(dependency: string): ContextBuilder {
     if (!dependeciesMap[dependency]) {
@@ -74,8 +54,20 @@ class ContextBuilder {
     return this.withDependency('core');
   }
 
+  withNunjucks() {
+    return this.withDependency('nunjucks');
+  }
+
   async createContext(): Promise<Context> {
-    const context = this._isolate.createContextSync();
+    const context = this.isolate.createContextSync();
+    const jail = context.global;
+    // Set up a reference to the global object
+    jail.setSync('global', jail.derefInto());
+    return context;
+  }
+
+  createContextSync(): Context {
+    const context = this.isolate.createContextSync();
     const jail = context.global;
     // Set up a reference to the global object
     jail.setSync('global', jail.derefInto());
@@ -86,6 +78,14 @@ class ContextBuilder {
     const context = await this.createContext();
     for (let dep of this.deps) {
       await context.eval(dep);
+    }
+    return context;
+  }
+
+  buildSync(): Context {
+    const context = this.createContextSync();
+    for (let dep of this.deps) {
+      context.evalSync(dep);
     }
     return context;
   }
