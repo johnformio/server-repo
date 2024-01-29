@@ -301,6 +301,86 @@ module.exports = (router) => {
             },
           ],
         },
+        {
+          title: 'Retry Request',
+          collapsible: false,
+          key: 'enableRetryRequest',
+          type: 'panel',
+          label: 'Panel',
+          input: false,
+          tableView: false,
+          components: [
+            {
+              html: '<p>Enable retry request to webhook if response failed.</p>',
+              label: 'content',
+              refreshOnChange: false,
+              key: 'content1',
+              type: 'content',
+              input: false,
+              tableView: false
+            },
+            {
+              label: 'Retry Type',
+              widget: 'choicesjs',
+              tableView: true,
+              data: {
+                values: [
+                  {
+                    label: 'Constant',
+                    value: 'constant'
+                  },
+                  {
+                    label: 'Linear',
+                    value: 'linear'
+                  },
+                  {
+                    label: 'Exponential',
+                    value: 'exponential'
+                  },
+                  {
+                    label: 'Jitter',
+                    value: 'jitter'
+                  },
+                  {
+                    label: 'Exponentially Jitter',
+                    value: 'exponentiallyJitter'
+                  }
+                ]
+              },
+              key: 'retryType',
+              type: 'select',
+              input: true
+            },
+            {
+              label: 'Number of attempts',
+              applyMaskOn: 'change',
+              mask: false,
+              tableView: false,
+              delimiter: false,
+              requireDecimal: false,
+              inputFormat: 'plain',
+              truncateMultipleSpaces: false,
+              key: 'numberOfAttempts',
+              type: 'number',
+              input: true,
+              tooltip: 'The maximum number of additional attempts if the request failed'
+            },
+            {
+              label: 'Initial Delay, ms',
+              applyMaskOn: 'change',
+              mask: false,
+              tableView: false,
+              delimiter: false,
+              requireDecimal: false,
+              inputFormat: 'plain',
+              truncateMultipleSpaces: false,
+              key: 'initialDelay',
+              type: 'number',
+              input: true,
+              tooltip: 'The delay after the initial request. Next, the delay is calculated based on the Retry Type.'
+            }
+          ]
+        }
       ]);
     }
 
@@ -537,17 +617,67 @@ module.exports = (router) => {
           options.body = JSON.stringify(payload);
         }
 
-        // Make the request
-        const fetchRequest = fetch(url, options);
-        const processResponseBody = fetchRequest.then((response) =>
-          processWebhookResponseBody(response, isDeleteRequest)
-        );
+        let attempts = 0;
+
+        const makeWebhookRequest = () => {
+          // Make the request
+          const fetchRequest = fetch(url, options);
+          const processResponseBody = fetchRequest.then((response) =>
+            processWebhookResponseBody(response, isDeleteRequest)
+          );
+          return [fetchRequest, processResponseBody]
+        }
+
+        const retryRequest = async () => {
+          attempts++;
+          let delay = 0;
+          switch (settings.retryType) {
+            case 'constant': {
+              delay = settings.initialDelay;
+              break;
+            }
+            case 'linear': {
+              delay = attempts * settings.initialDelay;
+              break;
+            } 
+            case 'exponential': {
+              delay = settings.initialDelay * Math.pow(2, attempts);
+              break;
+            }
+            case 'jitter': {
+              delay = _.random(0, settings.initialDelay * Math.pow(2, attempts));
+              break;
+            }
+            case 'exponentiallyJitter': {
+              delay = _.random(settings.initialDelay * Math.pow(2, attempts-1), settings.initialDelay * Math.pow(2, attempts));
+            }
+          }
+
+          await setTimeout(()=>{
+            Promise.all(makeWebhookRequest()).then(onResolve).catch(onError)
+          }, delay)
+        }
 
         // Set up closures
-        const result = Promise.all([fetchRequest, processResponseBody]);
-        const onResolve = ([response, body]) =>
-          response.ok ? handleSuccess(body) : handleError(body, response);
-        const onError = (err) => handleError(err);
+        const result = Promise.all(makeWebhookRequest());
+        const onResolve = async([response, body]) =>
+          {
+            if (response.ok) {
+              return handleSuccess(body)
+            }
+            if (settings.retryType && attempts <= settings.numberOfAttempts) {
+              await retryRequest();
+            } else {
+              return handleError(body, response);
+            }
+          }
+        const onError = async (err) => {
+          if (err.statusCode && settings.retryType && attempts <= settings.numberOfAttempts) {
+            await retryRequest();
+          } else {
+            return handleError(err);
+          }
+        };
 
         return result.then(onResolve).catch(onError);
       }
