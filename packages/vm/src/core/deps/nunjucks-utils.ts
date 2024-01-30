@@ -272,6 +272,9 @@ const renderComponentValue = (data, key, components, noRecurse) => {
 
       break;
     }
+    // omit recaptcha components from emails
+    case 'recaptcha':
+      return {value: false};
     default:
       if (!component.input) {
         return { value: false };
