@@ -2,10 +2,23 @@ import { evaluate } from './evaluate';
 
 const code = `
 root = new RootShim(context.form, context.submission);
-instances = root.instanceMap;
+context.instances = root.instanceMap;
 data = context.data;
+
+if (context.form.module) {
+  // Wrap with parenthesis to return object, not function
+  formModule = eval( '(' + context.form.module + ')');
+  evalContext = formModule?.options?.form?.evalContext;
+  //evalContextFn = (context) => Object.assign(context, evalContext);
+  evalContextFn = (context) => Object.assign({}, context, evalContext);
+
+  if (evalContext) {
+    context.evalContext = evalContext;
+  }
+}
+
 context.processors = FormioCore.ProcessTargets.evaluator;
-scope = FormioCore.processSync({ ...context, instances });
+scope = FormioCore.processSync(context);
 
 ({ scope, data });
 `
@@ -26,8 +39,8 @@ export async function evaluateProcess(options: EvaluateProcessorsOptions): Promi
   const evaluateContext = {
     form: options.form,
     components: options.form.components,
-    submission: options.submission,
-    data: options.submission.data,
+    submission: JSON.parse(JSON.stringify(options.submission)),
+    data: JSON.parse(JSON.stringify(options.submission.data)),
     scope: options.scope || {},
     config: {
       server: true,
