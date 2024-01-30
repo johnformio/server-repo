@@ -36,11 +36,12 @@ export type EvaluateProcessorsResult = {
 }
 
 export async function evaluateProcess(options: EvaluateProcessorsOptions): Promise<EvaluateProcessorsResult> {
+  const submission = JSON.parse(JSON.stringify(options.submission));
   const evaluateContext = {
     form: options.form,
     components: options.form.components,
-    submission: JSON.parse(JSON.stringify(options.submission)),
-    data: JSON.parse(JSON.stringify(options.submission.data)),
+    submission: submission,
+    data: submission.data,
     scope: options.scope || {},
     config: {
       server: true,

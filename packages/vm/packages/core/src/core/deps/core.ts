@@ -28,4 +28,4 @@ export const aliasesCode = `
 util = FormioCore.Utils;
 
 // jsonLogic = util.jsonLogic;
-`
+`;
