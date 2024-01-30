@@ -10,13 +10,28 @@ const isAutoAddress = (data, component, path) => {
   }
   return (!addressData.mode || addressData.mode === 'autocomplete');
 }
+
+const convertFormatToMoment = (format) => {
+  return format
+  // Year conversion.
+    .replace(/y/g, 'Y')
+    // Day in month.
+    .replace(/d/g, 'D')
+    // Day in week.
+    .replace(/E/g, 'd')
+    // AM/PM marker
+    .replace(/a/g, 'A')
+    // Unix Timestamp
+    .replace(/U/g, 'X');
+}
+
 const flattenComponentsForRender = (data, components) => {
   const flattened = {};
   FormioCore.Utils.eachComponent(components, (component, path) => {
     var hasColumns = component.columns && Array.isArray(component.columns);
     var hasRows = component.rows && Array.isArray(component.rows);
     var hasComps = component.components && Array.isArray(component.components);
-    var autoAddress = utils.isAutoAddress(data, component, path);
+    var autoAddress = util.isAutoAddress(data, component, path);
     var isDataArray = ['datagrid', 'editgrid'].includes(component.type) || component.tree;
 
     // Address compoennt with manual mode disabled should not show the nested components.
@@ -50,17 +65,17 @@ const flattenComponentsForRender = (data, components) => {
 }
 
 const renderFormSubmission = (data, components) => {
-  const comps = utils.flattenComponentsForRender(data, components);
+  const comps = util.flattenComponentsForRender(data, components);
   let submission = '<table border="1" style="width:100%">';
   _.each(comps, function (component, key) {
-    const cmpValue = utils.renderComponentValue(data, key, comps);
+    const cmpValue = util.renderComponentValue(data, key, comps);
     if (typeof cmpValue.value === 'string') {
       submission += '<tr>';
       submission += `<th style="padding: 5px 10px;">${cmpValue.label}</th>`;
       submission += `<td style="width:100%;padding:5px 10px;">${cmpValue.value}</td>`;
       submission += '</tr>';
     }
-  }.bind(utils));
+  }.bind(util));
   submission += '</table>';
   return submission;
 }
@@ -114,9 +129,9 @@ const renderComponentValue = (data, key, components, noRecurse) => {
     component.parent &&
     component.parent.type === 'address' &&
     component.parent.enableManualMode &&
-    !utils.isAutoAddress(data, component.parent)
+    !util.isAutoAddress(data, component.parent)
   ) {
-    return utils.renderComponentValue(_.get(data, component.parent.key).address, key, components, true);
+    return util.renderComponentValue(_.get(data, component.parent.key).address, key, components, true);
   }
 
   compValue.label = component.label || component.placeholder || component.key;
@@ -125,7 +140,7 @@ const renderComponentValue = (data, key, components, noRecurse) => {
     compValue.value = _.map(value, (subValue) => {
       const subValues = {};
       subValues[key] = subValue;
-      return utils.renderComponentValue(subValues, key, components).value;
+      return util.renderComponentValue(subValues, key, components).value;
     }).join(', ');
     return compValue;
   }
@@ -147,7 +162,7 @@ const renderComponentValue = (data, key, components, noRecurse) => {
     case 'container':
       compValue.value = '<table border="1" style="width:100%">';
       _.each(value, (subValue, subKey) => {
-        const subCompValue = utils.renderComponentValue(value, subKey, components);
+        const subCompValue = util.renderComponentValue(value, subKey, components);
         if (_.isString(subCompValue.value)) {
           compValue.value += '<tr>';
           compValue.value += `<th style="text-align:right;padding: 5px 10px;">${subCompValue.label}</th>`;
@@ -159,7 +174,7 @@ const renderComponentValue = (data, key, components, noRecurse) => {
       break;
     case 'editgrid':
     case 'datagrid': {
-      const columns = utils.flattenComponentsForRender(data, component.components);
+      const columns = util.flattenComponentsForRender(data, component.components);
       compValue.value = '<table border="1" style="width:100%">';
       compValue.value += '<tr>';
       _.each(columns, (column) => {
@@ -170,7 +185,7 @@ const renderComponentValue = (data, key, components, noRecurse) => {
       _.each(value, (subValue) => {
         compValue.value += '<tr>';
         _.each(columns, (column, key) => {
-          const subCompValue = this.renderComponentValue(subValue, key, columns);
+          const subCompValue = util.renderComponentValue(subValue, key, columns);
           if (typeof subCompValue.value === 'string') {
             compValue.value += '<td style="padding:5px 10px;">';
             compValue.value += subCompValue.value;
@@ -184,7 +199,7 @@ const renderComponentValue = (data, key, components, noRecurse) => {
     }
     case 'datetime': {
       const dateFormat = (component.widget && component.widget.format) || component.format || 'yyyy-MM-dd hh:MM a';
-      compValue.value = moment(value).format(FormioUtils.convertFormatToMoment(dateFormat));
+      compValue.value = moment(value).format(util.convertFormatToMoment(dateFormat));
       break;
     }
     case 'radio':
@@ -283,8 +298,9 @@ const renderComponentValue = (data, key, components, noRecurse) => {
 console.log(isAutoAddress.toString())
 
 export const nunjucksUtilsCode = `
-utils = {
+util = {
   isAutoAddress: ${isAutoAddress.toString()},
+  convertFormatToMoment: ${convertFormatToMoment.toString()},
   flattenComponentsForRender: ${flattenComponentsForRender.toString()},
   renderFormSubmission: ${renderFormSubmission.toString()},
   getEmailViewForSubmission: ${getEmailViewForSubmission.toString()},

@@ -11,6 +11,28 @@ export const nunjucksDateFilterCode = fs.readFileSync('./node_modules/nunjucks-d
 
 console.log(nunjucksDateFilterCode);
 
+// Strip away macros and escape breakout attempts.
+const sanitize = (input: any) => {
+  if (!input) {
+    throw new Error('Input is required for sanitize fn');
+  }
+  return input
+    .replace(/{{(.*(\.constructor|\]\().*)}}/g, '{% raw %}{{$1}}{% endraw %}')
+};
+
+// Unescape HTML sequences
+const unescape = (str: any) => {
+  if (!str) {
+    throw new Error('Input is required for unescape fn');
+  }
+  return str
+  .replace(/&lt;/g , '<')
+  .replace(/&gt;/g , '>')
+  .replace(/&quot;/g , '\"')
+  .replace(/&#39;/g , '\'')
+  .replace(/&amp;/g , '&')
+};
+
 export const nunjucksEnvironmentCode = `
 // Configure nunjucks to not watch any files
 const environment = nunjucks.configure([], {
@@ -44,4 +66,7 @@ environment.addFilter('componentLabel', (key, components) => {
   const component = components[key];
   return component.label || component.placeholder || component.key;
 });
+
+sanitize = ${sanitize.toString()};
+unescape = ${unescape.toString()};
 `;
