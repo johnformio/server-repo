@@ -51,10 +51,11 @@ module.exports = function(formio) {
                 // upgrade plan for project itself
                 return formio.resources.project.model.updateOne({
                   _id: formio.util.idToBson(req.projectId)
-                }, {
+                },  {$set: {
                   plan: req.body.plan,
                   billing
-                });
+                }}
+                );
               });
           })
           .then(function(rawResponse) {

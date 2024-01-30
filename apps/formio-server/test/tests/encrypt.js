@@ -651,18 +651,17 @@ module.exports = function(app, template, hook) {
             }
 
             sub.markModified('data');
-            sub.save(function(err) {
-              if (err) return done(err);
-
+            app.formio.formio.resources.submission.model.updateOne({
+              _id: sub._id
+            },
+            {$set: sub})
+            .then(()=> {
               project.plan = 'trial';
-              project.save(function(err) {
-                if (err) {
-                  return done(err);
-                }
-                cache.loadCache.set(project.toObject());
-                done();
-              });
-            });
+              return app.formio.formio.resources.project.model.updateOne({_id: project._id},{$set: project})})
+            .then(()=> {
+              cache.loadCache.set(project.toObject());
+             done()})
+            .catch((err)=> {return done(err)});
           });
         });
       });

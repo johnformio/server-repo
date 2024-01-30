@@ -28,8 +28,23 @@ module.exports = app => routes => {
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
         if (formRevision.shouldCreateNewRevision(req, item, form)) {
           return formRevision.createVersion(item, getRequestUser(req), req.body._vnote, (err, revision) => {
-            revision.revisionId = revision._id;
-            revision.save(next);
+            if (err) {
+              return next(err);
+            }
+              if (revision) {
+                app.formio.formio.mongoose.models.formrevision.updateOne({
+                  _id: revision._id
+                },
+                {$set: {
+                  revisionId: revision._id,
+                }},
+                (err)=>{
+                  if (err) {
+                    return next(err);
+                  }
+                  return next();
+                });
+              }
           });
         }
         if (req.body.submissionRevisions !== form.submissionRevisions && req.body.submissionRevisions === 'true') {
@@ -55,8 +70,26 @@ module.exports = app => routes => {
       app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
         if (formRevision.shouldCreateNewRevision(req, item, form)) {
           return formRevision.createVersion(item, getRequestUser(req), '', (err, revision) => {
-            revision.revisionId = revision._id;
-            revision.save(next);
+            if (err) {
+              return next(err);
+            }
+              if (revision) {
+                app.formio.formio.mongoose.models.formrevision.updateOne({
+                  _id: revision._id
+                },
+                {$set: {
+                  revisionId: revision._id,
+                }},
+                // {
+                //   revisionId: revision._id
+                // },
+                (err)=>{
+                  if (err) {
+                    return next(err);
+                  }
+                  return next();
+                });
+              }
           });
         }
         next();
@@ -71,8 +104,26 @@ module.exports = app => routes => {
         formRevision.revisionsAllowed(req)
       ) {
         return formRevision.createVersion(item, getRequestUser(req), req.body._vnote, (err, revision) => {
-          revision.revisionId = revision._id;
-          revision.save(next);
+          if (err) {
+            return next(err);
+          }
+            if (revision) {
+              app.formio.formio.mongoose.models.formrevision.updateOne({
+                _id: revision._id
+              },
+              {$set: {
+                revisionId: revision._id,
+              }},
+              // {
+              //   revisionId: revision._id
+              // },
+              (err)=>{
+                if (err) {
+                  return next(err);
+                }
+                return next();
+              });
+            }
         });
       }
       return next();

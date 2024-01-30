@@ -31,7 +31,10 @@ function writeExternalIdToSubmission(req, res, router, type, id) {
         });
       }
 
-      return submission.save();
+      return router.formio.resources.submission.model.updateOne({
+        _id: submission._id
+      },
+      {$set: submission});
     })
     .catch(router.formio.util.log);
 }

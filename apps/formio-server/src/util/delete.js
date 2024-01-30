@@ -31,36 +31,20 @@ module.exports = function(formio) {
       .map(util.idToBson)
       .value();
 
-    formio.resources.submission.model.find({
-      project: util.idToBson(projectId),
-      form: {$in: forms},
-      deleted: {$eq: null}
-    }).exec((err, submissions) => {
-      if (err) {
-        return next(err);
-      }
-      if (!submissions || submissions.length === 0) {
-        return next();
-      }
-
-      async.eachSeries(submissions, function(submission, cb) {
-        submission.deleted = Date.now();
-        submission.markModified('deleted');
-        submission.save(function(err) {
-          if (err) {
-            return cb(err);
-          }
-
-          cb();
-        });
-      }, function(err) {
-        if (err) {
-          return next(err);
+      formio.resources.submission.model.updateMany(
+        {
+          project: util.idToBson(projectId),
+          form: {$in: forms},
+          deleted: {$eq: null}
+        },
+        {
+          deleted: Date.now()
         }
-
+      ).then(() => {
         next();
+      }).catch(err => {
+        next(err);
       });
-    });
   };
 
   /**
@@ -86,31 +70,15 @@ module.exports = function(formio) {
       .value();
 
     const query = {form: {$in: forms}, deleted: {$eq: null}};
-    formio.actions.model.find(query).exec((err, actions) => {
-      if (err) {
-        return next(err);
+    formio.actions.model.updateMany(
+      query,
+      {
+        deleted: Date.now()
       }
-      if (!actions || actions.length === 0) {
-        return next();
-      }
-
-      async.eachSeries(actions, function(action, cb) {
-        action.deleted = Date.now();
-        action.markModified('deleted');
-        action.save(function(err) {
-          if (err) {
-            return cb(err);
-          }
-
-          cb();
-        });
-      }, function(err) {
-        if (err) {
-          return next(err);
-        }
-
-        next();
-      });
+    ).then(() => {
+      next();
+    }).catch(err => {
+      next(err);
     });
   };
 
@@ -144,46 +112,25 @@ module.exports = function(formio) {
         .value();
 
       query._id = {$in: formIds};
-      formio.resources.form.model.find(query).exec(function(err, forms) {
-        if (err) {
-          return next(err);
-        }
-        if (!forms || forms.length === 0) {
-          return next();
-        }
-
-        // Mark all un-deleted forms as deleted.
-        async.eachSeries(forms, function(form, cb) {
-          form.deleted = Date.now();
-          form.markModified('deleted');
-          form.save(function(err) {
-            if (err) {
-              return cb(err);
-            }
-
-            cb();
-          });
-        }, function(err) {
+      formio.resources.form.model.updateMany(
+        query,
+        {deleted: Date.now()}
+      ).then(()=>{
+        deleteAction(formIds, function(err) {
           if (err) {
             return next(err);
           }
 
-          // Delete all the actions for the given list of forms.
-          deleteAction(formIds, function(err) {
+          // Update all submissions related to the newly deleted forms, as being deleted.
+          deleteSubmission(projectId, formIds, function(err) {
             if (err) {
               return next(err);
             }
-
-            // Update all submissions related to the newly deleted forms, as being deleted.
-            deleteSubmission(projectId, formIds, function(err) {
-              if (err) {
-                return next(err);
-              }
-
-              next();
-            });
+            next();
           });
         });
+      }).catch(err=>{
+        return next(err);
       });
     });
   };
@@ -239,32 +186,13 @@ module.exports = function(formio) {
     }
 
     const query = {project: util.idToBson(projectId), deleted: {$eq: null}};
-    formio.resources.role.model.find(query).exec((err, roles) => {
-      if (err) {
-        return next(err);
-      }
-      if (!roles || roles.length === 0) {
-        return next();
-      }
-
-      async.eachSeries(roles, function(role, cb) {
-        role.deleted = Date.now();
-        role.markModified('deleted');
-        role.save(function(err) {
-          if (err) {
-            return cb(err);
-          }
-
-          cb();
-        });
-      }, function(err) {
-        if (err) {
-          return next(err);
-        }
-
+    formio.resources.role.model.updateMany(query,
+      {deleted: Date.now()}
+      ).then(() => {
         next();
+      }).catch(err => {
+        next(err);
       });
-    });
   };
 
   /**

@@ -36,13 +36,14 @@ module.exports = function(router) {
       origin: 'https://form.io'
     };
 
-     // When using a development license, restrict CORS to only allow "localhost".
+    // When using a development license, restrict CORS to only allow "localhost".
     if (_.get(router, 'license.devLicense', false)) {
       return callback(null, {
         origin: [/http:\/\/localhost:/, /http:\/\/\w+.localhost:/]
       });
     }
 
+    // Disallow cors if they are attempting to use a token as querystring.
     if (!req.header('Origin') || req.header('Origin') === 'null') {
       return callback(null, pass);
     }

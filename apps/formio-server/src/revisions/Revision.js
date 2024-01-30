@@ -10,6 +10,7 @@ module.exports = class Revision {
     this.revisionModel = app.formio.formio.mongoose.models[`${type}revision`];
     this.app = app;
     this.idToBson = app.formio.formio.util.idToBson;
+    this.itemModel = app.formio.formio.mongoose.models[type];
   }
 
   checkRevisionPlan(plan) {
@@ -39,34 +40,21 @@ module.exports = class Revision {
   }
 
   delete(rid, next) {
-    this.revisionModel.find({
-      _rid: this.idToBson(rid),
-      deleted: {$eq: null}
-    }).exec((err, revisions) => {
-      if (err) {
-        return next(err);
-      }
-      if (!revisions || revisions.length === 0) {
-        return next();
-      }
-
-      async.eachSeries(revisions, function(revision, cb) {
-        revision.deleted = Date.now();
-        revision.markModified('deleted'); // ?
-        revision.save(function(err) {
-          if (err) {
-            return cb(err);
-          }
-
-          cb();
-        });
-      }, function(err) {
+    this.revisionModel.updateMany(
+      {
+        _rid: this.idToBson(rid),
+        deleted: {$eq: null}
+      },
+      {
+        deleted: Date.now(),
+        markModified: 'deleted'
+      },
+      (err) => {
         if (err) {
           return next(err);
         }
-
         next();
-      });
-    });
+      }
+    );
   }
 };

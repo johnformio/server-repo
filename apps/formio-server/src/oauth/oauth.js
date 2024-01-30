@@ -37,13 +37,18 @@ module.exports = function(formio) {
           user.set('externalTokens',
             _(tokens).concat(user.externalTokens).uniq('type').value()
           );
-          return user.save().then(() => {
-            const token = _.find(tokens, {type: provider.name});
-            if (!token) {
-              throw `No access token available. Make sure you have authenticated with ${provider.title}.`;
-            }
-            return token.token;
-          });
+
+          return formio.resources.submission.model.updateOne({
+            _id: userId},
+            user,
+            {upsert:true})
+            .then(() => {
+              const token = _.find(tokens, {type: provider.name});
+              if (!token) {
+                throw `No access token available. Make sure you have authenticated with ${provider.title}.`;
+              }
+              return token.token;
+            });
         });
       }).then((token) => {
         if (next) {
