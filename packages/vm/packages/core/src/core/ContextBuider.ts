@@ -59,10 +59,11 @@ class ContextBuilder {
   }
 
   async createContext(): Promise<Context> {
-    const context = this.isolate.createContextSync();
+    const context = await this.isolate.createContext();
     const jail = context.global;
     // Set up a reference to the global object
-    jail.setSync('global', jail.derefInto());
+    await jail.set('global', jail.derefInto());
+    await jail.set('log', console.log);
     return context;
   }
 
@@ -71,6 +72,7 @@ class ContextBuilder {
     const jail = context.global;
     // Set up a reference to the global object
     jail.setSync('global', jail.derefInto());
+    jail.setSync('log', console.log);
     return context;
   }
 
