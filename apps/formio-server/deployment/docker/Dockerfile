@@ -1,6 +1,4 @@
-FROM        alpine:latest
-MAINTAINER  Form.io <support@form.io>
-
+FROM node:lts-alpine
 
 ENV USERNAME=formiouser
 ENV UID=5000
@@ -10,13 +8,8 @@ ENV GID=${UID}
 RUN adduser -u ${UID} -g ${GROUP} -D ${USERNAME} &&\
     addgroup ${USERNAME} ${GROUP}
 
-# Install the latest versions from edge
-RUN sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories &&\
-    apk add --upgrade \
-    nodejs npm nghttp2 nghttp2-libs &&\
-    apk del git wget curl &&\
-    rm -rf /var/lib/apt/lists/* &&\
-    rm /var/cache/apk/* &&\
+# Cleanup
+RUN rm -rf /var/lib/apt/lists/* &&\
     rm -f /etc/fstab &&\
     crontab -r &&\
     find / -name wget -delete &&\
@@ -32,4 +25,4 @@ RUN apk add libcap && setcap 'cap_net_bind_service=+ep' $(which node)
 USER ${USERNAME}
 
 EXPOSE      80
-CMD  ["node", "--openssl-legacy-provider", "formio.js", "--max_old_space_size=8192"]
+CMD  ["node", "formio.js"]
