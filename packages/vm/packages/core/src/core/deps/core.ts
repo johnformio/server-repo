@@ -25,7 +25,7 @@ var btoa = (str) => {
 var self = global;
 `;
 export const aliasesCode = `
-util = FormioCore.FormioUtils;
+util = FormioCore.Utils;
 
 // jsonLogic = util.jsonLogic;
 `

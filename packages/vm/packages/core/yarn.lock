@@ -60,10 +60,24 @@
   dependencies:
     resize-observer-polyfill "^1.5.1"
 
+"@formio/bootstrap@^3.0.0-rc.20":
+  version "3.0.0-rc.21"
+  resolved "https://registry.npmjs.org/@formio/bootstrap/-/bootstrap-3.0.0-rc.21.tgz#2d39837913553da335b7857bb6755f01f4750f3e"
+  integrity sha512-MOxJzjQx2rFrmdPHywuNYONbfDtyGDn+2YRwgd1idoFiMLEpOf1kCPi83XbpaSjsiED4EkBSDen8PQCDZ4VSNQ==
+
 "@formio/choices.js@10.2.0":
   version "10.2.0"
   resolved "https://registry.npmjs.org/@formio/choices.js/-/choices.js-10.2.0.tgz#cfd089873ce3fae1e679570b4f471d25b5153593"
   integrity sha512-dEF+es4yj3pstKHif7Ck14vQCZdN+b1Afojl0ufTmKw5WIjqas1KXEIBBgtsg4eY6bxqFkgEjtxsK4ecvEeZsA==
+  dependencies:
+    deepmerge "^4.2.2"
+    fuse.js "^6.6.2"
+    redux "^4.2.0"
+
+"@formio/choices.js@^10.2.0":
+  version "10.2.1"
+  resolved "https://registry.npmjs.org/@formio/choices.js/-/choices.js-10.2.1.tgz#d0f5c032d94f33152b6036f6a5bb42fcc4684e31"
+  integrity sha512-NCE5u7jG3XGokJP16MyAbVSUptKu/mpJYAxd4PPIoLiO/l9Do5uoOQ0MgNb9qG9qABJiOX+qNRE8q8RybY/SwQ==
   dependencies:
     deepmerge "^4.2.2"
     fuse.js "^6.6.2"
@@ -81,6 +95,63 @@
     eventemitter3 "^4.0.7"
     fetch-ponyfill "^7.1.0"
     json-logic-js "^2.0.2"
+
+"@formio/core@^2.0.0-rc.6":
+  version "2.0.0-rc.6"
+  resolved "https://registry.npmjs.org/@formio/core/-/core-2.0.0-rc.6.tgz#393ad480068a2ada96c7675b9059f81e33b35502"
+  integrity sha512-0FPAE7GThKwsf4pghxaqmREt0mupjY+8QDdet81ECCibOhEWWh1hNPTXzx0XgC9cT9Y0PAPBZynahjH9Vu6ldA==
+  dependencies:
+    "@types/json-logic-js" "^2.0.5"
+    browser-cookies "^1.2.0"
+    core-js "^3.33.2"
+    dayjs "^1.11.10"
+    dompurify "^3.0.6"
+    eventemitter3 "^5.0.0"
+    fetch-ponyfill "^7.1.0"
+    json-logic-js "^2.0.2"
+    lodash "^4.17.21"
+    moment "^2.29.4"
+
+"@formio/js@^5.0.0-rc.39":
+  version "5.0.0-rc.39"
+  resolved "https://registry.npmjs.org/@formio/js/-/js-5.0.0-rc.39.tgz#6b422ced712166ef3ebcbc59f17397cfdcc10ff5"
+  integrity sha512-um11YAUx8RVsyyqgumK70rmcGQ9f5T+jFQoI694G5BbjFGVhNqZ/sGTybeUlBkjAMhyMSRhPnW8Yak1W/Ly4gw==
+  dependencies:
+    "@formio/bootstrap" "^3.0.0-rc.20"
+    "@formio/choices.js" "^10.2.0"
+    "@formio/core" "^2.0.0-rc.6"
+    "@formio/text-mask-addons" "^3.8.0-formio.2"
+    "@formio/vanilla-text-mask" "^5.1.1-formio.1"
+    abortcontroller-polyfill "^1.7.5"
+    autocompleter "^8.0.4"
+    bootstrap "^5.3.0"
+    browser-cookies "^1.2.0"
+    browser-md5-file "^1.1.1"
+    compare-versions "^6.0.0-rc.2"
+    core-js "^3.32.1"
+    dialog-polyfill "^0.5.6"
+    dom-autoscroller "^2.3.4"
+    dompurify "^3.0.5"
+    downloadjs "^1.4.7"
+    dragula "^3.7.3"
+    eventemitter3 "^5.0.1"
+    fast-deep-equal "^3.1.3"
+    fast-json-patch "^3.1.1"
+    fetch-ponyfill "^7.1.0"
+    idb "^7.1.1"
+    ismobilejs "^1.1.1"
+    json-logic-js "^2.0.2"
+    jstimezonedetect "^1.0.7"
+    jwt-decode "^3.1.2"
+    lodash "^4.17.21"
+    moment "^2.29.4"
+    moment-timezone "^0.5.43"
+    quill "^2.0.0-dev.3"
+    signature_pad "^4.1.4"
+    string-hash "^1.1.3"
+    tippy.js "^6.3.7"
+    uuid "^9.0.0"
+    vanilla-picker "^2.12.2"
 
 "@formio/lodash@0.0.9":
   version "0.0.9"
@@ -241,6 +312,11 @@
   version "2.0.4"
   resolved "https://registry.npmjs.org/@types/http-errors/-/http-errors-2.0.4.tgz#7eb47726c391b7345a6ec35ad7f4de469cf5ba4f"
   integrity sha512-D0CFMMtydbJAegzOyHjtiKPLlvnm3iTZyZRSZoLq2mRhDdmLfIWOCYPfQJ4cu2erKghU++QvjcUjp/5h7hESpA==
+
+"@types/json-logic-js@^2.0.5":
+  version "2.0.6"
+  resolved "https://registry.npmjs.org/@types/json-logic-js/-/json-logic-js-2.0.6.tgz#ceb090bcaf7ec4d5c7c4c3b5225cf53733e76624"
+  integrity sha512-X8f94UmgbRE9kRs83J/Jf+fndEVbBGuZLIeLHBOKYGxAX2g8dMAV41RqwkvoMdybRZ3vZoHEdnMnF8VPiP0OOA==
 
 "@types/json5@^0.0.29":
   version "0.0.29"
@@ -521,6 +597,11 @@ autocompleter@^7.0.1:
   resolved "https://registry.npmjs.org/autocompleter/-/autocompleter-7.1.0.tgz#f8ff1428ec976eddc3eb8df7a2842c287d9b2bf5"
   integrity sha512-uCToOnq7eAD/GJAteDbYuQ7ksDtrYWOy5CIAq43wh0dT+5frMpPlyD9tp+y5fz8KIcsP+zR2MjzoTAdW5aJESw==
 
+autocompleter@^8.0.4:
+  version "8.0.4"
+  resolved "https://registry.npmjs.org/autocompleter/-/autocompleter-8.0.4.tgz#1c4440397fbe9816ab443ebaa09f38e6d7bed89e"
+  integrity sha512-q334YswwucSBphN5djVkEt3beVhHotrCtPGNIXmyilw9UnXV9Cb+gNAZ2yhZSfiBSzP6rxHLLT2gpr57xgbcwQ==
+
 available-typed-arrays@^1.0.5:
   version "1.0.5"
   resolved "https://registry.npmjs.org/available-typed-arrays/-/available-typed-arrays-1.0.5.tgz#92f95616501069d07d10edb2fc37d3e1c65123b7"
@@ -567,6 +648,11 @@ body-parser@1.20.1:
     raw-body "2.5.1"
     type-is "~1.6.18"
     unpipe "1.0.0"
+
+bootstrap@^5.3.0:
+  version "5.3.2"
+  resolved "https://registry.npmjs.org/bootstrap/-/bootstrap-5.3.2.tgz#97226583f27aae93b2b28ab23f4c114757ff16ae"
+  integrity sha512-D32nmNWiQHo94BKHLmOrdjlL05q1c8oxbtBphQFb9Z5to6eGRDCm0QgeaZ4zFBHzfg2++rqa2JkqCcxDy0sH0g==
 
 brace-expansion@^1.1.7:
   version "1.1.11"
@@ -765,6 +851,11 @@ compare-versions@^5.0.1:
   resolved "https://registry.npmjs.org/compare-versions/-/compare-versions-5.0.3.tgz#a9b34fea217472650ef4a2651d905f42c28ebfd7"
   integrity sha512-4UZlZP8Z99MGEY+Ovg/uJxJuvoXuN4M6B3hKaiackiHrgzQFEe3diJi1mf1PNHbFujM7FvLrK2bpgIaImbtZ1A==
 
+compare-versions@^6.0.0-rc.2:
+  version "6.1.0"
+  resolved "https://registry.npmjs.org/compare-versions/-/compare-versions-6.1.0.tgz#3f2131e3ae93577df111dba133e6db876ffe127a"
+  integrity sha512-LNZQXhqUvqUTotpZ00qLSaify3b4VFD588aRr8MKFw4CMUr98ytzCW5wDH5qx/DEY5kCDXcbcRuCqL0szEf2tg==
+
 concat-map@0.0.1:
   version "0.0.1"
   resolved "https://registry.npmjs.org/concat-map/-/concat-map-0.0.1.tgz#d8a96bd77fd68df7793a73036a3ba0d5405d477b"
@@ -810,6 +901,11 @@ core-js@^3.26.1:
   resolved "https://registry.npmjs.org/core-js/-/core-js-3.35.0.tgz#58e651688484f83c34196ca13f099574ee53d6b4"
   integrity sha512-ntakECeqg81KqMueeGJ79Q5ZgQNR+6eaE8sxGCx62zMbAIj65q+uYvatToew3m6eAGdU4gNZwpZ34NMe4GYswg==
 
+core-js@^3.32.1, core-js@^3.33.2:
+  version "3.35.1"
+  resolved "https://registry.npmjs.org/core-js/-/core-js-3.35.1.tgz#9c28f8b7ccee482796f8590cc8d15739eaaf980c"
+  integrity sha512-IgdsbxNyMskrTFxa9lWHyMwAJU5gXOPP+1yO+K59d50VLVAIDAbs7gIv705KzALModfK3ZrSZTPNpC0PQgIZuw==
+
 create-point-cb@^1.0.0:
   version "1.2.0"
   resolved "https://registry.npmjs.org/create-point-cb/-/create-point-cb-1.2.0.tgz#1bce47fc4fc01855ee12138d676b0cb2a7cbce71"
@@ -848,7 +944,7 @@ custom-event@^1.0.0:
   resolved "https://registry.npmjs.org/custom-event/-/custom-event-1.0.1.tgz#5d02a46850adf1b4a317946a3928fccb5bfd0425"
   integrity sha512-GAj5FOq0Hd+RsCGVJxZuKaIDXDf3h6GQoNEjFgbLLI/trgtavwUbSnZ5pVfg27DVCaWjIohryS0JFwIJyT2cMg==
 
-dayjs@^1.10.8:
+dayjs@^1.10.8, dayjs@^1.11.10:
   version "1.11.10"
   resolved "https://registry.npmjs.org/dayjs/-/dayjs-1.11.10.tgz#68acea85317a6e164457d6d6947564029a6a16a0"
   integrity sha512-vjAczensTgRcqDERK0SR2XMwsF/tSvnvlv6VcF2GIhg6Sx4yOIt/irsr1RDJsKiIyBzJDpCoXiWWq28MqH2cnQ==
@@ -1044,7 +1140,7 @@ dompurify@^2.3.6:
   resolved "https://registry.npmjs.org/dompurify/-/dompurify-2.4.7.tgz#277adeb40a2c84be2d42a8bcd45f582bfa4d0cfc"
   integrity sha512-kxxKlPEDa6Nc5WJi+qRgPbOAbgTpSULL+vI3NUXsZMlkJxTqYI9wg5ZTay2sFrdZRWHPWNi+EdAhcJf81WtoMQ==
 
-dompurify@^3.0.5:
+dompurify@^3.0.5, dompurify@^3.0.6:
   version "3.0.8"
   resolved "https://registry.npmjs.org/dompurify/-/dompurify-3.0.8.tgz#e0021ab1b09184bc8af7e35c7dd9063f43a8a437"
   integrity sha512-b7uwreMYL2eZhrSCRC4ahLTeZcPZxSmYfmcQGXGkXiZSNW1X85v+SDM5KsWcpivIiUBH47Ji7NtyUdpLeF5JZQ==
@@ -1378,7 +1474,7 @@ eventemitter3@^4.0.0, eventemitter3@^4.0.7:
   resolved "https://registry.npmjs.org/eventemitter3/-/eventemitter3-4.0.7.tgz#2de9b68f6528d5644ef5c59526a1b4a07306169f"
   integrity sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==
 
-eventemitter3@^5.0.1:
+eventemitter3@^5.0.0, eventemitter3@^5.0.1:
   version "5.0.1"
   resolved "https://registry.npmjs.org/eventemitter3/-/eventemitter3-5.0.1.tgz#53f5ffd0a492ac800721bb42c66b841de96423c4"
   integrity sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==
@@ -3450,7 +3546,7 @@ v8-compile-cache-lib@^3.0.1:
   resolved "https://registry.npmjs.org/v8-compile-cache-lib/-/v8-compile-cache-lib-3.0.1.tgz#6336e8d71965cb3d35a1bbb7868445a7c05264bf"
   integrity sha512-wa7YjyUGfNZngI/vtK0UHAN+lgDCxBPCylVXGp0zu59Fz5aiGtNXaq3DhIov063MorB+VfufLh3JlF2KdTK3xg==
 
-vanilla-picker@^2.12.1:
+vanilla-picker@^2.12.1, vanilla-picker@^2.12.2:
   version "2.12.2"
   resolved "https://registry.npmjs.org/vanilla-picker/-/vanilla-picker-2.12.2.tgz#b4c6a3f4015dbd208080265fe7edd311709aa251"
   integrity sha512-dk0gNeNL9fQFGd1VEhNDQfFlbCqAiksRh1H2tVPlavkH88n/a/y30rXi9PPKrYPTK5kEfPO4xcldt4ts/1wIAg==

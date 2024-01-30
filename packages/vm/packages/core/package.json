@@ -12,6 +12,7 @@
     ],
     "dependencies": {
         "@formio/core": "^1.2.0",
+        "@formio/js": "^5.0.0-rc.39",
         "debug": "^4.3.4",
         "dotenv": "^16.3.1",
         "express": "^4.18.2",
@@ -27,7 +28,8 @@
         "test": "mocha -r ts-node/register -b -t 0 'src/**/__tests__/*.test.ts'",
         "start": "DOTENV_CONFIG_PATH=./.env node build/server.js",
         "clean": "rm -rf build",
-        "build": "npm run clean && tsc",
+        "copy-html": "rsync -avm --include='*.html' -f 'hide,! */' ./src/ ./build/",
+        "build": "npm run clean && tsc && npm run copy-html",
         "prepack": "npm run build && rm -rf build/server && rm -rf build/core/__tests__",
         "prepare": "husky install"
     },

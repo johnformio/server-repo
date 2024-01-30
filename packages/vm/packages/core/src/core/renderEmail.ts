@@ -1,7 +1,9 @@
 import _ from 'lodash';
 
-import { Formio } from 'formiojs';
+import { Formio, Form } from 'formiojs';
 import { evaluate } from '..';
+import * as FormioCore from '@formio/core';
+
 
 import macros from './deps/nunjucks-macros/macros';
 
@@ -10,7 +12,7 @@ export type RenderEmailOptions = {
   context: any,
 }
 
-export async function renderEmail({render, context = {}}: RenderEmailOptions) {
+export async function renderEmail({ render, context = {} }: RenderEmailOptions) {
   if (context._private) {
     delete context._private;
   }
@@ -25,19 +27,23 @@ export async function renderEmail({render, context = {}}: RenderEmailOptions) {
     Formio.use(premium);
   }
   catch {}
-
-  const form = await Formio.createForm(context.form, {
+  const form = await (new Form(context.form, {
     server: true,
     noeval: true,
     noDefaults: true
-  });
-  
+    })).ready;
+  // const form = await Formio.createForm(context.form, {
+  //   server: true,
+  //   noeval: true,
+  //   noDefaults: true
+  // });
+
   const submissionTableHtml = form.getView(context.data, {
     email: true
   });
 
   const data: any = {
-    input: render,
+    input: omitUndefined(render),
     submissionTableHtml
   };
 
@@ -46,8 +52,8 @@ export async function renderEmail({render, context = {}}: RenderEmailOptions) {
   }
 
   const res = await evaluate({
-    deps: ['lodash', 'moment', 'nunjucks'],
-    data,
+    deps: ['lodash', 'moment', 'core', 'nunjucks'],
+    data: data,
     code: getScript(render),
   });
   return res;
@@ -89,3 +95,5 @@ function getRenderMethod(render: any) {
   }
   return renderMethod;
 }
+
+const omitUndefined = (obj: any) => _.omitBy(obj, _.isUndefined);
