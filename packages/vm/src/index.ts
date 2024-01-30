@@ -63,7 +63,12 @@ export function evaluateProcess(options: Expand<EvaluateProcessorsOptions>): Pro
   throw new Error('Unknown module type');
 }
 
-
-export function renderEmail(options: any) {
+/**
+ * Renders email in isoalted context.
+ * 
+ * @param options
+ * @returns {Promise<string>} The rendered email.
+ */
+export function renderEmail(options: any): Promise<string> {
   return lib.renderEmail(options);
 }

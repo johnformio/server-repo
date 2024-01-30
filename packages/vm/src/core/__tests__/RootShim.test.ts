@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 
 describe('Test eachProcessedComponent', () => {
+  return;
   const processes = {
     customDefaultValue: [{
       type: 'textfield',
@@ -24,8 +25,4 @@ describe('Test eachProcessedComponent', () => {
       }
     ]
   };
-
-  it('should create an array of processed components', () => {
-
-  })
 });

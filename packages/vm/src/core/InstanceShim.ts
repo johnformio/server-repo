@@ -100,4 +100,4 @@ export class InstanceShim {
 export const instanceShimCode = `
 ${InstanceShim.toString().replace('lodash_1.default', '_')}
 ${RootShim.toString().replace('InstanceShim_1.', '')}
-`
+`;

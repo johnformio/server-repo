@@ -2,8 +2,6 @@ import _ from 'lodash';
 
 import { Formio, Form } from 'formiojs';
 import { evaluate } from '..';
-import * as FormioCore from '@formio/core';
-
 
 import macros from './deps/nunjucks-macros/macros';
 
@@ -12,7 +10,7 @@ export type RenderEmailOptions = {
   context: any,
 }
 
-export async function renderEmail({ render, context = {} }: RenderEmailOptions) {
+export async function renderEmail({ render, context = {} }: RenderEmailOptions): Promise<string> {
   if (context._private) {
     delete context._private;
   }
@@ -32,11 +30,6 @@ export async function renderEmail({ render, context = {} }: RenderEmailOptions) 
     noeval: true,
     noDefaults: true
     })).ready;
-  // const form = await Formio.createForm(context.form, {
-  //   server: true,
-  //   noeval: true,
-  //   noDefaults: true
-  // });
 
   const submissionTableHtml = form.getView(context.data, {
     email: true
@@ -56,7 +49,7 @@ export async function renderEmail({ render, context = {} }: RenderEmailOptions) 
     data: data,
     code: getScript(render),
   });
-  return res;
+  return res as string;
 }
 
 function getScript(data: any) {

@@ -75,40 +75,4 @@ describe('Test InstanceShim', () => {
     const someTextInstance = instanceMap.firstName.root.getComponent('someText');
     expect(someTextInstance.component).to.deep.equal(component4);
   });
-
-  it('test', () => {
-    const components = [
-      {
-        type: 'editgrid',
-        // type: 'textfield',
-        key: 'parentTest',
-        components: [{
-          key: 'test',
-          type: 'textfield',
-        }]
-      },
-      {
-        type: 'textfield',
-        key: 'testKeyValue',
-        customDefaultValue: `value = instance.root.getComponent('parentTest.test').dataValue`,
-      },
-    ];
-    const data = {
-      parentTest: [
-        {
-          test: 'test',
-        },
-      ],
-      testKeyValue: '',
-    };
-    const processes = {
-      customDefaultValue: [{
-        type: 'textfield',
-        key: 'testKeyValue',
-        customDefaultValue: `value = instance.root.getComponent('parentTest.test').dataValue`,
-      }]
-    };
-
-    // const instanceMap = createInstanceMap(processes, components, data);
-  })
 });
