@@ -1,3 +1,6 @@
+import mockBrowserContext from './mockBrowserContext';
+mockBrowserContext();
+
 import { EvaluateOptions, EvaluateResult } from './core/evaluate';
 import { EvaluateProcessorsOptions, EvaluateProcessorsResult } from './core/evaluateProcess';
 import * as lib from './lib';

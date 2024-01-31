@@ -298,8 +298,6 @@ const renderComponentValue = (data, key, components, noRecurse) => {
   return compValue;
 }
 
-console.log(isAutoAddress.toString())
-
 export const nunjucksUtilsCode = `
 util = {
   isAutoAddress: ${isAutoAddress.toString()},
