@@ -1,6 +1,7 @@
 import fs from 'fs';
+import path from 'path';
 
-export const coreCode = fs.readFileSync('./node_modules/@formio/core/dist/formio.core.min.js', 'utf8');
+export const coreCode = fs.readFileSync(path.join(__dirname, './assets/formio.core.min.js'), 'utf8');
 export const polyfillCode = `
 var Text              = class {};
 var HTMLElement       = class {};

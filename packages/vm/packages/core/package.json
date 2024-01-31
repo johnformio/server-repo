@@ -24,12 +24,10 @@
         "nunjucks-date-filter": "^0.1.1"
     },
     "scripts": {
-        "test": "mocha -r ts-node/register -b -t 0 'src/**/__tests__/*.test.ts'",
+        "test": "gulp pretest && mocha -r ts-node/register -b -t 0 'src/**/__tests__/*.test.ts'; gulp posttest",
         "start": "DOTENV_CONFIG_PATH=./.env node build/server.js",
-        "clean": "rm -rf build",
-        "copy-html": "rsync -avm --include='*.html' -f 'hide,! */' ./src/ ./build/",
-        "build": "npm run clean && tsc && npm run copy-html",
-        "prepack": "npm run build && rm -rf build/server && rm -rf build/core/__tests__",
+        "build": "gulp prebuild && tsc && gulp postbuild",
+        "prepack": "npm run build",
         "prepare": "husky install"
     },
     "devDependencies": {
@@ -42,12 +40,15 @@
         "@types/node": "^20.8.9",
         "@types/nunjucks": "^3.2.6",
         "chai": "^4.3.10",
+        "del": "^7.1.0",
         "eslint": ">=7.0.0",
         "eslint-config-prettier": "^9.0.0",
         "eslint-config-standard": "^17.1.0",
         "eslint-plugin-import": "^2.25.2",
         "eslint-plugin-n": "^15.0.0 || ^16.0.0 ",
         "eslint-plugin-promise": "^6.0.0",
+        "gulp": "^4.0.2",
+        "gulp-rename": "^2.0.0",
         "husky": ">=6",
         "lint-staged": ">=10",
         "mocha": "^10.2.0",
