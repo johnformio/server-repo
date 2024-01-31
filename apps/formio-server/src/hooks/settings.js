@@ -1177,12 +1177,11 @@ module.exports = function(app) {
         };
 
         const createFormRevision = (item, doc, {_vid, tag}, done) => {
-          doc.set('_vid', _vid);
-          doc.save((err, result) => {
-            if (err) {
-              return done(err);
-            }
-
+          formioServer.formio.resources.form.model.findOneAndUpdate({
+            _id: doc._id
+          },
+          {$set: {_vid: _vid}})
+          .then((result)=> {
             const body = Object.assign({}, item);
             body._rid = result._id;
             body._vid = result._vid;
@@ -1194,6 +1193,11 @@ module.exports = function(app) {
             formioServer.formio.mongoose.models.formrevision.create(body, () => {
               done(null, item);
             });
+          })
+          .catch(err => {
+            if (err) {
+              return done(err);
+            }
           });
         };
 

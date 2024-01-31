@@ -114,12 +114,11 @@ module.exports = app => Resource => {
             });
           }
 
-          item.set(update);
-          item.save((err, item) => {
-            if (err) {
-              return ResourceClass.setResponse(res, {status: 400, error: err}, next);
-            }
-
+          app.formio.mongoose.models.formrevision.findOneAndUpdate({
+            _id: item._id},
+            {$set: update}
+          )
+          .then((item) => {
             return options.hooks.put.after.call(
               this,
               req,
@@ -127,6 +126,11 @@ module.exports = app => Resource => {
               item,
               ResourceClass.setResponse.bind(ResourceClass, res, {status: 200, item: item}, next)
             );
+          })
+          .catch(err=> {
+            if (err) {
+              return ResourceClass.setResponse(res, {status: 400, error: err}, next);
+            }
           });
         });
       }, ResourceClass.respond.bind(ResourceClass), options);

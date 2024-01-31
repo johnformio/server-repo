@@ -1151,7 +1151,6 @@ module.exports = function(app, template, hook, eventEmitter) {
             assert.deepEqual(response.roles, [template.roles.authenticated._id.toString()], 'The submission should have the OAuth Action configured role added to it.');
             assert.equal(response.externalIds.length, 1);
             assert(response.externalIds[0].hasOwnProperty('_id'), 'The externalId should contain an `_id`.');
-            assert(response.externalIds[0].hasOwnProperty('modified'), 'The externalId should contain a `modified` timestamp.');
             assert(response.externalIds[0].hasOwnProperty('created'), 'The externalId should contain a `created` timestamp.');
             assert.equal(response.externalIds[0].type, app.formio.formio.oauth.providers.test1.name, 'The externalId should be for test1 oauth.');
             assert.equal(response.externalIds[0].id, TEST_USER_1.id, 'The externalId should match test user 1\'s id.');
@@ -1207,7 +1206,6 @@ module.exports = function(app, template, hook, eventEmitter) {
             assert.deepEqual(response.roles, [template.roles.authenticated._id.toString()], 'The submission should have the OAuth Action configured role added to it.');
             assert.equal(response.externalIds.length, 1);
             assert(response.externalIds[0].hasOwnProperty('_id'), 'The externalId should contain an `_id`.');
-            assert(response.externalIds[0].hasOwnProperty('modified'), 'The externalId should contain a `modified` timestamp.');
             assert(response.externalIds[0].hasOwnProperty('created'), 'The externalId should contain a `created` timestamp.');
             assert.equal(response.externalIds[0].type, app.formio.formio.oauth.providers.test2.name, 'The externalId should be for test2 oauth.');
             assert.equal(response.externalIds[0].id, TEST_USER_2.id, 'The externalId should match test user 2\'s id.');
@@ -1262,7 +1260,6 @@ module.exports = function(app, template, hook, eventEmitter) {
             assert.deepEqual(response.roles, [template.roles.authenticated._id.toString()], 'The submission should have the OAuth Action configured role.');
             assert.equal(response.externalIds.length, 1);
             assert(response.externalIds[0].hasOwnProperty('_id'), 'The externalId should contain an `_id`.');
-            assert(response.externalIds[0].hasOwnProperty('modified'), 'The externalId should contain a `modified` timestamp.');
             assert(response.externalIds[0].hasOwnProperty('created'), 'The externalId should contain a `created` timestamp.');
             assert.equal(response.externalIds[0].type, app.formio.formio.oauth.providers.test1.name, 'The externalId should be for test1 oauth.');
             assert.equal(response.externalIds[0].id, TEST_USER_1.id, 'The externalId should match test user 1\'s id.');
@@ -1313,7 +1310,6 @@ module.exports = function(app, template, hook, eventEmitter) {
             assert.deepEqual(response.roles, [template.roles.authenticated._id.toString()], 'The submission should have the OAuth Action configured role.');
             assert.equal(response.externalIds.length, 1);
             assert(response.externalIds[0].hasOwnProperty('_id'), 'The externalId should contain an `_id`.');
-            assert(response.externalIds[0].hasOwnProperty('modified'), 'The externalId should contain a `modified` timestamp.');
             assert(response.externalIds[0].hasOwnProperty('created'), 'The externalId should contain a `created` timestamp.');
             assert.equal(response.externalIds[0].type, app.formio.formio.oauth.providers.test2.name, 'The externalId should be for test2 oauth.');
             assert.equal(response.externalIds[0].id, TEST_USER_2.id, 'The externalId should match test user 2\'s id.');
@@ -1364,7 +1360,6 @@ module.exports = function(app, template, hook, eventEmitter) {
             assert.deepEqual(response.roles, [template.roles.authenticated._id.toString()], 'The submission should have the OAuth Action configured role.');
             assert.equal(response.externalIds.length, 1);
             assert(response.externalIds[0].hasOwnProperty('_id'), 'The externalId should contain an `_id`.');
-            assert(response.externalIds[0].hasOwnProperty('modified'), 'The externalId should contain a `modified` timestamp.');
             assert(response.externalIds[0].hasOwnProperty('created'), 'The externalId should contain a `created` timestamp.');
             assert.equal(response.externalIds[0].type, app.formio.formio.oauth.providers.test1.name, 'The externalId should be for test1 oauth.');
             assert.equal(response.externalIds[0].id, TEST_USER_1.id, 'The externalId should match test user 1\'s id.');

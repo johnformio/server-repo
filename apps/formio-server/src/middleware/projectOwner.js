@@ -33,7 +33,11 @@ module.exports = function(formioServer) {
             // Add the administrative roles of this Project to the creators roles.
             owner.roles.push(adminRole.toObject()._id);
 
-            owner.save(function(err) {
+            formio.resources.submission.model.updateOne({
+              _id: owner._id
+            },
+            {$push: {roles: owner.roles}}
+            ).then(()=>{
               return res.send(projectObj);
             });
           });

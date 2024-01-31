@@ -199,6 +199,9 @@ module.exports = function(router) {
         description: 'The stage title.',
         maxlength: 63,
       },
+      builderConfig: {
+        type: formio.mongoose.Schema.Types.Mixed
+      }
     })
   });
   /* eslint-enable new-cap, max-len */

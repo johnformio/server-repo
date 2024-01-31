@@ -27,26 +27,17 @@ module.exports = function(formio, formioServer) {
         return next();
       }
 
-      formioServer.formio.resources.tag.model.find({project: tag.project, tag: tag.tag}, function(err, tagChunks) {
-        if (err) {
-          debug(err);
-          return next(err.message || err);
-        }
-
-        const updatedChunks = tagChunks.map((tag)=>{
-          tag.deleted = Date.now();
-          tag.markModified('deleted');
-          return tag.save();
-        });
-
-        Q.all(updatedChunks)
-        .then(()=>{
-          return res.sendStatus(200);
-        })
-        .catch(err=>{
-          debug(err);
-          return next(err.message || err);
-        });
+      formioServer.formio.resources.tag.model.updateMany({
+        project: tag.project,
+        tag: tag.tag
+      },
+      {deleted: Date.now()}
+      ).then(()=>{
+        return res.sendStatus(200);
+      })
+      .catch(err=>{
+        debug(err);
+        return next(err.message || err);
       });
     });
   };

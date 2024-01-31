@@ -126,6 +126,23 @@ module.exports = function(config, formio) {
           txn.metadata.lastRequest = new Date();
           txn.metadata.requestCount++;
 
+          const saveTransaction = () =>
+            formio.resources.submission.model
+              .updateOne(
+                {
+                  _id: txn._id,
+                  ...txnObject,
+                },
+                txn,
+                {upsert: true}
+              )
+              .then(() => {
+                return res.sendStatus(200);
+              })
+              .catch((err) => {
+                next(err);
+              });
+
           sendAuthTxn((transaction) => {
             if (process.env.TEST_SUITE && transaction && transaction.data) {
               txn.data = {
@@ -139,7 +156,9 @@ module.exports = function(config, formio) {
                 transactionStatus: transaction.data.status_code.toString(), // TODO: Add Text field in the Transactions Record Resource
                 transactionId: transaction.data.id, // TODO: Add Text field in the Transactions Record Resource
               };
-              txn.save();
+
+              saveTransaction();
+
               if (transaction.data.status_code === 102) {
                 return res.sendStatus(200);
               }
@@ -160,8 +179,7 @@ module.exports = function(config, formio) {
             if (transaction.data.status_code !== 102) {
               // Update the transaction record.
               txn.metadata.failures++;
-              txn.markModified('metadata');
-              txn.save();
+              saveTransaction();
               res.status(400);
               if (transaction.data.serviceErrors) {
                 return res.send(`Transaction Failed:  ${transaction.data.serviceErrors}  ${transaction.data.verbiage}  ${transaction.data.status_code}`);
@@ -170,7 +188,7 @@ module.exports = function(config, formio) {
             }
 
             if (!transaction.data.id) {
-              txn.save();
+              saveTransaction();
               res.status(400);
               return res.send('Card Information Missing in the transaction');
             }
@@ -188,10 +206,7 @@ module.exports = function(config, formio) {
             };
 
             // Update the transaction record.
-            txn.markModified('metadata');
-            txn.markModified('data');
-            txn.save();
-            return res.sendStatus(200);
+            saveTransaction();
           });
         });
       })

@@ -6,6 +6,7 @@ const _ = require('lodash');
 const crypto = require('crypto');
 const Q = require('q');
 const chance = require('chance').Chance();
+const {ObjectId} = require('mongodb');
 
 module.exports = router => {
   const formio = router.formio;
@@ -372,15 +373,16 @@ module.exports = router => {
             req['x-jwt-token'] = result.token.token;
 
             // Update external tokens with new tokens
-            result.user.set('externalTokens',
-              _(tokens).concat(result.user.externalTokens).uniq('type').value()
-            );
+            const externalTokens = _.uniqWith([...tokens, ...result.user.externalTokens], (a, b) => a.type === b.type);
 
-            return result.user.save()
-              .then(function() {
-                // Manually invoke formio.auth.currentUser to trigger resourcejs middleware.
-                return Q.ninvoke(formio.auth, 'currentUser', req, res);
-              });
+            return formio.resources.submission.model.updateOne({
+              _id: ObjectId(result.user.id)
+            }, {
+              $set: {externalTokens}
+            }).then(()=> {
+              // Manually invoke formio.auth.currentUser to trigger resourcejs middleware.
+              return Q.ninvoke(formio.auth, 'currentUser', req, res);
+            });
           }
           else { // Need to create and auth new resource
             // If we were looking for an existing resource, return an error
@@ -479,44 +481,30 @@ module.exports = router => {
             };
           }
 
-          // Add role
-          // Convert to just the roleId
-          role = role.toObject()._id.toString();
-
-          // Add and store unique roles only.
-          var temp = submission.toObject().roles || [];
-          temp = _.map(temp, function(r) {
-            return r.toString();
-          });
-          temp.push(role);
-          temp = _.uniq(temp);
-          temp = _.map(temp, function(r) {
-            return formio.mongoose.Types.ObjectId(r);
-          });
+          // Add role and make sure only unique roles are present
+          submission.roles = _.uniqWith([...submission.roles, role._id], (a, b) => a.toString() === b.toString());
 
           // Update the submissions owner.
-          if (!submission.owner && temp.length) {
+          if (!submission.owner && submission.roles.length) {
             submission.owner = submission._id;
           }
-
-          // Update and save the submissions roles.
-          submission.set('roles', temp);
 
           // Add external id
           submission.externalIds.push({
             type: provider.name,
-            id: req.oauthDeferredAuth.id
+            id: req.oauthDeferredAuth.id,
           });
 
           // Update external tokens with new tokens
-          submission.set('externalTokens',
-            _(req.oauthDeferredAuth.tokens).concat(submission.externalTokens).uniq('type').value()
-          );
+          submission.externalTokens = _.uniqWith([...req.oauthDeferredAuth.tokens, ...submission.externalTokens], (a, b) => a.type === b.type);
 
-          return submission.save()
-            .then(function() {
-              return auth.authenticateOAuth(resource, provider.name, req.oauthDeferredAuth.id, req);
-            });
+          return formio.resources.submission.model.updateOne({
+            _id: submission.id
+          }, {
+            $set: submission
+          }).then(()=> {
+            return auth.authenticateOAuth(resource, provider.name, req.oauthDeferredAuth.id, req);
+          });
         })
         .then(function(result) {
           if (!result) {

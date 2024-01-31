@@ -175,8 +175,18 @@ module.exports = app => routes => {
               }
               else {
                 if (item.containRevisions) {
-                  item.containRevisions = false;
-                  item.save();
+                  app.formio.formio.mongoose.models.submission.updateOne({
+                    _id: item._id
+                  },
+                  {$set: {
+                    containRevisions: false,
+                  }},
+                  (err)=>{
+                    if (err) {
+                      return next(err);
+                    }
+                    return next();
+                  });
                 }
               }
             return next();
@@ -210,8 +220,21 @@ module.exports = app => routes => {
             }
             else {
               if (item.containRevisions) {
-                item.containRevisions = false;
-                item.save();
+                app.formio.formio.mongoose.models.submission.updateOne({
+                  _id: item._id
+                },
+                {$set: {
+                  containRevisions: false,
+                }},
+                // {
+                //   containRevisions: false
+                // },
+                (err)=>{
+                  if (err) {
+                    return next(err);
+                  }
+                  return next();
+                });
               }
             }
           return next();

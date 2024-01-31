@@ -33,7 +33,7 @@ module.exports = class FormRevision extends Revision {
     delete body._id;
     delete body.__v;
 
-    this.revisionModel.findOne({
+   this.revisionModel.findOne({
       _rid: body._rid,
       _vid: 'draft'
     }).exec((err, result)=>{
@@ -41,12 +41,12 @@ module.exports = class FormRevision extends Revision {
         return done(err);
       }
       // If a draft exists, overwrite it.
-      if (result) {
-        result.set(body);
-        return result.save(done);
-      }
+          if (result) {
+              result.set(body);
+              return this.revisionModel.findOneAndUpdate({_id: result._id}, result, done);
+          }
       // Otherwise create a new entry.
       this.revisionModel.create(body, done);
     });
-  }
+    }
 };
