@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { Formio, Form } from 'formiojs';
 import { evaluate } from '..';
 
-import macros from './deps/nunjucks-macros/macros';
+import macros from './deps/nunjucks-macros';
 
 export type RenderEmailOptions = {
   render: any,

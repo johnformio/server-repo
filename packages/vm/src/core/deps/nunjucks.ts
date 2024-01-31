@@ -1,7 +1,8 @@
 import fs from 'fs';
+import path from 'path';
 
-export const nunjucksCode = fs.readFileSync('./node_modules/nunjucks/browser/nunjucks.min.js', 'utf8');
-export const nunjucksDateFilterCode = fs.readFileSync('./node_modules/nunjucks-date-filter/index.js', 'utf8')
+export const nunjucksCode = fs.readFileSync(path.join(__dirname, './assets/nunjucks.min.js'), 'utf8');
+export const nunjucksDateFilterCode = fs.readFileSync(path.join(__dirname, './assets/nunjucks-date-filter.js'), 'utf8')
   // Remove 'use strict' and require statements
   .replace(`'use strict';`, '')
   .replace(/^.+require.+$/gm, '')

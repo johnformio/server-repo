@@ -1,3 +1,4 @@
 import fs from 'fs';
+import path from 'path';
 
-export const lodashCode = fs.readFileSync('./node_modules/lodash/lodash.min.js', 'utf8');
+export const lodashCode = fs.readFileSync(path.join(__dirname, './assets/lodash.min.js'), 'utf8');
