@@ -9,8 +9,6 @@ export const nunjucksDateFilterCode = fs.readFileSync('./node_modules/nunjucks-d
   .replace(`module.exports = dateFilter;`, '')
   .replaceAll(`module.exports.`, '');
 
-console.log(nunjucksDateFilterCode);
-
 // Strip away macros and escape breakout attempts.
 const sanitize = (input: any) => {
   if (!input) {
