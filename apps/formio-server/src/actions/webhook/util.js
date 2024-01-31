@@ -49,9 +49,8 @@ function writeExternalIdToSubmission(req, res, router, type, id) {
 function processWebhookResponseBody(response, isDeleteRequest) {
   let bodyPromise = {};
 
-  // TODO: Should we consider what happens if Content-Length is unset/stripped by the 3rd party API? Might cause issues b/c Number(null) === 0
   const contentType = response.headers.get("content-type");
-  const contentLength = Number(response.headers.get("content-length"));
+  const contentLength = response.headers.get("content-length") === null || Number(response.headers.get("content-length"));
 
   // Restore the delete request check to ensure fidelity with fixes implemented in FOR-2722
   if (!isDeleteRequest && contentLength > 0) {
