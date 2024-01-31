@@ -128,13 +128,13 @@ module.exports = function(app) {
 
         return args;
       },
-      decrypt(req, cipherbuffer) {
+      decrypt(req, data) {
         const currentProject = formioServer.formio.cache.currentProject(req);
         const secret = currentProject && _.get(app, 'license.terms.options.sac', false)
-          ? currentProject.settings.secret || config.formio.secret
+          ? currentProject.settings.secret || config.formio.mongoSecret
           : null;
 
-        return secret ? util.decrypt(secret, cipherbuffer) : cipherbuffer;
+        return secret ? util.decrypt(secret, data) : data;
       },
       export(req, query, form, exporter, cb) {
         util.getSubmissionModel(formioServer.formio, req, form, true, (err, submissionModel) => {
