@@ -36,6 +36,10 @@ module.exports = function(formio) {
           }
         );
       }
+      else {
+        res.sendStatus(200);
+        return next();
+      }
     });
   };
 
