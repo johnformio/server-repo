@@ -625,8 +625,8 @@ module.exports = (router) => {
           const processResponseBody = fetchRequest.then((response) =>
             processWebhookResponseBody(response, isDeleteRequest)
           );
-          return [fetchRequest, processResponseBody]
-        }
+          return [fetchRequest, processResponseBody];
+        };
 
         const retryRequest = async () => {
           attempts++;
@@ -639,7 +639,7 @@ module.exports = (router) => {
             case 'linear': {
               delay = attempts * settings.initialDelay;
               break;
-            } 
+            }
             case 'exponential': {
               delay = settings.initialDelay * Math.pow(2, attempts);
               break;
@@ -654,27 +654,30 @@ module.exports = (router) => {
           }
 
           await setTimeout(()=>{
-            Promise.all(makeWebhookRequest()).then(onResolve).catch(onError)
-          }, delay)
-        }
+            /* eslint-disable no-use-before-define */
+            Promise.all(makeWebhookRequest()).then(onResolve).catch(onError);
+            /* eslint-enable no-use-before-define */
+          }, delay);
+        };
 
         // Set up closures
         const result = Promise.all(makeWebhookRequest());
-        const onResolve = async([response, body]) =>
-          {
-            if (response.ok) {
-              return handleSuccess(body)
-            }
-            if (settings.retryType && attempts <= settings.numberOfAttempts) {
-              await retryRequest();
-            } else {
-              return handleError(body, response);
-            }
+        const onResolve = async ([response, body]) => {
+          if (response.ok) {
+            return handleSuccess(body);
           }
+          if (settings.retryType && attempts <= settings.numberOfAttempts) {
+            await retryRequest();
+          }
+          else {
+            return handleError(body, response);
+          }
+        };
         const onError = async (err) => {
           if (err.statusCode && settings.retryType && attempts <= settings.numberOfAttempts) {
             await retryRequest();
-          } else {
+          }
+          else {
             return handleError(err);
           }
         };
