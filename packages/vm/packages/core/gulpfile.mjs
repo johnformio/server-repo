@@ -5,9 +5,6 @@ import { deleteAsync } from 'del';
 gulp.task('remove-server', async () => await deleteAsync(['build/server']));
 gulp.task('remove-tests', async () => await deleteAsync(['build/core/__tests__']));
 
-gulp.task('remove-unwanted', gulp.parallel('remove-server', 'remove-tests'));
-
-
 function copyAssets(assetsDir) {
   return gulp.parallel(
     () => gulp.src('./node_modules/lodash/lodash.min.js').pipe(gulp.dest(assetsDir)),
@@ -21,7 +18,7 @@ function copyAssets(assetsDir) {
 
 gulp.task('copy-assets-build', copyAssets('build/core/deps/assets'));
 gulp.task('prebuild', async () => deleteAsync(['build']))
-gulp.task('postbuild', gulp.parallel('copy-assets-build', 'remove-unwanted'));
+gulp.task('postbuild', gulp.parallel('copy-assets-build', 'remove-server'));
 
 gulp.task('pretest', copyAssets('src/core/deps/assets'));
 gulp.task('posttest', async () => await deleteAsync(['src/core/deps/assets/*.js']));
