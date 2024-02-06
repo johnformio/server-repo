@@ -16,9 +16,20 @@ if (process.argv.length > 2) {
   responseCode = process.argv[4] !== 'null' && process.argv[4] !== 'undefined' ? process.argv[4] : responseCode;
   response = process.argv[5] !== 'null' && process.argv[5] !== 'undefined' ? JSON.parse(process.argv[5]) : response;
 }
+let attempts = 0;
 
 webhookServer.post(path, async (req, res) => {
   const hookData = { recievedAt: Date(), headers: req.headers, body: req.body, url: req.url };
+
+  if (path === '/retry') {
+    if (attempts < 4 ) {
+      attempts++;
+    }
+    else {
+      responseCode = 201;
+      response = req.body;
+    }
+  }
   if (!response) {
     res.sendStatus(responseCode);
   }

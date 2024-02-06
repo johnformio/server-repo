@@ -1027,6 +1027,67 @@ module.exports = (app, template, hook) => {
             });
         });
       });
+
+      describe('Retry request for webhook', ()=> {
+        before('Set up webhook listener', (done) => {
+          webhookListener.setup(1337, '/retry', 500)
+            .then((config) => {
+              testWebhookUrl = config.url;
+              done();
+            })
+        });
+
+        afterEach('Clear in-memory webhook responses', () => {
+          webhookListener.clearReceivedHooks();
+        });
+
+        after('Stop the webhook listener process', () => {
+          webhookListener.stop();
+        });
+
+        it('Should retry request, if it fails', (done) => {
+          request(app)
+          .put(`/project/${project._id}/form/${webhookForm._id}/action/${webhookAction._id}`)
+            .set('x-jwt-token', template.formio.owner.token)
+            .send({
+              ...webhookAction,
+              settings: {
+                username: '',
+                password: '',
+                url: testWebhookUrl,
+                block: true,
+                retryType: 'constant',
+                numberOfAttempts: 10,
+                initialDelay: 100
+              }
+            })
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              webhookAction = res.body;
+              template.formio.owner.token = res.headers['x-jwt-token'];
+              const submission = { player: 'Rafayel' };
+              request(app)
+                .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+                .set('x-jwt-token', template.formio.owner.token)
+                .send({
+                  data: submission
+                })
+                .expect(201)
+                .expect('Content-Type', /json/)
+                .end(async(err, res) => {
+                  if (err) {
+                    return done(err);
+                  }
+                  assert.deepEqual(submission, res.body.data);
+                  done();
+                });
+            })
+        })
+      })
     });
 
     describe('LDAP Login', () => {
