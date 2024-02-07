@@ -45,7 +45,7 @@ export class InstanceShim {
 
   // Returns row
   get data() {
-    return FormioCore.Utils.getContextualRowData(this.component.path, this._data);
+    return FormioCore.Utils.getContextualRowData(this.component, this.component.path, this._data);
   }
 
   // No op

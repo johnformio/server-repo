@@ -9,11 +9,10 @@ if (context.form.module) {
   // Wrap with parenthesis to return object, not function
   formModule = eval( '(' + context.form.module + ')');
   evalContext = formModule?.options?.form?.evalContext;
-  //evalContextFn = (context) => Object.assign(context, evalContext);
-  evalContextFn = (context) => Object.assign({}, context, evalContext);
 
   if (evalContext) {
-    context.evalContext = evalContext;
+    evalContextFn = (context) => Object.assign({}, context, evalContext);
+    context.evalContext = evalContextFn;
   }
 }
 
