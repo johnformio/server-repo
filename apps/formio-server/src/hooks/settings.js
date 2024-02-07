@@ -7,7 +7,7 @@ const async = require('async');
 const fs = require('fs');
 const log = require('debug')('formio:log');
 const util = require('../util/util');
-const {VM} = require('vm2');
+const {evaluateSync} = require('@formio/vm');
 const {ClientCredentials} = require('simple-oauth2');
 const moment = require('moment');
 const config = require('../../config');
@@ -1549,15 +1549,14 @@ module.exports = function(app) {
           req.currentProject.settings.tokenParse
         ) {
           try {
-            const data = (new VM({
-              timeout: 500,
-              sandbox: _.cloneDeep({
+            const data = evaluateSync({
+              deps: ['lodash'],
+              code: req.currentProject.settings.tokenParse,
+              data: {
                 token: decoded,
                 roles: req.currentProject.roles
-              }),
-              eval: false,
-              fixAsync: true
-            })).run(req.currentProject.settings.tokenParse);
+              }
+            });
             if (!data.hasOwnProperty('user')) {
               throw new Error('User not defined on data.');
             }

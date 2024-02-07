@@ -1255,7 +1255,7 @@ module.exports = (app, template, hook) => {
       },
       (err, result) => {
         if (err) {
-          done(err);
+          return done(err);
         }
         submissionWithInitiallyDisabledRevision = result;
         assert.deepEqual(submissionWithInitiallyDisabledRevision.data, data);
@@ -1263,7 +1263,7 @@ module.exports = (app, template, hook) => {
         helper.getSubmissionRevisions(formWithInitiallyDisabledRevision, submissionWithInitiallyDisabledRevision,
         (err, revisions) => {
           if (err) {
-            done(err);
+            return done(err);
           }
           assert.equal(revisions.length, 0);
           done();
@@ -1279,7 +1279,7 @@ module.exports = (app, template, hook) => {
         helper.getSubmissionRevisions(formWithInitiallyDisabledRevision, submissionWithInitiallyDisabledRevision,
           (err, revisions) => {
             if (err) {
-              done(err);
+              return done(err);
             }
 
             assert.equal(revisions.length, 1);
@@ -1291,7 +1291,7 @@ module.exports = (app, template, hook) => {
             helper.getSubmission('submissionRevisionUpdateForm', submissionWithInitiallyDisabledRevision._id,
               (err, result) => {
                 if (err) {
-                  done(err);
+                  return done(err);
                 }
                 submissionWithInitiallyDisabledRevision = result;
                 assert.deepEqual(submissionWithInitiallyDisabledRevision.containRevisions, true);
@@ -1326,7 +1326,7 @@ module.exports = (app, template, hook) => {
         },
         (err, result) => {
           if (err) {
-            done(err);
+            return done(err);
           }
           submission = result;
           assert.deepEqual(submission.data, data);
@@ -1334,7 +1334,7 @@ module.exports = (app, template, hook) => {
           helper.getSubmissionRevisions(form, submission,
           (err, revisions) => {
             if (err) {
-              done(err);
+             return  done(err);
             }
             assert.equal(revisions.length, 0);
             done();
@@ -1353,7 +1353,7 @@ module.exports = (app, template, hook) => {
         helper.updateSubmission( submissionWithInitiallyDisabledRevision,
           (err, result) => {
             if (err) {
-              done(err);
+              return done(err);
             }
             submissionWithInitiallyDisabledRevision = result;
             assert.deepEqual(submissionWithInitiallyDisabledRevision.data, nawData);
@@ -1361,7 +1361,7 @@ module.exports = (app, template, hook) => {
             helper.getSubmissionRevisions(formWithInitiallyDisabledRevision, submissionWithInitiallyDisabledRevision,
             (err, revisions) => {
               if (err) {
-                done(err);
+                return done(err);
               }
               assert.equal(revisions.length, 2);
               assert.equal(revisions[0]._rid, submissionWithInitiallyDisabledRevision._id);
@@ -1405,7 +1405,7 @@ module.exports = (app, template, hook) => {
         },
         (err, result) => {
           if (err) {
-            done(err);
+            return done(err);
           }
           submission = result;
           assert.deepEqual(submission.data, data);
@@ -1413,7 +1413,7 @@ module.exports = (app, template, hook) => {
           helper.getSubmissionRevisions(form, submission,
           (err, revisions) => {
             if (err) {
-              done(err);
+              return done(err);
             }
 
             assert.equal(revisions.length, 1);
@@ -1433,11 +1433,11 @@ module.exports = (app, template, hook) => {
         helper.updateSubmission(submission,
         (err, result) => {
           if (err) {
-            done(err);
+            return done(err);
           }
           helper.getSubmissionRevisions(form, submission, (err, revisions) => {
             if (err) {
-              done(err);
+              return done(err);
             }
 
             assert.equal(revisions.length, 1);
@@ -1459,11 +1459,11 @@ module.exports = (app, template, hook) => {
         helper.updateSubmission(submission,
         (err, result) => {
           if (err) {
-            done(err);
+            return done(err);
           }
           helper.getSubmissionRevisions(form, submission, (err, revisions) => {
             if (err) {
-              done(err);
+              return done(err);
             }
 
             assert.equal(revisions.length, 2);
@@ -1495,11 +1495,11 @@ module.exports = (app, template, hook) => {
         helper.updateSubmission(submission,
         (err, result) => {
           if (err) {
-            done(err);
+            return done(err);
           }
           helper.getSubmissionRevisions(form, submission, (err, revisions) => {
             if (err) {
-              done(err);
+              return done(err);
             }
 
             assert.equal(revisions.length, 2);
@@ -1530,7 +1530,7 @@ module.exports = (app, template, hook) => {
       it('Get submission revision by Id', done => {
         helper.getSubmissionRevision(form, submission, submissionRevisions[1]._id, (err, result) => {
           if (err) {
-            done(err);
+            return done(err);
           }
 
           assert.equal(result._rid, submission._id);
@@ -1548,7 +1548,7 @@ module.exports = (app, template, hook) => {
       it('Get submission change log', done => {
         helper.getSubmissionChangeLog(form, submission, (err, results) => {
           if (err) {
-            done(err);
+            return done(err);
           }
 
           assert.equal(results.length, 2);
@@ -1575,7 +1575,7 @@ module.exports = (app, template, hook) => {
       it('Get submission revision change log', done => {
         helper.getSubmissionRevisionChangeLog(form, submission, submissionRevisions[1]._id, (err, result) => {
           if (err) {
-            done(err);
+            return done(err);
           }
 
           assert.equal(result._id, submissionRevisions[1]._id);
@@ -1602,7 +1602,7 @@ module.exports = (app, template, hook) => {
             data
           }, (err, result) => {
             if (err) {
-              done(err);
+              return done(err);
             }
             submission = result;
             assert.deepEqual(submission.data, data);
@@ -1612,18 +1612,18 @@ module.exports = (app, template, hook) => {
             helper.updateSubmission(submission,
             (err, res) => {
               if (err) {
-                done(err);
+                return done(err);
               }
               submission = res;
               helper.getSubmissionRevisions(submissionRevisionChangelogForm, submission,
               (err, revisions) => {
                 if (err) {
-                  done(err);
+                  return done(err);
                 }
                 helper.getSubmissionRevisionChangeLog(submissionRevisionChangelogForm, submission, revisions[1]._id,
                   (err, results) => {
-                    if (err) {
-                      done(err);
+                    if (err) { 
+                      return done(err); 
                     }
                     assert.equal(results.data.number2, 0);
                     assert.equal(results.metadata.previousData.number1, 0);

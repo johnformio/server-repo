@@ -2,7 +2,7 @@
 
 const fetch = require('formio/src/util/fetch');
 const _ = require('lodash');
-const {NodeVM, VMScript} = require('vm2');
+const {evaluate} = require('@formio/vm');
 
 const {isEmptyObject} = require('../../util/util');
 const {
@@ -396,7 +396,7 @@ module.exports = (router) => {
      * @param next
      *   The callback function to execute upon completion.
      */
-    resolve(handler, method, req, res, next, setActionItemMessage) {
+    async resolve(handler, method, req, res, next, setActionItemMessage) {
       const settings = this.settings || {};
       const submission = getSubmission(req, res);
       const externalId = getExternalId(submission, settings);
@@ -569,25 +569,25 @@ module.exports = (router) => {
         // Allow user scripts to transform the payload.
         setActionItemMessage('Transforming payload');
         if (settings.transform) {
-          const script = new VMScript(
-            `${settings.transform} \n module.exports = payload;`
-          );
+          const script = `
+            ${settings.transform}
+            payload;
+          `;
           try {
-            payload = new NodeVM({
-              timeout: 500,
-              sandbox: _.cloneDeep({
-                externalId,
+            payload = await evaluate({
+              deps: ['lodash', 'moment'],
+              code: script,
+              data: {
                 payload,
+                externalId,
                 headers,
                 config:
                   req.currentProject &&
                   req.currentProject.hasOwnProperty('config')
                     ? req.currentProject.config
                     : {},
-              }),
-              eval: false,
-              fixAsync: true,
-            }).run(script);
+              }
+            });
           }
           catch (err) {
             setActionItemMessage('Webhook transform failed', err, 'error');
