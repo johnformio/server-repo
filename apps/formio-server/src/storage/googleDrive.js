@@ -193,7 +193,7 @@ const middleware = router => {
     router.formio.formio.middleware.permissionHandler,
     router.formio.formio.plans.disableForPlans(['basic', 'independent', 'archived']),
     function(req, res) {
-      router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
+      router.formio.formio.cache.loadProject(req, req.projectId, async function(err, project) {
         if (err) {
           debug(err);
           return res.status(400).send('Project not found.');
@@ -234,41 +234,39 @@ const middleware = router => {
           }
         };
 
-        authenticate(settings)
-          .then(async drive => {
-            const webViewLink = await getWebViewLink(drive, fileId);
-            if (webViewLink) {
-              return res.redirect(webViewLink);
-            }
+        try {
+          const drive = await authenticate(settings);
+          const webViewLink = await getWebViewLink(drive, fileId);
+          if (webViewLink) {
+            return res.redirect(webViewLink);
+          }
 
-            try {
-              debug(`Loading a file ${fileId} from Google Drive.`);
+          debug(`Loading a file ${fileId} from Google Drive.`);
 
-              const response = await drive.files.get(
-                {
-                  fileId,
-                  alt: 'media',
-                },
-                {responseType: 'stream'}
-              );
-              // Set the fileName
-              res.setHeader('content-disposition', `filename=${fileName}`);
-              res.setHeader('content-type', 'application/octet-stream');
+          const response = await drive.files.get(
+            {
+              fileId,
+              alt: 'media',
+            },
+            {responseType: 'stream'}
+          );
+          // Set the fileName
+          res.setHeader('content-disposition', `filename=${fileName}`);
+          res.setHeader('content-type', 'application/octet-stream');
 
-              debug(`Loaded a file ${fileId} from Google Drive.`);
+          debug(`Loaded a file ${fileId} from Google Drive.`);
 
-              response.data
-                .on('error', err => {
-                  debug(err);
-                  return res.status(400).send('Invalid response.');
-                })
-                .pipe(res);
-            }
-            catch (err) {
+          response.data
+            .on('error', err => {
               debug(err);
               return res.status(400).send('Invalid response.');
-            }
-          });
+            })
+            .pipe(res);
+        }
+        catch (err) {
+          debug(err);
+          return res.status(400).send('Invalid response.');
+        }
       });
     }
   );
