@@ -1,6 +1,5 @@
 'use strict';
 
-const Q = require('q');
 const debug = require('debug')('formio:middleware:deleteTagHandler');
 
 /**

@@ -1,8 +1,8 @@
 const { fork } = require("child_process");
 const { join } = require("path");
 
-module.exports = class WebhooksListener {
-  setup(port, path, responseCode, data) {
+module.exports = class MockServer {
+  setup(file, protocol, port, path, responseCode, data) {
     return new Promise((resolve, reject) => {
       try {
         this.hooksReceived = [];
@@ -12,16 +12,16 @@ module.exports = class WebhooksListener {
         * process.argv[4] => response code
         * process.argv[5] => response data
         */
-        this.hooksServerProcess = fork(join(__dirname, "webhookServer.js"), [
+        this.process = fork(join(__dirname, file), [
           port,
           path,
           responseCode,
           JSON.stringify(data),
         ]);
 
-        this.hooksServerProcess.on("message", (message) => {
+        this.process.on("message", (message) => {
           if (message.ready) {
-            resolve({ url: `http://localhost:${port}${path}`, processHandle: this.hookListenerProcess })
+            resolve(`${protocol}://localhost:${port}${path ? path : ""}`);
           }
           this.hooksReceived.push(message);
         });
@@ -36,11 +36,11 @@ module.exports = class WebhooksListener {
   }
 
   stop() {
-    this.hooksServerProcess.kill("SIGKILL");
+    this.process.kill("SIGKILL");
   }
 
   clearReceivedHooks() {
-    this.hooksServerProcess.send({ clearHooks: true });
+    this.process.send({ clearHooks: true });
     this.hooksReceived = [];
   }
 }

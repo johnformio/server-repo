@@ -1,6 +1,5 @@
 'use strict';
 const _ = require('lodash');
-const async = require('async');
 const config = require('../../config');
 module.exports = class Revision {
   constructor(app, type, trackedProperties, revisionPlans) {
