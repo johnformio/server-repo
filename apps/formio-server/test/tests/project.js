@@ -5546,6 +5546,105 @@ module.exports = function(app, template, hook) {
       })
     });
   });
+ 
+  if (!config.formio.hosted) {
+    describe('Test sanitizeConfig Setting', function() {
+      const helper = new Helper(template.formio.owner);
+      const sanitizeConfig =  {
+          addTags: ['iframe', 'script'],
+      };
+      const formOwnSanitizeConfig =  {
+        addTags: ['link'],
+      };
+
+      before((done) => {
+        helper.project().execute((err) => {
+          if (err) {
+            return done(err);
+          }
+          done();
+        });
+      });
+
+      it('Should save sanitizeConfig settings for the project', (done) => {
+        request(app)
+          .put('/project/' + helper.template.project._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .send({settings: { sanitizeConfig }})
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            assert.deepEqual(res.body.settings?.sanitizeConfig, sanitizeConfig);
+            done();
+          });
+      });
+  
+      it('Should create a form ', (done) => {
+        helper.form('test1', [
+          {
+            type: 'textfield',
+            key: 'firstName',
+            label: 'First Name',
+            input: true
+          }
+        ]).execute((err) => {
+          if (err) {
+            done(err);
+          }
+          assert.equal(!!helper.getForm('test1'), true);
+          done();
+        })
+      });
+  
+      it('Should attach globalSettings with sanitizeConfig to the form', (done) => {
+        request(app)
+          .get('/project/' + helper.template.project._id + '/form/' + helper.getForm('test1')._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .send()
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            assert.deepEqual(res.body.globalSettings?.sanitizeConfig, sanitizeConfig);
+            done();
+          });
+      });
+
+      it('Should add own sanitizeConfig to the form', (done) => {
+        const form1 = helper.getForm('test1');
+
+        _.set(form1, 'settings.sanitizeConfig', formOwnSanitizeConfig);
+        helper.updateForm(form1, (err, updatedForm) => {
+          if (err) {
+            return done(err);
+          }
+          assert.deepEqual(updatedForm.settings?.sanitizeConfig, formOwnSanitizeConfig);
+          done();
+        })
+      });
+
+      it('Should not attach global sanitizeConfig to the form when the form has its own', (done) => {
+        request(app)
+          .get('/project/' + helper.template.project._id + '/form/' + helper.getForm('test1')._id)
+          .set('x-jwt-token', template.formio.owner.token)
+          .expect('Content-Type', /json/)
+          .send()
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            assert.deepEqual(!!_.get(res.body, 'globalSettings.sanitizeConfig'), false);
+            assert.deepEqual(res.body.settings?.sanitizeConfig, formOwnSanitizeConfig);
+            done();
+          });
+      });
+    });
+  }
   // This is disabled until we set up customer testing again. This should not be allowed for hosted or docker version. Only customers.
   if (!docker || config.formio.hosted) {
     return;
