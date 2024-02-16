@@ -21,7 +21,8 @@
     "builddocker": "docker build --no-cache -t tmpimage -f deployment/docker/Builder .",
     "distdocker": "docker build --no-cache -t formio/formio-enterprise:latest -f deployment/docker/Dockerfile .",
     "lint": "eslint .",
-    "validate": "circleci config validate -c .circleci/config.yml"
+    "validate": "circleci config validate -c .circleci/config.yml",
+    "preinstall": "npx check-node-version --node '>=20.0.0'"
   },
   "cache": "1550086650",
   "main": "./main.js",
