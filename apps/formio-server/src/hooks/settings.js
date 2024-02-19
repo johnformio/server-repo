@@ -918,7 +918,7 @@ module.exports = function(app) {
         const url = nodeUrl.parse(req.url).pathname.split('/');
         if (
           (url[5] === 'validate') ||
-          (url[5] === 'storage' && ['s3', 'dropbox', 'azure'].indexOf(url[6]) !== -1)
+          (url[5] === 'storage' && ['gdrive', 's3', 'dropbox', 'azure'].indexOf(url[6]) !== -1)
         ) {
           entity = {
             type: 'submission',
