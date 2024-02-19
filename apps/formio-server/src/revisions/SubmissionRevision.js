@@ -62,9 +62,21 @@ module.exports = class FormRevision extends Revision {
     body._vnote = note || '';
     delete body._id;
     delete body.__v;
-    item.containRevisions = true;
-    item.save();
-    return this.revisionModel.create(body, done);
+    if (!item.containRevisions) {
+      item.containRevisions = true;
+      this.itemModel.updateOne({
+        _id: item._id
+      },
+      {
+        $set: item,
+      },
+      (err) => {
+        return this.revisionModel.create(body, done);
+      });
+    }
+    else {
+      return this.revisionModel.create(body, done);
+    }
  }
 
  async checkDraft(loadSubmission) {

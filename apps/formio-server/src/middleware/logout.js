@@ -25,9 +25,9 @@ module.exports = (app) => {
       {
         _id: req.session._id,
       },
-      {
+      {$set: {
         logout: Date.now(),
-      },
+      }}
     )
       .then(() => {
         log(req, 'Session was successfully invalidated');

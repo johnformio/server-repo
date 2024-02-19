@@ -5,8 +5,6 @@ const debug = require('debug')('formio:payment:upgrade');
 const _merge = require('lodash/merge');
 
 module.exports = function(formio) {
-  const emailer = require('formio/src/util/email')(formio);
-
   return function(req, res, next) {
     new Promise((resolve, reject) => {
       if (!req.body) {
@@ -51,10 +49,11 @@ module.exports = function(formio) {
                 // upgrade plan for project itself
                 return formio.resources.project.model.updateOne({
                   _id: formio.util.idToBson(req.projectId)
-                }, {
+                },  {$set: {
                   plan: req.body.plan,
                   billing
-                });
+                }}
+                );
               });
           })
           .then(function(rawResponse) {

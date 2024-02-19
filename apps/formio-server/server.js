@@ -134,7 +134,8 @@ module.exports = function(options) {
               else if (config.enableOauthM2M && matched.includes('var oAuthM2MEnabled')) {
                 return 'var oAuthM2MEnabled = true;';
               }
-              else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.reporting && matched.includes('var reportingUI')) {
+              // else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.reporting && matched.includes('var reportingUI')) {
+              else if (matched.includes('var reportingUI')) {
                 return 'var reportingUI = true;';
               }
               else if (!config.formio.hosted && app.license && app.license.licenseId && matched.includes('var licenseId')) {
@@ -266,7 +267,7 @@ module.exports = function(options) {
   app.get('/reportingui/config', [
     cors(),
     (req, res) => {
-      const reportingUIForm = require('./reportingUI.json').resources.reportingui;
+      const reportingUIForm = require('@formio/reporting/reportConfigTemplate.json').resources.reportingui;
       res.json(reportingUIForm);
     }
   ]);

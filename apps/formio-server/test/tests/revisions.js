@@ -163,7 +163,7 @@ module.exports = (app, template, hook) => {
         });
       });
     });
-    
+
     if (!config.formio.hosted) {
       it('Should not create a new revision if sac is disabled', done => {
         process.env.TEST_SIMULATE_SAC_PACKAGE = '0';
@@ -182,7 +182,7 @@ module.exports = (app, template, hook) => {
         });
       });
     }
-  
+
     it('Creates a new revision when a form is updated', done => {
       form.components.push({
         input: true,
@@ -1030,7 +1030,7 @@ module.exports = (app, template, hook) => {
     let formWithInitiallyDisabledRevision;
     let submissionRevisionChangelogForm;
     let submission;
-    let submissionWithInitiallyDisabledRevision; 
+    let submissionWithInitiallyDisabledRevision;
     const data = {
       fname: 'joe',
       lname: 'test'
@@ -1176,68 +1176,68 @@ module.exports = (app, template, hook) => {
             type: 'textfield'
           }
         ])
-        .form('submissionRevisionChangelogForm', [ 
-          { 
-            input: true, 
-            tableView: false, 
+        .form('submissionRevisionChangelogForm', [
+          {
+            input: true,
+            tableView: false,
             inputFormat: 'plain',
-            label: 'number1', 
-            key: 'number1', 
+            label: 'number1',
+            key: 'number1',
             requireDecimal: false,
-            placeholder: '', 
-            prefix: '', 
-            suffix: '', 
-            multiple: false, 
-            defaultValue: '', 
-            protected: false, 
-            unique: false, 
-            persistent: true, 
-            validate: { 
-              required: true, 
-              minLength: '', 
-              maxLength: '', 
-              pattern: '', 
-              custom: '', 
-              customPrivate: false 
-            }, 
-            conditional: { 
-              show: '', 
-              when: null, 
-              eq: '' 
-            }, 
-            type: 'number', 
-          },  
-          { 
-            input: true, 
-            tableView: false, 
+            placeholder: '',
+            prefix: '',
+            suffix: '',
+            multiple: false,
+            defaultValue: '',
+            protected: false,
+            unique: false,
+            persistent: true,
+            validate: {
+              required: true,
+              minLength: '',
+              maxLength: '',
+              pattern: '',
+              custom: '',
+              customPrivate: false
+            },
+            conditional: {
+              show: '',
+              when: null,
+              eq: ''
+            },
+            type: 'number',
+          },
+          {
+            input: true,
+            tableView: false,
             inputFormat: 'plain',
-            label: 'number2', 
-            key: 'number2', 
+            label: 'number2',
+            key: 'number2',
             requireDecimal: false,
-            placeholder: '', 
-            prefix: '', 
-            suffix: '', 
-            multiple: false, 
-            defaultValue: '', 
-            protected: false, 
-            unique: false, 
-            persistent: true, 
-            validate: { 
-              required: true, 
-              minLength: '', 
-              maxLength: '', 
-              pattern: '', 
-              custom: '', 
-              customPrivate: false 
-            }, 
-            conditional: { 
-              show: '', 
-              when: null, 
-              eq: '' 
-            }, 
-            type: 'number', 
-          } 
-        ]) 
+            placeholder: '',
+            prefix: '',
+            suffix: '',
+            multiple: false,
+            defaultValue: '',
+            protected: false,
+            unique: false,
+            persistent: true,
+            validate: {
+              required: true,
+              minLength: '',
+              maxLength: '',
+              pattern: '',
+              custom: '',
+              customPrivate: false
+            },
+            conditional: {
+              show: '',
+              when: null,
+              eq: ''
+            },
+            type: 'number',
+          }
+        ])
         .execute(function() {
           form = helper.getForm('submissionRevisionForm');
           formWithInitiallyDisabledRevision = helper.getForm('submissionRevisionUpdateForm');
@@ -1255,7 +1255,7 @@ module.exports = (app, template, hook) => {
       },
       (err, result) => {
         if (err) {
-          done(err);
+          return done(err);
         }
         submissionWithInitiallyDisabledRevision = result;
         assert.deepEqual(submissionWithInitiallyDisabledRevision.data, data);
@@ -1263,7 +1263,7 @@ module.exports = (app, template, hook) => {
         helper.getSubmissionRevisions(formWithInitiallyDisabledRevision, submissionWithInitiallyDisabledRevision,
         (err, revisions) => {
           if (err) {
-            done(err);
+            return done(err);
           }
           assert.equal(revisions.length, 0);
           done();
@@ -1279,7 +1279,7 @@ module.exports = (app, template, hook) => {
         helper.getSubmissionRevisions(formWithInitiallyDisabledRevision, submissionWithInitiallyDisabledRevision,
           (err, revisions) => {
             if (err) {
-              done(err);
+              return done(err);
             }
 
             assert.equal(revisions.length, 1);
@@ -1291,7 +1291,7 @@ module.exports = (app, template, hook) => {
             helper.getSubmission('submissionRevisionUpdateForm', submissionWithInitiallyDisabledRevision._id,
               (err, result) => {
                 if (err) {
-                  done(err);
+                  return done(err);
                 }
                 submissionWithInitiallyDisabledRevision = result;
                 assert.deepEqual(submissionWithInitiallyDisabledRevision.containRevisions, true);
@@ -1326,7 +1326,7 @@ module.exports = (app, template, hook) => {
         },
         (err, result) => {
           if (err) {
-            done(err);
+            return done(err);
           }
           submission = result;
           assert.deepEqual(submission.data, data);
@@ -1334,7 +1334,7 @@ module.exports = (app, template, hook) => {
           helper.getSubmissionRevisions(form, submission,
           (err, revisions) => {
             if (err) {
-              done(err);
+             return  done(err);
             }
             assert.equal(revisions.length, 0);
             done();
@@ -1353,7 +1353,7 @@ module.exports = (app, template, hook) => {
         helper.updateSubmission( submissionWithInitiallyDisabledRevision,
           (err, result) => {
             if (err) {
-              done(err);
+              return done(err);
             }
             submissionWithInitiallyDisabledRevision = result;
             assert.deepEqual(submissionWithInitiallyDisabledRevision.data, nawData);
@@ -1361,7 +1361,7 @@ module.exports = (app, template, hook) => {
             helper.getSubmissionRevisions(formWithInitiallyDisabledRevision, submissionWithInitiallyDisabledRevision,
             (err, revisions) => {
               if (err) {
-                done(err);
+                return done(err);
               }
               assert.equal(revisions.length, 2);
               assert.equal(revisions[0]._rid, submissionWithInitiallyDisabledRevision._id);
@@ -1405,7 +1405,7 @@ module.exports = (app, template, hook) => {
         },
         (err, result) => {
           if (err) {
-            done(err);
+            return done(err);
           }
           submission = result;
           assert.deepEqual(submission.data, data);
@@ -1413,7 +1413,7 @@ module.exports = (app, template, hook) => {
           helper.getSubmissionRevisions(form, submission,
           (err, revisions) => {
             if (err) {
-              done(err);
+              return done(err);
             }
 
             assert.equal(revisions.length, 1);
@@ -1433,11 +1433,11 @@ module.exports = (app, template, hook) => {
         helper.updateSubmission(submission,
         (err, result) => {
           if (err) {
-            done(err);
+            return done(err);
           }
           helper.getSubmissionRevisions(form, submission, (err, revisions) => {
             if (err) {
-              done(err);
+              return done(err);
             }
 
             assert.equal(revisions.length, 1);
@@ -1459,11 +1459,11 @@ module.exports = (app, template, hook) => {
         helper.updateSubmission(submission,
         (err, result) => {
           if (err) {
-            done(err);
+            return done(err);
           }
           helper.getSubmissionRevisions(form, submission, (err, revisions) => {
             if (err) {
-              done(err);
+              return done(err);
             }
 
             assert.equal(revisions.length, 2);
@@ -1495,11 +1495,11 @@ module.exports = (app, template, hook) => {
         helper.updateSubmission(submission,
         (err, result) => {
           if (err) {
-            done(err);
+            return done(err);
           }
           helper.getSubmissionRevisions(form, submission, (err, revisions) => {
             if (err) {
-              done(err);
+              return done(err);
             }
 
             assert.equal(revisions.length, 2);
@@ -1530,7 +1530,7 @@ module.exports = (app, template, hook) => {
       it('Get submission revision by Id', done => {
         helper.getSubmissionRevision(form, submission, submissionRevisions[1]._id, (err, result) => {
           if (err) {
-            done(err);
+            return done(err);
           }
 
           assert.equal(result._rid, submission._id);
@@ -1548,7 +1548,7 @@ module.exports = (app, template, hook) => {
       it('Get submission change log', done => {
         helper.getSubmissionChangeLog(form, submission, (err, results) => {
           if (err) {
-            done(err);
+            return done(err);
           }
 
           assert.equal(results.length, 2);
@@ -1575,7 +1575,7 @@ module.exports = (app, template, hook) => {
       it('Get submission revision change log', done => {
         helper.getSubmissionRevisionChangeLog(form, submission, submissionRevisions[1]._id, (err, result) => {
           if (err) {
-            done(err);
+            return done(err);
           }
 
           assert.equal(result._id, submissionRevisions[1]._id);
@@ -1588,8 +1588,8 @@ module.exports = (app, template, hook) => {
           done();
         });
       });
-      
-      it('0 is shown in the Submission Revisions Changelog', done => { 
+
+      it('0 is shown in the Submission Revisions Changelog', done => {
         submissionRevisionChangelogForm.submissionRevisions = 'true';
         submissionRevisionChangelogForm.components.push();
         helper.updateForm(submissionRevisionChangelogForm, (err, result) => {
@@ -1602,7 +1602,7 @@ module.exports = (app, template, hook) => {
             data
           }, (err, result) => {
             if (err) {
-              done(err);
+              return done(err);
             }
             submission = result;
             assert.deepEqual(submission.data, data);
@@ -1612,18 +1612,18 @@ module.exports = (app, template, hook) => {
             helper.updateSubmission(submission,
             (err, res) => {
               if (err) {
-                done(err);
+                return done(err);
               }
               submission = res;
               helper.getSubmissionRevisions(submissionRevisionChangelogForm, submission,
               (err, revisions) => {
                 if (err) {
-                  done(err);
+                  return done(err);
                 }
                 helper.getSubmissionRevisionChangeLog(submissionRevisionChangelogForm, submission, revisions[1]._id,
                   (err, results) => {
                     if (err) { 
-                      done(err); 
+                      return done(err); 
                     }
                     assert.equal(results.data.number2, 0);
                     assert.equal(results.metadata.previousData.number1, 0);

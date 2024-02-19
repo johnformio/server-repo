@@ -234,7 +234,10 @@ module.exports = function(server) {
           }
           project.markModified(prop);
         }
-        return project.save().then(() => {
+        return formio.resources.project.model.updateOne(
+          {_id: project._id},
+           project
+        ).then(() => {
           if (update.deleted) {
             project = this.deleteProjectCache(project);
           }

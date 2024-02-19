@@ -295,7 +295,31 @@ const Utils = {
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&apos;");
-  }
+  },
+  getAllObjectPaths(data, leavesOnly = false) {
+    const paths = [];
+
+    const iterate = (obj, path) => {
+      path = path || '';
+      for (const prop in obj) {
+        if (prop && obj.hasOwnProperty(prop)) {
+          if (typeof obj[prop] === 'object') {
+            if (!leavesOnly && (path || prop)) {
+              paths.push(path || prop);
+            }
+            iterate(obj[prop], `${path}${path ? '.' : ''}${prop}`);
+          }
+          else {
+            paths.push(`${path}${path ? '.' : ''}${prop}`);
+          }
+        }
+      }
+    };
+
+    iterate(data, '');
+
+    return paths;
+  },
 };
 
 module.exports = Utils;

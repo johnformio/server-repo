@@ -10,19 +10,6 @@ const {ensureValueIsString, determineRequestUsageType} = require('./util');
 
 const TTL = process.env.USAGE_CACHE_TTL || 60;
 
-function loadPrimaryProjectFromCache(cache, req) {
-  return new Promise((resolve, reject) => {
-    cache.loadPrimaryProject(req, (err, primaryProject) => {
-      if (err) {
-        reject(err);
-      }
-      else {
-        resolve(primaryProject);
-      }
-    });
-  });
-}
-
 class UsageTracking {
   constructor(formio) {
     this._cache = new NodeCache({stdTTL: TTL});

@@ -2,7 +2,7 @@
 
 const fetch = require('formio/src/util/fetch');
 const _ = require('lodash');
-const {NodeVM, VMScript} = require('vm2');
+const {evaluate} = require('@formio/vm');
 
 const {isEmptyObject} = require('../../util/util');
 const {
@@ -301,6 +301,86 @@ module.exports = (router) => {
             },
           ],
         },
+        {
+          title: 'Retry Request',
+          collapsible: false,
+          key: 'enableRetryRequest',
+          type: 'panel',
+          label: 'Panel',
+          input: false,
+          tableView: false,
+          components: [
+            {
+              html: '<p>Enable retry request to webhook if response failed.</p>',
+              label: 'content',
+              refreshOnChange: false,
+              key: 'content1',
+              type: 'content',
+              input: false,
+              tableView: false
+            },
+            {
+              label: 'Retry Type',
+              widget: 'choicesjs',
+              tableView: true,
+              data: {
+                values: [
+                  {
+                    label: 'Constant',
+                    value: 'constant'
+                  },
+                  {
+                    label: 'Linear',
+                    value: 'linear'
+                  },
+                  {
+                    label: 'Exponential',
+                    value: 'exponential'
+                  },
+                  {
+                    label: 'Jitter',
+                    value: 'jitter'
+                  },
+                  {
+                    label: 'Exponentially Jitter',
+                    value: 'exponentiallyJitter'
+                  }
+                ]
+              },
+              key: 'retryType',
+              type: 'select',
+              input: true
+            },
+            {
+              label: 'Number of attempts',
+              applyMaskOn: 'change',
+              mask: false,
+              tableView: false,
+              delimiter: false,
+              requireDecimal: false,
+              inputFormat: 'plain',
+              truncateMultipleSpaces: false,
+              key: 'numberOfAttempts',
+              type: 'number',
+              input: true,
+              tooltip: 'The maximum number of additional attempts if the request failed'
+            },
+            {
+              label: 'Initial Delay, ms',
+              applyMaskOn: 'change',
+              mask: false,
+              tableView: false,
+              delimiter: false,
+              requireDecimal: false,
+              inputFormat: 'plain',
+              truncateMultipleSpaces: false,
+              key: 'initialDelay',
+              type: 'number',
+              input: true,
+              tooltip: 'The delay after the initial request. Next, the delay is calculated based on the Retry Type.'
+            }
+          ]
+        }
       ]);
     }
 
@@ -316,7 +396,7 @@ module.exports = (router) => {
      * @param next
      *   The callback function to execute upon completion.
      */
-    resolve(handler, method, req, res, next, setActionItemMessage) {
+    async resolve(handler, method, req, res, next, setActionItemMessage) {
       const settings = this.settings || {};
       const submission = getSubmission(req, res);
       const externalId = getExternalId(submission, settings);
@@ -489,25 +569,25 @@ module.exports = (router) => {
         // Allow user scripts to transform the payload.
         setActionItemMessage('Transforming payload');
         if (settings.transform) {
-          const script = new VMScript(
-            `${settings.transform} \n module.exports = payload;`
-          );
+          const script = `
+            ${settings.transform}
+            payload;
+          `;
           try {
-            payload = new NodeVM({
-              timeout: 500,
-              sandbox: _.cloneDeep({
-                externalId,
+            payload = await evaluate({
+              deps: ['lodash', 'moment'],
+              code: script,
+              data: {
                 payload,
+                externalId,
                 headers,
                 config:
                   req.currentProject &&
                   req.currentProject.hasOwnProperty('config')
                     ? req.currentProject.config
                     : {},
-              }),
-              eval: false,
-              fixAsync: true,
-            }).run(script);
+              }
+            });
           }
           catch (err) {
             setActionItemMessage('Webhook transform failed', err, 'error');
@@ -537,17 +617,70 @@ module.exports = (router) => {
           options.body = JSON.stringify(payload);
         }
 
-        // Make the request
-        const fetchRequest = fetch(url, options);
-        const processResponseBody = fetchRequest.then((response) =>
-          processWebhookResponseBody(response, isDeleteRequest)
-        );
+        let attempts = 0;
+
+        const makeWebhookRequest = () => {
+          // Make the request
+          const fetchRequest = fetch(url, options);
+          const processResponseBody = fetchRequest.then((response) =>
+            processWebhookResponseBody(response, isDeleteRequest)
+          );
+          return [fetchRequest, processResponseBody];
+        };
+
+        const retryRequest = async () => {
+          attempts++;
+          let delay = 0;
+          switch (settings.retryType) {
+            case 'constant': {
+              delay = settings.initialDelay;
+              break;
+            }
+            case 'linear': {
+              delay = attempts * settings.initialDelay;
+              break;
+            }
+            case 'exponential': {
+              delay = settings.initialDelay * Math.pow(2, attempts);
+              break;
+            }
+            case 'jitter': {
+              delay = _.random(0, settings.initialDelay * Math.pow(2, attempts));
+              break;
+            }
+            case 'exponentiallyJitter': {
+              delay = _.random(settings.initialDelay * Math.pow(2, attempts-1), settings.initialDelay * Math.pow(2, attempts));
+            }
+          }
+
+          await setTimeout(()=>{
+            /* eslint-disable no-use-before-define */
+            Promise.all(makeWebhookRequest()).then(onResolve).catch(onError);
+            /* eslint-enable no-use-before-define */
+          }, delay);
+        };
 
         // Set up closures
-        const result = Promise.all([fetchRequest, processResponseBody]);
-        const onResolve = ([response, body]) =>
-          response.ok ? handleSuccess(body) : handleError(body, response);
-        const onError = (err) => handleError(err);
+        const result = Promise.all(makeWebhookRequest());
+        const onResolve = async ([response, body]) => {
+          if (response.ok) {
+            return handleSuccess(body);
+          }
+          if (settings.retryType && attempts <= settings.numberOfAttempts) {
+            await retryRequest();
+          }
+          else {
+            return handleError(body, response);
+          }
+        };
+        const onError = async (err) => {
+          if (err.statusCode && settings.retryType && attempts <= settings.numberOfAttempts) {
+            await retryRequest();
+          }
+          else {
+            return handleError(err);
+          }
+        };
 
         return result.then(onResolve).catch(onError);
       }
