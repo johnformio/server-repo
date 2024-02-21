@@ -1,7 +1,7 @@
 'use strict';
 
 const crypto = require('crypto');
-const fetch = require('formio/src/util/fetch');
+const fetch = require('@formio/node-fetch-http-proxy');
 const multer  = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({storage: storage});

@@ -1,7 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
-const fetch = require('formio/src/util/fetch');
+const fetch = require('@formio/node-fetch-http-proxy');
 const util = require('formio/src/util/util');
 
 module.exports = function(config, formio) {

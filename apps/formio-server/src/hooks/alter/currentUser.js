@@ -1,7 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
-const fetch = require('formio/src/util/fetch');
+const fetch = require('@formio/node-fetch-http-proxy');
 
 module.exports = (app) => (middleware) => {
   middleware.unshift((req, res, next) => {
@@ -73,6 +73,7 @@ module.exports = (app) => (middleware) => {
 
         fetch(oauthSettings.userInfoURI,{
           method: 'GET',
+          rejectUnauthorized: false,
           headers: {
             Authorization: authorization,
           },

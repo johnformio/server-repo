@@ -13,7 +13,7 @@ var hook = null;
 var template = _.cloneDeep(require('./tests/fixtures/template')());
 var formioProject = require('../formio.json');
 let EventEmitter = require('events');
-const fetch = require('formio/src/util/fetch');
+const fetch = require('@formio/node-fetch-http-proxy');
 const mockery = require('mockery');
 const sinon = require('sinon');
 const { Readable } = require('stream');
@@ -190,7 +190,7 @@ const requestMock = sinon.stub()
         });
     }
   });
-mockery.registerMock('formio/src/util/fetch', requestMock);
+mockery.registerMock('@formio/node-fetch-http-proxy', requestMock);
 
 process.on('uncaughtException', function(err) {
   console.error(err);
