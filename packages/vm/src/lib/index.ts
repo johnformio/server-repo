@@ -1,1 +1,7 @@
-export { evaluate, evaluateSync, evaluateProcess, renderEmail } from '../core';
+export {
+    evaluate,
+    evaluateSync,
+    evaluateProcess,
+    evaluateProcessMocked,
+    renderEmail,
+} from '../core';
