@@ -37,12 +37,9 @@ export async function renderEmail({ render, context = {} }: RenderEmailOptions):
 
   const data: any = {
     input: omitUndefined(render),
-    submissionTableHtml
+    submissionTableHtml,
+    context,
   };
-
-  if (renderMethod === 'static') {
-    data.context = context;
-  }
 
   const res = await evaluate({
     deps: ['lodash', 'moment', 'core', 'nunjucks'],
