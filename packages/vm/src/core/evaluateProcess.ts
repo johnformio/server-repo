@@ -47,6 +47,9 @@ export async function evaluateProcess(options: EvaluateProcessorsOptions): Promi
     config: {
       server: true,
       token: options.token || '',
+    },
+    options: {
+      server: true,
     }
   };
   const result = await evaluate({
@@ -60,6 +63,7 @@ export async function evaluateProcess(options: EvaluateProcessorsOptions): Promi
 // Does the same as `evaluateProcess`, but omits call to evaluate
 // So it's possible to debug core functions outside of the vm
 // Should be used only for development
+// Before using this function, make sure that it corresponds to the actual version of `evaluateProcess`
 export async function evaluateProcessMocked(options: EvaluateProcessorsOptions): Promise<EvaluateProcessorsResult> {
   const submission = JSON.parse(JSON.stringify(options.submission));
   const context: any = {
@@ -71,6 +75,9 @@ export async function evaluateProcessMocked(options: EvaluateProcessorsOptions):
     config: {
       server: true,
       token: options.token || '',
+    },
+    options: {
+      server: true,
     }
   };
   const root = new RootShim(context.form, context.submission);
