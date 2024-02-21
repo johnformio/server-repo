@@ -1,4 +1,4 @@
-export { evaluate, evaluateSync } from './evaluate';
-export { evaluateError } from './util';
-export { evaluateProcess } from './evaluateProcess';
-export { renderEmail } from './renderEmail';
+export * from './evaluate';
+export * from './util';
+export * from './evaluateProcess';
+export * from './renderEmail';

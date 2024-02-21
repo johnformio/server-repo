@@ -3,6 +3,9 @@
     "version": "0.0.6",
     "main": "build/index.js",
     "license": "OSL-3.0",
+    "engines": {
+        "node": ">=20.0.0"
+    },
     "files": [
         "build",
         "package.json",
@@ -24,8 +27,9 @@
         "nunjucks-date-filter": "^0.1.1"
     },
     "scripts": {
-        "test": "npm run build && mocha -r ts-node/register -b -t 0 'build/**/__tests__/*.test.js'",
-        "start": "DOTENV_CONFIG_PATH=./.env node build/server.js",
+        "preinstall": "npx check-node-version --node '>=20.0.0'",
+        "test": "npm run build && mocha -r ts-node/register -b -t 0 --no-node-snapshot 'build/**/__tests__/*.test.js'",
+        "start": "DOTENV_CONFIG_PATH=./.env node --no-node-snapshot build/server.js",
         "build": "gulp prebuild && tsc && gulp postbuild",
         "prepack": "npm run build && gulp remove-tests",
         "prepare": "husky install"
