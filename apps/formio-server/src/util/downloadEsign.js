@@ -1,5 +1,5 @@
 'use strict';
-const fetch = require('formio/src/util/fetch');
+const fetch = require('@formio/node-fetch-http-proxy');
 
 module.exports = () => {
     const BoxSign = require('../actions/esign/integrations/BoxSign')();
@@ -8,7 +8,9 @@ module.exports = () => {
             case 'Box Sign':
             return BoxSign.downloadBoxSignature(project, submission)
             .then((downloadUrl) => {
-                return fetch(downloadUrl);
+                return fetch(downloadUrl, {
+                    rejectUnauthorized: false
+                });
             })
             .catch((error) => {
                 console.log(error);

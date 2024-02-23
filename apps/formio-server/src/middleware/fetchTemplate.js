@@ -1,5 +1,5 @@
 'use strict';
-const fetch = require('formio/src/util/fetch');
+const fetch = require('@formio/node-fetch-http-proxy');
 const isURL = require('is-url');
 
 module.exports = (req, res, next) => {
@@ -21,7 +21,9 @@ module.exports = (req, res, next) => {
     return next();
   }
 
-  return fetch(req.body.template)
+  return fetch(req.body.template, {
+    rejectUnauthorized: false
+  })
     .catch((err) => next(err.message || err))
     .then((response) => response.ok ? response.json() : null)
     .then((body) => {

@@ -3,7 +3,7 @@
 const Q = require('q');
 const _ = require('lodash');
 
-const fetch = require('formio/src/util/fetch');
+const fetch = require('@formio/node-fetch-http-proxy');
 
 const MAX_TIMESTAMP = 8640000000000000;
 
