@@ -257,7 +257,8 @@ module.exports = (formioServer) => {
     if (settings.callbackUrl) {
       config.callbackUrl = settings.callbackUrl;
     }
-    res.status(200).send(config);
+    const sanitizeConfig = xss(JSON.stringify(config));
+    res.status(200).send(sanitizeConfig);
   });
 
   router.post('/acs',
