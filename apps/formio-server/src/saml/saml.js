@@ -248,6 +248,18 @@ module.exports = (formioServer) => {
     });
   });
 
+  router.post('/passport', (req, res) => {
+    const settings = req.body;
+    const config = toPassportConfig(new MetadataReader(settings.idp));
+    if (settings.issuer) {
+      config.issuer = settings.issuer;
+    }
+    if (settings.callbackUrl) {
+      config.callbackUrl = settings.callbackUrl;
+    }
+    res.status(200).send(config);
+  });
+
   router.post('/acs',
     (req, res) => {
     const sanitizeRelay =  xss(req.query.relay);
