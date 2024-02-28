@@ -8,7 +8,53 @@ const {google} = require('googleapis');
 const debug = require('debug')('formio:storage:googledrive');
 const Stream = require('stream');
 
+function hasValidProviderSettings(settings) {
+  return settings.google
+    && settings.google.clientId
+    && settings.google.cskey
+    && settings.google.refreshtoken;
+}
+
+async function getContentUrl(options = {}) {
+  let {settings} = options;
+  const {project, file, id} = options;
+  if (project && !settings) {
+    settings = _.get(project, 'settings.storage.googleDrive');
+  }
+
+  if (!settings) {
+    throw new Error('Storage settings not set.');
+  }
+
+  let {drive} = options;
+  if (!drive && hasValidProviderSettings(project.settings)) {
+    drive = await authenticate(project.settings);
+  }
+
+  const fileId = file?.id || id;
+  debug('Getting a Google Drive content link for the file.');
+
+  try {
+    const response = await drive.files.get({
+      fileId,
+      fields: 'webContentLink',
+    });
+    return {
+      url: response.data.webContentLink,
+      key: fileId,
+    };
+  }
+  catch (error) {
+    debug(error);
+    throw new Error('Invalid response');
+  }
+}
+
 async function getUrl(options = {}) {
+  if (options.fromAction) {
+    return await getContentUrl(options);
+  }
+
   // Allow options.project as an alternative to options.settings
   if (options.project && !options.settings) {
     options.settings = _.get(options.project, 'settings.storage.googleDrive');
@@ -58,7 +104,10 @@ async function getUrl(options = {}) {
     throw new Error('Invalid response.');
   }
 
-  return link;
+  return {
+    url: link,
+    key: fileId,
+  };
 }
 
 // Authentication method for Google Drive
@@ -131,11 +180,8 @@ const middleware = router => {
 
           const {settings} = project;
           // Use the Google Drive Data connection integration settings
-          if (!settings.google
-            || !settings.google.clientId
-            || !settings.google.cskey
-            || !settings.google.refreshtoken) {
-              return res.status(400).send('Google Drive Settings not configured. Please go to Data Connections');
+          if (!hasValidProviderSettings(settings)) {
+            return res.status(400).send('Google Drive Settings not configured. Please go to Data Connections');
           }
 
           authenticate(settings)
@@ -205,14 +251,8 @@ const middleware = router => {
           settings.storage = {};
         }
 
-        if (
-          !settings.storage.googleDrive
-          || !settings.google
-          || !settings.google.clientId
-          || !settings.google.cskey
-          || !settings.google.refreshtoken
-          ) {
-            return res.status(400).send('Google Drive Settings not configured. Please go to Data Connections');
+        if (!settings.storage.googleDrive || !hasValidProviderSettings(settings)) {
+          return res.status(400).send('Google Drive Settings not configured. Please go to Data Connections');
         }
 
         const {fileId, fileName} = req.query;
@@ -299,14 +339,8 @@ const middleware = router => {
           settings.storage = {};
         }
 
-        if (
-          !settings.storage.googleDrive
-          || !settings.google
-          || !settings.google.clientId
-          || !settings.google.cskey
-          || !settings.google.refreshtoken
-          ) {
-            return res.status(400).send('Google Drive Settings not configured. Please go to Data Connections');
+        if (!settings.storage.googleDrive || !hasValidProviderSettings(settings)) {
+          return res.status(400).send('Google Drive Settings not configured. Please go to Data Connections');
         }
 
         const fileInfo = req.body;
@@ -364,7 +398,7 @@ const middleware = router => {
                 debug(`Uploaded a file ${id} to Google Drive.`);
 
                 // Get the url google drive link
-                getUrl({project, file: file.data, drive, id}).then((url) => {
+                getUrl({project, file: file.data, drive, id}).then(({url}) => {
                   res.send({id, originalUrl: url});
                 });
               }
@@ -404,14 +438,8 @@ const middleware = router => {
           settings.storage = {};
         }
 
-        if (
-          !settings.storage.googleDrive
-          || !settings.google
-          || !settings.google.clientId
-          || !settings.google.cskey
-          || !settings.google.refreshtoken
-          ) {
-            return res.status(400).send('Google Drive Settings not configured. Please go to Data Connections');
+        if (!settings.storage.googleDrive || !hasValidProviderSettings(settings)) {
+          return res.status(400).send('Google Drive Settings not configured. Please go to Data Connections');
         }
 
         const {id, name} = req.query;
@@ -451,5 +479,5 @@ const middleware = router => {
 
 module.exports = {
   middleware,
-  getUrl
+  getUrl,
 };
