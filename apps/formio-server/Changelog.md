@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Bump ecma version to 2022
  - Revert FIO-7125
  - FIO-7549: evaluate axios upgrades and CVE resolution
+ - FIO-7804: added PKCE methods for OIDC
    
  
 ## 8.4.0-rc.7

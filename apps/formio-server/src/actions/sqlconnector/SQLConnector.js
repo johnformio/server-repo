@@ -2,7 +2,7 @@
 
 const _ = require('lodash');
 const debug = require('debug')('formio:action:sqlconnector');
-const fetch = require('formio/src/util/fetch');
+const fetch = require('@formio/node-fetch-http-proxy');
 const config = require('../../../config');
 
 module.exports = (router) => {
@@ -317,6 +317,7 @@ module.exports = (router) => {
         method = req.method.toString().toLowerCase();
         const options = {
           method,
+          rejectUnauthorized: false,
         };
 
         const primaryKey = this.settings.primary;

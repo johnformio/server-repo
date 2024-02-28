@@ -7,7 +7,7 @@ const async = require('async');
 const fs = require('fs');
 const log = require('debug')('formio:log');
 const util = require('../util/util');
-const {VM} = require('vm2');
+const {evaluateSync} = require('@formio/vm');
 const {ClientCredentials} = require('simple-oauth2');
 const moment = require('moment');
 const config = require('../../config');
@@ -104,6 +104,7 @@ module.exports = function(app) {
       loadRevision: require('./alter/loadRevision')(app),
       parentProjectSettings: require('./alter/parentProjectSettings')(app),
       rawDataAccess: require('./alter/rawDataAccess'),
+      rehydrateValidatedSubmissionData: require('./alter/rehydrateValidatedSubmissionData')(app),
       schemaIndex(index) {
         index.project = 1;
         return index;
@@ -127,7 +128,14 @@ module.exports = function(app) {
 
         return args;
       },
+      decrypt(req, data) {
+        const currentProject = formioServer.formio.cache.currentProject(req);
+        const secret = currentProject && _.get(app, 'license.terms.options.sac', false)
+          ? currentProject.settings.secret || config.formio.mongoSecret
+          : null;
 
+        return secret ? util.decrypt(secret, data) : data;
+      },
       export(req, query, form, exporter, cb) {
         util.getSubmissionModel(formioServer.formio, req, form, true, (err, submissionModel) => {
           if (err) {
@@ -139,6 +147,9 @@ module.exports = function(app) {
               return value.map(item => _.get(item, 'data.email', ''));
             });
           }
+
+          req.flattenedComponents = formioServer.formio.util.flattenComponents(form.components, true);
+          encrypt.hasEncryptedComponents(req);
 
           if (!submissionModel) {
             return cb();
@@ -907,7 +918,7 @@ module.exports = function(app) {
         const url = nodeUrl.parse(req.url).pathname.split('/');
         if (
           (url[5] === 'validate') ||
-          (url[5] === 'storage' && ['s3', 'dropbox', 'azure'].indexOf(url[6]) !== -1)
+          (url[5] === 'storage' && ['gdrive', 's3', 'dropbox', 'azure'].indexOf(url[6]) !== -1)
         ) {
           entity = {
             type: 'submission',
@@ -1166,12 +1177,11 @@ module.exports = function(app) {
         };
 
         const createFormRevision = (item, doc, {_vid, tag}, done) => {
-          doc.set('_vid', _vid);
-          doc.save((err, result) => {
-            if (err) {
-              return done(err);
-            }
-
+          formioServer.formio.resources.form.model.findOneAndUpdate({
+            _id: doc._id
+          },
+          {$set: {_vid: _vid}})
+          .then((result)=> {
             const body = Object.assign({}, item);
             body._rid = result._id;
             body._vid = result._vid;
@@ -1183,6 +1193,11 @@ module.exports = function(app) {
             formioServer.formio.mongoose.models.formrevision.create(body, () => {
               done(null, item);
             });
+          })
+          .catch(err => {
+            if (err) {
+              return done(err);
+            }
           });
         };
 
@@ -1534,15 +1549,14 @@ module.exports = function(app) {
           req.currentProject.settings.tokenParse
         ) {
           try {
-            const data = (new VM({
-              timeout: 500,
-              sandbox: _.cloneDeep({
+            const data = evaluateSync({
+              deps: ['lodash'],
+              code: req.currentProject.settings.tokenParse,
+              data: {
                 token: decoded,
                 roles: req.currentProject.roles
-              }),
-              eval: false,
-              fixAsync: true
-            })).run(req.currentProject.settings.tokenParse);
+              }
+            });
             if (!data.hasOwnProperty('user')) {
               throw new Error('User not defined on data.');
             }

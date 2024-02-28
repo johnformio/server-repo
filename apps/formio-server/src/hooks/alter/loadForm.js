@@ -9,6 +9,22 @@ module.exports = app => {
         form.config = project.config;
       }
 
+      const sanitizeConfigPath = 'settings.sanitizeConfig';
+      const formGlobalSanitizeConfigPath = 'globalSettings.sanitizeConfig';
+      if (!config.formio.hosted) {
+        const formSanitizeConfig = _.get(form, sanitizeConfigPath);
+        const globalSanitizeConfig = _.get(project, sanitizeConfigPath);
+        // Add a global sanitize config to the form if it does not have its own
+        if (!formSanitizeConfig && !_.isEmpty(globalSanitizeConfig)) {
+          _.set(form, formGlobalSanitizeConfigPath, globalSanitizeConfig);
+        }
+      }
+      else {
+        // Not allow sanitize config for hosted env
+        _.unset(form, sanitizeConfigPath);
+        _.unset(form, formGlobalSanitizeConfigPath);
+      }
+
       // Add form modules.
       const formModule = _.get(project, 'settings.formModule');
       if (formModule) {

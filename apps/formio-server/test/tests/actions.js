@@ -3,7 +3,7 @@
 
 const request = require('supertest');
 const assert = require('assert');
-const WebhookListener = require('./fixtures/WebhookListener');
+const MockServer = require('./fixtures/MockServer');
 const config = require("../../config");
 
 const docker = process.env.DOCKER;
@@ -302,16 +302,16 @@ module.exports = (app, template, hook) => {
       let project;
       let testWebhookUrl;
       let webhookAction;
-      const webhookListener = new WebhookListener();
+      const webhookListener = new MockServer();
 
       describe('Blocking webhooks', () => {
         describe('After handled webhooks', () => {
 
           before('Set up webhook listener', (done) => {
             // create the webhook listener child process
-            webhookListener.setup(1337, '/player', 201, {records: [{playerId: '123456'}]})
-              .then((config) => {
-                testWebhookUrl = config.url;
+            webhookListener.setup("webhookServer.js", 'http', 1337, '/player', 201, {records: [{playerId: '123456'}]})
+              .then((url) => {
+                testWebhookUrl = url;
                 done();
               })
           });
@@ -558,10 +558,10 @@ module.exports = (app, template, hook) => {
       describe('Before handled webhooks', () => {
           before('Set up webhook listener', (done) => {
             // create the webhook listener child process
-            webhookListener.setup(1337, '/player', 201, {records: [{playerId: '123456'}]})
-              .then((config) => {
+            webhookListener.setup("webhookServer.js", 'http', 1337, '/player', 201, {records: [{playerId: '123456'}]})
+              .then((url) => {
                 console.log("Done with setup!");
-                testWebhookUrl = config.url;
+                testWebhookUrl = url;
                 done();
               })
           });
@@ -740,10 +740,10 @@ module.exports = (app, template, hook) => {
         describe('Webhook with query parameters in Request URL', () => {
           before('Set up webhook listener', (done) => {
             // create the webhook listener child process
-            webhookListener.setup(1337, '/player', 201, {records: [{playerId: '123456'}]})
-              .then((config) => {
+            webhookListener.setup("webhookServer.js", 'http', 1337, '/player', 201, {records: [{playerId: '123456'}]})
+              .then((url) => {
                 console.log("Done with setup!");
-                testWebhookUrl = config.url;
+                testWebhookUrl = url;
                 done();
               })
           });
@@ -841,10 +841,10 @@ module.exports = (app, template, hook) => {
         describe('Webhook with delete request and query parameters in url', () => {
           before('Set up webhook listener', (done) => {
             // create the webhook listener child process
-            webhookListener.setup(1337, '/player', 201, {records: [{playerId: '123456'}]})
-              .then((config) => {
+            webhookListener.setup("webhookServer.js", 'http', 1337, '/player', 201, {records: [{playerId: '123456'}]})
+              .then((url) => {
                 console.log("Done with setup!");
-                testWebhookUrl = config.url;
+                testWebhookUrl = url;
                 done();
               })
           });
@@ -909,9 +909,9 @@ module.exports = (app, template, hook) => {
 
         before('Set up new error-responding listener', (done) => {
           // create the webhook listener child process
-          webhookListener.setup(1337, '/shouldError', 401, {error: true, myCustomParameter: `The operation 'twas not successful.`})
-            .then((config) => {
-              testWebhookUrl = config.url;
+          webhookListener.setup("webhookServer.js", 'http', 1337, '/shouldError', 401, {error: true, myCustomParameter: `The operation 'twas not successful.`})
+            .then((url) => {
+              testWebhookUrl = url;
               done();
             });
         })
@@ -972,9 +972,9 @@ module.exports = (app, template, hook) => {
 
         before('Set up new error-responding listener', (done) => {
           // create the webhook listener child process
-          webhookListener.setup(1337, '/shouldError', 405)
-            .then((config) => {
-              testWebhookUrl = config.url;
+          webhookListener.setup("webhookServer.js", 'http', 1337, '/shouldError', 405)
+            .then((url) => {
+              testWebhookUrl = url;
               done();
             });
         })
@@ -1027,6 +1027,67 @@ module.exports = (app, template, hook) => {
             });
         });
       });
+
+      describe('Retry request for webhook', ()=> {
+        before('Set up webhook listener', (done) => {
+          webhookListener.setup("webhookServer.js", 'http', 1337, '/retry', 500)
+            .then((url) => {
+              testWebhookUrl = url;
+              done();
+            })
+        });
+
+        afterEach('Clear in-memory webhook responses', () => {
+          webhookListener.clearReceivedHooks();
+        });
+
+        after('Stop the webhook listener process', () => {
+          webhookListener.stop();
+        });
+
+        it('Should retry request, if it fails', (done) => {
+          request(app)
+          .put(`/project/${project._id}/form/${webhookForm._id}/action/${webhookAction._id}`)
+            .set('x-jwt-token', template.formio.owner.token)
+            .send({
+              ...webhookAction,
+              settings: {
+                username: '',
+                password: '',
+                url: testWebhookUrl,
+                block: true,
+                retryType: 'constant',
+                numberOfAttempts: 10,
+                initialDelay: 100
+              }
+            })
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err);
+              }
+              webhookAction = res.body;
+              template.formio.owner.token = res.headers['x-jwt-token'];
+              const submission = { player: 'Rafayel' };
+              request(app)
+                .post(`/project/${project._id}/form/${webhookForm._id}/submission`)
+                .set('x-jwt-token', template.formio.owner.token)
+                .send({
+                  data: submission
+                })
+                .expect(201)
+                .expect('Content-Type', /json/)
+                .end(async(err, res) => {
+                  if (err) {
+                    return done(err);
+                  }
+                  assert.deepEqual(submission, res.body.data);
+                  done();
+                });
+            })
+        })
+      })
     });
 
     describe('LDAP Login', () => {
@@ -1035,6 +1096,16 @@ module.exports = (app, template, hook) => {
       }
       const helper2 = new template.Helper(template.formio.owner);
       let project2;
+      let testLdapUrl;
+      const ldapListener = new MockServer();
+      before('Set up ldap listener', (done) => {
+        // create the webhook listener child process
+        ldapListener.setup('ldapServer.js', 'ldap', 1389)
+          .then((url) => {
+            testLdapUrl = url;
+            done();
+          })
+      });
       it('Create an ldap test project', (done) => {
         helper2
           .project()
@@ -1103,8 +1174,8 @@ module.exports = (app, template, hook) => {
           .settings({
             cors: '*',
             ldap: {
-              "url": "ldap://ldap.forumsys.com:389",
-              "bindDn": "cn=read-only-admin,dc=example,dc=com",
+              "url": testLdapUrl,
+              "bindDn": "dc=example,dc=com",
               "bindCredentials": "password",
               "searchBase": "dc=example,dc=com",
               "searchFilter": "(uid={{username}})"
@@ -1131,9 +1202,13 @@ module.exports = (app, template, hook) => {
             assert.equal(res.body._id, 'einstein');
             assert.equal(res.body.roles.length, 1);
             assert.equal(res.body.roles[0], helper2.template.roles.authenticated._id.toString());
-            assert.equal(res.body.data.mail, 'einstein@ldap.forumsys.com');
+            assert.equal(res.body.data.mail, 'einstein@example.com');
             done();
           });
+      });
+
+      after('Stop the ldap listener process', () => {
+        ldapListener.stop();
       });
     });
   })

@@ -19,8 +19,27 @@ module.exports = function(formio) {
         debug(err);
         return next(err);
       }
-      res.sendStatus(200);
-      return next();
+
+      const settings = req.primaryProject.settings;
+      if (settings && settings.defaultStage === req.projectId) {
+        formio.cache.updateProject(
+          req.primaryProject._id,
+          {settings: {defaultStage: ''}},
+          (err) => {
+            if (err) {
+              debug(err);
+              return next(err);
+            }
+
+            res.sendStatus(200);
+            return next();
+          }
+        );
+      }
+      else {
+        res.sendStatus(200);
+        return next();
+      }
     });
   };
 
@@ -38,6 +57,8 @@ module.exports = function(formio) {
       if (!project) {
         return res.status(400).send('Environment project doesnt exist.');
       }
+
+      req.primaryProject = project;
 
       if (
         (formio.util.idToString(req.user._id) === formio.util.idToString(project.owner)) ||

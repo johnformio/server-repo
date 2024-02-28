@@ -1,5 +1,5 @@
 'use strict';
-const fetch = require('formio/src/util/fetch');
+const fetch = require('@formio/node-fetch-http-proxy');
 const {promisify} = require('util');
 const _ = require('lodash');
 const Promise = require('bluebird');

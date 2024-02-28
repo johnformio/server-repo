@@ -73,8 +73,8 @@ module.exports = (app, config, next) => {
                       'account or your environment will not be secure.'
                     );
                   }
-                  project.owner = user._id;
-                  project.save();
+                  formio.resources.submission.model.updateOne({_id: project._id},
+                    {$set: {owner: user._id}});
                   return next();
                 });
               });

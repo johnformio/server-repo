@@ -87,8 +87,8 @@ async function getAWSPresignedPutUrl(s3Settings, file) {
   }
   catch (err) {
     // log the error, but try and fallback to legacy manually signed upload url
-    debug(err);
-    debug('Attempting to fall back to legacy manualy signed upload url');
+    debug.s3(err);
+    debug.s3('Attempting to fall back to legacy manualy signed upload url');
     return {url: null, headers: {}};
   }
 }

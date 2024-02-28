@@ -37,8 +37,11 @@ module.exports = function(formio) {
           result.forEach(stage => {
             const stageAccess = {access: stage.access.toObject()};
             teamAccess.forEach(access => replaceAccess(stageAccess, access));
-            stage.set('access', stageAccess.access);
-            stage.save();
+            formio.mongoose.models.project.updateOne({
+              _id: stage._id
+            },
+            {$set: {access: stageAccess.access}})
+            .then((res)=>{});
           });
           return next();
         });

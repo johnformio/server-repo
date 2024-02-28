@@ -89,6 +89,24 @@ module.exports = function(app, template, hook) {
         });
     });
 
+    it('Should return error when formId URL parameter is undefined', done => {
+      request(app)
+        .get(`/project/${projectId}/form/undefined/submission/${submissionId}/download`)
+        .set(`x-jwt-token`, template.formio.owner.token)
+        .expect('Content-Type', /text/)
+        .expect(400)
+        .end(done);
+    });
+
+    it('Should return error when formId URL parameter is null', done => {
+      request(app)
+        .get(`/project/${projectId}/form/null/submission/${submissionId}/download`)
+        .set(`x-jwt-token`, template.formio.owner.token)
+        .expect('Content-Type', /text/)
+        .expect(400)
+        .end(done);
+    });
+
     it('Should proxy PDF download with project alias', (done) => {
       request(app)
         .get(`/${projectName}/form/${formId}/submission/${submissionId}/download`)

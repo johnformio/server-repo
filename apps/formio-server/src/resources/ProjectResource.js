@@ -363,37 +363,47 @@ module.exports = (router, formioServer) => {
         // If the name changed, then re-save all forms, actions, and roles to set the new project name
         if (res.resource && res.resource.item && res.resource.item.name !== req.currentProject.name) {
           let parts = [];
-          formio.mongoose.model('form').find({
+          formio.resources.form.model.find({
             deleted: {$eq: null},
             project: formio.util.idToBson(req.currentProject._id),
           }).then((forms) => forms.forEach((form) => {
             parts = form.machineName.split(':');
             if (parts.length === 2) {
               form.machineName = `${res.resource.item.name}:${parts[1]}`;
-              form.save();
+              formio.resources.form.model.updateOne({
+                _id: form._id
+              },
+              {$set: form});
             }
 
-            formio.mongoose.model('action').find({
+            formio.resources.actionItem.model.find({
               deleted: {$eq: null},
               form: form._id,
             }).then((actions) => actions.forEach((action) => {
               parts = action.machineName.split(':');
               if (parts.length === 3) {
                 action.machineName = `${res.resource.item.name}:${parts[1]}:${parts[2]}`;
-                action.save();
+                formio.resources.actionItem.model.updateOne({
+                  _id: action._id
+                },
+                {$set: action});
               }
             }));
           }));
 
           // Update all roles.
-          formio.mongoose.model('role').find({
+          formio.resources.role.model.find({
             deleted: {$eq: null},
             project: formio.util.idToBson(req.currentProject._id),
           }).then((roles) => roles.forEach((role) => {
             parts = role.machineName.split(':');
             if (parts.length === 2) {
               role.machineName = `${res.resource.item.name}:${parts[1]}`;
-              role.save();
+
+              formio.resources.role.model.updateOne({
+                _id: role._id
+              },
+              {$set: role});
             }
           }));
         }

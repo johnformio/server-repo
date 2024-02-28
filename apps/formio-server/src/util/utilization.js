@@ -1,5 +1,5 @@
 'use strict';
-const fetch = require('formio/src/util/fetch');
+const fetch = require('@formio/node-fetch-http-proxy');
 const _ = require('lodash');
 const {match} = require("path-to-regexp");
 const licenseServer = process.env.LICENSE_SERVER || 'https://license.form.io';
