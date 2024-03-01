@@ -397,7 +397,7 @@ module.exports = function(app, template, hook) {
                 type: 'create_own',
                 roles: [
                   template.roles.administrator._id.toString(),
-                  template.roles.authenticated._id.toString()
+                  template.roles.authenticated._id.toString(),
                 ]
               },
               {
@@ -496,6 +496,77 @@ module.exports = function(app, template, hook) {
 
               template.formio.owner.token = res.headers['x-jwt-token'];
 
+              done();
+            });
+        });
+
+        it('Should not allow access to Google Drive for anonymous user', function(done) {
+          const file = {
+            name: 'myfile222.doc',
+            type: 'application/document',
+            size: '10001'
+          };
+
+          request(app)
+            .post('/project/' + template.project._id + '/form/' + template.forms.uploadFormDrive._id + '/storage/gdrive')
+            .send(file)
+            .expect(401)
+            .expect('Content-Type', /text\/plain; charset=utf-8/)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+              done();
+            });
+        });
+
+        it('Adds anonymous role to the upload form create_own permissions', function(done) {
+          const form = template.forms.uploadFormDrive;
+          const createOwn = form.submissionAccess.find(access => access.type === 'create_own');
+          if (createOwn && createOwn.roles) {
+            createOwn.roles.push(template.roles.anonymous._id)
+          }
+
+          request(app)
+            .put('/project/' + template.project._id + '/form/' + template.forms.uploadFormDrive._id)
+            .set('x-jwt-token', template.formio.owner.token)
+            .send(form)
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+
+              const response = res.body;
+              const createOwnAccess = response.submissionAccess.find(access => access.type === 'create_own');
+
+              assert(createOwnAccess.roles.includes(template.roles.anonymous._id.toString()), true);
+              template.forms.uploadFormDrive = response;
+              // Store the JWT for future API calls.
+              template.formio.owner.token = res.headers['x-jwt-token'];
+
+              done();
+            });
+        });
+
+        it('Should allow access to Google Drive for anonymous user', function(done) {
+          const file = {
+            name: 'myfile333.doc',
+            type: 'application/document',
+            size: '10001'
+          };
+
+          request(app)
+            .post('/project/' + template.project._id + '/form/' + template.forms.uploadFormDrive._id + '/storage/gdrive')
+            .send(file)
+            .expect(400)
+            .expect('Content-Type', /text\/html/)
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              }
+              assert.equal(res.text, 'Bad request from Google Drive.');
               done();
             });
         });
