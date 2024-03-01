@@ -1,7 +1,7 @@
 'use strict';
 const _ = require('lodash');
 const Promise = require('bluebird');
-const fetch = require('formio/src/util/fetch');
+const fetch = require('@formio/node-fetch-http-proxy');
 const processChangeLogData = require('./processChangeLogData');
 const proxy = require('../middleware/pdfProxy/proxy');
 
@@ -13,9 +13,10 @@ module.exports = (formioServer) => {
     proxy.authenticate(req, project);
     proxy.updateHeadersForPdfRequest(req, formio);
 
-    if (submission.data.esign && submission.data.esign.fileId) {
-      return require('./downloadEsign')()(project, submission);
-    }
+    // TODO_esign
+    // if (submission.data.esign && submission.data.esign.fileId) {
+    //   return require('./downloadEsign')()(project, submission);
+    // }
 
     // Swap in form components from earlier revision, if applicable
     if (form.revisions === 'original') {

@@ -4,9 +4,17 @@ const util = require('formio/src/util/util');
 const formioUtil = require('../../util/util');
 const _ = require('lodash');
 const crypto = require('crypto');
+const base64url = require('base64url');
+const NodeCache = require('node-cache');
+const fetch = require('formio/src/util/fetch');
+
+const qs = require('qs');
 const Q = require('q');
 const chance = require('chance').Chance();
 const {ObjectId} = require('mongodb');
+
+const MAX_TIMESTAMP = 8640000000000000;
+const cacheVerifire = new NodeCache();
 
 module.exports = router => {
   const formio = router.formio;
@@ -543,7 +551,9 @@ module.exports = router => {
       // Get the response from OAuth.
       var oauthResponse = req.body.oauth[provider.name];
 
-      if (!oauthResponse.code || !oauthResponse.state || !oauthResponse.redirectURI) {
+      const isPkce = _.get(req.currentProject, `settings.oauth.${provider.name}.authorizationMethod`) === 'pkce';
+
+      if (!oauthResponse.code || (!oauthResponse.state && !isPkce) || !oauthResponse.redirectURI) {
         return res.status(400).send('No authorization code provided.');
       }
 
@@ -560,6 +570,42 @@ module.exports = router => {
 
       // Do not execute the form CRUD methods.
       req.skipResource = true;
+
+      var tokensPromisePkce = function() {
+        let userInfoURI;
+        return oauthUtil.settings(req, provider.name)
+        .then((settings) => {
+          /* eslint-disable camelcase */
+          const params = {
+            grant_type: "authorization_code",
+            redirect_uri: oauthResponse.redirectURI,
+            client_id: settings.clientId,
+            code_verifier: cacheVerifire.get('code_verifier'),
+            code: oauthResponse.code
+          };
+          /* eslint-enable camelcase */
+          userInfoURI = settings.userInfoURI;
+          return fetch(settings.tokenURI, {
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            method: 'POST',
+            body: qs.stringify(params)
+          }).then((response)=> response.json());
+        })
+        .then((token) => {
+          cacheVerifire.del('code_verifier');
+          if (token.error) {
+            return res.status(400).send(token.error_description || token.error);
+          }
+          return [
+            {
+              type: provider.name,
+              userInfo: userInfoURI,
+              token: token.access_token || token.id_token || token.token,
+              exp: new Date(MAX_TIMESTAMP),
+            }
+          ];
+        });
+      };
 
       var getUserTeams = function(user) {
         return new Promise((resolve) => {
@@ -578,7 +624,7 @@ module.exports = router => {
         });
       };
 
-      var tokensPromise = provider.getTokens(req, oauthResponse.code, oauthResponse.state, oauthResponse.redirectURI);
+      var tokensPromise = isPkce ? tokensPromisePkce() : provider.getTokens(req, oauthResponse.code, oauthResponse.state, oauthResponse.redirectURI);
       switch (self.settings.association) {
         case 'new':
         case 'existing':
@@ -801,7 +847,8 @@ module.exports = router => {
             else { // Use default configuration, good for most oauth providers
               var oauthSettings = _.get(settings, `oauth.${  provider.name}`);
               if (oauthSettings) {
-                if (!oauthSettings.clientId || !oauthSettings.clientSecret) {
+                const isPkce = oauthSettings.authorizationMethod === 'pkce';
+                if (!oauthSettings.clientId || (!oauthSettings.clientSecret && !isPkce)) {
                   component.oauth = {
                     provider: provider.name,
                     error: `${provider.title  } OAuth provider is missing client ID or client secret`
@@ -813,10 +860,42 @@ module.exports = router => {
                     clientId: oauthSettings.clientId,
                     authURI: oauthSettings.authURI || provider.authURI,
                     redirectURI: self.settings.redirectURI,
-                    state: state,
                     scope: oauthSettings.scope || provider.scope,
                     logoutURI: oauthSettings.logout || null,
                   };
+                  if (isPkce) {
+                    const createCodeVerifier = ( size ) => {
+                      const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~';
+                      const charsetIndexBuffer = new Uint8Array( size );
+
+                      for ( let i = 0; i < size; i += 1 ) {
+                        charsetIndexBuffer[i] = ( Math.random() * charset.length ) | 0;
+                      }
+
+                      const randomChars = [];
+                      for ( let i = 0; i < charsetIndexBuffer.byteLength; i += 1 ) {
+                        const index = charsetIndexBuffer[i] % charset.length;
+                        randomChars.push( charset[index] );
+                      }
+
+                      return randomChars.join( '' );
+                    };
+
+                    let  codeVerifier  = cacheVerifire.get('code_verifier');
+                    if (!codeVerifier) {
+                      codeVerifier = createCodeVerifier(50);
+                      cacheVerifire.set('code_verifier', codeVerifier);
+                    }
+
+                    var hash = crypto.createHash('sha256').update(codeVerifier).digest();
+                    var codeChallenge = base64url.encode(hash);
+                    /* eslint-disable camelcase */
+                    component.oauth.code_challenge = codeChallenge;
+                    /* eslint-enable camelcase */
+                  }
+                  else {
+                    component.oauth.state = state;
+                  }
                   if (provider.display) {
                     component.oauth.display = provider.display;
                   }

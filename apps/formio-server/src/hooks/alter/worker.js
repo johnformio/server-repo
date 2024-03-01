@@ -1,5 +1,5 @@
 'use strict';
-const fetch = require('formio/src/util/fetch');
+const fetch = require('@formio/node-fetch-http-proxy');
 
 class Service {
   constructor(url) {
@@ -12,6 +12,7 @@ class Service {
         headers: {
           'content-type': 'application/json',
         },
+        rejectUnauthorized: false,
         body: JSON.stringify(data),
       })
         .then((response) => response.ok ? response.json() : null)

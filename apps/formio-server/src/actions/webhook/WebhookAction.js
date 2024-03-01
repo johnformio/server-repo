@@ -1,6 +1,6 @@
 'use strict';
 
-const fetch = require('formio/src/util/fetch');
+const fetch = require('@formio/node-fetch-http-proxy');
 const _ = require('lodash');
 const {evaluate} = require('@formio/vm');
 

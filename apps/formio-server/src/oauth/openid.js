@@ -6,7 +6,7 @@ const URL = require('url').URL;
 const {AuthorizationCode} = require('simple-oauth2');
 const debug = require('debug')('formio:openid');
 
-const fetch = require('formio/src/util/fetch');
+const fetch = require('@formio/node-fetch-http-proxy');
 
 const MAX_TIMESTAMP = 8640000000000000;
 
@@ -100,6 +100,7 @@ module.exports = (formio) => {
       }
       const response = await fetch(accessToken.userInfo, {
         method: 'GET',
+        rejectUnauthorized: false,
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',

@@ -31,6 +31,7 @@ module.exports = async (req, res, next) => {
     await fetch(`${config.pdfProject}/info/submission`, {
       method: 'POST',
       headers,
+      rejectUnauthorized: false,
       body: JSON.stringify({
         data: {
           project: res.resource.item._id,

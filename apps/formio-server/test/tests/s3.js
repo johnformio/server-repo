@@ -154,7 +154,7 @@ module.exports = function(app, template, hook) {
                 ]
               },
               {
-                type: 'delete_all',
+                type: 'delete_own',
                 roles: [
                   template.roles.administrator._id.toString(),
                   template.roles.authenticated._id.toString()
@@ -427,6 +427,13 @@ module.exports = function(app, template, hook) {
                   template.roles.administrator._id.toString(),
                   template.roles.authenticated._id.toString()
                 ]
+              },
+              {
+                type: 'delete_own',
+                roles: [
+                  template.roles.administrator._id.toString(),
+                  template.roles.authenticated._id.toString()
+                ]
               }
             ],
             components: [
@@ -695,7 +702,7 @@ module.exports = function(app, template, hook) {
                 ]
               },
               {
-                type: 'delete_all',
+                type: 'delete_own',
                 roles: [
                   template.roles.administrator._id.toString(),
                   template.roles.authenticated._id.toString()
@@ -1083,7 +1090,7 @@ module.exports = function(app, template, hook) {
                 ]
               },
               {
-                type: 'delete_all',
+                type: 'delete_own',
                 roles: [
                   template.roles.administrator._id.toString(),
                   template.roles.authenticated._id.toString()
