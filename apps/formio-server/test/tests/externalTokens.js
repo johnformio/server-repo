@@ -327,5 +327,85 @@ module.exports = (app, template, hook) => {
           .end(done);
       });
     });
+
+    describe('External Authentication with primary admin role', () => {
+      let adminAuthToken;
+      let authenticatedAuthToken;
+
+      before('Create an external authoried token with primary admin role', done => {
+        const payload = {
+          external: true,
+          user: {
+            _id: 'abc123',
+            data: {
+              firstName: 'Foo',
+              lastName: 'Bar'
+            },
+            roles: [tempRole2]
+          },
+          form: {
+            _id: tempForm._id
+          },
+          project: {
+            _id: template.formio.primary._id
+          },
+          externalToken: 'Some external token'
+        };
+
+        adminAuthToken = app.formio.formio.auth.getToken({
+          ...payload,
+          user: {
+            ...payload.user,
+            roles: [...payload.user.roles, template.formio.roles.administrator._id],
+          },
+        });
+        authenticatedAuthToken = app.formio.formio.auth.getToken({
+          ...payload,
+          user: {
+            ...payload.user,
+            roles: [...payload.user.roles, template.formio.roles.authenticated._id],
+          },
+        });
+        done();
+      });
+
+      it('Current endpoint should return admin flag for primary admin with external token', done => {
+        request(app)
+          .get('/current')
+          .set('x-jwt-token', adminAuthToken)
+          .send()
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            const response = res.body;
+            assert.equal(response.isAdmin, true);
+
+            done();
+          });
+      });
+
+      it('Current endpoint should not return admin flag for non primary admin with external token', done => {
+        request(app)
+          .get('/current')
+          .set('x-jwt-token', authenticatedAuthToken)
+          .send()
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+
+            const response = res.body;
+            assert.equal(response.isAdmin, false);
+
+            done();
+          });
+      });
+    })
   });
 };

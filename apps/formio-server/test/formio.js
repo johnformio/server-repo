@@ -456,11 +456,40 @@ describe('Initial Tests', function() {
               cb();
             });
         };
+        var getRoles = function(cb) {
+          request(app)
+            .get('/project/' + template.formio.project._id + '/role?limit=1000')
+            .set('x-admin-key', process.env.ADMIN_KEY)
+            .expect(200)
+            .expect('Content-Type', /json/)
+            .end(function(err, res) {
+              if (err) {
+                return cb(err);
+              }
+
+              var response = res.body;
+              template.formio.roles = {};
+              response.forEach(function(role) {
+                if (role.machineName === 'formio:administrator') {
+                  template.formio.roles.administrator = role;
+                }
+                else if (role.machineName === 'formio:authenticated') {
+                  template.formio.roles.authenticated = role;
+                }
+                else if (role.machineName === 'formio:anonymous') {
+                  template.formio.roles.anonymous = role;
+                }
+              });
+
+              cb();
+            });
+        };
 
         async.series([
           getPrimary,
           getProject,
-          getForms
+          getForms,
+          getRoles,
         ], function(err) {
           if (err) {
             return done(err);
