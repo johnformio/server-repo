@@ -69,10 +69,10 @@
     fuse.js "^6.6.2"
     redux "^4.2.0"
 
-"@formio/core@2.0.0-rc.15":
-  version "2.0.0-rc.15"
-  resolved "https://registry.yarnpkg.com/@formio/core/-/core-2.0.0-rc.15.tgz#01c9151654059be3f91af02a720b52d3dc8b365b"
-  integrity sha512-RhYzyv1/wpbw7fyCBY3gF8Q/fapJUDLWvkMA3sRs5sAoftI4nbJm3MH4EOMSQ2KlevZNobdSPzwWFf2g0zZu1w==
+"@formio/core@2.0.0-rc.16":
+  version "2.0.0-rc.16"
+  resolved "https://registry.yarnpkg.com/@formio/core/-/core-2.0.0-rc.16.tgz#a1fc046d3e90c107ceba577ad56bfebcd28a3220"
+  integrity sha512-0LLLo3k9rJLiOazX76K4FoOMXlezYvxkw0Px5/o04UjT/R5vOnPM6zPq6KYoQh5q3PUmps5QCJ441n03q6L/qA==
   dependencies:
     "@types/json-logic-js" "^2.0.5"
     browser-cookies "^1.2.0"
