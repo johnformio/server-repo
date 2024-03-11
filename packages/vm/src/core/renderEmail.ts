@@ -18,28 +18,33 @@ export async function renderEmail({ render, context = {} }: RenderEmailOptions):
 
   const renderMethod = getRenderMethod(render);
 
-  try {
-    // TODO: Figure out if premium has to be added to dependencies
-    // @ts-ignore
-    const premium = await import('@formio/premium/dist/premium-server.min.js');
-    Formio.use(premium);
-  }
-  catch {}
-  const form = await (new Form(context.form, {
-    server: true,
-    noeval: true,
-    noDefaults: true
-    })).ready;
-
-  const submissionTableHtml = form.getView(context.data, {
-    email: true
-  });
-
   const data: any = {
     input: omitUndefined(render),
-    submissionTableHtml,
     context,
+    submissionTableHtml: null,
   };
+
+  if (renderMethod === 'dynamic') {
+    try {
+      // @ts-ignore
+      const premium = await import('@formio/premium/dist/premium-server.min.js');
+      Formio.use(premium);
+    }
+    catch {}
+    const form = await (new Form(context.form, {
+      server: true,
+      noeval: true,
+      noDefaults: true
+      })).ready;
+  
+    form.setValue({ data: context.data });
+  
+    const submissionTableHtml = form.getView(context.data, {
+      email: true
+    });
+
+    data.submissionTableHtml = submissionTableHtml;
+  }
 
   const res = await evaluate({
     deps: ['lodash', 'moment', 'core', 'nunjucks'],
