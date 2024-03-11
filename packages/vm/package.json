@@ -27,7 +27,7 @@
         "nunjucks-date-filter": "^0.1.1"
     },
     "scripts": {
-        "preinstall": "npx check-node-version --node '>=20.0.0'",
+        "preinstall": "npx check-node-version --node \">=20.0.0\"",
         "test": "npm run build && mocha -r ts-node/register -b -t 0 --no-node-snapshot 'build/**/__tests__/*.test.js'",
         "start": "DOTENV_CONFIG_PATH=./.env node --no-node-snapshot build/server.js",
         "build": "gulp prebuild && tsc && gulp postbuild",
