@@ -1,49 +1,61 @@
 import { InstanceShim } from './InstanceShim';
-import * as FormioCore from '@formio/core'
+import * as FormioCore from '@formio/core';
 
 export class RootShim {
-  public instanceMap: any;
-  public data: any;
-  
-  private _form: any;
-  private _submission: any;
+    public instanceMap: any;
+    public data: any;
+    public components: any[];
 
-  constructor(form: any, submission: any) {
-    this.instanceMap = {};
-    this._form = form;
-    this._submission = submission;
-    this.data = submission.data;
-    FormioCore.Utils.eachComponentData(form.components, submission.data, (component: any, data: any, row: any, path: any, components: any, index: any) => {
-      // this.instanceMap[path] = component;
-      this.instanceMap[path] = new InstanceShim(component, this, submission.data, path);
-    });
-  }
+    private _form: any;
+    private _submission: any;
 
-  getComponent(path: string) {
-    if (!this.instanceMap[path]) {
-      return null;
+    constructor(form: any, submission: any) {
+        this.instanceMap = {};
+        this._form = form;
+        this._submission = submission;
+        this.data = submission.data;
+        this.components = [];
+        FormioCore.Utils.eachComponentData(
+            form.components,
+            submission.data,
+            (component: any, data: any, row: any, path: any) => {
+                // this.instanceMap[path] = component;
+                const componentInstance = new InstanceShim(
+                    component,
+                    this,
+                    submission.data,
+                    path,
+                );
+                this.instanceMap[path] = componentInstance;
+                this.components.push(componentInstance);
+            },
+        );
     }
-    // return new InstanceShim(this.instanceMap[path], this, this.data, path);
-    return this.instanceMap[path];
-  }
-  // How getComponent should work for dataGrid childs, which row should be used for dataValue;
 
-  get submission() {
-    return this._submission;
-  }
+    getComponent(path: string) {
+        if (!this.instanceMap[path]) {
+            return null;
+        }
+        // return new InstanceShim(this.instanceMap[path], this, this.data, path);
+        return this.instanceMap[path];
+    }
+    // How getComponent should work for dataGrid childs, which row should be used for dataValue;
 
-  set submission(data: any) {}
+    get submission() {
+        return this._submission;
+    }
 
-  get form() {
-    return this._form;
-  }
+    set submission(data: any) {}
 
-  set form(form: any) {}
+    get form() {
+        return this._form;
+    }
 
-  get root() {
-    return null;
-  }
+    set form(form: any) {}
 
+    get root() {
+        return null;
+    }
 }
 
 // Note: eachComponentData does not work correctly
