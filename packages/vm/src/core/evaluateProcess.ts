@@ -65,6 +65,12 @@ export async function evaluateProcess(options: EvaluateProcessorsOptions): Promi
 // Should be used only for development
 // Before using this function, make sure that it corresponds to the actual version of `evaluateProcess`
 export async function evaluateProcessMocked(options: EvaluateProcessorsOptions): Promise<EvaluateProcessorsResult> {
+  (globalThis as any).moment = require('moment');
+  (globalThis as any)._ = require('lodash');
+  (globalThis as any).FormioCore = require('@formio/core');
+  (globalThis as any).utils = FormioCore.Utils;
+  (globalThis as any).util = FormioCore.Utils;
+  
   const submission = JSON.parse(JSON.stringify(options.submission));
   const context: any = {
     form: options.form,
