@@ -53,7 +53,7 @@ export async function evaluateProcess(options: EvaluateProcessorsOptions): Promi
     }
   };
   const result = await evaluate({
-    deps: [ 'lodash', 'core', 'instanceShim' ],
+    deps: [ 'lodash', 'core', 'instanceShim', 'moment' ],
     data: { context: evaluateContext },
     code,
   });
