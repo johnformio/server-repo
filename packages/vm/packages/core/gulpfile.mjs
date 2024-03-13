@@ -10,6 +10,7 @@ function copyAssets(assetsDir) {
     () => gulp.src('./node_modules/lodash/lodash.min.js').pipe(gulp.dest(assetsDir)),
     () => gulp.src('./node_modules/moment/min/moment.min.js').pipe(gulp.dest(assetsDir)),
     () => gulp.src('./node_modules/@formio/core/dist/formio.core.min.js').pipe(gulp.dest(assetsDir)),
+    () => gulp.src('./node_modules/fast-json-patch/dist/fast-json-patch.min.js').pipe(gulp.dest(assetsDir)),
     () => gulp.src('./node_modules/nunjucks/browser/nunjucks.min.js').pipe(gulp.dest(assetsDir)),
     () => gulp.src('./node_modules/nunjucks-date-filter/index.js').pipe(rename('nunjucks-date-filter.js')).pipe(gulp.dest(assetsDir)),
     () => gulp.src('./src/core/deps/assets/*.html').pipe(gulp.dest(assetsDir))
