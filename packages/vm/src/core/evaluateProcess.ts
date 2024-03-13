@@ -60,9 +60,9 @@ export async function evaluateProcess(options: EvaluateProcessorsOptions): Promi
   return result as EvaluateProcessorsResult;
 }
 
-// Does the same as `evaluateProcess`, but omits call to evaluate
+// Does the same as `evaluateProcess`, but omits the call to evaluate
 // So it's possible to debug core functions outside of the vm
-// Should be used only for development
+// Should be used ONLY for development
 // Before using this function, make sure that it corresponds to the actual version of `evaluateProcess`
 export async function evaluateProcessMocked(options: EvaluateProcessorsOptions): Promise<EvaluateProcessorsResult> {
   (globalThis as any).moment = require('moment');
