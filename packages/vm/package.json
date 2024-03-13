@@ -43,10 +43,12 @@
         "@types/mocha": "^10.0.6",
         "@types/node": "^20.8.9",
         "@types/nunjucks": "^3.2.6",
+        "@typescript-eslint/eslint-plugin": "^7.2.0",
+        "@typescript-eslint/parser": "^7.2.0",
         "chai": "^4.3.10",
         "del": "^7.1.0",
         "eslint": ">=7.0.0",
-        "eslint-config-prettier": "^9.0.0",
+        "eslint-config-prettier": "^9.1.0",
         "eslint-config-standard": "^17.1.0",
         "eslint-plugin-import": "^2.25.2",
         "eslint-plugin-n": "^15.0.0 || ^16.0.0 ",
@@ -64,8 +66,8 @@
     },
     "lint-staged": {
         "*.ts": [
-            "prettier --write",
-            "eslint --fix"
+            "eslint --fix",
+            "prettier --write"
         ],
         "*.{ts,json,md}": "prettier --write"
     }
