@@ -15,23 +15,24 @@ function hasValidProviderSettings(settings) {
     && settings.google.refreshtoken;
 }
 
-async function getContentUrl(options = {}) {
-  let {settings} = options;
-  const {project, file, id} = options;
-  if (project && !settings) {
-    settings = _.get(project, 'settings.storage.googleDrive');
-  }
-
+async function getEmailFileUrl(project, file) {
+  const settings = _.get(project, 'settings.storage.googleDrive');
   if (!settings) {
     throw new Error('Storage settings not set.');
   }
 
-  let {drive} = options;
-  if (!drive && hasValidProviderSettings(project.settings)) {
-    drive = await authenticate(project.settings);
+  const fileId = file?.id;
+  if (!fileId) {
+    throw new Error('File not provided.');
   }
 
-  const fileId = file?.id || id;
+  const drive = hasValidProviderSettings(project.settings)
+    ? await authenticate(project.settings)
+    : null;
+  if (!drive) {
+    throw new Error('Drive not provided.');
+  }
+
   debug('Getting a Google Drive content link for the file.');
 
   try {
@@ -39,10 +40,7 @@ async function getContentUrl(options = {}) {
       fileId,
       fields: 'webContentLink',
     });
-    return {
-      url: response.data.webContentLink,
-      key: fileId,
-    };
+    return response.data.webContentLink;
   }
   catch (error) {
     debug(error);
@@ -51,10 +49,6 @@ async function getContentUrl(options = {}) {
 }
 
 async function getUrl(options = {}) {
-  if (options.fromAction) {
-    return await getContentUrl(options);
-  }
-
   // Allow options.project as an alternative to options.settings
   if (options.project && !options.settings) {
     options.settings = _.get(options.project, 'settings.storage.googleDrive');
@@ -104,10 +98,7 @@ async function getUrl(options = {}) {
     throw new Error('Invalid response.');
   }
 
-  return {
-    url: link,
-    key: fileId,
-  };
+  return link;
 }
 
 // Authentication method for Google Drive
@@ -398,7 +389,7 @@ const middleware = router => {
                 debug(`Uploaded a file ${id} to Google Drive.`);
 
                 // Get the url google drive link
-                getUrl({project, file: file.data, drive, id}).then(({url}) => {
+                getUrl({project, file: file.data, drive, id}).then((url) => {
                   res.send({id, originalUrl: url});
                 });
               }
@@ -479,5 +470,5 @@ const middleware = router => {
 
 module.exports = {
   middleware,
-  getUrl,
+  getEmailFileUrl,
 };

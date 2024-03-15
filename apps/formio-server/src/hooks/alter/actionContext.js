@@ -39,7 +39,7 @@ module.exports = (app) => async (params, req) => {
     .map(async file => {
       if (['s3', 'azure', 'googledrive', 'dropbox'].includes(file.storage)) {
         try {
-          file.url = (await storages[file.storage].getUrl({project: req.currentProject, file, fromAction: true})).url;
+          file.url = await storages[file.storage]?.getEmailFileUrl(req.currentProject, file);
         }
         catch (err) {
           // Don't let a failure on one file derail the whole email action

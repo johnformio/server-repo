@@ -10,6 +10,8 @@ var docker = process.env.DOCKER;
 var customer = process.env.CUSTOMER;
 var _ = require('lodash');
 const config = require('../../config');
+const { storages } = require('../../src/storage');
+const s3Storage = storages.s3;
 
 module.exports = function(app, template, hook) {
   describe('S3 Tests', function() {
@@ -1341,6 +1343,49 @@ module.exports = function(app, template, hook) {
               done();
             });
         });
+      });
+    });
+
+    describe('Email Actions', () => {
+      let file;
+      before(() => {
+        file = {
+          bucket: 'fakeBucket',
+          key: 'fakeKey',
+        };
+      });
+
+      it('Should throw error if file not provided', async () => {
+        try {
+          await s3Storage.getEmailFileUrl(template.project);
+        }
+        catch(err) {
+          assert.equal(err.message, 'File not provided.');
+        }
+      });
+
+      it('Should throw error if storage settings not set', async () => {
+        try {
+          const project = {
+            ...template.project,
+            settings: {},
+          };
+          await s3Storage.getEmailFileUrl(project, file);
+          assert.fail('Expected an error to be thrown');
+        }
+        catch(err) {
+          assert.equal(err.message, 'Storage settings not set.');
+        }
+      });
+
+      it('Should return file url for email attachment', async () => {
+        try {
+          const url = await s3Storage.getEmailFileUrl(template.project, file);
+          assert.ok(url && url.startsWith('https://s3.us-east-1.amazonaws.com/fakeBucket/fakeKey'));
+        }
+        catch(err) {
+          assert.fail('An error should not be thrown');
+        }
       });
     });
 

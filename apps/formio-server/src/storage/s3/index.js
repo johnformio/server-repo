@@ -26,19 +26,22 @@ function getS3Settings(project) {
   return project.settings.storage.s3;
 }
 
-async function getPresignedGetUrl(options = {}) {
-  const {project, bucket, key, file} = options;
-  const s3Settings = getS3Settings(project);
+function getPresignedGetUrl(s3Settings, bucket, key) {
   if (s3Settings.minio) {
-    return {
-      url: await getMinioPresignedGetUrl(s3Settings, bucket || file.bucket, key || file.key),
-      key: key || file.key,
-    };
+    return getMinioPresignedGetUrl(s3Settings, bucket, key);
   }
-  return {
-    url: await getAWSPresignedGetUrl(s3Settings, bucket || file.bucket, key || file.key),
-    key: key || file.key,
-  };
+  return getAWSPresignedGetUrl(s3Settings, bucket, key);
+}
+
+async function getEmailFileUrl(project, file) {
+  if (!file?.bucket || !file?.key) {
+    throw new Error('File not provided.');
+  }
+
+  const s3Settings = getS3Settings(project);
+  return s3Settings.minio
+    ? await getMinioPresignedGetUrl(s3Settings, file.bucket, file.key)
+    : await getAWSPresignedGetUrl(s3Settings, file.bucket, file.key);
 }
 
 function removeFile(s3Settings, bucket, key) {
@@ -184,10 +187,11 @@ const middleware = function(router) {
     async function(req, res) {
       try {
         const project = await loadProject(req);
+        const s3Settings = getS3Settings(project);
         if (!req.query.bucket || !req.query.key) {
           throw new Error('Need both bucket and key to GET file from S3');
         }
-        const {url} = await getPresignedGetUrl({project, bucket: req.query.bucket, key: req.query.key});
+        const url = await getPresignedGetUrl(s3Settings, req.query.bucket, req.query.key);
         return res.send({url});
       }
       catch (err) {
@@ -301,5 +305,5 @@ const middleware = function(router) {
 
 module.exports = {
   middleware,
-  getUrl: getPresignedGetUrl,
+  getEmailFileUrl,
 };
