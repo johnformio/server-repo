@@ -5,14 +5,18 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 0.0.7-rc.10]
+## 0.0.7-rc.10
+
+### Changed
+
+-   Updated @formio/core@2.0.0-rc.18
 
 ### Fixed
 
 -   fix conditional fields visibility in emails
 -   FIO-8040: Fix utils object
 -   FIO-8046: Fix/add components array to rootshim
-   
+
 ## 0.0.7-rc.9
 
 ### Changed
