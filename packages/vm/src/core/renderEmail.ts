@@ -35,10 +35,14 @@ export async function renderEmail({ render, context = {} }: RenderEmailOptions):
       server: true,
       noeval: true,
       noDefaults: true
-      })).ready;
+    })).ready;
   
-    form.setValue({ data: context.data });
-  
+    form.setValue({ data: context.data }, { sanitize: true });
+
+    for (let conditionalComp of context.scope.conditionals) {
+      form.getComponent(conditionalComp.path).visible = !conditionalComp.conditionalyHidden;
+    }
+
     const submissionTableHtml = form.getView(context.data, {
       email: true
     });
