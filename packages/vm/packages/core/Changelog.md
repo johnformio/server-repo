@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased: 0.0.7-rc.10]
+
+### Fixed
+
+-   fix conditional fields visibility in emails
+-   FIO-8040: Fix utils object
+-   FIO-8046: Fix/add components array to rootshim
+   
 ## 0.0.7-rc.9
 
 ### Changed
