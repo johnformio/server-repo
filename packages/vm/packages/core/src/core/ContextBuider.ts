@@ -2,7 +2,7 @@ import { Isolate, Context } from 'isolated-vm';
 import { instanceShimCode } from './InstanceShim';
 import { lodashCode } from './deps/lodash';
 import { momentCode } from './deps/moment';
-import { polyfillCode, aliasesCode, coreCode } from './deps/core';
+import { polyfillCode, aliasesCode, coreCode, fastJsonPatchCode } from './deps/core';
 import { nunjucksCode, nunjucksDateFilterCode, nunjucksEnvironmentCode } from './deps/nunjucks';
 import { nunjucksUtilsCode } from './deps/nunjucks-utils';
 
@@ -10,7 +10,7 @@ import { nunjucksUtilsCode } from './deps/nunjucks-utils';
 const dependeciesMap: Record<string, string[]> = {
   lodash: [lodashCode],
   moment: [momentCode],
-  core: [polyfillCode, coreCode, aliasesCode],
+  core: [polyfillCode, coreCode, fastJsonPatchCode, aliasesCode],
   instanceShim: [instanceShimCode],
   nunjucks: [
     nunjucksCode,
