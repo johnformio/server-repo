@@ -590,7 +590,7 @@ module.exports = (router) => {
             });
           }
           catch (err) {
-            setActionItemMessage('Webhook transform failed', err, 'error');
+            setActionItemMessage('Webhook transform failed', err.message || err, 'error');
           }
         }
         setActionItemMessage('Transform payload done');
