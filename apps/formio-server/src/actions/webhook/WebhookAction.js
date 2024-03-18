@@ -12,6 +12,7 @@ const {
   constructHeadersObject,
   processWebhookResponseBody,
 } = require('./util');
+const config = require('../../../config');
 
 module.exports = (router) => {
   const Action = router.formio.Action;
@@ -586,7 +587,8 @@ module.exports = (router) => {
                   req.currentProject.hasOwnProperty('config')
                     ? req.currentProject.config
                     : {},
-              }
+              },
+              timeout: config.formio.vmTimeout
             });
           }
           catch (err) {

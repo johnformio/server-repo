@@ -1555,7 +1555,8 @@ module.exports = function(app) {
               data: {
                 token: decoded,
                 roles: req.currentProject.roles
-              }
+              },
+              timeout: config.formio.vmTimeout
             });
             if (!data.hasOwnProperty('user')) {
               throw new Error('User not defined on data.');
