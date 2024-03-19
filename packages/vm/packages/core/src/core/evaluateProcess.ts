@@ -9,13 +9,15 @@ data = context.data;
 
 if (context.form.module) {
   // Wrap with parenthesis to return object, not function
-  formModule = eval( '(' + context.form.module + ')');
-  evalContext = formModule?.options?.form?.evalContext;
-
-  if (evalContext) {
-    evalContextFn = (context) => Object.assign({}, context, evalContext);
-    context.evalContext = evalContextFn;
-  }
+  try {
+    formModule = eval( '(' + context.form.module + ')');
+    evalContext = formModule?.options?.form?.evalContext;
+  
+    if (evalContext) {
+      evalContextFn = (context) => Object.assign({}, context, evalContext);
+      context.evalContext = evalContextFn;
+    }
+  } catch (e) {}
 }
 
 context.processors = FormioCore.ProcessTargets.evaluator;
