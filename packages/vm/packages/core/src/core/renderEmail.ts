@@ -39,8 +39,10 @@ export async function renderEmail({ render, context = {} }: RenderEmailOptions):
   
     form.setValue({ data: context.data }, { sanitize: true });
 
-    for (let conditionalComp of context.scope.conditionals) {
-      form.getComponent(conditionalComp.path).visible = !conditionalComp.conditionalyHidden;
+    if (context?.scope?.conditionals) {
+      for (let conditionalComp of context.scope.conditionals) {
+        form.getComponent(conditionalComp.path).visible = !conditionalComp.conditionalyHidden;
+      }
     }
 
     const submissionTableHtml = form.getView(context.data, {
