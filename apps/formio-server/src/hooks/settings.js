@@ -12,6 +12,9 @@ const {ClientCredentials} = require('simple-oauth2');
 const moment = require('moment');
 const config = require('../../config');
 const ActionLogger = require('../actions/ActionLogger');
+const debug = {
+  authentication: require('debug')('formio:authentication'),
+};
 
 module.exports = function(app) {
   const formioServer = app.formio;
@@ -1591,7 +1594,8 @@ module.exports = function(app) {
           }
           catch (err) {
             // eslint-disable-next-line no-console
-            console.error('Error parsing JWT token:', err.message);
+            debug('Error parsing JWT token: ', err.message || err);
+            console.error('Error parsing JWT token:', err.message || err);
           }
         }
 
