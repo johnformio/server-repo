@@ -85,7 +85,7 @@ module.exports = app => models => {
     deleted: 1
   });
   // Add the case sensitive index for MongoDB-compliant APIs
-  if (app.formio.formio.mongoFeatures.collation && app.formio.formio.mongoFeatures.compoundNestedPaths) {
+  if (app.formio.formio.mongoFeatures.collation && app.formio.formio.mongoFeatures.compoundIndexWithNestedPath) {
     models.submission.schema.index({
       form: 1,
       project: 1,
@@ -93,7 +93,7 @@ module.exports = app => models => {
       deleted: 1
     }, {collation: {locale: 'en', strength: 2}});
   }
-  else if (app.formio.formio.mongoFeatures.compoundNestedPaths) {
+  else if (app.formio.formio.mongoFeatures.compoundIndexWithNestedPath) {
     models.submission.schema.index({
       form: 1,
       project: 1,
