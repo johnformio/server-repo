@@ -69,10 +69,10 @@
     fuse.js "^6.6.2"
     redux "^4.2.0"
 
-"@formio/core@2.0.0-rc.19":
-  version "2.0.0-rc.19"
-  resolved "https://registry.yarnpkg.com/@formio/core/-/core-2.0.0-rc.19.tgz#120175b46ca3723e0fd322ac3f06de3207dc7242"
-  integrity sha512-kJGQLVACo6dggWKgR2StREks2tJVBXn23o/+uXOSrz/6zBln8UJwMYhYHDR4kz0cZUs8tczqN6sre1y2WzeekQ==
+"@formio/core@2.0.0-rc.20":
+  version "2.0.0-rc.20"
+  resolved "https://registry.yarnpkg.com/@formio/core/-/core-2.0.0-rc.20.tgz#34b55a5973cdc65b33563eab8ff5c1f35573397b"
+  integrity sha512-PwlRqtIuyBldFGJ4jGb/+59o7/o1ZMkpRosKmkiMVdZKI0OjZpIJ0U/w6PzUbFny07DaZF0wwfFiJYrZs/z+0w==
   dependencies:
     "@types/json-logic-js" "^2.0.5"
     browser-cookies "^1.2.0"
@@ -2318,10 +2318,10 @@ for-own@^1.0.0:
   dependencies:
     for-in "^1.0.1"
 
-formiojs@4.19.0:
-  version "4.19.0"
-  resolved "https://registry.yarnpkg.com/formiojs/-/formiojs-4.19.0.tgz#09df6ea456be21947da9ea34f63849080ceac1b7"
-  integrity sha512-0Cft6mfvqglEDUngYSVhBHr003T7DdznSF4yMjNPLSr5QUwJnJe+sIJyhmHj4/9MvZnn7+s7wmq0DG6bHCrIBQ==
+formiojs@4.19.1-rc.1:
+  version "4.19.1-rc.1"
+  resolved "https://registry.yarnpkg.com/formiojs/-/formiojs-4.19.1-rc.1.tgz#8b8d67a3e42b88128db4bb924c6801252b50538b"
+  integrity sha512-gpRPzwtUGTHqjqRiUL2Db1rkggNScOl4gnRNGZSazw9/xz1tQjuYRVEWuq5p1JnRNpOy3RwQdtkK8diKi/Z5Zg==
   dependencies:
     "@formio/bootstrap3" "2.12.4-rc.1"
     "@formio/choices.js" "10.2.1"
