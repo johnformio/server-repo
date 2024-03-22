@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased: 0.0.7-rc.14]
+
+### Changed
+
+-   FIO-8092: add isEmpty function to component instance shim
+  
 ## 0.0.7-rc.13
 
 ### Changed
