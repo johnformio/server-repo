@@ -111,7 +111,7 @@ const Utils = {
     }
     obj[plainName] = Utils.decrypt(secret, obj[encryptedName], true);
     if (!obj[plainName]) {
-      obj[plainName] = {};
+      obj[plainName] = {cannotDecrypt: true};
     }
     delete obj[encryptedName];
     return obj;

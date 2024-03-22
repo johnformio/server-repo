@@ -12,6 +12,7 @@ const {ClientCredentials} = require('simple-oauth2');
 const moment = require('moment');
 const config = require('../../config');
 const ActionLogger = require('../actions/ActionLogger');
+const updateSecret = require('../util/updateSecret.js');
 
 module.exports = function(app) {
   const formioServer = app.formio;
@@ -2309,6 +2310,12 @@ module.exports = function(app) {
 
       includeReports() {
         return !config.formio.hosted && _.get(app, 'license.terms.options.reporting', false);
+      },
+
+      checkEncryption(formio, db) {
+        if (formio.config.mongoSecretOld && formio.config.mongoSecret) {
+          updateSecret(formio, db, formio.config.mongoSecret, formio.config.mongoSecretOld);
+        }
       }
     }
   };
