@@ -32,7 +32,7 @@ jobs:
           root: build
           paths:
             - favicon.ico
-            - formio.js
+            - formio.js 
             - package.json
             - yarn.lock
   portal:
@@ -171,30 +171,77 @@ jobs:
               git push
             fi
             git push --tags
+
+            
+# workflows:
+#   do-build:
+#     jobs:
+#       - build:
+#           filters:
+#             tags:
+#               only: /.*/
+#       - portal:
+#           filters:
+#             tags:
+#               only: /.*/
+#       - test:
+#           requires:
+#             - build
+#             - portal
+#           filters:
+#             tags:
+#               only: /.*/
+#       - docker:
+#           requires:
+#             - test
+#           filters:
+#             tags:
+#               only: /^\d+\.\d+\.\d+.*/
+#             branches:
+#               ignore: /.*/
+#       - deploy_npm:
+#           requires:
+#             - test
+#             - docker
+#           filters:
+#             tags:
+#               only: /^\d+\.\d+\.\d+.*/
+#             branches:
+#               ignore: /.*/
+
+############################################################
+## Disables Circle CI (Comment/Remove to re-enable CircleCI)
+############################################################
 workflows:
   do-build:
     jobs:
       - build:
           filters:
             tags:
-              only: /.*/
+              ignore: /.*/
+            branches:
+              ignore: /.*/
       - portal:
           filters:
             tags:
-              only: /.*/
+              ignore: /.*/
+            branches:
+              ignore: /.*/
       - test:
           requires:
             - build
             - portal
           filters:
             tags:
-              only: /.*/
+              ignore: /.*/
+            branches:
+              ignore: /.*/
       - docker:
           requires:
             - test
           filters:
             tags:
-              only: /^\d+\.\d+\.\d+.*/
+              ignore: /.*/
             branches:
               ignore: /.*/
       - deploy_npm:
@@ -203,6 +250,6 @@ workflows:
             - docker
           filters:
             tags:
-              only: /^\d+\.\d+\.\d+.*/
+              ignore: /.*/
             branches:
               ignore: /.*/
