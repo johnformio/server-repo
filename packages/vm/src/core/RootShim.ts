@@ -35,9 +35,15 @@ export class RootShim {
     getComponent(path: string) {
         if (!this.instanceMap[path]) {
             let match = null;
-            FormioCore.Utils.eachComponent(
+            FormioCore.Utils.eachComponentData(
                 this.form.components,
-                (component: FormioCore.Component, componentPath: string) => {
+                this.submission.data,
+                (
+                    component: FormioCore.Component,
+                    data: any,
+                    row: any,
+                    componentPath: string,
+                ) => {
                     const contextualPath =
                         FormioCore.Utils.getContextualRowPath(
                             component,
