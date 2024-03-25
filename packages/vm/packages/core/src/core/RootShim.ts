@@ -1,6 +1,5 @@
 import { InstanceShim } from './InstanceShim';
 import * as FormioCore from '@formio/core';
-import { getLastPathName } from './util.js';
 
 export class RootShim {
     public instanceMap: any;
@@ -35,12 +34,21 @@ export class RootShim {
 
     getComponent(path: string) {
         if (!this.instanceMap[path]) {
-            for (const key of Object.keys(this.instanceMap)) {
-                if (getLastPathName(key) === getLastPathName(path)) {
-                    return this.instanceMap[key];
-                }
-            }
-            return null;
+            let match = null;
+            FormioCore.Utils.eachComponent(
+                this.form.components,
+                (component: FormioCore.Component, componentPath: string) => {
+                    const contextualPath =
+                        FormioCore.Utils.getContextualRowPath(
+                            component,
+                            componentPath,
+                        );
+                    if (contextualPath === path) {
+                        match = component;
+                    }
+                },
+            );
+            return match;
         }
         return this.instanceMap[path];
     }
