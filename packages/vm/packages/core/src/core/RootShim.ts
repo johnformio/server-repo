@@ -1,5 +1,6 @@
 import { InstanceShim } from './InstanceShim';
 import * as FormioCore from '@formio/core';
+import { getLastPathName } from './util.js';
 
 export class RootShim {
     public instanceMap: any;
@@ -34,9 +35,13 @@ export class RootShim {
 
     getComponent(path: string) {
         if (!this.instanceMap[path]) {
+            for (const key of Object.keys(this.instanceMap)) {
+                if (getLastPathName(key) === getLastPathName(path)) {
+                    return this.instanceMap[key];
+                }
+            }
             return null;
         }
-        // return new InstanceShim(this.instanceMap[path], this, this.data, path);
         return this.instanceMap[path];
     }
     // How getComponent should work for dataGrid childs, which row should be used for dataValue;
