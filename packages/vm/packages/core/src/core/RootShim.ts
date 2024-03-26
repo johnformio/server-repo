@@ -52,12 +52,9 @@ export class RootShim {
                     if (contextualPath === path) {
                         match = component;
                         // set a cache for future `getComponent` calls in this lifecycle
-                        this.instanceMap[path] = new InstanceShim(
-                            component,
-                            this,
-                            this.submission.data,
-                            path,
-                        );
+                        // TODO: discuss potential memory leaks, bad evaluations downstream
+                        this.instanceMap[path] =
+                            this.instanceMap[contextualPath];
                     }
                 },
             );
