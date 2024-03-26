@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased: 0.0.7-rc.17]
+
+### Changed
+
+-   FIO-8102: add last path segment to make getComponent relatively performant
+
 ## 0.0.7-rc.16
 
 ### Changed
