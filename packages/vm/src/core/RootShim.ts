@@ -34,9 +34,32 @@ export class RootShim {
 
     getComponent(path: string) {
         if (!this.instanceMap[path]) {
-            return null;
+            let match = null;
+            FormioCore.Utils.eachComponentData(
+                this.form.components,
+                this.submission.data,
+                (
+                    component: FormioCore.Component,
+                    data: any,
+                    row: any,
+                    componentPath: string,
+                ) => {
+                    const contextualPath =
+                        FormioCore.Utils.getContextualRowPath(
+                            component,
+                            componentPath,
+                        );
+                    if (contextualPath === path) {
+                        match = component;
+                        // set a cache for future `getComponent` calls in this lifecycle
+                        // TODO: discuss potential memory leaks, bad evaluations downstream
+                        this.instanceMap[path] =
+                            this.instanceMap[contextualPath];
+                    }
+                },
+            );
+            return match;
         }
-        // return new InstanceShim(this.instanceMap[path], this, this.data, path);
         return this.instanceMap[path];
     }
     // How getComponent should work for dataGrid childs, which row should be used for dataValue;
