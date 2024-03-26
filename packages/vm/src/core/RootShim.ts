@@ -1,6 +1,6 @@
 import { InstanceShim } from './InstanceShim';
 import * as FormioCore from '@formio/core';
-import { getLastPathnameSegment } from './util.js';
+import { getLastPathnameSegment } from './util';
 
 export class RootShim {
     public instanceMap: any;
