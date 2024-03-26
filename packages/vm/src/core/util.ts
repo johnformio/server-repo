@@ -1,3 +1,4 @@
+import { Utils as CoreUtils, Component } from '@formio/core';
 type ErrorLike = {
     message: string;
     stack?: string;
@@ -16,4 +17,11 @@ export function evaluateError(err: unknown) {
         const stringified = JSON.stringify(err, null, 2);
         return stringified;
     }
+}
+
+export function getLastPathnameSegment(component: Component, path: string) {
+    const match = path.match(
+        new RegExp(`${CoreUtils.getComponentKey(component)}$`),
+    );
+    return match ? match[0] : '';
 }
