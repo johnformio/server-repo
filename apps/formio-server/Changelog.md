@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-7549: evaluate axios upgrades and CVE resolution
  - FIO-7804: added PKCE methods for OIDC
  - FIO-7671: leverage mongoFeature to prevent index creation failure in CosmosDB
+ - FIO-7522: Encrypted Fields Not Re-Encrypted to New DB Secret
    
  
 ## 8.4.0-rc.7
