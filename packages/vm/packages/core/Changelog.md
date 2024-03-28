@@ -5,13 +5,17 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 0.0.7-rc.18]
+## 0.0.7-rc.18
+
+### Changed
+
+-   Updated @formio/core@2.0.0-rc.24
 
 ### Changed
 
 -   update lint config
 -   FIO-8102: update to getComponent
--   renderEmail updated to use clearHidden processor 
+-   renderEmail updated to use clearHidden processor
 
 ## 0.0.7-rc.17
 
