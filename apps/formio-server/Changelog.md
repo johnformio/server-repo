@@ -44,6 +44,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-7804: added PKCE methods for OIDC
  - FIO-7671: leverage mongoFeature to prevent index creation failure in CosmosDB
  - FIO-7522: Encrypted Fields Not Re-Encrypted to New DB Secret
+ - FIO-8114: Saml Email Handles toLowerCase undefined error
+ - FIO-7146: migrate formio server to gh actions
    
  
 ## 8.4.0-rc.7
