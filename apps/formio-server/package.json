@@ -59,7 +59,7 @@
     "crypto-js": "^4.2.0",
     "debug": "^4.3.2",
     "dotenv": "^16.3.1",
-    "express": "^4.17.1",
+    "express": "^4.19.2",
     "express-cache-controller": "^1.1.0",
     "formio": "4.0.0-dev.2",
     "formiojs": "4.19.0-rc.7",
