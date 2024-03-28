@@ -40,6 +40,8 @@ export async function renderEmail({ render, context = {} }: RenderEmailOptions):
   
     form.setValue({ data: context.data }, { sanitize: true });
 
+    // Set visibility of hidden components.
+    // This is necessary to ensure that hidden components are not rendered in the email.
     if (context?.scope?.clearHidden) {
       for (const hiddenCompPath in context.scope.clearHidden) {
         form.getComponent(hiddenCompPath).visible = !context.scope.clearHidden[hiddenCompPath];
