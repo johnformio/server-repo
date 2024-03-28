@@ -1,6 +1,5 @@
 import { InstanceShim } from './InstanceShim';
 import * as FormioCore from '@formio/core';
-import { getLastPathnameSegment } from './util';
 
 export class RootShim {
     public instanceMap: any;
@@ -16,10 +15,9 @@ export class RootShim {
         this._submission = submission;
         this.data = submission.data;
         this.components = [];
-        FormioCore.Utils.eachComponentData(
+        FormioCore.Utils.eachComponent(
             form.components,
-            submission.data,
-            (component: any, data: any, row: any, path: any) => {
+            (component: any, path: any) => {
                 // this.instanceMap[path] = component;
                 const componentInstance = new InstanceShim(
                     component,
@@ -37,26 +35,15 @@ export class RootShim {
         // If we don't have an exact path match, compare the final pathname segment with the path argument for each component
         // i.e. getComponent('foo') should return a component at the path 'bar.foo' if it exists
         if (!this.instanceMap[pathArg]) {
-            FormioCore.Utils.eachComponentData(
-                this.form.components,
-                this.submission.data,
-                (
-                    component: FormioCore.Component,
-                    data: any,
-                    row: any,
-                    componentPath: string,
-                ) => {
-                    const lastPathSegment = getLastPathnameSegment(
-                        component,
-                        componentPath,
-                    );
-                    if (lastPathSegment === pathArg) {
-                        // set a cache for future `getComponent` calls in this lifecycle
-                        this.instanceMap[pathArg] =
-                            this.instanceMap[componentPath];
-                    }
-                },
-            );
+            for (const key in this.instanceMap) {
+                const match = key.match(new RegExp(`${pathArg}$`));
+                const lastPathSegment = match ? match[0] : '';
+                if (lastPathSegment === pathArg) {
+                    // set a cache for future `getComponent` calls in this lifecycle
+                    this.instanceMap[pathArg] = this.instanceMap[key];
+                    break;
+                }
+            }
         }
         return this.instanceMap[pathArg];
     }
