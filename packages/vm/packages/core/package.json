@@ -32,7 +32,8 @@
         "start": "DOTENV_CONFIG_PATH=./.env node --no-node-snapshot build/server.js",
         "build": "gulp prebuild && tsc && gulp postbuild",
         "prepack": "npm run build && gulp remove-tests",
-        "prepare": "husky install"
+        "prepare": "husky install",
+        "lint": "eslint ."
     },
     "devDependencies": {
         "@types/chai": "^4.3.11",
