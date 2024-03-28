@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 -   update lint config
 -   FIO-8102: update to getComponent
+-   renderEmail updated to use clearHidden processor 
 
 ## 0.0.7-rc.17
 
