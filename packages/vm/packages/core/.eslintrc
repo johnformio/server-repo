@@ -10,5 +10,6 @@
         "no-prototype-builtins": "off",
         "@typescript-eslint/no-explicit-any": "warn"
     },
-    "root": true
+    "root": true,
+    "ignorePatterns": ["build/", "node_modules/"]
 }
