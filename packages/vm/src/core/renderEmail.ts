@@ -26,10 +26,11 @@ export async function renderEmail({ render, context = {} }: RenderEmailOptions):
 
   if (renderMethod === 'dynamic') {
     try {
-      // @ts-ignore
+      // @ts-expect-error Premium is included in the server build.
       const premium = await import('@formio/premium/dist/premium-server.min.js');
       Formio.use(premium);
     }
+    // eslint-disable-next-line no-empty
     catch {}
     const form = await (new Form(context.form, {
       server: true,
@@ -39,9 +40,11 @@ export async function renderEmail({ render, context = {} }: RenderEmailOptions):
   
     form.setValue({ data: context.data }, { sanitize: true });
 
-    if (context?.scope?.conditionals) {
-      for (let conditionalComp of context.scope.conditionals) {
-        form.getComponent(conditionalComp.path).visible = !conditionalComp.conditionalyHidden;
+    // Set visibility of hidden components.
+    // This is necessary to ensure that hidden components are not rendered in the email.
+    if (context?.scope?.clearHidden) {
+      for (const hiddenCompPath in context.scope.clearHidden) {
+        form.getComponent(hiddenCompPath).visible = !context.scope.clearHidden[hiddenCompPath];
       }
     }
 
