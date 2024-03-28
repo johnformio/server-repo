@@ -15,9 +15,10 @@ export class RootShim {
         this._submission = submission;
         this.data = submission.data;
         this.components = [];
-        FormioCore.Utils.eachComponent(
+        FormioCore.Utils.eachComponentData(
             form.components,
-            (component: any, path: any) => {
+            submission.data,
+            (component: any, data: any, row: any, path: any) => {
                 // this.instanceMap[path] = component;
                 const componentInstance = new InstanceShim(
                     component,
@@ -36,8 +37,8 @@ export class RootShim {
         // i.e. getComponent('foo') should return a component at the path 'bar.foo' if it exists
         if (!this.instanceMap[pathArg]) {
             for (const key in this.instanceMap) {
-                const match = key.match(new RegExp(`${pathArg}$`));
-                const lastPathSegment = match ? match[0] : '';
+                const match = key.match(new RegExp(`\\.${pathArg}$`));
+                const lastPathSegment = match ? match[0].slice(1) : '';
                 if (lastPathSegment === pathArg) {
                     // set a cache for future `getComponent` calls in this lifecycle
                     this.instanceMap[pathArg] = this.instanceMap[key];
