@@ -1,5 +1,5 @@
 import { Isolate, Context } from 'isolated-vm';
-import { dependeciesMap } from './configure';
+import { dependeciesMap } from './configureVm';
 class ContextBuilder {
     private deps: string[] = [];
 
