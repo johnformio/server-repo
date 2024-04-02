@@ -149,6 +149,17 @@ module.exports = function(app, formioServer) {
     Teams.teamAccessHandler(true),
     async (req, res, next) => {
       if (req.method.toLowerCase() === 'post') {
+        let maxLength;
+        const teamResource = await Teams.getMemberResource();
+        _.forEach(teamResource.components, (component) => {
+          if (component.key === 'email') {
+            maxLength = component.maxLength;
+          }
+        });
+        if (req.body.data.email.length > maxLength) {
+          return res.status(416).send('Team member email exceeds allowed character limit');
+        }
+        else {
           const teamUsers = await Teams.getMembers( _.get(req.body, 'data.team', req.currentTeam));
           const duplicateUser = teamUsers.find((user)=> _.get(user, 'data.email') === _.get(req.body, 'data.email'));
           if (duplicateUser) {
@@ -157,6 +168,7 @@ module.exports = function(app, formioServer) {
           else {
             return next();
           }
+        }
       }
       else {
         return next();

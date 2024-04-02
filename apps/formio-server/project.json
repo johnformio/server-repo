@@ -1598,7 +1598,8 @@
           "key": "email",
           "type": "email",
           "validate": {
-            "required": true
+            "required": true, 
+            "maxLength": 254
           }
         },
         {
