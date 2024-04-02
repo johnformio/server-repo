@@ -1,6 +1,6 @@
 import ContextBuilder from './ContextBuilder';
 import _ from 'lodash';
-import { dependeciesMap } from './configure.js';
+import { dependeciesMap } from './configureVm.js';
 
 export type EvaluationDependency = keyof typeof dependeciesMap;
 
