@@ -40,7 +40,7 @@ type BaseDependencyMap = {
 /**
  * Function to modify/configure the formio/vm library's global dependencies map.
  */
-export const configure = ({
+export const configureVm = ({
     lodash,
     moment,
     core,
