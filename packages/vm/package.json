@@ -1,6 +1,6 @@
 {
     "name": "@formio/vm",
-    "version": "0.0.7-dev.21.b6ddde3",
+    "version": "0.0.7-rc.18",
     "main": "build/index.js",
     "license": "OSL-3.0",
     "engines": {
