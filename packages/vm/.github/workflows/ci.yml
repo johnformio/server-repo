@@ -1,8 +1,7 @@
 name: Build, Test, Publish
 
-## Verify does not duplicate gh action when pr is created
+## Verify does not duplicate gh
 on:
-  push:
   pull_request:
     types: [opened, synchronize]
 
@@ -11,10 +10,6 @@ env:
 
 jobs:
   setup:
-    if: >
-      (github.event_name == 'pull_request' && github.event.action != 'synchronize') ||
-      github.event_name == 'push'
-      
     runs-on: ubuntu-latest
     steps:
       - run: echo "Triggered by ${{ github.event_name }} event."
