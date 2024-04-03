@@ -58,7 +58,7 @@ jobs:
       - name: Build
         uses: borales/actions-yarn@v4
         with:
-          cmd: build
+          cmd: prepack
 
   test:
     needs: setup
