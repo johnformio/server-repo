@@ -1,5 +1,6 @@
 name: Build, Test, Publish
 
+## Verify does not duplicate gh action when pr is created
 on:
   push:
   pull_request:
