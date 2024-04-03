@@ -1,0 +1,11 @@
+.github
+.vscode
+.husky
+.eslintrc
+src
+.prettierrc
+Dockerfile
+gulpfile.mjs
+tsconfig.json
+.gitignore
+node_modules
