@@ -62,7 +62,7 @@ jobs:
         with:
           cmd: prepack
 
-  test:
+  test-source:
     needs: setup
     runs-on: ubuntu-latest
     steps:
@@ -137,7 +137,7 @@ jobs:
           cmd: test
 
   publish:
-    needs: [setup, test, test-target]
+    needs: [setup, test-source, test-target]
     if: ${{ github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'synchronize') }}
     runs-on: ubuntu-latest
     steps:
