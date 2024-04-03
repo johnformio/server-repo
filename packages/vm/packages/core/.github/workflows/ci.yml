@@ -1,9 +1,8 @@
 name: Build, Test, Publish
 
-## Verify does not duplicate gh
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, reopened]
 
 env:
   NODE_VERSION: 20.x
@@ -150,7 +149,7 @@ jobs:
         run: |
           echo "Version to publish: $NEW_VERSION"
 
-      # - name: Publish to npm
-      #   run: |
-      #     npm version $NEW_VERSION
-      #     npm publish --tag dev
+      - name: Publish to npm
+        run: |
+          npm version $NEW_VERSION
+          npm publish --tag dev
