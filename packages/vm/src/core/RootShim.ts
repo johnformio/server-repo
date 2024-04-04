@@ -15,11 +15,9 @@ export class RootShim {
         this._submission = submission;
         this.data = submission.data;
         this.components = [];
-        FormioCore.Utils.eachComponentData(
+        FormioCore.Utils.eachComponent(
             form.components,
-            submission.data,
-            (component: any, data: any, row: any, path: any) => {
-                // this.instanceMap[path] = component;
+            (component: FormioCore.Component, path: any) => {
                 const componentInstance = new InstanceShim(
                     component,
                     this,
@@ -48,7 +46,6 @@ export class RootShim {
         }
         return this.instanceMap[pathArg];
     }
-    // How getComponent should work for dataGrid childs, which row should be used for dataValue;
 
     get submission() {
         return this._submission;
@@ -66,6 +63,3 @@ export class RootShim {
         return null;
     }
 }
-
-// Note: eachComponentData does not work correctly
-// when correspoding component lacks value in the data.
