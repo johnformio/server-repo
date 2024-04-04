@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import ContextBuilder from '../ContextBuider';
+import ContextBuilder from '../ContextBuilder';
 import { Context } from 'isolated-vm';
 
 describe('Test ContextBuilder', () => {
@@ -38,5 +38,13 @@ describe('Test ContextBuilder', () => {
             'nunjucks.renderString("Hello {{ name }}", { name: "World" })',
         );
         expect(result).to.equal('Hello World');
+    });
+
+    it('should evaluate code with injectable depencies', () => {
+        const context = ContextBuilder.fromDefaultIsolate()
+            .withInjectedDependency('function sum(x, y) { return x + y }')
+            .buildSync();
+        const result = context.evalSync('sum(1, 2)');
+        expect(result).to.equal(3);
     });
 });
