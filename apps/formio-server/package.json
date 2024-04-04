@@ -40,7 +40,7 @@
     "@formio/lodash": "^0.1.0",
     "@formio/node-fetch-http-proxy": "^1.1.0",
     "@formio/premium": "github:formio/premium#v1.22.0-rc.3",
-    "@formio/reporting": "github:formio/reporting#2.0.0-dev.28.76d5e72",
+    "@formio/reporting": "github:formio/reporting#main",
     "@formio/vm": "0.0.7-dev.20.717e1bf",
     "@node-saml/node-saml": "^4.0.5",
     "@types/qrcode": "^1.4.1",

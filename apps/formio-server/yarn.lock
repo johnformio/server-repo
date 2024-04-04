@@ -941,9 +941,9 @@
     uuid "^8.3.2"
     vanilla-picker "^2.12.1"
 
-"@formio/reporting@github:formio/reporting#2.0.0-dev.28.76d5e72":
+"@formio/reporting@github:formio/reporting#main":
   version "2.0.0-rc.4"
-  resolved "git+ssh://git@github.com/formio/reporting.git#76d5e72735d0ebebcdf97101a543b48666c45812"
+  resolved "git+ssh://git@github.com/formio/reporting.git#81b63895bf04b73b0b88c9c0baa236e363bb5caa"
   dependencies:
     file-saver "^2.0.5"
     jose "^4.14.4"
