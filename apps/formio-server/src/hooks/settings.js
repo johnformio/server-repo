@@ -106,6 +106,7 @@ module.exports = function(app) {
       parentProjectSettings: require('./alter/parentProjectSettings')(app),
       rawDataAccess: require('./alter/rawDataAccess'),
       rehydrateValidatedSubmissionData: require('./alter/rehydrateValidatedSubmissionData')(app),
+      dynamicVmDependencies: require('./alter/dynamicVmDependencies')(app),
       schemaIndex(index) {
         index.project = 1;
         return index;
