@@ -1,10 +1,11 @@
 'use strict';
 const _ = require('lodash');
 const fs = require('fs');
+const resolve = require('resolve/sync');
 
 const reportingCode = [
-  fs.readFileSync(require.resolve('@formio/reporting/build/reporting.vm.js'), 'utf8'),
-  `utils.reporting = reporting.utils;util.reporting = reporting.utils;`
+  fs.readFileSync(resolve('@formio/reporting/build/reporting.vm.js'), 'utf8'),
+  'utils.reporting = reporting.utils;util.reporting = reporting.utils;'
 ];
 
 module.exports = (app) => {
