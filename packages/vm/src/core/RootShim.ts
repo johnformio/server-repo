@@ -27,6 +27,7 @@ export class RootShim {
                 this.instanceMap[path] = componentInstance;
                 this.components.push(componentInstance);
             },
+            true,
         );
     }
 
