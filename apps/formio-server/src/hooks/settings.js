@@ -15,6 +15,7 @@ const ActionLogger = require('../actions/ActionLogger');
 const debug = {
   authentication: require('debug')('formio:authentication'),
 };
+const updateSecret = require('../util/updateSecret.js');
 
 module.exports = function(app) {
   const formioServer = app.formio;
@@ -108,6 +109,7 @@ module.exports = function(app) {
       parentProjectSettings: require('./alter/parentProjectSettings')(app),
       rawDataAccess: require('./alter/rawDataAccess'),
       rehydrateValidatedSubmissionData: require('./alter/rehydrateValidatedSubmissionData')(app),
+      dynamicVmDependencies: require('./alter/dynamicVmDependencies')(app),
       schemaIndex(index) {
         index.project = 1;
         return index;
@@ -2314,6 +2316,12 @@ module.exports = function(app) {
 
       includeReports() {
         return !config.formio.hosted && _.get(app, 'license.terms.options.reporting', false);
+      },
+
+      checkEncryption(formio, db) {
+        if (formio.config.mongoSecretOld && formio.config.mongoSecret) {
+          updateSecret(formio, db, formio.config.mongoSecret, formio.config.mongoSecretOld);
+        }
       }
     }
   };

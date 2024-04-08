@@ -152,7 +152,7 @@ module.exports = (formioServer) => {
     // Add an "Everyone" role.
     userRoles.push('Everyone');
 
-    const email = _.get(profile, emailPath).toLowerCase();
+    const email = _.get(profile, emailPath)?.toLowerCase();
     const userId = _.get(profile, idPath, email);
     if (!userId) {
       return next('No User ID or Email was found within your SAML profile.');

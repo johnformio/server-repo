@@ -714,6 +714,7 @@ describe('Initial Tests', function() {
         require('./tests/group-permissions')(app, template, hook);
         require('formio/test/templates')(app, template, hook);
         require('./tests/templates')(app, template, hook);
+        require('./tests/updateSecret')(app, template, hook);
       });
     });
   });

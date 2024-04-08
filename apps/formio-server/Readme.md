@@ -4,26 +4,20 @@ This repository is the main server for the Form.IO project. There is no UI and t
 without a subdomain in front of the domain. The main components that are included are as follows.
 
  - **formio** @ /node_modules/formio - The Form.IO core server - https://github.com/formio/formio
- 
-Installation (Docker)
+
+
+Local Development
 ------------
-http://viget.com/extend/how-to-use-docker-on-os-x-the-missing-guide
-In order to install and run this application with docker, you will need to download and install.
+## Prequisites
+Before you can start the app server, you need to do a few things first:
+1. Install [Yarn](https://classic.yarnpkg.com/lang/en/)
+2. Setup [ssh keys](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) with github.
+3. clone the [formio-app](https://github.com/formio/formio-app) project and set it up.
 
-  - boot2docker: https://github.com/boot2docker/osx-installer/releases/latest
-  - virtualbox: https://www.virtualbox.org/wiki/Downloads
-  
-Next, open a terminal window and type the following to initialize boot2docker
+### setup mongo with docker
+It's easiest to run mongo for a docker container, though you can run it manually if you want to.
 
-  - ```boot2docker init```
-  - ```VBoxManage modifyvm "boot2docker-vm" --natpf1 "tcp-port27017,tcp,,27017,,27017"``` This will forward host port 27017 to the boot2docker vm.
-  - ```VBoxManage modifyvm "boot2docker-vm" --natpf1 "tcp-port3000,tcp,,3000,,3000"``` This will forward host port 3000 to the boot2docker vm.
-  - ```boot2docker start```
-  - ```$(boot2docker shellinit)```
-   
-In the future, if you get an error about unable to connect to docker, run the shellinit again. You may want to add the variables to your ~/.bash_profile.
-
-Next, start up a mongodb server in docker with the following command.
+start up a mongodb server in docker with the following command.
 
   - ```docker run --name mongo-server -p 27017:27017 -d mongo```
   
@@ -39,43 +33,23 @@ You can control the mongo server with these commands.
   - ```docker start mongo-server```
   - ```docker stop mongo-server```
 
-Next, get a database backup, and then do the following.
+### create environment file
+1. copy `.env.empty` to `.env`
+2. add line for your license key: `LICENSE_KEY=<YOUR KEY>`
 
- - Unzip the database so that it is a folder of BSON files.
- - ```mongorestore --db formio formio```
+### Symlink formio-app
+Use the formio-app project to interact with the api server.  This line assumes you cloned `formio-app` repo in the same parent directory.  If it is somewhere else, change this command accordingly
 
-Next, we will run the formio-app server. (This does not currently work because node packages need to be recompiled for linux).
+```
+ln -s  ../formio-app/dist/ ./portal
+```
 
-  - ```./deployment/scripts/setup.sh -snbrg```
-  - ```docker run --name formio-server -p 3000:80 --link mongo-server:mongo -d -v $(pwd):/src formio/formio-server```
-  
-This will redownload all node_modules since some are compiled for the mac and won't run within the docker container.  Port 80 in the container is mapped to port 3000 so the url http://localhost:3000 should now be running the node app.  --link will automatically link the mongodb instance with the correct environment variables so the container knows how to use it. -v will replace the existing /src dir with a link to your current code directory so any changes are immediately seen within the app.
+You should now be able to run the server
 
-Installation (Manual)
-------------
-In order to install and run this application, you will first need to install Node.JS, Gulp, Bower, and MongoDB.
+```
+yarn start
+```
 
-  - ```brew install node```
-  - ```brew install mongodb```
-  - ```npm install -g bower```
-  - ```npm install -g gulp```
-  
-Next, you will need to run MongoDB.
-
-  - ```mongod```
-
-Next, get a database backup, and then do the following.
- - Unzip the database so that it is a folder of BSON files.
- - ```mongorestore --db formio formio```
-
-Next, use the setup.sh script to run npm and bower install, and update the submodules.
-
-  - ```cd scripts```
-  - ```./deployment/scripts/setup.sh -bngs```
-  
-You should then be able to run the application locally by typing.
-
-  - ```node server```
 
 Deployment
 ---------------

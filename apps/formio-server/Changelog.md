@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 8.5.0-rc.1]
+## [Unreleased: 9.1.0-rc.1]
 ### Changed
  - FIO-7328: replace kickbox verify with node-fetch
  - FIO-7349: Fixes an issue where server crashes when user tries to load a view page of the deleted team
@@ -42,6 +42,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Revert FIO-7125
  - FIO-7549: evaluate axios upgrades and CVE resolution
  - FIO-7804: added PKCE methods for OIDC
+ - FIO-7671: leverage mongoFeature to prevent index creation failure in CosmosDB
+ - FIO-7522: Encrypted Fields Not Re-Encrypted to New DB Secret
+ - FIO-8114: Saml Email Handles toLowerCase undefined error
+ - FIO-7146: migrate formio server to gh actions
    
  
 ## 8.4.0-rc.7

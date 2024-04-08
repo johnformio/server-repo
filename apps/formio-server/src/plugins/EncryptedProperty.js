@@ -40,8 +40,19 @@ module.exports = function(schema, options) {
     })
     .set(function(value) {
       // Encrypt and set the value
-      const ciphertext = util.encrypt(options.secret, value, true);
-      this[encryptedName] = ciphertext;
+      try {
+        if (value.cannotDecrypt) {
+          // Do not encrypt bad decrypted values!
+          return;
+        }
+        const ciphertext = util.encrypt(options.secret, value, true);
+        if (ciphertext) {
+          this[encryptedName] = ciphertext;
+        }
+      }
+      catch (err) {
+        // do nothing...
+      }
     });
 
   // Decrypt data when converted using toJSON.

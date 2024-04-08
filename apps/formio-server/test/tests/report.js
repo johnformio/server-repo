@@ -1,12 +1,207 @@
 /* eslint-env mocha */
 'use strict';
 
-var request = require('supertest');
-var assert = require('assert');
-var async = require('async');
-var chance = new (require('chance'))();
+const request = require('supertest');
+const assert = require('assert');
+
+const reportingUITemplate = require('@formio/reporting/reportConfigTemplate.json');
 
 module.exports = function(app, template, hook) {
+  let form;
+  describe('Reporting Configurator', () => {
+    before('Ensure the project has the reporting UI configurator', (done) => {
+      request(app)
+        .post('/project/' + template.project._id + '/form')
+        .set('x-jwt-token', template.users.admin.token)
+        .send({
+          ...reportingUITemplate,
+          "name": "reportingui",
+          "path": "reportingui",
+          "title": "Reporting UI Configurator",
+        })
+        .expect(201)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+          done();
+        });
+    });
+    before('Create a form for reporting', (done) => {
+      request(app)
+        .post('/project/' + template.project._id + '/form')
+        .set('x-jwt-token', template.users.admin.token)
+        .send({
+          "type": "form",
+          "name": "reporting",
+          "title": "Reporting",
+          "path": "reporting",
+          "components": [
+            {
+              "type": "textfield",
+              "key": "a",
+              "label": "A",
+              "input": true,
+            },
+            {
+              "type": "textfield",
+              "key": "b",
+              "label": "B",
+              "input": true,
+            }
+          ]
+        })
+        .expect(201)
+        .end((err, res) => {
+      if (err) {
+            return done(err);
+          }
+          form = res.body;
+          done();
+        });
+    })
+    it('Should allow a submission to the reporting UI configurator form', (done) => {
+      request(app)
+        .post(`/${template.project.name}/reportingui/submission`)
+        .set('x-jwt-token', template.users.admin.token)
+        .send({
+          "data": {
+              "title": "Test Report",
+              "name": "testReport",
+              "gridSettings": {
+                  "itemsPerPage": 10,
+                  "allowCaching": true,
+                  "cellMaxWidth": ""
+              },
+              "forms": [
+                  form._id,
+              ],
+              "calculatedColumns": [
+                  {
+                      "name": "Test Column",
+                      "key": "testColumn",
+                      "operator": "concat",
+                      "concatArgs": [
+                          {
+                              "field": {
+                                  "path": "a",
+                                  "formId": form._id
+                              },
+                              "connector": ""
+                          }
+                      ]
+                  }
+              ],
+              "groups": {
+                  "groupingFields": [
+                      {
+                          "field": {
+                              "path": "a",
+                              "formId": form._id,
+                          }
+                      }
+                  ],
+                  "calculatedColumns": [
+                      {
+                          "name": "Test Column",
+                          "key": "testColumn",
+                          "operator": "avg",
+                          "argument": {
+                              "path": "testColumn"
+                          }
+                      }
+                  ]
+              },
+              "columnsList": [
+                  {
+                      "value": {
+                          "path": "a",
+                          "formId": form._id,
+                      },
+                      "label": "A (Reporting/a)"
+                  },
+                  {
+                      "value": {
+                          "path": "testColumn"
+                      },
+                      "label": "Test Column (*calculated)"
+                  }
+              ],
+              "reportType": {
+                  "grouping": true,
+                  "typeChanged": false
+              },
+              "enableControls": false,
+              "reportingForms": [
+                  form
+              ],
+              "availableColumns": [
+                  {
+                      "column": {
+                          "path": "a",
+                          "formId": form._id
+                      },
+                      "displayTitle": ""
+                  }
+              ],
+              "defaultColumns": [
+                  {
+                      "path": "a",
+                      "formId": form._id
+                  }
+              ]
+          },
+          "metadata": {
+              "selectData": {
+                  "gridSettings": {
+                      "itemsPerPage": {
+                          "label": "10"
+                      }
+                  },
+                  "forms": {
+                      [form._id]: {
+                          "title": "Reporting"
+                      }
+                  },
+                  "calculatedColumns": [
+                      {
+                          "operator": {
+                              "label": "Concatenate Strings"
+                          }
+                      }
+                  ],
+                  "groups": {
+                      "calculatedColumns": [
+                          {
+                              "operator": {
+                                  "label": "Average"
+                              }
+                          }
+                      ]
+                  }
+              },
+              "timezone": "America/Chicago",
+              "offset": -300,
+              "origin": "http://localhost:3000",
+              "referrer": "",
+              "browserName": "Netscape",
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+              "pathName": "/",
+              "onLine": true
+          },
+          "state": "submitted",
+          "_vnote": ""
+        })
+        .expect(201)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+          done();
+        });
+    })
+  });
+
   describe('Aggregation Reporting', function () {
     it('Should not allow aggregation for anonymous users.', function(done) {
       request(app)
@@ -35,7 +230,7 @@ module.exports = function(app, template, hook) {
         .get('/project/' + template.project._id + '/report')
         .set('x-jwt-token', template.users.admin.token)
         .set('x-query', JSON.stringify([{
-          '$lookup': { 
+          '$lookup': {
             from: 'submissions',
             localField: 'data.email',
             foreignField: 'data.email',
@@ -182,7 +377,7 @@ module.exports = function(app, template, hook) {
         .set('x-jwt-token', template.users.admin.token)
         .set('x-query', JSON.stringify([
           {'$match': {}},
-          {'$lookup': { 
+          {'$lookup': {
             from: 'submissions',
             localField: 'data.email',
             foreignField: 'data.email',
