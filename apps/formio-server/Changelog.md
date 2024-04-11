@@ -46,7 +46,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-7522: Encrypted Fields Not Re-Encrypted to New DB Secret
  - FIO-8114: Saml Email Handles toLowerCase undefined error
  - FIO-7146: migrate formio server to gh actions
-   
+ - FIO 8169: add resolve dependency to avoid webpack build issues
+ - FIO-7933: fixed tests
+ - FIO-8128: adds reporting code to vm evaluation context
  
 ## 8.4.0-rc.7
 ### Changed
