@@ -28,7 +28,7 @@
   "main": "./main.js",
   "version": "8.4.0-rc.10",
   "schema": "3.3.18",
-  "portalVersion": "8.4.0-rc.10",
+  "portalVersion": "9.0.0-rc.36",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.405.0",
     "@aws-sdk/s3-request-presigner": "^3.405.0",
