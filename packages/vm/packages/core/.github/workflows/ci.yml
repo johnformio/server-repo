@@ -97,18 +97,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Configure Git user
+      - name: Merge target branch into current branch
         run: |
           git config --global user.email "pkgbot@form.io"
           git config --global user.name "pkgbot"
-
-      - name: Merge target branch into current branch
-        run: |
           git fetch origin ${{ github.event.pull_request.base.ref }}:${{ github.event.pull_request.base.ref }}
           git merge ${{ github.event.pull_request.base.ref }} --no-commit --no-ff
-
-      - name: Check for merge conflicts
-        run: |
           if ! git merge --no-commit --no-ff ${{ github.event.pull_request.base.ref }}; then
             echo "Merge conflicts detected."
             git merge --abort
