@@ -1,6 +1,6 @@
 {
     "name": "@formio/vm",
-    "version": "0.0.7-rc.10",
+    "version": "0.0.7-rc.18",
     "main": "build/index.js",
     "license": "OSL-3.0",
     "engines": {
@@ -14,11 +14,11 @@
         "LICENSE.txt"
     ],
     "dependencies": {
-        "@formio/core": "2.0.0-rc.18",
+        "@formio/core": "2.0.0-rc.24",
         "debug": "^4.3.4",
         "dotenv": "^16.3.1",
         "express": "^4.18.2",
-        "formiojs": "4.19.0",
+        "formiojs": "4.19.1-rc.1",
         "isolated-vm": "^4.6.0",
         "lodash": "^4.17.21",
         "moment": "^2.29.4",
@@ -32,7 +32,8 @@
         "start": "DOTENV_CONFIG_PATH=./.env node --no-node-snapshot build/server.js",
         "build": "gulp prebuild && tsc && gulp postbuild",
         "prepack": "npm run build && gulp remove-tests",
-        "prepare": "husky install"
+        "prepare": "husky install",
+        "lint": "eslint ."
     },
     "devDependencies": {
         "@types/chai": "^4.3.11",

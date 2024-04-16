@@ -15,11 +15,9 @@ export class RootShim {
         this._submission = submission;
         this.data = submission.data;
         this.components = [];
-        FormioCore.Utils.eachComponentData(
+        FormioCore.Utils.eachComponent(
             form.components,
-            submission.data,
-            (component: any, data: any, row: any, path: any) => {
-                // this.instanceMap[path] = component;
+            (component: FormioCore.Component, path: any) => {
                 const componentInstance = new InstanceShim(
                     component,
                     this,
@@ -29,17 +27,26 @@ export class RootShim {
                 this.instanceMap[path] = componentInstance;
                 this.components.push(componentInstance);
             },
+            true,
         );
     }
 
-    getComponent(path: string) {
-        if (!this.instanceMap[path]) {
-            return null;
+    getComponent(pathArg: string) {
+        // If we don't have an exact path match, compare the final pathname segment with the path argument for each component
+        // i.e. getComponent('foo') should return a component at the path 'bar.foo' if it exists
+        if (!this.instanceMap[pathArg]) {
+            for (const key in this.instanceMap) {
+                const match = key.match(new RegExp(`\\.${pathArg}$`));
+                const lastPathSegment = match ? match[0].slice(1) : '';
+                if (lastPathSegment === pathArg) {
+                    // set a cache for future `getComponent` calls in this lifecycle
+                    this.instanceMap[pathArg] = this.instanceMap[key];
+                    break;
+                }
+            }
         }
-        // return new InstanceShim(this.instanceMap[path], this, this.data, path);
-        return this.instanceMap[path];
+        return this.instanceMap[pathArg];
     }
-    // How getComponent should work for dataGrid childs, which row should be used for dataValue;
 
     get submission() {
         return this._submission;
@@ -57,6 +64,3 @@ export class RootShim {
         return null;
     }
 }
-
-// Note: eachComponentData does not work correctly
-// when correspoding component lacks value in the data.

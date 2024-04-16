@@ -9,13 +9,15 @@ data = context.data;
 
 if (context.form.module) {
   // Wrap with parenthesis to return object, not function
-  formModule = eval( '(' + context.form.module + ')');
-  evalContext = formModule?.options?.form?.evalContext;
+  try {
+    formModule = eval( '(' + context.form.module + ')');
+    evalContext = formModule?.options?.form?.evalContext;
 
-  if (evalContext) {
-    evalContextFn = (context) => Object.assign({}, context, evalContext);
-    context.evalContext = evalContextFn;
-  }
+    if (evalContext) {
+      evalContextFn = (context) => Object.assign({}, context, evalContext);
+      context.evalContext = evalContextFn;
+    }
+  } catch (e) {}
 }
 
 context.processors = FormioCore.ProcessTargets.evaluator;
@@ -30,6 +32,7 @@ export type EvaluateProcessorsOptions = {
     scope?: any;
     token?: string;
     timeout?: number;
+    additionalDeps?: string[];
 };
 
 export type EvaluateProcessorsResult = {
@@ -37,19 +40,24 @@ export type EvaluateProcessorsResult = {
     data: any;
 };
 
-export async function evaluateProcess(
-    options: EvaluateProcessorsOptions,
-): Promise<EvaluateProcessorsResult> {
-    const submission = JSON.parse(JSON.stringify(options.submission));
+export async function evaluateProcess({
+    form,
+    submission,
+    timeout,
+    scope = {},
+    token = '',
+    additionalDeps = [],
+}: EvaluateProcessorsOptions): Promise<EvaluateProcessorsResult> {
+    const serializedSubmission = JSON.parse(JSON.stringify(submission));
     const evaluateContext = {
-        form: options.form,
-        components: options.form.components,
-        submission: submission,
-        data: submission.data,
-        scope: options.scope || {},
+        form: form,
+        components: form.components,
+        submission: serializedSubmission,
+        data: serializedSubmission.data,
+        scope: scope,
         config: {
             server: true,
-            token: options.token || '',
+            token,
         },
         options: {
             server: true,
@@ -57,9 +65,10 @@ export async function evaluateProcess(
     };
     const result = await evaluate({
         deps: ['lodash', 'core', 'instanceShim', 'moment'],
+        additionalDeps,
         data: { context: evaluateContext },
         code,
-        timeout: options.timeout,
+        timeout,
     });
     return result as EvaluateProcessorsResult;
 }
