@@ -14,7 +14,8 @@
         "LICENSE.txt"
     ],
     "dependencies": {
-        "@formio/core": "2.0.0-rc.24",
+        "@formio/core": "2.0.0",
+        "@formio/reporting": "github:formio/reporting#1.0.2",
         "debug": "^4.3.4",
         "dotenv": "^16.3.1",
         "express": "^4.18.2",

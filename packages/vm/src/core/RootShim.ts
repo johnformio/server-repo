@@ -15,6 +15,13 @@ export class RootShim {
         this._submission = submission;
         this.data = submission.data;
         this.components = [];
+        // I don't love this solution, but for the moment eachComponent and eachComponentData
+        // each have complimentary drawbacks; eachComponent will get you all of the top level
+        // components, but WILL NOT include array values in the data object (e.g. it will include
+        // data.dataGrid[0].textField but NOT data.dataGrid[1].textField) whereas eachComponentData
+        // will get you all of the components that have corresponding data values but will NOT include
+        // components that don't have data values. So, we run both compliment the result of eachComponent
+        // with eachComponentData.
         FormioCore.Utils.eachComponent(
             form.components,
             (component: FormioCore.Component, path: any) => {
@@ -28,6 +35,26 @@ export class RootShim {
                 this.components.push(componentInstance);
             },
             true,
+        );
+        FormioCore.Utils.eachComponentData(
+            form.components,
+            submission.data,
+            (
+                component: FormioCore.Component,
+                data: any,
+                row: any,
+                path: any,
+            ) => {
+                if (!this.instanceMap[path]) {
+                    this.instanceMap[path] = new InstanceShim(
+                        component,
+                        this,
+                        submission.data,
+                        path,
+                    );
+                    this.components.push(this.instanceMap[path]);
+                }
+            },
         );
     }
 
