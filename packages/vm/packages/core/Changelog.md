@@ -5,6 +5,78 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased: 0.0.8-rc.1]
+
+### Changed
+
+-   FIO-8143: migrate RootShim to eachComponent vs eachComponentData
+-   FIO-8145: injectable deps
+-   add includeAll flag to eachComponent
+  
+## 0.0.7-rc.18
+
+### Changed
+
+-   Updated @formio/core@2.0.0-rc.24
+
+### Changed
+
+-   update lint config
+-   FIO-8102: update to getComponent
+-   renderEmail updated to use clearHidden processor
+
+## 0.0.7-rc.17
+
+### Changed
+
+-   Updated @formio/core@2.0.0-rc.23
+
+### Changed
+
+-   FIO-8102: add last path segment to make getComponent relatively performant
+
+## 0.0.7-rc.16
+
+### Changed
+
+-   FIO-8102: update getComponent shim to reflect inexact paths
+
+## 0.0.7-rc.15
+
+### Changed
+
+-   Updated @formio/core@2.0.0-rc.22
+
+## 0.0.7-rc.14
+
+### Changed
+
+-   Updated @formio/core@2.0.0-rc.21
+
+### Changed
+
+-   FIO-8092: add isEmpty function to component instance shim
+
+## 0.0.7-rc.13
+
+### Changed
+
+-   Updated @formio/core@2.0.0-rc.20
+-   Updated formiojs@4.19.1-rc.1
+
+## 0.0.7-rc.12
+
+### Changed
+
+-   FIO-8061: swallow form module syntax errors
+-   FIO-8069: Fix emails not sending when there are no conditional fields
+
+## 0.0.7-rc.11
+
+### Changed
+
+-   Updated @formio/core@2.0.0-rc.19
+
 ## 0.0.7-rc.10
 
 ### Changed
