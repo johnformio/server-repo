@@ -1,5 +1,4 @@
 import * as FormioCore from '@formio/core';
-import * as FormioReporting from '@formio/reporting';
 import { evaluate } from './evaluate';
 import { RootShim } from './RootShim';
 
@@ -83,8 +82,6 @@ export async function evaluateProcessMocked(
     (globalThis as any).FormioCore = require('@formio/core');
     (globalThis as any).utils = FormioCore.Utils;
     (globalThis as any).util = FormioCore.Utils;
-    (globalThis as any).util.reporting = FormioReporting.utils;
-    (globalThis as any).utils.reporting = FormioReporting.utils;
 
     const submission = JSON.parse(JSON.stringify(options.submission));
     const context: any = {
