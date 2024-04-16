@@ -69,10 +69,10 @@
     fuse.js "^6.6.2"
     redux "^4.2.0"
 
-"@formio/core@2.0.0-rc.24":
-  version "2.0.0-rc.24"
-  resolved "https://registry.yarnpkg.com/@formio/core/-/core-2.0.0-rc.24.tgz#26255a1d96c448f5a0da8eafef7c53ad5b934fcd"
-  integrity sha512-uJMqrZr4K7Yaic7jq7ogfVnkQVBivtqq7pA2aniiVH3yIw9RRUPtpLET74MK/mGNWqk/WGakpBJnFdOWO9LM/w==
+"@formio/core@2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@formio/core/-/core-2.0.0.tgz#94035bc3d1507ba1531fff8e37fe40501c90182f"
+  integrity sha512-VZGzW5NJ2nOyJVkMirbXZbf2cS2NbMogGeQZSyEA/CT3KU3W1eT5BdEtBzGen1FvyNqhtRUaowPEEDwgVhj9VA==
   dependencies:
     "@types/json-logic-js" "^2.0.5"
     browser-cookies "^1.2.0"
@@ -86,6 +86,14 @@
     json-logic-js "^2.0.2"
     lodash "^4.17.21"
     moment "^2.29.4"
+
+"@formio/reporting@github:formio/reporting#1.0.2":
+  version "1.0.2"
+  resolved "git+ssh://git@github.com/formio/reporting.git#9c6023f90b29b8e09ef5439ba4677ff184d59789"
+  dependencies:
+    file-saver "^2.0.5"
+    jose "^4.14.4"
+    uuid "^9.0.0"
 
 "@formio/semantic@2.6.1":
   version "2.6.1"
@@ -2185,6 +2193,11 @@ file-entry-cache@^6.0.1:
   dependencies:
     flat-cache "^3.0.4"
 
+file-saver@^2.0.5:
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/file-saver/-/file-saver-2.0.5.tgz#d61cfe2ce059f414d899e9dd6d4107ee25670c38"
+  integrity sha512-P9bmyZ3h/PRG+Nzga+rbdI4OEpNDzAVyy74uVO9ATgzLK6VtAsYybF/+TOCvrc0MO793d6+42lLyZTw7/ArVzA==
+
 file-uri-to-path@1.0.0:
   version "1.0.0"
   resolved "https://registry.npmjs.org/file-uri-to-path/-/file-uri-to-path-1.0.0.tgz#553a7b8446ff6f684359c445f1e37a05dacc33dd"
@@ -3304,6 +3317,11 @@ isolated-vm@^4.6.0:
   integrity sha512-MEnfC/54q5PED3VJ9UJYJPOlU6mYFHS3ivR9E8yeNNBEFRFUNBnY0xO4Rj3D/SOtFKPNmsQp9NWUYSKZqAoZiA==
   dependencies:
     prebuild-install "^7.1.1"
+
+jose@^4.14.4:
+  version "4.15.5"
+  resolved "https://registry.yarnpkg.com/jose/-/jose-4.15.5.tgz#6475d0f467ecd3c630a1b5dadd2735a7288df706"
+  integrity sha512-jc7BFxgKPKi94uOvEmzlSWFFe2+vASyXaKUpdQKatWAESU2MWjDfFf0fdfc83CDKcA5QecabZeNLyfhe3yKNkg==
 
 js-yaml@4.1.0, js-yaml@^4.1.0:
   version "4.1.0"
