@@ -12,6 +12,9 @@ const {ClientCredentials} = require('simple-oauth2');
 const moment = require('moment');
 const config = require('../../config');
 const ActionLogger = require('../actions/ActionLogger');
+const debug = {
+  authentication: require('debug')('formio:authentication'),
+};
 const updateSecret = require('../util/updateSecret.js');
 
 module.exports = function(app) {
@@ -1557,7 +1560,8 @@ module.exports = function(app) {
               data: {
                 token: decoded,
                 roles: req.currentProject.roles
-              }
+              },
+              timeout: config.formio.vmTimeout
             });
             if (!data.hasOwnProperty('user')) {
               throw new Error('User not defined on data.');
@@ -1592,7 +1596,8 @@ module.exports = function(app) {
           }
           catch (err) {
             // eslint-disable-next-line no-console
-            console.error('Error parsing JWT token:', err.message);
+            debug('Error parsing JWT token: ', err.message || err);
+            console.error('Error parsing JWT token:', err.message || err);
           }
         }
 
