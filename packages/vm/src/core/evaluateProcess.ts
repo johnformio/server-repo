@@ -31,6 +31,7 @@ export type EvaluateProcessorsOptions = {
     submission: any;
     scope?: any;
     token?: string;
+    timeout?: number;
     additionalDeps?: string[];
 };
 
@@ -42,6 +43,7 @@ export type EvaluateProcessorsResult = {
 export async function evaluateProcess({
     form,
     submission,
+    timeout,
     scope = {},
     token = '',
     additionalDeps = [],
@@ -66,6 +68,7 @@ export async function evaluateProcess({
         additionalDeps,
         data: { context: evaluateContext },
         code,
+        timeout,
     });
     return result as EvaluateProcessorsResult;
 }
