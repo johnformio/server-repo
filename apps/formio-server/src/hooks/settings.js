@@ -60,21 +60,17 @@ module.exports = function(app) {
       formRequest: require('./on/formRequest')(app),
       validateEmail: require('./on/validateEmail')(app),
     },
-    performAsync: {
-      logAction(req, res, action, handler, method) {
-        const allowLogs = _.get(req.currentForm, 'settings.logs', false) &&
-          ((config.formio.hosted && ['trial', 'commercial'].includes(req.primaryProject.plan)) ||
-          (!config.formio.hosted && app.license && !app.license.licenseServerError && app.license.terms && _.get(app, 'license.terms.options.sac', false)));
+    alter: {
+      logAction(req, res, action, handler, method, cb) {
+        const allowLogs = true;
 
         if (allowLogs) {
-          return new ActionLogger(app.formio, req, res, action, handler, method).log();
+          new ActionLogger(app.formio, req, res, action, handler, method).log(cb);
         }
         else {
-          return Promise.resolve(false);
+          return cb(null, false);
         }
       },
-    },
-    alter: {
       formio: require('./alter/formio')(app),
       resources(resources) {
         return _.assign(resources, require('../resources/resources')(app, formioServer));
