@@ -31,8 +31,8 @@ export async function renderEmail({
 
     if (renderMethod === 'dynamic') {
         try {
-            // @ts-expect-error Premium is included in the server build.
             const premium = await import(
+                // @ts-expect-error Premium is included in the server build.
                 '@formio/premium/dist/premium-server.min.js'
             );
             Formio.use(premium);
