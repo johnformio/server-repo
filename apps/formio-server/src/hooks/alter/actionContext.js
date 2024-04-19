@@ -2,6 +2,7 @@
 
 const _ = require('lodash');
 const util = require('../../util/util');
+const {storages} = require('../../storage');
 
 module.exports = (app) => async (params, req) => {
   const formioServer = app.formio;
@@ -36,9 +37,9 @@ module.exports = (app) => async (params, req) => {
     .flattenDeep()
     .compact()
     .map(async file => {
-      if (['s3', 'azure', 'dropbox'].includes(file.storage)) {
+      if (['s3', 'azure', 'googledrive', 'dropbox'].includes(file.storage)) {
         try {
-          file.url = await require(`../../storage/${file.storage}`).getUrl({project: req.currentProject, file});
+          file.url = await storages[file.storage]?.getEmailFileUrl(req.currentProject, file);
         }
         catch (err) {
           // Don't let a failure on one file derail the whole email action

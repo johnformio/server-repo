@@ -33,6 +33,17 @@ function getPresignedGetUrl(s3Settings, bucket, key) {
   return getAWSPresignedGetUrl(s3Settings, bucket, key);
 }
 
+async function getEmailFileUrl(project, file) {
+  if (!file?.bucket || !file?.key) {
+    throw new Error('File not provided.');
+  }
+
+  const s3Settings = getS3Settings(project);
+  return s3Settings.minio
+    ? await getMinioPresignedGetUrl(s3Settings, file.bucket, file.key)
+    : await getAWSPresignedGetUrl(s3Settings, file.bucket, file.key);
+}
+
 function removeFile(s3Settings, bucket, key) {
   if (s3Settings.minio) {
     return removeMinioObject(s3Settings, bucket, key);
@@ -294,5 +305,5 @@ const middleware = function(router) {
 
 module.exports = {
   middleware,
-  getUrl: getPresignedPutUrl
+  getEmailFileUrl,
 };

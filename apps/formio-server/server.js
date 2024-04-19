@@ -528,7 +528,7 @@ module.exports = function(options) {
     });
 
     debug.startup('Attaching middleware: File Storage');
-    app.storage = require('./src/storage/index.js')(app);
+    app.storage = require('./src/storage/').mountStorages(app);
 
     // Check to install primary project.
     debug.startup('Installing');
