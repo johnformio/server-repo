@@ -8,7 +8,7 @@ import macros from './deps/nunjucks-macros';
 export type RenderEmailOptions = {
     render: any;
     context: any;
-    timeout: number;
+    timeout?: number;
 };
 
 export async function renderEmail({
