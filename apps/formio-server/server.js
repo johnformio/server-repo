@@ -90,6 +90,10 @@ module.exports = function(options) {
 
   // Initialization middleware.
   app.use((req, res, next) => {
+    // Do not allow populate.
+    if (req.query.populate) {
+      delete req.query.populate;
+    }
     const sendStatus = res.sendStatus;
     res.sendStatus = function(...args) {
       if (!res.headersSent) {
