@@ -212,7 +212,7 @@ config.onlyPrimaryWriteAccess = Boolean(getConfig('ONLY_PRIMARY_WRITE_ACCESS', f
 config.AccessControlMaxAge = getConfig('ACCESS_CONTROL_MAX_AGE', 600);
 config.enableRestrictions = getConfig('ENABLE_RESTRICTIONS', false);
 
-config.formio.vmTimeout = getConfig('FORMIO_VM_TIMEOUT', 500);
+config.formio.vmTimeout = Number(getConfig('FORMIO_VM_TIMEOUT', 500)) || 500;
 
 const getMaxOldSpace = () => {
   const nodeOptions = getConfig('NODE_OPTIONS', '');
