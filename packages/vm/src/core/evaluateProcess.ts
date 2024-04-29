@@ -64,7 +64,7 @@ export async function evaluateProcess({
         },
     };
     const result = await evaluate({
-        deps: ['lodash', 'core', 'instanceShim', 'moment'],
+        deps: ['lodash', 'core', 'instanceShim', 'moment', 'inputmask'],
         additionalDeps,
         data: { context: evaluateContext },
         code,
@@ -82,6 +82,7 @@ export async function evaluateProcessMocked(
 ): Promise<EvaluateProcessorsResult> {
     (globalThis as any).moment = require('moment');
     (globalThis as any)._ = require('lodash');
+    (globalThis as any).Inputmask = require('inputmask');
     (globalThis as any).FormioCore = require('@formio/core');
     (globalThis as any).utils = FormioCore.Utils;
     (globalThis as any).util = FormioCore.Utils;

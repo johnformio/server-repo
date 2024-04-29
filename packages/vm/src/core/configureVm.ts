@@ -1,6 +1,7 @@
 import { instanceShimCode } from './InstanceShim';
 import { lodashCode } from './deps/lodash';
 import { momentCode } from './deps/moment';
+import { inputmaskCode } from './deps/inputmask';
 import {
     polyfillCode,
     aliasesCode,
@@ -18,6 +19,7 @@ import { nunjucksUtilsCode } from './deps/nunjucks-utils';
 export const dependeciesMap = {
     lodash: [lodashCode],
     moment: [momentCode],
+    inputmask: [inputmaskCode],
     core: [polyfillCode, coreCode, fastJsonPatchCode, aliasesCode],
     instanceShim: [instanceShimCode],
     nunjucks: [
@@ -31,6 +33,7 @@ export const dependeciesMap = {
 type BaseDependencyMap = {
     lodash?: string;
     moment?: string;
+    inputmask?: string;
     core?: string;
     instanceShim?: string;
     nunjucks?: string;
@@ -43,6 +46,7 @@ type BaseDependencyMap = {
 export const configureVm = ({
     lodash,
     moment,
+    inputmask,
     core,
     instanceShim,
     nunjucks,
@@ -53,6 +57,10 @@ export const configureVm = ({
     }
     if (moment) {
         dependeciesMap.moment = [moment];
+    }
+
+    if (inputmask) {
+        dependeciesMap.inputmask = [inputmask];
     }
     if (core) {
         dependeciesMap.core = [
