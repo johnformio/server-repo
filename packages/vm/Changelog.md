@@ -5,14 +5,6 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 0.0.8-rc.1]
-
-### Changed
-
--   FIO-8143: migrate RootShim to eachComponent vs eachComponentData
--   FIO-8145: injectable deps
--   add includeAll flag to eachComponent
-  
 ## 0.0.7-rc.18
 
 ### Changed
