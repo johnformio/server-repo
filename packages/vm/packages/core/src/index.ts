@@ -2,20 +2,17 @@ import mockBrowserContext from './mockBrowserContext';
 mockBrowserContext();
 
 import { EvaluateOptions, EvaluateResult } from './core/evaluate';
-import {
-    EvaluateProcessorsOptions,
-    EvaluateProcessorsResult,
-} from './core/evaluateProcess';
+import { EvaluateProcessorsOptions, EvaluateProcessorsResult } from './core/evaluateProcess';
 import * as lib from './lib';
 import * as requests from './requests';
 import { Expand } from './types';
 
 enum ModuleType {
-    Server,
-    Lib,
+  Server,
+  Lib,
 }
 function getModuleType(): ModuleType {
-    return ModuleType.Lib;
+  return ModuleType.Lib;
 }
 
 /**
@@ -27,15 +24,14 @@ function getModuleType(): ModuleType {
  * @returns {Promise<EvaluateResult>} The result of the evaluation. Can't be a function or contain functions.
  * @throws {Error} Will throw an error if evaluation fails or if the module type is unknown.
  */
-export function evaluate(
-    options: Expand<EvaluateOptions>,
-): Promise<EvaluateResult> {
-    if (getModuleType() === ModuleType.Server) {
-        return requests.evaluate(options);
-    } else if (getModuleType() === ModuleType.Lib) {
-        return lib.evaluate(options);
-    }
-    throw new Error('Unknown module type');
+export function evaluate(options: Expand<EvaluateOptions>): Promise<EvaluateResult> {
+  if (getModuleType() === ModuleType.Server) {
+    return requests.evaluate(options);
+  }
+  else if (getModuleType() === ModuleType.Lib) {
+    return lib.evaluate(options);
+  }
+  throw new Error('Unknown module type');
 }
 
 /**
@@ -47,8 +43,8 @@ export function evaluate(
  * @returns {EvaluateResult} The result of the evaluation. Can't be a function or contain functions.
  */
 export function evaluateSync(options: Expand<EvaluateOptions>): EvaluateResult {
-    // Only lib type supports sync
-    return lib.evaluateSync(options);
+  // Only lib type supports sync
+  return lib.evaluateSync(options);
 }
 
 /**
@@ -60,25 +56,22 @@ export function evaluateSync(options: Expand<EvaluateOptions>): EvaluateResult {
  * @param {string} [options.token] - The token to pass to evaluations.
  * @returns {Promise<EvaluateProcessorsResult>} An object containing result scope and data. Can't contain functions.
  */
-export function evaluateProcess(
-    options: Expand<EvaluateProcessorsOptions>,
-): Promise<EvaluateProcessorsResult> {
-    if (getModuleType() === ModuleType.Server) {
-        return requests.evaluateProcess(options);
-    } else if (getModuleType() === ModuleType.Lib) {
-        return lib.evaluateProcess(options);
-    }
-    throw new Error('Unknown module type');
+export function evaluateProcess(options: Expand<EvaluateProcessorsOptions>): Promise<EvaluateProcessorsResult> {
+  if (getModuleType() === ModuleType.Server) {
+    return requests.evaluateProcess(options);
+  }
+  else if (getModuleType() === ModuleType.Lib) {
+    return lib.evaluateProcess(options);
+  }
+  throw new Error('Unknown module type');
 }
 
 /**
  * Renders email in isoalted context.
- *
+ * 
  * @param options
  * @returns {Promise<string>} The rendered email.
  */
 export function renderEmail(options: any): Promise<string> {
-    return lib.renderEmail(options);
+  return lib.renderEmail(options);
 }
-
-export { configureVm } from './core/configureVm';
