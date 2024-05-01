@@ -64,4 +64,14 @@ describe('Test evaluate', () => {
         });
         expect(result).to.equal('Hello World');
     });
+
+    it('should evaluate code with injectable dependencies', async () => {
+        const result = await evaluate({
+            deps: [],
+            data: {},
+            code: 'sum(1, 2)',
+            additionalDeps: ['function sum(x, y) { return x + y }'],
+        });
+        expect(result).to.equal(3);
+    });
 });
