@@ -666,7 +666,7 @@ module.exports = (router) => {
           if (response.ok) {
             return handleSuccess(body);
           }
-          if (settings.retryType && attempts <= settings.numberOfAttempts) {
+          if (settings.retryType && attempts < settings.numberOfAttempts) {
             await retryRequest();
           }
           else {
@@ -674,7 +674,7 @@ module.exports = (router) => {
           }
         };
         const onError = async (err) => {
-          if (err.statusCode && settings.retryType && attempts <= settings.numberOfAttempts) {
+          if (err.statusCode && settings.retryType && attempts < settings.numberOfAttempts) {
             await retryRequest();
           }
           else {

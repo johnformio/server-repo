@@ -27,7 +27,7 @@ webhookServer.post(path, async (req, res) => {
     }
     else {
       responseCode = 201;
-      response = req.body;
+      response = {...req.body, attempts};
     }
   }
   if (!response) {
