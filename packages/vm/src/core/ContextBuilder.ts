@@ -43,6 +43,10 @@ class ContextBuilder {
         return this.withDefaultDependency('moment');
     }
 
+    withInputmask() {
+        return this.withDefaultDependency('inputmask');
+    }
+
     withCore() {
         return this.withDefaultDependency('core');
     }

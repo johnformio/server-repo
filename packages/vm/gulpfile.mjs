@@ -8,6 +8,7 @@ gulp.task('remove-tests', async () => await deleteAsync(['build/core/__tests__']
 function copyAssets(assetsDir) {
   return gulp.parallel(
     () => gulp.src('./node_modules/lodash/lodash.min.js').pipe(gulp.dest(assetsDir)),
+    () => gulp.src('./node_modules/inputmask/dist/inputmask.min.js').pipe(gulp.dest(assetsDir)),
     () => gulp.src('./node_modules/moment/min/moment.min.js').pipe(gulp.dest(assetsDir)),
     () => gulp.src('./node_modules/@formio/core/dist/formio.core.min.js').pipe(gulp.dest(assetsDir)),
     () => gulp.src('./node_modules/fast-json-patch/dist/fast-json-patch.min.js').pipe(gulp.dest(assetsDir)),
