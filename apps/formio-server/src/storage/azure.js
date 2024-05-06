@@ -62,6 +62,52 @@ async function getUrl(options = {}) {
   return ({url, key: blobName});
 }
 
+async function getEmailFileUrl(project, file) {
+  const settings = _.get(project, 'settings.storage.azure');
+
+  if (!settings || !settings.connectionString) {
+    throw new Error('Storage settings not set.');
+  }
+
+  if (!file?.name) {
+    throw new Error('File not provided.');
+  }
+
+  // Get the expiration.
+  let expiration = settings.expiration ? parseInt(settings.expiration, 10) : 900;
+  expiration = isNaN(expiration) ? 15 : (expiration / 60);
+
+  // Add start and expiry date.
+  const startDate = new Date();
+  const expiryDate = new Date(startDate);
+  expiryDate.setMinutes(startDate.getMinutes() + expiration);
+  startDate.setMinutes(startDate.getMinutes() - 100);
+
+  // Get token
+  const perms = storage.BlobSASPermissions.parse("r");
+  const service = storage.BlobServiceClient.fromConnectionString(settings.connectionString);
+  const directory = settings.startsWith || '';
+  const fileName = file.name || '';
+  const blobName = _.trim(`${_.trim(directory, '/')}/${_.trim(fileName, '/')}`, '/');
+
+  const token = storage.generateBlobSASQueryParameters({
+    containerName: settings.container,
+    blobName: blobName,
+    permissions: perms,
+    startsOn: startDate,
+    expiresOn: expiryDate
+  }, service.credential).toString();
+
+  // Get URL
+  const url = `${service.url}${settings.container}/${blobName}?${token}`;
+
+  if (!token || !url) {
+    throw new Error('Invalid request.');
+  }
+
+  return url;
+}
+
 const middleware = router => {
   const routes = [
     router.formio.formio.middleware.tokenHandler,
@@ -102,5 +148,5 @@ const middleware = router => {
 
 module.exports = {
   middleware,
-  getUrl
+  getEmailFileUrl,
 };

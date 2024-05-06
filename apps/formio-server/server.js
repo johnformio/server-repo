@@ -90,6 +90,10 @@ module.exports = function(options) {
 
   // Initialization middleware.
   app.use((req, res, next) => {
+    // Do not allow populate.
+    if (req.query.populate) {
+      delete req.query.populate;
+    }
     const sendStatus = res.sendStatus;
     res.sendStatus = function(...args) {
       if (!res.headersSent) {
@@ -133,8 +137,7 @@ module.exports = function(options) {
               else if (config.enableOauthM2M && matched.includes('var oAuthM2MEnabled')) {
                 return 'var oAuthM2MEnabled = true;';
               }
-              // else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.reporting && matched.includes('var reportingUI')) {
-              else if (matched.includes('var reportingUI')) {
+              else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.reporting && matched.includes('var reportingUI')) {
                 return 'var reportingUI = true;';
               }
               else if (!config.formio.hosted && app.license && app.license.licenseId && matched.includes('var licenseId')) {
@@ -528,7 +531,7 @@ module.exports = function(options) {
     });
 
     debug.startup('Attaching middleware: File Storage');
-    app.storage = require('./src/storage/index.js')(app);
+    app.storage = require('./src/storage/').mountStorages(app);
 
     // Check to install primary project.
     debug.startup('Installing');

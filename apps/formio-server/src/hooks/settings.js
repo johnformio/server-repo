@@ -12,6 +12,9 @@ const {ClientCredentials} = require('simple-oauth2');
 const moment = require('moment');
 const config = require('../../config');
 const ActionLogger = require('../actions/ActionLogger');
+const debug = {
+  authentication: require('debug')('formio:authentication'),
+};
 const updateSecret = require('../util/updateSecret.js');
 
 module.exports = function(app) {
@@ -57,21 +60,17 @@ module.exports = function(app) {
       formRequest: require('./on/formRequest')(app),
       validateEmail: require('./on/validateEmail')(app),
     },
-    performAsync: {
-      logAction(req, res, action, handler, method) {
-        const allowLogs = _.get(req.currentForm, 'settings.logs', false) &&
-          ((config.formio.hosted && ['trial', 'commercial'].includes(req.primaryProject.plan)) ||
-          (!config.formio.hosted && app.license && !app.license.licenseServerError && app.license.terms && _.get(app, 'license.terms.options.sac', false)));
+    alter: {
+      logAction(req, res, action, handler, method, cb) {
+        const allowLogs = true;
 
         if (allowLogs) {
-          return new ActionLogger(app.formio, req, res, action, handler, method).log();
+          new ActionLogger(app.formio, req, res, action, handler, method).log(cb);
         }
         else {
-          return Promise.resolve(false);
+          return cb(null, false);
         }
       },
-    },
-    alter: {
       formio: require('./alter/formio')(app),
       resources(resources) {
         return _.assign(resources, require('../resources/resources')(app, formioServer));
@@ -106,6 +105,7 @@ module.exports = function(app) {
       parentProjectSettings: require('./alter/parentProjectSettings')(app),
       rawDataAccess: require('./alter/rawDataAccess'),
       rehydrateValidatedSubmissionData: require('./alter/rehydrateValidatedSubmissionData')(app),
+      dynamicVmDependencies: require('./alter/dynamicVmDependencies')(app),
       schemaIndex(index) {
         index.project = 1;
         return index;
@@ -1556,7 +1556,8 @@ module.exports = function(app) {
               data: {
                 token: decoded,
                 roles: req.currentProject.roles
-              }
+              },
+              timeout: config.formio.vmTimeout
             });
             if (!data.hasOwnProperty('user')) {
               throw new Error('User not defined on data.');
@@ -1591,7 +1592,8 @@ module.exports = function(app) {
           }
           catch (err) {
             // eslint-disable-next-line no-console
-            console.error('Error parsing JWT token:', err.message);
+            debug('Error parsing JWT token: ', err.message || err);
+            console.error('Error parsing JWT token:', err.message || err);
           }
         }
 
