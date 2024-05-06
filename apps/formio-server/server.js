@@ -497,7 +497,7 @@ module.exports = function(options) {
 
     // Mount the saml integration.
     debug.startup('Attaching middleware: SAML');
-    app.use('/project/:projectId/saml', require('./src/saml/saml')(app.formio));
+    app.use('/project/:projectId/saml', require('./src/saml/saml')(app.formio.formio, app.formio.config));
 
     // Mount the aggregation system.
     debug.startup('Attaching middleware: Report API');

@@ -182,7 +182,7 @@ module.exports = function(formioServer) {
           // Find all forms that this user has "read_all" or "read_own" access
           _.each(result, function(form) {
             const access = form.submissionAccess.toObject();
-            if (req.isAdmin) {
+            if (req.isAdmin || (_.includes(_.keys(req.user.access), req.currentProject.name) && req.userProject.name === 'formio')) {
               readAllForms.push(form._id);
             }
             else {

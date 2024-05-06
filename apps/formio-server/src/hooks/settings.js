@@ -665,6 +665,15 @@ module.exports = function(app) {
                   return _.startsWith(permission.type, 'stage_');
                 }));
 
+                if (req.currentProject && req.currentProject.type === 'tenant' && req.userProject.name === 'formio') {
+                  if (req.access && _.includes(_.keys(req.access), req.currentProject.name)) {
+                    _.find(teamAccess, {type: req.access[req.currentProject.name]}).roles.push(req.user._id.toString());
+                  }
+                  if (req.user && req.user.sso && req.user.access && _.includes(_.keys(req.user.access), req.currentProject.name)) {
+                    _.find(teamAccess, {type: req.user.access[req.currentProject.name]}).roles.push(req.user._id.toString());
+                  }
+                }
+
                 // Initialize the project access.
                 access.project = access.project || {};
                 access.project.create_all = access.project.create_all || [];
