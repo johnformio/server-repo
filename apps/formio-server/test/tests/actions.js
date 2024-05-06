@@ -1046,6 +1046,7 @@ module.exports = (app, template, hook) => {
         });
 
         it('Should retry request, if it fails', (done) => {
+          const numberOfAttempts = 4;
           request(app)
           .put(`/project/${project._id}/form/${webhookForm._id}/action/${webhookAction._id}`)
             .set('x-jwt-token', template.formio.owner.token)
@@ -1057,7 +1058,7 @@ module.exports = (app, template, hook) => {
                 url: testWebhookUrl,
                 block: true,
                 retryType: 'constant',
-                numberOfAttempts: 10,
+                numberOfAttempts,
                 initialDelay: 100
               }
             })
@@ -1083,6 +1084,7 @@ module.exports = (app, template, hook) => {
                     return done(err);
                   }
                   assert.deepEqual(submission, res.body.data);
+                  assert.equal(_.get(res.body, `metadata.${webhookAction.title}.attempts`), numberOfAttempts, 'The number of attempts should not exceed the set number of attempts');
                   done();
                 });
             })
