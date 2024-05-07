@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 9.1.0-rc.1]
+## [Unreleased: 9.2.0-rc.1]
 ### Changed
  - FIO-7328: replace kickbox verify with node-fetch
  - FIO-7349: Fixes an issue where server crashes when user tries to load a view page of the deleted team
@@ -49,6 +49,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO 8169: add resolve dependency to avoid webpack build issues
  - FIO-7933: fixed tests
  - FIO-8128: adds reporting code to vm evaluation context
+ - FIO-7347: update encryption tests
+ - FIO-7488: add configurable timeout to evaluations
+ - FIO-7692: Fixed email action with attached submission files
+ - FIO-8239: Changes for reporting module license check for 9x
+ - FIO-8166: contactMessage form for hosted portalBase projects
+ - FIO-7488: add number casting to vmTimeout
+ - FIO-8115: Throw an error when type is not provided
+ - FIO-7467: Added Project SAML Settings Form
+ - FIO-8275: fixed an additional request for Webhook action
  
 ## 8.4.0-rc.7
 ### Changed
