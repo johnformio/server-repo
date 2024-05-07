@@ -103,10 +103,10 @@
     lodash "^4.17.21"
     moment "^2.29.4"
 
-"@formio/js@^5.0.0-rc.49":
-  version "5.0.0-rc.49"
-  resolved "https://registry.npmjs.org/@formio/js/-/js-5.0.0-rc.49.tgz#f19934555962c777b865f770e1dd29bed56c43a3"
-  integrity sha512-7FZYaSmpQ3GEbE/8L5hHGn7uKoxaPvicOvBjbcJiGrL/BWmmx/gy4RsynzgyE0nOvn6LN09BnV+W0MxPhHPF2g==
+"@formio/js@^5.0.0-rc.50":
+  version "5.0.0-rc.50"
+  resolved "https://registry.npmjs.org/@formio/js/-/js-5.0.0-rc.50.tgz#3ab6ec4c890b0459f5b61202aabb61a2d83fe3e3"
+  integrity sha512-OHkDZ/u2rxFZ9oJsoTWZPAAQJw2bs0JPWiTK/dVNG2nzg05zolgWLHOSVcpPGpiOh+aiL9sqLwKP7HMRSVLO4A==
   dependencies:
     "@formio/bootstrap" "^3.0.0-rc.24"
     "@formio/choices.js" "^10.2.1"
