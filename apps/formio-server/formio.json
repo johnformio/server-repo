@@ -1613,6 +1613,139 @@
         }
       ]
     },
+    "contactMessage": {
+      "title": "Contact Message",
+      "type": "form",
+      "name": "contactMessage",
+      "path": "contactmessage",
+      "tags": [],
+      "access": [
+        {
+          "type": "read_all",
+          "roles": [
+            "administrator",
+            "authenticated",
+            "anonymous"
+          ]
+        }
+      ],
+      "submissionAccess": [
+        {
+          "type": "create_all",
+          "roles": []
+        },
+        {
+          "type": "read_all",
+          "roles": []
+        },
+        {
+          "type": "update_all",
+          "roles": []
+        },
+        {
+          "type": "delete_all",
+          "roles": []
+        },
+        {
+          "type": "create_own",
+          "roles": [
+            "authenticated"
+          ]
+        },
+        {
+          "type": "read_own",
+          "roles": []
+        },
+        {
+          "type": "update_own",
+          "roles": []
+        },
+        {
+          "type": "delete_own",
+          "roles": []
+        }
+      ],
+      "components": [
+        {
+          "html": "\u003Ch2\u003E\u003Cstrong\u003EReports With \u003C/strong\u003E\u003Ca href=\"http://Form.io\"\u003E\u003Cstrong\u003EForm.io\u003C/strong\u003E\u003C/a\u003E\u003Cstrong\u003E Enterprise\u003C/strong\u003E\u003C/h2\u003E\u003Cp\u003E\u003Ca href=\"http://Form.io\"\u003EForm.io\u003C/a\u003E's Reporting Module is only available on self-hosted, enterprise deployments.\u003C/p\u003E\u003Ch3\u003E\u003Cstrong\u003EWhat Can You Do With The Reporting Module?\u003C/strong\u003E\u003C/h3\u003E\u003Cul\u003E\u003Cli\u003EApply sorting and filtering across your submission data\u003C/li\u003E\u003Cli\u003EGenerate complex reports that combine data from multiple Forms and Resources\u003C/li\u003E\u003Cli\u003EPerform calculations on columns using math, Boolean, data manipulation functions, and the numerous other operators available in MongoDB's Aggregation Pipeline\u003C/li\u003E\u003Cli\u003ESpecify output groupings and perform group calculations\u003C/li\u003E\u003Cli\u003EDefine user-interface controls, filters, and actions and save reports to their own interactive, embeddable experiences\u003C/li\u003E\u003C/ul\u003E\u003Ch3\u003E\u003Cstrong\u003EWho Is The Reporting Module For?\u003C/strong\u003E\u003C/h3\u003E\u003Cp\u003EThis is for any data-driven organization that wants the ability to build robust data analysis reports that function with live submission data within their forms without having to deploy a new tool or integration just to make sense of the data they’re collecting.\u003C/p\u003E\u003Cp\u003E\u003Ca href=\"http://Form.io\"\u003EForm.io\u003C/a\u003E is your forms, your data management, and your reports in one platform, deployed in your environment.\u003C/p\u003E",
+          "label": "Content",
+          "refreshOnChange": false,
+          "key": "content1",
+          "customConditional": "show = instance?.root?.options.tag === 'report';",
+          "type": "content",
+          "input": false,
+          "tableView": false
+        },
+        {
+          "html": "\u003Cp\u003ESelf-hosted deployments in your environment are issued licenses based on configuration. These licenses are managed here.\u003C/p\u003E",
+          "label": "Content",
+          "refreshOnChange": false,
+          "key": "content2",
+          "customConditional": "show = instance?.root?.options.tag === 'license'",
+          "type": "content",
+          "input": false,
+          "tableView": false
+        },
+        {
+          "html": "\u003Ch3\u003E\u003Cstrong\u003ESelf-Hosting With \u003C/strong\u003E\u003Ca href=\"http://Form.io\"\u003E\u003Cstrong\u003EForm.io\u003C/strong\u003E\u003C/a\u003E\u003Cstrong\u003E Enterprise\u003C/strong\u003E\u003C/h3\u003E",
+          "label": "Content",
+          "refreshOnChange": false,
+          "key": "content3",
+          "customConditional": "show = instance?.root?.options.tag !== 'projectPricing';",
+          "type": "content",
+          "input": false,
+          "tableView": false
+        },
+        {
+          "html": "\u003Ch4\u003EContact Us\u003C/h4\u003E",
+          "label": "Content",
+          "refreshOnChange": false,
+          "key": "content4",
+          "customConditional": "show = instance?.root?.options.tag === 'projectPricing';",
+          "type": "content",
+          "input": false,
+          "tableView": false
+        },
+        {
+          "html": "\u003Cp\u003E\u003Cstrong\u003E90%\u003C/strong\u003E of our customers self-host the \u003Ca href=\"http://Form.io\"\u003EForm.io\u003C/a\u003E platform in their own environment, including this developer portal application.\u003C/p\u003E\u003Cp\u003E\u003Ca href=\"https://form.io/enterprise-self-hosting\"\u003E\u003Cstrong\u003EClick here\u003C/strong\u003E\u003C/a\u003E to learn more about what's different in an enterprise self-hosted plan and what criteria make them a better fit. If you’re interested in self-hosting, send us a short message below, and we'll get back to you within 1 business day.\u003C/p\u003E",
+          "label": "Content",
+          "refreshOnChange": false,
+          "key": "content",
+          "type": "content",
+          "input": false,
+          "tableView": false
+        },
+        {
+          "label": "Message",
+          "placeholder": "What are you trying to accomplish?",
+          "widget": "",
+          "applyMaskOn": "change",
+          "autoExpand": true,
+          "tableView": true,
+          "key": "message",
+          "type": "textarea",
+          "input": true
+        },
+        {
+          "label": "cameFrom",
+          "calculateValue": "switch(instance?.root.options.tag) {\n  case 'globalinfo':\n    value = 'Self-Hosted Global Info Drop Down';\n    break;\n  case 'report':\n    value = 'Reports page';\n    break;\n  case 'license':\n    value = 'License Management page';\n    break;\n  case 'projectPricing':\n    value = 'Project Pricing page';\n    break;\n}",
+          "key": "cameFrom",
+          "type": "hidden",
+          "input": true,
+          "tableView": false
+        },
+        {
+          "label": "Send Message",
+          "showValidations": false,
+          "disableOnInvalid": true,
+          "tableView": false,
+          "key": "submit",
+          "type": "button",
+          "input": true,
+          "saveOnEnter": false
+        }
+      ]
+    },
     "paymentAuthorization": {
       "title": "Payment Authorization",
       "type": "form",
@@ -4038,6 +4171,35 @@
       ],
       "handler": [
         "before"
+      ]
+    },
+    "contactMessage:email": {
+      "title": "Email",
+      "name": "email",
+      "form": "contactMessage",
+      "condition": {
+        "custom": "",
+        "value": "",
+        "eq": "",
+        "field": ""
+      },
+      "settings": {
+        "template": "",
+        "sendEach": false,
+        "message": "<h2>New message came from {{ data.cameFrom }}: </h2>\n<p>{{ data.message }}</p>",
+        "subject": "Message from {{data.cameFrom}}",
+        "emails": [
+          "sales@form.io"
+        ],
+        "from": "{{req.user.data.email}}",
+        "transport": "sendgrid"
+      },
+      "priority": 0,
+      "method": [
+        "create"
+      ],
+      "handler": [
+        "after"
       ]
     },
     "paymentAuthorization:save": {

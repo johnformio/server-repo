@@ -8,18 +8,15 @@ module.exports = class ActionLogger {
         this.action = action;
         this.handler = handler;
         this.method = method;
-        this.logsDone = new Promise((resolve, reject) => {
-            this.loggerPromise = {resolve, reject};
-        });
     }
 
-    log() {
+    log(done) {
         this.createActionItem((err, actionItem) => {
             this.action.resolve(this.handler, this.method, this.req, this.res, (err) => {
                 if (err) {
                     // Error has occurred.
                     this.updateActionItem(actionItem,'Error Occurred', err, 'error');
-                    this.loggerPromise.reject(err);
+                    return done(err);
                 }
 
                 // Action has completed successfully
@@ -28,11 +25,9 @@ module.exports = class ActionLogger {
                     {},
                     actionItem.state === 'inprogress' ? 'complete' : actionItem.state,
                 );
-                this.loggerPromise.resolve(true);
+                return done(null, true);
             }, (...args) => this.updateActionItem(actionItem, ...args));
         });
-
-        return this.logsDone;
     }
 
     updateActionItem(actionItem, message, data = {}, state = null) {

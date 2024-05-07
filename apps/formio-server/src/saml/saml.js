@@ -10,11 +10,9 @@ const xss = require("xss");
 const {getConfig} = require("../../config");
 const fs = require("fs");
 const path = require('path');
+const {evaluate} = require('@formio/vm');
 
-module.exports = (formioServer) => {
-  const formio = formioServer.formio;
-  const config = formioServer.config;
-
+module.exports = (formio, config) => {
   const parseSAMLPassportSettings = (settings) => {
     const pathToDecryptionPrivateKey = getConfig("SAML_PASSPORT_DECRYPTION_PVK_PATH", null);
     const pathToPrivateKey = getConfig("SAML_PASSPORT_PRIVATE_KEY_PATH", null);
@@ -40,6 +38,31 @@ module.exports = (formioServer) => {
       }
     }
     return samlPassportConfig;
+  };
+
+  const getUserSamlRoles = (userRoles, rolesDelimiter) => {
+    if (typeof userRoles === 'string') {
+      if (rolesDelimiter) {
+        userRoles = userRoles.split(rolesDelimiter);
+      }
+      else if (userRoles.indexOf(',') !== -1) {
+        userRoles = userRoles.split(',');
+      }
+      else if (userRoles.indexOf(';') !== -1) {
+        userRoles = userRoles.split(';');
+      }
+      else {
+        userRoles = userRoles.split(' ');
+      }
+    }
+
+    // Trim all whitespace from the roles.
+    userRoles = _.map(userRoles, _.trim);
+
+    // Add an "Everyone" role.
+    userRoles.push('Everyone');
+
+    return userRoles;
   };
 
   // Get the SAML providers for this project.
@@ -125,62 +148,110 @@ module.exports = (formioServer) => {
    * @param roleMap
    * @return {*}
    */
-  const getToken = function(profile, settings, project, roleMap, next) {
-    const rolesPath = settings.rolesPath || 'roles';
-    const idPath = settings.idPath || 'id';
-    const emailPath = settings.emailPath || 'email';
-    let userRoles = _.get(profile, rolesPath, []);
-    const {rolesDelimiter} = settings;
-    if (typeof userRoles === 'string') {
-      if (rolesDelimiter) {
-        userRoles = userRoles.split(rolesDelimiter);
+  const getToken = async function(profile, settings, project, roleMap) {
+    let user = {};
+    let userRoles = [];
+    if (settings.customParser) {
+      try {
+        const customParserData  = await evaluate({
+          deps: ['lodash'],
+          code: settings.customParser,
+          data: {
+            profile: (_.omitBy(profile, _.isFunction)),
+            roles: project.roles
+          }
+        });
+        if (typeof customParserData !== 'object') {
+          throw new Error('User not an object.');
+        }
+        if (!customParserData.hasOwnProperty('_id')) {
+          throw new Error('_id not defined on user.');
+        }
+        if (typeof customParserData._id !== 'string') {
+          throw new Error('_id not a string.');
+        }
+        if (!customParserData.hasOwnProperty('roles')) {
+          throw new Error('roles not defined on user.');
+        }
+        if (!Array.isArray(customParserData.roles)) {
+          throw new Error('roles not an array.');
+        }
+        if (!customParserData.data.hasOwnProperty('roles')) {
+          throw new Error('SAML roles not defined on user.data.');
+        }
+
+        // Make sure assigned role ids are actually in the project.
+        const roleIds = _.map(project.roles, role => role._id.toString());
+        customParserData.roles.forEach(roleId => {
+          if (!roleIds.includes(roleId)) {
+            throw new Error('Invalid role id. Not in the project.');
+          }
+        });
+
+        user = {
+          _id: util.toMongoId(customParserData._id),
+          sso: true,
+          project: project._id.toString(),
+          data: customParserData.data,
+          roles: customParserData.roles
+        };
+
+        userRoles = getUserSamlRoles(customParserData.data.roles);
+
+        if (customParserData.access) {
+          user.access = customParserData.access;
+        }
       }
-      else if (userRoles.indexOf(',') !== -1) {
-        userRoles = userRoles.split(',');
-      }
-      else if (userRoles.indexOf(';') !== -1) {
-        userRoles = userRoles.split(';');
-      }
-      else {
-        userRoles = userRoles.split(' ');
+      catch (err) {
+        throw new Error(`Error parsing JWT token: ${err.message}`);
       }
     }
+    else {
+      const rolesPath = settings.rolesPath || 'roles';
+      const idPath = settings.idPath || 'id';
+      const emailPath = settings.emailPath || 'email';
+      const {rolesDelimiter} = settings;
+      userRoles = getUserSamlRoles(_.get(profile, rolesPath, []), rolesDelimiter);
 
-    // Trim all whitespace from the roles.
-    userRoles = _.map(userRoles, _.trim);
-
-    // Add an "Everyone" role.
-    userRoles.push('Everyone');
-
-    const email = _.get(profile, emailPath).toLowerCase();
-    const userId = _.get(profile, idPath, email);
-    if (!userId) {
-      return next('No User ID or Email was found within your SAML profile.');
-    }
-
-    const roles = [];
-    _.map(roleMap, map => {
-      const roleName = _.trim(map.role);
-      if (_.includes(userRoles, roleName)) {
-        roles.push(map.id);
+      const email = _.get(profile, emailPath)?.toLowerCase();
+      const userId = _.get(profile, idPath, email);
+      if (!userId) {
+        throw new Error('No User ID or Email was found within your SAML profile.');
       }
-    });
 
-    const defaultFields = `objectidentifier,name,email,inresponseto,${rolesPath},${idPath},${emailPath}`;
-    let profileFields = settings.hasOwnProperty('profileFields') ? (settings.profileFields || defaultFields) : false;
-    profileFields = profileFields ? _.map(profileFields.split(','), _.trim).join('|').replace(/[^A-z0-9_|-]/g, '') : '';
-    const fieldsRegex = new RegExp(profileFields || '', 'i');
-    const user = {
-      _id: util.toMongoId(userId),
-      sso: true,
-      project: project._id.toString(),
-      data: profileFields ? _.pickBy(profile, (prop, key) => key.match(fieldsRegex)) : profile,
-      roles
-    };
+      const roles = [];
+      _.map(roleMap, map => {
+        const roleName = _.trim(map.role);
+        if (_.includes(userRoles, roleName)) {
+          roles.push(map.id);
+        }
+      });
 
-    // If an email is provided, then set it here.
-    if (email) {
-      user.data.email = email;
+      const defaultFields = `objectidentifier,name,email,inresponseto,${rolesPath},${idPath},${emailPath}`;
+      let profileFields = settings.hasOwnProperty('profileFields') ? (settings.profileFields || defaultFields) : false;
+      profileFields = profileFields ? _.map(profileFields.split(','), _.trim).join('|').replace(/[^A-z0-9_|-]/g, '') : '';
+      const fieldsRegex = new RegExp(profileFields || '', 'i');
+      user = {
+        _id: util.toMongoId(userId),
+        sso: true,
+        project: project._id.toString(),
+        data: profileFields ? _.pickBy(profile, (prop, key) => key.match(fieldsRegex)) : profile,
+        roles
+      };
+
+      // If an email is provided, then set it here.
+      if (email) {
+        user.data.email = email;
+      }
+
+      if (settings.tenantAccess) {
+        _.forEach(userRoles, (role) => {
+          const tenantAccess = _.find(settings.tenantAccess, {samlRole: role});
+          if (tenantAccess) {
+            _.set(user, `access.${tenantAccess.tenant}`, tenantAccess.role);
+          }
+        });
+      }
     }
 
     debug(`Requested Roles: ${JSON.stringify(userRoles)}`);
@@ -199,23 +270,23 @@ module.exports = (formioServer) => {
     // the user object that will be read by the teams feature to determine which teams are allocated to this user.
     if (project.primary && config.ssoTeams) {
       // Load the teams by name.
-      formio.teams.getSSOTeams(user, userRoles).then((teams) => {
+      return await formio.teams.getSSOTeams(user, userRoles).then((teams) => {
         teams = teams || [];
         user.teams = _.map(_.map(teams, '_id'), formio.util.idToString);
         debug(`Teams: ${JSON.stringify(user.teams)}`);
-        return next(null, {
+        return {
           user,
           decoded: token,
           token: formio.auth.getToken(token),
-        });
+        };
       });
     }
     else {
-      return next(null, {
+      return {
         user,
         decoded: token,
         token: formio.auth.getToken(token),
-      });
+      };
     }
   };
 
@@ -250,6 +321,10 @@ module.exports = (formioServer) => {
 
   router.post('/acs',
     (req, res) => {
+    let fromSettings = false;
+    if (_.endsWith(req.body.RelayState, 'samlconfig')) {
+      fromSettings = true;
+    }
     const sanitizeRelay =  xss(req.query.relay);
     const sanitizeRelayState =  xss(req.body.RelayState);
     if ((req.query.relay!==undefined && sanitizeRelay !== req.query.relay) || sanitizeRelayState !== req.body.RelayState) {
@@ -261,31 +336,27 @@ module.exports = (formioServer) => {
       return res.status(400).send('No relay provided.');
     }
     getSAMLProviders(req).then((providers) => {
-      providers.saml.validatePostResponseAsync(req.body).then(({profile}) => {
-        // Get the saml token.
-        getToken(
-          profile,
-          providers.settings,
-          providers.project,
-          providers.roles,
-          (err, token) => {
-            if (err) {
-              return res.status(400).send(err);
-            }
-            if (!token) {
-              return res.status(401).send('Unauthorized');
-            }
-            if (typeof token === 'string') {
-              return res.status(401).send(token);
-            }
-
-            relay += (relay.indexOf('?') === -1) ? '?' : '&';
-            relay += `saml=${token.token}`;
-            return res.redirect(relay);
+      providers.saml.validatePostResponseAsync(req.body).then(async ({profile}) => {
+        if (fromSettings) {
+          const sanitizeProfile = xss(JSON.stringify(profile, null, "\t"));
+          res.end(sanitizeProfile);
+        }
+        else {
+          // Get the saml token.
+          const token = await getToken(profile, providers.settings, providers.project, providers.roles);
+          if (!token) {
+            return res.status(401).send('Unauthorized');
           }
-        );
+          if (typeof token === 'string') {
+            return res.status(401).send(token);
+          }
+
+          relay += (relay.indexOf('?') === -1) ? '?' : '&';
+          relay += `saml=${token.token}`;
+          return res.redirect(relay);
+        }
       }).catch((err) => {
-        return res.status(400).send(err.message || err);
+        return res.status(400).send(xss(err.message || err));
       });
     }).catch((err) => {
       return res.status(400).send(err.message || err);

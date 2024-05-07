@@ -5,7 +5,11 @@ const request = require('supertest');
 const assert = require('assert');
 const docker = process.env.DOCKER;
 const _ = require('lodash');
+const sinon = require('sinon');
+const {google} = require('googleapis');
 const config = require('../../config');
+const { storages } = require('../../src/storage');
+const googleDriveStorage = storages.googledrive;
 
 module.exports = function(app, template, hook) {
   describe('Google Drive Tests', function() {
@@ -609,6 +613,114 @@ module.exports = function(app, template, hook) {
 
               done();
             });
+        });
+      });
+    });
+
+    describe('Email Actions', () => {
+      describe('Exceptions', () => {
+        let file;
+        let OAuth2Stub;
+        before(() => {
+          file = { id: 'fakeId' };
+          OAuth2Stub = sinon.stub(google.auth, 'OAuth2');
+          OAuth2Stub.returns({
+            setCredentials: sinon.stub().returns(undefined),
+            getAccessToken: sinon.stub().rejects(new Error('Unauthorized')),
+          });
+        });
+
+        it('Should throw error if storage settings not set', async () => {
+          try {
+            const project = {
+              ...template.project,
+              settings: {},
+            };
+            await googleDriveStorage.getEmailFileUrl(project);
+            assert.fail('Expected an error to be thrown');
+          }
+          catch(err) {
+            assert.equal(err.message, 'Storage settings not set.');
+          }
+        });
+
+        it('Should throw error if file not provided', async () => {
+          try {
+            await googleDriveStorage.getEmailFileUrl(template.project);
+            assert.fail('Expected an error to be thrown');
+          }
+          catch(err) {
+            assert.equal(err.message, 'File not provided.');
+          }
+        });
+
+        it('Should throw error if google settings not set', async () => {
+          try {
+            const project = {
+              ...template.project,
+              settings: {
+                ...template.project.settings,
+                google: null,
+              },
+            };
+            await googleDriveStorage.getEmailFileUrl(project, file);
+            assert.fail('Expected an error to be thrown');
+          }
+          catch(err) {
+            assert.equal(err.message, 'Drive not provided.');
+          }
+        });
+
+        it('Should throw error if google settings are incorrect', async () => {
+          try {
+            await googleDriveStorage.getEmailFileUrl(template.project, file);
+            assert.fail('Expected an error to be thrown');
+          }
+          catch(err) {
+            assert.equal(err.message, 'Unauthorized');
+          }
+        });
+
+        after(() => {
+          OAuth2Stub.restore();
+        });
+      });
+
+      describe('Email Action Url', () => {
+        let file;
+        let OAuth2Stub;
+        let driveStub;
+        before(() => {
+          file = { id: 'fakeId' };
+          OAuth2Stub = sinon.stub(google.auth, 'OAuth2');
+          OAuth2Stub.returns({
+            setCredentials: sinon.stub().returns(undefined),
+            getAccessToken: sinon.stub().resolves('mockedAccessToken'),
+          });
+          driveStub = sinon.stub(google, 'drive').returns({
+            files: {
+              get: sinon.stub().resolves({
+                data: {
+                  webContentLink: 'mockedWebContentLink',
+                },
+              }),
+            },
+          });
+        });
+
+        it('Should return file url for email attachment', async () => {
+          try {
+            const url = await googleDriveStorage.getEmailFileUrl(template.project, file);
+            assert.equal(url, 'mockedWebContentLink');
+          }
+          catch(err) {
+            assert.fail('An error should not be thrown');
+          }
+        });
+
+        after(() => {
+          OAuth2Stub.restore();
+          driveStub.restore();
         });
       });
     });

@@ -1,10 +1,24 @@
 'use strict';
+const dropbox = require('./dropbox');
+const s3 =require('./s3');
+const azure = require('./azure');
+const googledrive = require('./googleDrive');
 
-module.exports = function(router) {
-  return {
-    dropbox: require('./dropbox').middleware(router),
-    s3: require('./s3').middleware(router),
-    azure: require('./azure').middleware(router),
-    gdrive: require('./googleDrive').middleware(router)
-  };
+const storages = {
+  dropbox,
+  s3,
+  azure,
+  googledrive,
+};
+
+const mountStorages = (router) => ({
+  dropbox: dropbox.middleware(router),
+  s3: s3.middleware(router),
+  azure: azure.middleware(router),
+  googledrive: googledrive.middleware(router),
+});
+
+module.exports = {
+  mountStorages,
+  storages,
 };

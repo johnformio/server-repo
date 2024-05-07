@@ -8,6 +8,46 @@ const {google} = require('googleapis');
 const debug = require('debug')('formio:storage:googledrive');
 const Stream = require('stream');
 
+function hasValidProviderSettings(settings) {
+  return settings.google
+    && settings.google.clientId
+    && settings.google.cskey
+    && settings.google.refreshtoken;
+}
+
+async function getEmailFileUrl(project, file) {
+  const settings = _.get(project, 'settings.storage.googleDrive');
+  if (!settings) {
+    throw new Error('Storage settings not set.');
+  }
+
+  const fileId = file?.id;
+  if (!fileId) {
+    throw new Error('File not provided.');
+  }
+
+  const drive = hasValidProviderSettings(project.settings)
+    ? await authenticate(project.settings)
+    : null;
+  if (!drive) {
+    throw new Error('Drive not provided.');
+  }
+
+  debug('Getting a Google Drive content link for the file.');
+
+  try {
+    const response = await drive.files.get({
+      fileId,
+      fields: 'webContentLink',
+    });
+    return response.data.webContentLink;
+  }
+  catch (error) {
+    debug(error);
+    throw new Error('Invalid response');
+  }
+}
+
 async function getUrl(options = {}) {
   // Allow options.project as an alternative to options.settings
   if (options.project && !options.settings) {
@@ -131,11 +171,8 @@ const middleware = router => {
 
           const {settings} = project;
           // Use the Google Drive Data connection integration settings
-          if (!settings.google
-            || !settings.google.clientId
-            || !settings.google.cskey
-            || !settings.google.refreshtoken) {
-              return res.status(400).send('Google Drive Settings not configured. Please go to Data Connections');
+          if (!hasValidProviderSettings(settings)) {
+            return res.status(400).send('Google Drive Settings not configured. Please go to Data Connections');
           }
 
           authenticate(settings)
@@ -205,14 +242,8 @@ const middleware = router => {
           settings.storage = {};
         }
 
-        if (
-          !settings.storage.googleDrive
-          || !settings.google
-          || !settings.google.clientId
-          || !settings.google.cskey
-          || !settings.google.refreshtoken
-          ) {
-            return res.status(400).send('Google Drive Settings not configured. Please go to Data Connections');
+        if (!settings.storage.googleDrive || !hasValidProviderSettings(settings)) {
+          return res.status(400).send('Google Drive Settings not configured. Please go to Data Connections');
         }
 
         const {fileId, fileName} = req.query;
@@ -299,14 +330,8 @@ const middleware = router => {
           settings.storage = {};
         }
 
-        if (
-          !settings.storage.googleDrive
-          || !settings.google
-          || !settings.google.clientId
-          || !settings.google.cskey
-          || !settings.google.refreshtoken
-          ) {
-            return res.status(400).send('Google Drive Settings not configured. Please go to Data Connections');
+        if (!settings.storage.googleDrive || !hasValidProviderSettings(settings)) {
+          return res.status(400).send('Google Drive Settings not configured. Please go to Data Connections');
         }
 
         const fileInfo = req.body;
@@ -404,14 +429,8 @@ const middleware = router => {
           settings.storage = {};
         }
 
-        if (
-          !settings.storage.googleDrive
-          || !settings.google
-          || !settings.google.clientId
-          || !settings.google.cskey
-          || !settings.google.refreshtoken
-          ) {
-            return res.status(400).send('Google Drive Settings not configured. Please go to Data Connections');
+        if (!settings.storage.googleDrive || !hasValidProviderSettings(settings)) {
+          return res.status(400).send('Google Drive Settings not configured. Please go to Data Connections');
         }
 
         const {id, name} = req.query;
@@ -451,5 +470,5 @@ const middleware = router => {
 
 module.exports = {
   middleware,
-  getUrl
+  getEmailFileUrl,
 };

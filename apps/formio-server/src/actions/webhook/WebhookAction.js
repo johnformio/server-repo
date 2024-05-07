@@ -12,6 +12,7 @@ const {
   constructHeadersObject,
   processWebhookResponseBody,
 } = require('./util');
+const config = require('../../../config');
 
 module.exports = (router) => {
   const Action = router.formio.Action;
@@ -586,7 +587,8 @@ module.exports = (router) => {
                   req.currentProject.hasOwnProperty('config')
                     ? req.currentProject.config
                     : {},
-              }
+              },
+              timeout: config.formio.vmTimeout
             });
           }
           catch (err) {
@@ -666,7 +668,7 @@ module.exports = (router) => {
           if (response.ok) {
             return handleSuccess(body);
           }
-          if (settings.retryType && attempts <= settings.numberOfAttempts) {
+          if (settings.retryType && attempts < settings.numberOfAttempts) {
             await retryRequest();
           }
           else {
@@ -674,7 +676,7 @@ module.exports = (router) => {
           }
         };
         const onError = async (err) => {
-          if (err.statusCode && settings.retryType && attempts <= settings.numberOfAttempts) {
+          if (err.statusCode && settings.retryType && attempts < settings.numberOfAttempts) {
             await retryRequest();
           }
           else {
