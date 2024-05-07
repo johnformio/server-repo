@@ -66,7 +66,7 @@ module.exports = (formioServer) => {
       else {
         submission = req.body;
       }
-      const translations = await getTranslations(req);
+      const translations = await getTranslations(req, form);
       const response = await downloadPDF(req, project, form, submission, translations);
       if (response.ok) {
         res.append('Content-Type', response.headers.get('content-type'));
