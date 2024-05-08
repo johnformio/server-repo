@@ -62,7 +62,13 @@ module.exports = function(app) {
     },
     alter: {
       logAction(req, res, action, handler, method, cb) {
-        const allowLogs = true;
+        const allowLogs = _.get(req.currentForm, 'settings.logs', false) &&
+          ((config.formio.hosted && ['trial', 'commercial'].includes(req.primaryProject.plan)) ||
+            (!config.formio.hosted && app.license && !app.license.licenseServerError && app.license.terms && _.get(
+              app,
+              'license.terms.options.sac',
+              false,
+            )));
 
         if (allowLogs) {
           new ActionLogger(app.formio, req, res, action, handler, method).log(cb);
