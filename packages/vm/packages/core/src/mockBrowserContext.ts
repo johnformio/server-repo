@@ -28,6 +28,8 @@ export default function mockBrowserContext() {
     if (!globalThis.window.Event) globalThis.window.Event = function () {};
     if (!globalThis.window.navigator)
         globalThis.window.navigator = globalThis.navigator;
+    if (!globalThis.window.document)
+        globalThis.window.document = globalThis.document;
     if (!globalThis.btoa)
         globalThis.btoa = (str: any) => {
             return str instanceof Buffer
