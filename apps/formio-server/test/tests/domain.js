@@ -18,7 +18,8 @@ module.exports = function(app, template, hook) {
   var tempProject = {
     title: chance.word(),
     description: chance.sentence(),
-    template: _.pick(template, ['title', 'name', 'version', 'primary', 'roles', 'resources', 'forms', 'actions'])
+    template: _.pick(template, ['title', 'name', 'version', 'primary', 'roles', 'resources', 'forms', 'actions']),
+    type: 'project'
   };
   var originalProject = _.cloneDeep(tempProject);
   var project;

@@ -24,7 +24,8 @@ module.exports = function(app, template, hook) {
           title: chance.word(),
           description: chance.sentence(),
           name: chance.word(),
-          template: _template
+          template: _template,
+          type: 'project'
         };
 
         request(app)
@@ -756,7 +757,7 @@ module.exports = function(app, template, hook) {
         }
         done();
       });
-  
+
       after(done => {
         if (!config.formio.hosted) {
           process.env.TEST_SIMULATE_SAC_PACKAGE = '0';

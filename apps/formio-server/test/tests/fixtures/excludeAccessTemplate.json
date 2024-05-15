@@ -2,6 +2,7 @@
   "title": "Authoring",
   "version": "2.0.0",
   "name": "exclude-check",
+  "type": "project",
   "roles": {
     "administrator": {
       "title": "Administrator",

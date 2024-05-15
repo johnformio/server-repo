@@ -55,6 +55,7 @@ module.exports = function(app, template, hook) {
         .send({
           title: chance.word(),
           name: chance.word(),
+          type: 'project'
         });
 
       assert.equal(projectRes.status, 201);
