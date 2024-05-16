@@ -72,6 +72,12 @@ module.exports = function(formioServer) {
               }
             ]
           },
+          {
+            name: {$in: _.keys(req.access)}
+          },
+          {
+            name: {$in: _.keys(req.user.access)}
+          }
         ]
       };
     }

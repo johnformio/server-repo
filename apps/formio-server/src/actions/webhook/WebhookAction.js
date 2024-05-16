@@ -378,7 +378,7 @@ module.exports = (router) => {
               key: 'initialDelay',
               type: 'number',
               input: true,
-              tooltip: 'The delay after the initial request. Next, the delay is calculated based on the Retry Type.'
+              tooltip: 'The delay after the initial request. The delay is calculated based on the Retry Type.'
             }
           ]
         }
@@ -668,7 +668,7 @@ module.exports = (router) => {
           if (response.ok) {
             return handleSuccess(body);
           }
-          if (settings.retryType && attempts <= settings.numberOfAttempts) {
+          if (settings.retryType && attempts < settings.numberOfAttempts) {
             await retryRequest();
           }
           else {
@@ -676,7 +676,7 @@ module.exports = (router) => {
           }
         };
         const onError = async (err) => {
-          if (err.statusCode && settings.retryType && attempts <= settings.numberOfAttempts) {
+          if (err.statusCode && settings.retryType && attempts < settings.numberOfAttempts) {
             await retryRequest();
           }
           else {

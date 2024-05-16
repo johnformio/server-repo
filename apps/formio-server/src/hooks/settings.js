@@ -62,7 +62,13 @@ module.exports = function(app) {
     },
     alter: {
       logAction(req, res, action, handler, method, cb) {
-        const allowLogs = true;
+        const allowLogs = _.get(req.currentForm, 'settings.logs', false) &&
+          ((config.formio.hosted && ['trial', 'commercial'].includes(req.primaryProject.plan)) ||
+            (!config.formio.hosted && app.license && !app.license.licenseServerError && app.license.terms && _.get(
+              app,
+              'license.terms.options.sac',
+              false,
+            )));
 
         if (allowLogs) {
           new ActionLogger(app.formio, req, res, action, handler, method).log(cb);
@@ -664,6 +670,15 @@ module.exports = function(app) {
                 }).concat(_.filter(currentProject.access, function(permission) {
                   return _.startsWith(permission.type, 'stage_');
                 }));
+
+                if (req.currentProject && req.currentProject.type === 'tenant' && req.userProject.name === 'formio') {
+                  if (req.access && _.includes(_.keys(req.access), req.currentProject.name)) {
+                    _.find(teamAccess, {type: req.access[req.currentProject.name]}).roles.push(req.user._id.toString());
+                  }
+                  if (req.user && req.user.sso && req.user.access && _.includes(_.keys(req.user.access), req.currentProject.name)) {
+                    _.find(teamAccess, {type: req.user.access[req.currentProject.name]}).roles.push(req.user._id.toString());
+                  }
+                }
 
                 // Initialize the project access.
                 access.project = access.project || {};
