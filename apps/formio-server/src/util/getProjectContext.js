@@ -1,8 +1,17 @@
 'use strict';
 const _ = require('lodash');
+const allowedProjectTypes = ['project', 'stage', 'tenant'];
 
 module.exports = (req, isNew, res = null, postCreate = false, app = null) => {
-    let type = isNew ? _.get(req, 'body.type', 'project') : _.get(req, 'currentProject.type', req.body.type || 'project');
+    let type = isNew ? _.get(req, 'body.type') : _.get(req, 'currentProject.type', req.body.type);
+
+    if (!type) {
+        throw new Error('Project type must be provided.');
+    }
+
+    if (!allowedProjectTypes.includes(type)) {
+        throw new Error(`Invalid project type. Allowed values are: ${allowedProjectTypes.join(', ')}.`);
+    }
 
     if (postCreate) {
         type = res.resource?.item?.type;
