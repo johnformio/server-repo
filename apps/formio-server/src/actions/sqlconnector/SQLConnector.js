@@ -379,7 +379,9 @@ module.exports = (router) => {
             }
 
             if (!response.ok) {
-              throw new Error('Invalid response.');
+              return response.text().then(text => {
+                throw new Error(text);
+              });
             }
 
             const body = await response.json();

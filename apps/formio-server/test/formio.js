@@ -358,8 +358,7 @@ describe('Initial Tests', function() {
             title: 'Form.io',
             name: 'formio',
             plan: 'commercial',
-            template: formioProject,
-            type: 'project'
+            template: formioProject
           })
           .expect(201)
           .end(function(err, res) {
