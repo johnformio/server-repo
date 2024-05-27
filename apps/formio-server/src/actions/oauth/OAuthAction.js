@@ -5,7 +5,6 @@ const formioUtil = require('../../util/util');
 const _ = require('lodash');
 const crypto = require('crypto');
 const base64url = require('base64url');
-const NodeCache = require('node-cache');
 const fetch = require('@formio/node-fetch-http-proxy');
 
 const qs = require('qs');
@@ -14,7 +13,6 @@ const chance = require('chance').Chance();
 const {ObjectId} = require('mongodb');
 
 const MAX_TIMESTAMP = 8640000000000000;
-const cacheVerifire = new NodeCache();
 
 module.exports = router => {
   const formio = router.formio;
@@ -25,6 +23,7 @@ module.exports = router => {
   } = router.formio;
   const oauthUtil = require('../../util/oauth')(formio);
   const auth = require('../../authentication/index')(formio);
+  let codeVerifier = null;
 
   /**
    * OAuthAction class.
@@ -580,7 +579,7 @@ module.exports = router => {
             grant_type: "authorization_code",
             redirect_uri: oauthResponse.redirectURI,
             client_id: settings.clientId,
-            code_verifier: cacheVerifire.get('code_verifier'),
+            code_verifier: codeVerifier,
             code: oauthResponse.code
           };
           /* eslint-enable camelcase */
@@ -592,7 +591,7 @@ module.exports = router => {
           }).then((response)=> response.json());
         })
         .then((token) => {
-          cacheVerifire.del('code_verifier');
+          codeVerifier = null;
           if (token.error) {
             return res.status(400).send(token.error_description || token.error);
           }
@@ -881,10 +880,8 @@ module.exports = router => {
                       return randomChars.join( '' );
                     };
 
-                    let  codeVerifier  = cacheVerifire.get('code_verifier');
                     if (!codeVerifier) {
                       codeVerifier = createCodeVerifier(50);
-                      cacheVerifire.set('code_verifier', codeVerifier);
                     }
 
                     var hash = crypto.createHash('sha256').update(codeVerifier).digest();
