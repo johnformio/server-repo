@@ -65,6 +65,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-8115: Fix tests
  - Revert "FIO-8115: Throw an error when type is not provided"
  - Revert "FIO-8115: Fix tests"
+ - FIO-8225: SQL Connector Error Handling and Action Logs
 
 ## 9.2.0-rc.1
 ### Changed
