@@ -485,9 +485,16 @@ module.exports = function(options) {
           window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/view\\/?$/, '');
           ${appVariables(req.currentProject)}
         </script>`;
+        let customJs;
+        if (_.get(req.currentProject, 'public.custom.js', '')) {
+          customJs = `<script type="text/javascript" src="${req.currentProject.public.custom.js}" defer></script>`;
+        }
         fs.readFile(`./portal/manager/view/index.html`, 'utf8', (err, contents) => {
           if (err) {
             return next(err);
+          }
+          if (customJs) {
+            contents = contents.replace('</body>', `${customJs}</body>`);
           }
           res.send(contents.replace('<head>', `<head>${script}`));
         });
