@@ -66,6 +66,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Revert "FIO-8115: Throw an error when type is not provided"
  - Revert "FIO-8115: Fix tests"
  - FIO-8225: SQL Connector Error Handling and Action Logs
+ - FIO-7804 fixed grant request error
+ - FIO-7864 added tool to create passport config based on saml metadata xml
 
 ## 9.2.0-rc.1
 ### Changed
