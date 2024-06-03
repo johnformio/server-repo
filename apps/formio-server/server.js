@@ -10,6 +10,7 @@ const Q = require('q');
 const cacheControl = require('express-cache-controller');
 const {v4: uuidv4} = require('uuid');
 const fs = require('fs');
+const xss = require("xss");
 const license = require('./src/util/license');
 const audit = require('./src/util/audit');
 const cors = require('cors');
@@ -488,9 +489,16 @@ module.exports = function(options) {
           window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/view\\/?$/, '');
           ${appVariables(req.currentProject)}
         </script>`;
+        let customJs;
+        if (_.get(req.currentProject, 'public.custom.js', '')) {
+          customJs = `<script type="text/javascript" src="${xss(req.currentProject.public.custom.js)}" defer></script>`;
+        }
         fs.readFile(`./portal/manager/view/index.html`, 'utf8', (err, contents) => {
           if (err) {
             return next(err);
+          }
+          if (customJs) {
+            contents = contents.replace('</body>', `${customJs}</body>`);
           }
           res.send(contents.replace('<head>', `<head>${script}`));
         });
