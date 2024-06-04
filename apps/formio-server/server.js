@@ -526,6 +526,10 @@ module.exports = function(options) {
     debug.startup('Attaching middleware: Validate Submission Data');
     app.use('/project/:projectId/form/:formId/validate', require('./src/middleware/validateSubmission')(app.formio));
 
+    // Add Server part Captcha verification.
+    debug.startup('Attaching middleware: Captcha verification');
+    app.use('/project/:projectId/captcha', require('./src/middleware/captcha')(app.formio.formio));
+
     // Mount the error logging middleware.
     debug.startup('Attaching middleware: Error Handler');
     app.use((err, req, res, next) => {

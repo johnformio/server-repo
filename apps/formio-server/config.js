@@ -132,6 +132,7 @@ config.formio.reservedForms = [
   'saml',
   'oauth2',
   'recaptcha',
+  'captcha',
   'manage',
   'action',
   'actionItem',

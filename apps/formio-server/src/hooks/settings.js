@@ -96,6 +96,8 @@ module.exports = function(app) {
       FormResource: require('./alter/FormResource')(app),
       models: require('./alter/models')(app),
       email: require('./alter/email')(app),
+      validationDatabaseHooks: require('./alter/validationDatabaseHooks')(app),
+      serverRules: require('./alter/serverRules.js')(app),
       validateSubmissionForm: require('./alter/validateSubmissionForm')(app),
       currentUser: require('./alter/currentUser')(app),
       accessInfo: require('./alter/accessInfo')(app),
