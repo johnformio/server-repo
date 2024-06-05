@@ -68,6 +68,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-8225: SQL Connector Error Handling and Action Logs
  - FIO-7804 fixed grant request error
  - FIO-7864 added tool to create passport config based on saml metadata xml
+ - FIO-8381 Added limit access for PDF Designer
+ - FIO-7515 fixed display of Custom components on Launch Tab Preview
+ - FIO-7804 fixed invalid grant request error
+ - FIO-8027 add cloudflare turnstile as a captcha provider
 
 ## 9.2.0-rc.1
 ### Changed
