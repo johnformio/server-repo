@@ -117,23 +117,59 @@ module.exports = (formioServer) => {
 
     encryptDecrypt: (req, submission, operation, next) => {
       Encryptor.loadProject(req).then((project) => {
-        Utils.eachComponentData(req.currentForm.components, submission.data, (component, data, row, path, components, index, parent) => {
-          if (Encryptor.encryptedComponent(component)) {
+        if (!req.currentForm && req.encryptedComponents) {
+          _.each(req.encryptedComponents, (component, path) => {
+            let parent = null;
+            const pathParts = path.split('.');
+            pathParts.pop();
+            if (pathParts.length) {
+              // Get the parent.
+              parent = req.flattenedComponents[pathParts[(pathParts.length - 1)]];
+            }
             // Skip component if parent already encrypted.
             if (parent && Encryptor.containerBasedComponent(parent) && Encryptor.encryptedComponent(parent)) {
               return;
             }
-            if (_.has(data, path)) {
-              const prevValue = _.get(req.previousSubmission?.data, path);
-              const newValue = _.get(data, path);
-              const result = Encryptor.getValue(project, operation, newValue, req.primaryProject.plan, prevValue);
-              if (result === undefined) {
+            // Handle array-based components.
+            if (parent && Encryptor.arrayBasedComponent(parent)) {
+              _.get(submission.data, pathParts.join('.'), []).forEach((row) => {
+                row[component.key] = Encryptor.getValue(project, operation, row[component.key], req.primaryProject ? req.primaryProject.plan : '');
+              });
+            }
+            else if (_.has(submission.data, path)) {
+              // Handle other components including Container, which is object-based.
+              _.set(
+                submission.data,
+                path,
+                Encryptor.getValue(
+                  project,
+                  operation,
+                  _.get(submission.data, path),
+                  req.primaryProject.plan
+                )
+              );
+            }
+          });
+        }
+        else {
+          Utils.eachComponentData(req.currentForm.components, submission.data, (component, data, row, path, components, index, parent) => {
+            if (Encryptor.encryptedComponent(component)) {
+              // Skip component if parent already encrypted.
+              if (parent && Encryptor.containerBasedComponent(parent) && Encryptor.encryptedComponent(parent)) {
                 return;
               }
-              _.set(submission.data, path, result);
+              if (_.has(data, path)) {
+                const prevValue = _.get(req.previousSubmission?.data, path);
+                const newValue = _.get(data, path);
+                const result = Encryptor.getValue(project, operation, newValue, req.primaryProject.plan, prevValue);
+                if (result === undefined) {
+                  return;
+                }
+                _.set(submission.data, path, result);
+              }
             }
-          }
-        });
+          });
+        }
 
         next();
       }).catch((err)=>{
