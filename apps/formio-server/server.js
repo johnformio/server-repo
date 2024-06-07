@@ -144,7 +144,7 @@ module.exports = function(options) {
               else if (!config.formio.hosted && app.license && app.license.licenseId && matched.includes('var licenseId')) {
                 return `var licenseId = '${app.license.licenseId}'`;
               }
-              else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.pdf && matched.includes('var pdfBuilder')) {
+              else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.pdfBasic === false && matched.includes('var pdfBuilder')) {
                 return 'var pdfBuilder = true;';
               }
               return matched;
