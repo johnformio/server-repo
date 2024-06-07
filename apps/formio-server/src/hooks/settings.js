@@ -673,7 +673,7 @@ module.exports = function(app) {
                   return _.startsWith(permission.type, 'stage_');
                 }));
 
-                if (req.currentProject && req.currentProject.type === 'tenant' && req.userProject.name === 'formio') {
+                if (req.currentProject?.type === 'tenant' && req.userProject?.name === 'formio') {
                   if (req.access && _.includes(_.keys(req.access), req.currentProject.name)) {
                     _.find(teamAccess, {type: req.access[req.currentProject.name]}).roles.push(req.user._id.toString());
                   }
