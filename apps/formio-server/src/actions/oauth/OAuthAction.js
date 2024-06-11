@@ -5,7 +5,7 @@ const formioUtil = require('../../util/util');
 const _ = require('lodash');
 const crypto = require('crypto');
 const base64url = require('base64url');
-const fetch = require('@formio/node-fetch-http-proxy');
+const fetch = require('node-fetch');
 
 const qs = require('qs');
 const Q = require('q');

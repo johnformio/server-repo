@@ -96,6 +96,8 @@ module.exports = function(app) {
       FormResource: require('./alter/FormResource')(app),
       models: require('./alter/models')(app),
       email: require('./alter/email')(app),
+      validationDatabaseHooks: require('./alter/validationDatabaseHooks')(app),
+      serverRules: require('./alter/serverRules.js')(app),
       validateSubmissionForm: require('./alter/validateSubmissionForm')(app),
       currentUser: require('./alter/currentUser')(app),
       accessInfo: require('./alter/accessInfo')(app),
@@ -671,7 +673,7 @@ module.exports = function(app) {
                   return _.startsWith(permission.type, 'stage_');
                 }));
 
-                if (req.currentProject && req.currentProject.type === 'tenant' && req.userProject.name === 'formio') {
+                if (req.currentProject?.type === 'tenant' && req.userProject?.name === 'formio') {
                   if (req.access && _.includes(_.keys(req.access), req.currentProject.name)) {
                     _.find(teamAccess, {type: req.access[req.currentProject.name]}).roles.push(req.user._id.toString());
                   }
