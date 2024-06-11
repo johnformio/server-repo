@@ -711,6 +711,7 @@ describe('Initial Tests', function() {
         require('./tests/report')(app, template, hook);
         require('./tests/actions')(app, template, hook);
         require('./tests/pdfProxy')(app, template, hook);
+        require('./tests/pdfUtils')(app, template, hook);
         require('./tests/revisions')(app, template, hook);
         require('./tests/group-permissions')(app, template, hook);
         require('formio/test/templates')(app, template, hook);
