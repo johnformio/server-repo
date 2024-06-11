@@ -1,14 +1,37 @@
-name: Repo
+name: CI/CD
 
 on:
+  pull_request:
+    types: [opened, synchronize, reopened]
   push:
-    branches:
-      - '*' # This will make sure all push events on any branch triggers this workflow.
     tags:
       - '*' # This will make sure tag creations also trigger the workflow.
 
 env:
   NODE_VERSION: 20.x
+  NPM_EMAIL: ${{ secrets.NPM_EMAIL }}
+  NPM_USERNAME: ${{ secrets.NPM_USERNAME }}
+  NPM_PASSWORD: ${{ secrets.NPM_PASSWORD }}
+  FILTER_ACCESS: false
+  TEST_SUITE: 1
+  PROTOCOL: http
+  DOMAIN: localhost
+  PORT: 3000
+  MONGO: mongodb://localhost:27017/formio-test
+  PDF_SERVER: http://localhost:4005
+  PROJECT_PLAN: trial
+  DROPBOX_CLIENTID: clientid123
+  DROPBOX_CLIENTSECRET: clientsecret123
+  ADMIN_EMAIL: admin@example.com
+  ADMIN_PASS: CHANGEME
+  ADMIN_KEY: thisIsMyXAdminKey
+  LICENSE_REMOTE: true
+  LICENSE_KEY: ${{ secrets.LICENSE_KEY }}
+  FORMIO_PDF_PROJECT: https://pdf.test-form.io
+  FORMIO_PDF_APIKEY: ${{ secrets.FORMIO_PDF_APIKEY }}
+  PORTAL_SECRET: 123secret123
+  DB_SECRET: 123secret123
+  JWT_SECRET: 123secret123
 
 jobs:
   ###########################################################################
@@ -114,38 +137,15 @@ jobs:
   ###########################################################################
   ## Test
   ###########################################################################
-  test:    
+  ## Current Branch
+  test-current:    
     needs: build
     runs-on: ubuntu-latest
     services:
       mongodb:
-        image: mongo:4.4
+        image: mongo
         ports:
           - 27017:27017
-    env:
-      NPM_EMAIL: ${{ secrets.NPM_EMAIL }}
-      NPM_USERNAME: ${{ secrets.NPM_USERNAME }}
-      NPM_PASSWORD: ${{ secrets.NPM_PASSWORD }}
-      FILTER_ACCESS: false
-      TEST_SUITE: 1
-      PROTOCOL: http
-      DOMAIN: localhost
-      PORT: 3000
-      MONGO: mongodb://localhost:27017/formio-test
-      PDF_SERVER: http://localhost:4005
-      PROJECT_PLAN: trial
-      DROPBOX_CLIENTID: clientid123
-      DROPBOX_CLIENTSECRET: clientsecret123
-      ADMIN_EMAIL: admin@example.com
-      ADMIN_PASS: CHANGEME
-      ADMIN_KEY: thisIsMyXAdminKey
-      LICENSE_REMOTE: true
-      LICENSE_KEY: ${{ secrets.LICENSE_KEY }}
-      FORMIO_PDF_PROJECT: https://pdf.test-form.io
-      FORMIO_PDF_APIKEY: ${{ secrets.FORMIO_PDF_APIKEY }}
-      PORTAL_SECRET: 123secret123
-      DB_SECRET: 123secret123
-      JWT_SECRET: 123secret123
     strategy:
       matrix:
         node-version: [20.x]
@@ -178,12 +178,76 @@ jobs:
         uses: borales/actions-yarn@v4
         with:
           cmd: test
+
+  ## Target Branch
+  test-target:    
+    needs: build
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo
+        ports:
+          - 27017:27017
+    strategy:
+      matrix:
+        node-version: [20.x]
+    steps:
+      - run: echo "Triggered by ${{ github.event_name }} event."
+      - name: Check out repository code ${{ github.repository }} on ${{ github.ref }}
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git user
+        run: |
+          git config --global user.email "pkgbot@form.io"
+          git config --global user.name "pkgbot"
+
+      - name: Merge target branch into current branch
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}:${{ github.event.pull_request.base.ref }}
+          git merge ${{ github.event.pull_request.base.ref }} --no-commit --no-ff
+  
+      - name: Check for merge conflicts
+        run: |
+          if ! git merge --no-commit --no-ff ${{ github.event.pull_request.base.ref }}; then
+            echo "Merge conflicts detected."
+            git merge --abort
+            exit 1
+          else
+            echo "Merge successful."
+          fi
+
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Restore node modules from cache
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Test
+        if: true
+        uses: borales/actions-yarn@v4
+        with:
+          cmd: test
   ###########################################################################
   ## Docker
   ###########################################################################
   docker:
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [build, test]
+    needs: [build, test-current, test-target]
     runs-on: ubuntu-latest
     env:
       NPM_EMAIL: ${{ secrets.NPM_EMAIL }}
@@ -288,7 +352,7 @@ jobs:
   ###########################################################################
   deploy_npm:
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [test, docker]
+    needs: [docker, test-current, test-target]
     runs-on: ubuntu-latest
 
     steps:

@@ -378,7 +378,7 @@ module.exports = (router) => {
               key: 'initialDelay',
               type: 'number',
               input: true,
-              tooltip: 'The delay after the initial request. Next, the delay is calculated based on the Retry Type.'
+              tooltip: 'The delay after the initial request. The delay is calculated based on the Retry Type.'
             }
           ]
         }
