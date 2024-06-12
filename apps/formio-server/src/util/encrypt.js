@@ -115,27 +115,41 @@ module.exports = (formioServer) => {
       return result;
     },
 
-    encryptDecrypt: (req, submission, operation, next) => {
-      Encryptor.loadProject(req).then((project) => {
-        Utils.eachComponentData(req.currentForm.components, submission.data, (component, data, row, path, components, index, parent) => {
-          if (Encryptor.encryptedComponent(component)) {
-            // Skip component if parent already encrypted.
-            if (parent && Encryptor.containerBasedComponent(parent) && Encryptor.encryptedComponent(parent)) {
+    traverseComponents: (req, project, operation, components, data, next) => {
+      Utils.eachComponentData(components, data, (component, data, row, path, components, index, parent) => {
+        if (Encryptor.encryptedComponent(component)) {
+          if (parent && Encryptor.containerBasedComponent(parent) && Encryptor.encryptedComponent(parent)) {
+            return;
+          }
+          if (_.has(data, path)) {
+            const prevValue = _.get(req.previousSubmission?.data, path);
+            const newValue = _.get(data, path);
+            const result = Encryptor.getValue(project, operation, newValue, req.primaryProject.plan, prevValue);
+            if (result === undefined) {
               return;
             }
-            if (_.has(data, path)) {
-              const prevValue = _.get(req.previousSubmission?.data, path);
-              const newValue = _.get(data, path);
-              const result = Encryptor.getValue(project, operation, newValue, req.primaryProject.plan, prevValue);
-              if (result === undefined) {
-                return;
-              }
-              _.set(submission.data, path, result);
-            }
+            _.set(data, path, result);
           }
-        });
+        }
+      });
+      next();
+    },
 
-        next();
+    encryptDecrypt: (req, submission, operation, next) => {
+      Encryptor.loadProject(req).then((project) => {
+        if (!req.currentForm) {
+          formioServer.formio.cache.loadCurrentForm(req, (err, form) => {
+            if (err) {
+              return next();
+            }
+            formioServer.formio.cache.loadSubForms(form, req, () => {
+              Encryptor.traverseComponents(req, project, operation, form.components, submission.data, next);
+            });
+          });
+        }
+        else {
+          Encryptor.traverseComponents(req, project, operation, req.currentForm.components, submission.data, next);
+        }
       }).catch((err)=>{
         console.warn(err.message);
         next();
