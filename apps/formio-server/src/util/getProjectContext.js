@@ -4,10 +4,6 @@ const _ = require('lodash');
 module.exports = (req, isNew, res = null, postCreate = false, app = null) => {
     let type = isNew ? _.get(req, 'body.type', 'project') : _.get(req, 'currentProject.type', req.body.type || 'project');
 
-   if (!type) {
-    throw new Error("The type should be provided");
-   }
-
     if (postCreate) {
         type = res.resource?.item?.type;
 

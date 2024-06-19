@@ -36,9 +36,10 @@ module.exports = app => {
         form.allowAllSubmissionData = true;
       }
 
-      // Add recaptcha site keys.
-      if (_.get(form, 'settings.recaptcha.isEnabled')) {
+      // Add captcha site keys.
+      if (_.get(form, 'settings.captcha.isEnabled')) {
         _.set(form, 'settings.recaptcha.siteKey', _.get(project, 'settings.recaptcha.siteKey'));
+        _.set(form, 'settings.captcha.siteKey', _.get(project, 'settings.captcha.siteKey'));
       }
 
       // add project plan to form definition in hosted environments
