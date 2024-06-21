@@ -1043,7 +1043,7 @@ module.exports = function(app) {
               return req.userProject.primary;
             }
 
-            if (_url === '/payeezy') {
+            if (_url === '/gateway') {
               return req.userProject.primary;
             }
 
