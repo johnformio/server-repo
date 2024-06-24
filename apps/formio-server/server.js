@@ -115,7 +115,7 @@ module.exports = function(options) {
         res.set('Content-Type', 'application/javascript; charset=UTF-8');
         res.send(
           contents.replace(
-            /var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false|var licenseId = '';|var reportingUI = false;|var whitelabel = false;|var pdfBuilder = false;/gi,
+            /var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false|var licenseId = '';|var reportingUI = false;|var whitelabel = false;|var pdfBuilder = false;|var enterpriseBuilder = false;/gi,
             (matched) => {
               if (config.portalSSO && matched.includes('var sso =')) {
                 return `var sso = '${config.portalSSO}';`;
@@ -146,6 +146,9 @@ module.exports = function(options) {
               }
               else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.pdfBasic === false && matched.includes('var pdfBuilder')) {
                 return 'var pdfBuilder = true;';
+              }
+              else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.enterpriseBuilder && matched.includes('var enterpriseBuilder')) {
+                return 'var enterpriseBuilder = true;';
               }
               return matched;
             }
