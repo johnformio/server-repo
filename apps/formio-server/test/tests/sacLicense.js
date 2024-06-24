@@ -285,26 +285,24 @@ module.exports = function (app, template, hook) {
             },
           })
           .expect(201)
-          .end(function (err, res) {
+          .end(async function (err, res) {
             if (err) {
               return done(err);
             }
             assert.equal(res.body.settings.collection, "textField");
             resourceId = res.body._id;
             const mockReq = { projectId: project._id, params: {}, path: '' };
-            getSubmissionModel(
-              app.formio.formio,
-              mockReq,
-              res.body,
-              false,
-              (err, model) => {
-                if (err) {
-                  done(err);
-                }
-                assert.equal(model.collection.name, "sacTestProject_textField");
-                done();
-              }
-            );
+            try {
+              const model = await getSubmissionModel(
+                app.formio.formio,
+                mockReq,
+                res.body,
+                false);
+              assert.equal(model.collection.name, "sacTestProject_textField");
+              done();
+            } catch (err) {
+              done(err);
+            }
           });
       });
 
@@ -318,24 +316,22 @@ module.exports = function (app, template, hook) {
             },
           })
           .expect(200)
-          .end(function (err, res) {
+          .end(async function (err, res) {
             if (err) {
               return done(err);
             }
             const mockReq = { projectId: project._id, path: '', params: {} };
-            getSubmissionModel(
-              app.formio.formio,
-              mockReq,
-              res.body,
-              false,
-              (err, model) => {
-                if (err) {
-                  done(err);
-                }
-                assert.equal(model.collection.name, "sacTestProject_textFieldNew");
-                done();
-              }
-            );
+            try {
+              const model = await getSubmissionModel(
+                app.formio.formio,
+                mockReq,
+                res.body,
+                false);
+              assert.equal(model.collection.name, "sacTestProject_textFieldNew");
+              done();
+            } catch (err) {
+              done(err);
+            }
           });
       });
 

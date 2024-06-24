@@ -48,16 +48,12 @@ module.exports = app => {
       }
       return form;
     },
-    hook: (form, req, next) => {
+    hook: async (form, req) => {
       if (!form || !form.project) {
-        return next(null, form);
+        return form;
       }
-      app.formio.formio.cache.loadProject(req, form.project.toString(), (err, project) => {
-        if (err) {
-          return next(err);
-        }
-        return next(null, loadFormAlter.alter(project, form));
-      });
+      const project = await app.formio.formio.cache.loadProject(req, form.project.toString());
+      return loadFormAlter.alter(project, form);
     }
   };
   return loadFormAlter;

@@ -34,7 +34,7 @@ const Utils = {
     if (req.headers && req.headers.host) {
       return `${req.protocol}://${req.headers.host}`;
     }
-    if (!req.protocol || !req.host) {
+    if (!req.protocol || !req.hostname) {
       return formio.config.apiHost;
     }
     return `${req.protocol}://${req.host}`;
@@ -116,47 +116,43 @@ const Utils = {
     delete obj[encryptedName];
     return obj;
   },
-  getSubmissionModel: (formio, req, form, init, next) => {
+  getSubmissionModel: async (formio, req, form, init) => {
     if (!form) {
-      return next('No form provided');
+      throw new Error('No form provided');
     }
 
     // No collection provided.
     if (!form.settings || !form.settings.collection) {
-      return next();
+      return;
     }
 
     // Disable for hosted projects
     if (config.formio.hosted) {
-      return next();
+      return;
     }
 
     // Return if the submission model is already established.
     if (req.submissionModel) {
-      return next(null, req.submissionModel);
+      return req.submissionModel;
     }
 
     // Load the project in context.
-    formio.cache.loadCurrentProject(req, (err, project) => {
-      if (err) {
-        delete form.settings.collection;
-        return next(err);
-      }
-
+    try {
+      const project = await formio.cache.loadCurrentProject(req);
       if (!project) {
         delete form.settings.collection;
-        return next('No project found');
+        throw new Error('No project found');
       }
 
       if (project.plan !== 'commercial') {
         delete form.settings.collection;
-        return next('Only Enterprise projects can set different form collections.');
+        throw ('Only Enterprise projects can set different form collections.');
       }
 
       // Get the project name.
       const projectName = project.name.replace(/[^A-Za-z0-9]+/g, '');
       if (!projectName) {
-        return next('Invalid project name');
+        throw new Error('Invalid project name');
       }
 
       // Set the collection name.
@@ -175,7 +171,7 @@ const Utils = {
       ];
       if (reservedCollections.includes(collectionName)) {
         delete form.settings.collection;
-        return next(`${collectionName} is a reserved collection name.`);
+        throw new Error(`${collectionName} is a reserved collection name.`);
       }
 
       // Set the submission model. Mongoose does not automatically create a collection upon establishing a model, (see
@@ -183,59 +179,56 @@ const Utils = {
       // if it has indexes or prepare it to be created upon an initial submission
       debug.db(`Setting submission model to ${collectionName} from submission schema and creating a collection`);
       req.submissionModel = formio.mongoose.model(collectionName, formio.schemas.submission, collectionName, init);
-      req.submissionModel.init((err) => {
-        if (err) {
-          return next(err);
-        }
-        // Set custom submissions collection to be used by default if the request is related to submissions
-        if (req.path.includes('/submission')) {
-          req.model = req.submissionModel;
-        }
-        return next(null, req.submissionModel);
-      });
-    });
+      await req.submissionModel.init();
+      // Set custom submissions collection to be used by default if the request is related to submissions
+      if (req.path.includes('/submission')) {
+        req.model = req.submissionModel;
+      }
+      return req.submissionModel;
+    }
+    catch (err) {
+      delete form.settings.collection;
+      throw err;
+    }
   },
-  getSubmissionRevisionModel: (formio, req, form, init, next) => {
+  getSubmissionRevisionModel: async (formio, req, form, init) => {
     if (!form) {
-      return next('No form provided');
+      throw new Error('No form provided');
     }
 
     // No collection provided.
     if (!form.settings || !form.settings.collection) {
-      return next();
+      return;
     }
 
     // Disable for hosted projects
     if (config.formio.hosted) {
-      return next();
+      return;
     }
 
     // Return if the submission model is already established.
     if (req.submissionRevisionModel) {
-      return next(null, req.submissionRevisionModel);
+      return req.submissionRevisionModel;
     }
 
     // Load the project in context.
-    formio.cache.loadCache.load(req.projectId, (err, project) => {
-      if (err) {
-        delete form.settings.collection;
-        return next(err);
-      }
+    try {
+      const project = await formio.cache.loadCache.load(req.projectId);
 
       if (!project) {
         delete form.settings.collection;
-        return next('No project found');
+        throw new Error('No project found');
       }
 
       if (project.plan !== 'commercial') {
         delete form.settings.collection;
-        return next('Only Enterprise projects can set different form collections.');
+        throw new Error('Only Enterprise projects can set different form collections.');
       }
 
       // Get the project name.
       const projectName = project.name.replace(/[^A-Za-z0-9]+/g, '');
       if (!projectName) {
-        return next('Invalid project name');
+        throw new Error('Invalid project name');
       }
 
       // Set the collection name.
@@ -245,8 +238,12 @@ const Utils = {
       req.submissionRevisionModel = formio.mongoose.model(collectionName, formio.schemas.submissionrevision, collectionName, init);
 
       // Establish a model using the schema.
-      return next(null, req.submissionRevisionModel);
-    });
+      return req.submissionRevisionModel;
+    }
+    catch (err) {
+      delete form.settings.collection;
+      throw err;
+    }
   },
   getComponentDataByPath: (path, data) => {
     if (Array.isArray(path)) {

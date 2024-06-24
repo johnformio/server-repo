@@ -96,7 +96,7 @@ module.exports = function(formio) {
     }
   };
 
-  return function(req, res, next) {
+  return async function(req, res, next) {
     const isPost = req.method === 'POST';
     const isPut = req.method === 'PUT';
     if (!config.formio.hosted || (!isPost && !isPut)) {
@@ -104,10 +104,11 @@ module.exports = function(formio) {
       return next();
     }
 
-    formio.plans.getPlan(req, function(err, plan) {
-      if (err || !plan) {
-        debug(err || 'Project plan not found.');
-        return next(err || 'Project plan not found.');
+    try {
+      const plan = await formio.plans.getPlan(req);
+      if (!plan) {
+        debug('Project plan not found.');
+        return next('Project plan not found.');
       }
 
       if (config.formio.hosted && req.body.plan !== plan) {
@@ -138,6 +139,10 @@ module.exports = function(formio) {
           filterDataConnectionSettings(req);
           return next();
       }
-    });
+    }
+ catch (err) {
+      debug(err);
+      return next(err);
+    }
   };
 };

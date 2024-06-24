@@ -33,27 +33,24 @@ module.exports = function(app) {
   app.formio.formio.payment = require('../payment/payment')(app, app.formio.formio);
 
   return {
-    settings(settings, req, cb) {
+    async settings(settings, req) {
       if (!req.projectId) {
         if (settings !== undefined) {
-          return cb(null, settings);
+          return settings;
         }
 
-        return cb('No project ID provided.');
+       throw ('No project ID provided.');
       }
 
       // Load the project settings.
-      formioServer.formio.cache.loadProject(req, req.projectId, function(err, project) {
-        if (err) {
-          return cb(err);
-        }
+      const project = await formioServer.formio.cache.loadProject(req, req.projectId);
+
         if (!project) {
-          return cb('Could not find project');
+          throw ('Could not find project');
         }
 
         // Call the callback with the project settings.
-        cb(null, project.settings);
-      });
+        return project.settings;
     },
     on: {
       init: require('./on/init')(app),
@@ -145,12 +142,9 @@ module.exports = function(app) {
 
         return secret ? util.decrypt(secret, data) : data;
       },
-      export(req, query, form, exporter, cb) {
-        util.getSubmissionModel(formioServer.formio, req, form, true, (err, submissionModel) => {
-          if (err) {
-            return cb(err);
-          }
-
+      async export(req, query, form, exporter, cb) {
+        try {
+           const submissionModel = await util.getSubmissionModel(formioServer.formio, req, form, true);
           if (form && form.name === 'license2' && exporter && exporter.addCustomTransformer) {
             exporter.addCustomTransformer('user', (value) => {
               return value.map(item => _.get(item, 'data.email', ''));
@@ -166,7 +160,10 @@ module.exports = function(app) {
 
           req.submissionModel = submissionModel;
           return cb();
-        });
+        }
+ catch (err) {
+          return cb(err);
+        }
       },
 
       /**
@@ -588,30 +585,25 @@ module.exports = function(app) {
         /**
          * Calculate the project access.
          *
-         * @param callback {Function}
-         *   The callback function to invoke after completion.
          */
-        const getProjectAccess = function(callback) {
+        const getProjectAccess = async function() {
           // Build the access object for this project.
           access.project = {};
 
           // Skip project access if no projectId was given.
           if (!req.projectId) {
-            return callback(null);
+            return null;
           }
 
           // Load the project.
-          formioServer.formio.cache.loadProject(req, req.projectId, function(err, project) {
-            if (err) {
-              return callback(err);
-            }
+            const project = await formioServer.formio.cache.loadProject(req, req.projectId);
             if (!project) {
-              return callback(`No project found with projectId: ${req.projectId}`);
+              throw new Error(`No project found with projectId: ${req.projectId}`);
             }
 
             req.currentProject = project;
-            formioServer.formio.cache.loadPrimaryProject(req, function(err, primaryProject) {
-              req.primaryProject = primaryProject;
+            const primaryProject = await formioServer.formio.cache.loadPrimaryProject(req);
+            req.primaryProject = primaryProject;
 
               // Store the Project Owners UserId, because they will have all permissions.
               if (req.primaryProject && req.primaryProject.owner) {
@@ -634,40 +626,33 @@ module.exports = function(app) {
               }
 
               // Pass the access of this project to the next function.
-              return callback(null);
-            });
-          });
+            return null;
         };
 
         /**
          * Calculate the team access.
          *
-         * @param callback {Function}
-         *   The callback function to invoke after completion.
          */
-        const getTeamAccess = function(callback) {
+        const getTeamAccess = async function() {
           // Modify the project access with teams functionality.
           access.project = access.project || {};
 
           // Skip teams access if no projectId was given.
           if (!req.projectId) {
-            return callback(null);
+            return null;
           }
 
-          formioServer.formio.cache.loadCurrentProject(req, function(err, currentProject) {
+            const currentProject = await formioServer.formio.cache.loadCurrentProject(req);
             // Load the primary project.
             /* eslint-disable camelcase, max-statements, no-fallthrough */
-            formioServer.formio.cache.loadPrimaryProject(req, function(err, primaryProject) {
-              if (err) {
-                return callback(err);
-              }
+            const primaryProject = await formioServer.formio.cache.loadPrimaryProject(req);
               if (!primaryProject) {
-                return callback(`No project found with projectId: ${req.projectId}`);
+                throw new Error(`No project found with projectId: ${req.projectId}`);
               }
 
               // Skip teams processing, if this projects plan does not support teams.
               if (['basic', 'independent', 'archived'].includes(primaryProject.plan)) {
-                return callback(null);
+                return null;
               }
 
               // Iterate the project access permissions, and search for teams functionality.
@@ -756,25 +741,21 @@ module.exports = function(app) {
               }
 
               // Pass the access of this Team to the next function.
-              return callback(null);
-            });
+              return null;
+
             /* eslint-enable camelcase, max-statements, no-fallthrough */
-          });
         };
 
-        const getPrimaryProjectAdminRole = function(callback) {
+        const getPrimaryProjectAdminRole = async function() {
           /* eslint-disable camelcase, max-statements, no-fallthrough */
-          const getRoles = (project) => {
-            formioServer.formio.resources.role.model.find(
+          const getRoles = async (project) => {
+            const roles = await formioServer.formio.resources.role.model.find(
               {
                 deleted: {$eq: null},
                 project: project._id,
-              }, function(err, roles) {
-                if (err) {
-                  return callback(err);
-                }
+              });
 
-                if (roles && roles.length) {
+              if (roles && roles.length) {
                   roles.forEach((role) => {
                     if (role.admin) {
                       const roleId = role._id.toString();
@@ -783,33 +764,27 @@ module.exports = function(app) {
                   });
                 }
 
-                return callback(null);
-              });
+                return null;
           };
           if (req.userProject && req.userProject.primary) {
-           getRoles(req.userProject);
+           await getRoles(req.userProject);
           }
           else if (req.user && req.token) {
             if (!req.projectId) {
-              return callback(null);
+              return null;
             }
             const projectId = req.token.project ? req.token.project._id : req.token.form.project;
+            const project = await formioServer.formio.cache.loadProject(req, projectId);
 
-            formioServer.formio.cache.loadProject(req, projectId, function(err, project) {
-              if (err) {
-                return callback(err);
-              }
-
-              if (project && project.primary) {
-                getRoles(project);
-              }
-              else {
-                return callback(null);
-              }
-            });
+            if (project && project.primary) {
+              await getRoles(project);
+            }
+            else {
+              return;
+            }
           }
           else {
-            return callback(null);
+            return;
           }
           /* eslint-enable camelcase, max-statements, no-fallthrough */
         };
@@ -821,7 +796,7 @@ module.exports = function(app) {
           getTeamAccess,
           getPrimaryProjectAdminRole
         );
-        handlers.push((callback) => {
+        handlers.push(async () => {
           // The groups should be the difference between the user roles and access.roles.
           const groups = (req.user && req.user.roles && access.roles) ? _.difference(req.user.roles, access.roles) : [];
 
@@ -848,7 +823,8 @@ module.exports = function(app) {
               .value();
 
             // Verify these are all submissions within this project.
-            formioServer.formio.resources.submission.model
+            try {
+              const subs = await formioServer.formio.resources.submission.model
               .find({
                 _id: {$in: groupIds},
                 project: formioServer.formio.util.idToBson(req.projectId),
@@ -856,11 +832,11 @@ module.exports = function(app) {
               })
               .lean()
               .select({_id: 1})
-              .exec((err, subs) => {
-                if (err || !subs || !subs.length) {
-                  // Don't add any groups to the access roles.
-                  return callback(null);
-                }
+              .exec();
+              if (!subs || !subs.length) {
+                // Don't add any groups to the access roles.
+                return null;
+              }
 
                 // Add the valid groups to the access roles.
                 access.roles = access.roles.concat(
@@ -873,11 +849,14 @@ module.exports = function(app) {
                     .uniq()
                     .value(),
                 );
-                return callback(null);
-              });
+                return null;
+            }
+            catch (err) {
+              return;
+            }
           }
           else {
-            return callback(null);
+            return null;
           }
         });
         return handlers;
@@ -891,20 +870,16 @@ module.exports = function(app) {
        * @param callback
        * @returns {*}
        */
-      resourceAccessFilter(query, req, callback) {
-        formioServer.formio.plans.getPlan(req, function(err, plan) {
-          if (err) {
-            return callback(err, []);
-          }
+      async resourceAccessFilter(query, req) {
+          const {plan} = await formioServer.formio.plans.getPlan(req);
 
           // FOR-209 - Skip group permission checks for non-team/commercial project plans.
           if (['team', 'commercial', 'trial'].indexOf(plan) === -1) {
-            return callback(null, []);
+            return [];
           }
 
           // Return the query and user roles as groups.
-          return callback(null, query);
-        });
+          return query;
       },
 
       /**
@@ -1353,11 +1328,9 @@ module.exports = function(app) {
         steps.unshift(async.apply(install(projectEntity), template, project));
 
         // TODO: this may be better in the project entity's transform() method so we can install project entity in one fell swoop
-        const _importAccess = (template, items, done) => {
-          formioServer.formio.cache.loadCache.load(template._id, (err, project) => {
-            if (err) {
-              return done(err);
-            }
+        const _importAccess = async (template, items, done) => {
+          try {
+            const project = await formioServer.formio.cache.loadCache.load(template._id);
 
             if (!project) {
               return done();
@@ -1434,10 +1407,14 @@ module.exports = function(app) {
             }
 
             // Update this project.
-            formioServer.formio.cache.updateProject(project._id, {
+            await formioServer.formio.cache.updateProject(project._id, {
               access: project.access
-            }, done);
-          });
+            });
+            done();
+        }
+        catch (err) {
+          return done(err);
+        }
         };
 
         steps.push(async.apply(_importAccess, template, project));
@@ -1468,8 +1445,8 @@ module.exports = function(app) {
         return steps;
       },
 
-      exportOptions(options, req, res) {
-        const currentProject = formioServer.formio.cache.currentProject(req);
+      async exportOptions(options, req, res) {
+        const currentProject = await formioServer.formio.cache.currentProject(req);
         options.title = currentProject.title;
         options.tag = currentProject.tag;
         options.name = currentProject.name;
@@ -1646,17 +1623,21 @@ module.exports = function(app) {
        * @returns {Object}
        *   The modified mongoose request object.
        */
-      formQuery(query, req, formio) {
+      async formQuery(query, req, formio) {
         // Determine which project to use, one in the request, or formio.
         if (formio && formio === true) {
-          return formioServer.formio.cache.loadProjectByName(req, 'formio', function(err, _id) {
-            if (err || !_id) {
+          try {
+            const _id = await formioServer.formio.cache.loadProjectByName(req, 'formio');
+            if (!_id) {
               return query;
             }
 
             query.project = formioServer.formio.util.idToBson(_id);
             return query;
-          });
+          }
+          catch (err) {
+            return query;
+          }
         }
         else {
           req.projectId = req.projectId || (req.params ? req.params.projectId : undefined) || req._id;
@@ -1863,7 +1844,7 @@ module.exports = function(app) {
         schema.externalTokens = [ExternalTokenSchema];
         return schema;
       },
-      newRoleAccess(handlers, req) {
+      async newRoleAccess(handlers, req) {
         const projectId = req.projectId;
 
         /**
@@ -1871,11 +1852,9 @@ module.exports = function(app) {
          *
          * @param done
          */
-        const updateProject = function(_role, done, req, id, cb) {
-          formioServer.formio.cache.loadCache.load(projectId, (err, project) => {
-            if (err) {
-              return done(err);
-            }
+        const updateProject = async function(_role, done, req, id, cb) {
+          try {
+            const project = await formioServer.formio.cache.loadCache.load(projectId);
             if (!project) {
               return done();
             }
@@ -1901,15 +1880,14 @@ module.exports = function(app) {
             }
 
             // Save the updated permissions.
-            formioServer.formio.cache.updateProject(projectId, {
+            await formioServer.formio.cache.updateProject(projectId, {
               access: project.access
-            }, (err) => {
-              if (err) {
-                return done(err);
-              }
-              done();
             });
-          });
+            done();
+        }
+        catch (err) {
+          return done(err);
+        }
         };
 
         // Update the project when new roles are added.
@@ -1940,14 +1918,12 @@ module.exports = function(app) {
         actionItem.project = req.projectId;
         return actionItem;
       },
-      formMachineName(machineName, document, done) {
+      async formMachineName(machineName, document, done) {
         if (!document) {
           return done(null, machineName);
         }
-        formioServer.formio.cache.loadCache.load(document.project, function(err, project) {
-            if (err) {
-              return done(err);
-            }
+        try {
+            const project = await formioServer.formio.cache.loadCache.load(document.project);
             if (!project) {
               return done(null, machineName);
             }
@@ -1957,7 +1933,10 @@ module.exports = function(app) {
             }
 
             done(null, `${project.machineName}:${machineName}`);
-          });
+        }
+        catch (err) {
+          return done(err);
+        }
       },
       roleMachineName(machineName, document, done) {
         this.formMachineName(machineName, document, done);
@@ -2277,18 +2256,13 @@ module.exports = function(app) {
         }
       },
 
-      getPrimaryProjectAdminRole(req, res, cb) {
+      async getPrimaryProjectAdminRole(req, res) {
         /* eslint-disable camelcase, max-statements, no-fallthrough */
-        const getRoles = (project) => {
-          formioServer.formio.resources.role.model.find(
-            {
+        const getRoles = async (project) => {
+            const roles = await formioServer.formio.resources.role.model.find({
               deleted: {$eq: null},
               project: project._id,
-            }, function(err, roles) {
-              if (err) {
-                return cb(err);
-              }
-
+            });
               let primaryAdminRole;
 
               if (roles && roles.length) {
@@ -2300,30 +2274,24 @@ module.exports = function(app) {
                 });
               }
 
-              cb(null, primaryAdminRole);
-            });
+              return primaryAdminRole;
         };
 
         if (req.userProject && req.userProject.primary) {
-         getRoles(req.userProject);
+         return await getRoles(req.userProject);
         }
         else if (req.user && req.token) {
           const projectId = req.token.project ? req.token.project._id : req.token.form.project;
-          formioServer.formio.cache.loadProject(req, projectId, function(err, project) {
-            if (err) {
-              return cb(err);
-            }
-
-            if (project && project.primary) {
-              getRoles(project);
-            }
-            else {
-              return cb(null);
-            }
-          });
-        }
+          const project = await formioServer.formio.cache.loadProject(req, projectId);
+          if (project && project.primary) {
+            await getRoles(project);
+          }
+          else {
+           return;
+          }
+         }
         else {
-          return cb(null);
+          return;
         }
         /* eslint-enable camelcase, max-statements, no-fallthrough */
       },

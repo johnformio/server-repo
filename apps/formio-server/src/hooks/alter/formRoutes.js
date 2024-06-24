@@ -15,35 +15,35 @@ module.exports = app => routes => {
   };
 
   routes.hooks.put = {
-    before(req, res, item, next) {
+    async before(req, res, item, next) {
       app.formio.formio.util.markModifiedParameters(item, ['components', 'properties']);
-      app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
-        if (formRevision.shouldCreateNewRevision(req, item, form)) {
-          formRevision.incrementVersion(item);
-        }
-        next();
-      });
+      const form = await app.formio.formio.cache.loadForm(req, null, req.params.formId);
+      if (formRevision.shouldCreateNewRevision(req, item, form)) {
+        formRevision.incrementVersion(item);
+      }
+      next();
     },
-    after(req, res, item, next) {
-      app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
+    async after(req, res, item, next) {
+        const form = await app.formio.formio.cache.loadForm(req, null, req.params.formId);
         if (formRevision.shouldCreateNewRevision(req, item, form)) {
-          return formRevision.createVersion(item, getRequestUser(req), req.body._vnote, (err, revision) => {
+          return formRevision.createVersion(item, getRequestUser(req), req.body._vnote, async (err, revision) => {
             if (err) {
               return next(err);
             }
               if (revision) {
-                app.formio.formio.mongoose.models.formrevision.updateOne({
-                  _id: revision._id
-                },
-                {$set: {
-                  revisionId: revision._id,
-                }},
-                (err)=>{
-                  if (err) {
-                    return next(err);
-                  }
+                try {
+                  await app.formio.formio.mongoose.models.formrevision.updateOne({
+                    _id: revision._id
+                  },
+                  {$set: {
+                    revisionId: revision._id,
+                    }
+                  });
                   return next();
-                });
+                }
+                catch (err) {
+                  return next(err);
+                }
               }
           });
         }
@@ -52,48 +52,42 @@ module.exports = app => routes => {
           return submissionRevision.updateRevisionsSet(form._id, req.user, next);
         }
         next();
-      });
     }
   };
 
   routes.hooks.patch = {
-    before(req, res, item, next) {
+    async before(req, res, item, next) {
       app.formio.formio.util.markModifiedParameters(item, ['components', 'properties']);
-      app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
-        if (formRevision.shouldCreateNewRevision(req, item, form)) {
-          formRevision.incrementVersion(item);
-        }
-        return next();
-      });
+      const form = await app.formio.formio.cache.loadForm(req, null, req.params.formId);
+      if (formRevision.shouldCreateNewRevision(req, item, form)) {
+        formRevision.incrementVersion(item);
+      }
+      return next();
     },
-    after(req, res, item, next) {
-      app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
+    async after(req, res, item, next) {
+        const form = await app.formio.formio.cache.loadForm(req, null, req.params.formId);
         if (formRevision.shouldCreateNewRevision(req, item, form)) {
-          return formRevision.createVersion(item, getRequestUser(req), '', (err, revision) => {
+          return formRevision.createVersion(item, getRequestUser(req), '', async (err, revision) => {
             if (err) {
               return next(err);
             }
               if (revision) {
-                app.formio.formio.mongoose.models.formrevision.updateOne({
-                  _id: revision._id
-                },
-                {$set: {
-                  revisionId: revision._id,
-                }},
-                // {
-                //   revisionId: revision._id
-                // },
-                (err)=>{
-                  if (err) {
-                    return next(err);
-                  }
+                try {
+                  await app.formio.formio.mongoose.models.formrevision.updateOne({
+                    _id: revision._id
+                  },
+                  {$set: {
+                    revisionId: revision._id,
+                  }});
                   return next();
-                });
+                }
+                catch (err) {
+                  return next(err);
+                }
               }
           });
         }
         next();
-      });
     }
   };
 
@@ -103,26 +97,23 @@ module.exports = app => routes => {
         item.revisions &&
         formRevision.revisionsAllowed(req)
       ) {
-        return formRevision.createVersion(item, getRequestUser(req), req.body._vnote, (err, revision) => {
+        return formRevision.createVersion(item, getRequestUser(req), req.body._vnote, async (err, revision) => {
           if (err) {
             return next(err);
           }
             if (revision) {
-              app.formio.formio.mongoose.models.formrevision.updateOne({
-                _id: revision._id
-              },
-              {$set: {
-                revisionId: revision._id,
-              }},
-              // {
-              //   revisionId: revision._id
-              // },
-              (err)=>{
-                if (err) {
-                  return next(err);
-                }
+              try {
+                await app.formio.formio.mongoose.models.formrevision.updateOne({
+                  _id: revision._id
+                },
+                {$set: {
+                  revisionId: revision._id,
+                }});
                 return next();
-              });
+              }
+              catch (err) {
+                return next(err);
+              }
             }
         });
       }
@@ -173,20 +164,24 @@ module.exports = app => routes => {
     next();
   });
 
-  routes.before.push((req, res, next) => {
+  routes.before.push(async (req, res, next) => {
     if (req.method !== 'POST') {
       return next();
     }
 
-    app.formio.formio.cache.loadCurrentProject(req, (err, project) => {
-      if (err || !project) {
+    try {
+      const project = await app.formio.formio.cache.loadCurrentProject(req);
+      if (!project) {
         return next();
       }
 
       addFormDefaults(req.body, project.formDefaults);
 
-      next();
-    });
+      return next();
+    }
+    catch (err) {
+      return next();
+    }
   });
 
   routes.before.unshift(require('../../middleware/projectProtectAccess')(app.formio.formio));
@@ -196,20 +191,24 @@ module.exports = app => routes => {
   /**
    * Ensure primary project is loaded. May fail without Redis otherwise.
    */
-  routes.before.unshift((req, res, next) => {
+  routes.before.unshift(async (req, res, next) => {
     if (req.primaryProject) {
       return next();
     }
 
-    app.formio.formio.cache.loadCurrentProject(req, (err, project) => {
-      if (err || !project) {
+    try {
+      const project = await app.formio.formio.cache.loadCurrentProject(req);
+      if (!project) {
         return next();
       }
 
       addFormDefaults(req.body, project.formDefaults);
 
-      next();
-    });
+      return next();
+    }
+    catch (err) {
+      return next();
+    }
   });
 
   return routes;

@@ -134,9 +134,7 @@ module.exports = (router) => {
             const {settings} = this;
             const {interpolate, eachComponent} =  router.formio.util.FormioUtils;
             const submission = req.submission;
-            const project = await new Promise((resolve) => {
-                router.formio.cache.loadProject(req, req.projectId, (err, project) => resolve(project));
-              });
+            const project = await router.formio.cache.loadProject(req, req.projectId);
             if (!project) {
                 log(req, PROJECT_NOT_FOUND);
                 setActionItemMessage(PROJECT_NOT_FOUND);
@@ -230,9 +228,7 @@ module.exports = (router) => {
             }
 
             // Download PDF submission and convert to base64
-            const form = await new Promise((resolve) => {
-                router.formio.cache.loadCurrentForm(req, (err, form) => resolve(form));
-            });
+            const form = await router.formio.cache.loadCurrentForm(req);
             const pdf = await downloadPDF(req, project, form, submission);
             const responseBuffer = await pdf.buffer();
             const base64 = responseBuffer.toString('base64');

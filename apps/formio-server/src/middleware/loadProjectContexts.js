@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = (formio) => (req, res, next) => {
+module.exports = (formio) => async (req, res, next) => {
   // If there is no projectId, don't error out, just skip loading the current project.
   let projectId = req.projectId;
   if (req.params.projectId) {
@@ -13,47 +13,60 @@ module.exports = (formio) => (req, res, next) => {
     return next();
   }
 
-  const promises = [
-    new Promise((resolve, reject) => {
-      formio.cache.loadCurrentProject(req, function(err, currentProject) {
+  try {
+    const loadCurrentProject = async () => {
         // TODO: why do we not resolve with an error here (or reject)?
-        if (err || !currentProject) {
-          return resolve();
-        }
-        req.currentProject = currentProject;
-        formio.resources.role.model.find(
-          formio.hook.alter('roleQuery', {deleted: {$eq: null}}, req)
-        )
-          .sort({title: 1})
-          .lean()
-          .exec((err, roles) => {
-            if (err || !roles) {
-              return resolve();
-            }
-            req.currentProject.roles = roles;
-            return resolve();
-          });
-      });
-    }),
-    new Promise((resolve, reject) => {
-      formio.cache.loadParentProject(req, function(err, parentProject) {
-        if (err || !parentProject) {
-          return resolve();
-        }
-        req.parentProject = parentProject;
-        return resolve();
-      });
-    }),
-    new Promise((resolve, reject) => {
-      formio.cache.loadPrimaryProject(req, function(err, primaryProject) {
-        if (err || !primaryProject) {
-          return resolve();
-        }
-        req.primaryProject = primaryProject;
-        return resolve();
-      });
-    }),
-  ];
+      try {
+        const currentProject = await formio.cache.loadCurrentProject(req);
 
-  Promise.all(promises).then(() => next());
+        if (currentProject) {
+          req.currentProject = currentProject;
+          const roles = await formio.resources.role.model.find(
+            formio.hook.alter('roleQuery', {deleted: {$eq: null}}, req)
+          ).sort({title: 1}).lean().exec();
+          if (roles) {
+            req.currentProject.roles = roles;
+          }
+        }
+      }
+      catch (err) {
+        return;
+      }
+    };
+
+    const loadParentProject = async () => {
+      try {
+        const parentProject = await formio.cache.loadParentProject(req);
+        if (parentProject) {
+          req.parentProject = parentProject;
+        }
+      }
+      catch (err) {
+        return;
+      }
+    };
+
+    const loadPrimaryProject = async () => {
+      try {
+        const primaryProject = await formio.cache.loadPrimaryProject(req);
+        if (primaryProject) {
+          req.primaryProject = primaryProject;
+        }
+      }
+      catch (err) {
+        return;
+      }
+    };
+
+    await Promise.all([
+      loadCurrentProject(),
+      loadParentProject(),
+      loadPrimaryProject()
+    ]);
+
+    return next();
+  }
+  catch (err) {
+    return next(err);
+  }
 };

@@ -6,30 +6,27 @@ const CACHE_TIME =  process.env.FORMIO_HOSTED ? 0 : process.env.CACHE_TIME || 15
 
 module.exports = function(formio) {
     const projectCache = {
-        load(projectId, cb, noCache) {
-            if (!cb) {
-                cb = (err, result) => new Promise((resolve, reject) => (err ? reject(err) : resolve(result)));
-            }
+        async load(projectId, noCache) {
             if (!projectId) {
-                return cb(null, null);
+                return null;
             }
             const id = projectId.toString();
             if (!noCache && id) {
                 const project = ncache.get(id);
                 if (project) {
-                    return cb(null, JSON.parse(project));
+                    return JSON.parse(project);
                 }
             }
-            return formio.resources.project.model.findOne({
+
+            let result = await  formio.resources.project.model.findOne({
                 _id: formio.util.idToBson(projectId),
                 deleted: {$eq: null}
-            }).exec().then(function(result) {
-                if (result) {
-                  result = result.toObject();
-                  projectCache.set(result);
-                }
-                return cb(null, result);
-            }).catch(err => cb(err, null));
+              }).exec();
+              if (result) {
+                result = result.toObject();
+                projectCache.set(result);
+              }
+              return result;
         },
 
         set(project) {

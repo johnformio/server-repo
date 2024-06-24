@@ -13,46 +13,36 @@ const debug = require('debug')('formio:middleware:deleteProjectHandler');
  */
 module.exports = function(formio) {
   const prune = require('../util/delete')(formio);
-  const deleteProject = function(req, res, next) {
-    prune.project(req.projectId, function(err) {
-      if (err) {
-        debug(err);
-        return next(err);
-      }
+  const deleteProject = async function(req, res, next) {
+    try {
+      await prune.project(req.projectId);
 
       const settings = req.primaryProject.settings;
       if (settings && settings.defaultStage === req.projectId) {
-        formio.cache.updateProject(
+        await formio.cache.updateProject(
           req.primaryProject._id,
-          {settings: {defaultStage: ''}},
-          (err) => {
-            if (err) {
-              debug(err);
-              return next(err);
-            }
-
-            res.sendStatus(200);
-            return next();
-          }
-        );
+          {settings: {defaultStage: ''}});
+        res.sendStatus(200);
+        return next();
       }
       else {
         res.sendStatus(200);
         return next();
       }
-    });
+    }
+    catch (err) {
+      debug(err);
+      return next(err);
+    }
   };
 
-  return function(req, res, next) {
+  return async function(req, res, next) {
     if (req.method !== 'DELETE' || !req.projectId || !req.user._id) {
       return next();
     }
 
-    formio.cache.loadPrimaryProject(req, function(err, project) {
-      if (err) {
-        debug(err);
-        return res.status(400).send(err);
-      }
+    try {
+      const project = await formio.cache.loadPrimaryProject(req);
 
       if (!project) {
         return res.status(400).send('Environment project doesnt exist.');
@@ -84,6 +74,10 @@ module.exports = function(formio) {
       else {
         return res.sendStatus(401);
       }
-    });
+    }
+    catch (err) {
+      debug(err);
+      return res.status(400).send(err);
+    }
   };
 };

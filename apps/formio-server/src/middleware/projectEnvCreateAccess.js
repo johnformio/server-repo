@@ -4,30 +4,28 @@ const _ = require('lodash');
 const debug = require('debug')('formio:middleware:projectEnvCreateAccess');
 
 module.exports = function(formio) {
-  return function(req, res, next) {
+  return async function(req, res, next) {
     if (!('project' in req.body)) {
       return next();
     }
 
-    const checkAccess = (projectId) => {
-      return new Promise((resolve, reject) => {
-        formio.cache.loadProject(req, projectId, function(err, project) {
-          if (err) {
-            debug(err);
-            return reject({status: 400, err});
-          }
-
+    const checkAccess = async (projectId) => {
+      try {
+          const project = await formio.cache.loadProject(req, projectId);
           if (!project) {
-            return reject({status: 400, err: 'Stage parent project doesnt exist.'});
+            throw {
+              status: 400,
+              err: 'Stage parent project doesnt exist.',
+            };
           }
 
           // If there is no access defined, like on premise stages in separate environment from project.
           if (!project.access) {
-            return resolve(project);
+            return project;
           }
 
           if (req.token && req.token.user._id === project.owner.toString()) {
-            return resolve(project);
+            return project;
           }
           else if (req.user) {
             const access = _.chain(project.access)
@@ -39,40 +37,43 @@ module.exports = function(formio) {
             const roles = _.map(req.user.teams, formio.util.idToString);
 
             if ( _.intersection(access, roles).length !== 0) {
-              return resolve(project);
+              return project;
             }
           }
           else if (req.isAdmin) {
             _.set(req, 'body.owner', project.owner || null);
-            return resolve(project);
+            return project;
           }
-          return reject({status: 403, err: 'Permission Denied'});
-        });
-      });
+          throw {
+            status: 403,
+            err: 'Permission Denied',
+          };
+      }
+      catch (err) {
+        debug(err);
+        throw ({status: err.status || 400, err});
+      }
     };
 
-    checkAccess(req.body.project)
-      .then((project) => {
-        if (
-          req.body.hasOwnProperty('copyFromProject')
-          && req.body.copyFromProject !== 'empty'
-          && req.body.copyFromProject !== req.body.project
-          ) {
-          return checkAccess(req.body.copyFromProject).then((copyProject) => {
-            if (!copyProject.project || formio.util.idToString(copyProject.project) !== formio.util.idToString(project._id)) {
-              throw {
-                status: 400,
-                err: "Stage parent project doesnt relate to the current project.",
-              };
-            }
-          });
-        }
-      })
-      .then(() => {
-        return next();
-      })
-      .catch((err) => {
-        return res.status(err.status).send(err.err);
-      });
+    try {
+      const project = await checkAccess(req.body.project);
+      if (
+        req.body.hasOwnProperty('copyFromProject')
+        && req.body.copyFromProject !== 'empty'
+        && req.body.copyFromProject !== req.body.project
+        ) {
+          const copyProject = await checkAccess(req.body.copyFromProject);
+          if (!copyProject.project || formio.util.idToString(copyProject.project) !== formio.util.idToString(project._id)) {
+            throw {
+              status: 400,
+              err: "Stage parent project doesnt relate to the current project.",
+            };
+          }
+      }
+      return next();
+    }
+    catch (err) {
+    return res.status(err.status).send(err.err);
+    }
   };
 };

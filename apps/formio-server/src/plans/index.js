@@ -22,27 +22,34 @@ module.exports = function(formioServer) {
 
   /**
    * After loading, determine the plan from the project
-   * @param err
    * @param project
    * @returns {*|{done, value}}
    */
-  const getProjectPlan = function(err, project, currentProject, next) {
-    if (err || !project) {
-      debug.getPlan(err || 'Project not found.');
-      return next(err || 'Project not found.');
+  const getProjectPlan = function(project, currentProject) {
+    if (!project) {
+      debug.getPlan('Project not found.');
+      return {error: 'Project not found.'};
     }
 
     // Only allow plans defined within the plans definition.
     if (project.plan && ALL_PLAN_LIMITS.hasOwnProperty(project.plan)) {
       debug.getPlan('has plan');
       debug.getPlan(project.plan);
-      return next(null, project.plan, project, currentProject);
+      return {
+        plan: project.plan,
+        project: project,
+        currentProject: currentProject
+      };
     }
 
     // Default the project to the basePlan plan if not defined in the plans.
     debug.getPlan('using default');
     debug.getPlan(getBasePlan());
-    return next(null, getBasePlan(), project, currentProject);
+    return  {
+      plan: getBasePlan(),
+      project: project,
+      currentProject: currentProject
+    };
   };
 
   /**
@@ -52,63 +59,71 @@ module.exports = function(formioServer) {
    *
    * @param req {Object}
    *   The Express request object.
-   * @param next {Function}
-   *   The callback to invoke with the results.
    * @returns {*}
    */
-  const getPlan = function(req, next) {
+  const getPlan = async function(req) {
     if (req.method === 'POST' && req.path === '/project') {
       // Environment Create is tricky as we have to use permissions of the referenced project before it exists.
       if (req.body.hasOwnProperty('project')) {
         debug.getPlan('Project from environment create.');
-        return formioServer.formio.cache.loadProject(req, req.body.project, function(err, project) {
-          return getProjectPlan(err, project, null, next);
-        });
+        try {
+          const project = await formioServer.formio.cache.loadProject(req, req.body.project);
+          return getProjectPlan(project, null);
+        }
+        catch (err) {
+          debug.getPlan(err || 'Project not found.');
+          return {error: err || 'Project not found.'};
+        }
       }
 
       // Allow admins to set plan on deployed env.
       if (!config.formio.hosted && req.body.plan && req.isAdmin) {
-        return next(null, req.body.plan);
+        return req.body.plan;
       }
 
       // Allow admin with x-admin-token to set plan on hosted env.
       if (config.formio.hosted && req.body.plan && isSuperAdmin(req)) {
-        return next(null, req.body.plan);
+        return req.body.plan;
       }
     }
 
     if (req.method === 'PUT' && req.projectId && !req.formId) {
       if (config.formio.hosted && req.body.plan && isSuperAdmin(req)) {
-        return next(null, req.body.plan);
+        return req.body.plan;
       }
     }
 
     // Ignore project plans, if not interacting with a project.
     if (!req.projectId) {
       debug.getPlan('No project given.');
-      return next(null, getBasePlan());
+      return getBasePlan();
     }
-
-    formioServer.formio.cache.loadCurrentProject(req, function(err, currentProject) {
-      formioServer.formio.cache.loadPrimaryProject(req, function(err, project) {
-        getProjectPlan(err, project, currentProject, next);
-      });
-    });
+    try {
+      const currentProject = await formioServer.formio.cache.loadCurrentProject(req);
+      const project = await formioServer.formio.cache.loadPrimaryProject(req);
+      return getProjectPlan(project, currentProject);
+    }
+    catch (err) {
+      debug.getPlan(err || 'Project not found.');
+      return {error: err || 'Project not found.'};
+    }
   };
 
   const checkRequest = function(req) {
-    return function(cb) {
+    return async function() {
       // Don't limit for on premise.
       if (!config.formio.hosted) {
-        return cb();
+        return;
       }
 
-      getPlan(req, async function(err, plan, project, currentProject) {
+        const planData = await getPlan(req);
+        const {plan, project} = planData;
+        let {currentProject} = planData;
         currentProject = currentProject || project;
         const planLimits = ALL_PLAN_LIMITS.hasOwnProperty(plan) ? ALL_PLAN_LIMITS[plan] : ALL_PLAN_LIMITS.basic;
-        if (!err && !project) {
+        if (!project) {
           if (!req.body.template) {
-            return cb();
+            return;
           }
 
           const forms = {
@@ -117,26 +132,21 @@ module.exports = function(formioServer) {
           };
 
           if (Object.keys(forms).length > planLimits['forms'] && config.enableRestrictions) {
-            return cb('Limit exceeded. Upgrade your plan.');
+            throw new Error('Limit exceeded. Upgrade your plan.');
           }
 
-          return cb();
-        }
-
-        if (err) {
-          return cb(err);
+          return;
         }
 
         // Ignore limits for the formio project.
         if (currentProject.hasOwnProperty('name') && project.name && project.name === 'formio') {
-          return cb();
+          return;
         }
 
-        try {
           // Check the calls made this month.
           const usageMetrics = await formioServer.usageTracking.getUsageMetrics(currentProject._id);
           if (usageMetrics === undefined) {
-            return cb();
+            return;
           }
 
           // Determine if we've exceeded our counts
@@ -167,15 +177,17 @@ module.exports = function(formioServer) {
           if (type && planLimits[type] && usageMetrics[type] >= planLimits[type] && config.enableRestrictions) {
             // Form modifications should always fail.
             if (type === 'forms') {
-              return cb('Limit exceeded. Upgrade your plan.');
+              throw new Error('Limit exceeded. Upgrade your plan.');
             }
             else if (planLimits.failure > 0) {
               // Delay the request if over the limit.
-              setTimeout(cb, planLimits.failure * 1000);
+              setTimeout(()=>{
+                return;
+                }, planLimits.failure * 1000);
             }
             else {
               // If not a timed failure, fail straight out.
-              return cb('Limit exceeded. Upgrade your plan.');
+              throw new Error('Limit exceeded. Upgrade your plan.');
             }
           }
           else if (type === 'import' && config.enableRestrictions) {
@@ -184,20 +196,15 @@ module.exports = function(formioServer) {
               ..._.get(req, 'body.template.resources', {})
             });
             if (usageMetrics['forms'] + countOfNewForms > planLimits['forms']) {
-              return cb('Limit exceeded. Upgrade your plan.');
+              throw new Error('Limit exceeded. Upgrade your plan.');
             }
             else {
-              return cb();
+              return;
             }
           }
           else {
-            return cb();
+            return;
           }
-        }
-        catch (err) {
-          return cb(err);
-        }
-      });
     };
   };
 
@@ -222,20 +229,20 @@ module.exports = function(formioServer) {
     }
 
     debug.allowForPlans(plans);
-    return function(req, res, next) {
-      getPlan(req, function(err, plan) {
-        if (err) {
-          debug.allowForPlans(err);
-          return res.sendStatus(402);
-        }
-
+    return async function(req, res, next) {
+      try {
+        const {plan} = await getPlan(req);
         if (plans.indexOf(plan) === -1) {
           debug.allowForPlans(`${plan} not found in whitelist: ${plans.join(', ')}`);
           return res.sendStatus(402);
         }
 
         return next();
-      });
+      }
+      catch (err) {
+        debug.allowForPlans(err);
+        return res.sendStatus(402);
+      }
     };
   };
 

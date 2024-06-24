@@ -136,15 +136,13 @@ function getUploadResponse(s3Settings, file, signedUrl, headers, uploadId, partS
 }
 
 const middleware = function(router) {
-  function loadProject(req) {
-    return new Promise((resolve, reject) => {
-      router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
-        if (err) {
-          return reject('Project not found.');
-        }
-        resolve(project);
-      });
-    });
+  async function loadProject(req) {
+    try {
+      return await router.formio.formio.cache.loadProject(req, req.projectId);
+    }
+    catch (err) {
+      throw ('Project not found.');
+    }
   }
 
   const beforeFileUpload = [

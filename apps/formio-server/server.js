@@ -361,10 +361,15 @@ module.exports = function(options) {
       app.formio.formio.middleware.tokenHandler,
       app.formio.formio.middleware.params,
       app.formio.formio.middleware.permissionHandler,
-      (req, res, next) => {
-        app.formio.formio.cache.loadCurrentForm(req, (err, currentForm) => {
-          return util.getSubmissionRevisionModel(app.formio.formio, req, currentForm, false, next);
-        });
+      async (req, res, next) => {
+        try {
+          const currentForm = await app.formio.formio.cache.loadCurrentForm(req);
+          await util.getSubmissionRevisionModel(app.formio.formio, req, currentForm, false);
+          return next();
+        }
+        catch (err) {
+          return next(err);
+        }
       },
       require('./src/middleware/submissionChangeLog')(app),
       (req, res) => {

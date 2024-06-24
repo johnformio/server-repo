@@ -15,11 +15,7 @@ module.exports = (formio) => {
       return next();
     }
 
-    const primaryProject = await new Promise((resolve) =>
-      req.primaryProject
-        ? resolve(req.primaryProject)
-        : formio.cache.loadPrimaryProject(req, (_, project) => resolve(project))
-    );
+    const primaryProject = req.primaryProject ? req.primaryProject: await formio.cache.loadPrimaryProject(req);
 
     // Skip if the request doesn't contain any project information
     if (!primaryProject) {

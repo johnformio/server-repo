@@ -3714,20 +3714,19 @@ module.exports = function(app, template, hook) {
 
     describe('CORS Access for default', function() {
       if (!docker)
-      before(function(done) {
+      before(async function(done) {
         // Confirm the dummy project is on the team plan.
-        cache.updateProject(template.project._id, {
-          plan: 'team',
-          settings: {
-            portalDomain: 'https://portal.form.io'
-          }
-        }, (err, project) => {
-          if (err) {
-            return done(err);
-          }
-
+        try {
+          await cache.updateProject(template.project._id, {
+            plan: 'team',
+            settings: {
+              portalDomain: 'https://portal.form.io'
+            }
+          });
           done();
-        });
+        } catch (err) {
+          return done(err);
+        }
       });
 
       if (!docker)
@@ -3806,14 +3805,13 @@ module.exports = function(app, template, hook) {
       const cors = 'http://www.example.com,http://portal.example.com';
 
       if (!docker)
-      before(function(done) {
-        cache.updateProject(template.project._id, {plan: 'commercial'}, (err, project) => {
-          if (err) {
-            return done(err);
-          }
-
+      before(async function(done) {
+        try {
+          await cache.updateProject(template.project._id, {plan: 'commercial'});
           done();
-        });
+        } catch (err) {
+          return done(err);
+        }
       });
 
       if (!docker)
@@ -5546,7 +5544,7 @@ module.exports = function(app, template, hook) {
       })
     });
   });
- 
+
   if (!config.formio.hosted) {
     describe('Test sanitizeConfig Setting', function() {
       const helper = new Helper(template.formio.owner);
@@ -5580,7 +5578,7 @@ module.exports = function(app, template, hook) {
             done();
           });
       });
-  
+
       it('Should create a form ', (done) => {
         helper.form('test1', [
           {
@@ -5597,7 +5595,7 @@ module.exports = function(app, template, hook) {
           done();
         })
       });
-  
+
       it('Should attach globalSettings with sanitizeConfig to the form', (done) => {
         request(app)
           .get('/project/' + helper.template.project._id + '/form/' + helper.getForm('test1')._id)

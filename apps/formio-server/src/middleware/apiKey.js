@@ -9,13 +9,14 @@ const _ = require('lodash');
  */
 module.exports = function(formio) {
   // Handle the request.
-  return function(req, res, next) {
+  return async function(req, res, next) {
     // Get the API Token
     const token = req.headers.hasOwnProperty('x-token') ? req.headers['x-token'] : req.query['token'];
 
     // Load the current project.
-    formio.cache.loadCurrentProject(req, function(err, currentProject) {
-      if (err || !currentProject) {
+    try {
+      const currentProject = await formio.cache.loadCurrentProject(req);
+      if (!currentProject) {
         return next();
       }
 
@@ -38,6 +39,9 @@ module.exports = function(formio) {
       req.user = null;
       req.token = null;
       return next();
-    });
+  }
+  catch (err) {
+    return next();
+  }
   };
 };

@@ -8,10 +8,15 @@ module.exports = function(app) {
 
   // Load changelog and rewrite url
   app.get('/project/:projectId/form/:formId/submission/:submissionId/download/changelog',
-    (req, res, next) => {
-      app.formio.formio.cache.loadCurrentForm(req, (err, currentForm) => {
-        return util.getSubmissionRevisionModel(app.formio.formio, req, currentForm, false, next);
-      });
+    async (req, res, next) => {
+      try {
+      const currentForm = await app.formio.formio.cache.loadCurrentForm(req);
+      await util.getSubmissionRevisionModel(app.formio.formio, req, currentForm, false);
+      return next();
+      }
+      catch (err) {
+        return next(err);
+      }
     },
     require('../../submissionChangeLog')(app),
     (req, res, next) => {

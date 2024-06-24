@@ -122,18 +122,18 @@ const middleware = router => {
     },
     router.formio.formio.middleware.permissionHandler,
     router.formio.formio.plans.disableForPlans(['basic', 'independent', 'archived']),
-    function(req, res) {
-      const fileName = req.body.name || req.query.key || req.query.name;
-
-      router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
-        if (err) {
-          return res.status(400).send('Project not found.');
-        }
+    async function(req, res) {
+      try {
+        const fileName = req.body.name || req.query.key || req.query.name;
+        const project = await router.formio.formio.cache.loadProject(req, req.projectId);
 
         getUrl({project, fileName, method: req.method}).then(
           data => res.json(data),
           err => res.status(400).send(err.message));
-      });
+      }
+      catch (err) {
+        return res.status(400).send('Project not found.');
+      }
     }
   ];
 

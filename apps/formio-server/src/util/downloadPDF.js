@@ -8,7 +8,6 @@ const proxy = require('../middleware/pdfProxy/proxy');
 module.exports = (formioServer) => {
   const formio = formioServer.formio;
   const encrypt = require('./encrypt')(formioServer);
-  Promise.promisifyAll(formio.cache, {context: formio.cache});
   return async (req, project, form, submission) => {
     proxy.authenticate(req, project);
     proxy.updateHeadersForPdfRequest(req, formio);
@@ -47,10 +46,10 @@ module.exports = (formioServer) => {
     }
 
     // Speed up performance by loading all subforms inline to the form
-    await formio.cache.loadSubFormsAsync(form, req);
+    await formio.cache.loadSubForms(form, req);
 
     // Load all subform submissions
-    await formio.cache.loadSubSubmissionsAsync(form, submission, req);
+    await formio.cache.loadSubSubmissions(form, submission, req);
 
     // Remove protected fields
     formio.util.removeProtectedFields(form, 'download', submission);

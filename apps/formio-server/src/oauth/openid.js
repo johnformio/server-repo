@@ -1,6 +1,5 @@
 'use strict';
 
-const Q = require('q');
 const _ = require('lodash');
 const URL = require('url').URL;
 const {AuthorizationCode} = require('simple-oauth2');
@@ -37,58 +36,58 @@ module.exports = (formio) => {
     // Exchanges authentication code for auth token
     // Returns a promise, or you can provide the next callback arg
     // Resolves with array of tokens defined like externalTokenSchema
-    getTokens(req, code, state, redirectURI, next) {
-      return oauthUtil.settings(req, this.name)
-        .then(({
+    async getTokens(req, code, state, redirectURI) {
+        const {
           authorizationMethod = 'body',
           clientId,
           clientSecret,
           tokenURI,
           userInfoURI
-        }) => {
-          /* eslint-disable camelcase */
-          const url = new URL(tokenURI);
-          const tokenHost = url.origin;
-          const tokenPath = url.pathname;
-          this.userInfoURI = userInfoURI;
-          const provider = new AuthorizationCode({
-            client: {
-              id: clientId,
-              secret: clientSecret,
-            },
-            auth: {
-              tokenHost,
-              tokenPath,
-            },
-            options: {
-              authorizationMethod,
-            },
-          });
+        } = await oauthUtil.settings(req, this.name);
 
-          return provider.getToken({
-            code,
-            redirect_uri: redirectURI
-          }).then(accessToken => accessToken.token);
+        /* eslint-disable camelcase */
+        const url = new URL(tokenURI);
+        const tokenHost = url.origin;
+        const tokenPath = url.pathname;
+        this.userInfoURI = userInfoURI;
+        const provider = new AuthorizationCode({
+          client: {
+            id: clientId,
+            secret: clientSecret,
+          },
+          auth: {
+            tokenHost,
+            tokenPath,
+          },
+          options: {
+            authorizationMethod,
+          },
+        });
 
-          /* eslint-enable camelcase */
-        })
-        .then((token) => {
-          if (!token) {
-            throw 'No response from OpenID Provider.';
+        const accessToken = await provider.getToken({
+          code,
+          redirect_uri: redirectURI
+        });
+
+        const token = accessToken.token;
+        /* eslint-enable camelcase */
+
+        if (!token) {
+          throw new Error('No response from OpenID Provider.');
+        }
+        if (token.error) {
+          throw new Error(token.error_description);
+        }
+
+        const result = [
+          {
+            type: this.name,
+            userInfo: this.userInfoURI,
+            token: token.access_token || token.id_token || token.token,
+            exp: new Date(MAX_TIMESTAMP),
           }
-          if (token.error) {
-            throw token.error_description;
-          }
-          return [
-            {
-              type: this.name,
-              userInfo: this.userInfoURI,
-              token: token.access_token || token.id_token || token.token,
-              exp: new Date(MAX_TIMESTAMP),
-            }
-          ];
-        })
-        .nodeify(next);
+        ];
+        return result;
     },
 
     // Gets user information from oauth access token
@@ -168,8 +167,8 @@ module.exports = (formio) => {
 
     // OpenID tokens have no expiration date. If it is invalidated it means they have disabled the app.
     refreshTokens(req, res, user, next) {
-      return Q.reject(`Token has been invalidated, please reauthenticate with ${this.title}.`)
-        .nodeify(next);
+      return Promise.reject(new Error(`Token has been invalidated, please reauthenticate with ${this.title}.`))
+        .catch(next);
     },
   };
 };

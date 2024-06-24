@@ -1,15 +1,16 @@
 'use strict';
 
 module.exports = function(formio) {
-  return function(req, res, next) {
+  return async function(req, res, next) {
     // If this is a project, not an environment.
     if (!('project' in req.body)) {
       return next();
     }
 
-    formio.plans.getPlan(req, function(err, plan) {
-      if (err || !plan) {
-        return next(err || 'Project plan not found.');
+    try {
+      const {plan} = await formio.plans.getPlan(req);
+      if (!plan) {
+        return next('Project plan not found.');
       }
 
       switch (plan.toString()) {
@@ -22,6 +23,9 @@ module.exports = function(formio) {
         default:
           return res.status(402).send('Environments can only be created on a Commercial or higher plan.');
       }
-    });
+    }
+    catch (err) {
+      return next(err);
+    }
   };
 };

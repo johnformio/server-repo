@@ -17,23 +17,20 @@ module.exports = function(server) {
   const loadCache = projectCache(server.formio);
   const formio = server.formio;
   const ProjectCache = {
-    loadProjectByName(req, name, cb) {
+    async loadProjectByName(req, name) {
       const cache = formio.cache.cache(req);
       if (cache.projectNames && cache.projectNames[name]) {
-        return this.loadProject(req, cache.projectNames[name], cb);
+        return await this.loadProject(req, cache.projectNames[name]);
       }
 
       // Find the project and cache for later.
-      formio.resources.project.model.findOne({
+      let project = await formio.resources.project.model.findOne({
         name: name,
         deleted: {$eq: null}
-      }).exec(function(err, project) {
-        if (err) {
-          return cb(err);
-        }
-        if (!project) {
-          return cb('Project not found');
-        }
+      }).exec();
+      if (!project) {
+        throw new Error('Project not found');
+      }
 
         project = project.toObject();
         const projectId = project._id.toString();
@@ -43,8 +40,7 @@ module.exports = function(server) {
         cache.projectNames[name] = projectId;
         cache.projects[projectId] = project;
         loadCache.set(project);
-        cb(null, project);
-      });
+        return project;
     },
 
     /**
@@ -81,118 +77,90 @@ module.exports = function(server) {
     * @param req
     * @param cb
     */
-    loadCurrentProject(req, cb) {
+    async loadCurrentProject(req) {
       const projectId = this.getCurrentProjectId(req);
       if (!projectId) {
-        return cb('No project found.');
+        throw new Error('No project found.');
       }
-      this.loadProject(req, projectId, cb);
+      return await this.loadProject(req, projectId);
     },
 
-    loadParentProject(req, cb) {
-      this.loadCurrentProject(req, function(err, currentProject) {
-        if (err) {
-          return cb(err);
-        }
+    async loadParentProject(req) {
+        const currentProject = await this.loadCurrentProject(req);
         // If this is an environment, not a project, load the primary project.
         if ('project' in currentProject && currentProject.project) {
-          this.loadProject(req, currentProject.project, function(err, parentProject) {
-            if (err) {
-              return cb(err);
-            }
-            debug.loadProject('Has parent. ', currentProject._id, parentProject._id);
-            return cb(null, parentProject);
-          });
+          const parentProject = await this.loadProject(req, currentProject.project);
+          debug.loadProject('Has parent. ', currentProject._id, parentProject._id);
+          return parentProject;
         }
         else {
           debug.loadProject('Is parent. ', currentProject._id);
-          return cb(null, currentProject);
+          return currentProject;
         }
-      }.bind(this));
     },
 
-    loadPrimaryProject(req, cb) {
-      this.loadParentProject(req, (err, parentProject) => {
-        if (err) {
-          return cb(err);
-        }
+    async loadPrimaryProject(req) {
+        const parentProject = await this.loadParentProject(req);
         if ('project' in parentProject && parentProject.project) {
-          this.loadProject(req, parentProject.project, function(err, primaryProject) {
-            if (err) {
-              return cb(err);
-            }
+          const primaryProject = await this.loadProject(req, parentProject.project);
             debug.loadProject('Has primary. ', parentProject._id, primaryProject._id);
-            return cb(null, primaryProject);
-          });
+            return primaryProject;
         }
         else {
           debug.loadProject('Is primary. ', parentProject._id);
-          return cb(null, parentProject);
+          return parentProject;
         }
-      });
     },
 
     /**
     * Load an Project provided the Project ID.
     * @param req
     * @param id
-    * @param cb
     */
-    loadProject(req, id, cb) {
-      if (!cb) {
-        cb = (err, result) => new Promise((resolve, reject) => (err ? reject(err) : resolve(result)));
-      }
+    async loadProject(req, id) {
       if (!id) {
-        return cb('Project not found');
+        throw new Error('Project not found');
       }
       id = formio.util.idToString(id);
       const cache = formio.cache.cache(req);
       if (cache.projects[id]) {
-        return cb(null, cache.projects[id]);
+        return cache.projects[id];
       }
 
-      loadCache.load(id, (err, result) => {
-        if (err) {
-          return cb(err);
-        }
-        if (!result) {
-          if (!config.formio.hosted) {
-            const cached = ncache.get(id.toString());
-            // Check for cached info.
-            if (cached) {
-              cached.toObject = function() {
-                return this;
-              };
-              return cb(null, cached);
-            }
-            return utilizationSync(server, `project:${id}`, {
-              licenseKey: server.config.licenseKey,
-              type: 'project',
-              projectId: id,
-              readOnly: true
-            })
-            .then((licenseInfo) => {
-              if (!licenseInfo) {
-                return cb(null, req.currentProject);
-              }
-              const project = {
-                _id: licenseInfo.projectId,
-                plan: licenseInfo.terms.plan,
-                owner: req.currentProject ? req.currentProject.owner : null,
-              };
-              ncache.set(id.toString(), project, CACHE_TIME);
-              return cb(null, project);
-            })
-            .catch(cb);
+      const result = await loadCache.load(id);
+      if (!result) {
+        if (!config.formio.hosted) {
+          const cached = ncache.get(id.toString());
+          // Check for cached info.
+          if (cached) {
+            cached.toObject = function() {
+              return this;
+            };
+          return cached;
+          }
+          const licenseInfo = await utilizationSync(server, `project:${id}`, {
+            licenseKey: server.config.licenseKey,
+            type: 'project',
+            projectId: id,
+            readOnly: true
+          });
+          if (!licenseInfo) {
+            return req.currentProject;
+          }
+          const project = {
+            _id: licenseInfo.projectId,
+            plan: licenseInfo.terms.plan,
+            owner: req.currentProject ? req.currentProject.owner : null,
+          };
+          ncache.set(id.toString(), project, CACHE_TIME);
+          return project;
           }
           else {
-            return cb('Project not found');
+            throw new Error('Project not found');
           }
         }
-
         cache.projects[id] = result;
-        return cb(null, result);
-      });
+        return result;
     },
 
     deleteProjectCache(project) {
@@ -217,107 +185,80 @@ module.exports = function(server) {
       return project;
     },
 
-    updateProject(id, update, cb) {
-      return formio.resources.project.model.findOne({
+    async updateProject(id, update) {
+      let project = await formio.resources.project.model.findOne({
         _id: formio.util.idToBson(id),
         deleted: {$eq: null}
-      }).exec().then((project) => {
-        if (update.settings) {
-          const currentSettings = project.settings;
-          project.settings = _.merge(currentSettings, update.settings);
-          project.markModified('settings');
-          delete update.settings;
+      }).exec();
+      if (update.settings) {
+        const currentSettings = project.settings;
+        project.settings = _.merge(currentSettings, update.settings);
+        project.markModified('settings');
+        delete update.settings;
+      }
+      for (const prop in update) {
+        if (prop !== 'modified') {
+          project[prop] = update[prop];
         }
-        for (const prop in update) {
-          if (prop !== 'modified') {
-            project[prop] = update[prop];
-          }
-          project.markModified(prop);
-        }
-        return formio.resources.project.model.updateOne(
-          {_id: project._id},
-           project
-        ).then(() => {
-          if (update.deleted) {
-            project = this.deleteProjectCache(project);
-          }
-          else {
-            project = this.updateProjectCache(project);
-          }
-          if (cb) {
-            return cb(null, project);
-          }
-          return project;
-        }).catch((err) => {
-          if (cb) {
-            return cb(err);
-          }
-        });
-      }).catch((err) => {
-        if (cb) {
-          return cb(err);
-        }
-      });
+        project.markModified(prop);
+      }
+
+      await formio.resources.project.model.updateOne(
+        {_id: project._id},
+         project);
+
+      if (update.deleted) {
+        project = this.deleteProjectCache(project);
+      }
+      else {
+        project = this.updateProjectCache(project);
+       }
+      return project;
     },
 
-    updateCurrentProject(req, update, cb) {
+    async updateCurrentProject(req, update) {
       const projectId = this.getCurrentProjectId(req);
       if (!projectId) {
-        if (cb) {
-          return cb('No project found.');
-        }
         return;
       }
-      this.updateProject(projectId, update, cb);
+      await this.updateProject(projectId, update);
     },
 
-    loadStages(req, id, cb) {
+    async loadStages(req, id) {
       id = formio.util.idToString(id);
 
       const projectId = formio.util.idToBson(id);
       if (!projectId) {
-        return cb('Project not found');
+        throw new Error('Project not found');
       }
 
       const query = {project: projectId, deleted: {$eq: null}};
-      formio.resources.project.model.find(query, function(err, result) {
-        if (err) {
-          return cb(err);
-        }
-        return cb(null, result);
-      });
+      const result = await formio.resources.project.model.find(query);
+        return result;
     }
   };
 
-  ProjectCache.setSubmissionModel = (req, formId, cb) => {
-    formio.cache.loadForm(req, null, formId, function(err, form) {
-      if (err) {
-        // deliberately do not return an error.
-        return cb();
-      }
-
-      util.getSubmissionModel(formio, req, form, true, (err, submissionModel) => {
-        if (err) {
-          return cb(err);
-        }
-
+  ProjectCache.setSubmissionModel = async (req, formId) => {
+    try {
+      const form = await formio.cache.loadForm(req, null, formId);
+      const submissionModel = await util.getSubmissionModel(formio, req, form, true);
         if (!submissionModel) {
-          return cb();
+          return null;
         }
 
         req.model = req.submissionModel = submissionModel;
-        return cb();
-      });
-    });
+        return null;
+      }
+      catch (err) {
+        // deliberately do not return an error.
+        return null;
+      }
   };
   ProjectCache._loadSubmission = formio.cache.loadSubmission.bind(formio.cache);
-  ProjectCache.loadSubmission = function(req, formId, subId, cb) {
-    ProjectCache.setSubmissionModel(req, formId, (err) => {
-      if (err) {
-        return cb(err);
-      }
-      return ProjectCache._loadSubmission(req, formId, subId, cb);
-    });
+  ProjectCache.loadSubmission = async function(req, formId, subId) {
+      await ProjectCache.setSubmissionModel(req, formId);
+      const submission = await ProjectCache._loadSubmission(req, formId, subId);
+      return submission;
   };
 
   ProjectCache.loadCache = loadCache;

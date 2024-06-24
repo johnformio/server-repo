@@ -37,9 +37,10 @@ module.exports = router => {
      * @param res
      * @param next
      */
-    static settingsForm(req, res, next) {
-      formio.cache.loadCurrentForm(req, (err, form) => {
-        if (err || !form) {
+    static async settingsForm(req, res, next) {
+      try {
+      const form = await formio.cache.loadCurrentForm(req);
+        if (!form) {
           return res.status(400).send('Could not load form.');
         }
         const usernameOptions = [];
@@ -52,11 +53,12 @@ module.exports = router => {
             passwordOptions.push({label: component.title || component.label || component.key, value: path});
           }
         });
-        formio.resources.role.model.find(formio.hook.alter('roleQuery', {deleted: {$eq: null}}, req))
+        try {
+          const roles = await formio.resources.role.model.find(formio.hook.alter('roleQuery', {deleted: {$eq: null}}, req))
           .sort({title: 1})
           .lean()
-          .exec((err, roles) => {
-            if (err || !roles) {
+          .exec();
+            if (!roles) {
               return res.status(400).send('Could not load the Roles.');
             }
             const settingForm = [
@@ -174,9 +176,15 @@ module.exports = router => {
                 type: "datagrid"
               }
             ];
-            next(null, settingForm);
-          });
-      });
+            return next(null, settingForm);
+        }
+        catch (err) {
+          return res.status(400).send('Could not load the Roles.');
+        }
+    }
+    catch (err) {
+      return res.status(400).send('Could not load form.');
+      }
     }
 
     processAuth(req, res, data, user, token) {
@@ -225,7 +233,7 @@ module.exports = router => {
      *   The callback function to execute upon completion.
      */
 
-    resolve(handler, method, req, res, next) {
+    async resolve(handler, method, req, res, next) {
       debug('Starting LDAP Login');
       if (!hook.alter('resolve', true, this, handler, method, req, res)) {
         return next();
@@ -241,7 +249,7 @@ module.exports = router => {
         return res.status(400).send('LDAP Action is missing Password Field setting.');
       }
 
-      hook.settings(req, (err, settings) => {
+      const settings = await hook.settings(req);
         if (!settings.ldap || !settings.ldap.url) {
           debug('LDAP Project settings not configured');
           return res.status(400).send('LDAP Project settings not configured.');
@@ -400,7 +408,6 @@ module.exports = router => {
             return res.status(401).send(err);
           }
         }
-      });
     }
   }
 

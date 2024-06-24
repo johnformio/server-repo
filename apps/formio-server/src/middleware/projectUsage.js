@@ -4,16 +4,16 @@ const _ = require('lodash');
 const config = require('../../config');
 
 module.exports = function(formioServer) {
-  const loadPrimaryProjectPlanFromCache = (req, primaryProjectId) => new Promise((resolve, reject) => {
-    formioServer.formio.cache.loadProject(req, primaryProjectId, (err, primaryProject) => {
-      if (!primaryProject || err) {
-        reject(err || new Error('Primary project not found'));
-      }
-      else {
-        resolve(primaryProject.plan);
-      }
-    });
-  });
+  const loadPrimaryProjectPlanFromCache = async (req, primaryProjectId) => {
+    const primaryProject = await formioServer.formio.cache.loadProject(req, primaryProjectId);
+    if (!primaryProject) {
+      throw new Error('Primary project not found');
+    }
+    else {
+      return primaryProject.plan;
+    }
+  };
+
   /**
    * Get api call info for a project
    * @param project

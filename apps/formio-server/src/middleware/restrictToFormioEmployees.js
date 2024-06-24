@@ -1,13 +1,14 @@
 'use strict';
 const _ = require('lodash');
 module.exports = function(formio) {
-  return (req, res, next) => {
+  return async (req, res, next) => {
     if (!req.user) {
       return res.sendStatus(401);
     }
 
-    formio.cache.loadProjectByName(req, 'formio', (err, project) => {
-      if (err || !project) {
+    try {
+      const project = await formio.cache.loadProjectByName(req, 'formio');
+      if (!project) {
         return res.sendStatus(401);
       }
 
@@ -16,17 +17,21 @@ module.exports = function(formio) {
         return next();
       }
 
-      formio.resources.role.model.findOne({
+      try {
+        const response = await formio.resources.role.model.findOne({
         project: formio.util.idToBson(project._id),
         title: "Administrator",
         deleted: {$eq: null}
-      }, (err, response) => {
-        if (!err && response) {
-          // Admin of Formio.
-          if (req.user.roles.indexOf(response.toObject()._id) !== -1) {
-            return next();
-          }
+      });
+
+      if (response) {
+        // Admin of Formio.
+        if (req.user.roles.indexOf(response.toObject()._id) !== -1) {
+          return next();
         }
+      }
+    }
+    catch (err) {
         // Team member of Formio.
         formio.teams.getProjectTeams(req, project._id, 'team_', (err, teams, permissions) => {
           if (err || !teams || !permissions) {
@@ -47,7 +52,10 @@ module.exports = function(formio) {
 
           return res.sendStatus(401);
         });
-      });
-    });
+      }
+    }
+    catch (err) {
+      return res.sendStatus(401);
+    }
   };
 };

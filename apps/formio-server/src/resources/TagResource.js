@@ -39,11 +39,11 @@ module.exports = function(router, formioServer) {
       formio.middleware.restrictToPlans(['commercial', 'trial']),
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       formio.middleware.tagHandler,
-      function(req, res, next) {
-        formio.cache.loadCurrentProject(req, (err, project) => {
+      async function(req, res, next) {
+          const project = await formio.cache.loadCurrentProject(req);
           // Allow passing template from frontend. This is useful for remote environments.
           if (!req.body.template) {
-            const options = router.formio.formio.hook.alter('exportOptions', {}, req, res);
+            const options = await router.formio.formio.hook.alter('exportOptions', {}, req, res);
             formio.template.export(options, function(err, template) {
               if (err) {
                 return res.status(400).send(err);
@@ -60,7 +60,6 @@ module.exports = function(router, formioServer) {
 
             return next();
           }
-        });
       },
       function(req, res, next) {
         const template = {};
@@ -81,15 +80,16 @@ module.exports = function(router, formioServer) {
     afterPost: [
       formio.middleware.createTagChunks,
       formio.middleware.getFullTagTemplate,
-      function(req, res, next) {
-        formio.cache.updateCurrentProject(req, {
-          tag: req.body.tag
-        }, (err) => {
-          if (err) {
-            return next(err);
-          }
+      async function(req, res, next) {
+        try {
+          await formio.cache.updateCurrentProject(req, {
+            tag: req.body.tag
+          });
           return next();
-        });
+        }
+        catch (err) {
+          return next(err);
+        }
       },
       formio.middleware.filterResourcejsResponse(hiddenFields)
     ],
@@ -138,13 +138,14 @@ module.exports = function(router, formioServer) {
    */
   router.get(
     '/project/:projectId/tag/current',
-    function(req, res, next) {
-      formio.cache.loadCurrentProject(req, (err, project) => {
-        if (err) {
-          return res.status(400).send(err);
-        }
+    async function(req, res, next) {
+      try {
+        const project = await formio.cache.loadCurrentProject(req);
         return res.send({tag: project.tag});
-      });
+      }
+      catch (err) {
+        return res.status(400).send(err);
+      }
     }
   );
 
@@ -155,8 +156,8 @@ module.exports = function(router, formioServer) {
     '/project/:projectId/deploy',
     formio.middleware.checkRequestAllowed,
     formio.middleware.restrictToPlans(['commercial', 'trial']),
-    function(req, res, next) {
-      formio.cache.loadCurrentProject(req, (err, project) => {
+    async function(req, res, next) {
+        const project = await formio.cache.loadCurrentProject(req);
         const deploy = req.body;
 
         // Sanity checks.
@@ -175,10 +176,8 @@ module.exports = function(router, formioServer) {
               project: router.formio.formio.util.idToBson(project.project || project._id),
               deleted: {$eq: null}
             };
-            formio.mongoose.model('tag').find(search).exec((err, tags) => {
-              if (err) {
-                return res.status(400).send(err);
-              }
+            try {
+              const tags = await formio.mongoose.model('tag').find(search).exec();
               if (tags.length===0) {
                 return res.status(400).send('Tag not found.');
               }
@@ -188,23 +187,22 @@ module.exports = function(router, formioServer) {
               Object.assign(template, _.pick(project, ['name', 'title', 'description', 'machineName']));
               const alters = hook.alter('templateAlters', {});
 
-              formio.template.import.template(template, alters, function(err, template) {
+              formio.template.import.template(template, alters, async function(err, template) {
                 if (err) {
                   debug(err);
                   return res.status(400).send(err);
                 }
 
-                formio.cache.updateCurrentProject(req, {
+                await formio.cache.updateCurrentProject(req, {
                   tag: tags[0].tag,
                   lastDeploy: Date.now()
-                }, (err) => {
-                  if (err) {
-                    return res.status(400).send(err.message || err);
-                  }
-                  return res.send('Tag Deployed');
                 });
+                  return res.send('Tag Deployed');
               });
-            });
+            }
+            catch (err) {
+              return res.status(400).send(err);
+            }
             break;
           }
           case 'environment': {
@@ -226,22 +224,23 @@ module.exports = function(router, formioServer) {
             Object.assign(template, _.pick(project, ['name', 'title', 'description', 'machineName']));
             const alters = hook.alter('templateAlters', {});
 
-            formio.template.import.template(template, alters, function(err, template) {
+            formio.template.import.template(template, alters, async function(err, template) {
               if (err) {
                 debug(err);
                 return res.status(400).send(err);
               }
 
               router.formio.formio.log('Deploy Template', req, template.tag);
-              formio.cache.updateCurrentProject(req, {
-                tag: template.tag,
-                lastDeploy: Date.now()
-              }, (err) => {
-                if (err) {
-                  return res.status(400).send(err.message || err);
-                }
+              try {
+                await formio.cache.updateCurrentProject(req, {
+                  tag: template.tag,
+                  lastDeploy: Date.now()
+                });
                 return res.send('Tag Deployed');
-              });
+              }
+              catch (err) {
+                return res.status(400).send(err.message || err);
+              }
             });
 
             break;
@@ -250,7 +249,6 @@ module.exports = function(router, formioServer) {
             return res.status(400).send('Unknown deploy type. Please use tag or environment.');
           }
         }
-      });
     }
   );
 
