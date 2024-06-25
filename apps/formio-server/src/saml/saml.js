@@ -319,6 +319,19 @@ module.exports = (formio, config) => {
     });
   });
 
+  router.post('/passport', (req, res) => {
+    const settings = req.body;
+    const config = toPassportConfig(new MetadataReader(settings.idp));
+    if (settings.issuer) {
+      config.issuer = settings.issuer;
+    }
+    if (settings.callbackUrl) {
+      config.callbackUrl = settings.callbackUrl;
+    }
+    const sanitizeConfig = xss(JSON.stringify(config));
+    res.status(200).send(sanitizeConfig);
+  });
+
   router.post('/acs',
     (req, res) => {
     let fromSettings = false;

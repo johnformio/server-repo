@@ -96,6 +96,8 @@ module.exports = function(app) {
       FormResource: require('./alter/FormResource')(app),
       models: require('./alter/models')(app),
       email: require('./alter/email')(app),
+      validationDatabaseHooks: require('./alter/validationDatabaseHooks')(app),
+      serverRules: require('./alter/serverRules.js')(app),
       validateSubmissionForm: require('./alter/validateSubmissionForm')(app),
       currentUser: require('./alter/currentUser')(app),
       accessInfo: require('./alter/accessInfo')(app),
@@ -540,6 +542,11 @@ module.exports = function(app) {
           return true;
         }
 
+        // Allow access to the tenant with access team_admin
+        if (req.currentProject?.type === 'tenant' && req.userProject?.primary && _.get(req.user, `access.${req.currentProject.name}`, '') === 'team_admin') {
+          return true;
+        }
+
         // If no user is found, then return false.
         if (!req.token || !req.token.user) {
           return false;
@@ -671,7 +678,7 @@ module.exports = function(app) {
                   return _.startsWith(permission.type, 'stage_');
                 }));
 
-                if (req.currentProject && req.currentProject.type === 'tenant' && req.userProject.name === 'formio') {
+                if (req.currentProject?.type === 'tenant' && req.userProject?.name === 'formio') {
                   if (req.access && _.includes(_.keys(req.access), req.currentProject.name)) {
                     _.find(teamAccess, {type: req.access[req.currentProject.name]}).roles.push(req.user._id.toString());
                   }
@@ -1036,7 +1043,7 @@ module.exports = function(app) {
               return req.userProject.primary;
             }
 
-            if (_url === '/payeezy') {
+            if (_url === '/gateway') {
               return req.userProject.primary;
             }
 

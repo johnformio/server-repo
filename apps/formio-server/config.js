@@ -132,6 +132,7 @@ config.formio.reservedForms = [
   'saml',
   'oauth2',
   'recaptcha',
+  'captcha',
   'manage',
   'action',
   'actionItem',
@@ -262,8 +263,9 @@ config.enableOauthM2M = getConfig('OAUTH_M2M_ENABLED', false);
 config.fortis = {
   userId: getConfig('FORTIS_USER_ID'),
   userAPIKey: getConfig('FORTIS_USER_API_KEY'),
-  endpoint: getConfig('FORTIS_ENDPOINT', 'https://api.sandbox.fortis.tech/v1/transactions/cc/auth-only/keyed'),
-  developerId: getConfig('FORTIS_DEV_ID')
+  endpoint: getConfig('FORTIS_ENDPOINT', 'https://api.sandbox.fortis.tech/v1/transactions/cc/avs-only/keyed'),
+  developerId: getConfig('FORTIS_DEV_ID'),
+  location: getConfig('FORTIS_LOCATION_ID')
 };
 
 // Using docker, support legacy linking and network links.
