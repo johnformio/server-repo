@@ -3,6 +3,7 @@
 const _ = require('lodash');
 const fetch = require('@formio/node-fetch-http-proxy');
 const util = require('formio/src/util/util');
+const debug = require('debug')('formio:payment:gateway');
 
 module.exports = function(config, formio) {
   return function(req, res, next) {
@@ -73,7 +74,7 @@ module.exports = function(config, formio) {
       if (fullNameParts.length > 1 || fullNameParts.length === 1) {
         contactReq['last_name'] = fullNameParts[fullNameParts.length - 1];
       }
-      const contact = await fetch(contactApi, {
+      const response = await fetch(contactApi, {
         headers: {
           "user-id": config.fortis.userId,
           "user-api-key": config.fortis.userAPIKey,
@@ -83,8 +84,16 @@ module.exports = function(config, formio) {
         },
         method: 'POST',
         body: JSON.stringify(contactReq)
-      }).then((response) => response.json());
-      return contact;
+      });
+      if (response.ok) {
+        return response.json();
+      }
+      else {
+        const message = await response.text();
+        debug(`Failed to create contact: ${message}`);
+        debug("Failed Contact Request: ", contactReq);
+        throw new Error(`Failed to create contact: ${message}`);
+      }
     };
 
     // Send an authorize transaction.
@@ -101,8 +110,16 @@ module.exports = function(config, formio) {
         },
         method: 'POST',
         body: JSON.stringify(buildRequest(contact))
-      }).then((response) => response.json());
-      return txn;
+      });
+      if (txn.ok) {
+        return txn.json();
+      }
+      else {
+        const message = await txn.text();
+        debug(`Failed to create transaction: ${message}`);
+        debug("Failed Transaction Request: ", buildRequest(contact));
+        throw new Error(`Failed to create transaction: ${message}`);
+      }
     };
     /* eslint-enable new-cap */
 
@@ -196,8 +213,8 @@ module.exports = function(config, formio) {
             txn.markModified('metadata');
             await txn.save();
             res.status(400);
-            if (transaction.data.serviceErros) {
-              return res.send(`Transaction Failed:  ${transaction.data.serviceErros}  ${transaction.data.verbiage}  ${transaction.data.status_code}`);
+            if (transaction.data.serviceErrors) {
+              return res.send(`Transaction Failed:  ${transaction.data.serviceErrors}  ${transaction.data.verbiage}  ${transaction.data.status_code}`);
             }
             return res.send(`Transaction Failed: ${transaction.data.verbiage}  ${transaction.data.status_code}`);
           }
@@ -219,7 +236,7 @@ module.exports = function(config, formio) {
             transactionStatus: transaction.data.status_code === 121 ? 'approved' : 'declined',
             transactionId: transaction.data.id,
           };
-
+          debug('Transaction Data:', transaction.data);
           // Update the transaction record.
           txn.markModified('metadata');
           txn.markModified('data');
