@@ -421,6 +421,11 @@ const Teams = {
       return;
     }
 
+    // Check teamId is a valid mongo ObjectId
+    if (!Teams.util().FormioUtils.isMongoId(teamId)) {
+      return;
+    }
+
     // A team object is already provided.
     if (typeof teamId !== 'string') {
       return teamId;
