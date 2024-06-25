@@ -154,6 +154,10 @@ module.exports = function(config, formio) {
           txn.metadata.lastRequest = new Date();
           txn.metadata.requestCount++;
 
+          if (!portalUser.fullName) {
+            return res.status(400).send('User Full Name is missing');
+          }
+
           const fortisContact = await createFortisContact();
           const transaction = await sendAuthTxn(fortisContact);
           if (process.env.TEST_SUITE && transaction && transaction.data) {
