@@ -38,11 +38,11 @@ module.exports = function(config, formio) {
             "exp_date": "0924",
             "account_holder_name": "Test Account Name",
             "account_number": "5454545454545454",
+            "save_account_title": "Formio",
             "transaction_amount": 1,
-            "save_account_title": "Testing Account",
             "customer_id": "123123123",
             "cvv": "123",
-            "description": `Formio Test Payment ${userId} ${portalUser.email}`
+            "description": `UserID: ${userId}`
           };
       }
 
@@ -52,11 +52,11 @@ module.exports = function(config, formio) {
         "account_holder_name": data.cardholderName,
         "account_number": data.ccNumber,
         "transaction_amount": 0,
-        "save_account_title": portalUser.fullName || portalUser.email,
+        "save_account_title": "Formio",
         "customer_id": userId,
         "cvv": data.securityCode,
         "auto_decline_cvv_override": true,
-        "description": `PaymentAuth: ${userId} ${portalUser.email}`,
+        "description": `ID: ${userId}`,
         "contact_id": contact.data.id,
       };
     };
@@ -115,10 +115,10 @@ module.exports = function(config, formio) {
         return txn.json();
       }
       else {
-        const message = await txn.text();
+        const message = await txn.json();
         debug(`Failed to create transaction: ${message}`);
         debug("Failed Transaction Request: ", buildRequest(contact));
-        throw new Error(`Failed to create transaction: ${message}`);
+        return message;
       }
     };
     /* eslint-enable new-cap */
@@ -214,9 +214,9 @@ module.exports = function(config, formio) {
             await txn.save();
             res.status(400);
             if (transaction.data.serviceErrors) {
-              return res.send(`Transaction Failed:  ${transaction.data.serviceErrors}  ${transaction.data.verbiage}  ${transaction.data.status_code}`);
+              return res.send(`Transaction Failed:  ${transaction.data.serviceErrors}  ${transaction.data.verbiage}  ${transaction.data.reason_code_id === 1656 ? 'Declined' : transaction.data.reason_code_id}`);
             }
-            return res.send(`Transaction Failed: ${transaction.data.verbiage}  ${transaction.data.status_code}`);
+            return res.send(`Transaction Failed: ${transaction.data.verbiage}  ${transaction.data.reason_code_id === 1656 ? 'Declined' : transaction.data.reason_code_id}`);
           }
 
           if (!transaction.data.id) {
