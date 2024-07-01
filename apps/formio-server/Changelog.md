@@ -82,6 +82,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-8136: Full name requirement
  - FIO-8266: Invalid Team ID Should Not Crash Server
  - FIO-8536 Added conditions for displaying Tenant Access on the project settings page
+ - FIO-8136: Remove Fortis Limits add verbose errors
 
 ## 9.2.0-rc.1
 ### Changed
