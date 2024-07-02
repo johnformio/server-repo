@@ -16,7 +16,9 @@
       "access": [],
       "components": [],
       "controller": "some controller for b",
-      "submissionRevisions": ""
+      "submissionRevisions": "",
+      "revisions": "", 
+      "esign": {}
     }
   },
   "forms": {
@@ -31,8 +33,9 @@
       "access": [],
       "components": [],
       "controller": "some controller for a",
-      "submissionRevisions": ""
-
+      "submissionRevisions": "",
+      "revisions": "", 
+      "esign": {}
     }
   },
   "actions": {},
