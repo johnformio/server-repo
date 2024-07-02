@@ -1,5 +1,7 @@
 import _ from 'lodash';
-import * as FormioCore from '@formio/core';
+import mockBrowserContext from '../mockBrowserContext';
+mockBrowserContext();
+import { Utils } from '@formio/core/utils';
 
 import { RootShim } from './RootShim';
 
@@ -45,7 +47,7 @@ export class InstanceShim {
 
     // Returns row
     get data() {
-        return FormioCore.Utils.getContextualRowData(
+        return Utils.getContextualRowData(
             this.component,
             this.component.path,
             this._data,
@@ -88,7 +90,7 @@ export class InstanceShim {
     }
 
     isEmpty() {
-        return FormioCore.Utils.isComponentDataEmpty(
+        return Utils.isComponentDataEmpty(
             this.component,
             this._data,
             this._path,

@@ -23,7 +23,7 @@ var document          = {
     firstElementChild: {appendChild: () => {}}
   }
 };
-var window = {addEventListener: () => {}, Event: function() {}, navigator: global.navigator};
+var window = {addEventListener: () => {}, Event: function() {}, navigator: navigator};
 var btoa = (str) => {
   return (str instanceof Buffer) ?
     str.toString('base64') :
