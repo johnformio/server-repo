@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 -   FIO-8251: added inputmask library
 -   FIO-8128: utilize eachComponentData 'includeAll' flag for RootShim
 -   FIO-7507: Run tests and publish dev tag to npm
-  
+
 ## 0.0.7-rc.18
 
 ### Changed
