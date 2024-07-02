@@ -53,10 +53,10 @@
   resolved "https://registry.npmjs.org/@eslint/js/-/js-8.55.0.tgz#b721d52060f369aa259cf97392403cb9ce892ec6"
   integrity sha512-qQfo2mxH5yVom1kacMtZZJFVdW+E70mqHMJvVg6WTLo+VBuQJ4TojZlfWBjK0ve5BdEeNAVxOsl/nvNMpJOaJA==
 
-"@formio/bootstrap@^3.0.0-rc.24":
-  version "3.0.0-rc.21-dev.90.e1f0b93"
-  resolved "https://registry.npmjs.org/@formio/bootstrap/-/bootstrap-3.0.0-rc.21-dev.90.e1f0b93.tgz#fd669cecbf4ab2f58ad91d1a67e55dfbcad1d2b7"
-  integrity sha512-hNw2XvCU1hzdke42Gos2MnvWbUQjjhLPLPoRAqxEwxzg0lMeR5Xc9wlw1jRhHEwbpvF8c5bBVnnxfX/ilfah4A==
+"@formio/bootstrap@3.0.0-rc.36":
+  version "3.0.0-rc.36"
+  resolved "https://registry.npmjs.org/@formio/bootstrap/-/bootstrap-3.0.0-rc.36.tgz#23662de12a2e1fec357bcf7c05b4417bf85dd883"
+  integrity sha512-osgJoX47fq1mPRqLepDwgNMLn96bqtSNFQfizJs/WdnlPm+kgNj4R7PTWg+Rs8yyglqIjT0LNNrakAZLl/7new==
 
 "@formio/choices.js@^10.2.1":
   version "10.2.1"
@@ -67,50 +67,50 @@
     fuse.js "^6.6.2"
     redux "^4.2.0"
 
-"@formio/core@2.0.0":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@formio/core/-/core-2.0.0.tgz#94035bc3d1507ba1531fff8e37fe40501c90182f"
-  integrity sha512-VZGzW5NJ2nOyJVkMirbXZbf2cS2NbMogGeQZSyEA/CT3KU3W1eT5BdEtBzGen1FvyNqhtRUaowPEEDwgVhj9VA==
-  dependencies:
-    "@types/json-logic-js" "^2.0.5"
-    browser-cookies "^1.2.0"
-    core-js "^3.33.2"
-    dayjs "^1.11.10"
-    dompurify "^3.0.6"
-    eventemitter3 "^5.0.0"
-    fast-json-patch "^3.1.1"
-    fetch-ponyfill "^7.1.0"
-    inputmask "^5.0.9-beta.45"
-    json-logic-js "^2.0.2"
-    lodash "^4.17.21"
-    moment "^2.29.4"
-
-"@formio/core@^2.1.0-dev.tt.4":
-  version "2.1.0-dev.tt.7"
-  resolved "https://registry.npmjs.org/@formio/core/-/core-2.1.0-dev.tt.7.tgz#08a0a67a903f1266c7769e971248bd53ade909f4"
-  integrity sha512-PJNnyceXW1WuFP936yb+1lXMmEK5BhqKvlBOdP8pA6wpzoHgd+7yykuwsHKZ4DeqhifEL+AncJCgMcHx0q4jZA==
+"@formio/core@2.1.0-dev.104.42720ba":
+  version "2.1.0-dev.104.42720ba"
+  resolved "https://registry.npmjs.org/@formio/core/-/core-2.1.0-dev.104.42720ba.tgz#f23e0013977f42165b11c7ebf2942fd2a0b66b6d"
+  integrity sha512-Op+uzR0gKf0DYlQhTOENHrNvxckBF1+ivCvEX7MozfiTfk1DOwLktJdMxlE0JYG8ZdkpkLT/cnG2nBL5iC+PKg==
   dependencies:
     "@types/json-logic-js" "^2.0.7"
     browser-cookies "^1.2.0"
-    core-js "^3.37.0"
-    dayjs "^1.11.10"
-    dompurify "^3.1.0"
+    core-js "^3.37.1"
+    dayjs "^1.11.11"
+    dompurify "^3.1.4"
     eventemitter3 "^5.0.0"
     fast-json-patch "^3.1.1"
     fetch-ponyfill "^7.1.0"
-    inputmask "4.0.9"
+    inputmask "5.0.8"
     json-logic-js "^2.0.2"
     lodash "^4.17.21"
     moment "^2.29.4"
 
-"@formio/js@^5.0.0-rc.50":
-  version "5.0.0-rc.50"
-  resolved "https://registry.npmjs.org/@formio/js/-/js-5.0.0-rc.50.tgz#3ab6ec4c890b0459f5b61202aabb61a2d83fe3e3"
-  integrity sha512-OHkDZ/u2rxFZ9oJsoTWZPAAQJw2bs0JPWiTK/dVNG2nzg05zolgWLHOSVcpPGpiOh+aiL9sqLwKP7HMRSVLO4A==
+"@formio/core@^2.1.0-dev.tt.13":
+  version "2.1.0-dev.tt.13"
+  resolved "https://registry.npmjs.org/@formio/core/-/core-2.1.0-dev.tt.13.tgz#6e44940b9465c884ef548d797fcd6720cc2608f5"
+  integrity sha512-vpuHjwpNHDVITCbRl4C7hnIdLCad/W2zm4GMdudpJHVe0UdDhwRR+nK+eZ8MiUr8MzBENfj3kasFo1Y8Ybmd0g==
   dependencies:
-    "@formio/bootstrap" "^3.0.0-rc.24"
+    "@types/json-logic-js" "^2.0.7"
+    browser-cookies "^1.2.0"
+    core-js "^3.37.1"
+    dayjs "^1.11.11"
+    dompurify "^3.1.4"
+    eventemitter3 "^5.0.0"
+    fast-json-patch "^3.1.1"
+    fetch-ponyfill "^7.1.0"
+    inputmask "5.0.8"
+    json-logic-js "^2.0.2"
+    lodash "^4.17.21"
+    moment "^2.29.4"
+
+"@formio/js@5.0.0-rc.62":
+  version "5.0.0-rc.62"
+  resolved "https://registry.npmjs.org/@formio/js/-/js-5.0.0-rc.62.tgz#0945473e29d509a416b393a6bfc1eb5b0c185939"
+  integrity sha512-y6Go9j4h332aNq2J6pstISl+/U89160EzG4qa0FXG30qwEVe6luOuf6LAfmBEms0SAWtDf8d8fSmQwW1nDWNwA==
+  dependencies:
+    "@formio/bootstrap" "3.0.0-rc.36"
     "@formio/choices.js" "^10.2.1"
-    "@formio/core" "^2.1.0-dev.tt.4"
+    "@formio/core" "2.1.0-dev.104.42720ba"
     "@formio/text-mask-addons" "^3.8.0-formio.2"
     "@formio/vanilla-text-mask" "^5.1.1-formio.1"
     abortcontroller-polyfill "^1.7.5"
@@ -119,10 +119,10 @@
     browser-cookies "^1.2.0"
     browser-md5-file "^1.1.1"
     compare-versions "^6.0.0-rc.2"
-    core-js "^3.37.0"
+    core-js "^3.37.1"
     dialog-polyfill "^0.5.6"
     dom-autoscroller "^2.3.4"
-    dompurify "^3.1.0"
+    dompurify "^3.1.3"
     downloadjs "^1.4.7"
     dragula "^3.7.3"
     eventemitter3 "^5.0.1"
@@ -138,7 +138,7 @@
     lodash "^4.17.21"
     moment "^2.29.4"
     moment-timezone "^0.5.44"
-    quill "^2.0.0"
+    quill "^2.0.2"
     signature_pad "^4.2.0"
     string-hash "^1.1.3"
     tippy.js "^6.3.7"
@@ -294,11 +294,6 @@
   version "2.0.4"
   resolved "https://registry.npmjs.org/@types/http-errors/-/http-errors-2.0.4.tgz#7eb47726c391b7345a6ec35ad7f4de469cf5ba4f"
   integrity sha512-D0CFMMtydbJAegzOyHjtiKPLlvnm3iTZyZRSZoLq2mRhDdmLfIWOCYPfQJ4cu2erKghU++QvjcUjp/5h7hESpA==
-
-"@types/json-logic-js@^2.0.5":
-  version "2.0.6"
-  resolved "https://registry.npmjs.org/@types/json-logic-js/-/json-logic-js-2.0.6.tgz#ceb090bcaf7ec4d5c7c4c3b5225cf53733e76624"
-  integrity sha512-X8f94UmgbRE9kRs83J/Jf+fndEVbBGuZLIeLHBOKYGxAX2g8dMAV41RqwkvoMdybRZ3vZoHEdnMnF8VPiP0OOA==
 
 "@types/json-logic-js@^2.0.7":
   version "2.0.7"
@@ -1331,15 +1326,10 @@ copy-props@^2.0.1:
     each-props "^1.3.2"
     is-plain-object "^5.0.0"
 
-core-js@^3.33.2:
-  version "3.35.1"
-  resolved "https://registry.npmjs.org/core-js/-/core-js-3.35.1.tgz#9c28f8b7ccee482796f8590cc8d15739eaaf980c"
-  integrity sha512-IgdsbxNyMskrTFxa9lWHyMwAJU5gXOPP+1yO+K59d50VLVAIDAbs7gIv705KzALModfK3ZrSZTPNpC0PQgIZuw==
-
-core-js@^3.37.0:
-  version "3.37.0"
-  resolved "https://registry.npmjs.org/core-js/-/core-js-3.37.0.tgz#d8dde58e91d156b2547c19d8a4efd5c7f6c426bb"
-  integrity sha512-fu5vHevQ8ZG4og+LXug8ulUtVxjOcEYvifJr7L5Bfq9GOztVqsKd9/59hUk2ZSbCrS3BqUr3EpaYGIYzq7g3Ug==
+core-js@^3.37.1:
+  version "3.37.1"
+  resolved "https://registry.npmjs.org/core-js/-/core-js-3.37.1.tgz#d21751ddb756518ac5a00e4d66499df981a62db9"
+  integrity sha512-Xn6qmxrQZyB0FFY8E3bgRXei3lWDJHhvI+u0q9TKIYM49G8pAr0FgnnrFRAmsbptZL1yxRADVXn+x5AGsbBfyw==
 
 core-util-is@~1.0.0:
   version "1.0.3"
@@ -1387,10 +1377,10 @@ d@1, d@^1.0.1:
     es5-ext "^0.10.50"
     type "^1.0.1"
 
-dayjs@^1.11.10:
-  version "1.11.10"
-  resolved "https://registry.npmjs.org/dayjs/-/dayjs-1.11.10.tgz#68acea85317a6e164457d6d6947564029a6a16a0"
-  integrity sha512-vjAczensTgRcqDERK0SR2XMwsF/tSvnvlv6VcF2GIhg6Sx4yOIt/irsr1RDJsKiIyBzJDpCoXiWWq28MqH2cnQ==
+dayjs@^1.11.11:
+  version "1.11.11"
+  resolved "https://registry.npmjs.org/dayjs/-/dayjs-1.11.11.tgz#dfe0e9d54c5f8b68ccf8ca5f72ac603e7e5ed59e"
+  integrity sha512-okzr3f11N6WuqYtZSvm+F776mB41wRZMhKP+hc34YdW+KmtYYK9iqvHSwo2k9FEH3fhGXvOPV6yz2IcSrfRUDg==
 
 debug@2.6.9, debug@^2.2.0, debug@^2.3.3:
   version "2.6.9"
@@ -1612,15 +1602,10 @@ dom-set@^1.0.1:
     is-array "^1.0.1"
     iselement "^1.1.4"
 
-dompurify@^3.0.6:
-  version "3.0.8"
-  resolved "https://registry.npmjs.org/dompurify/-/dompurify-3.0.8.tgz#e0021ab1b09184bc8af7e35c7dd9063f43a8a437"
-  integrity sha512-b7uwreMYL2eZhrSCRC4ahLTeZcPZxSmYfmcQGXGkXiZSNW1X85v+SDM5KsWcpivIiUBH47Ji7NtyUdpLeF5JZQ==
-
-dompurify@^3.1.0:
-  version "3.1.2"
-  resolved "https://registry.npmjs.org/dompurify/-/dompurify-3.1.2.tgz#d1e158457e00666ab40c9c3d8aab57586a072bd1"
-  integrity sha512-hLGGBI1tw5N8qTELr3blKjAML/LY4ANxksbS612UiJyDfyf/2D092Pvm+S7pmeTGJRqvlJkFzBoHBQKgQlOQVg==
+dompurify@^3.1.3, dompurify@^3.1.4:
+  version "3.1.5"
+  resolved "https://registry.npmjs.org/dompurify/-/dompurify-3.1.5.tgz#2c6a113fc728682a0f55684b1388c58ddb79dc38"
+  integrity sha512-lwG+n5h8QNpxtyrJW/gJWckL+1/DQiYMX8f7t8Z2AZTPw1esVrqjI63i7Zc2Gz0aKzLVMYC1V1PL/ky+aY/NgA==
 
 dotenv@^16.3.1:
   version "16.3.1"
@@ -2838,20 +2823,10 @@ ini@^1.3.4, ini@~1.3.0:
   resolved "https://registry.npmjs.org/ini/-/ini-1.3.8.tgz#a29da425b48806f34767a4efce397269af28432c"
   integrity sha512-JV/yugV2uzW5iMRSiZAyDtQd+nxtUnjeLt0acNdw98kKLrvuRVyB80tsREOE7yvGVgalhZ6RNXCmEHkUKBKxew==
 
-inputmask@4.0.9:
-  version "4.0.9"
-  resolved "https://registry.npmjs.org/inputmask/-/inputmask-4.0.9.tgz#a60fc46cee52a35a0ba5f50b5cca3a6733ece18c"
-  integrity sha512-EodaYhJKncXRBwvCE8YrRmAFmBJ6bWdgX4Qw8QSnK5GBDXE03jgpJhrS+a2N0v2Zsgp+OjKXy7qACktjYD83Uw==
-
-inputmask@^5.0.8:
+inputmask@5.0.8, inputmask@^5.0.8:
   version "5.0.8"
   resolved "https://registry.yarnpkg.com/inputmask/-/inputmask-5.0.8.tgz#cd0f70b058c3291a0d4f27de25dbfc179c998bb4"
   integrity sha512-1WcbyudPTXP1B28ozWWyFa6QRIUG4KiLoyR6LFHlpT4OfTzRqFfWgHFadNvRuMN1S9XNVz9CdNvCGjJi+uAMqQ==
-
-inputmask@^5.0.9-beta.45:
-  version "5.0.9-beta.45"
-  resolved "https://registry.npmjs.org/inputmask/-/inputmask-5.0.9-beta.45.tgz#2699ebfd1e99f572815fb8f2ac23c548198f9ec6"
-  integrity sha512-Nh6RHifykvEfPvnpCiwEER8LcDTAWvWKWUnVsRjqOyutGwAdjFuucCDI3YAm8tTVmhsmAydqEs+ORwllkN7Pfw==
 
 internal-slot@^1.0.5:
   version "1.0.6"
@@ -4272,10 +4247,10 @@ quill-delta@^5.1.0:
     lodash.clonedeep "^4.5.0"
     lodash.isequal "^4.5.0"
 
-quill@^2.0.0:
-  version "2.0.1"
-  resolved "https://registry.npmjs.org/quill/-/quill-2.0.1.tgz#472bbc5010b0794ef4a73728379edfef12ae89cc"
-  integrity sha512-HtZSieCRgGCfXkc0a4r+e4NlITvl1C1B2cpS+NyNsDskomj+MbfCcUlZ8JxgPCCwmq/vIDbYuyumDkJKVeBcXg==
+quill@^2.0.2:
+  version "2.0.2"
+  resolved "https://registry.npmjs.org/quill/-/quill-2.0.2.tgz#5b26bc10a74e9f7fdcfdb5156b3133a3ebf0a814"
+  integrity sha512-QfazNrhMakEdRG57IoYFwffUIr04LWJxbS/ZkidRFXYCQt63c1gK6Z7IHUXMx/Vh25WgPBU42oBaNzQ0K1R/xw==
   dependencies:
     eventemitter3 "^5.0.1"
     lodash-es "^4.17.21"
