@@ -51,7 +51,7 @@ module.exports = class FormRevision extends Revision {
     }
   }
 
-  createVersion(item, user, note, done) {
+  async createVersion(item, user, note, done) {
     const body = item.toObject();
     body._rid = body._id;
 
@@ -64,18 +64,18 @@ module.exports = class FormRevision extends Revision {
     delete body.__v;
     if (!item.containRevisions) {
       item.containRevisions = true;
-      this.itemModel.updateOne({
+      await this.itemModel.updateOne({
         _id: item._id
       },
       {
         $set: item,
-      },
-      (err) => {
-        return this.revisionModel.create(body, done);
       });
+      const revision = await this.revisionModel.create(body);
+      return done(null, revision);
     }
     else {
-      return this.revisionModel.create(body, done);
+      const revision = await this.revisionModel.create(body);
+      return done(null, revision);
     }
  }
 

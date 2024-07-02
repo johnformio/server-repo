@@ -44,18 +44,18 @@ module.exports = (formio) => {
       }
       // If the trial time has ended, archive the project
       debug(`Archiving project ${primaryProject._id}`);
-      projects.updateOne({
-        _id: ObjectId(primaryProject._id)
-      }, {
-        $set: {'plan': 'archived'}
-      }, function(err) {
-        if (err) {
-          debug(err);
-          return next(err);
-        }
-
+      try {
+        await projects.updateOne({
+          _id: ObjectId(primaryProject._id)
+        }, {
+          $set: {'plan': 'archived'}
+        });
         return next(REQUEST_FOR_ARCHIVED_PROJECT_NOT_ALLOWED_ERROR);
-      });
+      }
+      catch (err) {
+        debug(err);
+        return next(err);
+      }
     }
     else {
       return next();

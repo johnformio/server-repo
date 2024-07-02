@@ -21,7 +21,7 @@ module.exports = class FormRevision extends Revision {
     item.set('_vid', item.get('_vid') + 1);
   }
 
-  createVersion(item, user ,note, done) {
+  async createVersion(item, user ,note, done) {
     const body = item.toObject();
     body._rid = body._id;
 
@@ -33,20 +33,23 @@ module.exports = class FormRevision extends Revision {
     delete body._id;
     delete body.__v;
 
-   this.revisionModel.findOne({
-      _rid: body._rid,
-      _vid: 'draft'
-    }).exec((err, result)=>{
-      if (err) {
-        return done(err);
-      }
+    try {
+      const result = await this.revisionModel.findOne({
+        _rid: body._rid,
+        _vid: 'draft'
+      }).exec();
       // If a draft exists, overwrite it.
-          if (result) {
-              result.set(body);
-              return this.revisionModel.findOneAndUpdate({_id: result._id}, result, done);
-          }
+        if (result) {
+          result.set(body);
+          const revision = await this.revisionModel.findOneAndUpdate({_id: result._id}, result);
+          return done(null, revision);
+        }
       // Otherwise create a new entry.
-      this.revisionModel.create(body, done);
-    });
+      const revision = await this.revisionModel.create(body);
+      return done(null, revision);
     }
+    catch (err) {
+      return done(err);
+    }
+  }
 };

@@ -210,21 +210,17 @@ var emptyDatabase = template.emptyDatabase = template.clearData = function(done)
    * @param next
    *   The callback to execute.
    */
-  var dropDocuments = function(model, next) {
-    model.deleteMany({}, function(err) {
-      if (err) {
-        return next(err);
-      }
+  var dropDocuments = async function(model, next) {
+    try {
+      await model.deleteMany({});
 
-      model.countDocuments({}, function(err, count) {
-        if (err) {
-          return next(err);
-        }
-
-        assert.equal(count, 0);
-        next();
-      });
-    });
+      const count = await model.countDocuments({});
+      assert.equal(count, 0);
+      next();
+    }
+    catch (err) {
+      return next(err);
+    }
   };
 
   // Remove all test documents for tags.

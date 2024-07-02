@@ -411,20 +411,19 @@ module.exports = function(app) {
        * @param tokenResponse
        * @param cb
        */
-      tempToken(req, res, allow, expire, tokenResponse, cb) {
+      async tempToken(req, res, allow, expire, tokenResponse, cb) {
         // Save to mongo
-        formioServer.formio.mongoose.models.token.create({
-          value: tokenResponse.token,
-          expireAt: (expire || expire === 0) ? Date.now() + (expire * 1000) : null
-        }, (err, token) => {
-          if (err) {
-            return res.status(400).send(err.message);
-          }
-
+        try {
+          const token = await formioServer.formio.mongoose.models.token.create({
+            value: tokenResponse.token,
+            expireAt: (expire || expire === 0) ? Date.now() + (expire * 1000) : null
+          });
           tokenResponse.key = token.key;
-
           return cb();
-        });
+        }
+        catch (err) {
+          return res.status(400).send(err.message);
+        }
       },
 
       /**
@@ -1174,12 +1173,12 @@ module.exports = function(app) {
           });
         };
 
-        const createFormRevision = (item, doc, {_vid, tag}, done) => {
-          formioServer.formio.resources.form.model.findOneAndUpdate({
-            _id: doc._id
-          },
-          {$set: {_vid: _vid}})
-          .then((result)=> {
+        const createFormRevision = async (item, doc, {_vid, tag}, done) => {
+          try {
+            const result = await formioServer.formio.resources.form.model.findOneAndUpdate({
+              _id: doc._id
+            },
+            {$set: {_vid: _vid}});
             const body = Object.assign({}, item);
             body._rid = result._id;
             body._vid = result._vid;
@@ -1188,34 +1187,29 @@ module.exports = function(app) {
             delete body._id;
             delete body.__v;
 
-            formioServer.formio.mongoose.models.formrevision.create(body, () => {
-              done(null, item);
-            });
-          })
-          .catch(err => {
-            if (err) {
-              return done(err);
-            }
-          });
+            await formioServer.formio.mongoose.models.formrevision.create(body);
+            return done(null, item);
+          }
+          catch (err) {
+            return done(err);
+          }
         };
 
         alters.form = (item, template, done) => {
           item.project = template._id;
-          this.formMachineName(item.machineName, item, (err, machineName) => {
+          this.formMachineName(item.machineName, item, async (err, machineName) => {
             if (err) {
               return done(err);
             }
 
             item.machineName = machineName;
 
-            formioServer.formio.resources.form.model.findOne({
-              machineName: item.machineName,
-              deleted: {$eq: null},
-              project: formioServer.formio.util.idToBson(item.project)
-            }).exec((err, doc) => {
-              if (err) {
-                return done(err);
-              }
+            try {
+              const doc = await formioServer.formio.resources.form.model.findOne({
+                machineName: item.machineName,
+                deleted: {$eq: null},
+                project: formioServer.formio.util.idToBson(item.project)
+              }).exec();
               // If form doesn't exist or revisions are disabled, don't worry about revisions.
               if (!doc || !doc.revisions) {
                 return done(null, item);
@@ -1230,34 +1224,31 @@ module.exports = function(app) {
                 _vid: parseInt(doc._vid) + 1,
                 tag: template.tag,
               }, done);
-            });
+            }
+            catch (err) {
+              return done(err);
+            }
           });
         };
 
-        const getFormRevisions = (item, done) => {
-          formioServer.formio.resources.form.model.findOne({
+        const getFormRevisions = async (item, done) => {
+          try {
+          const form = await formioServer.formio.resources.form.model.findOne({
             machineName: item.machineName,
             deleted: {$eq: null},
             project: formioServer.formio.util.idToBson(item.project),
-          }).exec((err, form) => {
-            if (err) {
-              return done(err);
-            }
-
+          }).exec();
             if (!form || form._vid || !form.revisions) {
               return done(null, form);
             }
-
-            formioServer.formio.resources.formrevision.model.findOne({
+            const formrevision = await formioServer.formio.resources.formrevision.model.findOne({
               _rid: form._id,
-            }).exec((err, formrevision) => {
-              if (err) {
-                return done(err);
-              }
-
-              return done(null, form, formrevision);
-            });
-          });
+            }).exec();
+            return done(null, form, formrevision);
+          }
+          catch (err) {
+           return done(err);
+          }
         };
 
         alters.formSave = (item, done) => {
@@ -1796,7 +1787,7 @@ module.exports = function(app) {
           query.projectId = token.form.project;
         }
         else {
-          query.projectId = formioServer.formio.mongoose.Types.ObjectId('000000000000000000000000');
+          query.projectId = new formioServer.formio.mongoose.Types.ObjectId('000000000000000000000000');
         }
         return query;
       },
@@ -1941,19 +1932,19 @@ module.exports = function(app) {
       roleMachineName(machineName, document, done) {
         this.formMachineName(machineName, document, done);
       },
-      actionMachineName(machineName, document, done) {
+      async actionMachineName(machineName, document, done) {
         if (!document) {
           return this.formMachineName(machineName, null, done);
         }
-        formioServer.formio.resources.form.model.findOne({_id: document.form, deleted: {$eq: null}})
-          .lean()
-          .exec((err, form) => {
-            if (err) {
-              return done(err);
-            }
-
+        try {
+          const form = await formioServer.formio.resources.form.model.findOne({_id: document.form, deleted: {$eq: null}})
+            .lean()
+            .exec();
             this.formMachineName(machineName, form, done);
-          });
+        }
+        catch (err) {
+          return done(err);
+        }
       },
       machineNameExport(machineName) {
         if (!machineName) {
@@ -2072,8 +2063,7 @@ module.exports = function(app) {
        *   The form object.
        * @return {Promise}
        */
-      checkEmailPermission(mail, form) {
-        return new Promise((resolve, reject) => {
+      async checkEmailPermission(mail, form) {
           let isAllowed = !(mail.from || '').match(/form\.io/gi);
           if (!isAllowed) {
             // form.io to form.io emails are allowed.
@@ -2082,31 +2072,25 @@ module.exports = function(app) {
           if (!isAllowed) {
             const ownerId = _.get(form, 'owner', '');
             if (!ownerId) {
-              return reject('You are not allowed to send a message from the form.io domain');
+              throw ('You are not allowed to send a message from the form.io domain');
             }
             const submissionModel = formioServer.formio.resources.submission.model;
 
-            submissionModel.findOne({_id: ownerId.toString()}, (err, owner) => {
-              if (err) {
-                return reject(err);
-              }
+            const owner = await submissionModel.findOne({_id: ownerId.toString()});
+            const email = _.get(owner, 'data.email');
 
-              const email = _.get(owner, 'data.email');
+            isAllowed = !!email && email.match(/form\.io/gi);
 
-              isAllowed = !!email && email.match(/form\.io/gi);
-
-              if (isAllowed) {
-                resolve(mail);
-              }
-              else {
-                reject('You are not allowed to send a message from the form.io domain');
-              }
-            });
+            if (isAllowed) {
+              return mail;
+            }
+            else {
+              throw ('You are not allowed to send a message from the form.io domain');
+            }
           }
           else {
-            resolve(mail);
+            return mail;
           }
-        });
       },
 
        /**

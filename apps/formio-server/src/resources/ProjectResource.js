@@ -427,7 +427,7 @@ module.exports = (router, formioServer) => {
     ],
   });
 
-  router.post('/project/available', (req, res, next) => {
+  router.post('/project/available', async (req, res, next) => {
     if (!req.body || !req.body.name) {
       return res.status(400).send('"name" parameter is required');
     }
@@ -435,14 +435,14 @@ module.exports = (router, formioServer) => {
       return res.status(200).send({available: false});
     }
 
-    resource.model.findOne({name: req.body.name, deleted: {$eq: null}}, (err, project) => {
-      if (err) {
-        debug(err);
-        return next(err);
-      }
-
+    try {
+      const project = await resource.model.findOne({name: req.body.name, deleted: {$eq: null}});
       return res.status(200).json({available: !project});
-    });
+    }
+    catch (err) {
+      debug(err);
+      return next(err);
+    }
   });
 
   const sqlconnector = require('../actions/sqlconnector/util')(formioServer);

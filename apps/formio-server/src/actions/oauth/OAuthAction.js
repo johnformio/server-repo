@@ -383,7 +383,7 @@ module.exports = router => {
         const externalTokens = _.uniqWith([...tokens, ...result.user.externalTokens], (a, b) => a.type === b.type);
 
         await formio.resources.submission.model.updateOne({
-          _id: ObjectId(result.user.id)
+          _id: new ObjectId(result.user.id)
         }, {
           $set: {externalTokens}
         });

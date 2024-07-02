@@ -23,16 +23,12 @@ module.exports = (formioServer) => {
       if (submissionFormRevisionId !== form._vid) {
         let result;
         if (submissionFormRevisionId.length === 24) {
-          result = await Promise.promisify(formio.resources.formrevision.model.findOne, {
-            context: formio.resources.formrevision.model
-          })({
-            _id: formio.util.idToBson(submissionFormRevisionId),
+          result = await formio.resources.formrevision.model.findOne({
+            _id: formio.util.idToBson(submissionFormRevisionId)
           });
         }
         else {
-          result = await Promise.promisify(formio.resources.formrevision.model.findOne, {
-            context: formio.resources.formrevision.model
-          })({
+          result = await formio.resources.formrevision.model.findOne({
             project: project._id,
             _rid: formio.util.idToBson(form._id),
             _vid: parseInt(submissionFormRevisionId),

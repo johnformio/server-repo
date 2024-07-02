@@ -39,8 +39,7 @@ module.exports = function(router) {
           },
           {
             message: 'The Project name must be unique.',
-            validator(value) {
-              return new Promise((resolve) => {
+            async validator(value) {
                 const search = {
                   name: value,
                   deleted: {$eq: null}
@@ -51,14 +50,16 @@ module.exports = function(router) {
                   search._id = {$ne: this._id};
                 }
 
-                formio.mongoose.model('project').findOne(search).lean().exec(function(err, result) {
-                  if (err || result) {
-                    return resolve(false);
+                try {
+                  const result = await formio.mongoose.model('project').findOne(search).lean().exec();
+                  if (result) {
+                    return false;
                   }
-
-                  resolve(true);
-                });
-              });
+                  return true;
+                }
+                catch (err) {
+                  return false;
+                }
             }
           }
         ]
@@ -105,10 +106,9 @@ module.exports = function(router) {
         validate: [
           {
             message: 'Remote already connected to an environment.',
-            validator(value) {
-              return new Promise((resolve) => {
+            async validator(value) {
                 if (!value || !value.project || !value.project._id) {
-                  return resolve(true);
+                  return true;
                 }
 
                 const search = {
@@ -121,14 +121,16 @@ module.exports = function(router) {
                   search._id = {$ne: this._id};
                 }
 
-                formio.mongoose.model('project').findOne(search).lean().exec(function(err, result) {
-                  if (err || result) {
-                    return resolve(false);
+                try {
+                  const result = await formio.mongoose.model('project').findOne(search).lean().exec();
+                  if (result) {
+                    return false;
                   }
-
-                  return resolve(true);
-                });
-              });
+                  return true;
+                }
+                catch (err) {
+                  return false;
+                }
             }
           }
         ],

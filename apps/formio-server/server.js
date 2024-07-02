@@ -6,7 +6,6 @@ const _ = require('lodash');
 const bodyParser = require('body-parser');
 const favicon = require('serve-favicon');
 const packageJson = require('./package.json');
-const Q = require('q');
 const cacheControl = require('express-cache-controller');
 const {v4: uuidv4} = require('uuid');
 const fs = require('fs');
@@ -21,295 +20,292 @@ const debug = {
 const RequestCache = require('./src/util/requestCache');
 const util = require('./src/util/util');
 
-module.exports = function(options) {
-  options = options || {};
-  var q = Q.defer();
+module.exports = async function(options) {
+  try {
+    options = options || {};
 
-  // Create cache for requests//
-  const requestCache = new RequestCache();
+    // Create cache for requests//
+    const requestCache = new RequestCache();
 
-  // Use the express application.
-  var app = options.app || express();
+    // Use the express application.
+    var app = options.app || express();
 
-  // Functions to mitigate license server crashes:
-  // Mitigation function to call if license server is unhealthy
-  app.utilizationCheckFailed = () => {
-    debug.licenseCheck('Utilization check failed');
-    if (!app._recoveryTimeout) {
-      console.log('Utilization check failed, going to recovery wait');
-      const timeToRecover = 72 * 60 * 60 * 1000; // 72 hours
-      app._recoveryTimeout = setTimeout(() => {
-        console.log('License server failed to recover, going to restricted mode');
-        app.restrictMethods = true;
-      }, timeToRecover);
-    }
-  };
-  // Recovery function to call if license check was successful
-  app.utilizationCheckSucceed = () => {
-    debug.licenseCheck('Utilization check succeed');
-    if (app._recoveryTimeout) {
-      clearTimeout(app._recoveryTimeout);
-      app._recoveryTimeout = null;
-      app.restrictMethods = false;
-      console.log('License server recovered successfully, going to work normally');
-    }
-  };
+    // Functions to mitigate license server crashes:
+    // Mitigation function to call if license server is unhealthy
+    app.utilizationCheckFailed = () => {
+      debug.licenseCheck('Utilization check failed');
+      if (!app._recoveryTimeout) {
+        console.log('Utilization check failed, going to recovery wait');
+        const timeToRecover = 72 * 60 * 60 * 1000; // 72 hours
+        app._recoveryTimeout = setTimeout(() => {
+          console.log('License server failed to recover, going to restricted mode');
+          app.restrictMethods = true;
+        }, timeToRecover);
+      }
+    };
+    // Recovery function to call if license check was successful
+    app.utilizationCheckSucceed = () => {
+      debug.licenseCheck('Utilization check succeed');
+      if (app._recoveryTimeout) {
+        clearTimeout(app._recoveryTimeout);
+        app._recoveryTimeout = null;
+        app.restrictMethods = false;
+        console.log('License server recovered successfully, going to work normally');
+      }
+    };
 
-  // Insert middleware for enforcing gradual degradation
-  // as a result of multiple license check failures
-  app.use(license.generateMiddleware(app));
+    // Insert middleware for enforcing gradual degradation
+    // as a result of multiple license check failures
+    app.use(license.generateMiddleware(app));
 
-  // Use the given config.
-  var config = options.config || require('./config');
+    // Use the given config.
+    var config = options.config || require('./config');
 
-  // Ensure that we create projects within the helper.
-  app.hasProjects = true;
+    // Ensure that we create projects within the helper.
+    app.hasProjects = true;
 
-  // Create the app server.
-  debug.startup('Creating application server');
+    // Create the app server.
+    debug.startup('Creating application server');
 
-  if (config.sslEnabled) {
-    if (config.sslKey && config.sslCert) {
-      app.server = require('https').createServer({
-        key: config.sslKey,
-        cert: config.sslCert
-      }, app);
+    if (config.sslEnabled) {
+      if (config.sslKey && config.sslCert) {
+        app.server = require('https').createServer({
+          key: config.sslKey,
+          cert: config.sslCert
+        }, app);
+      }
+      else {
+        throw new Error("SSL is enabled, but its configuration is not complete. Check your SSL_KEY and SSL_CERT environment variables.");
+      }
     }
     else {
-      throw new Error("SSL is enabled, but its configuration is not complete. Check your SSL_KEY and SSL_CERT environment variables.");
+      app.server = require('http').createServer(app);
     }
-  }
-  else {
-    app.server = require('http').createServer(app);
-  }
 
-  app.listen = function() {
-    return app.server.listen.apply(app.server, arguments);
-  };
-
-  app.portalEnabled = (process.env.PRIMARY && process.env.PRIMARY !==  'false') || (process.env.PORTAL_ENABLED && process.env.PORTAL_ENABLED !==  'false');
-
-  // Initialization middleware.
-  app.use((req, res, next) => {
-    // Do not allow populate.
-    if (req.query.populate) {
-      delete req.query.populate;
-    }
-    const sendStatus = res.sendStatus;
-    res.sendStatus = function(...args) {
-      if (!res.headersSent) {
-        return sendStatus.call(this, ...args);
-      }
+    app.listen = function() {
+      return app.server.listen.apply(app.server, arguments);
     };
-    return next();
-  });
 
-  // Use helmet to add CSP to application code.
-  app.use(...require('./src/middleware/helmet')(app));
+    app.portalEnabled = (process.env.PRIMARY && process.env.PRIMARY !==  'false') || (process.env.PORTAL_ENABLED && process.env.PORTAL_ENABLED !==  'false');
 
-  if (app.portalEnabled) {
-    debug.startup('Mounting Portal Application');
-    // Override config.js so we can set onPremise to true.
-    app.get('/config.js', (req, res) => {
-      fs.readFile(`./portal/config.js`, 'utf8', (err, contents) => {
-        res.set('Content-Type', 'application/javascript; charset=UTF-8');
-        res.send(
-          contents.replace(
-            /var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false|var licenseId = '';|var reportingUI = false;|var whitelabel = false;|var pdfBuilder = false;|var enterpriseBuilder = false;/gi,
-            (matched) => {
-              if (config.portalSSO && matched.includes('var sso =')) {
-                return `var sso = '${config.portalSSO}';`;
+    // Initialization middleware.
+    app.use((req, res, next) => {
+      // Do not allow populate.
+      if (req.query.populate) {
+        delete req.query.populate;
+      }
+      const sendStatus = res.sendStatus;
+      res.sendStatus = function(...args) {
+        if (!res.headersSent) {
+          return sendStatus.call(this, ...args);
+        }
+      };
+      return next();
+    });
+
+    // Use helmet to add CSP to application code.
+    app.use(...require('./src/middleware/helmet')(app));
+
+    if (app.portalEnabled) {
+      debug.startup('Mounting Portal Application');
+      // Override config.js so we can set onPremise to true.
+      app.get('/config.js', (req, res) => {
+        fs.readFile(`./portal/config.js`, 'utf8', (err, contents) => {
+          res.set('Content-Type', 'application/javascript; charset=UTF-8');
+          res.send(
+            contents.replace(
+              /var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false|var licenseId = '';|var reportingUI = false;|var whitelabel = false;|var pdfBuilder = false;/gi,
+              (matched) => {
+                if (config.portalSSO && matched.includes('var sso =')) {
+                  return `var sso = '${config.portalSSO}';`;
+                }
+                else if (config.ssoTeams && matched.includes('var ssoTeamsEnabled =')) {
+                  return `var ssoTeamsEnabled = ${config.ssoTeams};`;
+                }
+                else if (config.portalSSOLogout && matched.includes('var ssoLogout =')) {
+                  return `var ssoLogout = '${config.portalSSOLogout}';`;
+                }
+                else if (!config.formio.hosted && matched.includes('var onPremise')) {
+                  return 'var onPremise = true;';
+                }
+                else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.sac && matched.includes('var sac')) {
+                  return 'var sac = true;';
+                }
+                else if (config.whitelabel && app.license.terms.options.whitelabel &&  matched.includes('var whitelabel')) {
+                  return `var whitelabel = true;`;
+                }
+                else if (config.enableOauthM2M && matched.includes('var oAuthM2MEnabled')) {
+                  return 'var oAuthM2MEnabled = true;';
+                }
+                else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.reporting && matched.includes('var reportingUI')) {
+                  return 'var reportingUI = true;';
+                }
+                else if (!config.formio.hosted && app.license && app.license.licenseId && matched.includes('var licenseId')) {
+                  return `var licenseId = '${app.license.licenseId}'`;
+                }
+                else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.pdf && matched.includes('var pdfBuilder')) {
+                  return 'var pdfBuilder = true;';
+                }
+                return matched;
               }
-              else if (config.ssoTeams && matched.includes('var ssoTeamsEnabled =')) {
-                return `var ssoTeamsEnabled = ${config.ssoTeams};`;
-              }
-              else if (config.portalSSOLogout && matched.includes('var ssoLogout =')) {
-                return `var ssoLogout = '${config.portalSSOLogout}';`;
-              }
-              else if (!config.formio.hosted && matched.includes('var onPremise')) {
-                return 'var onPremise = true;';
-              }
-              else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.sac && matched.includes('var sac')) {
-                return 'var sac = true;';
-              }
-              else if (config.whitelabel && app.license.terms.options.whitelabel &&  matched.includes('var whitelabel')) {
-                return `var whitelabel = true;`;
-              }
-              else if (config.enableOauthM2M && matched.includes('var oAuthM2MEnabled')) {
-                return 'var oAuthM2MEnabled = true;';
-              }
-              else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.reporting && matched.includes('var reportingUI')) {
-                return 'var reportingUI = true;';
-              }
-              else if (!config.formio.hosted && app.license && app.license.licenseId && matched.includes('var licenseId')) {
-                return `var licenseId = '${app.license.licenseId}'`;
-              }
-              else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.pdfBasic === false && matched.includes('var pdfBuilder')) {
-                return 'var pdfBuilder = true;';
-              }
-              else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.enterpriseBuilder && matched.includes('var enterpriseBuilder')) {
-                return 'var enterpriseBuilder = true;';
+            )
+            .replace(/https:\/\/license.form.io/gi, (matched) => {
+              if (config.licenseServer && config.licenseServer !== matched) {
+                return config.licenseServer;
               }
               return matched;
-            }
-          )
-          .replace(/https:\/\/license.form.io/gi, (matched) => {
-            if (config.licenseServer && config.licenseServer !== matched) {
-              return config.licenseServer;
-            }
-            return matched;
-          })
-        );
+            })
+          );
+        });
       });
+      app.use(express.static(`./portal`));
+    }
+
+    app.use(express.static(`./public`));
+
+    // Make sure no-cache headers are sent to prevent IE from caching Ajax requests.
+    debug.startup('Attaching middleware: Cache Control');
+    app.use(cacheControl({
+      noCache: true
+    }));
+
+    // Hook each request and add usage tracking.
+    app.use((req, res, next) => {
+      // eslint-disable-next-line callback-return
+      next();
+      if (app.formio.usageTracking) {
+        app.formio.usageTracking.hook(req, res, next);
+      }
     });
-    app.use(express.static(`./portal`));
-  }
 
-  app.use(express.static(`./public`));
+    debug.startup('Attaching middleware: Favicon');
+    app.use(favicon('./favicon.ico'));
 
-  // Make sure no-cache headers are sent to prevent IE from caching Ajax requests.
-  debug.startup('Attaching middleware: Cache Control');
-  app.use(cacheControl({
-    noCache: true
-  }));
+    // Add Middleware necessary for REST API's
+    debug.startup('Attaching middleware: Body Parser and MethodOverride');
+    app.use(bodyParser.urlencoded({extended: true, limit: config.maxBodySize}));
+    app.use(bodyParser.json({limit: config.maxBodySize}));
 
-  // Hook each request and add usage tracking.
-  app.use((req, res, next) => {
-    // eslint-disable-next-line callback-return
-    next();
-    if (app.formio.usageTracking) {
-      app.formio.usageTracking.hook(req, res, next);
-    }
-  });
-
-  debug.startup('Attaching middleware: Favicon');
-  app.use(favicon('./favicon.ico'));
-
-  // Add Middleware necessary for REST API's
-  debug.startup('Attaching middleware: Body Parser and MethodOverride');
-  app.use(bodyParser.urlencoded({extended: true, limit: config.maxBodySize}));
-  app.use(bodyParser.json({limit: config.maxBodySize}));
-
-  // Error handler for malformed JSON
-  debug.startup('Attaching middleware: Malformed JSON Handler');
-  app.use(function(err, req, res, next) {
-    if (err instanceof SyntaxError) {
-      return res.status(400).send(err.message);
-    }
-
-    next();
-  });
-
-  app.use(require('./src/middleware/requestCache')(requestCache));
-
-  // Create the formio server.
-  debug.startup('Creating Form.io Core Server');
-  app.formio = options.server || require('formio')(config.formio);
-  // Mitigation functions must be available in every middleware
-  // that uses license utilization function
-  app.formio.utilizationCheckFailed = app.utilizationCheckFailed;
-  app.formio.utilizationCheckSucceed = app.utilizationCheckSucceed;
-  app.formio.formio.utilizationCheckFailed = app.utilizationCheckFailed;
-  app.formio.formio.utilizationCheckSucceed = app.utilizationCheckSucceed;
-
-  debug.startup('Attaching middleware: Restrict Request Types');
-  app.use(app.formio.formio.middleware.restrictRequestTypes);
-
-  // Attach the formio-server config.
-  app.formio.config = _.omit(config, 'formio');
-
-  // Import the OAuth providers
-  debug.startup('Attaching middleware: OAuth Providers');
-  app.formio.formio.oauth = require('./src/oauth/oauth')(app.formio.formio);
-
-  app.formio.formio.twoFa = require('./src/authentication/2FA')(app.formio);
-  // Establish our url alias middleware.
-  debug.startup('Attaching middleware: Alias Handler');
-  app.use(require('./src/middleware/alias')(app.formio.formio));
-
-  debug.startup('Attaching middleware: UUID Request');
-  app.use((req, res, next) => {
-    // Allow audit uuid from external header.
-    req.uuid = req.header('X-Request-UUID');
-    if (!req.uuid) {
-      req.uuid = uuidv4();
-    }
-    req.startTime = new Date();
-
-    app.formio.formio.audit('REQUEST_START', req, req.method, req.path, JSON.stringify(req.query));
-    app.formio.formio.log('Request', req, req.method, req.path, JSON.stringify(req.query));
-
-    // Override send function to log event
-    const resend = res.send;
-    res.send = function() {
-      const duration = new Date() - req.startTime;
-      if (duration > 200) {
-        app.formio.formio.log('Long Request', req, `${duration}ms`);
+    // Error handler for malformed JSON
+    debug.startup('Attaching middleware: Malformed JSON Handler');
+    app.use(function(err, req, res, next) {
+      if (err instanceof SyntaxError) {
+        return res.status(400).send(err.message);
       }
-      app.formio.formio.log('Duration', req, `${duration}ms`);
-      app.formio.formio.log('Response Code', req, res.statusCode);
-      if (res.statusCode < 300) {
-        audit(req, res, arguments[0], app.formio.formio.audit);
+
+      next();
+    });
+
+    app.use(require('./src/middleware/requestCache')(requestCache));
+
+    // Create the formio server.
+    debug.startup('Creating Form.io Core Server');
+    app.formio = options.server || require('formio')(config.formio);
+    // Mitigation functions must be available in every middleware
+    // that uses license utilization function
+    app.formio.utilizationCheckFailed = app.utilizationCheckFailed;
+    app.formio.utilizationCheckSucceed = app.utilizationCheckSucceed;
+    app.formio.formio.utilizationCheckFailed = app.utilizationCheckFailed;
+    app.formio.formio.utilizationCheckSucceed = app.utilizationCheckSucceed;
+
+    debug.startup('Attaching middleware: Restrict Request Types');
+    app.use(app.formio.formio.middleware.restrictRequestTypes);
+
+    // Attach the formio-server config.
+    app.formio.config = _.omit(config, 'formio');
+
+    // Import the OAuth providers
+    debug.startup('Attaching middleware: OAuth Providers');
+    app.formio.formio.oauth = require('./src/oauth/oauth')(app.formio.formio);
+
+    app.formio.formio.twoFa = require('./src/authentication/2FA')(app.formio);
+    // Establish our url alias middleware.
+    debug.startup('Attaching middleware: Alias Handler');
+    app.use(require('./src/middleware/alias')(app.formio.formio));
+
+    debug.startup('Attaching middleware: UUID Request');
+    app.use((req, res, next) => {
+      // Allow audit uuid from external header.
+      req.uuid = req.header('X-Request-UUID');
+      if (!req.uuid) {
+        req.uuid = uuidv4();
       }
-      app.formio.formio.audit('REQUEST_END', req, res.statusCode, `${duration}ms`);
-      resend.apply(this, arguments);
-    };
+      req.startTime = new Date();
 
-    next();
-  });
+      app.formio.formio.audit('REQUEST_START', req, req.method, req.path, JSON.stringify(req.query));
+      app.formio.formio.log('Request', req, req.method, req.path, JSON.stringify(req.query));
 
-  // Status response.
-  debug.startup('Attaching middleware: Status');
-  console.log(`Server version: ${packageJson.version}`);
-  app.get('/status', [
-    cors(),
-    (req, res) => {
-      res.json({
-        version: packageJson.version,
-        schema: packageJson.schema,
-        environmentId: app.environmentId
-      });
+      // Override send function to log event
+      const resend = res.send;
+      res.send = function() {
+        const duration = new Date() - req.startTime;
+        if (duration > 200) {
+          app.formio.formio.log('Long Request', req, `${duration}ms`);
+        }
+        app.formio.formio.log('Duration', req, `${duration}ms`);
+        app.formio.formio.log('Response Code', req, res.statusCode);
+        if (res.statusCode < 300) {
+          audit(req, res, arguments[0], app.formio.formio.audit);
+        }
+        app.formio.formio.audit('REQUEST_END', req, res.statusCode, `${duration}ms`);
+        resend.apply(this, arguments);
+      };
+
+      next();
+    });
+
+    // Status response.
+    debug.startup('Attaching middleware: Status');
+    console.log(`Server version: ${packageJson.version}`);
+    app.get('/status', [
+      cors(),
+      (req, res) => {
+        res.json({
+          version: packageJson.version,
+          schema: packageJson.schema,
+          environmentId: app.environmentId
+        });
+      }
+    ]);
+
+    // made reportingui configuration form available for import
+    app.get('/reportingui/config', [
+      cors(),
+      (req, res) => {
+        const reportingUIForm = require('@formio/reporting/reportConfigTemplate.json').resources.reportingui;
+        res.json(reportingUIForm);
+      }
+    ]);
+
+    // CORS Support
+    debug.startup('Attaching middleware: CORS');
+    var corsMiddleware = require('./src/middleware/corsOptions')(app);
+    var corsRoute = cors(corsMiddleware);
+    app.use(function(req, res, next) {
+      // If headers already sent, skip cors.
+      if (res.headersSent) {
+        return next();
+      }
+      corsRoute(req, res, next);
+    });
+
+    // Load projects and roles.
+    debug.startup('Attaching middleware: Project & Roles Loader');
+    app.use(require('./src/middleware/loadProjectContexts')(app.formio.formio));
+
+    // Set the project query middleware for filtering disabled projects
+    app.use(require('./src/middleware/projectQueryLimits'));
+
+    // Check project status
+    app.use(require('./src/middleware/projectUtilization')(app));
+
+    debug.startup('Attaching middleware: CSP');
+    if (app.portalEnabled) {
+    app.use(require('./src/middleware/cspSettings')(app));
     }
-  ]);
-
-  // made reportingui configuration form available for import
-  app.get('/reportingui/config', [
-    cors(),
-    (req, res) => {
-      const reportingUIForm = require('@formio/reporting/reportConfigTemplate.json').resources.reportingui;
-      res.json(reportingUIForm);
-    }
-  ]);
-
-  // CORS Support
-  debug.startup('Attaching middleware: CORS');
-  var corsMiddleware = require('./src/middleware/corsOptions')(app);
-  var corsRoute = cors(corsMiddleware);
-  app.use(function(req, res, next) {
-    // If headers already sent, skip cors.
-    if (res.headersSent) {
-      return next();
-    }
-    corsRoute(req, res, next);
-  });
-
-  // Load projects and roles.
-  debug.startup('Attaching middleware: Project & Roles Loader');
-  app.use(require('./src/middleware/loadProjectContexts')(app.formio.formio));
-
-  // Set the project query middleware for filtering disabled projects
-  app.use(require('./src/middleware/projectQueryLimits'));
-
-   // Check project status
-  app.use(require('./src/middleware/projectUtilization')(app));
-
-  debug.startup('Attaching middleware: CSP');
-  if (app.portalEnabled) {
-  app.use(require('./src/middleware/cspSettings')(app));
-  }
-  // Handle our API Keys.
-  debug.startup('Attaching middleware: API Key Handler');
-  app.use(require('./src/middleware/apiKey')(app.formio.formio));
+    // Handle our API Keys.
+    debug.startup('Attaching middleware: API Key Handler');
+    app.use(require('./src/middleware/apiKey')(app.formio.formio));
 
   // app.get('/project/:projectId/form/:formId/submission/:submissionId/esign', (req, res, next) => {
   //   const {submissionId, projectId} = req.params;
@@ -323,11 +319,11 @@ module.exports = function(options) {
   //   });
   // });
 
-  var hooks = _.merge(require('./src/hooks/settings')(app), options.hooks);
+    var hooks = _.merge(require('./src/hooks/settings')(app), options.hooks);
 
-  // Start the api server.
-  debug.startup('Initializing Form.io Core');
-  app.formio.init(hooks).then(function(formio) {
+    // Start the api server.
+    debug.startup('Initializing Form.io Core');
+    const formio = await app.formio.init(hooks);
     debug.startup('Done initializing Form.io Core');
     // Kick off license validation process
     debug.startup('Checking License');
@@ -347,35 +343,34 @@ module.exports = function(options) {
     app.use(require('./src/middleware/attachLicenseTerms')(licenseValidationPromise, app));
 
     app.get('/project/:projectId/form/:formId/submission/:submissionId/changelog',
-      (req, res, next) => {
-        if (config.formio.hosted || !_.get(req, 'licenseTerms.options.sac', false)) {
-          res.sendStatus(403);
-          return;
-        }
-        return next();
-      },
-      require('./src/middleware/apiKey')(app.formio.formio),
-      require('./src/middleware/remoteToken')(app),
-      app.formio.formio.middleware.alias,
-      require('./src/middleware/aliasToken')(app),
-      app.formio.formio.middleware.tokenHandler,
-      app.formio.formio.middleware.params,
-      app.formio.formio.middleware.permissionHandler,
-      async (req, res, next) => {
-        try {
-          const currentForm = await app.formio.formio.cache.loadCurrentForm(req);
-          await util.getSubmissionRevisionModel(app.formio.formio, req, currentForm, false);
-          return next();
-        }
-        catch (err) {
-          return next(err);
-        }
-      },
-      require('./src/middleware/submissionChangeLog')(app),
-      (req, res) => {
-        res.send(req.changelog);
+    (req, res, next) => {
+      if (config.formio.hosted || !_.get(req, 'licenseTerms.options.sac', false)) {
+        res.sendStatus(403);
+        return;
       }
-    );
+      return next();
+    },
+    require('./src/middleware/apiKey')(app.formio.formio),
+    require('./src/middleware/remoteToken')(app),
+    app.formio.formio.middleware.alias,
+    require('./src/middleware/aliasToken')(app),
+    app.formio.formio.middleware.tokenHandler,
+    app.formio.formio.middleware.params,
+    app.formio.formio.middleware.permissionHandler,
+    async (req, res, next) => {
+      try {
+        const currentForm = await app.formio.formio.cache.loadCurrentForm(req);
+        await util.getSubmissionRevisionModel(app.formio.formio, req, currentForm, false);
+        return next();
+      }
+      catch (err) {
+        return next(err);
+      }
+    },
+    require('./src/middleware/submissionChangeLog')(app),
+    (req, res) => {
+      res.send(req.changelog);
+    });
 
     debug.startup('Attaching middleware: Cache');
     app.formio.formio.cache = _.assign(app.formio.formio.cache, require('./src/cache/cache')(app.formio));
@@ -558,30 +553,26 @@ module.exports = function(options) {
 
     // Check to install primary project.
     debug.startup('Installing');
-    require('./src/util/install')(app, config, () => {
-      debug.startup('Done Installing');
-      return q.resolve({
-        app: app,
-        config: config
-      });
-    });
-  });
+    debug.startup('Installing');
+    await require('./src/util/install')(app, config);
+    debug.startup('Done Installing');
+    return {
+      app: app,
+      config: config
+    };
+  }
+  catch (err) {
+        /* eslint-disable no-console */
+        console.log('Uncaught exception:');
+        if (err) {
+          console.log(err);
+          console.log(err.stack);
+        }
+        /* eslint-enable no-console */
 
-  // Do some logging on uncaught exceptions in the application.
-  process.on('uncaughtException', function(err) {
-    /* eslint-disable no-console */
-    console.log('Uncaught exception:');
-    if (err) {
-      console.log(err);
-      console.log(err.stack);
-    }
-    /* eslint-enable no-console */
-
-    // Give the loggers some time to log before exiting.
-    setTimeout(function() {
-      process.exit(1);
-    }, 2500);
-  });
-
-  return q.promise;
+        // Give the loggers some time to log before exiting.
+        setTimeout(function() {
+          process.exit(1);
+        }, 2500);
+  }
 };

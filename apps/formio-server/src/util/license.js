@@ -283,7 +283,7 @@ async function getEnvironmentId(app) {
   if (!dbIdentifierRecord) {
     dbIdentifierRecord = await schema.create({
       key: 'dbIdentifier',
-      value: app.formio.formio.mongoose.Types.ObjectId()
+      value: new app.formio.formio.mongoose.Types.ObjectId()
     });
   }
 

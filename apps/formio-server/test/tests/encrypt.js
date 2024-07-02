@@ -423,7 +423,7 @@ module.exports = function (app, template, hook) {
         tempForm.components = getFormComponents(true);
         app.formio.formio.mongoose.model('form').updateOne(
           {
-            _id: ObjectID(tempForm._id),
+            _id: new ObjectID(tempForm._id),
           },
           {
             $set: {
@@ -549,43 +549,26 @@ module.exports = function (app, template, hook) {
           });
       });
 
-      it('Should downgrade the project to "trial"', (done) => {
-        app.formio.formio.resources.project.model.findOne(
-          { _id: template.project._id, deleted: { $eq: null } },
-          function (err, project) {
-            if (err) return done(err);
+      it('Should downgrade the project to "trial"', async () => {
+        const project = await app.formio.formio.resources.project.model.findOne(
+          { _id: template.project._id, deleted: { $eq: null } });
 
-            app.formio.formio.resources.submission.model.findOne(
-              {
-                'data.licenseKeys.key': project.settings.licenseKey,
-              },
-              function (err, sub) {
-                if (err) return done(err);
+        const sub = await app.formio.formio.resources.submission.model.findOne(
+          {
+            'data.licenseKeys.key': project.settings.licenseKey,
+        });
+        if (sub) {
+          sub.data = {
+            ...sub.data,
+            plan: 'trial',
+          };
+        }
 
-                if (sub) {
-                  sub.data = {
-                    ...sub.data,
-                    plan: 'trial',
-                  };
-                }
-
-                sub.markModified('data');
-                sub.save(function (err) {
-                  if (err) return done(err);
-
-                  project.plan = 'trial';
-                  project.save(function (err) {
-                    if (err) {
-                      return done(err);
-                    }
-                    cache.loadCache.set(project.toObject());
-                    done();
-                  });
-                });
-              }
-            );
-          }
-        );
+        sub.markModified('data');
+        await sub.save();
+        project.plan = 'trial';
+        await project.save();
+        cache.loadCache.set(project.toObject());
       });
 
       after((done) => {
@@ -761,34 +744,28 @@ module.exports = function (app, template, hook) {
           });
       });
 
-      it('The actual database object should be encrypted', (done) => {
-        app.formio.formio.mongoose.model('submission').findOne(
+      it('The actual database object should be encrypted', async () => {
+        const submission = await app.formio.formio.mongoose.model('submission').findOne(
           {
-            _id: ObjectID(submissions[2]._id),
-          },
-          (err, submission) => {
-            if (err) {
-              return done(err);
-            }
-            assert(submission.data.ssn.toString().length);
-            assert(submission.data.secret.toString().length);
-            assert(submission.data.datagrid[0].c.length);
-            assert(submission.data.datagrid[1].c.length);
-            assert(submission.data.ssn.toString() !== submissions[2].data.ssn);
-            assert(
-              submission.data.secret.toString() !== submissions[2].data.secret
-            );
-            assert(
-              submission.data.datagrid[0].c.toString() !==
-                submissions[2].data.datagrid[0].c
-            );
-            assert(
-              submission.data.datagrid[1].c.toString() !==
-                submissions[2].data.datagrid[1].c
-            );
-            done();
-          }
-        );
+            _id: new ObjectID(submissions[2]._id),
+          })
+
+          assert(submission.data.ssn.toString().length);
+          assert(submission.data.secret.toString().length);
+          assert(submission.data.datagrid[0].c.length);
+          assert(submission.data.datagrid[1].c.length);
+          assert(submission.data.ssn.toString() !== submissions[2].data.ssn);
+          assert(
+            submission.data.secret.toString() !== submissions[2].data.secret
+          );
+          assert(
+            submission.data.datagrid[0].c.toString() !==
+              submissions[2].data.datagrid[0].c
+          );
+          assert(
+            submission.data.datagrid[1].c.toString() !==
+              submissions[2].data.datagrid[1].c
+          );
       });
 
       it('Updating the submission should not double encrypt.', (done) => {
@@ -825,31 +802,27 @@ module.exports = function (app, template, hook) {
           });
       });
 
-      it('The actual database object should be encrypted', (done) => {
-        app.formio.formio.mongoose.model('submission').findOne(
+      it('The actual database object should be encrypted', async () => {
+        const submission = await app.formio.formio.mongoose.model('submission').findOne(
           {
-            _id: ObjectID(submissions[2]._id),
-          },
-          (err, submission) => {
-            assert(submission.data.ssn.toString().length);
-            assert(submission.data.secret.toString().length);
-            assert(submission.data.datagrid[0].c.length);
-            assert(submission.data.datagrid[1].c.length);
-            assert(submission.data.ssn.toString() !== submissions[2].data.ssn);
-            assert(
-              submission.data.secret.toString() !== submissions[2].data.secret
-            );
-            assert(
-              submission.data.datagrid[0].c.toString() !==
-                submissions[2].data.datagrid[0].c
-            );
-            assert(
-              submission.data.datagrid[1].c.toString() !==
-                submissions[2].data.datagrid[1].c
-            );
-            done();
-          }
-        );
+            _id: new ObjectID(submissions[2]._id),
+          })
+          assert(submission.data.ssn.toString().length);
+          assert(submission.data.secret.toString().length);
+          assert(submission.data.datagrid[0].c.length);
+          assert(submission.data.datagrid[1].c.length);
+          assert(submission.data.ssn.toString() !== submissions[2].data.ssn);
+          assert(
+            submission.data.secret.toString() !== submissions[2].data.secret
+          );
+          assert(
+            submission.data.datagrid[0].c.toString() !==
+              submissions[2].data.datagrid[0].c
+          );
+          assert(
+            submission.data.datagrid[1].c.toString() !==
+              submissions[2].data.datagrid[1].c
+          );
       });
 
       it('Should let you load the individual submission and show unencrypted.', (done) => {
@@ -922,34 +895,28 @@ module.exports = function (app, template, hook) {
           });
       });
 
-      it('The actual database object should be encrypted', (done) => {
-        app.formio.formio.mongoose.model('submission').findOne(
+      it('The actual database object should be encrypted', async () => {
+        const submission = await app.formio.formio.mongoose.model('submission').findOne(
           {
-            _id: ObjectID(submissions[3]._id),
-          },
-          (err, submission) => {
-            if (err) {
-              return done(err);
-            }
-            assert(submission.data.ssn.toString().length);
-            assert(submission.data.secret.toString().length);
-            assert(submission.data.datagrid[0].c.length);
-            assert(submission.data.datagrid[1].c.length);
-            assert(submission.data.ssn.toString() !== submissions[3].data.ssn);
-            assert(
-              submission.data.secret.toString() !== submissions[3].data.secret
-            );
-            assert(
-              submission.data.datagrid[0].c.toString() !==
-                submissions[3].data.datagrid[0].c
-            );
-            assert(
-              submission.data.datagrid[1].c.toString() !==
-                submissions[3].data.datagrid[1].c
-            );
-            done();
-          }
-        );
+            _id: new ObjectID(submissions[3]._id),
+          });
+
+          assert(submission.data.ssn.toString().length);
+          assert(submission.data.secret.toString().length);
+          assert(submission.data.datagrid[0].c.length);
+          assert(submission.data.datagrid[1].c.length);
+          assert(submission.data.ssn.toString() !== submissions[3].data.ssn);
+          assert(
+            submission.data.secret.toString() !== submissions[3].data.secret
+          );
+          assert(
+            submission.data.datagrid[0].c.toString() !==
+              submissions[3].data.datagrid[0].c
+          );
+          assert(
+            submission.data.datagrid[1].c.toString() !==
+              submissions[3].data.datagrid[1].c
+          );
       });
 
       it('Should let you load the individual submission and show unencrypted.', (done) => {
