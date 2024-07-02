@@ -15,18 +15,28 @@ export class RootShim {
         this._submission = submission;
         this.data = submission.data;
         this.components = [];
-        FormioCore.Utils.eachComponent(
+        FormioCore.Utils.eachComponentData(
             form.components,
-            (component: FormioCore.Component, path: any) => {
-                const componentInstance = new InstanceShim(
-                    component,
-                    this,
-                    submission.data,
-                    path,
-                );
-                this.instanceMap[path] = componentInstance;
-                this.components.push(componentInstance);
+            submission.data,
+            (
+                component: FormioCore.Component,
+                data: any,
+                row: any,
+                path: any,
+            ) => {
+                if (!this.instanceMap[path]) {
+                    this.instanceMap[path] = new InstanceShim(
+                        component,
+                        this,
+                        submission.data,
+                        path,
+                    );
+                    this.components.push(this.instanceMap[path]);
+                }
             },
+            undefined,
+            undefined,
+            undefined,
             true,
         );
     }
