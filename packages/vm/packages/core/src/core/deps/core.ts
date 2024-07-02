@@ -1,8 +1,14 @@
 import fs from 'fs';
 import path from 'path';
 
-export const coreCode = fs.readFileSync(path.join(__dirname, './assets/formio.core.min.js'), 'utf8');
-export const fastJsonPatchCode = fs.readFileSync(path.join(__dirname, './assets/fast-json-patch.min.js'), 'utf8');
+export const coreCode = fs.readFileSync(
+    path.join(__dirname, './assets/formio.core.min.js'),
+    'utf8',
+);
+export const fastJsonPatchCode = fs.readFileSync(
+    path.join(__dirname, './assets/fast-json-patch.min.js'),
+    'utf8',
+);
 export const polyfillCode = `
 var Text              = class {};
 var HTMLElement       = class {};
@@ -17,13 +23,13 @@ var document          = {
     firstElementChild: {appendChild: () => {}}
   }
 };
-var window = {addEventListener: () => {}, Event: function() {}, navigator: global.navigator};
+var window = {addEventListener: () => {}, Event: function() {}, navigator: navigator};
 var btoa = (str) => {
   return (str instanceof Buffer) ?
     str.toString('base64') :
     Buffer.from(str.toString(), 'binary').toString('base64');
 };
-//var setTimeout = () => {};
+var setTimeout = (cb) => {cb()};
 var self = global;
 `;
 export const aliasesCode = `

@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-import { Formio, Form } from 'formiojs';
+import { Formio, Form } from '@formio/js';
 import { evaluate } from '..';
 
 import macros from './deps/nunjucks-macros';
