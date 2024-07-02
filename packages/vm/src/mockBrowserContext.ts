@@ -9,7 +9,11 @@ export default function mockBrowserContext() {
     if (!globalThis.navigator) globalThis.navigator = { userAgent: '' };
     if (!globalThis.document) globalThis.document = {};
     if (!globalThis.document.createElement)
-        globalThis.document.createElement = () => ({});
+        globalThis.document.createElement = () => ({
+            style: {},
+            appendChild: () => {},
+            setAttribute: () => {},
+        });
     if (!globalThis.document.cookie) globalThis.document.cookie = '';
     if (!globalThis.document.getElementsByTagName)
         globalThis.document.getElementsByTagName = () => [];
