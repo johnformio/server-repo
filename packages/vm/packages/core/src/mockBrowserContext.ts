@@ -3,6 +3,7 @@ export default function mockBrowserContext() {
     if (!globalThis) return;
     if (!globalThis.Text) globalThis.Text = class {};
     if (!globalThis.HTMLElement) globalThis.HTMLElement = class {};
+    if (!globalThis.HTMLCanvasElement) globalThis.HTMLCanvasElement = class {};
     if (!globalThis.HTMLInputElement) globalThis.HTMLInputElement = class {};
     if (!globalThis.HTMLTextAreaElement)
         globalThis.HTMLTextAreaElement = class {};
@@ -13,6 +14,7 @@ export default function mockBrowserContext() {
             style: {},
             appendChild: () => {},
             setAttribute: () => {},
+            getContext: () => ({}),
         });
     if (!globalThis.document.cookie) globalThis.document.cookie = '';
     if (!globalThis.document.getElementsByTagName)
