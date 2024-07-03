@@ -1,6 +1,5 @@
 'use strict';
 const _ = require('lodash');
-const Promise = require('bluebird');
 const fetch = require('@formio/node-fetch-http-proxy');
 const processChangeLogData = require('./processChangeLogData');
 const proxy = require('../middleware/pdfProxy/proxy');
