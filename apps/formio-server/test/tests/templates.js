@@ -4,7 +4,7 @@ const request = require('supertest');
 const assert = require('assert');
 const _ = require('lodash');
 const config = require('../../config');
-const formioUtils = require('formiojs/utils').default;
+const formioUtils = require('@formio/js').Utils;
 
 module.exports = function(app, template, hook) {
   let formio = app.formio.formio;

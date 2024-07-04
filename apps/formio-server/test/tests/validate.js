@@ -1,6 +1,6 @@
 'use strict';
 
-const {Formio} = require('formiojs');
+const {Formio} = require('@formio/js');
 const assert = require('assert');
 const request = require('supertest');
 
