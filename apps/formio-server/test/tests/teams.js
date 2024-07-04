@@ -417,8 +417,8 @@ module.exports = function(app, template, hook) {
             admin: false
           }
         })
-        .expect(416)
-        .expect('Team member email exceeds allowed character limit')
+        .expect(400)
+        .expect('Email must have no more than 254 characters')
         .end(function(err, res) {
           if (err) {
             return done(err);
