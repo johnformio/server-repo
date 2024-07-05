@@ -255,9 +255,9 @@ module.exports = function(server) {
       }
   };
   ProjectCache._loadSubmission = formio.cache.loadSubmission.bind(formio.cache);
-  ProjectCache.loadSubmission = async function(req, formId, subId) {
+  ProjectCache.loadSubmission = async function(req, formId, subId, noCachedResult) {
       await ProjectCache.setSubmissionModel(req, formId);
-      const submission = await ProjectCache._loadSubmission(req, formId, subId);
+      const submission = await ProjectCache._loadSubmission(req, formId, subId, noCachedResult);
       return submission;
   };
 

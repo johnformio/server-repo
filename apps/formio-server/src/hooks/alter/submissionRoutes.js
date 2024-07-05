@@ -4,6 +4,10 @@ const _ = require('lodash');
 const config = require('../../../config');
 const util = require('../../util/util');
 const SubmissionRevision = require('../../revisions/SubmissionRevision');
+const ESignature = require('../../esignature/ESignature');
+const debug = require('debug')('formio:error');
+const attachSignaturesToMultipleSubmissions = require('../../esignature/attachSignaturesToMultipleSubmissions');
+
 module.exports = app => routes => {
   const filterExternalTokens = app.formio.formio.middleware.filterResourcejsResponse(['externalTokens']);
   const conditionalFilter = function(req, res, next) {
@@ -35,14 +39,79 @@ module.exports = app => routes => {
     next();
   };
 
+  const attachSignatures = function(req, res, next) {
+    app.formio.formio.cache.loadForm(req, null, req.params.formId, async (err, form) => {
+      if (err) {
+        return next(err);
+      }
+
+      const esignature = new ESignature(app.formio, req);
+
+      if (esignature.allowESign(form)) {
+        try {
+          await esignature.attachESignatures(res.resource.item);
+          return next();
+        }
+        catch (e) {
+          return next(e);
+        }
+      }
+      else {
+        return next();
+      }
+   });
+  };
+
+  _.each(['afterGet', 'afterPost', 'afterPut'], function(handler) {
+    routes[handler].push(attachSignatures);
+  });
+
   _.each(['afterGet', 'afterIndex', 'afterPost', 'afterPut', 'afterDelete'], function(handler) {
     routes[handler].push(conditionalFilter);
+  });
+
+  routes.beforeDelete.unshift((req, res, next) => {
+    app.formio.formio.cache.loadCurrentForm(req, (err, currentForm) => {
+      if (err || !currentForm) {
+        debug(`Unable to load current form. ${err}`);
+        return next();
+      }
+
+      const submissionRevision = new SubmissionRevision(app, req.submissionModel || null);
+      if (submissionRevision.revisionsAllowed(req) && currentForm.submissionRevisions) {
+        debug(`Unable to delete submission ${req.params?.submissionId} with enabled submission revisions.`);
+        return res.status(403).send('Deletion is not allowed when submission revisions are enabled.');
+      }
+      return next();
+    });
+  });
+
+  routes.afterIndex.push(async (req, res, next) => {
+    try {
+      await attachSignaturesToMultipleSubmissions(app.formio, req, res.resource.item || [], req.params.formId);
+      return next();
+    }
+    catch (e) {
+      debug(`Unable to attach eSignatures to maltiple submissions: ${e}`);
+      return next(e);
+    }
   });
 
   routes.afterGet.push(addAdminAccess);
   routes.afterDelete.push((req, res, next)=> {
     const submissionRevision = new SubmissionRevision(app, req.submissionModel || null);
     submissionRevision.delete(req.params.submissionId, next);
+  });
+
+  routes.afterDelete.push(async (req, res, next)=> {
+    try {
+      const esignature = new ESignature(app.formio, req);
+      await esignature.delete(req.params.submissionId);
+      return next();
+    }
+    catch (e) {
+      return next(e);
+    }
   });
 
   // Add a submission model set before the index.
@@ -132,10 +201,21 @@ module.exports = app => routes => {
         const form = await app.formio.formio.cache.loadForm(req, null, req.params.formId);
         const submissionRevision = new SubmissionRevision(app, req.submissionModel || null);
         if (submissionRevision.shouldCreateNewRevision(req, item, null, form)) {
-          return submissionRevision.createVersion(item, req.user, req.body._vnote, (err, revision) => {
+          return submissionRevision.createVersion(item, req.user, req.body._vnote, async (err, revision) => {
             if (err) {
               return next(err);
             }
+            const esignature = new ESignature(app.formio, req);
+            if (esignature.allowESign(form)) {
+              try {
+                await esignature.checkSignatures(item, revision);
+                return next();
+              }
+              catch (e) {
+                return next(e);
+              }
+            }
+
             return next();
           });
         }
@@ -215,9 +295,20 @@ module.exports = app => routes => {
           req.body._id);
             loadSubmission = await submissionRevision.checkDraft(loadSubmission);
             if (submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form)) {
-              return submissionRevision.createVersion(item, null, req.body._vnote, (err, revision) => {
+              return submissionRevision.createVersion(item, null, req.body._vnote, async (err, revision) => {
                 if (err) {
                   return next(err);
+                }
+                const esignature = new ESignature(app.formio, req);
+                if (esignature.allowESign(form)) {
+                  try {
+                    req.prevESignatures = loadSubmission?.eSignatures || [];
+                    await esignature.checkSignatures(item, revision);
+                    return next();
+                  }
+                  catch (e) {
+                    return next(e);
+                  }
                 }
                 return next();
               });

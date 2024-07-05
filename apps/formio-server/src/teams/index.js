@@ -149,14 +149,14 @@ module.exports = function(app, formioServer) {
     Teams.teamAccessHandler(true),
     async (req, res, next) => {
       if (req.method.toLowerCase() === 'post') {
-          const teamUsers = await Teams.getMembers( _.get(req.body, 'data.team', req.currentTeam));
-          const duplicateUser = teamUsers.find((user)=> _.get(user, 'data.email') === _.get(req.body, 'data.email'));
-          if (duplicateUser) {
-            return res.status(400).send(`Team member with ${_.get(duplicateUser, 'data.email')} email already exists`);
-          }
-          else {
-            return next();
-          }
+        const teamUsers = await Teams.getMembers( _.get(req.body, 'data.team', req.currentTeam));
+        const duplicateUser = teamUsers.find((user)=> _.get(user, 'data.email') === _.get(req.body, 'data.email'));
+        if (duplicateUser) {
+          return res.status(400).send(`Team member with ${_.get(duplicateUser, 'data.email')} email already exists`);
+        }
+        else {
+          return next();
+        }
       }
       else {
         return next();
