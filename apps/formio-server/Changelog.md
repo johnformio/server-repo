@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 9.3.0-rc.1]
+## [Unreleased: 9.4.0-rc.1]
 ### Changed
  - FIO-7328: replace kickbox verify with node-fetch
  - FIO-7349: Fixes an issue where server crashes when user tries to load a view page of the deleted team
@@ -83,6 +83,130 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-8266: Invalid Team ID Should Not Crash Server
  - FIO-8536 Added conditions for displaying Tenant Access on the project settings page
  - FIO-8136: Remove Fortis Limits add verbose errors
+
+## 9.3.0-rc.5
+### Changed
+ - Updated formio@4.3.0-rc.1
+
+## 9.3.0-rc.4
+### Changed
+ - Updated formio@4.2.1-rc.2
+ - Updated @formio/vm@1.0.0-rc.1
+
+## 9.3.0-rc.3
+### Changed
+ - Added lodash to middleware test
+   
+## 9.3.0-rc.2
+### Changed
+ - Fixed the premium and formio/js imports
+   
+## 9.3.0-rc.1
+### Changed
+ - Updated formio-app@9.3.0-rc.1
+ - Updated @formio/premium@3.0.0-rc.1
+ - Updated formio@4.2.1-rc.1
+ - Updated @formio/reporting@2.0.0-rc.9
+ - Updated @formio/vm@0.2.1-rc.1
+ - Updated @formio/core@2.1.1-rc.1
+
+### Changed
+ - Increment minor version.
+
+
+## 9.2.0
+### Changed
+ - Official Release
+ - Updated formio-app@9.2.0
+ - Updated formiojs@4.21.0
+ - Updated @formio/premium@2.0.1
+ - Updated formio@4.2.0
+ - Updated @formio/reporting@1.0.3
+ - Updated @formio/vm@0.2.0
+ - Updated @formio/core@2.1.0
+
+## 9.2.0-rc.16
+### Changed
+ - FIO-8136: remove fortis limits
+
+## 9.2.0-rc.15
+### Changed
+ - FIO-8136: add additional logs
+
+## 9.2.0-rc.14
+### Changed
+ - FIO-8136: Full name requirement
+
+## 9.2.0-rc.13
+### Changed
+ - Updated formio-app@9.2.0-rc.10
+ - FIO-8536  Added conditions for displaying Tenant Access on the project settings page
+ - FIO-8136  Restore Fortis integration
+
+## 9.2.0-rc.12
+### Changed
+ - Revert Fortis integration
+   
+## 9.2.0-rc.11
+### Changed
+ - FIO-8136: Fortis integration
+
+## 9.2.0-rc.10
+### Changed
+ - Updated formio-app@9.2.0-rc.8
+ - FIO-8136: Opening /gateway endpoint
+
+## 9.2.0-rc.9
+### Changed
+ - Updated formio-app@9.2.0-rc.7
+ - Updated formio@4.2.0-rc.6
+ - Updated @formio/vm@0.2.0-rc.4
+ - Updated @formio/core@2.1.0-rc.4
+ - FIO-8404 Encrypted data displayed as encrypted on PDF page
+ - FIO-8467 fixed team_admin access for saml tenant
+
+## 9.2.0-rc.8
+### Changed
+ - Updated @formio/core@2.1.0-rc.3
+
+## 9.2.0-rc.7
+### Changed
+ - FIO-8381 fixed PDF design access for pdfPlus
+ - fix reference error in hook
+
+## 9.2.0-rc.6
+### Changed
+ - Updated formio-app@9.2.0-rc.6
+ - Updated formio@4.2.0-rc.5
+ - Updated @formio/vm@0.2.0-rc.3
+ - FIO-7804 fixed invalid grant request error
+
+ - FIO-7467 Added Project SAML Settings Form
+ 
+## 9.2.0-rc.5
+### Changed
+ - Updated formio-app@9.2.0-rc.5
+ - Updated @formio/premium@2.0.1-rc.2
+
+## 9.2.0-rc.4
+### Changed
+ - Updated formio-app@9.2.0-rc.4
+ - FIO-8381 Added limit access for PDF Designer
+ - FIO-7864 added tool to create passport config based on saml metadata xml
+ - FIO-7804 fixed grant request error
+
+## 9.2.0-rc.3
+### Changed
+ - Updated formio-app@9.2.0-rc.3
+
+## 9.2.0-rc.2
+### Changed
+ - Updated formio-app@9.2.0-rc.2
+ - Updated formiojs@4.21.0-rc.2
+ - Updated formio@4.2.0-rc.4
+ - Updated @formio/vm@0.2.0-rc.2
+ - FIO-8128: adds reporting code to vm evaluation context
+ - FIO-8065: better error handling
 
 ## 9.2.0-rc.1
 ### Changed
@@ -657,6 +781,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-7323: Fix issue involving Azure and PDF email attachments
  - FIO-5728 checking for unique email when adding user to team
    
+
+## 8.4.0-rc.7
+### Changed
+ - Updated formio-app@8.4.0-rc.7
+
 ## 8.4.0-rc.6
 ### Changed
  - Updated formio-app@8.4.0-rc.6

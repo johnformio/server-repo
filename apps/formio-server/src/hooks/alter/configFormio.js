@@ -1,5 +1,7 @@
 'use strict';
-const {premium} = require('@formio/premium/dist/premium-server.min.js');
+const mockBroswerContext = require('@formio/vm/build/mockBrowserContext');
+mockBroswerContext.default();
+const premium = require('@formio/premium');
 const reporting = require('@formio/reporting');
 const fs = require('fs');
 var path = require('path');
