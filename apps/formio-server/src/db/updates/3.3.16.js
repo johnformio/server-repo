@@ -4,7 +4,6 @@ const isString = require('lodash/isString');
 const isArray = require('lodash/isArray');
 const defaultTo = require('lodash/defaultTo');
 const toNumber = require('lodash/toNumber');
-
 const FormioUtils = require('@formio/js').Utils;
 
 function getArrayFromComponentPath(pathStr) {
