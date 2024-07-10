@@ -421,6 +421,11 @@ const Teams = {
       return;
     }
 
+    // Check teamId is a valid mongo ObjectId
+    if (!Teams.util().FormioUtils.isMongoId(teamId)) {
+      return;
+    }
+
     // A team object is already provided.
     if (typeof teamId !== 'string') {
       return teamId;
@@ -828,7 +833,7 @@ const Teams = {
       path += '/:submissionId';
     }
     return new Promise((resolve, reject) => {
-      Teams.resourcejs()[path][method](subReq, subRes, (err) => {
+      Teams.resourcejs()[path][method](subReq, res, (err) => {
         if (err) {
           return reject(err);
         }

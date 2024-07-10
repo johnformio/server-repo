@@ -542,6 +542,11 @@ module.exports = function(app) {
           return true;
         }
 
+        // Allow access to the tenant with access team_admin
+        if (req.currentProject?.type === 'tenant' && req.userProject?.primary && _.get(req.user, `access.${req.currentProject.name}`, '') === 'team_admin') {
+          return true;
+        }
+
         // If no user is found, then return false.
         if (!req.token || !req.token.user) {
           return false;
@@ -1038,7 +1043,7 @@ module.exports = function(app) {
               return req.userProject.primary;
             }
 
-            if (_url === '/payeezy') {
+            if (_url === '/gateway') {
               return req.userProject.primary;
             }
 
@@ -1819,6 +1824,7 @@ module.exports = function(app) {
       formRoutes: require('./alter/formRoutes')(app),
       submissionRoutes: require('./alter/submissionRoutes')(app),
       worker: require('./alter/worker')(app),
+      transformReferences: require('./alter/transformReferences')(app),
 
       actionRoutes(routes) {
         routes.beforePost = routes.beforePost || [];

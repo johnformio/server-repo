@@ -284,6 +284,22 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      it('Should return 404 for invalid ObjectId', (done) => {
+        request(app)
+        .get('/team/' + "INVALID_ID")
+        .set('x-jwt-token', template.formio.teamAdmin.token)
+        .expect(404)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          assert.equal(res.text, 'Could not find the team');
+
+          done();
+        });
+      });
+
       it('Should have added the team owner as an admin member', (done) => {
         request(app)
         .get('/team/' + template.team1._id)
@@ -382,6 +398,27 @@ module.exports = function(app, template, hook) {
         })
         .expect('Content-Type', /text/)
         .expect(400)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+          done();
+        });
+      });
+
+      it('The Team Owner should not be able to add an outside user with email excideening limit', (done) => {
+        request(app)
+        .post('/team/' + template.team1._id + '/member')
+        .set('x-jwt-token', template.formio.teamAdmin.token)
+        .send({
+          data: {
+            userId: '',
+            email: chance.email({ length: 300 }),
+            admin: false
+          }
+        })
+        .expect(400)
+        .expect('Email must have no more than 254 characters')
         .end(function(err, res) {
           if (err) {
             return done(err);

@@ -72,6 +72,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-7515 fixed display of Custom components on Launch Tab Preview
  - FIO-7804 fixed invalid grant request error
  - FIO-8027 add cloudflare turnstile as a captcha provider
+ - fix reference error in hook
+ - FIO-8381 fixed PDF design access for pdfPlus
+ - FIO-8136: Fortis integration
+ - FIO-8467 fixed team_admin access for saml tenant
+ - FIO-8404 Encrypted data displayed as encrypted on PDF page
+ - FIO-8136: Opening /gateway endpoint
+ - FIO-8136: Adding Logs to Transactions
+ - FIO-8136: Full name requirement
+ - FIO-8266: Invalid Team ID Should Not Crash Server
+ - FIO-8536 Added conditions for displaying Tenant Access on the project settings page
+ - FIO-8136: Remove Fortis Limits add verbose errors
 
 ## 9.2.0-rc.1
 ### Changed
