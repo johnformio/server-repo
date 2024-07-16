@@ -28,12 +28,7 @@ module.exports = app => models => {
       index: true,
       required: true,
       default: 0
-    },
-    esign: {
-      type:  app.formio.formio.mongoose.Schema.Types.Mixed,
-      description: 'The form.io E-Signature settings.',
-      default: {}
-    },
+    }
   });
 
   // Add a suggested indexes.
@@ -76,15 +71,7 @@ module.exports = app => models => {
     },
     containRevisions: {
       type: Boolean
-    },
-    eSignatures: {
-      type: [app.formio.formio.mongoose.Schema.Types.ObjectId],
-      default: []
-    },
-    stage: {
-      type: String,
-      description: 'The current stage of the submission',
-    },
+    }
   });
 
   // Add a suggested indexes.

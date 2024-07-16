@@ -41,6 +41,6 @@ module.exports = function(app) {
       }
       next();
     },
-    require('./router')(app),
+    require('./router')(app.formio),
   ]);
 };

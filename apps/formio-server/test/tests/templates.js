@@ -122,7 +122,7 @@ module.exports = function(app, template, hook) {
         }
 
         let machineName = form.machineName;
-        let tempForm = _.omit(form, ['_id', '__v', 'created', 'deleted', 'modified', 'machineName', 'owner', '_vid']);
+        let tempForm = _.omit(form, ['_id', '__v', 'created', 'deleted', 'modified', 'machineName', 'owner', '_vid', 'revisions']);
 
         tempForm.access = tempForm.access.map(access => {
           access.roles = access.roles.map(role => {
