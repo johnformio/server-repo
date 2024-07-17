@@ -2,7 +2,6 @@
 const _ = require('lodash');
 const debug = require('debug')('formio:esignature');
 const config = require('../../config');
-const {Formio} = require('formio/src/util/util');
 const FormRevision = require('../revisions/FormRevision');
 const crypto = require('crypto');
 const fs = require('fs');
@@ -13,6 +12,7 @@ module.exports = class ESignature {
     this.revisionModel = app.formio.formio.mongoose.models.submissionrevision;
     this.app = app;
     this.req = req;
+    this.flattenedComponents = {};
     this.idToBson = app.formio.formio.util.idToBson;
     this.itemModel = app.formio.formio.mongoose.models.submission;
     this.esignatureModel = app.formio.formio.mongoose.models.esignature;
@@ -65,7 +65,11 @@ module.exports = class ESignature {
       revisionPromiseResolve = res;
     });
 
-    this.app.formio.formio.cache.loadSubForms(formRevision, this.req, () => {
+    this.app.formio.formio.cache.loadSubForms(formRevision, this.req, (err) => {
+      if (err) {
+        debug(`SubForms loading error: ${err}`);
+      }
+      this.flattenedComponents = this.app.formio.formio.util.flattenComponents(formRevision.components, true);
       return revisionPromiseResolve(formRevision);
     });
 
@@ -186,7 +190,7 @@ module.exports = class ESignature {
       return childRefs.length ? Promise.all(childRefs) : currentPromises;
   }
 
-  async getESignatureData(compPath, dataPath, revisionItem, user) {
+  async getESignatureData(compPath, valuePath, revisionItem, user) {
     const form = this.formRevision || {};
     revisionItem = this.fastCloneDeep(revisionItem);
 
@@ -203,12 +207,12 @@ module.exports = class ESignature {
         data: _.get(user, 'data.email'),
       },
       compPath,
-      dataPath
+      valuePath
     };
   }
 
-  async createESignature(compPath, dataPath, revisionItem, user) {
-    const esignatureData = await this.getESignatureData(compPath, dataPath, revisionItem, user);
+  async createESignature(compPath, valuePath, revisionItem, user) {
+    const esignatureData = await this.getESignatureData(compPath, valuePath, revisionItem, user);
 
     const esignature = {signature: await this.encryptData(esignatureData), _sid: revisionItem._rid};
     const result = await this.esignatureModel.create(esignature);
@@ -253,7 +257,7 @@ module.exports = class ESignature {
 
   async validateOrCreateESignature(
     signatureSettings = {},
-    dataPath,
+    valuePath,
     prevSignature,
     revisionItem,
     item,
@@ -266,7 +270,7 @@ module.exports = class ESignature {
         return prevSignature;
       }
     }
-    const newSignature = await this.createESignature(signatureSettings.component, dataPath, revisionItem, user);
+    const newSignature = await this.createESignature(signatureSettings.component, valuePath, revisionItem, user);
     newSignature.new = true;
     newSignature.stage = signatureSettings.stage;
     return newSignature;
@@ -317,9 +321,12 @@ module.exports = class ESignature {
       return 'Invalid project/form/submission ID';
     }
 
-    _.each(excludedData || [], dataPath => {
-      _.unset(currentSubmData, dataPath);
-      _.unset(signatureSubmData, dataPath);
+    _.each(excludedData || [], valuePath => {
+      const excludedValuePathsInSignSubmData = this.getComponentValuePaths(valuePath, signatureSubmData);
+      _.each(excludedValuePathsInSignSubmData, (path) => {
+        _.unset(currentSubmData, path);
+        _.unset(signatureSubmData, path);
+      });
     });
 
     if (!_.isEqual(currentSubmData, signatureSubmData)) {
@@ -360,16 +367,82 @@ module.exports = class ESignature {
     }));
   }
 
-  shouldHaveESignature(data, dataPath) {
-    const signatureValue = _.get(data, dataPath);
+  shouldHaveESignature(data, valuePath) {
+    const signatureValue = _.get(data, valuePath);
     return _.isObject(signatureValue) ? !_.isEmpty(signatureValue) : !!signatureValue;
   }
 
-  getPrevSignature(prevSignatures, signatureCompPath, signatureDataPath) {
+  getPrevSignature(prevSignatures, signatureCompPath, signatureValuePath) {
     return _.find(prevSignatures, sign => {
-      const {compPath, dataPath} = sign.signature;
-      return signatureCompPath === compPath && dataPath === signatureDataPath;
+      const {compPath, valuePath} = sign.signature;
+      return signatureCompPath === compPath && valuePath === signatureValuePath;
     });
+  }
+
+  getComponentValuePaths(compPath = '', submissionData) {
+    if (!compPath) {
+      return [];
+    }
+
+    const compPathParts = _.split(compPath, '.');
+    const flattenedComps = this.flattenedComponents;
+    const comp = flattenedComps[compPath];
+
+    if (!comp || compPathParts.length < 2) {
+      return [compPath];
+    }
+
+    const rowDataComponents = ['datagrid', 'editgrid', 'datatable', 'tagpad'];
+
+    return _.reduce(compPathParts, (result, pathPart, ind) => {
+      if (ind + 1 === compPathParts.length) {
+        return _.map(result, path => `${path}${pathPart}`);
+      }
+
+      const isFirstPart = ind === 0;
+      const parentCompPath = _.chain(compPathParts).slice(0, ind + 1).join('.').value();
+      const parentComp = flattenedComps[parentCompPath];
+
+      if (parentComp && _.includes(rowDataComponents, parentComp.type)) {
+        if (isFirstPart) {
+          const rowComponentValue = _.get(submissionData, pathPart);
+          if (_.isArray(rowComponentValue)) {
+            const valueLength = rowComponentValue.length;
+            if (valueLength) {
+              // eslint-disable-next-line max-depth
+              for (let i = 0; i < valueLength; i++) {
+                result.push(`${pathPart}[${i}]`);
+              }
+              return result;
+            }
+          }
+          result.push(`${pathPart}[0]`);
+          return result;
+        }
+        else {
+          return _.chain(result)
+          .map(pathStart => {
+            const rowComponentValue = _.get(submissionData, `${pathStart}${pathPart}`);
+            if (_.isArray(rowComponentValue)) {
+              const valueLength = rowComponentValue.length;
+              if (valueLength) {
+                const paths = [];
+                // eslint-disable-next-line max-depth
+                for (let i = 0; i < valueLength; i++) {
+                  paths.push(`${pathStart}${pathPart}[${i}]`);
+                }
+                return paths;
+              }
+            }
+            return `${pathStart}${pathPart}[0]`;
+          })
+          .flatten()
+          .value();
+        }
+      }
+
+      return isFirstPart ? [`${pathPart}.`] : _.map(result, path => `${path}${pathPart}.`);
+    }, []);
   }
 
   async checkSignatures(item, revisionItem, form, done) {
@@ -379,37 +452,24 @@ module.exports = class ESignature {
         return done();
       }
 
-      const formInstance = await Formio.createForm(_.cloneDeep(this.formRevision));
-      await formInstance.setSubmission(_.cloneDeep(revisionItem));
-
-      const signaturePromises = [];
       let prevSignatures = this.req.prevESignatures;
       if (!_.isEmpty(prevSignatures)) {
         prevSignatures = await this.loadAndDecryptSignatures(prevSignatures);
       }
+
       const {signatures = []} = this.formRevision.esign || {};
+      const signaturePromises = [];
+
       _.each(signatures, (signatureSettings) => {
         const {component} = signatureSettings;
-        let eSignatureComponent = formInstance.getComponent(component);
+        const signatureValuePaths = this.getComponentValuePaths(component, revisionItem.data);
 
-        if (!eSignatureComponent) {
-          return;
-        }
-
-        if (!_.isArray(eSignatureComponent)) {
-          eSignatureComponent = [eSignatureComponent];
-        }
-
-        _.each(eSignatureComponent, (comp) => {
-          // make sure that the right component is found
-          const compKeyPartsLength = _.split(comp.key , '.').length;
-          const keyFromCompPath = _.chain(component).split('.').slice(-compKeyPartsLength).join('.').value();
-
-          if (_.isEqual(comp.key, keyFromCompPath) && this.shouldHaveESignature(revisionItem.data, comp.path)) {
+        _.each(signatureValuePaths, (valuePath) => {
+          if (this.shouldHaveESignature(revisionItem.data, valuePath)) {
             signaturePromises.push(this.validateOrCreateESignature(
               signatureSettings,
-              comp.path,
-              this.getPrevSignature(prevSignatures, component, comp.path),
+              valuePath,
+              this.getPrevSignature(prevSignatures, component, valuePath),
               revisionItem,
               item,
               this.req.user
