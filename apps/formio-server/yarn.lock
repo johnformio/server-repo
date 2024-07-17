@@ -3703,10 +3703,10 @@ formidable@^2.1.2:
     once "^1.4.0"
     qs "^6.11.0"
 
-formio@4.0.0-dev.1728.7431b1a:
-  version "4.0.0-dev.1728.7431b1a"
-  resolved "https://registry.yarnpkg.com/formio/-/formio-4.0.0-dev.1728.7431b1a.tgz#33df6efd2b4ad005098826c10fae3c7d8f3b014c"
-  integrity sha512-/F6tYXN4eIYLRgmff2EcRc3yXQ/YFu+WIJ8zkDCJtdPuudsu+1ufUKZrfiws+kvBqZXu7YgewZZrADauV1WiTQ==
+formio@4.0.0-dev.1754.9fc5738:
+  version "4.0.0-dev.1754.9fc5738"
+  resolved "https://registry.npmjs.org/formio/-/formio-4.0.0-dev.1754.9fc5738.tgz#ccd9aad23d8861d90b656ba02423b913f9535475"
+  integrity sha512-UIbhAKVjMgKuInXYMDkDP5V85hGrryMtIoTYj4QTQec7Bv3p4C70c5bn+A4burO11yyAg/06Z5onm/QpufN0qg==
   dependencies:
     "@formio/core" "2.0.0-dev.71.013793a"
     "@formio/node-fetch-http-proxy" "^1.1.0"
@@ -3732,6 +3732,7 @@ formio@4.0.0-dev.1728.7431b1a:
     formiojs "^4.18.0-rc.6"
     fs-extra "^10.1.0"
     html-entities "^2.3.3"
+    inputmask "^5.0.8"
     jsonwebtoken "^9.0.0"
     lodash "^4.17.21"
     memory-cache "^0.2.0"
@@ -3743,6 +3744,7 @@ formio@4.0.0-dev.1728.7431b1a:
     progress "^2.0.3"
     prompt "^1.3.0"
     q "^1.5.0"
+    resolve "^1.22.8"
     resourcejs "^2.5.0"
     semver "^7.3.8"
     superagent-retry "^0.6.0"
@@ -3836,9 +3838,9 @@ formiojs@4.19.1-rc.1:
     vanilla-picker "^2.12.1"
 
 formiojs@^4.18.0-rc.6:
-  version "4.19.1"
-  resolved "https://registry.yarnpkg.com/formiojs/-/formiojs-4.19.1.tgz#3658dd4bae267d199fc985c5de6e961f4ea6ab45"
-  integrity sha512-CCgeDYYdnLbExr6Q4NmZZf4BVaUsQ3KFo2y772tM53YH3hIRaiR02PzcGIwmYf1s9Fsq1HOUa9Mc2E25soNxrg==
+  version "4.21.1"
+  resolved "https://registry.npmjs.org/formiojs/-/formiojs-4.21.1.tgz#7a366c5b26ce2548cc01ceee7bc08ab0c04d280c"
+  integrity sha512-08JdjG+ks/2ZIy7ArV9W4qHTKU1Ta4/fQegxq9YpSQTqxCeO0csz6TZhQg9dV3s1huLrqWdILCwvxwK35KWc4Q==
   dependencies:
     "@formio/bootstrap3" "2.12.4-rc.1"
     "@formio/choices.js" "10.2.1"
@@ -3863,6 +3865,7 @@ formiojs@^4.18.0-rc.6:
     fetch-ponyfill "^7.1.0"
     i18next "22.4.12"
     idb "^7.1.1"
+    inputmask "^5.0.8"
     ismobilejs "^1.1.1"
     json-logic-js "^2.0.2"
     jstimezonedetect "^1.0.7"
@@ -4298,6 +4301,11 @@ ini@~1.3.0:
   resolved "https://registry.npmjs.org/ini/-/ini-1.3.8.tgz#a29da425b48806f34767a4efce397269af28432c"
   integrity sha512-JV/yugV2uzW5iMRSiZAyDtQd+nxtUnjeLt0acNdw98kKLrvuRVyB80tsREOE7yvGVgalhZ6RNXCmEHkUKBKxew==
 
+inputmask@^5.0.8:
+  version "5.0.9"
+  resolved "https://registry.npmjs.org/inputmask/-/inputmask-5.0.9.tgz#7bf4e83f5e199c88c0edf28545dc23fa208ef4be"
+  integrity sha512-s0lUfqcEbel+EQXtehXqwCJGShutgieOaIImFKC/r4reYNvX3foyrChl6LOEvaEgxEbesePIrw1Zi2jhZaDZbQ==
+
 inputmask@^5.0.9-beta.45:
   version "5.0.9-beta.45"
   resolved "https://registry.npmjs.org/inputmask/-/inputmask-5.0.9-beta.45.tgz#2699ebfd1e99f572815fb8f2ac23c548198f9ec6"
@@ -4532,10 +4540,15 @@ joi@^17.3.0:
     "@sideway/formula" "^3.0.1"
     "@sideway/pinpoint" "^2.0.0"
 
-jose@^4.14.4, jose@^4.15.5:
+jose@^4.14.4:
   version "4.15.5"
   resolved "https://registry.yarnpkg.com/jose/-/jose-4.15.5.tgz#6475d0f467ecd3c630a1b5dadd2735a7288df706"
   integrity sha512-jc7BFxgKPKi94uOvEmzlSWFFe2+vASyXaKUpdQKatWAESU2MWjDfFf0fdfc83CDKcA5QecabZeNLyfhe3yKNkg==
+
+jose@^5.2.3:
+  version "5.6.3"
+  resolved "https://registry.npmjs.org/jose/-/jose-5.6.3.tgz#415688bc84875461c86dfe271ea6029112a23e27"
+  integrity sha512-1Jh//hEEwMhNYPDDLwXHa2ePWgWiFNNUadVmguAAw2IJ6sj9mNxV5tGXJNqlMkJAybF6Lgw1mISDxTePP/187g==
 
 js-string-escape@1.0.1:
   version "1.0.1"

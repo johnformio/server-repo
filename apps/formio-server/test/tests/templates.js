@@ -5,6 +5,7 @@ const assert = require('assert');
 const _ = require('lodash');
 const config = require('../../config');
 const formioUtils = require('formiojs/utils').default;
+const ignoredFormProps = ['revisions', 'esign'];
 
 module.exports = function(app, template, hook) {
   let formio = app.formio.formio;
@@ -122,7 +123,7 @@ module.exports = function(app, template, hook) {
         }
 
         let machineName = form.machineName;
-        let tempForm = _.omit(form, ['_id', '__v', 'created', 'deleted', 'modified', 'machineName', 'owner', '_vid', 'revisions']);
+        let tempForm = _.omit(form, ['_id', '__v', 'created', 'deleted', 'modified', 'machineName', 'owner', '_vid', ...ignoredFormProps]);
 
         tempForm.access = tempForm.access.map(access => {
           access.roles = access.roles.map(role => {
@@ -479,6 +480,8 @@ module.exports = function(app, template, hook) {
           }
 
           exportData = data;
+          exportData.forms = _.mapValues(exportData.forms, (form) => _.omit(form, ignoredFormProps));
+          exportData.resources = _.mapValues(exportData.resources, (resource) => _.omit(resource, ignoredFormProps));
           return done();
         });
       });

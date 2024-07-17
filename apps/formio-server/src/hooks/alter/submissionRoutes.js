@@ -4,6 +4,8 @@ const _ = require('lodash');
 const config = require('../../../config');
 const util = require('../../util/util');
 const SubmissionRevision = require('../../revisions/SubmissionRevision');
+const ESignature = require('../../esignature/ESignature');
+
 module.exports = app => routes => {
   const filterExternalTokens = app.formio.formio.middleware.filterResourcejsResponse(['externalTokens']);
   const conditionalFilter = function(req, res, next) {
@@ -35,14 +37,45 @@ module.exports = app => routes => {
     next();
   };
 
+  const attachSignatures = function(req, res, next) {
+    const esignature = new ESignature(app, req);
+
+    if (esignature.allowESign()) {
+      app.formio.formio.cache.loadSubmission(
+        req,
+        req.params.formId,
+        req.params.submissionId,
+        async (err, loadSubmission) => {
+          if (err) {
+            return next(err);
+          }
+          return esignature.validateAndAttachESignatures(res.resource.item, loadSubmission, req.currentForm,  (err) => {
+            if (err) {
+              return next(err);
+            }
+            return next();
+          });
+        });
+    }
+    else {
+      return next();
+    }
+  };
+
   _.each(['afterGet', 'afterIndex', 'afterPost', 'afterPut', 'afterDelete'], function(handler) {
     routes[handler].push(conditionalFilter);
   });
 
+  routes.afterGet.push(attachSignatures);
   routes.afterGet.push(addAdminAccess);
   routes.afterDelete.push((req, res, next)=> {
     const submissionRevision = new SubmissionRevision(app, req.submissionModel || null);
     submissionRevision.delete(req.params.submissionId, next);
+  });
+
+  routes.afterDelete.push((req, res, next)=> {
+    const esignature = new ESignature(app, req);
+    esignature.delete(req.params.submissionId, next);
   });
 
   // Add a submission model set before the index.
@@ -120,6 +153,16 @@ module.exports = app => routes => {
             if (err) {
               return next(err);
             }
+            const esignature = new ESignature(app, req);
+            if (esignature.allowESign()) {
+              return esignature.checkSignatures(item, revision, form, (err) => {
+                if (err) {
+                  return next(err);
+                }
+                return next();
+              });
+            }
+
             return next();
           });
         }
@@ -146,6 +189,10 @@ module.exports = app => routes => {
             loadSubmission = await submissionRevision.checkDraft(loadSubmission);
             if (submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form)) {
               req.shouldCreateSubmissionRevision = true;
+              const esignature = new ESignature(app, req);
+              if (esignature.allowESign()) {
+                req.prevESignatures = loadSubmission.eSignatures;
+              }
             }
             return next();
         });
@@ -169,6 +216,15 @@ module.exports = app => routes => {
                 return submissionRevision.createVersion(item, req.user, req.body._vnote, (err, revision) => {
                   if (err) {
                     return next(err);
+                  }
+                  const esignature = new ESignature(app, req);
+                  if (esignature.allowESign()) {
+                    return esignature.checkSignatures(item, revision, form,  (err) => {
+                      if (err) {
+                        return next(err);
+                      }
+                      return next();
+                    });
                   }
                   return next();
                 });
@@ -214,6 +270,16 @@ module.exports = app => routes => {
               return submissionRevision.createVersion(item, null, req.body._vnote, (err, revision) => {
                 if (err) {
                   return next(err);
+                }
+                const esignature = new ESignature(app, req);
+                if (esignature.allowESign()) {
+                  req.prevESignatures = loadSubmission?.eSignatures || [];
+                  return esignature.checkSignatures(item, revision, form,  (err) => {
+                    if (err) {
+                      return next(err);
+                    }
+                    return next();
+                  });
                 }
                 return next();
               });
