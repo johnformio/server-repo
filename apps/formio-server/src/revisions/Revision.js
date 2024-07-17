@@ -17,7 +17,7 @@ module.exports = class Revision {
   }
 
   revisionsAllowed(req) {
-    return this.checkRevisionPlan(req.primaryProject.plan) &&
+    return this.checkRevisionPlan(req.primaryProject?.plan || req.formioCache.projects[req.params.projectId].plan) &&
       !config.formio.hosted &&
       (this.app.license && !this.app.license.licenseServerError && _.get(req, 'licenseTerms.options.sac', false));
   }

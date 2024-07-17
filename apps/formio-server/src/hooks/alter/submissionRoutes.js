@@ -5,6 +5,7 @@ const config = require('../../../config');
 const util = require('../../util/util');
 const SubmissionRevision = require('../../revisions/SubmissionRevision');
 const ESignature = require('../../esignature/ESignature');
+const debug = require('debug')('formio:error');
 
 module.exports = app => routes => {
   const filterExternalTokens = app.formio.formio.middleware.filterResourcejsResponse(['externalTokens']);
@@ -64,6 +65,22 @@ module.exports = app => routes => {
 
   _.each(['afterGet', 'afterIndex', 'afterPost', 'afterPut', 'afterDelete'], function(handler) {
     routes[handler].push(conditionalFilter);
+  });
+
+  routes.beforeDelete.unshift((req, res, next) => {
+    app.formio.formio.cache.loadCurrentForm(req, (err, currentForm) => {
+      if (err || !currentForm) {
+        debug(`Unable to load current form. ${err}`);
+        return next();
+      }
+
+      const submissionRevision = new SubmissionRevision(app, req.submissionModel || null);
+      if (submissionRevision.revisionsAllowed(req) && currentForm.submissionRevisions) {
+        debug(`Unable to delete submission ${req.params?.submissionId} with enabled submission revisions.`);
+        return res.status(403).send('Deletion is not allowed when submission revisions are enabled.');
+      }
+      return next();
+    });
   });
 
   routes.afterGet.push(attachSignatures);

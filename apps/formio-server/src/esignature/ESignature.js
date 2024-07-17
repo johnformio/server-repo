@@ -1,6 +1,10 @@
 "use strict";
 const _ = require('lodash');
-const debug = require('debug')('formio:esignature');
+const debug = {
+  error: require('debug')('formio:esign:error'),
+  esign: require('debug')('formio:esign'),
+  validate: require('debug')('formio:esign:validate'),
+};
 const config = require('../../config');
 const FormRevision = require('../revisions/FormRevision');
 const crypto = require('crypto');
@@ -67,7 +71,7 @@ module.exports = class ESignature {
 
     this.app.formio.formio.cache.loadSubForms(formRevision, this.req, (err) => {
       if (err) {
-        debug(`SubForms loading error: ${err}`);
+        debug.esign(`Form Revision SubForms loading error: ${err}`);
       }
       this.flattenedComponents = this.app.formio.formio.util.flattenComponents(formRevision.components, true);
       return revisionPromiseResolve(formRevision);
@@ -167,7 +171,7 @@ module.exports = class ESignature {
                   subSubmissionId,
                   (err, subSubmission) => {
                     if (err) {
-                      debug(`Unable to load reference for submission ${subSubmissionId} of form ${formId}, `);
+                      debug.esign(`Unable to load reference for submission ${subSubmissionId} of form ${formId}`);
                     }
 
                     if (subSubmission?.data) {
@@ -212,6 +216,7 @@ module.exports = class ESignature {
   }
 
   async createESignature(compPath, valuePath, revisionItem, user) {
+    debug(`Create esignature for ${revisionItem?._id}`);
     const esignatureData = await this.getESignatureData(compPath, valuePath, revisionItem, user);
 
     const esignature = {signature: await this.encryptData(esignatureData), _sid: revisionItem._rid};
@@ -220,15 +225,18 @@ module.exports = class ESignature {
   }
 
   async validateAndAttachESignatures(resultSubmission, submission, form, done) {
+    debug.esign(`Validate and attach esignatures for ${submission._id}`);
     try {
       const submissionESignatureIds = _.get(submission, 'eSignatures', []);
       if (!submissionESignatureIds.length) {
+        debug.esign('No esignatures found for submission');
         return done();
       }
 
       await this.setRevisionForm(submission, form);
 
       if (!this.haveESignSettings()) {
+        debug.esign('No esign settings found');
         return done();
       }
 
@@ -250,6 +258,7 @@ module.exports = class ESignature {
       done();
     }
     catch (e) {
+      debug.error(`Validate and attach esignature error: ${e}`);
       console.log(777, e);
       done(e);
     }
@@ -281,8 +290,10 @@ module.exports = class ESignature {
   }
 
   async validateESignature(signatureObj, submission) {
+    debug.validate(`Validate esignature ${signatureObj?._id}`);
     let esignature = signatureObj?.signature;
     if (!esignature) {
+      debug.validate(`${signatureObj?._id} - validation failed: No ESignature Data Found`);
       return 'No ESignature Data Found';
     }
 
@@ -291,6 +302,7 @@ module.exports = class ESignature {
     }
 
     if (!_.isObject(esignature)) {
+      debug.validate(`${signatureObj?._id} - validation failed: ESignature invalid format`);
       return 'ESignature invalid format';
     }
     const {esign = {}} = this.formRevision || {};
@@ -299,6 +311,7 @@ module.exports = class ESignature {
     const {component, excludedData = []} = esignatureSettings;
 
     if (!esignatureSettings) {
+      debug.validate(`${signatureObj?._id} - validation failed: No ESignature settings found`);
       return 'No ESignature settings found';
     }
 
@@ -307,6 +320,7 @@ module.exports = class ESignature {
     const isFormDataEqual = _.isEqual(signatureCurrentData.form, esignature.form);
 
     if (!isFormDataEqual) {
+      debug.validate(`${signatureObj?._id} - validation failed: Form changed`);
       return 'Form changed';
     }
 
@@ -318,6 +332,7 @@ module.exports = class ESignature {
       !_.isEqual(currentFormId.toString(), signatureFormId.toString()) ||
       !_.isEqual(currentSubmissionId.toString(), signatureSubmissionId.toString())
     ) {
+      debug.validate(`${signatureObj?._id} - validation failed: Invalid project/form/submission ID`);
       return 'Invalid project/form/submission ID';
     }
 
@@ -330,6 +345,7 @@ module.exports = class ESignature {
     });
 
     if (!_.isEqual(currentSubmData, signatureSubmData)) {
+      debug.validate(`${signatureObj?._id} - validation failed: Submission data changed`);
       return 'Submission data changed';
     }
 
@@ -344,13 +360,16 @@ module.exports = class ESignature {
       });
 
       if (!_.isEqual(customCurrentProps, customSignatureProps)) {
+        debug.validate(`${signatureObj?._id} - validation failed: Value of custom properties changed`);
         return 'Value of custom properties changed';
       }
     }
+    debug.validate(`Valid ESignature: ${signatureObj?._id}`);
     return true;
   }
 
   async loadAndDecryptSignatures(signatures) {
+    debug.esign(`Load and descypt esignatures`);
     const result = await this.esignatureModel.find({
       _id: {
         $in: _.map(signatures || [], sign => _.isObject(sign) ? sign._id : sign)
@@ -392,7 +411,7 @@ module.exports = class ESignature {
       return [compPath];
     }
 
-    const rowDataComponents = ['datagrid', 'editgrid', 'datatable', 'tagpad'];
+    const rowDataComponents = ['datagrid', 'editgrid', 'datatable', 'tagpad', 'dynamicWizard'];
 
     return _.reduce(compPathParts, (result, pathPart, ind) => {
       if (ind + 1 === compPathParts.length) {
@@ -446,6 +465,7 @@ module.exports = class ESignature {
   }
 
   async checkSignatures(item, revisionItem, form, done) {
+    debug.esign(`Check signatures for ${item?._id}`);
     try {
       await this.setRevisionForm(item, form);
       if (!this.haveESignSettings()) {
@@ -496,12 +516,14 @@ module.exports = class ESignature {
       }
     }
     catch (e) {
+      debug.error(`Check Signatures error: ${e}`);
       console.log(555, e);
       done(e);
     }
   }
 
   async updateSubmission(item, revisionItem, updates) {
+    debug.esign('Update submission and submssion revisoons with new signatures and state');
     const submissionPromises = [];
     if (item) {
       submissionPromises.push(
