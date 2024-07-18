@@ -40,7 +40,7 @@ module.exports = app => routes => {
   };
 
   const attachSignatures = function(req, res, next) {
-    app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
+    app.formio.formio.cache.loadForm(req, null, req.params.formId, async (err, form) => {
       if (err) {
         return next(err);
       }
@@ -48,12 +48,13 @@ module.exports = app => routes => {
       const esignature = new ESignature(app.formio, req);
 
       if (esignature.allowESign(form)) {
-        return esignature.attachESignatures(res.resource.item, (err) => {
-          if (err) {
-            return next(err);
-          }
+        try {
+          await esignature.attachESignatures(res.resource.item);
           return next();
-        });
+        }
+        catch (e) {
+          return next(e);
+        }
       }
       else {
         return next();
@@ -85,10 +86,15 @@ module.exports = app => routes => {
     });
   });
 
-  routes.afterIndex.push((req, res, next) => {
-    attachSignaturesToMultipleSubmissions(app.formio, req, res.resource.item || [], req.params.formId, () => {
-      next();
-    });
+  routes.afterIndex.push(async (req, res, next) => {
+    try {
+      await attachSignaturesToMultipleSubmissions(app.formio, req, res.resource.item || [], req.params.formId);
+      return next();
+    }
+    catch (e) {
+      debug(`Unable to attach eSignatures to maltiple submissions: ${e}`);
+      return next(e);
+    }
   });
 
   routes.afterGet.push(addAdminAccess);
@@ -97,9 +103,15 @@ module.exports = app => routes => {
     submissionRevision.delete(req.params.submissionId, next);
   });
 
-  routes.afterDelete.push((req, res, next)=> {
-    const esignature = new ESignature(app.formio, req);
-    esignature.delete(req.params.submissionId, next);
+  routes.afterDelete.push(async (req, res, next)=> {
+    try {
+      const esignature = new ESignature(app.formio, req);
+      await esignature.delete(req.params.submissionId);
+      return next();
+    }
+    catch (e) {
+      return next(e);
+    }
   });
 
   // Add a submission model set before the index.
@@ -173,18 +185,19 @@ module.exports = app => routes => {
         }
         const submissionRevision = new SubmissionRevision(app, req.submissionModel || null);
         if (submissionRevision.shouldCreateNewRevision(req, item, null, form)) {
-          return submissionRevision.createVersion(item, req.user, req.body._vnote, (err, revision) => {
+          return submissionRevision.createVersion(item, req.user, req.body._vnote, async (err, revision) => {
             if (err) {
               return next(err);
             }
             const esignature = new ESignature(app.formio, req);
             if (esignature.allowESign(form)) {
-              return esignature.checkSignatures(item, revision, (err) => {
-                if (err) {
-                  return next(err);
-                }
+              try {
+                await esignature.checkSignatures(item, revision);
                 return next();
-              });
+              }
+              catch (e) {
+                return next(e);
+              }
             }
 
             return next();
@@ -237,18 +250,19 @@ module.exports = app => routes => {
             }
             loadSubmission = await submissionRevision.checkDraft(loadSubmission);
               if (submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form) || req.shouldCreateSubmissionRevision) {
-                return submissionRevision.createVersion(item, req.user, req.body._vnote, (err, revision) => {
+                return submissionRevision.createVersion(item, req.user, req.body._vnote, async (err, revision) => {
                   if (err) {
                     return next(err);
                   }
                   const esignature = new ESignature(app.formio, req);
                   if (esignature.allowESign(form)) {
-                    return esignature.checkSignatures(item, revision, (err) => {
-                      if (err) {
-                        return next(err);
-                      }
+                    try {
+                      await esignature.checkSignatures(item, revision);
                       return next();
-                    });
+                    }
+                    catch (e) {
+                      return next(e);
+                    }
                   }
                   return next();
                 });
@@ -291,19 +305,20 @@ module.exports = app => routes => {
             }
             loadSubmission = await submissionRevision.checkDraft(loadSubmission);
             if (submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form)) {
-              return submissionRevision.createVersion(item, null, req.body._vnote, (err, revision) => {
+              return submissionRevision.createVersion(item, null, req.body._vnote, async (err, revision) => {
                 if (err) {
                   return next(err);
                 }
                 const esignature = new ESignature(app.formio, req);
                 if (esignature.allowESign(form)) {
-                  req.prevESignatures = loadSubmission?.eSignatures || [];
-                  return esignature.checkSignatures(item, revision, (err) => {
-                    if (err) {
-                      return next(err);
-                    }
+                  try {
+                    req.prevESignatures = loadSubmission?.eSignatures || [];
+                    await esignature.checkSignatures(item, revision);
                     return next();
-                  });
+                  }
+                  catch (e) {
+                    return next(e);
+                  }
                 }
                 return next();
               });

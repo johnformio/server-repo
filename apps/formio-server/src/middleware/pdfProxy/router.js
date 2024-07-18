@@ -71,7 +71,7 @@ module.exports = (app) => {
       const esignature = new ESignature(app.formio, req);
 
       if (esignature.allowESign(form) && submission) {
-        await esignature.attachESignatures(submission, () => {});
+        await esignature.attachESignatures(submission);
       }
       const response = await downloadPDF(req, project, form, submission);
       if (response.ok) {

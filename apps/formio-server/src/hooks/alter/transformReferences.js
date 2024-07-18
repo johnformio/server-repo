@@ -1,26 +1,19 @@
 'use strict';
 const _ = require('lodash');
 const attachSignaturesToMultipleSubmissions = require('../../esignature/attachSignaturesToMultipleSubmissions');
+const debug = require('debug')('hook:transformReferences');
 
-module.exports = app => (subSubmsPromise, formId, req) => {
-  if (!formId) {
-    return;
+module.exports = app => async (subSubmsPromise, formId, req) => {
+  const subSubms = await subSubmsPromise;
+  if (_.isEmpty(subSubms) || !formId) {
+    return subSubms;
   }
 
-  return subSubmsPromise?.then((subSubms) => {
-    if (_.isEmpty(subSubms)) {
-        return;
-    }
-
-    let refPromiseResolve;
-    const refPromise = new Promise(res => {
-      refPromiseResolve = res;
-    });
-
-    attachSignaturesToMultipleSubmissions(app.formio, req, subSubms, formId, () => {
-      refPromiseResolve();
-    });
-
-    return refPromise;
-  });
+  try {
+    return await attachSignaturesToMultipleSubmissions(app.formio, req, subSubms, formId);
+  }
+  catch (e) {
+    debug(e);
+    return subSubms;
+  }
 };

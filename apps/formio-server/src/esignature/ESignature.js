@@ -8,6 +8,7 @@ const debug = {
 const config = require('../../config');
 const FormRevision = require('../revisions/FormRevision');
 const keyServices = require('../kms');
+const {promisify} = require('node:util');
 
 module.exports = class ESignature {
   constructor(formioServer, req) {
@@ -64,23 +65,8 @@ module.exports = class ESignature {
   }
 
   async setRevisionForm(formId, formRev) {
-    let formPromiseResolve;
-    let formPromiseReject;
-
-    const formPromise = new Promise((res, rej) => {
-      formPromiseResolve = res;
-      formPromiseReject = rej;
-    });
-
-    this.formioServer.formio.cache.loadForm(this.req, null, formId, (err, form) => {
-      if (err) {
-        debug.error(`Unable to load form ${formId}`);
-        formPromiseReject(err);
-      }
-      formPromiseResolve(form);
-    }, true);
-
-    let formRevision = await formPromise;
+    const loadForm = promisify((req, type, id, noCachedResult, cb) => this.formioServer.formio.cache.loadForm(req, type, id, cb, noCachedResult));
+    let formRevision = await loadForm(this.req, null, formId, true);
 
     if (_.isNumber(formRev) &&
       !((formRevision.hasOwnProperty('revisions') && (formRevision.revisions === 'current')) ||
@@ -102,40 +88,17 @@ module.exports = class ESignature {
   }
 
   async attachSubForms() {
-    let revisionPromiseResolve;
+    const loadSubForms = promisify((form, req, next) => this.formioServer.formio.cache.loadSubForms(form, req, next));
+    await loadSubForms(this.formRevision, this.req);
+  }
 
-    const revisionPromise = new Promise((res) => {
-      revisionPromiseResolve = res;
-    });
-
-    this.formioServer.formio.cache.loadSubForms(this.formRevision, this.req, (err) => {
-      if (err) {
-        debug.esign(`Form Revision SubForms loading error: ${err}`);
-      }
-      return revisionPromiseResolve();
-    });
-
-    await revisionPromise;
+  async loadSubmission(req, formId, submissionId, skipCache) {
+    const loadSubmission = promisify((req, formId, submissionId, skipCache, cb) => this.formioServer.formio.cache.loadSubmission(req, formId, submissionId, cb, skipCache));
+    return await loadSubmission(req, formId, submissionId, skipCache);
   }
 
   async getCurrentSubmission(submissionId) {
-    let submissionPromiseResolve;
-    let submissionPromiseReject;
-
-    const submissionPromise = new Promise((res, rej) => {
-      submissionPromiseResolve = res;
-      submissionPromiseReject = rej;
-    });
-
-    this.formioServer.formio.cache.loadSubmission(this.req, this.formRevision._id, submissionId, (err, subm) => {
-      if (err) {
-        debug.error(`Unable to load submission ${submissionId}`);
-        submissionPromiseReject(err);
-      }
-      submissionPromiseResolve(subm);
-    }, true);
-
-    return await submissionPromise;
+    return await this.loadSubmission(this.req, this.formRevision._id, submissionId, true);
   }
 
   md5(value) {
@@ -158,7 +121,7 @@ module.exports = class ESignature {
     this.formioServer.formio.util.eachValue(
       this.formRevision.components,
       submissionData,
-      ({component,
+      async ({component,
         data,
         path}) => {
           if (component) {
@@ -173,33 +136,33 @@ module.exports = class ESignature {
 
               if (subSubmissionId) {
                 let subSubmissionPromiseResolve;
-                const subSubmissionPromise = new Promise(res => {
+                let subSubmissionPromiseReject;
+                const subSubmissionPromise = new Promise((res, rej) => {
                   subSubmissionPromiseResolve = res;
+                  subSubmissionPromiseReject = rej;
                 });
                 promises.push(subSubmissionPromise);
-                // load submission for nested form
-                this.formioServer.formio.cache.loadSubmission(
-                  this.req,
-                  formId,
-                  subSubmissionId,
-                  (err, subSubmission) => {
-                    if (err) {
-                      debug.esign(`Unable to load reference for submission ${subSubmissionId} of form ${formId}`);
-                    }
 
-                    if (subSubmission?.data) {
-                      _.set(data, compPath, {_id: subSubmissionId, data: subSubmission.data});
+                try {
+                  // load submission for nested form
+                  const subSubmission = await this.loadSubmission(this.req, formId, subSubmissionId, true);
 
-                      if (isNestedForm && component.components) {
-                        // recursively load all subforms data
-                        childRefs.push(this.attachSubmissionRefs(component.components, subSubmission.data));
-                      }
-                      subSubmissionPromiseResolve();
+                  // eslint-disable-next-line max-depth
+                  if (subSubmission?.data) {
+                    _.set(data, compPath, {_id: subSubmissionId, data: subSubmission.data});
+
+                    // eslint-disable-next-line max-depth
+                    if (isNestedForm && component.components) {
+                      // recursively load all subforms data
+                      childRefs.push(this.attachSubmissionRefs(component.components, subSubmission.data));
                     }
-                  },
-                  // do not take result from cache as it can be mutated
-                  true
-                );
+                  }
+                  subSubmissionPromiseResolve();
+                }
+                catch (e) {
+                  debug.esign(`Unable to load reference for submission ${subSubmissionId} of form ${formId}`);
+                  subSubmissionPromiseReject(e);
+                }
               }
             }
           }
@@ -241,20 +204,20 @@ module.exports = class ESignature {
     return result ? result.toObject() : null;
   }
 
-  async attachESignatures(resultSubmission, done) {
+  async attachESignatures(resultSubmission) {
     debug.esign(`Validate and attach esignatures for ${resultSubmission?._id}`);
     try {
       const submissionESignatureIds = _.get(resultSubmission, 'eSignatures', []);
       if (!submissionESignatureIds.length) {
         debug.esign('No esignatures found for submission');
-        return done();
+        return;
       }
 
       await this.setRevisionForm(resultSubmission.form, resultSubmission._fvid);
 
       if (!this.haveESignSettings()) {
         debug.esign('No esign settings found');
-        return done();
+        return;
       }
       this.initKms();
 
@@ -276,7 +239,7 @@ module.exports = class ESignature {
 
       if (!submission) {
         debug.esign('No submission found.');
-        return done();
+        return;
       }
 
       let submissionESignatures = await this.loadAndDecryptSignatures(submissionESignatureIds);
@@ -289,11 +252,11 @@ module.exports = class ESignature {
       }));
 
       resultSubmission.eSignatures = submissionESignatures;
-      done();
+      return;
     }
     catch (e) {
       debug.error(`Validate and attach esignature error: ${e}`);
-      done();
+      return;
     }
   }
 
@@ -498,17 +461,17 @@ module.exports = class ESignature {
     }, []);
   }
 
-  async checkSignatures(item, revisionItem, done) {
+  async checkSignatures(item, revisionItem) {
     debug.esign(`Check signatures for ${item?._id}`);
 
     if (!item || !revisionItem) {
-      done();
+      return;
     }
 
     try {
       await this.setRevisionForm(revisionItem.form, revisionItem._fvid);
       if (!this.haveESignSettings()) {
-        return done();
+        return;
       }
       this.initKms();
       let prevSignatures = this.req.prevESignatures;
@@ -541,11 +504,11 @@ module.exports = class ESignature {
       item.eSignatures = revisionItem.eSignatures = eSignatureIds;
       await this.updateSubmission(item, revisionItem, {eSignatures: eSignatureIds});
 
-      done(null, eSignatureIds);
+      return eSignatureIds;
     }
     catch (e) {
       debug.error(`Check Signatures error: ${e}`);
-      done(e);
+      throw new Error(e);
     }
   }
 
@@ -581,8 +544,8 @@ module.exports = class ESignature {
     return Promise.all(submissionPromises);
   }
 
-  delete(submissionId, next) {
-    this.esignatureModel.updateMany(
+  async delete(submissionId) {
+    await this.esignatureModel.updateMany(
       {
         _sid: this.idToBson(submissionId),
         deleted: {
@@ -593,12 +556,6 @@ module.exports = class ESignature {
         deleted: Date.now(),
         markModified: 'deleted',
       },
-      (err) => {
-        if (err) {
-          return next(err);
-        }
-        next();
-      }
     );
   }
 };

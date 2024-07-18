@@ -1,50 +1,34 @@
 'use strict';
 const _ = require('lodash');
 const ESignature = require('./ESignature');
-const debug = require('debug')('attachSignaturesToMultipleSubmissions:error');
+const debug = require('debug')('attachSignaturesToMultipleSubmissions');
+const {promisify} = require('node:util');
 
-module.exports = (formioServer, req, submissions, formId, done) => {
+module.exports = async (formioServer, req, submissions, formId) => {
     submissions = submissions || [];
     if (_.isEmpty(submissions)) {
-      return done(submissions);
+      return submissions;
     }
 
-    formioServer.formio.cache.loadForm(req, null, formId, (err, form) => {
-      if (err) {
-        debug(`Unable to load reference form: ${err}`);
-        return done(submissions, err);
-      }
+    const loadForm = promisify((req, type, id, noCachedResult, cb) => formioServer.formio.cache.loadForm(req, type, id, cb, noCachedResult));
+    const form = await loadForm(req, null, formId, false);
 
-      const esignature = new ESignature(formioServer, req);
+    if (!form) {
+      debug(`Unable to load reference form: ${formId}`);
+      return submissions;
+    }
 
-      if (esignature.allowESign(form)) {
-        const esignPromises = _.map(submissions, subm => {
-          let promiseRes;
-          let promiseRej;
+    const esignature = new ESignature(formioServer, req);
 
-          const esignPromise = new Promise((res, rej) => {
-            promiseRej = rej;
-            promiseRes = res;
-          });
+    if (esignature.allowESign(form)) {
+      debug(`Load eSignatures for submissions of form ${formId}`);
+      const esignPromises = _.map(submissions, async (subm) => {
+        const esignature = new ESignature(formioServer, req);
+        return await esignature.attachESignatures(subm);
+      });
 
-          const esignature = new ESignature(formioServer, req);
-          esignature.attachESignatures(subm, (err) => {
-          if (err) {
-            debug(`Unable to attach eSigantures: ${err}`);
-            return promiseRej(err);
-          }
-          return promiseRes();
-        });
+      await Promise.all(esignPromises);
+    }
 
-        return esignPromise;
-        });
-
-        return Promise.all(esignPromises)
-          .then(() => done(submissions))
-          .catch(e => done(submissions, e));
-      }
-      else {
-        return done(submissions);
-      }
-   });
+    return submissions;
 };
