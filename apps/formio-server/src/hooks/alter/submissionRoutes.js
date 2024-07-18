@@ -6,6 +6,7 @@ const util = require('../../util/util');
 const SubmissionRevision = require('../../revisions/SubmissionRevision');
 const ESignature = require('../../esignature/ESignature');
 const debug = require('debug')('formio:error');
+const attachSignaturesToMultipleSubmissions = require('../../esignature/attachSignaturesToMultipleSubmissions');
 
 module.exports = app => routes => {
   const filterExternalTokens = app.formio.formio.middleware.filterResourcejsResponse(['externalTokens']);
@@ -39,36 +40,30 @@ module.exports = app => routes => {
   };
 
   const attachSignatures = function(req, res, next) {
-    const esignature = new ESignature(app, req);
+    app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
+      if (err) {
+        return next(err);
+      }
 
-    if (esignature.allowESign()) {
-      app.formio.formio.cache.loadSubmission(
-        req,
-        req.params.formId,
-        req.params.submissionId,
-        async (err, loadSubmission) => {
+      const esignature = new ESignature(app.formio, req);
+
+      if (esignature.allowESign(form)) {
+        return esignature.attachESignatures(res.resource.item, (err) => {
           if (err) {
             return next(err);
           }
-
-          return app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
-            if (err) {
-              return next(err);
-            }
-
-            return esignature.validateAndAttachESignatures(res.resource.item, loadSubmission, form,  (err) => {
-              if (err) {
-                return next(err);
-              }
-              return next();
-            });
-          });
+          return next();
         });
-    }
-    else {
-      return next();
-    }
+      }
+      else {
+        return next();
+      }
+   });
   };
+
+  _.each(['afterGet', 'afterPost', 'afterPut'], function(handler) {
+    routes[handler].push(attachSignatures);
+  });
 
   _.each(['afterGet', 'afterIndex', 'afterPost', 'afterPut', 'afterDelete'], function(handler) {
     routes[handler].push(conditionalFilter);
@@ -90,7 +85,12 @@ module.exports = app => routes => {
     });
   });
 
-  routes.afterGet.push(attachSignatures);
+  routes.afterIndex.push((req, res, next) => {
+    attachSignaturesToMultipleSubmissions(app.formio, req, res.resource.item || [], req.params.formId, () => {
+      next();
+    });
+  });
+
   routes.afterGet.push(addAdminAccess);
   routes.afterDelete.push((req, res, next)=> {
     const submissionRevision = new SubmissionRevision(app, req.submissionModel || null);
@@ -98,7 +98,7 @@ module.exports = app => routes => {
   });
 
   routes.afterDelete.push((req, res, next)=> {
-    const esignature = new ESignature(app, req);
+    const esignature = new ESignature(app.formio, req);
     esignature.delete(req.params.submissionId, next);
   });
 
@@ -177,9 +177,9 @@ module.exports = app => routes => {
             if (err) {
               return next(err);
             }
-            const esignature = new ESignature(app, req);
-            if (esignature.allowESign()) {
-              return esignature.checkSignatures(item, revision, form, (err) => {
+            const esignature = new ESignature(app.formio, req);
+            if (esignature.allowESign(form)) {
+              return esignature.checkSignatures(item, revision, (err) => {
                 if (err) {
                   return next(err);
                 }
@@ -213,8 +213,8 @@ module.exports = app => routes => {
             loadSubmission = await submissionRevision.checkDraft(loadSubmission);
             if (submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form)) {
               req.shouldCreateSubmissionRevision = true;
-              const esignature = new ESignature(app, req);
-              if (esignature.allowESign()) {
+              const esignature = new ESignature(app.formio, req);
+              if (esignature.allowESign(form)) {
                 req.prevESignatures = loadSubmission.eSignatures;
               }
             }
@@ -241,9 +241,9 @@ module.exports = app => routes => {
                   if (err) {
                     return next(err);
                   }
-                  const esignature = new ESignature(app, req);
-                  if (esignature.allowESign()) {
-                    return esignature.checkSignatures(item, revision, form,  (err) => {
+                  const esignature = new ESignature(app.formio, req);
+                  if (esignature.allowESign(form)) {
+                    return esignature.checkSignatures(item, revision, (err) => {
                       if (err) {
                         return next(err);
                       }
@@ -295,10 +295,10 @@ module.exports = app => routes => {
                 if (err) {
                   return next(err);
                 }
-                const esignature = new ESignature(app, req);
-                if (esignature.allowESign()) {
+                const esignature = new ESignature(app.formio, req);
+                if (esignature.allowESign(form)) {
                   req.prevESignatures = loadSubmission?.eSignatures || [];
-                  return esignature.checkSignatures(item, revision, form,  (err) => {
+                  return esignature.checkSignatures(item, revision, (err) => {
                     if (err) {
                       return next(err);
                     }

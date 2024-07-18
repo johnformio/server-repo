@@ -204,6 +204,7 @@ config.formio.defaultEmailSource= getConfig('DEFAULT_EMAIL_SOURCE', 'no-reply@ex
 config.pdfServer = getConfig('PDF_SERVER') || getConfig('FORMIO_FILES_SERVER');
 config.pdfProject = getConfig('FORMIO_PDF_PROJECT', 'https://pdf.form.io');
 config.pdfProjectApiKey = getConfig('FORMIO_PDF_APIKEY');
+config.esignPrivateKey = getConfig('ESIGN_PRIVATE_KEY');
 
 config.enableOauthM2M = getConfig('OAUTH_M2M_ENABLED', false);
 config.formio.hosted = false;

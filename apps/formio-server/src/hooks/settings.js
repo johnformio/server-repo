@@ -1824,6 +1824,7 @@ module.exports = function(app) {
       formRoutes: require('./alter/formRoutes')(app),
       submissionRoutes: require('./alter/submissionRoutes')(app),
       worker: require('./alter/worker')(app),
+      transformReferences: require('./alter/transformReferences')(app),
 
       actionRoutes(routes) {
         routes.beforePost = routes.beforePost || [];
