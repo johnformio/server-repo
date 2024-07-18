@@ -35,7 +35,7 @@ module.exports = class ESignature {
 
   allowESign(form) {
     return !config.formio.hosted &&
-      _.get(this.req, 'licenseTerms.options.esign', false) &&
+      (_.get(this.req, 'licenseTerms.options.esign', false) || config.simulateEsignLicenseOption) &&
       !!_.get(form, 'submissionRevisions') &&
       form?.revisions === 'original';
   }
