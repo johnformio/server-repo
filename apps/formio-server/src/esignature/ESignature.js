@@ -58,7 +58,10 @@ module.exports = class ESignature {
       const formRevisionModel = this.app.formio.formio.mongoose.models.formrevision;
       const result = await formRevisionModel.findOne({
         _rid: form._id,
-        _vid: submission._fvid
+        _vid: submission._fvid,
+        deleted: {
+          $eq: null,
+        },
       });
       formRevision = {...formRevision, ...(_.pick(result.toObject(), FormRevision.defaultTrackedProperties))};
     }
@@ -216,7 +219,7 @@ module.exports = class ESignature {
   }
 
   async createESignature(compPath, valuePath, revisionItem, user) {
-    debug(`Create esignature for ${revisionItem?._id}`);
+    debug.esign(`Create esignature for ${revisionItem?._id}`);
     const esignatureData = await this.getESignatureData(compPath, valuePath, revisionItem, user);
 
     const esignature = {signature: await this.encryptData(esignatureData), _sid: revisionItem._rid};
@@ -281,7 +284,6 @@ module.exports = class ESignature {
     }
     const newSignature = await this.createESignature(signatureSettings.component, valuePath, revisionItem, user);
     newSignature.new = true;
-    newSignature.stage = signatureSettings.stage;
     return newSignature;
   }
 
@@ -308,13 +310,12 @@ module.exports = class ESignature {
     const {esign = {}} = this.formRevision || {};
     const {signatures = [], submissionProps = ''} = esign;
     const esignatureSettings = _.find(signatures, sign => esignature.compPath === sign.component);
-    const {component, excludedData = []} = esignatureSettings;
 
     if (!esignatureSettings) {
       debug.validate(`${signatureObj?._id} - validation failed: No ESignature settings found`);
       return 'No ESignature settings found';
     }
-
+    const {component, excludedData = []} = esignatureSettings;
     const signatureCurrentData = await this.getESignatureData(component, null, _.cloneDeep(submission), {});
     // compare form
     const isFormDataEqual = _.isEqual(signatureCurrentData.form, esignature.form);
@@ -373,7 +374,10 @@ module.exports = class ESignature {
     const result = await this.esignatureModel.find({
       _id: {
         $in: _.map(signatures || [], sign => _.isObject(sign) ? sign._id : sign)
-      }
+      },
+      deleted: {
+        $eq: null,
+      },
     });
 
     return Promise.all(_.map(result || [], async (esign) => {
@@ -501,13 +505,8 @@ module.exports = class ESignature {
       if (signaturePromises.length) {
         const eSignatures = await Promise.all(signaturePromises);
         const eSignatureIds = _.map(eSignatures || [], (esign) => esign._id);
-
-        const newSignatureObject = _.find(eSignatures, esign => esign.new);
         item.eSignatures = revisionItem.eSignatures = eSignatureIds;
-        if (newSignatureObject) {
-          item.stage = revisionItem.stage = newSignatureObject.stage;
-        }
-        await this.updateSubmission(item, revisionItem, {stage: item.stage, eSignatures: eSignatureIds});
+        await this.updateSubmission(item, revisionItem, {eSignatures: eSignatureIds});
 
         done(null, eSignatureIds);
       }

@@ -50,11 +50,18 @@ module.exports = app => routes => {
           if (err) {
             return next(err);
           }
-          return esignature.validateAndAttachESignatures(res.resource.item, loadSubmission, req.currentForm,  (err) => {
+
+          return app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
             if (err) {
               return next(err);
             }
-            return next();
+
+            return esignature.validateAndAttachESignatures(res.resource.item, loadSubmission, form,  (err) => {
+              if (err) {
+                return next(err);
+              }
+              return next();
+            });
           });
         });
     }
