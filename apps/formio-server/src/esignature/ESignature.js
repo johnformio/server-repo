@@ -48,9 +48,13 @@ module.exports = class ESignature {
       this.kms = new CustomKms(kmsConfig);
     }
     else {
+      const privateKey = config.esignPrivateKey;
+      if (!privateKey) {
+        throw new Error('Unable to init eSignature kms. ESIGN_PRIVATE_KEY is not set.');
+      }
       const DefaultKms = keyServices.defaultKms;
       this.kms = new DefaultKms({
-        privateKey: config.esignPrivateKey
+        privateKey
       });
     }
   }
@@ -220,8 +224,8 @@ module.exports = class ESignature {
         controller: form.controller,
       }),
       user: {
-        _id: user._id,
-        data: _.get(user, 'data.email'),
+        _id: user?._id,
+        data: user ? _.get(user, 'data.email') : 'anonymous',
       },
       compPath,
       valuePath
@@ -289,7 +293,6 @@ module.exports = class ESignature {
     }
     catch (e) {
       debug.error(`Validate and attach esignature error: ${e}`);
-      console.log(777, e);
       done();
     }
   }
@@ -542,7 +545,6 @@ module.exports = class ESignature {
     }
     catch (e) {
       debug.error(`Check Signatures error: ${e}`);
-      console.log(555, e);
       done(e);
     }
   }
