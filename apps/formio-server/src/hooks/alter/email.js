@@ -54,7 +54,7 @@ module.exports = app => (mail, req, res, params, setActionItemMessage, cb) => {
   const attachPDF = async () => {
     // If they wish to attach a PDF.
     if (params.settings && params.settings.attachPDF) {
-      let attachment = {};
+      const attachment = {};
       const project = await formio.cache.loadPrimaryProject(req);
       const form = await formio.cache.loadCurrentForm(req);
       const submission = _.get(res.resource, 'item', req.body);
@@ -73,14 +73,7 @@ module.exports = app => (mail, req, res, params, setActionItemMessage, cb) => {
         }
         const responseBuffer = await response.buffer();
         const base64 = responseBuffer.toString('base64');
-        if (mail.transport === 'sendgrid') {
-          attachment = {content: `${base64}`};
-        }
-        else {
-          attachment = {
-            path: `data:application/pdf;base64,${base64}`
-          };
-        }
+        attachment.path = `data:application/pdf;base64,${base64}`;
       }
       catch (err) {
         // in case PDF throws an error rather than a bad response (e.g. the PDF server is not even configured) we want to
