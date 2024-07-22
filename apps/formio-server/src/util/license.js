@@ -190,7 +190,7 @@ KuKgTy9kdUG5qewqC7H6Jo8CAwEAAQ==
     }
     catch (err) {
       console.log('Invalid license');
-      process.exit();
+      process.exit(1);
     }
   }
 
