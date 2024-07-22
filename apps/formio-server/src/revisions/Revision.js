@@ -1,6 +1,7 @@
 'use strict';
 const _ = require('lodash');
 const config = require('../../config');
+const debug = require('debug')('formio:error');
 module.exports = class Revision {
   constructor(app, type, trackedProperties, revisionPlans) {
     this.revisionPlans = revisionPlans || ['trial', 'commercial'];
@@ -17,9 +18,23 @@ module.exports = class Revision {
   }
 
   revisionsAllowed(req) {
-    return this.checkRevisionPlan(req.primaryProject?.plan || req.formioCache.projects[req.params.projectId].plan) &&
-      !config.formio.hosted &&
-      (this.app.license && !this.app.license.licenseServerError && _.get(req, 'licenseTerms.options.sac', false));
+    const validatePlan = (project) => {
+      return this.checkRevisionPlan(project.plan)
+            && !config.formio.hosted
+            && (this.app.license && !this.app.license.licenseServerError
+            && _.get(req, 'licenseTerms.options.sac', false));
+    };
+    if (req.primaryProject) {
+      return validatePlan(req.primaryProject);
+    }
+    this.app.formio.formio.cache.loadPrimaryProject(req, (err, project) => {
+      if (err) {
+        debug(`Unable to load primary project: ${err}`);
+        return false;
+      }
+      req.primaryProject = project;
+      return validatePlan(project);
+    });
   }
 
   shouldCreateNewRevision(req, item, loadItem, form) {
