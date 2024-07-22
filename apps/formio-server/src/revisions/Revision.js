@@ -21,8 +21,9 @@ module.exports = class Revision {
     const validatePlan = (project) => {
       return this.checkRevisionPlan(project.plan)
             && !config.formio.hosted
-            && (this.app.license && !this.app.license.licenseServerError
-            && _.get(req, 'licenseTerms.options.sac', false));
+            && (this.app.license
+              && !this.app.license.licenseServerError
+              && _.get(req, 'licenseTerms.options.sac', false));
     };
     if (req.primaryProject) {
       return validatePlan(req.primaryProject);
