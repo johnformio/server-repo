@@ -7,7 +7,6 @@ module.exports = function(router, models) {
     formrevision: require('./FormRevision')(router, models),
     submissionrevision: require('./SubmissionRevision')(router, models),
     session: require('./Session')(router),
-    tag: require('./Tag')(router),
-    esignature: require('./ESignature')(router)
+    tag: require('./Tag')(router)
   };
 };

@@ -146,7 +146,7 @@ bJcTkVafzW5LxWsJX55zSUj8AvyKnQgbcr+kcLqBnZyvQ6m8NmZVroX1wZeQXTHu
 KuKgTy9kdUG5qewqC7H6Jo8CAwEAAQ==
 -----END PUBLIC KEY-----`);
       let {payload} = await compactVerify(config.licenseKey, pubkey);
-      payload = JSON.parse(payload.toString());
+      payload = JSON.parse(new TextDecoder().decode(payload));
       // eslint-disable-next-line no-console
       if (payload.exp < parseInt(Date.now() / 1000)) {
         console.log(`

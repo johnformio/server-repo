@@ -5,10 +5,8 @@ const fetch = require('node-fetch');
 const config = require('../../../config');
 const loadProjectContexts = require('../loadProjectContexts');
 const proxy = require('./proxy');
-const ESignature = require('../../esignature/ESignature');
 
-module.exports = (app) => {
-  const formioServer = app.formio;
+module.exports = (formioServer) => {
   const formio = formioServer.formio;
   const router = express.Router();
   const downloadPDF = require('../../util/downloadPDF')(formioServer);
@@ -67,12 +65,6 @@ module.exports = (app) => {
       }
       else {
         submission = req.body;
-      }
-
-      const esignature = new ESignature(app.formio, req);
-
-      if (esignature.allowESign(form) && submission) {
-        await esignature.attachESignatures(submission);
       }
       const response = await downloadPDF(req, project, form, submission);
       if (response.ok) {

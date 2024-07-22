@@ -3,13 +3,10 @@ const _ = require('lodash');
 const Revision = require('./Revision');
 const config = require('../../config');
 
+const trackedProperties = ['components', 'settings', 'tags', 'properties', 'controller'];
 module.exports = class FormRevision extends Revision {
   constructor(app) {
-    super(app, 'form', FormRevision.defaultTrackedProperties);
-  }
-
-  static get defaultTrackedProperties() {
-    return ['components', 'settings', 'tags', 'properties', 'controller', 'esign'];
+    super(app, 'form', trackedProperties);
   }
 
   revisionsAllowed(req) {
