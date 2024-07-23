@@ -27,7 +27,7 @@
   "cache": "1550086650",
   "main": "./main.js",
   "version": "9.0.0-rc.36",
-  "schema": "3.3.19",
+  "schema": "3.3.18",
   "portalVersion": "9.0.0-rc.11",
   "dependencies": {
     "@aws-sdk/client-kms": "^3.574.0",
@@ -62,7 +62,7 @@
     "dotenv": "^16.3.1",
     "express": "^4.19.2",
     "express-cache-controller": "^1.1.0",
-    "formio": "4.0.0-dev.1728.7431b1a",
+    "formio": "4.0.0-dev.1754.a5528a4c",
     "formiojs": "4.19.0-rc.7",
     "googleapis": "^105.0.0",
     "helmet": "^5.0.2",

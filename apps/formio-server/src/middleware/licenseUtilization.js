@@ -203,7 +203,7 @@ function middleware(app) {
           return next();
         }
         const status = result.error.statusCode ? result.error.statusCode : 400;
-        return res.status(status).send(result.error.message);
+        return res.status(status).json(result.error.message);
       }
       return next();
     }

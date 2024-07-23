@@ -833,7 +833,7 @@ const Teams = {
       path += '/:submissionId';
     }
     return new Promise((resolve, reject) => {
-      Teams.resourcejs()[path][method](subReq, res, (err) => {
+      Teams.resourcejs()[path][method](subReq, subRes, (err) => {
         if (err) {
           return reject(err);
         }

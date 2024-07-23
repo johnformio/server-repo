@@ -58,6 +58,9 @@ module.exports = function(config, formio) {
         "auto_decline_cvv_override": true,
         "description": `ID: ${userId}`,
         "contact_id": contact.data.id,
+        "billing_address": {
+          "postal_code": data.zipCode,
+        }
       };
     };
     // Create Fortis Contact
