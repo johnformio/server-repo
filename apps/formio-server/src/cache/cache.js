@@ -311,12 +311,12 @@ module.exports = function(server) {
     });
   };
   ProjectCache._loadSubmission = formio.cache.loadSubmission.bind(formio.cache);
-  ProjectCache.loadSubmission = function(req, formId, subId, cb) {
+  ProjectCache.loadSubmission = function(req, formId, subId, cb, noCachedResult) {
     ProjectCache.setSubmissionModel(req, formId, (err) => {
       if (err) {
         return cb(err);
       }
-      return ProjectCache._loadSubmission(req, formId, subId, cb);
+      return ProjectCache._loadSubmission(req, formId, subId, cb, noCachedResult);
     });
   };
 
