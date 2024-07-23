@@ -3,7 +3,6 @@
 const request = require('supertest');
 const assert = require('assert');
 const sinon = require('sinon');
-const Promise = require('bluebird');
 const getTranslations = require('../../src/util/getTranslations');
 
 module.exports = (app, template) => {
@@ -40,7 +39,6 @@ module.exports = (app, template) => {
               translation: {},
             },
           };
-          sinon.stub(Promise, 'promisify').callsFake((fn) => fn);
         });
 
         afterEach(() => {
@@ -55,16 +53,20 @@ module.exports = (app, template) => {
 
         it('Should return null if no form found', async () => {
           req.query = {language: 'en'}; // Language code provided
-          formio.resources.form.model.findOne.returns(null);
+          formio.resources.form.model.findOne.returns({
+            exec: sinon.stub().resolves(null),
+          });
           const result = await getTranslationsFunc(req, form);
           assert.equal(result, null);
         });
 
         it('Should return translation if found', async () => {
           form.settings.translation = {defaultCode: 'en'}; // Language code provided
-          formio.resources.form.model.findOne.returns({_id: 'formId'});
+          formio.resources.form.model.findOne.returns({
+            exec: sinon.stub().resolves({_id: 'formId'}),
+          });
           formio.resources.submission.model.findOne.returns({
-            data: {translation: 'translation'},
+            exec: sinon.stub().resolves({data: {translation: 'translation'}}),
           });
           const result = await getTranslationsFunc(req, form);
           assert.equal(result, 'translation');
@@ -89,7 +91,9 @@ module.exports = (app, template) => {
           };
 
           // Set up the stubs
-          formio.resources.form.model.findOne.returns({_id: 'formId'});
+          formio.resources.form.model.findOne.returns({
+            exec: sinon.stub().resolves({_id: 'formId'}),
+          });
           formio.resources.submission.model.findOne
             .withArgs(
               sinon.match({
@@ -100,11 +104,13 @@ module.exports = (app, template) => {
                 'data.tcomponent1': 1,
               }),
             )
-            .returns({data: {tcomponent1: 'translation1'}});
+            .returns({
+              exec: sinon.stub().resolves({data: {tcomponent1: 'translation1'}}),
+            });
 
           // Default return value
           formio.resources.submission.model.findOne.returns({
-            data: {tcomponent1: 'defaultTranslation'},
+            exec: sinon.stub().resolves({data: {tcomponent1: 'defaultTranslation'}}),
           });
 
           // Call the function and check the result
@@ -125,7 +131,9 @@ module.exports = (app, template) => {
           };
 
           // Set up the stubs
-          formio.resources.form.model.findOne.returns({_id: 'formId'});
+          formio.resources.form.model.findOne.returns({
+            exec: sinon.stub().resolves({_id: 'formId'}),
+          });
           formio.resources.submission.model.findOne
             .withArgs(
               sinon.match({
@@ -136,7 +144,9 @@ module.exports = (app, template) => {
                 'data.tcomponent1': 1,
               }),
             )
-            .returns({data: {tcomponent1: 'translation1'}});
+            .returns({
+              exec: sinon.stub().resolves({data: {tcomponent1: 'translation1'}}),
+            });
 
           formio.resources.submission.model.findOne
             .withArgs(
@@ -148,11 +158,13 @@ module.exports = (app, template) => {
                 'data.tcomponent2': 1,
               }),
             )
-            .returns({data: {tcomponent2: 'translation2'}});
+            .returns({
+              exec: sinon.stub().resolves({data: {tcomponent2: 'translation2'}}),
+            });
 
           // Default return value
           formio.resources.submission.model.findOne.returns({
-            data: {tcomponent1: 'defaultTranslation'},
+            exec: sinon.stub().resolves({data: {tcomponent1: 'defaultTranslation'}}),
           });
 
           let result = await getTranslationsFunc(req, form);
@@ -296,7 +308,7 @@ module.exports = (app, template) => {
 
         it('Should return null if no resource found', async () => {
           const form = {
-            settings: {translation: {defaultCode: 'en', resource: 'fakeId'}},
+            settings: {translation: {defaultCode: 'en', resource: '000000000000000000000000'}},
           };
           const result = await getTranslations({formio})(
             {query: {}, params: {projectId: helper.template.project._id}},

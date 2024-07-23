@@ -1,5 +1,5 @@
 'use strict';
-const Promise = require('bluebird');
+
 module.exports = (formioServer) => {
   const formio = formioServer.formio;
 
@@ -29,22 +29,12 @@ module.exports = (formioServer) => {
     }
 
     try {
-      const form = await Promise.promisify(
-        formio.resources.form.model.findOne,
-        {
-          context: formio.resources.form.model,
-        },
-      )(resourceQuery);
+      const form = await formio.resources.form.model.findOne(resourceQuery).exec();
       if (!form) {
         return null;
       }
 
-      const submission = await Promise.promisify(
-        formio.resources.submission.model.findOne,
-        {
-          context: formio.resources.submission.model,
-        },
-      )(
+      const submission = await formio.resources.submission.model.findOne(
         {
           form: form._id,
           [`data.${languageComponentKey}`]: languageCode,
@@ -52,7 +42,7 @@ module.exports = (formioServer) => {
         {
           [`data.${translationsComponentKey}`]: 1,
         },
-      );
+      ).exec();
 
       return submission?.data?.[translationsComponentKey];
     }
