@@ -30,6 +30,7 @@
   "schema": "3.3.18",
   "portalVersion": "9.0.0-rc.11",
   "dependencies": {
+    "@aws-sdk/client-kms": "^3.574.0",
     "@aws-sdk/client-s3": "^3.405.0",
     "@aws-sdk/s3-request-presigner": "^3.405.0",
     "@aws-sdk/util-create-request": "^3.398.0",
@@ -66,7 +67,7 @@
     "googleapis": "^105.0.0",
     "helmet": "^5.0.2",
     "is-url": "^1.2.4",
-    "jose": "^4.15.5",
+    "jose": "^5.2.3",
     "jsonwebtoken": "^9.0.0",
     "keygenerator": "^1.0.4",
     "knex": "^2.4.0",

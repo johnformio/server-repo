@@ -106,60 +106,66 @@ module.exports = async function(options) {
     // Use helmet to add CSP to application code.
     app.use(...require('./src/middleware/helmet')(app));
 
-    if (app.portalEnabled) {
-      debug.startup('Mounting Portal Application');
-      // Override config.js so we can set onPremise to true.
-      app.get('/config.js', (req, res) => {
-        fs.readFile(`./portal/config.js`, 'utf8', (err, contents) => {
-          res.set('Content-Type', 'application/javascript; charset=UTF-8');
-          res.send(
-            contents.replace(
-              /var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false|var licenseId = '';|var reportingUI = false;|var whitelabel = false;|var pdfBuilder = false;/gi,
-              (matched) => {
-                if (config.portalSSO && matched.includes('var sso =')) {
-                  return `var sso = '${config.portalSSO}';`;
-                }
-                else if (config.ssoTeams && matched.includes('var ssoTeamsEnabled =')) {
-                  return `var ssoTeamsEnabled = ${config.ssoTeams};`;
-                }
-                else if (config.portalSSOLogout && matched.includes('var ssoLogout =')) {
-                  return `var ssoLogout = '${config.portalSSOLogout}';`;
-                }
-                else if (!config.formio.hosted && matched.includes('var onPremise')) {
-                  return 'var onPremise = true;';
-                }
-                else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.sac && matched.includes('var sac')) {
-                  return 'var sac = true;';
-                }
-                else if (config.whitelabel && app.license.terms.options.whitelabel &&  matched.includes('var whitelabel')) {
-                  return `var whitelabel = true;`;
-                }
-                else if (config.enableOauthM2M && matched.includes('var oAuthM2MEnabled')) {
-                  return 'var oAuthM2MEnabled = true;';
-                }
-                else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.reporting && matched.includes('var reportingUI')) {
-                  return 'var reportingUI = true;';
-                }
-                else if (!config.formio.hosted && app.license && app.license.licenseId && matched.includes('var licenseId')) {
-                  return `var licenseId = '${app.license.licenseId}'`;
-                }
-                else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.pdf && matched.includes('var pdfBuilder')) {
-                  return 'var pdfBuilder = true;';
-                }
-                return matched;
+  if (app.portalEnabled) {
+    debug.startup('Mounting Portal Application');
+    // Override config.js so we can set onPremise to true.
+    app.get('/config.js', (req, res) => {
+      fs.readFile(`./portal/config.js`, 'utf8', (err, contents) => {
+        res.set('Content-Type', 'application/javascript; charset=UTF-8');
+        res.send(
+          contents.replace(
+            /var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false|var licenseId = '';|var reportingUI = false;|var esign = false;|var whitelabel = false;|var pdfBuilder = false;|var enterpriseBuilder = false;/gi,
+            (matched) => {
+              if (config.portalSSO && matched.includes('var sso =')) {
+                return `var sso = '${config.portalSSO}';`;
               }
-            )
-            .replace(/https:\/\/license.form.io/gi, (matched) => {
-              if (config.licenseServer && config.licenseServer !== matched) {
-                return config.licenseServer;
+              else if (config.ssoTeams && matched.includes('var ssoTeamsEnabled =')) {
+                return `var ssoTeamsEnabled = ${config.ssoTeams};`;
+              }
+              else if (config.portalSSOLogout && matched.includes('var ssoLogout =')) {
+                return `var ssoLogout = '${config.portalSSOLogout}';`;
+              }
+              else if (!config.formio.hosted && matched.includes('var onPremise')) {
+                return 'var onPremise = true;';
+              }
+              else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.sac && matched.includes('var sac')) {
+                return 'var sac = true;';
+              }
+              else if (config.whitelabel && app.license.terms.options.whitelabel &&  matched.includes('var whitelabel')) {
+                return `var whitelabel = true;`;
+              }
+              else if (config.enableOauthM2M && matched.includes('var oAuthM2MEnabled')) {
+                return 'var oAuthM2MEnabled = true;';
+              }
+              else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.reporting && matched.includes('var reportingUI')) {
+                return 'var reportingUI = true;';
+              }
+              else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.esign && matched.includes('var esign')) {
+                return 'var esign = true;';
+              }
+              else if (!config.formio.hosted && app.license && app.license.licenseId && matched.includes('var licenseId')) {
+                return `var licenseId = '${app.license.licenseId}'`;
+              }
+              else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.pdfBasic === false && matched.includes('var pdfBuilder')) {
+                return 'var pdfBuilder = true;';
+              }
+              else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.enterpriseBuilder && matched.includes('var enterpriseBuilder')) {
+                return 'var enterpriseBuilder = true;';
               }
               return matched;
-            })
-          );
-        });
+            }
+          )
+          .replace(/https:\/\/license.form.io/gi, (matched) => {
+            if (config.licenseServer && config.licenseServer !== matched) {
+              return config.licenseServer;
+            }
+            return matched;
+          })
+        );
       });
-      app.use(express.static(`./portal`));
-    }
+    });
+    app.use(express.static(`./portal`));
+  }
 
     app.use(express.static(`./public`));
 
