@@ -83,6 +83,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-8266: Invalid Team ID Should Not Crash Server
  - FIO-8536 Added conditions for displaying Tenant Access on the project settings page
  - FIO-8136: Remove Fortis Limits add verbose errors
+ - FIO-8667 fixed design issues for FMG
+ - FIO-8669: Adding Zipcode to the payment transaction
+ - FIO-7783: added character limit to add new team member
+ - FIO-7835: added eSignature
 
 ## 9.3.0-rc.5
 ### Changed

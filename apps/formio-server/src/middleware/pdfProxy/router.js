@@ -12,6 +12,7 @@ module.exports = (app) => {
   const formio = formioServer.formio;
   const router = express.Router();
   const downloadPDF = require('../../util/downloadPDF')(formioServer);
+  const getTranslations = require('../../util/getTranslations')(formioServer);
   router.use(express.raw({type: '*/*', limit: '50mb'}));
 
   router.use((req, res, next) => {
@@ -73,7 +74,8 @@ module.exports = (app) => {
       if (esignature.allowESign(form) && submission) {
         await esignature.attachESignatures(submission);
       }
-      const response = await downloadPDF(req, project, form, submission);
+      const translations = await getTranslations(req, form);
+      const response = await downloadPDF(req, project, form, submission, translations);
       if (response.ok) {
         res.append('Content-Type', response.headers.get('content-type'));
         res.append('Content-Length', response.headers.get('content-length'));

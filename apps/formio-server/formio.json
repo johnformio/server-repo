@@ -4641,8 +4641,7 @@
         {
           "label": "Email",
           "key": "email",
-          "type": "email",
-          "maxLength" : 254
+          "type": "email"
         },
         {
           "label": "Team Admin",
