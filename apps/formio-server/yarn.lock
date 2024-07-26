@@ -1328,11 +1328,6 @@
     lodash "^4.17.21"
     moment "^2.29.4"
 
-"@formio/lodash@^0.1.0":
-  version "0.1.0"
-  resolved "https://registry.npmjs.org/@formio/lodash/-/lodash-0.1.0.tgz#6f837423d33e45a022211eb98bfc683dd8bee9a8"
-  integrity sha512-xwDR6UyoOVZaYHNRmSAQXzx57I6svqi7wY2n8PAbGCWFnSvIKIWjlZ8Jktb63VJY1b5lfNF8xyq2ZFcsAMjYVg==
-
 "@formio/node-fetch-http-proxy@^1.1.0":
   version "1.1.0"
   resolved "https://registry.npmjs.org/@formio/node-fetch-http-proxy/-/node-fetch-http-proxy-1.1.0.tgz#a281686f3982a6e07cb1721ffbdbcce0096f538f"
