@@ -103,13 +103,15 @@ module.exports = function(formio, app) {
         };
       }
       const alters = hook.alter('templateAlters', {});
-      const components = Object.values(template.forms).concat(Object.values(template.resources));
-      const missingComponents = formio.template.import.check(components, template);
+      const forms = Object.values(template.forms).concat(Object.values(template.resources));
+      const missingForms = formio.template.import.checkTemplate(forms, template);
 
-      if (missingComponents.length !== 0 ) {
-        const projectId = await formio.template.import.findProjectId(template);
-        formio.template.import.tryToLoadComponents(missingComponents, template, projectId);
-        importTemplateToProject(template, _project, alters);
+      if (missingForms.length !== 0 ) {
+        formio.template.import.findProjectId(template)
+        .then((projectId)=>{
+          formio.template.import.tryToLoadComponents(missingForms, template, projectId);
+          importTemplateToProject(template, _project, alters);
+        });
       }
       else {
         importTemplateToProject(template, _project, alters);

@@ -2,7 +2,9 @@
 
 let _ = require('lodash');
 let assert = require('assert');
-let formioUtils = require('formiojs/utils').default;
+const mockBroswerContext = require('@formio/vm/build/mockBrowserContext');
+mockBroswerContext.default();
+let formioUtils = require('@formio/js').Utils;
 
 module.exports = {
   alter: {
