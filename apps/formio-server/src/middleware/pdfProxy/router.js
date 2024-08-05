@@ -86,6 +86,7 @@ module.exports = (app) => {
       }
     }
     catch (err) {
+      console.error('Failed to download submission as PDF: ', err.message || err);
       res.status(400).send(err.message || err);
     }
   });
