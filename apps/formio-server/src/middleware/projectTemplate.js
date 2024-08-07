@@ -102,12 +102,12 @@ module.exports = function(formio, app) {
       }
       const alters = hook.alter('templateAlters', {});
       const components = Object.values(template.forms).concat(Object.values(template.resources));
-      const missingComponents = formio.template.import.check(components, template);
+      const missingForms = formio.template.import.checkTemplate(components, template);
 
-      if (missingComponents.length !== 0 ) {
+      if (missingForms.length !== 0 ) {
         formio.template.import.findProjectId(template)
         .then((projectId)=>{
-          formio.template.import.tryToLoadComponents(missingComponents, template, projectId);
+          formio.template.import.tryToLoadComponents(missingForms, template, projectId);
           importTemplateToProject(template, _project, alters);
         });
       }
