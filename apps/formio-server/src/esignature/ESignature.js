@@ -8,7 +8,6 @@ const debug = {
 const config = require('../../config');
 const FormRevision = require('../revisions/FormRevision');
 const keyServices = require('../kms');
-const {promisify} = require('node:util');
 
 module.exports = class ESignature {
   constructor(formioServer, req) {
@@ -65,8 +64,7 @@ module.exports = class ESignature {
   }
 
   async setRevisionForm(formId, formRev) {
-    const loadForm = promisify((req, type, id, noCachedResult, cb) => this.formioServer.formio.cache.loadForm(req, type, id, cb, noCachedResult));
-    let formRevision = await loadForm(this.req, null, formId, true);
+    let formRevision = await this.formioServer.formio.cache.loadForm(this.req, null, formId, true);
 
     if (_.isNumber(formRev) &&
       !((formRevision.hasOwnProperty('revisions') && (formRevision.revisions === 'current')) ||
@@ -88,13 +86,11 @@ module.exports = class ESignature {
   }
 
   async attachSubForms() {
-    const loadSubForms = promisify((form, req, next) => this.formioServer.formio.cache.loadSubForms(form, req, next));
-    await loadSubForms(this.formRevision, this.req);
+    await this.formioServer.formio.cache.loadSubForms(this.formRevision, this.req);
   }
 
   async loadSubmission(req, formId, submissionId, skipCache) {
-    const loadSubmission = promisify((req, formId, submissionId, skipCache, cb) => this.formioServer.formio.cache.loadSubmission(req, formId, submissionId, cb, skipCache));
-    return await loadSubmission(req, formId, submissionId, skipCache);
+    return await this.formioServer.formio.cache.loadSubmission(req, formId, submissionId, skipCache);
   }
 
   async getCurrentSubmission(submissionId) {
