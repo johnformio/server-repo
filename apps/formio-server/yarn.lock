@@ -3703,10 +3703,10 @@ formidable@^2.1.2:
     once "^1.4.0"
     qs "^6.11.0"
 
-formio@4.0.0-dev.1728.7431b1a:
-  version "4.0.0-dev.1728.7431b1a"
-  resolved "https://registry.yarnpkg.com/formio/-/formio-4.0.0-dev.1728.7431b1a.tgz#33df6efd2b4ad005098826c10fae3c7d8f3b014c"
-  integrity sha512-/F6tYXN4eIYLRgmff2EcRc3yXQ/YFu+WIJ8zkDCJtdPuudsu+1ufUKZrfiws+kvBqZXu7YgewZZrADauV1WiTQ==
+formio@4.0.0-dev.1748.9b6a236:
+  version "4.0.0-dev.1748.9b6a236"
+  resolved "https://registry.yarnpkg.com/formio/-/formio-4.0.0-dev.1748.9b6a236.tgz#db7c62cf3682c0963c1f63ebb1482be1b27dc205"
+  integrity sha512-8W5goJANbpOLOSuMCUyXEp8wIMGItuPCsgkqPmUdSWKha2/m9NlRo6Hts9AykgAzhoT+dsZB2f8GErNuq/lDTg==
   dependencies:
     "@formio/core" "2.0.0-dev.71.013793a"
     "@formio/node-fetch-http-proxy" "^1.1.0"
@@ -3732,6 +3732,7 @@ formio@4.0.0-dev.1728.7431b1a:
     formiojs "^4.18.0-rc.6"
     fs-extra "^10.1.0"
     html-entities "^2.3.3"
+    inputmask "^5.0.8"
     jsonwebtoken "^9.0.0"
     lodash "^4.17.21"
     memory-cache "^0.2.0"
@@ -3743,6 +3744,7 @@ formio@4.0.0-dev.1728.7431b1a:
     progress "^2.0.3"
     prompt "^1.3.0"
     q "^1.5.0"
+    resolve "^1.22.8"
     resourcejs "^2.5.0"
     semver "^7.3.8"
     superagent-retry "^0.6.0"
@@ -4297,6 +4299,11 @@ ini@~1.3.0:
   version "1.3.8"
   resolved "https://registry.npmjs.org/ini/-/ini-1.3.8.tgz#a29da425b48806f34767a4efce397269af28432c"
   integrity sha512-JV/yugV2uzW5iMRSiZAyDtQd+nxtUnjeLt0acNdw98kKLrvuRVyB80tsREOE7yvGVgalhZ6RNXCmEHkUKBKxew==
+
+inputmask@^5.0.8:
+  version "5.0.9"
+  resolved "https://registry.yarnpkg.com/inputmask/-/inputmask-5.0.9.tgz#7bf4e83f5e199c88c0edf28545dc23fa208ef4be"
+  integrity sha512-s0lUfqcEbel+EQXtehXqwCJGShutgieOaIImFKC/r4reYNvX3foyrChl6LOEvaEgxEbesePIrw1Zi2jhZaDZbQ==
 
 inputmask@^5.0.9-beta.45:
   version "5.0.9-beta.45"
