@@ -17,7 +17,8 @@ module.exports = function(formio) {
           return provider.isAvailable && provider.isAvailable(settings) ||
           // Else just check for default client id and secret
             settings.oauth && settings.oauth[name] &&
-            settings.oauth[name].clientId && settings.oauth[name].clientSecret;
+            settings.oauth[name].clientId &&
+            (settings.oauth[name].clientSecret || _.get(settings.oauth[name], 'authorizationMethod') === 'pkce');
         })
         .map(_.partialRight(_.pick, 'name', 'title'))
         .value();

@@ -9,7 +9,7 @@ module.exports = (formioServer) => {
   const formio = formioServer.formio;
   const encrypt = require('./encrypt')(formioServer);
   Promise.promisifyAll(formio.cache, {context: formio.cache});
-  return async (req, project, form, submission) => {
+  return async (req, project, form, submission, translations) => {
     proxy.authenticate(req, project);
     proxy.updateHeadersForPdfRequest(req, formio);
 
@@ -97,7 +97,8 @@ module.exports = (formioServer) => {
       body: JSON.stringify({
         form,
         submission,
-        settings: globalPdfSettings
+        settings: globalPdfSettings,
+        translations,
       }),
     });
   };

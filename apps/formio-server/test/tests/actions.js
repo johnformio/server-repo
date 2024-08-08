@@ -5,7 +5,7 @@ const request = require('supertest');
 const assert = require('assert');
 const MockServer = require('./fixtures/MockServer');
 const config = require("../../config");
-
+const _ = require('lodash');
 const docker = process.env.DOCKER;
 const customer = process.env.CUSTOMER;
 

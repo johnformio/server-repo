@@ -10,6 +10,7 @@ const Q = require('q');
 const cacheControl = require('express-cache-controller');
 const {v4: uuidv4} = require('uuid');
 const fs = require('fs');
+const xss = require("xss");
 const license = require('./src/util/license');
 const audit = require('./src/util/audit');
 const cors = require('cors');
@@ -114,7 +115,7 @@ module.exports = function(options) {
         res.set('Content-Type', 'application/javascript; charset=UTF-8');
         res.send(
           contents.replace(
-            /var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false|var licenseId = '';|var reportingUI = false;|var whitelabel = false;/gi,
+            /var sac = false;|var ssoLogout = '';|var sso = '';|var onPremise = false;|var ssoTeamsEnabled = false;|var oAuthM2MEnabled = false|var licenseId = '';|var reportingUI = false;|var esign = false;|var whitelabel = false;|var pdfBuilder = false;|var enterpriseBuilder = false;/gi,
             (matched) => {
               if (config.portalSSO && matched.includes('var sso =')) {
                 return `var sso = '${config.portalSSO}';`;
@@ -140,8 +141,17 @@ module.exports = function(options) {
               else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.reporting && matched.includes('var reportingUI')) {
                 return 'var reportingUI = true;';
               }
+              else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.esign && matched.includes('var esign')) {
+                return 'var esign = true;';
+              }
               else if (!config.formio.hosted && app.license && app.license.licenseId && matched.includes('var licenseId')) {
                 return `var licenseId = '${app.license.licenseId}'`;
+              }
+              else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.pdfBasic === false && matched.includes('var pdfBuilder')) {
+                return 'var pdfBuilder = true;';
+              }
+              else if (app.license && app.license.terms && app.license.terms.options && app.license.terms.options.enterpriseBuilder && matched.includes('var enterpriseBuilder')) {
+                return 'var enterpriseBuilder = true;';
               }
               return matched;
             }
@@ -485,9 +495,16 @@ module.exports = function(options) {
           window.PROJECT_URL = location.origin + location.pathname.replace(/\\/manage\\/view\\/?$/, '');
           ${appVariables(req.currentProject)}
         </script>`;
+        let customJs;
+        if (_.get(req.currentProject, 'public.custom.js', '')) {
+          customJs = `<script type="text/javascript" src="${xss(req.currentProject.public.custom.js)}" defer></script>`;
+        }
         fs.readFile(`./portal/manager/view/index.html`, 'utf8', (err, contents) => {
           if (err) {
             return next(err);
+          }
+          if (customJs) {
+            contents = contents.replace('</body>', `${customJs}</body>`);
           }
           res.send(contents.replace('<head>', `<head>${script}`));
         });
@@ -514,6 +531,10 @@ module.exports = function(options) {
     // Mount validate submission data endpoint.
     debug.startup('Attaching middleware: Validate Submission Data');
     app.use('/project/:projectId/form/:formId/validate', require('./src/middleware/validateSubmission')(app.formio));
+
+    // Add Server part Captcha verification.
+    debug.startup('Attaching middleware: Captcha verification');
+    app.use('/project/:projectId/captcha', require('./src/middleware/captcha')(app.formio.formio));
 
     // Mount the error logging middleware.
     debug.startup('Attaching middleware: Error Handler');

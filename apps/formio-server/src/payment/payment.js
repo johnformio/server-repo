@@ -1,6 +1,8 @@
 'use strict';
 
 const Q = require('q');
+const gateway = require('./gateway');
+const userProject = require('../middleware/userProject');
 
 module.exports = function(app, formio) {
   // Load custom CRM action.
@@ -25,13 +27,13 @@ module.exports = function(app, formio) {
   app.post('/gateway',
   formio.middleware.tokenHandler,
   doNotAllowNewAccounts,
-  require('../middleware/userProject')(formio),
-  require('./gateway')(app.formio.config, formio)
+  userProject(formio),
+  gateway(app.formio.config, formio)
 );
 
   app.post('/project/:projectId/upgrade',
     formio.middleware.tokenHandler,
-    require('../middleware/userProject')(formio),
+    userProject(formio),
     require('../middleware/restrictProjectAccess')(formio)({level: 'owner'}),
     require('./upgrade')(formio),
     formio.middleware.customCrmAction('updateproject')

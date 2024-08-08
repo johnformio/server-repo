@@ -5145,7 +5145,7 @@ module.exports = function(app, template, hook) {
         app.formio.config.fortis = {
           userId: '11ee62159e8669aa9c22b6a1',
           userAPIKey: '11ee62356fc99e4686188771',
-          endpoint: 'https://api.sandbox.fortis.tech/v1/transactions/cc/auth-only/keyed',
+          endpoint: 'https://api.sandbox.fortis.tech/v1/transactions/cc/avs-only/keyed',
           developerId: 'IFoNlX7Z'
         };
 
@@ -5179,7 +5179,7 @@ module.exports = function(app, template, hook) {
               assert.equal(submission.data.ccExpiryMonth, '12', 'The expiration month should be stored.');
               assert.equal(submission.data.ccExpiryYear, '30', 'The expiration year should be stored.');
               assert.equal(submission.data.cardholderName, 'FORMIO Test Account', 'The cardholder name should be stored.');
-              assert.equal(submission.data.transactionStatus, '102', 'The submission should store the transactionStatus');
+              assert.equal(submission.data.transactionStatus, 121, 'The submission should store the transactionStatus');
               assert.equal(submission.data.securityCode, undefined, 'The security card should not be stored.');
 
               done();

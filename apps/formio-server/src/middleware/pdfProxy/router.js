@@ -5,11 +5,14 @@ const fetch = require('node-fetch');
 const config = require('../../../config');
 const loadProjectContexts = require('../loadProjectContexts');
 const proxy = require('./proxy');
+const ESignature = require('../../esignature/ESignature');
 
-module.exports = (formioServer) => {
+module.exports = (app) => {
+  const formioServer = app.formio;
   const formio = formioServer.formio;
   const router = express.Router();
   const downloadPDF = require('../../util/downloadPDF')(formioServer);
+  const getTranslations = require('../../util/getTranslations')(formioServer);
   router.use(express.raw({type: '*/*', limit: '50mb'}));
 
   router.use((req, res, next) => {
@@ -65,7 +68,14 @@ module.exports = (formioServer) => {
       else {
         submission = req.body;
       }
-      const response = await downloadPDF(req, project, form, submission);
+
+      const esignature = new ESignature(app.formio, req);
+
+      if (esignature.allowESign(form) && submission) {
+        await esignature.attachESignatures(submission);
+      }
+      const translations = await getTranslations(req, form);
+      const response = await downloadPDF(req, project, form, submission, translations);
       if (response.ok) {
         res.append('Content-Type', response.headers.get('content-type'));
         res.append('Content-Length', response.headers.get('content-length'));
@@ -76,6 +86,7 @@ module.exports = (formioServer) => {
       }
     }
     catch (err) {
+      console.error('Failed to download submission as PDF: ', err.message || err);
       res.status(400).send(err.message || err);
     }
   });

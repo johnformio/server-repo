@@ -1,6 +1,7 @@
 'use strict';
-
-const {Formio} = require('formiojs');
+const mockBroswerContext = require('@formio/vm/build/mockBrowserContext');
+mockBroswerContext.default();
+const {Formio} = require('@formio/js');
 const assert = require('assert');
 const request = require('supertest');
 

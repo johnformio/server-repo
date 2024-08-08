@@ -4,7 +4,9 @@ const request = require('supertest');
 const assert = require('assert');
 const _ = require('lodash');
 const config = require('../../config');
-const formioUtils = require('formiojs/utils').default;
+const mockBroswerContext = require('@formio/vm/build/mockBrowserContext');
+mockBroswerContext.default();
+const formioUtils = require('@formio/js').Utils;
 
 module.exports = function(app, template, hook) {
   let formio = app.formio.formio;
@@ -122,7 +124,7 @@ module.exports = function(app, template, hook) {
         }
 
         let machineName = form.machineName;
-        let tempForm = _.omit(form, ['_id', '__v', 'created', 'deleted', 'modified', 'machineName', 'owner', '_vid', 'revisions']);
+        let tempForm = _.omit(form, ['_id', '__v', 'created', 'deleted', 'modified', 'machineName', 'owner', '_vid']);
 
         tempForm.access = tempForm.access.map(access => {
           access.roles = access.roles.map(role => {

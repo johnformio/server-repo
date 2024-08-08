@@ -49,6 +49,10 @@ module.exports = function(router) {
       'connect-src': ['*']
     };
 
+    if (req.url.endsWith('/manage/') || req.url.endsWith('/manage/view/')) {
+      directives['script-src-attr'] = ["'unsafe-inline'"];
+    }
+
     const createCSPMiddleware = (settings) => {
       helmetOverrides.contentSecurityPolicy = {
         directives: settings,

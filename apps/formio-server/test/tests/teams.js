@@ -284,6 +284,22 @@ module.exports = function(app, template, hook) {
           });
       });
 
+      it('Should return 404 for invalid ObjectId', (done) => {
+        request(app)
+        .get('/team/' + "INVALID_ID")
+        .set('x-jwt-token', template.formio.teamAdmin.token)
+        .expect(404)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          assert.equal(res.text, 'Could not find the team');
+
+          done();
+        });
+      });
+
       it('Should have added the team owner as an admin member', (done) => {
         request(app)
         .get('/team/' + template.team1._id)

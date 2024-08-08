@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 9.2.0-rc.1]
+## [Unreleased: 9.4.0-rc.1]
 ### Changed
  - FIO-7328: replace kickbox verify with node-fetch
  - FIO-7349: Fixes an issue where server crashes when user tries to load a view page of the deleted team
@@ -58,6 +58,722 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-8115: Throw an error when type is not provided
  - FIO-7467: Added Project SAML Settings Form
  - FIO-8275: fixed an additional request for Webhook action
+ - FIO-8231: Do not allow the populate query since it can pull in unwanted information
+ - Returned logic to allowLogs only in license includes SAC
+ - FIO-8087: Fixes an issue where Email Action with logs enabled don't render nested form value and shows ID instead
+ - FIO-8306: update tooltip for webhook action
+ - FIO-8115: Fix tests
+ - Revert "FIO-8115: Throw an error when type is not provided"
+ - Revert "FIO-8115: Fix tests"
+ - FIO-8225: SQL Connector Error Handling and Action Logs
+ - FIO-7804 fixed grant request error
+ - FIO-7864 added tool to create passport config based on saml metadata xml
+ - FIO-8381 Added limit access for PDF Designer
+ - FIO-7515 fixed display of Custom components on Launch Tab Preview
+ - FIO-7804 fixed invalid grant request error
+ - FIO-8027 add cloudflare turnstile as a captcha provider
+ - fix reference error in hook
+ - FIO-8381 fixed PDF design access for pdfPlus
+ - FIO-8136: Fortis integration
+ - FIO-8467 fixed team_admin access for saml tenant
+ - FIO-8404 Encrypted data displayed as encrypted on PDF page
+ - FIO-8136: Opening /gateway endpoint
+ - FIO-8136: Adding Logs to Transactions
+ - FIO-8136: Full name requirement
+ - FIO-8266: Invalid Team ID Should Not Crash Server
+ - FIO-8536 Added conditions for displaying Tenant Access on the project settings page
+ - FIO-8136: Remove Fortis Limits add verbose errors
+ - FIO-8667 fixed design issues for FMG
+ - FIO-8669: Adding Zipcode to the payment transaction
+ - FIO-7783: added character limit to add new team member
+ - FIO-7835: added eSignature
+
+## 9.3.0-rc.5
+### Changed
+ - Updated formio@4.3.0-rc.1
+
+## 9.3.0-rc.4
+### Changed
+ - Updated formio@4.2.1-rc.2
+ - Updated @formio/vm@1.0.0-rc.1
+
+## 9.3.0-rc.3
+### Changed
+ - Added lodash to middleware test
+   
+## 9.3.0-rc.2
+### Changed
+ - Fixed the premium and formio/js imports
+   
+## 9.3.0-rc.1
+### Changed
+ - Updated formio-app@9.3.0-rc.1
+ - Updated @formio/premium@3.0.0-rc.1
+ - Updated formio@4.2.1-rc.1
+ - Updated @formio/reporting@2.0.0-rc.9
+ - Updated @formio/vm@0.2.1-rc.1
+ - Updated @formio/core@2.1.1-rc.1
+
+### Changed
+ - Increment minor version.
+
+
+## 9.2.0
+### Changed
+ - Official Release
+ - Updated formio-app@9.2.0
+ - Updated formiojs@4.21.0
+ - Updated @formio/premium@2.0.1
+ - Updated formio@4.2.0
+ - Updated @formio/reporting@1.0.3
+ - Updated @formio/vm@0.2.0
+ - Updated @formio/core@2.1.0
+
+## 9.2.0-rc.16
+### Changed
+ - FIO-8136: remove fortis limits
+
+## 9.2.0-rc.15
+### Changed
+ - FIO-8136: add additional logs
+
+## 9.2.0-rc.14
+### Changed
+ - FIO-8136: Full name requirement
+
+## 9.2.0-rc.13
+### Changed
+ - Updated formio-app@9.2.0-rc.10
+ - FIO-8536  Added conditions for displaying Tenant Access on the project settings page
+ - FIO-8136  Restore Fortis integration
+
+## 9.2.0-rc.12
+### Changed
+ - Revert Fortis integration
+   
+## 9.2.0-rc.11
+### Changed
+ - FIO-8136: Fortis integration
+
+## 9.2.0-rc.10
+### Changed
+ - Updated formio-app@9.2.0-rc.8
+ - FIO-8136: Opening /gateway endpoint
+
+## 9.2.0-rc.9
+### Changed
+ - Updated formio-app@9.2.0-rc.7
+ - Updated formio@4.2.0-rc.6
+ - Updated @formio/vm@0.2.0-rc.4
+ - Updated @formio/core@2.1.0-rc.4
+ - FIO-8404 Encrypted data displayed as encrypted on PDF page
+ - FIO-8467 fixed team_admin access for saml tenant
+
+## 9.2.0-rc.8
+### Changed
+ - Updated @formio/core@2.1.0-rc.3
+
+## 9.2.0-rc.7
+### Changed
+ - FIO-8381 fixed PDF design access for pdfPlus
+ - fix reference error in hook
+
+## 9.2.0-rc.6
+### Changed
+ - Updated formio-app@9.2.0-rc.6
+ - Updated formio@4.2.0-rc.5
+ - Updated @formio/vm@0.2.0-rc.3
+ - FIO-7804 fixed invalid grant request error
+
+ - FIO-7467 Added Project SAML Settings Form
+ 
+## 9.2.0-rc.5
+### Changed
+ - Updated formio-app@9.2.0-rc.5
+ - Updated @formio/premium@2.0.1-rc.2
+
+## 9.2.0-rc.4
+### Changed
+ - Updated formio-app@9.2.0-rc.4
+ - FIO-8381 Added limit access for PDF Designer
+ - FIO-7864 added tool to create passport config based on saml metadata xml
+ - FIO-7804 fixed grant request error
+
+## 9.2.0-rc.3
+### Changed
+ - Updated formio-app@9.2.0-rc.3
+
+## 9.2.0-rc.2
+### Changed
+ - Updated formio-app@9.2.0-rc.2
+ - Updated formiojs@4.21.0-rc.2
+ - Updated formio@4.2.0-rc.4
+ - Updated @formio/vm@0.2.0-rc.2
+ - FIO-8128: adds reporting code to vm evaluation context
+ - FIO-8065: better error handling
+
+## 9.2.0-rc.1
+### Changed
+ - Updated formio@4.2.0-rc.3
+ - Updated formio-app@9.2.0-rc.1
+ - Updated formiojs@4.21.0-rc.1
+ - Updated @formio/premium@2.0.1-rc.1
+ - Updated @formio/reporting@1.0.3-rc.1
+ - Updated @formio/vm@0.2.0-rc.1
+ - FIO-7621: Fixes tests failing on hosted environment
+ - FIO-7807: added sanitizeConfig to global form settings
+ - FIO-7933 fixed tests
+ - FIO-8115: Throw an error when type is not provided
+ - FIO-7488: add number casting to vmTimeout
+ - FIO-8115: Fix tests
+ - FIO-7347: update encryption tests
+ - FIO-7292: fixed viewing files from google drive
+ - FIO-7804 added PKCE methods for OIDC
+ - FIO-7692: Fixed email action with attached submission files
+ - FIO-7488: add configurable timeout to evaluations
+ - FIO-7522 Encrypted Fields Not Re-Encrypted to New DB Secret
+ - FIO-8114: Saml Email Handles toLowerCase undefined error
+
+### Changed
+ - Increment minor version.
+
+
+## 9.1.0-rc.8
+### Changed
+ - Updated formio-app@9.1.0-rc.8
+
+## 9.1.0-rc.7
+### Changed
+ - Updated formio-app@9.1.0-rc.7
+
+## 9.1.0-rc.6
+### Changed
+ - Updated formio-app@9.1.0-rc.6
+ - FIO-8275 fixed an additional request for Webhook action
+
+## 9.1.0-rc.5
+### Changed
+ - Updated formio-app@9.1.0-rc.5
+ - Updated formio@4.1.0-rc.4
+
+## 9.1.0-rc.4
+### Changed
+ - Updated formio-app@9.1.0-rc.4
+ - Updated formiojs@4.20.0-rc.4
+ - Updated formio@4.1.0-rc.3
+ - Updated @formio/vm@0.1.0-rc.2
+
+## 9.1.0-rc.3
+### Changed
+ - Updated formio-app@9.1.0-rc.3
+ - Updated formiojs@4.20.0-rc.3
+ - Updated formio@4.1.0-rc.2
+ - Updated @formio/vm@0.1.0-rc.1
+ - FIO-8166 contactMessage form for hosted portalBase projects
+
+## 9.1.0-rc.2
+### Changed
+ - Updated formio-app@9.1.0-rc.2
+ - FIO-8239: Changes for reporting module license check for 9x
+ - FIO-8231: Do not allow the populate query since it can pull in unwanted information
+
+## 9.1.0-rc.1
+### Changed
+ - Updated formio-app@9.1.0-rc.1
+ - Updated formiojs@4.20.0-rc.2
+ - Updated formio@4.1.0-rc.1
+ - Updated @formio/vm@0.0.8-rc.1
+ - FIO-7718: Fixes s3 error when uploading to public bucket
+ - FIO-7659 OIDC automatically adding members
+ - FIO-7749: fixed and issue where Webhook Action External IDs not being…
+ - FIO-7465 added Retry feature for webhook action
+ - FIO-7671: leverage mongoFeature to prevent index creation failure in CosmosDB
+ - FIO-8087: Fixes an issue where Email Action with logs enabled don't render nested form value and shows ID instead
+ - FIO-5471: Removed mongoose.save from codebase
+ - FIO-7871: fixed the unauthorize error during during file upload with
+
+## 9.0.0
+### Changed
+ - Official Release
+ - Updated formio-app@9.0.0
+ - Updated formio@4.0.0
+ - Updated @formio/reporting@1.0.2
+ - Updated @formio/vm@0.0.7
+
+## 9.0.0-rc.38
+### Changed
+ - Updated formio@4.0.0-rc.33
+ - Updated @formio/vm@0.0.7-rc.27
+
+## 9.0.0-rc.37
+### Changed
+ - Updated formio@4.0.0-rc.32
+ - Updated @formio/vm@0.0.7-rc.26
+
+## 9.0.0-rc.36
+### Changed
+ - Updated formio@4.0.0-rc.31
+ - Updated @formio/vm@0.0.7-rc.25
+
+## 9.0.0-rc.35
+### Changed
+ - Updated formio-app@9.0.0-rc.11
+ - Updated formio@4.0.0-rc.30
+ - Updated @formio/reporting@1.0.2-rc.7
+ - Updated @formio/vm@0.0.7-rc.24
+
+## 9.0.0-rc.34
+### Changed
+ - Updated formio-app@9.0.0-rc.10
+ - Updated formiojs@4.19.1
+ - Updated formio@4.0.0-rc.29
+ - Updated @formio/vm@0.0.7-rc.23
+ - FIO 8169: add resolve dependency to avoid webpack build issues
+ 
+## 9.0.0-rc.33
+### Changed
+ - Updated formio-app@9.0.0-rc.9
+ - Updated @formio/reporting@1.0.2-rc.6
+
+## 9.0.0-rc.32
+### Changed
+ - Updated formio-app@9.0.0-rc.8
+ - Updated @formio/reporting@1.0.2-rc.5
+
+## 9.0.0-rc.31
+### Changed
+ - FIO-7684: import reporting ui configuration template from the reporting module
+
+## 9.0.0-rc.30
+### Changed
+ - Updated formio@4.0.0-rc.26
+ - Updated @formio/vm@0.0.7-rc.21
+
+## 9.0.0-rc.29
+### Changed
+ - Updated formio-app@9.0.0-rc.7
+ - Updated formio@4.0.0-rc.25
+ - Updated @formio/reporting@1.0.2-rc.4
+ - Updated @formio/vm@0.0.7-rc.20
+
+## 9.0.0-rc.28
+### Changed
+ - Updated formio-app@9.0.0-rc.6
+ - Updated formio@4.0.0-rc.24
+ - Updated @formio/reporting@1.0.2-rc.3
+ - Updated @formio/vm@0.0.7-rc.19
+
+## 9.0.0-rc.27
+### Changed
+ - Updated formio-app@9.0.0-rc.5
+ - Updated @formio/reporting@1.0.2-rc.2
+
+## 9.0.0-rc.26
+### Changed
+ - Updated formio-app@9.0.0-rc.4
+ - Updated @formio/premium@2.0.0
+ - Updated @formio/reporting@1.0.2-rc.1
+
+## 9.0.0-rc.25
+### Changed
+ - Updated formio@4.0.0-rc.23
+ - Updated @formio/vm@0.0.7-rc.18
+
+## 9.0.0-rc.24
+### Changed
+ - Updated formio@4.0.0-rc.22
+ - Updated @formio/vm@0.0.7-rc.17
+
+## 9.0.0-rc.23
+### Changed
+ - Updated formio-app@9.0.0-rc.3
+ - Updated formio@4.0.0-rc.21
+ - Updated @formio/vm@0.0.7-rc.16
+
+## 9.0.0-rc.22
+### Changed
+ - Updated formio@4.0.0-rc.20
+ - Updated @formio/vm@0.0.7-rc.15
+
+## 9.0.0-rc.21
+### Changed
+ - Updated formio-app@9.0.0-rc.2
+
+## 9.0.0-rc.20
+### Changed
+ - Updated formio@4.0.0-rc.19
+ - Updated @formio/vm@0.0.7-rc.14
+
+## 9.0.0-rc.19
+### Changed
+ - Updated formio-app@9.0.0-rc.1
+
+## 9.0.0-rc.18
+### Changed
+ - Updated formio-app@8.5.1-rc.3
+ - Updated formiojs@4.19.1-rc.1
+ - Updated formio@4.0.0-rc.18
+ - Updated @formio/vm@0.0.7-rc.13
+
+## 9.0.0-rc.17
+### Changed
+ - Updated formio@4.0.0-rc.17
+ - Updated @formio/vm@0.0.7-rc.12
+
+## 9.0.0-rc.16
+### Changed
+ - Updated formio@4.0.0-rc.16
+ - Updated @formio/vm@0.0.7-rc.11
+ - better error handling
+
+## 9.0.0-rc.15
+### Changed
+ - Updated formio@4.0.0-rc.15
+ - Updated @formio/vm@0.0.7-rc.10
+
+## 9.0.0-rc.14
+### Changed
+ - Updated formio-app@8.5.1-rc.2
+ - Updated formio@4.0.0-rc.14
+ - Updated @formio/vm@0.0.7-rc.9
+
+## 9.0.0-rc.13
+### Changed
+ - Updated formio@4.0.0-rc.13
+ - Updated @formio/vm@0.0.7-rc.8
+
+## 9.0.0-rc.12
+### Changed
+ - Updated formio@4.0.0-rc.12
+ - Updated @formio/vm@0.0.7-rc.7
+
+## 9.0.0-rc.11
+### Changed
+ - Updated formio@4.0.0-rc.11
+ - Updated @formio/vm@0.0.7-rc.6
+
+## 9.0.0-rc.10
+### Changed
+ - Updated formio@4.0.0-rc.10
+ - Updated @formio/vm@0.0.7-rc.5
+
+## 9.0.0-rc.9
+### Changed
+ - Updated formio@4.0.0-rc.9
+ - Updated @formio/vm@0.0.7-rc.4
+
+ - FIO-7888: fix tests, update test runners to Node v20, fix linter warnings
+
+## 9.0.0-rc.8
+### Changed
+ - Updated formio@4.0.0-rc.8
+
+## 9.0.0-rc.7
+
+## 9.0.0-rc.6
+### Changed
+ - Updated formio@4.0.0-rc.7
+
+### Changed
+ - Pin circle ci node image to 20
+   
+## 9.0.0-rc.5
+### Changed
+ - Updated formio@4.0.0-rc.6
+
+## 9.0.0-rc.4
+### Changed
+ - Updated formio@4.0.0-rc.5
+
+## 9.0.0-rc.3
+### Changed
+ - Updated formio-app@8.5.1-rc.1
+ - Updated @formio/premium@2.0.0-rc.8
+ - Updated formio@4.0.0-rc.4
+
+ - FIO-7938: Fixing the server side fetch processes to use our standard @formio/node-fetch-http-proxy module
+ - FIO-7923: removed boxsign integration and disabled esign action and other esign functionality
+   
+## 9.0.0-rc.2
+### Changed
+ - Updated formio-app@8.5.0
+ - Updated formiojs@4.19.0
+ - Updated @formio/premium@1.22.2
+ - Updated formio@4.0.0-rc.2
+ - Updated @formio/reporting@1.0.1
+
+### Changed
+ - FIO-7777: upgrade to Node 20
+ 
+## 9.0.0-rc.1
+### Changed
+ - Major version update
+ - Replaced vm2 with new core isolated-vm.
+ - Refactored submission data processing to be more efficient and use isolated-vm.
+
+## 8.5.0-rc.6
+### Changed
+ - Updated formio-app@8.5.0-rc.7
+ - Updated formiojs@4.19.0-rc.7
+ - Updated formio@3.5.0-rc.6
+ - Updated formio-workers@1.21.0-rc.6
+
+## 8.5.0-rc.5
+### Changed
+ - Updated formio-app@8.5.0-rc.6
+ - Updated formiojs@4.19.0-rc.6
+ - Updated formio@3.5.0-rc.5
+ - Updated formio-workers@1.21.0-rc.5
+ - FIO-7832: Fixes an issue where after deleting a stage that is selected as a default one, user will get an unauthorized error while accessing project
+ - FIO-7498 Changed decrypt hook variables and fixed fallback secret
+
+## 8.5.0-rc.4
+### Changed
+ - Updated formio-app@8.5.0-rc.5
+ - Updated formiojs@4.19.0-rc.5
+ - Updated formio@3.5.0-rc.4
+ - Updated formio-workers@1.21.0-rc.4
+
+## 8.5.0-rc.3
+### Changed
+ - Updated formio-app@8.5.0-rc.4
+ - Updated formiojs@4.19.0-rc.3
+ - Updated formio@3.5.0-rc.3
+ - Updated formio-workers@1.21.0-rc.3
+
+## 8.5.0-rc.2
+### Changed
+ - Updated formio-app@8.5.0-rc.3
+ - Updated formiojs@4.19.0-rc.2
+ - Updated formio@3.5.0-rc.2
+ - Updated formio-workers@1.21.0-rc.2
+ - Updated @formio/reporting@1.0.1-rc.1
+
+## 8.5.0-rc.1
+### Changed
+ - Updated formio-app@8.5.0-rc.1
+ - Updated formiojs@4.19.0-rc.1
+ - Updated @formio/premium@1.22.2-rc.1
+ - Updated formio@3.5.0-rc.1
+ - Updated formio-workers@1.21.0-rc.1
+ - FIO-7319: fixed an issue where submission changelog is available when sac is disabled and for hosted
+ - FIO-7498 Fixed the issue with data not being decrypted when trying to export submissions
+ - FIO-7536: added default form settings
+ - FIO-7492: Default Stage Feature
+
+### Changed
+ - Increment minor version.
+
+
+## 8.4.1-rc.4
+### Changed
+ - Updated formio-app@8.4.1-rc.5
+ - Updated formiojs@4.18.1-rc.4
+ - Updated formio@3.4.1-rc.4
+ - Updated formio-workers@1.20.1-rc.4
+
+## 8.4.1-rc.3
+### Changed
+ - Updated formio-app@8.4.1-rc.4
+ - Updated formiojs@4.18.1-rc.3
+ - Updated formio@3.4.1-rc.3
+ - Updated formio-workers@1.20.1-rc.3
+
+## 8.4.1-rc.2
+### Changed
+ - Updated formio-app@8.4.1-rc.3
+ - Updated formiojs@4.18.1-rc.2
+ - Updated formio@3.4.1-rc.2
+ - Updated formio-workers@1.20.1-rc.2
+
+## 8.4.1-rc.1
+### Changed
+ - Updated formio-app@8.4.1-rc.2
+ - Updated formiojs@4.18.1-rc.1
+ - Updated @formio/premium@1.22.1-rc.1
+ - Updated formio@3.4.1-rc.1
+ - Updated formio-workers@1.20.1-rc.1
+ - FIO-7413: removed SQL Connector action from hosted platform
+ - FIO-7549: evaluate axios upgrades and CVE resolution
+ - FIO-7482: added the db update script for reportingui forms
+
+## 8.4.0
+### Changed
+ - Official Release
+ - Updated formio-app@8.4.0
+ - Updated formiojs@4.18.0
+ - Updated @formio/premium@1.22.0
+ - Updated formio@3.4.0
+ - Updated formio-workers@1.20.0
+ - Updated @formio/reporting@1.0.0
+
+## 8.4.0-rc.33
+### Changed
+ - Updated formio@3.4.0-rc.19
+
+
+## 8.4.0-rc.32
+### Changed
+ - Updated formio-app@8.4.0-rc.24
+ - Updated formio@3.4.0-rc.18
+ - Revert FIO-7125
+
+## 8.4.0-rc.31
+### Changed
+ - Updated formio-app@8.4.0-rc.23
+ - FIO-7349: Fixes an issue where server crashes when user tries to load a view page of the deleted team
+
+## 8.4.0-rc.30
+### Changed
+ - Updated formio-app@8.4.0-rc.22
+ - Updated formiojs@4.18.0-rc.11
+ - Updated formio@3.4.0-rc.17
+ - Updated formio-workers@1.20.0-rc.13
+ - FIO-7551: Revert "FIO-7423: Fortis Payment Gateway Feature"
+
+## 8.4.0-rc.29
+### Changed
+ - Updated formio-app@8.4.0-rc.21
+
+## 8.4.0-rc.28
+### Changed
+ - Updated formio-app@8.4.0-rc.20
+ - Updated @formio/reporting@1.0.0-rc.10
+
+## 8.4.0-rc.27
+### Changed
+ - Updated formio-app@8.4.0-rc.19
+ - Updated formiojs@4.18.0-rc.10
+ - Updated formio@3.4.0-rc.16
+ - Updated formio-workers@1.20.0-rc.12
+
+## 8.4.0-rc.26
+### Changed
+ - Updated formio-app@8.4.0-rc.18
+ - Updated formiojs@4.18.0-rc.9
+ - Updated @formio/premium@1.22.0-rc.9
+ - Updated formio@3.4.0-rc.15
+ - Updated formio-workers@1.20.0-rc.11
+ - FIO-7290: fixed ability set project plan without x-admin-key
+
+ - FIO-7482: added the db update script for reportingui forms
+
+## 8.4.0-rc.25
+### Changed
+ - Updated formio-app@8.4.0-rc.17
+ - Updated formiojs@4.18.0-rc.8
+ - Updated @formio/premium@1.22.0-rc.7
+ - Updated formio@3.4.0-rc.14
+ - Updated formio-workers@1.20.0-rc.10
+ - Updated @formio/reporting@1.0.0-rc.9
+
+## 8.4.0-rc.24
+### Changed
+ - Pin axios@1.5.1
+   
+## 8.4.0-rc.23
+### Changed
+ - Updated formio@3.4.0-rc.13
+
+## 8.4.0-rc.22
+
+## 8.4.0-rc.21
+### Changed
+ - Pin node image to node 18
+ - Updated formio-app@8.4.0-rc.16
+ - Updated formiojs@4.18.0-rc.7
+ - Updated @formio/premium@1.22.0-rc.6
+ - Updated formio@3.4.0-rc.12
+ - Updated formio-workers@1.20.0-rc.9
+ - FIO-7460: Fix error during project creation
+
+## 8.4.0-rc.20
+### Changed
+ - FIO-7423: Transaction Failed message user with no names
+
+## 8.4.0-rc.19
+### Changed
+ - Updated formio@3.4.0-rc.11
+
+## 8.4.0-rc.18
+### Changed
+ - Updated formio@3.4.0-rc.10
+ - Updated formio-workers@1.20.0-rc.8
+ - FIO-7423: Transaction Failed empty message  FIXED
+ - FIO-7510: Revert "Merge pull request #1363 from formio/isolated-vm"
+
+## 8.4.0-rc.17
+### Changed
+ - Updated formio-app@8.4.0-rc.15
+ - Updated @formio/premium@1.22.0-rc.5
+ - Updated @formio/reporting@1.0.0-rc.8
+
+## 8.4.0-rc.16
+### Changed
+ - FIO-7423: Failed to search current payment info in server
+
+## 8.4.0-rc.15
+### Changed
+ - hotfix for failing tests #1371
+
+## 8.4.0-rc.14
+### Changed
+ - Updated formio-app@8.4.0-rc.14
+ - Updated @formio/premium@1.22.0-rc.4
+ - FIO-7391: refactored reporting-ui configuration form
+
+## 8.4.0-rc.13
+### Changed
+ - Updated formio-app@8.4.0-rc.13
+ - Updated formiojs@4.18.0-rc.6
+ - Updated formio@3.4.0-rc.9
+ - Updated formio-workers@1.20.0-rc.7
+
+## 8.4.0-rc.12
+### Changed
+ - Updated formio-app@8.4.0-rc.12
+ - FIO-7423: Fortis Payment transaction error per description
+
+## 8.4.0-rc.11
+### Changed
+ - Updated formio-app@8.4.0-rc.11
+ - Updated formiojs@4.18.0-rc.5
+ - Updated @formio/premium@1.22.0-rc.3
+ - Updated formio@3.4.0-rc.8
+ - Updated formio-workers@1.20.0-rc.6
+ - FIO-7328: replace kickbox verify with node-fetch
+ - FIO-7423: Fortis Payment Gateway Feature
+ - FIO-7400: fixed an issue where lookup operator with pipeline gives an error in DocumentDB
+ - FIO-7236: move to deprecate random keygen
+ - FIO-7371: Adds hook that would allow to retrieve raw DB data
+ - FIO 7239: add support for AWS S3 multipart uploads
+ - FIO-7167: Isolated vm
+
+## 8.4.0-rc.10
+### Changed
+ - Updated formio-app@8.4.0-rc.10
+ - Updated formio@3.4.0-rc.7
+ - FIO-7125: Adds password protected update feature to the SaveSubmission action
+
+## 8.4.0-rc.9
+### Changed
+ - Updated formio-app@8.4.0-rc.9
+ - Updated formiojs@4.18.0-rc.4
+ - Updated @formio/premium@1.22.0-rc.2
+ - Updated formio@3.4.0-rc.6
+ - Updated formio-workers@1.20.0-rc.5
+ - FIO-6859: from-reverted-refresh-includes-s3RequestPresigner
+ - FIO-7397: fixed server validation errors for reporting ui config form
+
+## 8.4.0-rc.8
+### Changed
+ - Updated formio-app@8.4.0-rc.8
+ - Updated @formio/premium@1.22.0-rc.2
+ - FIO 7323: Fix issue involving Azure and PDF email attachments
+ - FIO-7219 Removing default email transport references
+ - FIO-7327: remove deprecated jira connector
+ - FIO-7349: Prevent server crash when the user with a deleted team logs in
+ - FIO-5728 checking for unique email when adding user to team
  
 ## 8.4.0-rc.7
 ### Changed
@@ -69,6 +785,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-7323: Fix issue involving Azure and PDF email attachments
  - FIO-5728 checking for unique email when adding user to team
    
+
+## 8.4.0-rc.7
+### Changed
+ - Updated formio-app@8.4.0-rc.7
+
 ## 8.4.0-rc.6
 ### Changed
  - Updated formio-app@8.4.0-rc.6
