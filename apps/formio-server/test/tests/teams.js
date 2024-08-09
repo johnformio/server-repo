@@ -880,7 +880,8 @@ module.exports = function(app, template, hook) {
         .send({
           title: chance.word(),
           description: chance.sentence(),
-          template: _.pick(template, ['title', 'name', 'version', 'description', 'roles', 'resources', 'forms', 'actions', 'access'])
+          template: _.pick(template, ['title', 'name', 'version', 'description', 'roles', 'resources', 'forms', 'actions', 'access']),
+          type: 'project'
         })
         .set('x-jwt-token', template.formio.teamAdmin.token)
         .end(function(err, res) {
@@ -1550,7 +1551,8 @@ module.exports = function(app, template, hook) {
           .post('/project')
           .send({
             title: chance.word(),
-            description: chance.sentence()
+            description: chance.sentence(),
+            type: 'project'
           })
           .set('x-jwt-token', template.formio.user1.token)
           .expect('Content-Type', /json/)

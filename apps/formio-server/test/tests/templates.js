@@ -293,6 +293,7 @@ module.exports = function(app, template, hook) {
         framework: "custom",
         title: "Brendan's Happy Time Fun Land",
         stageTitle: "Live",
+        type: "project",
         settings: {
             cors: "*"
         }

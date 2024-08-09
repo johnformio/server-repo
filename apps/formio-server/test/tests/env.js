@@ -303,7 +303,8 @@ module.exports = function(app, template, hook) {
     it('Create a first project', function(done) {
       var newProject = {
         title: chance.word(),
-        description: chance.sentence()
+        description: chance.sentence(),
+        type: 'project'
       };
       request(app)
         .post('/project')
@@ -432,7 +433,8 @@ module.exports = function(app, template, hook) {
     it('Create a second project', function(done) {
       var newProject = {
         title: chance.word(),
-        description: chance.sentence()
+        description: chance.sentence(),
+        type: 'project'
       };
       request(app)
         .post('/project')
