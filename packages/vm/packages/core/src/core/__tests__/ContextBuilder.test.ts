@@ -40,6 +40,13 @@ describe('Test ContextBuilder', () => {
         expect(result).to.equal('Hello World');
     });
 
+    it(`should evaluate code with nunjucks['lib']`, () => {
+        const result = context.evalSync(
+            `var nlib = nunjucks["lib"]; var date = moment.utc('2024-08-01T13:03:26.208Z'); nlib.isFunction(date['add']);`,
+        );
+        expect(result).to.equal(true);
+    });
+
     it('should evaluate code with injectable depencies', () => {
         const context = ContextBuilder.fromDefaultIsolate()
             .withInjectedDependency('function sum(x, y) { return x + y }')
