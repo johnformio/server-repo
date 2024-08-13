@@ -23,17 +23,23 @@ module.exports = async function(db, config, tools, done) {
     return;
   }
 
+  const {components, tags = [], settings = {}, controller =''} = reportingUIForm;
+  const version = reportingUIForm.properties.version;
+
   await db.collection('forms').updateMany({
     deleted: {$eq: null},
     path: {$eq: reportingUIForm.path},
     $or: [
       {'properties.version': {$exists: false}},
-      {'properties.version': {$ne: reportingUIForm.properties.version}}
+      {'properties.version': {$ne: version}}
     ]
    }, {
     $set: {
-      components: reportingUIForm.components,
-      'properties.version': reportingUIForm.properties.version
+      components,
+      tags,
+      settings,
+      controller,
+      'properties.version': version
     }
   });
 };
