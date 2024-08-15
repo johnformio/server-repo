@@ -1203,7 +1203,8 @@ module.exports = function(app) {
           formioServer.formio.resources.form.model.findOneAndUpdate({
             _id: doc._id
           },
-          {$set: {_vid: _vid}})
+          {$set: {_vid: _vid}},
+          {new: true})
           .then((result)=> {
             const body = Object.assign({}, item);
             body._rid = result._id;

@@ -558,6 +558,72 @@ module.exports = function(app, template, hook) {
     });
   });
 
+  describe('Revisions Block Template', function() {
+    let testTemplate = require('./fixtures/revisionsData.json');
+    let _template = _.cloneDeep(testTemplate);
+    let revisionId = testTemplate.forms.outer.components[0].revision;
+    let project;
+
+    describe('Import', function() {
+
+    it('Should be able to bootstrap the template', function(done) {
+      importer.import.template(_template, alters, (err, data) => {
+        if (err) {
+          return done(err);
+        }
+        project = data;
+        done();
+      });
+    });
+
+    it('All the forms should be imported', function(done) {
+      assert.deepEqual(_.omit(project.forms.inner, ['_id', 'created', 'modified', '__v', 'owner', 'machineName', 'submissionAccess', 'deleted', 'access', '_vid', 'project', 'revisions', 'submissionRevisions', 'esign']),
+      _.omit(testTemplate.forms.inner, ['revisions', 'esign']));
+      assert.deepEqual(_.omit(project.forms.outer, ['_id', 'created', 'modified', '__v', 'owner', 'machineName', 'submissionAccess', 'deleted', 'access', 'components', '_vid', 'project', 'revisions', 'submissionRevisions', 'esign']),
+      _.omit(testTemplate.forms.outer, ['revisions', 'components', 'esign']));
+      assert.deepEqual(_.omit(project.forms.outer.components[0], ['form']),
+      _.omit(testTemplate.forms.outer.components[0], ['form']));
+      assert.deepEqual(project.forms.outer.components[1], testTemplate.forms.outer.components[1]);
+     done();
+    });
+    });
+
+    describe('Export', function() {
+      let exportData = {};
+
+      it('Should be able to export project data', function(done) {
+        importer.export(project, (err, data) => {
+          if (err) {
+            return done(err);
+          }
+
+          exportData = data;
+          exportData.forms = _.mapValues(exportData.forms, (form) => _.omit(form, ['submissionRevisions']));
+          exportData.resources = _.mapValues(exportData.resources, (resource) => _.omit(resource, ['submissionRevisions']));
+          return done();
+        });
+      })
+
+      it('An import/export should not change revisionId of nested form', function(done) {
+        assert.equal(exportData.forms.outer.components[0].revision, revisionId);
+        _.forEach(project.revisions, (revisionData, revisionKey) => {
+          if (revisionKey.match(`^inner:`)) {
+            assert.equal(revisionData.revisionId, revisionId);
+          }
+        });
+        done();
+      }); 
+    });
+
+    before(function(done) {
+      template.clearData(done);
+    });
+
+    after(function(done) {
+      template.clearData(done);
+    });
+  });
+
   describe('Project templates that exclude access', function() {
     let templateThatExcludesAccessJSON = require('./fixtures/excludeAccessTemplate.json');
     let templateThatExcludesAccess = _.cloneDeep(templateThatExcludesAccessJSON);
