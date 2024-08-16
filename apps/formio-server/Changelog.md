@@ -85,7 +85,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-7835: Resolve Esign Tests (PR #1502)
  - FIO-8604: Fixed the issue with SendGrid PDF attachment
  - FIO-8693: Resolve Failing Server Tests v2 (Revert PR 1502 & 1465)
- - use TextDecoder to decode UIntArray8 
+ - use TextDecoder to decode UIntArray8
+ - FIO-6495: form revision id transferring from stage to stage
 
 ## 9.3.0-rc.5
 ### Changed
