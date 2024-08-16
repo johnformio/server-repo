@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased: 0.0.9-rc.1]
+## [Unreleased: 1.0.0-rc.4]
 
 ### Changed
 
@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 -   FIO-8251: added inputmask library
 -   FIO-8128: utilize eachComponentData 'includeAll' flag for RootShim
 -   FIO-7507: Run tests and publish dev tag to npm
+-   Adding 5.x renderer
+-   FIO-8742: add missing nlib depedency to nunjucks injection
+-   FIO-8626: Fixed hidden components rendering in email
+-   Fixed issue with the instance shim and added getContext to element shim
 
 ## 0.0.7-rc.18
 
