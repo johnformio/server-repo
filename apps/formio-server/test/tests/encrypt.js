@@ -359,6 +359,7 @@ module.exports = function (app, template, hook) {
           name: 'encryptedFieldsProject',
           title: 'encryptedFieldsProject',
           settings: {},
+          type: 'project'
         };
 
         request(app)
@@ -645,6 +646,7 @@ module.exports = function (app, template, hook) {
           title: 'encryptedFieldsProject',
           plan: 'commercial',
           settings: {},
+          type: 'project'
         };
 
         request(app)
@@ -991,6 +993,7 @@ module.exports = function (app, template, hook) {
           title: 'encryptedFieldsProject2',
           plan: 'commercial',
           settings: {},
+          type: 'project'
         };
 
         request(app)

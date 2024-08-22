@@ -98,6 +98,7 @@ module.exports = function(app, template, hook) {
       description: chance.word(),
       name: 'trainingProject',
       plan: 'commercial',
+      type: 'project'
     };
 
     before((done) => {
@@ -143,7 +144,8 @@ module.exports = function(app, template, hook) {
     const tempProject = {
       title: chance.word(),
       description: chance.sentence(),
-      template: _.pick(template, ['title', 'name', 'version', 'description', 'roles', 'resources', 'forms', 'actions', 'access'])
+      template: _.pick(template, ['title', 'name', 'version', 'description', 'roles', 'resources', 'forms', 'actions', 'access']),
+      type: 'project'
     };
     const originalProject = _.cloneDeep(tempProject);
 
@@ -1982,6 +1984,7 @@ module.exports = function(app, template, hook) {
             framework: 'custom',
             title: 'Test Project',
             stageTitle: 'Live',
+            type: 'project',
             settings: {
               cors: '*'
             }
@@ -2170,6 +2173,52 @@ module.exports = function(app, template, hook) {
     });
   });
 
+  describe('Should not allow to sync license utilization if project type is not provided', () => {
+    it('Should throw error on project creation if type is missing', done => {
+      request(app)
+        .post('/project')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send({
+          title: chance.word(),
+          description: chance.word(),
+          name: chance.word(),
+          plan: 'trial'
+        })
+        .expect(400)
+        .expect('Project type must be provided.')
+        .end(done);
+    });
+
+    it('Should throw error on project creation from template if type is missing', done => {
+      const projectTemplate = require('./fixtures/excludeAccessTemplate.json');
+      delete projectTemplate.type;
+
+      request(app)
+        .post('/project')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send(projectTemplate)
+        .expect(400)
+        .expect('Project type must be provided.')
+        .end(done);
+    });
+
+    it('Should throw error on project creation if invalid type provided', done => {
+      request(app)
+        .post('/project')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send({
+          title: chance.word(),
+          description: chance.word(),
+          name: chance.word(),
+          plan: 'trial',
+          type: 'pr0ject'
+        })
+        .expect(400)
+        .expect('Invalid project type. Allowed values are: project, stage, tenant.')
+        .end(done);
+    });
+  });
+
   describe('Project Plans', function() {
     // TODO: It'd be good to segregate the tests into Docker, Hosted, and Deployed silos so we can stop using
     // imperative conditionals that hold no semantic meaning; for now we won't run project plans if we're not
@@ -2206,7 +2255,6 @@ module.exports = function(app, template, hook) {
         request(app)
           .post('/project')
           .set('x-jwt-token', template.formio.owner.token)
-          .set('x-admin-key', process.env.ADMIN_KEY)
           .send(tempProject)
           .expect('Content-Type', /json/)
           .expect(201)

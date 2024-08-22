@@ -6,23 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased: 9.4.0-rc.1]
 ### Changed
- - FIO-7328: replace kickbox verify with node-fetch
- - FIO-7349: Fixes an issue where server crashes when user tries to load a view page of the deleted team
- - FIO-6566: fixed issue with exceeding project plan limit
- - FIO-7290: fixed ability set project plan without x-admin-key
- - FIO-5728: checking for unique email when adding user to team
- - FIO-7236: move to deprecate random keygen
- - FIO-7397: fixed server validation errors for reporting ui config form
- - FIO-7167: Isolated vm
- - FIO-7423: Fortis Payment Gateway Feature
- - FIO-7551: Revert "FIO-7423: Fortis Payment Gateway Feature" 
  - FIO-7400: fixed an issue where lookup operator with pipeline gives an уrror in DocumentDB
  - hotfix for failing tests
  - FIO 7239: add support for AWS S3 multipart uploads
  - FIO-7371: Adds hook that would allow to retrieve raw DB data
  - FIO-7391: refactored reporting-ui configuration form
- - FIO-7423: Failed to search current payment info in server
- - FIO-7423: Transaction Failed message user with no names
  - FIO-7460: Fix error during project creation
  - FIO-7538: Update vm-utils to 1.0.0-rc.1
  - FIO-7319: fixed an issue where submission changelog is available when sac is disabled and for hosted
@@ -35,9 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-7482: added the db update script for reportingui forms
  - [Snyk] Security upgrade crypto-js from 4.1.1 to 4.2.0
  - FIO-7542: Pin node image to node 18
- - FIO-7423: Transaction Failed empty message FIXED
  - FIO-7510: Revert "Merge pull request #1363 from formio/isolated-vm"
- - FIO-7423: Fortis Payment transaction error per description
  - Bump ecma version to 2022
  - Revert FIO-7125
  - FIO-7549: evaluate axios upgrades and CVE resolution
@@ -87,6 +73,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-8669: Adding Zipcode to the payment transaction
  - FIO-7783: added character limit to add new team member
  - FIO-7835: added eSignature
+ - FIO-8800: upgrade minio dependency to latest
+ - FIO-8668: added additional form properties that must be updated on reportingUI form update in db
+ - FIO-8115: Fail if project type not provided for requests with license utilization
+ - Upgrade renderer to 5.x version
+ - FIO-7338: Add logging for pdf submission download error
+ - FIO-7338: Fixes server crush on invalid form id
+ - FIO-8545: Remove @formio/lodash
+ - FIO-7683: Added ability to get translations and pass them to pdf server
+ - FIO-8722 fixed styling for FVP
+ - FIO-7835: Resolve Esign Tests (PR #1502)
+ - FIO-8604: Fixed the issue with SendGrid PDF attachment
+ - FIO-8693: Resolve Failing Server Tests v2 (Revert PR 1502 & 1465)
+ - use TextDecoder to decode UIntArray8
+ - FIO-6495: form revision id transferring from stage to stage
 
 ## 9.3.0-rc.5
 ### Changed

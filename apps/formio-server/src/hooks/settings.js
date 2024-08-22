@@ -1178,7 +1178,8 @@ module.exports = function(app) {
             const result = await formioServer.formio.resources.form.model.findOneAndUpdate({
               _id: doc._id
             },
-            {$set: {_vid: _vid}});
+            {$set: {_vid: _vid}},
+            {new: true});
             const body = Object.assign({}, item);
             body._rid = result._id;
             body._vid = result._vid;
