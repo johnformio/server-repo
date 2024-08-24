@@ -406,6 +406,27 @@ module.exports = function(app, template, hook) {
         });
       });
 
+      it('The Team Owner should not be able to add an outside user with email excideening limit', (done) => {
+        request(app)
+        .post('/team/' + template.team1._id + '/member')
+        .set('x-jwt-token', template.formio.teamAdmin.token)
+        .send({
+          data: {
+            userId: '',
+            email: chance.email({ length: 300 }),
+            admin: false
+          }
+        })
+        .expect(400)
+        .expect('Team member email exceeds allowed character limit')
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+          done();
+        });
+      });
+
       let outsideMember = null;
       let formioMember = null;
       it('The Team should now have two members.', function(done) {
