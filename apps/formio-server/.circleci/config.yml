@@ -96,7 +96,7 @@ jobs:
       - image: cimg/node:20.11
     steps:
       - setup_remote_docker:
-          version: 19.03.13
+          version: default
       - checkout
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
