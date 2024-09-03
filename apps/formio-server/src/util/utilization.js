@@ -247,7 +247,7 @@ async function getNumberOfExistingProjects(formio, project = null) {
       projectQuery.project = formio.util.ObjectId(project.tenantId);
     }
   }
-  return await formio.resources.project.model.count(projectQuery);
+  return await formio.resources.project.model.countDocuments(projectQuery);
 }
 
 function getRemoteLicenseData(app) {
