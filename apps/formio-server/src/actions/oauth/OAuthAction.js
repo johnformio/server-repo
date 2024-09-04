@@ -887,7 +887,7 @@ module.exports = router => {
     onError(req, res, next) {
       return function(err) {
         if (err.status) {
-          return res.status(err.status).send(err.message);
+          return res.status(parseInt(err.status)).send(err.message);
         }
         next(err);
       };
