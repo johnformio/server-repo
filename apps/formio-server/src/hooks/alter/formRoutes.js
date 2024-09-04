@@ -49,7 +49,8 @@ module.exports = app => routes => {
         }
         if (req.body.submissionRevisions !== form.submissionRevisions && req.body.submissionRevisions === 'true') {
           const submissionRevision = new SubmissionRevision(app, req.submissionModel || null);
-          return submissionRevision.updateRevisionsSet(form._id, req.user, next);
+          await submissionRevision.updateRevisionsSet(form._id, req.user);
+          return next();
         }
         next();
     }

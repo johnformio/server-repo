@@ -201,35 +201,25 @@ module.exports = app => routes => {
   });
 
   routes.hooks.post = {
-   async after(req, res, item, next) {
-    try {
+    async after(req, res, item, next) {
+      try {
         const form = await app.formio.formio.cache.loadForm(req, null, req.params.formId);
         const submissionRevision = new SubmissionRevision(app, req.submissionModel || null);
         if (submissionRevision.shouldCreateNewRevision(req, item, null, form)) {
-          return submissionRevision.createVersion(item, req.user, req.body._vnote, async (err, revision) => {
-            if (err) {
-              return next(err);
-            }
-            const esignature = new ESignature(app.formio, req);
-            if (esignature.allowESign(form)) {
-              try {
-                await esignature.checkSignatures(item, revision);
-                return next();
-              }
-              catch (e) {
-                return next(e);
-              }
-            }
-
+          const revision = await submissionRevision.createVersion(item, req.user, req.body._vnote);
+          const esignature = new ESignature(app.formio, req);
+          if (esignature.allowESign(form)) {
+            await esignature.checkSignatures(item, revision);
             return next();
-          });
+          }
+          return next();
         }
         return next();
+      }
+      catch (err) {
+        return next(err);
+      }
     }
-    catch (err) {
-      return next(err);
-    }
-  }
   };
 
   routes.hooks.put = {
@@ -267,23 +257,14 @@ module.exports = app => routes => {
           req.body._id);
           loadSubmission = await submissionRevision.checkDraft(loadSubmission);
           if (submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form) || req.shouldCreateSubmissionRevision) {
-            return submissionRevision.createVersion(item, req.user, req.body._vnote, async (err, revision) => {
-              if (err) {
-                return next(err);
-              }
-              const esignature = new ESignature(app.formio, req);
-              if (esignature.allowESign(form)) {
-                try {
-                  await esignature.checkSignatures(item, revision);
-                  return next();
-                }
-                catch (e) {
-                  return next(e);
-                }
-              }
+            const revision = await submissionRevision.createVersion(item, req.user, req.body._vnote);
+            const esignature = new ESignature(app.formio, req);
+            if (esignature.allowESign(form)) {
+              await esignature.checkSignatures(item, revision);
               return next();
-            });
-           }
+            }
+            return next();
+          }
           else {
             if (item.containRevisions) {
             await app.formio.formio.mongoose.models.submission.updateOne({
@@ -314,23 +295,14 @@ module.exports = app => routes => {
           req.body._id);
             loadSubmission = await submissionRevision.checkDraft(loadSubmission);
             if (submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form)) {
-              return submissionRevision.createVersion(item, null, req.body._vnote, async (err, revision) => {
-                if (err) {
-                  return next(err);
-                }
-                const esignature = new ESignature(app.formio, req);
-                if (esignature.allowESign(form)) {
-                  try {
-                    req.prevESignatures = loadSubmission?.eSignatures || [];
-                    await esignature.checkSignatures(item, revision);
-                    return next();
-                  }
-                  catch (e) {
-                    return next(e);
-                  }
-                }
+              const revision = await submissionRevision.createVersion(item, null, req.body._vnote);
+              const esignature = new ESignature(app.formio, req);
+              if (esignature.allowESign(form)) {
+                req.prevESignatures = loadSubmission?.eSignatures || [];
+                await esignature.checkSignatures(item, revision);
                 return next();
-              });
+              }
+              return next();
             }
             else {
               if (item.containRevisions) {

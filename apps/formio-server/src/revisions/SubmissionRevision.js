@@ -51,7 +51,7 @@ module.exports = class FormRevision extends Revision {
     }
   }
 
-  async createVersion(item, user, note, done) {
+  async createVersion(item, user, note) {
     const body = item.toObject();
     body._rid = body._id;
 
@@ -71,13 +71,13 @@ module.exports = class FormRevision extends Revision {
         $set: item,
       });
       const revision = await this.revisionModel.create(body);
-      return done(null, revision);
+      return revision;
     }
     else {
       const revision = await this.revisionModel.create(body);
-      return done(null, revision);
+      return revision;
     }
- }
+  }
 
  async checkDraft(loadSubmission) {
   if (loadSubmission && loadSubmission.state === 'draft') {
@@ -94,36 +94,32 @@ module.exports = class FormRevision extends Revision {
   }
 }
 
- updateRevisionsSet(formId, user, done) {
-  this.itemModel.find({
-    form: formId,
-    containRevisions:{$ne: true},
-    deleted: {$eq: null}
-  })
-  .then((submissions) => {
-    submissions.forEach(submission => {
-      this.revisionModel.find({
+  async updateRevisionsSet(formId, user) {
+    const submissions = await this.itemModel.find({
+      form: formId,
+      containRevisions:{$ne: true},
+      deleted: {$eq: null}
+    });
+
+    for (const submission of submissions) {
+      const revisions = await this.revisionModel.find({
         _rid: submission._id,
         deleted: {$eq: null}
-      })
-      .then((revisions)=>{
-        const prevRevisionData = revisions.length > 0 ? revisions.reduce((prev, current) => (prev.created > current.created) ? prev : current).data : {};
-        const patch = jsonPatch.compare(prevRevisionData, submission.data)
-        .map((operation) => {
-          operation.path = `/data${operation.path}`;
-          return operation;
-        });
-        if (patch.length > 0) {
-          _.set(submission.metadata, 'jsonPatch', patch);
-          if (!_.isEmpty(prevRevisionData)) {
-             _.set(submission.metadata, 'previousData', prevRevisionData);
-          }
-          this.createVersion(submission, user);
-        }
       });
-    });
-    done();
-  });
-}
+      const prevRevisionData = revisions.length > 0 ? revisions.reduce((prev, current) => (prev.created > current.created) ? prev : current).data : {};
+      const patch = jsonPatch.compare(prevRevisionData, submission.data)
+      .map((operation) => {
+        operation.path = `/data${operation.path}`;
+        return operation;
+      });
+      if (patch.length > 0) {
+        _.set(submission.metadata, 'jsonPatch', patch);
+        if (!_.isEmpty(prevRevisionData)) {
+          _.set(submission.metadata, 'previousData', prevRevisionData);
+        }
+        this.createVersion(submission, user);
+      }
+    }
+  }
 };
 
