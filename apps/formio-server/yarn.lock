@@ -4197,10 +4197,10 @@ formidable@^2.1.2:
     once "^1.4.0"
     qs "^6.11.0"
 
-formio@4.0.0-dev.1766.1835bfa:
-  version "4.0.0-dev.1766.1835bfa"
-  resolved "https://registry.yarnpkg.com/formio/-/formio-4.0.0-dev.1766.1835bfa.tgz#be02d79ad4c08cf0174bc78974dbb7c56df9d442"
-  integrity sha512-69CN0bjHEqc0bAjFezv0qmTWDR7NMBsYOdhESXgdMES7t4noXURFFJe9+dyRw6TORcrYf3UySXPvK13Zrg9nrQ==
+formio@4.0.0-dev.1795.0236f58:
+  version "4.0.0-dev.1795.0236f58"
+  resolved "https://registry.npmjs.org/formio/-/formio-4.0.0-dev.1795.0236f58.tgz#98b4fe54aac7483e8443f2d8bda19832598372f8"
+  integrity sha512-W5aMbddXhHf1NJNFv0CRddOTQQfsTt+i5qm0xS415g3IdnhXmonsmCLos+ywesps+cq7Uq8aC4cYJCYd0OiUqA==
   dependencies:
     "@formio/core" "2.1.0-dev.129.a4f2d55"
     "@formio/js" "5.0.0-dev.5673.3d062b9"
