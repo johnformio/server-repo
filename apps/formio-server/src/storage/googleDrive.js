@@ -159,16 +159,12 @@ const middleware = router => {
       next();
     },
     restrictProjectAccess({level: 'admin'}),
-    function(req, res) {
+    async function(req, res) {
       if (req.body.enable) {
-        debug('Switching on Google Drive.');
-        // Swith on the Google Drive
-        router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
-          if (err) {
-            debug(err);
-            return res.status(400).send('No project found');
-          }
-
+        try {
+          debug('Switching on Google Drive.');
+          // Swith on the Google Drive
+          const project = await router.formio.formio.cache.loadProject(req, req.projectId);
           const {settings} = project;
           // Use the Google Drive Data connection integration settings
           if (!hasValidProviderSettings(settings)) {
@@ -199,7 +195,11 @@ const middleware = router => {
             debug(err);
             res.status(400).send(`Incorrect Google Drive credantials. ${err.message || ''}`);
           });
-        });
+        }
+        catch (err) {
+          debug(err);
+          return res.status(400).send('No project found');
+        }
       }
       else {
         debug('Switched off Google Drive.');
@@ -229,12 +229,9 @@ const middleware = router => {
     },
     router.formio.formio.middleware.permissionHandler,
     router.formio.formio.plans.disableForPlans(['basic', 'independent', 'archived']),
-    function(req, res) {
-      router.formio.formio.cache.loadProject(req, req.projectId, async function(err, project) {
-        if (err) {
-          debug(err);
-          return res.status(400).send('Project not found.');
-        }
+    async function(req, res) {
+      try {
+        const project = await router.formio.formio.cache.loadProject(req, req.projectId);
 
         const {settings} = project;
 
@@ -298,7 +295,11 @@ const middleware = router => {
           debug(err);
           return res.status(400).send('Invalid response.');
         }
-      });
+      }
+      catch (err) {
+        debug(err);
+        return res.status(400).send('Project not found.');
+      }
     }
   );
 
@@ -317,12 +318,9 @@ const middleware = router => {
     router.formio.formio.middleware.permissionHandler,
     router.formio.formio.plans.disableForPlans(['basic', 'independent', 'archived']),
     upload.single('file'),
-    function(req, res) {
-      router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
-        if (err) {
-          debug(err);
-          return res.status(400).send('Project not found.');
-        }
+    async function(req, res) {
+      try {
+        const project = await router.formio.formio.cache.loadProject(req, req.projectId);
 
         const {settings} = project;
 
@@ -399,7 +397,11 @@ const middleware = router => {
             debug(err);
             res.status(400).send('Bad request from Google Drive.');
           });
-      });
+      }
+      catch (err) {
+        debug(err);
+        return res.status(400).send('Project not found.');
+      }
     }
   );
 
@@ -416,12 +418,9 @@ const middleware = router => {
     },
     router.formio.formio.middleware.permissionHandler,
     router.formio.formio.plans.disableForPlans(['basic', 'independent', 'archived']),
-    function(req, res) {
-      router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
-        if (err) {
-          debug(err);
-          return res.status(400).send('Project not found.');
-        }
+    async function(req, res) {
+      try {
+        const project = await router.formio.formio.cache.loadProject(req, req.projectId);
 
         const {settings} = project;
 
@@ -463,7 +462,11 @@ const middleware = router => {
             debug(err);
             res.status(400).send('Bad request from Google Drive.');
           });
-      });
+      }
+      catch (err) {
+        debug(err);
+        return res.status(400).send('Project not found.');
+      }
     }
   );
 };

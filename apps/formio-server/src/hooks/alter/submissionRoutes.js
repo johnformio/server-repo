@@ -39,12 +39,9 @@ module.exports = app => routes => {
     next();
   };
 
-  const attachSignatures = function(req, res, next) {
-    app.formio.formio.cache.loadForm(req, null, req.params.formId, async (err, form) => {
-      if (err) {
-        return next(err);
-      }
-
+  const attachSignatures = async function(req, res, next) {
+    try {
+      const form = await app.formio.formio.cache.loadForm(req, null, req.params.formId);
       const esignature = new ESignature(app.formio, req);
 
       if (esignature.allowESign(form)) {
@@ -59,7 +56,10 @@ module.exports = app => routes => {
       else {
         return next();
       }
-   });
+    }
+    catch (err) {
+      return next(err);
+    }
   };
 
   _.each(['afterGet', 'afterPost', 'afterPut'], function(handler) {
@@ -70,10 +70,11 @@ module.exports = app => routes => {
     routes[handler].push(conditionalFilter);
   });
 
-  routes.beforeDelete.unshift((req, res, next) => {
-    app.formio.formio.cache.loadCurrentForm(req, (err, currentForm) => {
-      if (err || !currentForm) {
-        debug(`Unable to load current form. ${err}`);
+  routes.beforeDelete.unshift(async (req, res, next) => {
+    try {
+      const currentForm = await app.formio.formio.cache.loadCurrentForm(req);
+      if (!currentForm) {
+        debug(`Unable to load current form.`);
         return next();
       }
 
@@ -83,7 +84,11 @@ module.exports = app => routes => {
         return res.status(403).send('Deletion is not allowed when submission revisions are enabled.');
       }
       return next();
-    });
+    }
+    catch (err) {
+      debug(`Unable to load current form. ${err}`);
+      return next();
+    }
   });
 
   routes.afterIndex.push(async (req, res, next) => {
@@ -115,20 +120,33 @@ module.exports = app => routes => {
   });
 
   // Add a submission model set before the index.
-  routes.beforeIndex.unshift((req, res, next) => app.formio.formio.cache.setSubmissionModel(
-    req,
-    app.formio.formio.cache.getCurrentFormId(req),
-    next
-  ));
+  routes.beforeIndex.unshift(async (req, res, next) =>{
+    try {
+      await app.formio.formio.cache.setSubmissionModel(
+        req,
+        app.formio.formio.cache.getCurrentFormId(req));
+      return next();
+    }
+    catch (err) {
+      return next(err);
+    }
+});
 
   // Add the form version id to each submission.
   _.each(['beforePost', 'beforePut'], (handler) => {
     if (handler === 'beforePost') {
-      routes[handler].unshift((req, res, next) => app.formio.formio.cache.setSubmissionModel(
-        req,
-        app.formio.formio.cache.getCurrentFormId(req),
-        next
-      ));
+      routes[handler].unshift(async (req, res, next) => {
+        try {
+          await app.formio.formio.cache.setSubmissionModel(
+            req,
+            app.formio.formio.cache.getCurrentFormId(req)
+          );
+          return next();
+      }
+      catch (err) {
+        return next(err);
+      }
+    });
     }
 
     routes[handler].push((req, res, next) => {
@@ -145,16 +163,13 @@ module.exports = app => routes => {
 
     // Skip validation if state is draft.
     // Eventually this will be configurable but hard code to draft == noValidate for now.
-    routes[handler].unshift((req, res, next) => {
+    routes[handler].unshift(async (req, res, next) => {
       if (_.get(req, 'body.state', 'submitted') === 'draft' || req.isAdmin && req.query.noValidate) {
         req.noValidate = true;
       }
       if (req.method.toUpperCase() === 'PATCH') {
-        app.formio.formio.mongoose.models.submission.findOne({_id: req.params.submissionId, deleted: null}, (err, submission)=>{
-          if (err) {
-            return next(err);
-          }
-
+        try {
+          const submission = await app.formio.formio.mongoose.models.submission.findOne({_id: req.params.submissionId, deleted: null});
           if (submission && submission.state === 'draft' && !req.body.find(update=>update.path.includes('/submit') || update.path === '/state')) {
             req.noValidate = true;
             return next();
@@ -162,7 +177,10 @@ module.exports = app => routes => {
           else {
             return next();
           }
-        });
+        }
+        catch (err) {
+          return next(err);
+        }
       }
       else {
         return next();
@@ -170,181 +188,138 @@ module.exports = app => routes => {
     });
 });
   _.each(['beforePost', 'beforePut', 'beforeIndex', 'beforeGet'], handler => {
-    routes[handler].unshift((req, res, next) => {
-      app.formio.formio.cache.loadCurrentForm(req, (err, currentForm) => {
-        return util.getSubmissionModel(app.formio.formio, req, currentForm, false, next);
-      });
+    routes[handler].unshift( async (req, res, next) => {
+      try {
+        const currentForm = await app.formio.formio.cache.loadCurrentForm(req);
+        await util.getSubmissionModel(app.formio.formio, req, currentForm, false);
+        return next();
+      }
+      catch (err) {
+        return next(err);
+      }
     });
   });
 
   routes.hooks.post = {
-    after(req, res, item, next) {
-      app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
-        if (err) {
-          return next(err);
-        }
+    async after(req, res, item, next) {
+      try {
+        const form = await app.formio.formio.cache.loadForm(req, null, req.params.formId);
         const submissionRevision = new SubmissionRevision(app, req.submissionModel || null);
         if (submissionRevision.shouldCreateNewRevision(req, item, null, form)) {
-          return submissionRevision.createVersion(item, req.user, req.body._vnote, async (err, revision) => {
-            if (err) {
-              return next(err);
-            }
-            const esignature = new ESignature(app.formio, req);
-            if (esignature.allowESign(form)) {
-              try {
-                await esignature.checkSignatures(item, revision);
-                return next();
-              }
-              catch (e) {
-                return next(e);
-              }
-            }
-
+          const revision = await submissionRevision.createVersion(item, req.user, req.body._vnote);
+          const esignature = new ESignature(app.formio, req);
+          if (esignature.allowESign(form)) {
+            await esignature.checkSignatures(item, revision);
             return next();
-          });
+          }
+          return next();
         }
-        next();
-    });
-  }
+        return next();
+      }
+      catch (err) {
+        return next(err);
+      }
+    }
   };
 
   routes.hooks.put = {
-    before(req, res, item, next) {
-      app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
-        if (err) {
-          return next(err);
-        }
+    async before(req, res, item, next) {
+      try {
+        const form = await app.formio.formio.cache.loadForm(req, null, req.params.formId);
         const submissionRevision = new SubmissionRevision(app, req.submissionModel || null);
-        app.formio.formio.cache.loadSubmission(
+        let loadSubmission = await app.formio.formio.cache.loadSubmission(
           req,
           req.body.form,
           req.body._id,
-          async (err, loadSubmission) => {
-            if (err) {
-              return next(err);
-            }
-            loadSubmission = await submissionRevision.checkDraft(loadSubmission);
-            if (submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form)) {
-              req.shouldCreateSubmissionRevision = true;
-              const esignature = new ESignature(app.formio, req);
-              if (esignature.allowESign(form)) {
-                req.prevESignatures = loadSubmission.eSignatures;
-              }
-            }
-            return next();
-        });
-      });
-    },
-    after(req, res, item, next) {
-      app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
-        if (err) {
-          return next(err);
+        );
+
+        loadSubmission = await submissionRevision.checkDraft(loadSubmission);
+        if (submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form)) {
+          req.shouldCreateSubmissionRevision = true;
+          const esignature = new ESignature(app.formio, req);
+          if (esignature.allowESign(form)) {
+            req.prevESignatures = loadSubmission.eSignatures;
+          }
         }
+        return next();
+      }
+      catch (err) {
+        return next(err);
+      }
+    },
+    async after(req, res, item, next) {
+      try {
+        const form = await app.formio.formio.cache.loadForm(req, null, req.params.formId);
         const submissionRevision = new SubmissionRevision(app, req.submissionModel || null);
-        app.formio.formio.cache.loadSubmission(
+        let loadSubmission = await app.formio.formio.cache.loadSubmission(
           req,
           req.body.form,
-          req.body._id, async (err, loadSubmission)=>{
-            if (err) {
-              return next(err);
+          req.body._id);
+          loadSubmission = await submissionRevision.checkDraft(loadSubmission);
+          if (submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form) || req.shouldCreateSubmissionRevision) {
+            const revision = await submissionRevision.createVersion(item, req.user, req.body._vnote);
+            const esignature = new ESignature(app.formio, req);
+            if (esignature.allowESign(form)) {
+              await esignature.checkSignatures(item, revision);
+              return next();
             }
-            loadSubmission = await submissionRevision.checkDraft(loadSubmission);
-              if (submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form) || req.shouldCreateSubmissionRevision) {
-                return submissionRevision.createVersion(item, req.user, req.body._vnote, async (err, revision) => {
-                  if (err) {
-                    return next(err);
-                  }
-                  const esignature = new ESignature(app.formio, req);
-                  if (esignature.allowESign(form)) {
-                    try {
-                      await esignature.checkSignatures(item, revision);
-                      return next();
-                    }
-                    catch (e) {
-                      return next(e);
-                    }
-                  }
-                  return next();
-                });
-              }
-              else {
-                if (item.containRevisions) {
-                  app.formio.formio.mongoose.models.submission.updateOne({
-                    _id: item._id
-                  },
-                  {$set: {
-                    containRevisions: false,
-                  }},
-                  (err)=>{
-                    if (err) {
-                      return next(err);
-                    }
-                    return next();
-                  });
-                }
-              }
             return next();
-        });
-    });
+          }
+          else {
+            if (item.containRevisions) {
+            await app.formio.formio.mongoose.models.submission.updateOne({
+              _id: item._id
+              },
+              {$set: {
+                containRevisions: false,
+              }});
+            return next();
+            }
+          }
+        return next();
+      }
+      catch (err) {
+        return next(err);
+      }
     }
   };
 
   routes.hooks.patch = {
-    after(req, res, item, next) {
-      app.formio.formio.cache.loadForm(req, null, req.params.formId, (err, form) => {
-        if (err) {
-          return next(err);
-        }
+    async after(req, res, item, next) {
+      try {
+        const form = await app.formio.formio.cache.loadForm(req, null, req.params.formId);
         const submissionRevision = new SubmissionRevision(app, req.submissionModel || null);
-        app.formio.formio.cache.loadSubmission(
+        let loadSubmission = await app.formio.formio.cache.loadSubmission(
           req,
           req.body.form,
-          req.body._id, async (err, loadSubmission)=>{
-            if (err) {
-              return next(err);
-            }
+          req.body._id);
             loadSubmission = await submissionRevision.checkDraft(loadSubmission);
             if (submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form)) {
-              return submissionRevision.createVersion(item, null, req.body._vnote, async (err, revision) => {
-                if (err) {
-                  return next(err);
-                }
-                const esignature = new ESignature(app.formio, req);
-                if (esignature.allowESign(form)) {
-                  try {
-                    req.prevESignatures = loadSubmission?.eSignatures || [];
-                    await esignature.checkSignatures(item, revision);
-                    return next();
-                  }
-                  catch (e) {
-                    return next(e);
-                  }
-                }
+              const revision = await submissionRevision.createVersion(item, null, req.body._vnote);
+              const esignature = new ESignature(app.formio, req);
+              if (esignature.allowESign(form)) {
+                req.prevESignatures = loadSubmission?.eSignatures || [];
+                await esignature.checkSignatures(item, revision);
                 return next();
-              });
+              }
+              return next();
             }
             else {
               if (item.containRevisions) {
-                app.formio.formio.mongoose.models.submission.updateOne({
+                await app.formio.formio.mongoose.models.submission.updateOne({
                   _id: item._id
                 },
                 {$set: {
                   containRevisions: false,
-                }},
-                // {
-                //   containRevisions: false
-                // },
-                (err)=>{
-                  if (err) {
-                    return next(err);
-                  }
-                  return next();
-                });
+                }});
+                return next();
               }
             }
           return next();
-        });
-    });
+      }
+      catch (err) {
+        return next(err);
+      }
     }
   };
 

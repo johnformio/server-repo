@@ -131,14 +131,14 @@ module.exports = (app, template, hook) => {
             .then(projectResult => {
                 projectId = projectResult.insertedId;
                 const forms = db.collection('forms');
-                testForm.project = ObjectId(projectId);
+                testForm.project = new ObjectId(projectId);
                 forms.insertOne(testForm)
                     .then(formResult => {
                         formId = formResult.insertedId;
                         const submissions = db.collection('submissions');
-                        testSubmission.form = ObjectId(formId);
-                        testSubmission.owner = ObjectId(template.formio.owner._id);
-                        testSubmission.project = ObjectId(projectId);
+                        testSubmission.form = new ObjectId(formId);
+                        testSubmission.owner = new ObjectId(template.formio.owner._id);
+                        testSubmission.project = new ObjectId(projectId);
 
                         const testInput = {
                             name: util.encrypt(secretOld, initialNameValue),
@@ -160,7 +160,7 @@ module.exports = (app, template, hook) => {
 
         it('Should verify encryted project settings', function(done) {
             const projects = db.collection('projects');
-            projects.findOne({'_id': ObjectId(projectId)})
+            projects.findOne({'_id': new ObjectId(projectId)})
             .then(project => {
 
                 const decryptedSettings = util.decrypt(secretOld, project.settings_encrypted, true);
@@ -175,7 +175,7 @@ module.exports = (app, template, hook) => {
 
         it('Should verify initial encrypted fields with old secret', function(done) {
             const submissions = db.collection('submissions');
-            submissions.findOne({'_id': ObjectId(submissionId)})
+            submissions.findOne({'_id': new ObjectId(submissionId)})
             .then((submission) => {
                 const sName = submission.data.name;
                 const sDesc = submission.data.description;
@@ -195,12 +195,12 @@ module.exports = (app, template, hook) => {
             .catch(done);
         });
 
-        it('Should re-encrypt project settings and submission fields using new secret', function(done) {          
+        it('Should re-encrypt project settings and submission fields using new secret', function(done) {
             updateSecret(app.formio.formio, db, secret, secretOld)
             .then(() => {
 
                 const projects = db.collection('projects');
-                projects.findOne({'_id': ObjectId(projectId)})
+                projects.findOne({'_id': new ObjectId(projectId)})
                 .then(project => {
 
                     const decryptedSettings = util.decrypt(secret, project.settings_encrypted, true);
@@ -210,7 +210,7 @@ module.exports = (app, template, hook) => {
                     assert.deepEqual(decryptedSettings, settings);
 
                     const submissions = db.collection('submissions');
-                    submissions.findOne({'_id': ObjectId(submissionId)})
+                    submissions.findOne({'_id': new ObjectId(submissionId)})
                     .then((submission) => {
                         const sName = submission.data.name;
                         const sDesc = submission.data.description;
@@ -238,11 +238,11 @@ module.exports = (app, template, hook) => {
             const projects = db.collection('projects');
             const forms = db.collection('forms');
             const submissions = db.collection('submissions');
-            projects.deleteOne({'_id': ObjectId(projectId)})
+            projects.deleteOne({'_id': new ObjectId(projectId)})
             .then(() => {
-                forms.deleteOne({'_id': ObjectId(formId)})
+                forms.deleteOne({'_id': new ObjectId(formId)})
                 .then(() => {
-                    submissions.deleteOne({'_id': ObjectId(submissionId)})
+                    submissions.deleteOne({'_id': new ObjectId(submissionId)})
                     .then(() => {
                         done();
                     })

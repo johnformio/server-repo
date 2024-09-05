@@ -1,6 +1,6 @@
 'use strict';
 const config = require('../../config');
-module.exports = (formioServer) => (req, res, next) => {
+module.exports = (formioServer) => async (req, res, next) => {
   if (req.method !== 'POST') {
     return next();
   }
@@ -18,7 +18,7 @@ module.exports = (formioServer) => (req, res, next) => {
     return next();
   }
 
-  const plans = formioServer.formio.plans.getPlans();
+  const plans = await formioServer.formio.plans.getPlans();
 
   // Don't allow them to set a plan below the default plan.
   if (req.body.plan === 'trial' || plans.indexOf(req.body.plan) < plans.indexOf(formioServer.config.plan)) {

@@ -33,7 +33,7 @@ function provideFormsWithDefaultAccess(targetForms, sourceForms, roles) {
 
 module.exports = function(formio, app) {
   const hook = require('formio/src/util/hook')(formio);
-  return function(req, res, next) {
+  return async function(req, res, next) {
     // If we are creating a project without a template, use the default template.
     if (res.resource.status === 201 && !req.templateMode) {
       req.templateMode = 'create';
@@ -57,7 +57,7 @@ module.exports = function(formio, app) {
     const template = req.template || defaultTemplateName;
 
     // Method to import the template.
-    const importTemplate = function(template) {
+    const importTemplate = async function(template) {
       let _project;
       try {
         _project = project.toObject();
@@ -66,21 +66,23 @@ module.exports = function(formio, app) {
         _project = project;
       }
 
-      const done = (err, template) => {
+      const done = async (err, template) => {
         if (err) {
           debug(err);
           return res.status(400).send(err);
         }
 
         // Reload the project to reflect any changes made by the template.
-        formio.cache.loadCache.load(project._id, function(err, project) {
-          if (err) {
-            return res.status(400).send(err);
-          }
+        try {
+          const project = await formio.cache.loadCache.load(_project._id, true);
+
           res.resource.item = project;
 
           return next();
-         }, true);
+        }
+        catch (err) {
+          return res.status(400).send(err);
+        }
       };
 
       const importTemplateToProject = (template, project, alters) => {
@@ -133,7 +135,7 @@ module.exports = function(formio, app) {
         projectId = formio.util.idToBson(req.body.copyFromProject);
       }
 
-      formio.cache.loadProject(req, projectId, function(err, primaryProject) {
+        const primaryProject = await formio.cache.loadProject(req, projectId);
         formio.template.export({
           projectId: projectId,
           access: primaryProject.access ? primaryProject.access : [],
@@ -144,7 +146,6 @@ module.exports = function(formio, app) {
           }
           return importTemplate(template);
         });
-      });
     }
     // Check for template that is already provided.
     else if ((typeof template === 'string') && formio.templates.hasOwnProperty(template)) {

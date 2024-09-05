@@ -8,39 +8,9 @@ const {LicenseError, ValidationError} = require('../util/errors');
 module.exports = function(app) {
   const formio = app.formio.formio;
 
-  const getCurrentFormFromCache = (req) => {
-    return new Promise((resolve, reject) => {
-      formio.cache.loadCurrentForm(req, (err, form) => {
-        if (err) {
-          reject(err);
-        }
-        else {
-          resolve(form);
-        }
-      });
-    });
-  };
-
-  const getSubmissionModel = (req, form, init) => {
-    return new Promise((resolve, reject) => {
-      util.getSubmissionModel(
-        formio,
-        req,
-        form,
-        init,
-        (err, submissionModel) => {
-          if (err) {
-            reject(err);
-          }
-          resolve(submissionModel);
-        }
-      );
-    });
-  };
-
   const getCurrentForm = async (req) => {
     try {
-      const form = await getCurrentFormFromCache(req);
+      const form = await formio.cache.loadCurrentForm(req);
       return {
         ...form,
         settings: req.body.settings ? {
@@ -105,7 +75,7 @@ module.exports = function(app) {
     }
     try {
       const form = await getCurrentForm(req);
-      const submissionModel = await getSubmissionModel(req, form, false);
+      const submissionModel = await util.getSubmissionModel(formio, req, form, false);
 
       const hasSacPackage = _.get(req, 'licenseTerms.options.sac', false);
       const hasSubmissionCollection = _.get(form, 'settings.collection', false);

@@ -59,16 +59,9 @@ module.exports = (formioServer) => {
       return !_.isEmpty(req.encryptedComponents);
     },
 
-    loadProject: (req) => {
-      return new Promise((resolve, reject) => {
-        formioServer.formio.cache.loadCurrentProject(req, (err, project) => {
-          if (err) {
-            return reject(err);
-          }
-
-          resolve(project);
-        });
-      });
+    loadProject: async (req) => {
+        const project = await formioServer.formio.cache.loadCurrentProject(req);
+        return project;
     },
 
     getValue: (project, operation, newValue, plan, prevValue) => {

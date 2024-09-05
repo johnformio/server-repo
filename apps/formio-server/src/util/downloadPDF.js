@@ -1,6 +1,5 @@
 'use strict';
 const _ = require('lodash');
-const Promise = require('bluebird');
 const fetch = require('@formio/node-fetch-http-proxy');
 const processChangeLogData = require('./processChangeLogData');
 const proxy = require('../middleware/pdfProxy/proxy');
@@ -8,7 +7,6 @@ const proxy = require('../middleware/pdfProxy/proxy');
 module.exports = (formioServer) => {
   const formio = formioServer.formio;
   const encrypt = require('./encrypt')(formioServer);
-  Promise.promisifyAll(formio.cache, {context: formio.cache});
   return async (req, project, form, submission, translations) => {
     proxy.authenticate(req, project);
     proxy.updateHeadersForPdfRequest(req, formio);
@@ -24,16 +22,12 @@ module.exports = (formioServer) => {
       if (submissionFormRevisionId !== form._vid) {
         let result;
         if (submissionFormRevisionId.length === 24) {
-          result = await Promise.promisify(formio.resources.formrevision.model.findOne, {
-            context: formio.resources.formrevision.model
-          })({
-            _id: formio.util.idToBson(submissionFormRevisionId),
+          result = await formio.resources.formrevision.model.findOne({
+            _id: formio.util.idToBson(submissionFormRevisionId)
           });
         }
         else {
-          result = await Promise.promisify(formio.resources.formrevision.model.findOne, {
-            context: formio.resources.formrevision.model
-          })({
+          result = await formio.resources.formrevision.model.findOne({
             project: project._id,
             _rid: formio.util.idToBson(form._id),
             _vid: parseInt(submissionFormRevisionId),
@@ -47,10 +41,10 @@ module.exports = (formioServer) => {
     }
 
     // Speed up performance by loading all subforms inline to the form
-    await formio.cache.loadSubFormsAsync(form, req);
+    await formio.cache.loadSubForms(form, req);
 
     // Load all subform submissions
-    await formio.cache.loadSubSubmissionsAsync(form, submission, req);
+    await formio.cache.loadSubSubmissions(form, submission, req);
 
     // Remove protected fields
     formio.util.removeProtectedFields(form, 'download', submission);

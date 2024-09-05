@@ -18,10 +18,15 @@ module.exports = function(router, formioServer) {
           req.query['_rid'] =  req.params['submissionId'];
         next();
       },
-      (req, res, next) => {
-        formio.cache.loadCurrentForm(req, (err, currentForm) => {
-          return util.getSubmissionRevisionModel(formio, req, currentForm, false, next);
-        });
+      async (req, res, next) => {
+        try {
+          const currentForm = await formio.cache.loadCurrentForm(req);
+          await util.getSubmissionRevisionModel(formio, req, currentForm, false);
+          return next();
+        }
+        catch (err) {
+          return next(err);
+        }
       },
       (req, res, next) => {
         if (req.submissionRevisionModel) {

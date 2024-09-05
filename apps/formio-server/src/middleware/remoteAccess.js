@@ -3,7 +3,7 @@
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
 
-module.exports = app => (req, res, next) => {
+module.exports = app => async (req, res, next) => {
   const response = {
     project: {},
     permission: 'none',
@@ -13,7 +13,7 @@ module.exports = app => (req, res, next) => {
   // Permission heirarchy.
   const permissions = ['none', 'team_access', 'team_read', 'team_write', 'team_admin', 'owner'];
 
-  app.formio.cache.loadCurrentProject(req, function(err, project) {
+  const project = await app.formio.cache.loadCurrentProject(req);
     response.project = {
       _id: project._id,
       title: project.title,
@@ -52,5 +52,4 @@ module.exports = app => (req, res, next) => {
     return res.status(200).send(jwt.sign(response, project.settings.remoteSecret, {
       expiresIn: app.formio.config.jwt.expireTime * 60
     }));
-  });
 };

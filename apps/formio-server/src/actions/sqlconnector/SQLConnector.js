@@ -76,13 +76,9 @@ module.exports = (router) => {
       }));
     }
 
-    static settingsForm(req, res, next) {
-      hook.settings(req, (err, settings) => {
-        if (err) {
-          debug(err);
-          return next(null, {});
-        }
-
+    static async settingsForm(req, res, next) {
+      try {
+        let settings = await hook.settings(req);
         settings = settings || {};
         if (!settings.sqlconnector) {
           return res.status(400).send('No project settings were found for the SQL Connector.');
@@ -145,114 +141,113 @@ module.exports = (router) => {
           }
         ];
 
-        new Promise((resolve, reject) => {
+        try {
           // Load the current form, to get all the components.
-          formio.cache.loadCurrentForm(req, (err, form) => {
-            if (err) {
-              return reject(err);
+          const currentForm = await formio.cache.loadCurrentForm(req);
+
+          // Filter non-input components.
+          const components = [];
+          formio.util.eachComponent(currentForm.components, (component) => {
+            if (
+              !formio.util.isLayoutComponent(component) &&
+              component.input === true &&
+              component.type !== 'button' &&
+              component.type !== 'email'
+            ) {
+              components.push(component);
             }
-
-            // Filter non-input components.
-            const components = [];
-            formio.util.eachComponent(form.components, (component) => {
-              if (
-                !formio.util.isLayoutComponent(component) &&
-                component.input === true &&
-                component.type !== 'button' &&
-                component.type !== 'email'
-              ) {
-                components.push(component);
-              }
-            });
-
-            return resolve(components);
           });
-        })
-          .then((components) => {
-            form.push({
+
+          form.push({
+            conditional: {
+              eq: '',
+              when: null,
+              show: ''
+            },
+            tags: [],
+            type: 'datagrid',
+            persistent: true,
+            protected: false,
+            key: 'fields',
+            label: 'Fields',
+            tableView: true,
+            components: [{
+              lockKey: true,
+              tags: [],
+              hideLabel: true,
+              type: 'textfield',
+              conditional: {
+                eq: '',
+                when: null,
+                show: ''
+              },
+              validate: {
+                customPrivate: false,
+                custom: '',
+                pattern: '',
+                maxLength: '',
+                minLength: '',
+                required: false
+              },
+              persistent: true,
+              unique: false,
+              protected: false,
+              defaultValue: '',
+              multiple: false,
+              suffix: '',
+              prefix: '',
+              placeholder: '',
+              key: 'column',
+              label: 'Column Name',
+              inputMask: '',
+              inputType: 'text',
+              tableView: true,
+              input: true
+            }, {
               conditional: {
                 eq: '',
                 when: null,
                 show: ''
               },
               tags: [],
-              type: 'datagrid',
+              hideLabel: true,
+              type: 'select',
+              validate: {
+                required: false
+              },
               persistent: true,
+              unique: false,
               protected: false,
-              key: 'fields',
-              label: 'Fields',
+              multiple: false,
+              template: '<span>{{ item.label }}</span>',
+              authenticate: false,
+              filter: '',
+              refreshOn: '',
+              defaultValue: '',
+              valueProperty: '',
+              dataSrc: 'json',
+              data: {
+                json: JSON.stringify(components || [])
+              },
+              placeholder: '',
+              key: 'field',
+              label: 'Field',
               tableView: true,
-              components: [{
-                lockKey: true,
-                tags: [],
-                hideLabel: true,
-                type: 'textfield',
-                conditional: {
-                  eq: '',
-                  when: null,
-                  show: ''
-                },
-                validate: {
-                  customPrivate: false,
-                  custom: '',
-                  pattern: '',
-                  maxLength: '',
-                  minLength: '',
-                  required: false
-                },
-                persistent: true,
-                unique: false,
-                protected: false,
-                defaultValue: '',
-                multiple: false,
-                suffix: '',
-                prefix: '',
-                placeholder: '',
-                key: 'column',
-                label: 'Column Name',
-                inputMask: '',
-                inputType: 'text',
-                tableView: true,
-                input: true
-              }, {
-                conditional: {
-                  eq: '',
-                  when: null,
-                  show: ''
-                },
-                tags: [],
-                hideLabel: true,
-                type: 'select',
-                validate: {
-                  required: false
-                },
-                persistent: true,
-                unique: false,
-                protected: false,
-                multiple: false,
-                template: '<span>{{ item.label }}</span>',
-                authenticate: false,
-                filter: '',
-                refreshOn: '',
-                defaultValue: '',
-                valueProperty: '',
-                dataSrc: 'json',
-                data: {
-                  json: JSON.stringify(components || [])
-                },
-                placeholder: '',
-                key: 'field',
-                label: 'Field',
-                tableView: true,
-                input: true
-              }],
-              tree: true,
               input: true
-            });
-            return next(null, form);
-          })
-          .catch(() => next('Could not load the settings form.'));
-      });
+            }],
+            tree: true,
+            input: true
+          });
+          return next(null, form);
+        }
+        catch (err) {
+          return next('Could not load the settings form.');
+        }
+      }
+      catch (err) {
+        debug(err);
+        return next(null, {});
+      }
     }
 
     /**

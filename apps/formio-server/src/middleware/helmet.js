@@ -2,7 +2,7 @@
 const helmet = require('helmet');
 module.exports = (router) => {
     return [
-        function(req, res, next) {
+        async function(req, res, next) {
             const helmetOverrides = {};
             if (
                 (req.url === '/' && router.portalEnabled) ||
@@ -69,13 +69,8 @@ module.exports = (router) => {
                 }
 
                 // Load the project settings.
-                router.formio.formio.hook.settings(req, function(err, settings) {
-                    if (err) {
-                        if (err === 'Project not found') {
-                            return dynamicHelmet(defaultCSP)(req, res, next);
-                        }
-                        return next(err);
-                    }
+                try {
+                  let settings = await router.formio.formio.hook.settings(req);
 
                     // Build the CSP settings string.
                     settings = settings || {};
@@ -101,7 +96,13 @@ module.exports = (router) => {
                     }
 
                     return dynamicHelmet(cspSettings)(req, res, next);
-                });
+                }
+                catch (err) {
+                  if (err === 'Project not found') {
+                    return dynamicHelmet(defaultCSP)(req, res, next);
+                  }
+                  return next(err);
+                }
             }
             else {
                 return next();

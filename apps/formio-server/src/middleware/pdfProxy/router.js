@@ -15,24 +15,25 @@ module.exports = (app) => {
   const getTranslations = require('../../util/getTranslations')(formioServer);
   router.use(express.raw({type: '*/*', limit: '50mb'}));
 
-  router.use((req, res, next) => {
+  router.use(async (req, res, next) => {
     const params = formio.util.getUrlParams(req.url);
     if (params.pdf) {
       req.projectId = params.pdf;
     }
     if (req.projectId) {
-      loadProjectContexts(formio)(req, res, (err) => {
-        if (err) {
-          return next(err.message || err);
-        }
-
+      try {
+        await loadProjectContexts(formio)(req, res, (err) => {
         if (!req.currentProject) {
           return next('No project found.');
         }
 
         proxy.authenticate(req, req.currentProject);
         next();
-      });
+        });
+      }
+      catch (err) {
+        return next(err.message || err);
+      }
     }
     else {
       return next();
@@ -58,12 +59,12 @@ module.exports = (app) => {
     }
     try {
       const formId = req.query.form || formio.cache.getCurrentFormId(req);
-      const form = await formio.cache.loadFormAsync(req, null, formId);
+      const form = await formio.cache.loadForm(req, null, formId);
       let submission;
       if (req.subId) {
         submission = req.query.submissionRevision
-          ? await formio.cache.loadSubmissionRevisionAsync(req)
-          : await formio.cache.loadCurrentSubmissionAsync(req);
+          ? await formio.cache.loadSubmissionRevision(req)
+          : await formio.cache.loadCurrentSubmission(req);
       }
       else {
         submission = req.body;

@@ -1,27 +1,24 @@
 'use strict';
 
-const Q = require('q');
 const debug = require('debug')('formio:payment:upgrade');
 const _merge = require('lodash/merge');
 
 module.exports = function(formio) {
   return function(req, res, next) {
-    new Promise((resolve, reject) => {
       if (!req.body) {
-        return reject('No data received');
+        throw 'No data received';
       }
 
       if (!req.body.plan) {
-        return reject('No project plan received');
+        throw 'No project plan received';
       }
 
       if (formio.plans.getPlans().indexOf(req.body.plan) === -1) {
-        return reject('Invalid plan');
+        throw 'Invalid plan';
       }
 
-      // Check user has payment info saved
-      return resolve(Q.ninvoke(formio.cache, 'loadProject', req, req.projectId));
-    })
+    // Check user has payment info saved
+    formio.cache.loadProject(req, req.projectId)
       .then(function(project) {
         if (project.owner.toString() !== req.user._id.toString()) {
           throw 'Only project owners can upgrade a project';
@@ -33,7 +30,6 @@ module.exports = function(formio) {
             // Allow the manual transition from trial to basic.
             if (!hasPayment && ['basic', 'trial', 'archived'].indexOf(req.body.plan) === -1) {
               res.status(400).send('Cannot upgrade project without registered payment info');
-              return Q.reject();
             }
 
             billing.servers = _merge(billing.servers, req.body.servers);

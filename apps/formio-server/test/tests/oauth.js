@@ -33,7 +33,7 @@ module.exports = function(app, template, hook, eventEmitter) {
   // Does NOT fail if user has more tokens than expected ones
   // Returns a promise
   var checkExternalTokens = function(user, expected) {
-    return Q(app.formio.formio.resources.submission.model.findOne({_id: user._id}))
+    return app.formio.formio.resources.submission.model.findOne({_id: user._id})
     .then(function(user) {
       user = user.toObject();
       _.each(expected, function(expectedToken){

@@ -31,61 +31,53 @@ module.exports = (formio) => {
 
   const accessLevels = ['none', 'read', 'write', 'admin', 'owner'];
 
-  return (settings = {}) => (req, res, next) => new Promise((resolve, reject) => {
-    const {
-      level: accessLevel,
-    } = settings;
+  return (settings = {}) => async (req, res, next) => {
+    try {
+      const {
+        level: accessLevel,
+      } = settings;
 
-    if (!accessLevel) {
-      debug('No access level provided');
-      return reject();
-    }
-
-    if (!req.projectId) {
-      return reject('No project id found with the request.');
-    }
-
-    // Allow access if access key is set.
-    if (req.isAdmin) {
-      return resolve();
-    }
-
-    if (!req.user || !req.user._id) {
-      return reject();
-    }
-
-    // Get the owner of the Project
-    formio.cache.loadPrimaryProject(req, (err, project) => {
-      if (err) {
-        return reject(err);
+      if (!accessLevel) {
+        debug('No access level provided');
+        throw new Error();
       }
+
+      if (!req.projectId) {
+        throw new Error('No project id found with the request.');
+      }
+
+      // Allow access if access key is set.
+      if (req.isAdmin) {
+        return next();
+      }
+
+      if (!req.user || !req.user._id) {
+        throw new Error();
+      }
+
+      // Get the owner of the Project
+      const project = await formio.cache.loadPrimaryProject(req);
 
       if (!project.owner && accessLevel === 'owner') {
         const error = new Error('No project owner found');
         error.status = 400;
-        return reject(error);
+        throw error;
       }
 
       const userAccess = getUserAccess(req.user, project);
       if (accessLevels.indexOf(userAccess) >= accessLevels.indexOf(accessLevel)) {
-        return resolve();
+        return next();
       }
 
-      return reject();
-    });
-  })
-    .then(next)
-    .catch((err) => {
-      try {
-        if (!err) {
-          return res.sendStatus(401);
-        }
+      throw new Error();
+    }
+    catch (err) {
+      if (!err.status) {
+        return res.sendStatus(401);
+      }
 
-        debug(err);
-        return res.status(err.status || 400).send(err.message || err);
-      }
-      catch (e) {
-        debug(e);
-      }
-    });
+      debug(err);
+      return res.status(err.status || 400).send(err.message || err);
+    }
+  };
 };

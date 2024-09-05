@@ -16,14 +16,7 @@ module.exports = app => (mail, req, res, params, setActionItemMessage, cb) => {
       return;
     }
     if (typeof params.form === 'string') {
-      await new Promise((resolve, reject) => {
-        formio.cache.loadForm(req, null, params.form, (err, form) => {
-          if (err) {
-            return reject(err);
-          }
-          resolve(form);
-        });
-      });
+        return await formio.cache.loadForm(req);
     }
   };
 
@@ -62,12 +55,8 @@ module.exports = app => (mail, req, res, params, setActionItemMessage, cb) => {
     // If they wish to attach a PDF.
     if (params.settings && params.settings.attachPDF) {
       const attachment = {};
-      const project = await new Promise((resolve) => {
-        formio.cache.loadPrimaryProject(req, (err, project) => resolve(project));
-      });
-      const form = await new Promise((resolve) => {
-        formio.cache.loadCurrentForm(req, (err, form) => resolve(form));
-      });
+      const project = await formio.cache.loadPrimaryProject(req);
+      const form = await formio.cache.loadCurrentForm(req);
       const submission = _.get(res.resource, 'item', req.body);
       const downloadPDF = require('../../util/downloadPDF')(formioServer);
 
@@ -124,23 +113,24 @@ module.exports = app => (mail, req, res, params, setActionItemMessage, cb) => {
   };
 
   // Replace SSO tokens.
-  const replaceSSOTokens = () => new Promise((resolve) => {
+  const replaceSSOTokens = async () => {
     if (mail.to.indexOf(',') !== -1) {
-      return resolve(mail);
+      return mail;
     }
 
     // Find the ssoToken.
     const ssoTokens = util.ssoTokens(mail.html);
     if (!ssoTokens || !ssoTokens.length) {
-      return resolve(mail);
+      return mail;
     }
 
-    const query = formio.hook.alter('formQuery', {
+    const query = await formio.hook.alter('formQuery', {
       deleted: {$eq: null}
     }, req);
 
     const formObjs = {};
-    async.eachSeries(ssoTokens, (ssoToken, nextToken) => {
+
+    await async.eachSeries(ssoTokens, async (ssoToken) => {
       const inlineResource = ((!ssoToken.resources || !ssoToken.resources.length) &&
         res.resource &&
         res.resource.item);
@@ -150,10 +140,12 @@ module.exports = app => (mail, req, res, params, setActionItemMessage, cb) => {
       else {
         query.name = {'$in': ssoToken.resources};
       }
-      formio.resources.form.model.find(query).lean().exec((err, result) => {
-        if (err || !result || !result.length) {
+
+      try {
+        const result = await formio.resources.form.model.find(query).lean().exec();
+        if (!result || !result.length) {
           ssoToken.submission = null;
-          return nextToken();
+          return;
         }
 
         const forms = [];
@@ -164,65 +156,63 @@ module.exports = app => (mail, req, res, params, setActionItemMessage, cb) => {
 
         if (inlineResource) {
           ssoToken.submission = res.resource.item;
-          return nextToken();
+          return;
         }
 
-        const query = {
+        const submissionQuery = {
           project: formio.util.idToBson(req.projectId),
           form: {'$in': forms},
           deleted: {$eq: null}
         };
 
         // Set the username field to the email address this is getting sent to.
-        query[ssoToken.field] = formio.mongoFeatures.collation ? mail.to : {$regex: new RegExp(`^${formio.util.escapeRegExp(mail.to)}$`, 'i')};
+        submissionQuery[ssoToken.field] = formio.mongoFeatures.collation
+          ? mail.to
+          : {$regex: new RegExp(`^${formio.util.escapeRegExp(mail.to)}$`, 'i')};
 
-        let subQuery = formio.resources.submission.model.findOne(query);
-        subQuery = formio.mongoFeatures.collation ? subQuery.collation({locale: 'en', strength: 2}) : subQuery;
-
+        let subQuery = formio.resources.submission.model.findOne(submissionQuery);
+        subQuery = formio.mongoFeatures.collation
+          ? subQuery.collation({locale: 'en', strength: 2})
+          : subQuery;
         // Find the submission.
-        subQuery.lean().select('_id, form').exec(function(err, submission) {
-          ssoToken.submission = !submission ? null : submission;
-          nextToken();
-        });
-      });
-    }, () => {
-      async.eachSeries(ssoTokens, (ssoToken, nextToken) => {
-        if (!ssoToken.submission) {
-          return nextToken();
-        }
-        formio.mongoose.models.session.create({
+        const submission = await subQuery.lean().select('_id, form').exec();
+        ssoToken.submission = submission || null;
+      }
+      catch (err) {
+        ssoToken.submission = null;
+      }
+    });
+    await async.eachSeries(ssoTokens, async (ssoToken) => {
+      if (!ssoToken.submission) {
+        return;
+      }
+        const session = await formio.mongoose.models.session.create({
           project: formObjs[ssoToken.submission.form.toString()].project,
           form: ssoToken.submission.form,
           submission: ssoToken.submission._id,
           source: 'email',
-        })
-          .catch(nextToken)
-          .then((session) => {
-            ssoToken.token = formio.hook.alter('token', {
-              user: {
-                _id: ssoToken.submission._id.toString()
-              },
-              form: {
-                _id: ssoToken.submission.form.toString()
-              }
-            }, formObjs[ssoToken.submission.form.toString()], {session});
-            delete ssoToken.token.exp;
-            ssoToken.token = jwt.sign(ssoToken.token, formio.config.jwt.secret, {
-              expiresIn: ssoToken.expireTime * 60
-            });
-            nextToken();
-          });
-      }, () => {
-        // Replace the string token with the one generated here.
-        let index = 0;
-        mail.html = mail.html.replace(util.tokenRegex, () => {
-          return ssoTokens[index++].token || 'INVALID_TOKEN';
         });
 
-        return resolve(mail);
-      });
+        ssoToken.token = formio.hook.alter('token', {
+          user: {
+            _id: ssoToken.submission._id.toString()
+          },
+          form: {
+             _id: ssoToken.submission.form.toString()
+            }
+        }, formObjs[ssoToken.submission.form.toString()], {session});
+        delete ssoToken.token.exp;
+        ssoToken.token = jwt.sign(ssoToken.token, formio.config.jwt.secret, {
+          expiresIn: ssoToken.expireTime * 60
+        });
     });
-  });
+
+    // Replace the string token with the one generated here.
+    let index = 0;
+    mail.html = mail.html.replace(util.tokenRegex, () => ssoTokens[index++].token || 'INVALID_TOKEN');
+
+    return mail;
+  };
 
   checkPlan()
     .then(attachFiles)

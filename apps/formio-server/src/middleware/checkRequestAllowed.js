@@ -15,11 +15,7 @@ module.exports = (formio) => {
       return next();
     }
 
-    const primaryProject = await new Promise((resolve) =>
-      req.primaryProject
-        ? resolve(req.primaryProject)
-        : formio.cache.loadPrimaryProject(req, (_, project) => resolve(project))
-    );
+    const primaryProject = req.primaryProject ? req.primaryProject: await formio.cache.loadPrimaryProject(req);
 
     // Skip if the request doesn't contain any project information
     if (!primaryProject) {
@@ -48,18 +44,18 @@ module.exports = (formio) => {
       }
       // If the trial time has ended, archive the project
       debug(`Archiving project ${primaryProject._id}`);
-      projects.updateOne({
-        _id: ObjectId(primaryProject._id)
-      }, {
-        $set: {'plan': 'archived'}
-      }, function(err) {
-        if (err) {
-          debug(err);
-          return next(err);
-        }
-
+      try {
+        await projects.updateOne({
+          _id: ObjectId(primaryProject._id)
+        }, {
+          $set: {'plan': 'archived'}
+        });
         return next(REQUEST_FOR_ARCHIVED_PROJECT_NOT_ALLOWED_ERROR);
-      });
+      }
+      catch (err) {
+        debug(err);
+        return next(err);
+      }
     }
     else {
       return next();

@@ -19,10 +19,9 @@ module.exports = function(router) {
         validate: [
           {
             message: 'The tag must be unique.',
-            validator(value) {
-              return new Promise((resolve) => {
+            async validator(value) {
                 if (this.chunk) {
-                  return resolve(true);
+                  return true;
                 }
                 const search = {
                   project: this.project,
@@ -36,14 +35,16 @@ module.exports = function(router) {
                   search._id = {$ne: this._id};
                 }
 
-                formio.mongoose.model('tag').findOne(search).lean().exec(function(err, result) {
-                  if (err || result) {
-                    return resolve(false);
+                try {
+                  const result = await formio.mongoose.model('tag').findOne(search).lean().exec();
+                  if (result) {
+                    return false;
                   }
-
-                  resolve(true);
-                });
-              });
+                  return true;
+                }
+                catch (err) {
+                  return false;
+                }
             }
           }
         ]

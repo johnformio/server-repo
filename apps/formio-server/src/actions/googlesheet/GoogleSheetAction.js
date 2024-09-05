@@ -36,109 +36,108 @@ module.exports = (router) => {
     }
 
     // The actions settings form.
-    static settingsForm(req, res, next) {
+    static async settingsForm(req, res, next) {
       /**
        * Verifying settings form data and restricting action form loading if any of the settings field data is missing.
        */
-      util.checkOauthParameters(router, req)
-        .then(() => new Promise((resolve, reject) => {
-          cache.loadCurrentForm(req, (err, form) => {
-            if (err) {
-              return reject(err);
-            }
+      try {
+        await util.checkOauthParameters(router, req);
 
-            if (!form) {
-              return reject('No form found.');
-            }
+        const form = await cache.loadCurrentForm(req);
 
-            // Create the panel for all the fields.
-            const fieldPanel = {
-              type: 'panel',
-              theme: 'info',
-              title: 'Google Sheet Fields',
-              input: false,
-              components: _.map((new CSVExporter(form, req, res)).fields, (field) => ({
-                type: 'textfield',
-                input: true,
-                label: field.title ? `${field.title} Column (${field.label})` : `${field.label} Column`,
-                key: field.label,
-                placeholder: 'Enter a Column Key. Example: C',
-                multiple: false,
-              })),
-            };
+        if (!form) {
+          throw ('No form found.');
+        }
 
-            next(null, [
+        // Create the panel for all the fields.
+        const fieldPanel = {
+          type: 'panel',
+          theme: 'info',
+          title: 'Google Sheet Fields',
+          input: false,
+          components: _.map((new CSVExporter(form, req, res)).fields, (field) => ({
+            type: 'textfield',
+            input: true,
+            label: field.title ? `${field.title} Column (${field.label})` : `${field.label} Column`,
+            key: field.label,
+            placeholder: 'Enter a Column Key. Example: C',
+            multiple: false,
+          })),
+        };
+
+        return next(null, [
+          {
+            type: 'textfield',
+            label: 'Sheet ID',
+            key: 'sheetID',
+            placeholder: 'Enter the Sheet ID',
+            tooltip: 'Enter the Sheet ID',
+            input: true,
+            validate: {
+              required: true
+            },
+            multiple: false
+          },
+          {
+            type: 'textfield',
+            label: 'Worksheet Name',
+            key: 'worksheetName',
+            placeholder: 'Enter the Worksheet Name. Example: Sheet1',
+            tooltip: 'Enter the Worksheet Name. Example: Sheet1',
+            input: true,
+            validate: {
+              required: true
+            },
+            multiple: false
+          },
+          {
+            type: 'textfield',
+            label: 'Start Row',
+            placeholder: 'The first row of the data in your spreadsheet.',
+            tooltip: 'The first row of the data in your spreadsheet.',
+            key: 'spreadSheetStartRow',
+            defaultValue: '2',
+            input: true
+          },
+          fieldPanel,
+          {
+            key: 'well',
+            type: 'well',
+            input: false,
+            components: [
               {
-                type: 'textfield',
-                label: 'Sheet ID',
-                key: 'sheetID',
-                placeholder: 'Enter the Sheet ID',
-                tooltip: 'Enter the Sheet ID',
-                input: true,
-                validate: {
-                  required: true
-                },
-                multiple: false
-              },
-              {
-                type: 'textfield',
-                label: 'Worksheet Name',
-                key: 'worksheetName',
-                placeholder: 'Enter the Worksheet Name. Example: Sheet1',
-                tooltip: 'Enter the Worksheet Name. Example: Sheet1',
-                input: true,
-                validate: {
-                  required: true
-                },
-                multiple: false
-              },
-              {
-                type: 'textfield',
-                label: 'Start Row',
-                placeholder: 'The first row of the data in your spreadsheet.',
-                tooltip: 'The first row of the data in your spreadsheet.',
-                key: 'spreadSheetStartRow',
-                defaultValue: '2',
-                input: true
-              },
-              fieldPanel,
-              {
-                key: 'well',
-                type: 'well',
+                key: "content",
                 input: false,
-                components: [
-                  {
-                    key: "content",
-                    input: false,
-                    /* eslint-disable max-len */
-                    html: '<p>When using several Google Sheets actions you should specify unique <strong>External Id Type</strong> for each to avoid undesirable result.</p>',
-                    /* eslint-enable max-len */
-                    type: "content",
-                    label: "content",
-                  },
-                  {
-                    input: true,
-                    inputType: "text",
-                    label: "External Id Type",
-                    key: "externalIdType",
-                    multiple: false,
-                    protected: false,
-                    unique: false,
-                    persistent: true,
-                    type: "textfield",
-                    description: "The name to store and reference the external Id for this action",
-                  }
-                ]
+                /* eslint-disable max-len */
+                html: '<p>When using several Google Sheets actions you should specify unique <strong>External Id Type</strong> for each to avoid undesirable result.</p>',
+                /* eslint-enable max-len */
+                type: "content",
+                label: "content",
+              },
+              {
+                input: true,
+                inputType: "text",
+                label: "External Id Type",
+                key: "externalIdType",
+                multiple: false,
+                protected: false,
+                unique: false,
+                persistent: true,
+                type: "textfield",
+                description: "The name to store and reference the external Id for this action",
               }
-            ]);
-          });
-        }))
-        .catch((err) => res.status(400).send(err));
+            ]
+          }
+        ]);
+      }
+      catch (err) {
+          res.status(400).send(err);
+      }
     }
 
     // The actions core execution logic.
-    resolve(handler, method, req, res, next) {
-      if (!hook.alter('resolve', true, this, handler, method, req, res)) {
+    async resolve(handler, method, req, res, next) {
+      if (!await hook.alter('resolve', true, this, handler, method, req, res)) {
         return next();
       }
 
@@ -150,11 +149,8 @@ module.exports = (router) => {
       next(); // eslint-disable-line callback-return
 
       // Load the project settings.
-      hook.settings(req, (err, settings) => {
-        if (err) {
-          debug(err);
-          return;
-        }
+      try {
+        const settings = await hook.settings(req);
 
         const config = {
           client_id: _.get(settings, 'google.clientId'), // eslint-disable-line camelcase
@@ -225,7 +221,11 @@ module.exports = (router) => {
         if (request) {
           request.catch((err) => debug(err.message || err));
         }
-      });
+      }
+      catch (err) {
+        debug(err);
+        return;
+      }
     }
 
     getRowId(item, type) {

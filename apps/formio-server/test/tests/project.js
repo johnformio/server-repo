@@ -1376,7 +1376,7 @@ module.exports = function(app, template, hook) {
                   .delete('/project/' + stage._id)
                   .set('x-jwt-token', template.formio.owner.token)
                   .expect(200)
-                  .end(function (err, res) {
+                  .end(async function (err, res) {
                     if (err) {
                       return done(err);
                     }
@@ -1387,15 +1387,15 @@ module.exports = function(app, template, hook) {
                     // Store the JWT for future API calls.
                     template.formio.owner.token = res.headers['x-jwt-token'];
 
-                    app.formio.formio.resources.project.model.find({_id: template.project._id})
-                      .exec(function (err, results) {
-                        if (err) {
-                          return done(err);
-                        }
-
-                        assert.equal(results[0].settings.defaultStage, '', 'Should reset default stage property');
-                        done();
-                      });
+                    try {
+                      const results = await app.formio.formio.resources.project.model.find({_id: template.project._id})
+                        .exec();
+                      assert.equal(results[0].settings.defaultStage, '', 'Should reset default stage property');
+                      done();
+                    }
+                    catch (err) {
+                      return done(err);
+                    }
                   });
               });
           });
@@ -2089,56 +2089,44 @@ module.exports = function(app, template, hook) {
     }
 
     if (!docker) {
-      it('A Deleted Project should still remain in the Database', function (done) {
-        app.formio.formio.resources.project.model.find({project: template.project._id, deleted: {$eq: null}})
-          .exec(function (err, results) {
-            if (err) {
-              return done(err);
-            }
+      it('A Deleted Project should still remain in the Database', async function () {
+        const results = await app.formio.formio.resources.project.model.find({project: template.project._id, deleted: {$eq: null}})
+          .exec();
 
-            if (results.length === 0) {
-              done();
-            }
-            else {
-              done(new Error('Expected zero results, got ' + results.length));
-            }
-          });
+        if (results.length === 0) {
+          return;
+        }
+        else {
+          throw new Error('Expected zero results, got ' + results.length);
+        }
       });
     }
 
     if (!docker) {
-      it('A Deleted Project should not have any active Forms', function(done) {
-        app.formio.formio.resources.form.model.find({project: template.project._id, deleted: {$eq: null}})
-          .exec(function(err, results) {
-            if (err) {
-              return done(err);
-            }
+      it('A Deleted Project should not have any active Forms', async function() {
+        const results = await app.formio.formio.resources.form.model.find({project: template.project._id, deleted: {$eq: null}})
+          .exec();
 
-            if (results.length === 0) {
-              done();
-            }
-            else {
-              done(new Error('Expected zero results, got ' + results.length));
-            }
-          });
+        if (results.length === 0) {
+          return;
+        }
+        else {
+          throw new Error('Expected zero results, got ' + results.length);
+        }
       });
     }
 
     if (!docker) {
-      it('A Deleted Project should not have any active Roles', function(done) {
-        app.formio.formio.resources.role.model.find({project: template.project._id, deleted: {$eq: null}})
-          .exec(function(err, results) {
-            if (err) {
-              return done(err);
-            }
+      it('A Deleted Project should not have any active Roles', async function() {
+        const results = await app.formio.formio.resources.role.model.find({project: template.project._id, deleted: {$eq: null}})
+          .exec();
 
-            if (results.length === 0) {
-              done();
-            }
-            else {
-              done(new Error('Expected zero results, got ' + results.length));
-            }
-          });
+        if (results.length === 0) {
+          return;
+        }
+        else {
+          throw new Error('Expected zero results, got ' + results.length);
+        }
       });
     }
 
@@ -3762,20 +3750,19 @@ module.exports = function(app, template, hook) {
 
     describe('CORS Access for default', function() {
       if (!docker)
-      before(function(done) {
+      before(async function(done) {
         // Confirm the dummy project is on the team plan.
-        cache.updateProject(template.project._id, {
-          plan: 'team',
-          settings: {
-            portalDomain: 'https://portal.form.io'
-          }
-        }, (err, project) => {
-          if (err) {
-            return done(err);
-          }
-
+        try {
+          await cache.updateProject(template.project._id, {
+            plan: 'team',
+            settings: {
+              portalDomain: 'https://portal.form.io'
+            }
+          });
           done();
-        });
+        } catch (err) {
+          return done(err);
+        }
       });
 
       if (!docker)
@@ -3854,14 +3841,13 @@ module.exports = function(app, template, hook) {
       const cors = 'http://www.example.com,http://portal.example.com';
 
       if (!docker)
-      before(function(done) {
-        cache.updateProject(template.project._id, {plan: 'commercial'}, (err, project) => {
-          if (err) {
-            return done(err);
-          }
-
+      before(async function(done) {
+        try {
+          await cache.updateProject(template.project._id, {plan: 'commercial'});
           done();
-        });
+        } catch (err) {
+          return done(err);
+        }
       });
 
       if (!docker)
@@ -5170,7 +5156,7 @@ module.exports = function(app, template, hook) {
             if (err) {
               return done(err);
             }
-            Q(app.formio.formio.resources.form.model.findOne({name: 'paymentAuthorization'}))
+            app.formio.formio.resources.form.model.findOne({name: 'paymentAuthorization'})
             .then(function(form) {
               return app.formio.formio.resources.submission.model.findOne({form: form._id, owner: util.ObjectId(template.formio.owner._id)});
             })
@@ -5822,15 +5808,13 @@ module.exports = function(app, template, hook) {
         .execute(done);
     });
 
-    it('Should have saved these submissions within the Mongo collection', (done) => {
-      app.formio.formio.mongoose.model(collectionName).find({}, (err, records) => {
-        assert.equal(records.length, 2);
-        assert.equal(records[0]._id, helper.template.submissions.collection[0]._id);
-        assert.deepEqual(records[0].data, helper.template.submissions.collection[0].data);
-        assert.equal(records[1]._id, helper.template.submissions.collection[1]._id);
-        assert.deepEqual(records[1].data, helper.template.submissions.collection[1].data);
-        done();
-      });
+    it('Should have saved these submissions within the Mongo collection', async () => {
+      const records = await app.formio.formio.mongoose.model(collectionName).find({});
+      assert.equal(records.length, 2);
+      assert.equal(records[0]._id, helper.template.submissions.collection[0]._id);
+      assert.deepEqual(records[0].data, helper.template.submissions.collection[0].data);
+      assert.equal(records[1]._id, helper.template.submissions.collection[1]._id);
+      assert.deepEqual(records[1].data, helper.template.submissions.collection[1].data);
     });
 
     it('Should also allow you to get a single submission', (done) => {

@@ -34,7 +34,7 @@ webhookServer.post(path, async (req, res) => {
     res.sendStatus(responseCode);
   }
   else {
-    res.status(responseCode).json(response);
+    res.status(parseInt(responseCode)).json(response);
   }
   hooksRecieved.push(hookData);
   process.send(hookData);

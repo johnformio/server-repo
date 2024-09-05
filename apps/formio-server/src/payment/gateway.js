@@ -6,7 +6,7 @@ const util = require('formio/src/util/util');
 const debug = require('debug')('formio:payment:gateway');
 
 module.exports = function(config, formio) {
-  return function(req, res, next) {
+  return async function(req, res, next) {
     if (!req.user || !req.userProject.primary) {
       return res.status(401);
     }
@@ -101,9 +101,9 @@ module.exports = function(config, formio) {
 
     // Send an authorize transaction.
     /* eslint-disable new-cap */
-    const sendAuthTxn = async (contact) => {
-      const paymentApi = `${config.fortis.endpoint}/transactions/cc/avs-only/keyed`;
-      const txn = await fetch(paymentApi, {
+    const sendAuthTxn = async () => {
+      const paymentApi = `${config.fortis.endpoint}`;
+      const response = await fetch(paymentApi, {
         headers: {
           "user-id": config.fortis.userId,
           "user-api-key": config.fortis.userAPIKey,
@@ -112,143 +112,142 @@ module.exports = function(config, formio) {
           "Accept": "application/json"
         },
         method: 'POST',
-        body: JSON.stringify(buildRequest(contact))
+        body: JSON.stringify(buildRequest())
       });
-      if (txn.ok) {
-        return txn.json();
-      }
-      else {
-        const message = await txn.json();
-        debug(`Failed to create transaction: ${message}`);
-        debug("Failed Transaction Request: ", buildRequest(contact));
-        return message;
-      }
+      const txn = await response.json();
+      return txn;
     };
     /* eslint-enable new-cap */
 
-    formio.payment.getPaymentFormId(req.userProject._id)
-      .then(function(formId) {
-        const txnObject = {
-          project: req.userProject._id,
-          form: util.ObjectId(formId),
-          owner: util.ObjectId(userId)
-        };
-        const txnQuery = _.clone(txnObject);
-        txnQuery.deleted = {$eq: null};
+    try {
+      const formId = await formio.payment.getPaymentFormId(req.userProject._id);
+      const txnObject = {
+        project: req.userProject._id,
+        form: util.ObjectId(formId),
+        owner: util.ObjectId(userId)
+      };
+      const txnQuery = _.clone(txnObject);
+      txnQuery.deleted = {$eq: null};
 
-        // Get any previous auth attempts.
-        formio.resources.submission.model.findOne(txnQuery, async (err, txn) => {
-          if (err) {
+      // Get any previous auth attempts.
+      let txn = await formio.resources.submission.model.findOne(txnQuery);
+      if (!txn) {
+        // eslint-disable-next-line new-cap
+        txn = new formio.resources.submission.model(txnObject);
+        txn.data = {};
+      }
+
+      txn.metadata = txn.metadata || {};
+      _.defaults(txn.metadata, {
+        firstRequest: new Date(),
+        requestCount: 0,
+        failures: 0,
+      });
+
+      // Add protection against multiple requests. Do not allow more than 5 per day / user.
+        if (txn.metadata.lastRequest && (txn.metadata.requestCount >= 5)) {
+          if (((txn.metadata.lastRequest - txn.metadata.firstRequest) / 86400) > 1) {
+            txn.metadata.firstRequest = new Date();
+            txn.metadata.requestCount = 0;
+          }
+          else {
+            return res.status(400).send('Too many requests. Please try again later.');
+          }
+        }
+
+        if (txn.metadata.failures >= 5) {
+          return res.status(400).send('Account disabled. Please contact support to enable.');
+        }
+
+        // Set the last request and increment the request count.
+        txn.metadata.lastRequest = new Date();
+        txn.metadata.requestCount++;
+
+        const saveTransaction = async () => {
+          try {
+            await formio.resources.submission.model
+            .updateOne(
+              {
+                _id: txn._id,
+                ...txnObject,
+              },
+              txn,
+              {upsert: true}
+            );
+            return res.sendStatus(200);
+          }
+          catch (err) {
             return next(err);
           }
+        };
 
-          if (!txn) {
-            // eslint-disable-next-line new-cap
-            txn = new formio.resources.submission.model(txnObject);
-            txn.data = {};
-          }
+        const transaction = sendAuthTxn();
+            if (process.env.TEST_SUITE && transaction && transaction.data) {
+              txn.data = {
+                cardholderName: transaction.data.cardholdername,
+                // Replace all but last 4 digits with *'s
+                ccNumber: transaction.data.last_four,
+                ccExpiryMonth: data.ccExpiryMonth,
+                ccExpiryYear: data.ccExpiryYear, // TODO: Change the value from 2 digits to 4 i.e 2023
+                ccType: data.ccType,
+                transactionTag: 'O1', // TODO: Add Text field in the Transactions Record Resource
+                transactionStatus: transaction.data.status_code.toString(), // TODO: Add Text field in the Transactions Record Resource
+                transactionId: transaction.data.id, // TODO: Add Text field in the Transactions Record Resource
+              };
 
-          txn.metadata = txn.metadata || {};
-          _.defaults(txn.metadata, {
-            firstRequest: new Date(),
-            requestCount: 0,
-            failures: 0,
-          });
+              await saveTransaction();
 
-          // Add protection against multiple requests. Do not allow more than 5 per day / user.
-          if (txn.metadata.lastRequest && (txn.metadata.requestCount >= 5)) {
-            if (((txn.metadata.lastRequest - txn.metadata.firstRequest) / 86400) > 1) {
-              txn.metadata.firstRequest = new Date();
-              txn.metadata.requestCount = 0;
+              if (transaction.data.status_code === 102) {
+                return res.sendStatus(200);
+              }
+              else {
+                return res.status(400).send(`Transaction Failed: ${transaction.data.serviceErrors}  ${transaction.data.verbiage}`);
+              }
             }
-            else {
-              return res.status(400).send('Too many requests. Please try again later.');
+            if (!transaction || !transaction.data) {
+              if (transaction.meta && transaction.meta.errors) {
+                let message = '';
+                for (const error in transaction.meta.errors) {
+                  message += `${error}: ${transaction.meta.errors[error][0]}`;
+                }
+                return res.status(400).send(`Transaction Failed: ${message}`);
+              }
+              return res.status(400).send(`Transaction Failed ${transaction.details}`);
             }
-          }
+            if (transaction.data.status_code !== 102) {
+              // Update the transaction record.
+              txn.metadata.failures++;
+              await saveTransaction();
+              res.status(400);
+              if (transaction.data.serviceErrors) {
+                return res.send(`Transaction Failed:  ${transaction.data.serviceErrors}  ${transaction.data.verbiage}  ${transaction.data.status_code}`);
+              }
+              return res.send(`Transaction Failed: ${transaction.data.verbiage}  ${transaction.data.status_code}`);
+            }
 
-          if (txn.metadata.failures >= 5) {
-            return res.status(400).send('Account disabled. Please contact support to enable.');
-          }
+            if (!transaction.data.id) {
+              await saveTransaction();
+              res.status(400);
+              return res.send('Card Information Missing in the transaction');
+            }
 
-          // Set the last request and increment the request count.
-          txn.metadata.lastRequest = new Date();
-          txn.metadata.requestCount++;
-
-          if (!portalUser.fullName) {
-            return res.status(400).send('User Full Name is missing');
-          }
-
-          const fortisContact = await createFortisContact();
-          const transaction = await sendAuthTxn(fortisContact);
-          if (process.env.TEST_SUITE && transaction && transaction.data) {
             txn.data = {
-              cardholderName: transaction.data.cardholdername,
+              cardholderName: transaction.data.account_holder_name,
               // Replace all but last 4 digits with *'s
               ccNumber: transaction.data.last_four,
               ccExpiryMonth: data.ccExpiryMonth,
-              ccExpiryYear: data.ccExpiryYear, // TODO: Change the value from 2 digits to 4 i.e 2023
+              ccExpiryYear: data.ccExpiryYear,
               ccType: data.ccType,
-              transactionTag: 'O1', // TODO: Add Text field in the Transactions Record Resource
-              transactionStatus: transaction.data.status_code.toString(), // TODO: Add Text field in the Transactions Record Resource
-              transactionId: transaction.data.id, // TODO: Add Text field in the Transactions Record Resource
+              transactionTag: transaction.data.auth_code,
+              transactionStatus: transaction.data.status_code === 102 ? 'approved' : 'declined',
+              transactionId: transaction.data.id,
             };
-            await txn.save();
-            if (transaction.data.status_code === 121) {
-              return res.sendStatus(200);
-            }
-            else {
-              return res.status(400).send(`Transaction Failed: ${transaction.data.serviceErrors}  ${transaction.data.verbiage}`);
-            }
-          }
-          if (!transaction || !transaction.data) {
-            if (transaction.meta && transaction.meta.errors) {
-              let message = '';
-              for (const error in transaction.meta.errors) {
-                message += `${error}: ${transaction.meta.errors[error][0]}`;
-              }
-              return res.status(400).send(`Transaction Failed: ${message}`);
-            }
-            return res.status(400).send(`Transaction Failed ${transaction.details}`);
-          }
-          if (transaction.data.status_code !== 121) {
+
             // Update the transaction record.
-            txn.metadata.failures++;
-            txn.markModified('metadata');
-            await txn.save();
-            res.status(400);
-            if (transaction.data.serviceErrors) {
-              return res.send(`Transaction Failed:  ${transaction.data.serviceErrors}  ${transaction.data.verbiage}  ${transaction.data.reason_code_id === 1656 ? 'Declined' : transaction.data.reason_code_id}`);
-            }
-            return res.send(`Transaction Failed: ${transaction.data.verbiage}  ${transaction.data.reason_code_id === 1656 ? 'Declined' : transaction.data.reason_code_id}`);
-          }
-
-          if (!transaction.data.id) {
-            await txn.save();
-            res.status(400);
-            return res.send('Card Information Missing in the transaction');
-          }
-
-          txn.data = {
-            cardholderName: transaction.data.account_holder_name,
-            // Replace all but last 4 digits with *'s
-            ccNumber: transaction.data.last_four,
-            ccExpiryMonth: data.ccExpiryMonth,
-            ccExpiryYear: data.ccExpiryYear,
-            ccType: data.ccType,
-            transactionTag: transaction.data.auth_code,
-            transactionStatus: transaction.data.status_code === 121 ? 'approved' : 'declined',
-            transactionId: transaction.data.id,
-          };
-          debug('Transaction Data:', transaction.data);
-          // Update the transaction record.
-          txn.markModified('metadata');
-          txn.markModified('data');
-          await txn.save();
-          return res.sendStatus(200);
-        });
-      })
-      .catch(function(err) {
-        next(err);
-      });
+            await saveTransaction();
+      }
+      catch (err) {
+        return next(err);
+      }
   };
 };

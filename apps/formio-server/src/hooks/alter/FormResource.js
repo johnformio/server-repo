@@ -15,7 +15,7 @@ module.exports = app => Resource => {
     FormResource.getDraft = function(options) {
       options = ResourceClass.getMethodOptions('get', options);
       this.methods.push('get');
-      this.register(app, 'get', `${this.route}/:${this.name}Id/draft`, function(req, res, next) {
+      this.register(app, 'get', `${this.route}/:${this.name}Id/draft`, async function(req, res, next) {
         // Store the internal method for response manipulation.
         req.__rMethod = 'get';
 
@@ -23,13 +23,11 @@ module.exports = app => Resource => {
           return next();
         }
 
-        app.formio.mongoose.models.formrevision.findOne({
+        try {
+          const item = await app.formio.mongoose.models.formrevision.findOne({
           _rid: req.params.formId,
           _vid: 'draft'
-        }).lean().exec((err, item) => {
-          if (err) {
-            return ResourceClass.setResponse(res, {status: 400, error: err}, next);
-          }
+          }).lean().exec();
           if (item) {
             return options.hooks.get.after.call(
               this,
@@ -48,24 +46,31 @@ module.exports = app => Resource => {
             req,
             res,
             search,
-            () => query.findOne(search).lean().exec((err, item) => {
-              if (err) {
+            async () => {
+              try {
+                const item = await query.findOne(search).lean().exec();
+
+                if (!item) {
+                  return ResourceClass.setResponse(res, {status: 404}, next);
+                }
+
+                return options.hooks.get.after.call(
+                  this,
+                  req,
+                  res,
+                  item,
+                  ResourceClass.setResponse.bind(ResourceClass, res, {status: 200, item: item}, next)
+                );
+              }
+              catch (err) {
                 return ResourceClass.setResponse(res, {status: 400, error: err}, next);
               }
-              if (!item) {
-                return ResourceClass.setResponse(res, {status: 404}, next);
-              }
-
-              return options.hooks.get.after.call(
-                this,
-                req,
-                res,
-                item,
-                ResourceClass.setResponse.bind(ResourceClass, res, {status: 200, item: item}, next)
-              );
-            })
+            }
           );
-        });
+        }
+        catch (err) {
+          return ResourceClass.setResponse(res, {status: 400, error: err}, next);
+        }
       }, ResourceClass.respond.bind(ResourceClass), options);
       return this;
     };
@@ -76,7 +81,7 @@ module.exports = app => Resource => {
     FormResource.putDraft = function(options) {
       options = ResourceClass.getMethodOptions('put', options);
       this.methods.push('put');
-      this.register(app, 'put', `${this.route}/:${this.name}Id/draft`, (req, res, next) => {
+      this.register(app, 'put', `${this.route}/:${this.name}Id/draft`, async (req, res, next) => {
         // Store the internal method for response manipulation.
         req.__rMethod = 'put';
 
@@ -90,19 +95,14 @@ module.exports = app => Resource => {
         update._vuser = _.get(req, 'user.data.name') || _.get(req, 'user.data.email', req.user._id);
         update._vid = 'draft';
 
-        app.formio.mongoose.models.formrevision.findOne({
-          _rid: req.params[`${this.name}Id`],
-          _vid: 'draft'
-        }).exec((err, item) => {
-          if (err) {
-            return ResourceClass.setResponse(res, {status: 400, error: err}, next);
-          }
-          if (!item) {
-            return app.formio.mongoose.models.formrevision.create(update, (err, item) => {
-              if (err) {
-                return ResourceClass.setResponse(res, {status: 400, error: err}, next);
-              }
+        try {
+          let item = await app.formio.mongoose.models.formrevision.findOne({
+            _rid: req.params[`${this.name}Id`],
+            _vid: 'draft'
+          }).exec();
 
+          if (!item) {
+            item = await app.formio.mongoose.models.formrevision.create(update);
               // Trigger any after hooks before responding.
               return options.hooks.put.after.call(
                 this,
@@ -111,28 +111,23 @@ module.exports = app => Resource => {
                 item,
                 ResourceClass.setResponse.bind(ResourceClass, res, {status: 200, item: item}, next)
               );
-            });
           }
 
-          app.formio.mongoose.models.formrevision.findOneAndUpdate({
+          item = await app.formio.mongoose.models.formrevision.findOneAndUpdate({
             _id: item._id},
             {$set: update}
-          )
-          .then((item) => {
-            return options.hooks.put.after.call(
-              this,
-              req,
-              res,
-              item,
-              ResourceClass.setResponse.bind(ResourceClass, res, {status: 200, item: item}, next)
-            );
-          })
-          .catch(err=> {
-            if (err) {
-              return ResourceClass.setResponse(res, {status: 400, error: err}, next);
-            }
-          });
-        });
+          );
+          return options.hooks.put.after.call(
+            this,
+            req,
+            res,
+            item,
+            ResourceClass.setResponse.bind(ResourceClass, res, {status: 200, item: item}, next)
+          );
+        }
+        catch (err) {
+          return ResourceClass.setResponse(res, {status: 400, error: err}, next);
+        }
       }, ResourceClass.respond.bind(ResourceClass), options);
       return this;
     };

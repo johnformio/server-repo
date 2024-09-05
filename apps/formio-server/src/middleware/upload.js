@@ -2,7 +2,6 @@
 const fetch = require('@formio/node-fetch-http-proxy');
 const {promisify} = require('util');
 const _ = require('lodash');
-const Promise = require('bluebird');
 const fs = require('fs');
 const {getLicenseKey} = require('../util/utilization');
 const {getPDFUrls} = require('../util/pdf');
@@ -23,7 +22,6 @@ const tryUnlinkAsync = async filepath => {
 module.exports = (formioServer) => async (req, res, next) => {
   debug('Starting pdf upload');
   const formio = formioServer.formio;
-  Promise.promisifyAll(formio.cache, {context: formio.cache});
 
   try {
     // Load project

@@ -22,29 +22,28 @@ module.exports = function(formio) {
     }
   };
 
-  return function(req, res, next) {
+  return async function(req, res, next) {
     // Creating/Modifying a project.
     if (!('project' in req.body) || !req.body.project) {
       // Only update when modifying a project. When creating a project, there are no stages.
       if (req.method === 'PUT') {
         const teamAccess = _.filter(req.body.access || [], access => _.startsWith(access.type, 'team_'));
 
-        formio.cache.loadStages(req, req.body._id, (err, result) => {
-          if (err) {
-            return next(err);
-          }
-
-          result.forEach(stage => {
+        try {
+          const result = await formio.cache.loadStages(req, req.body._id);
+          for (const stage of result) {
             const stageAccess = {access: stage.access.toObject()};
             teamAccess.forEach(access => replaceAccess(stageAccess, access));
-            formio.mongoose.models.project.updateOne({
+            await formio.mongoose.models.project.updateOne({
               _id: stage._id
             },
-            {$set: {access: stageAccess.access}})
-            .then((res)=>{});
-          });
+            {$set: {access: stageAccess.access}});
+          }
           return next();
-        });
+        }
+        catch (err) {
+          return next(err);
+        }
       }
       else {
         return next();
@@ -52,9 +51,10 @@ module.exports = function(formio) {
     }
     // Creating/Modifying a stage.
     else {
-      formio.cache.loadProject(req, req.body.project, function(err, project) {
-        if (err || !project || !project.access) {
-          debug(err || 'No Project');
+      try {
+        const project = await formio.cache.loadProject(req, req.body.project);
+        if (!project || !project.access) {
+          debug('No Project');
           return next();
         }
 
@@ -63,7 +63,11 @@ module.exports = function(formio) {
         teamAccess.forEach(access => replaceAccess(req.body, access));
 
         return next();
-      });
+      }
+      catch (err) {
+        debug(err || 'No Project');
+        return next();
+      }
     }
   };
 };

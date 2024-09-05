@@ -19,12 +19,9 @@ const debug = {
 module.exports = function(formioServer) {
   const formio = formioServer.formio;
 
-  const report = function(req, res, next, filter) {
-    formio.cache.loadPrimaryProject(req, function(err, project) {
-      if (err) {
-        debug.report(err);
-        return res.status(400).send('Could not load the project.');
-      }
+  const report = async function(req, res, next, filter) {
+    try {
+      const project = await formio.cache.loadPrimaryProject(req);
 
       debug.report(`Plan: ${project.plan}`);
       if (!['trial', 'team', 'commercial'].includes(project.plan)) {
@@ -146,7 +143,7 @@ module.exports = function(formioServer) {
       // Ensure the project is always set to the project in context.
       query.project = accessCheckQuerySettings.project = formio.util.idToBson(req.projectId);
 
-      const getForms = function(formsNext) {
+      const getForms = async function() {
         // Make sure to not include deleted submissions.
         if (!req.query.deleted) {
           query.deleted = {$eq: null};
@@ -155,9 +152,9 @@ module.exports = function(formioServer) {
 
         if (req.isAdmin && !query.form) {
           // Speed up the report api by skipping the forms.
-          modelReady = Promise.resolve(formio.resources.submission.model);
+          modelReady = () => Promise.resolve(formio.resources.submission.model);
           preStage = [{'$match': query}];
-          return formsNext();
+          return;
         }
 
         const forms = [];
@@ -174,108 +171,101 @@ module.exports = function(formioServer) {
         }
 
         // Get all forms in a project.
-        formio.resources.form.model.find(formQuery).exec(function(err, result) {
-          if (err) {
-            return formsNext(err);
+        const result = await formio.resources.form.model.find(formQuery).exec();
+
+        // Find all forms that this user has "read_all" or "read_own" access
+        _.each(result, function(form) {
+          const access = form.submissionAccess.toObject();
+          if (req.isAdmin || (_.includes(_.keys(req.user.access), req.currentProject.name) && req.userProject.name === 'formio')) {
+            readAllForms.push(form._id);
           }
-
-          // Find all forms that this user has "read_all" or "read_own" access
-          _.each(result, function(form) {
-            const access = form.submissionAccess.toObject();
-            if (req.isAdmin || (_.includes(_.keys(req.user.access), req.currentProject.name) && req.userProject.name === 'formio')) {
-              readAllForms.push(form._id);
-            }
-            else {
-              _.map(access, (item) => {
-                const roles = _.map(item.roles, (role) => role.toString());
-                if (item.type === 'read_all' && req.user.roles.some((role) => roles.includes(role))) {
-                  readAllForms.push(form._id);
-                }
-                else if (item.type === 'read_own' && req.user.roles.some((role) => roles.includes(role))) {
-                  readOwnForms.push(form._id);
-                }
-              });
-            }
-
-            forms.push(form._id);
-            protectedFields[form._id.toString()] = [];
-            formio.util.FormioUtils.eachComponent(form.components, (component, path) => {
-              if (component.protected) {
-                protectedFields[form._id.toString()].push(path);
+          else {
+            _.map(access, (item) => {
+              const roles = _.map(item.roles, (role) => role.toString());
+              if (item.type === 'read_all' && req.user.roles.some((role) => roles.includes(role))) {
+                readAllForms.push(form._id);
+              }
+              else if (item.type === 'read_own' && req.user.roles.some((role) => roles.includes(role))) {
+                readOwnForms.push(form._id);
               }
             });
-          });
-
-          modelReady = new Promise((resolve, reject) => {
-            util.getSubmissionModel(formio, req, result[0], true, (err, collectionModel) => {
-              if (collectionModel) {
-                resolve(collectionModel);
-              }
-              else {
-                resolve(formio.resources.submission.model);
-              }
-            });
-          });
-
-          // If they do not provide a form limit, it should at least be the forms.
-          if (!query.form) {
-            query.form = {$in: forms};
-            accessCheckQuerySettings.forms = forms;
           }
 
-          preStage = [{'$match': query}];
-          if (!req.isAdmin) {
-            accessCheckQuerySettings.userRoles = userRoles;
-            accessCheckQuerySettings.readAllForms = readAllForms;
-            accessCheckQuerySettings.readOwnForms = readOwnForms;
-            const owner = accessCheckQuerySettings.owner = formio.util.idToBson(req.user._id);
-
-            preStage = preStage.concat([
-              {
-                '$addFields': {
-                  'hasAccess': {
-                    $gt: [{
-                      $size: {
-                        $setIntersection: [
-                          userRoles,
-                          {
-                            $reduce: {
-                              input: '$access',
-                              initialValue: [],
-                              in: {$concatArrays: ["$$value", "$$this.resources"]}
-                            }
-                          }
-                        ]
-                      }
-                    }, 0]
-                  }
-                }
-              },
-              {
-                '$match': {
-                  '$or': [
-                    {
-                      form: {
-                        '$in': readAllForms
-                      }
-                    },
-                    {
-                      form: {
-                        '$in': readOwnForms
-                      },
-                      owner
-                    },
-                    {
-                      hasAccess: true
-                    }
-                  ]
-                }
-              }
-            ]);
-          }
-
-          formsNext();
+          forms.push(form._id);
+          protectedFields[form._id.toString()] = [];
+          formio.util.FormioUtils.eachComponent(form.components, (component, path) => {
+            if (component.protected) {
+              protectedFields[form._id.toString()].push(path);
+            }
+          });
         });
+
+        modelReady = async () => {
+          const collectionModel = await util.getSubmissionModel(formio, req, result[0], true);
+          if (collectionModel) {
+            return collectionModel;
+          }
+          else {
+            return formio.resources.submission.model;
+          }
+        };
+
+        // If they do not provide a form limit, it should at least be the forms.
+        if (!query.form) {
+          query.form = {$in: forms};
+          accessCheckQuerySettings.forms = forms;
+        }
+
+        preStage = [{'$match': query}];
+        if (!req.isAdmin) {
+          accessCheckQuerySettings.userRoles = userRoles;
+          accessCheckQuerySettings.readAllForms = readAllForms;
+          accessCheckQuerySettings.readOwnForms = readOwnForms;
+          const owner = accessCheckQuerySettings.owner = formio.util.idToBson(req.user._id);
+
+          preStage = preStage.concat([
+            {
+              '$addFields': {
+                'hasAccess': {
+                  $gt: [{
+                    $size: {
+                      $setIntersection: [
+                        userRoles,
+                        {
+                          $reduce: {
+                            input: '$access',
+                            initialValue: [],
+                            in: {$concatArrays: ["$$value", "$$this.resources"]}
+                          }
+                        }
+                      ]
+                    }
+                  }, 0]
+                }
+              }
+            },
+            {
+              '$match': {
+                '$or': [
+                  {
+                    form: {
+                      '$in': readAllForms
+                    }
+                  },
+                  {
+                    form: {
+                      '$in': readOwnForms
+                    },
+                    owner
+                  },
+                  {
+                    hasAccess: true
+                  }
+                ]
+              }
+            }
+          ]);
+        }
       };
 
       // required for DBs that do not support multiple join conditions and uncorrelated subquery for lookup operator (e.g. DocumentDB)
@@ -366,107 +356,101 @@ module.exports = function(formioServer) {
       };
 
       // Get all forms in a project.
-      getForms(function(err) {
-        if (err) {
-          return next(err);
-        }
-        // check if poststage (instead of prestages) with access check are required as lookup with pipeline is not supported by DocumentDB.
-        const requireLookupPostStage = _.some(stages, stage => stage.$lookup && !stage.$lookup.pipeline)
-          && !_.some(stages, stage => stage.$lookup && _.isArray(stage.$lookup.pipeline));
+      await getForms();
 
-        const initialStages = stages;
-        stages = [];
+      // check if poststage (instead of prestages) with access check are required as lookup with pipeline is not supported by DocumentDB.
+      const requireLookupPostStage = _.some(stages, stage => stage.$lookup && !stage.$lookup.pipeline)
+        && !_.some(stages, stage => stage.$lookup && _.isArray(stage.$lookup.pipeline));
 
-        // Add prestages/poststage for lookup
-        _.each(initialStages, stage => {
-          const lookupSettings = stage.$lookup;
+      const initialStages = stages;
+      stages = [];
 
-          if (lookupSettings && _.isPlainObject(lookupSettings) ) {
-            if (!requireLookupPostStage) {
-              lookupSettings.pipeline = _.isArray(lookupSettings.pipeline)
-                ? preStage.concat(lookupSettings.pipeline)
-                : preStage;
+      // Add prestages/poststage for lookup
+      _.each(initialStages, stage => {
+        const lookupSettings = stage.$lookup;
 
-              stages.push(stage);
-            }
-            else {
-              stages.push(stage);
-              stages.push(getLookupPostStage(lookupSettings.as));
-            }
+        if (lookupSettings && _.isPlainObject(lookupSettings) ) {
+          if (!requireLookupPostStage) {
+            lookupSettings.pipeline = _.isArray(lookupSettings.pipeline)
+              ? preStage.concat(lookupSettings.pipeline)
+              : preStage;
+
+            stages.push(stage);
           }
           else {
             stages.push(stage);
+            stages.push(getLookupPostStage(lookupSettings.as));
           }
-        });
-
-        // Add the prestages to the beginning of the stages.
-        stages = preStage.concat(stages);
-        res.setHeader('Content-Type', 'application/json');
-
-        // Find the total count based on the query.
-        modelReady.then((model) =>
-          model.aggregate(stages.concat([{$count: 'total'}])).exec(function(err, result) {
-            if (err) {
-              debug.error(err);
-              return next(err);
-            }
-
-            const skip = skipStage ? skipStage['$skip'] : 0;
-            const limit = limitStage ? limitStage['$limit'] : 100;
-            if (!req.headers.range) {
-              req.headers['range-unit'] = 'items';
-              req.headers.range = `${skip}-${skip + (limit - 1)}`;
-            }
-
-            // Get the page range.
-            const total = result.length ? result[0].total : 0;
-            const pageRange = paginate(req, res, total, limit) || {
-              limit: limit,
-              skip: skip
-            };
-
-            // Alter the skip and limit stages.
-            if (skipStage) {
-              skipStage['$skip'] = pageRange.skip;
-            }
-            limitStage = {'$limit': pageRange.limit};
-
-            // Perform the aggregation command.
-            if (skipStage) {
-              stages.push(skipStage);
-            }
-
-            // Next add the limit.
-            stages.push({'$limit': pageRange.limit});
-
-            // Perform the aggregation.
-            debug.report('final pipeline', stages);
-            model.aggregate(stages)
-              .cursor()
-              .pipe(through(function(doc) {
-                if (doc && doc.form && doc.data) {
-                  const formId = doc.form.toString();
-                  if (protectedFields.hasOwnProperty(formId)) {
-                    _.each(protectedFields[formId], (path) => _.set(doc.data, path, '--- PROTECTED ---'));
-                  }
-                }
-                this.queue(doc);
-              }))
-              .pipe(JSONStream.stringify())
-              .pipe(res);
-          })
-        ).catch((err) => res.status(400).send(err.message));
+        }
+        else {
+          stages.push(stage);
+        }
       });
-    });
+
+      // Add the prestages to the beginning of the stages.
+      stages = preStage.concat(stages);
+      res.setHeader('Content-Type', 'application/json');
+
+      // Find the total count based on the query.
+      const model = await modelReady();
+      const countResult = await model.aggregate(stages.concat([{$count: 'total'}])).exec();
+
+      const skip = skipStage ? skipStage['$skip'] : 0;
+      const limit = limitStage ? limitStage['$limit'] : 100;
+      if (!req.headers.range) {
+        req.headers['range-unit'] = 'items';
+        req.headers.range = `${skip}-${skip + (limit - 1)}`;
+      }
+
+      // Get the page range.
+      const total = countResult.length ? countResult[0].total : 0;
+      const pageRange = paginate(req, res, total, limit) || {
+        limit: limit,
+        skip: skip
+      };
+
+      // Alter the skip and limit stages.
+      if (skipStage) {
+        skipStage['$skip'] = pageRange.skip;
+      }
+      limitStage = {'$limit': pageRange.limit};
+
+      // Perform the aggregation command.
+      if (skipStage) {
+        stages.push(skipStage);
+      }
+
+      // Next add the limit.
+      stages.push({'$limit': pageRange.limit});
+
+      // Perform the aggregation.
+      debug.report('final pipeline', stages);
+      const cursor = model.aggregate(stages).cursor();
+      cursor.pipe(through(function(doc) {
+        if (doc && doc.form && doc.data) {
+          const formId = doc.form.toString();
+          if (protectedFields.hasOwnProperty(formId)) {
+            _.each(protectedFields[formId], (path) => _.set(doc.data, path, '--- PROTECTED ---'));
+          }
+        }
+        this.queue(doc);
+      }))
+      .pipe(JSONStream.stringify())
+      .pipe(res);
+    }
+    catch (err) {
+      debug.report(err);
+      return res.status(400).send('Could not load the project.');
+    }
   };
 
   // Use post to crete aggregation criteria.
-  router.post('/', function(req, res, next) {
-    report(req, res, next, req.body);
+  router.post('/', async function(req, res, next) {
+    await report(req, res, next, req.body);
   });
 
   // Allow them to provide the query via headers on a GET request.
-  router.get('/', function(req, res, next) {
+  router.get('/', async function(req, res, next) {
     let pipeline = [];
     if (req.headers.hasOwnProperty('x-query')) {
       debug.report('GET', req.headers['x-query']);
@@ -480,7 +464,7 @@ module.exports = function(formioServer) {
     }
 
     // create the report.
-    report(req, res, next, pipeline);
+    await report(req, res, next, pipeline);
   });
 
   return router;

@@ -66,30 +66,26 @@ module.exports = (formio, config) => {
   };
 
   // Get the SAML providers for this project.
-  const getSAMLProviders = function(req) {
-    return new Promise((resolve, reject) => {
-      formio.cache.loadCurrentProject(req, function(err, project) {
-        if (err) {
+  const getSAMLProviders = async function(req) {
+        const project = await formio.cache.loadCurrentProject(req);
+        if (!project) {
           debug('Unable to load project');
-          return reject('Unable to load project');
+          throw new Error('Unable to load project');
         }
-
         const settings = _.get(project, 'settings.saml', null);
         if (
           !settings || (!settings.idp && !settings.passport)
         ) {
           debug('Project is not configured for SAML');
-          return reject('Project is not configured for SAML');
+          throw new Error('Project is not configured for SAML');
         }
 
         // Load the valid roles for this project.
-        formio.resources.role.model.find({
-          project: formio.util.idToBson(project._id),
-          deleted: {$eq: null}
-        }).exec((err, roles) => {
-          if (err) {
-            return reject('Unable to load project roles');
-          }
+        try {
+          const roles = await formio.resources.role.model.find({
+            project: formio.util.idToBson(project._id),
+            deleted: {$eq: null}
+          }).exec();
 
           // Make sure to only allow valid role ids.
           const validRoles = (roles && roles.length) ? _.map(roles, (role) => role._id.toString()) : [];
@@ -116,7 +112,7 @@ module.exports = (formio, config) => {
             debug("Error while parsing SAML settings");
           }
           if (!config) {
-            return reject('Invalid SAML Configuration');
+            throw new Error('Invalid SAML Configuration');
           }
           try {
             // Fix "authnContext" configuration option which changed in recent versions from a string to an array.
@@ -124,20 +120,21 @@ module.exports = (formio, config) => {
               config.authnContext = [config.authnContext];
             }
             const saml = new SAML(config);
-            return resolve({
+            return {
               saml: saml,
               project: project,
               projectRoles: roles,
               roles: roleMap,
               settings: settings
-            });
+            };
           }
           catch (err) {
-            return reject(err.message || err);
+            throw new Error(err.message || err);
           }
-        });
-      });
-    });
+      }
+      catch (err) {
+        throw new Error('Unable to load project roles');
+      }
   };
 
   /**

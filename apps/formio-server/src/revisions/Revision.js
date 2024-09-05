@@ -54,22 +54,21 @@ module.exports = class Revision {
     );
   }
 
-  delete(rid, next) {
-    this.revisionModel.updateMany(
-      {
-        _rid: this.idToBson(rid),
-        deleted: {$eq: null}
-      },
-      {
-        deleted: Date.now(),
-        markModified: 'deleted'
-      },
-      (err) => {
-        if (err) {
-          return next(err);
-        }
-        next();
-      }
-    );
+  async delete(rid, next) {
+    try {
+      await this.revisionModel.updateMany(
+        {
+          _rid: this.idToBson(rid),
+          deleted: {$eq: null}
+        },
+        {
+          deleted: Date.now(),
+          markModified: 'deleted'
+        });
+        return next();
+    }
+    catch (err) {
+      return next(err);
+    }
   }
 };

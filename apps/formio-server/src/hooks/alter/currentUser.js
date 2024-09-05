@@ -33,16 +33,20 @@ module.exports = (app) => (middleware) => {
     }
     return next();
   });
-  middleware.unshift((req, res, next) => {
-    app.formio.formio.hook.alter('getPrimaryProjectAdminRole', req, res, (err, role) => {
+  middleware.unshift(async (req, res, next) => {
+    try {
+      const role = await app.formio.formio.hook.alter('getPrimaryProjectAdminRole', req, res);
       req.isAdmin = req.user && req.user.roles && req.user.roles.includes(role);
-      next();
-    });
+      return next();
+  }
+  catch (err) {
+   return next();
+  }
   });
   middleware.unshift((req, res, next) => {
     app.formio.formio.hook.alter('oAuthResponse', req, res, next);
   });
-  middleware.unshift((req, res, next) => {
+  middleware.unshift(async (req, res, next) => {
     // Check for a bearer token.
     const authorization = app.formio.formio.util.getHeader(req, 'authorization');
 
@@ -50,20 +54,17 @@ module.exports = (app) => (middleware) => {
       return next();
     }
 
-    app.formio.formio.cache.loadCurrentProject(req, (err, currentProject) => {
-      if (err || !currentProject) {
+    try {
+      const currentProject = await app.formio.formio.cache.loadCurrentProject(req);
+      if (!currentProject) {
         return next();
       }
 
-      // Load the valid roles for this project.
-      app.formio.formio.resources.role.model.find({
-        project: app.formio.formio.util.idToBson(currentProject._id),
-        deleted: {$eq: null},
-      }).exec((err, roles) => {
-        if (err) {
-          return next();
-        }
-
+        // Load the valid roles for this project.
+        const roles = await app.formio.formio.resources.role.model.find({
+          project: app.formio.formio.util.idToBson(currentProject._id),
+          deleted: {$eq: null},
+        }).exec();
         // Get a list of valid roles for this project.
         const validRoles = (roles && roles.length) ? _.map(roles, (role) => role._id.toString()) : [];
 
@@ -73,15 +74,15 @@ module.exports = (app) => (middleware) => {
           return next();
         }
 
-        fetch(oauthSettings.userInfoURI,{
+        try {
+          const response = await fetch(oauthSettings.userInfoURI,{
           method: 'GET',
           rejectUnauthorized: false,
           headers: {
             Authorization: authorization,
           },
-        })
-          .then((response) => response.ok ? response.json() : null)
-          .then((data) => {
+        });
+        const data = response.ok ? await response.json() : null;
             // Assign roles based on settings.
             const roles = [];
             _.map(oauthSettings.roles, map => {
@@ -105,38 +106,41 @@ module.exports = (app) => (middleware) => {
             };
             const formio = app.formio.formio;
 
-            formio.mongoose.models.session.create({
+            const session = await formio.mongoose.models.session.create({
               project: currentProject._id,
               // form: ssoToken.submission.form,
               submission: user._id,
               source: 'oauth2:token',
-            })
-              .then((session) => {
-                const token = formio.hook.alter('token', {
-                  external: true,
-                  user,
-                  project: {
-                    _id: currentProject._id.toString(),
-                  },
-                }, '', {session});
+            });
 
-                req.user = user;
-                req.token = token;
-                res.token = formio.auth.getToken(token);
-                req['x-jwt-token'] = res.token;
+            const token = formio.hook.alter('token', {
+              external: true,
+              user,
+              project: {
+                _id: currentProject._id.toString(),
+              },
+            }, '', {session});
 
-                // Set the headers if they haven't been sent yet.
-                if (!res.headersSent) {
-                  const headers = formio.hook.alter('accessControlExposeHeaders', 'x-jwt-token');
-                  res.setHeader('Access-Control-Expose-Headers', headers);
-                  res.setHeader('x-jwt-token', res.token);
-                }
-                return res.send(user);
-              });
-          })
-          .catch((err) => res.status(400).send(err.message || err));
-      });
-    });
+            req.user = user;
+            req.token = token;
+            res.token = formio.auth.getToken(token);
+            req['x-jwt-token'] = res.token;
+
+            // Set the headers if they haven't been sent yet.
+            if (!res.headersSent) {
+              const headers = formio.hook.alter('accessControlExposeHeaders', 'x-jwt-token');
+              res.setHeader('Access-Control-Expose-Headers', headers);
+              res.setHeader('x-jwt-token', res.token);
+            }
+            return res.send(user);
+        }
+        catch (err) {
+          return res.status(400).send(err.message || err);
+        }
+  }
+  catch (err) {
+    return next();
+  }
   });
   return middleware;
 };

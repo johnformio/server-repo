@@ -43,7 +43,7 @@ module.exports = (router, formioServer) => {
     res.resource.item = multi ? list : list[0];
   };
 
-  const projectSettings = (req, res, next) => {
+  const projectSettings = async (req, res, next) => {
     // Allow admin key
     if (req.adminKey || req.isAdmin) {
       decryptSettings(req, res, next);
@@ -63,28 +63,24 @@ module.exports = (router, formioServer) => {
       return next();
     }
     else if (req.projectId && req.user) {
-      formio.cache.loadPrimaryProject(req, (err, project) => {
+      try {
+        const project = await formio.cache.loadPrimaryProject(req);
         let role = 'read';
-        if (!err) {
-          const adminAccess = getProjectAccess(project.access, 'team_admin');
-          const writeAccess = getProjectAccess(project.access, 'team_write');
-          const roles = _.map(req.user.teams, formio.util.idToString);
-          const isAdmin = _.intersection(adminAccess, roles).length !== 0;
-          decryptSettings(req, res, next, !isAdmin);
-          if (isAdmin) {
-            formioServer.formio.audit('PROJECT_SETTINGS', req);
-            return next();
-          }
-          if (_.intersection(writeAccess, roles).length !== 0) {
-            role = 'write';
-          }
-
-          if (req.method === 'GET') {
-            _.set(res, 'resource.item.addConfigToForms', _.get(project,'settings.addConfigToForms', false));
-          }
+        const adminAccess = getProjectAccess(project.access, 'team_admin');
+        const writeAccess = getProjectAccess(project.access, 'team_write');
+        const roles = _.map(req.user.teams, formio.util.idToString);
+        const isAdmin = _.intersection(adminAccess, roles).length !== 0;
+        decryptSettings(req, res, next, !isAdmin);
+        if (isAdmin) {
+          formioServer.formio.audit('PROJECT_SETTINGS', req);
+          return next();
         }
-        else {
-          debug(err);
+        if (_.intersection(writeAccess, roles).length !== 0) {
+          role = 'write';
+        }
+
+        if (req.method === 'GET') {
+          _.set(res, 'resource.item.addConfigToForms', _.get(project,'settings.addConfigToForms', false));
         }
 
         if (req.method === 'PUT' || req.method === 'POST') {
@@ -102,7 +98,11 @@ module.exports = (router, formioServer) => {
         if (fileToken) {
           _.set(res, 'resource.item.settings.filetoken', fileToken);
         }
-      });
+      }
+      catch (err) {
+        debug(err);
+        return next(err);
+      }
     }
     else {
       if (req.method === 'PUT' || req.method === 'POST') {
@@ -123,7 +123,7 @@ module.exports = (router, formioServer) => {
   formio.middleware.projectSettings = projectSettings;
 
   // Check tenant's parent project plan
-  formio.middleware.checkTenantProjectPlan = require('../middleware/checkTenantProjectPlan')(formio);
+   formio.middleware.checkTenantProjectPlan = require('../middleware/checkTenantProjectPlan')(formio);
 
   // Check stage's parent project
   formio.middleware.checkStageProject = require('../middleware/checkStageProject')(formio);
@@ -427,7 +427,7 @@ module.exports = (router, formioServer) => {
     ],
   });
 
-  router.post('/project/available', (req, res, next) => {
+  router.post('/project/available', async (req, res, next) => {
     if (!req.body || !req.body.name) {
       return res.status(400).send('"name" parameter is required');
     }
@@ -435,14 +435,14 @@ module.exports = (router, formioServer) => {
       return res.status(200).send({available: false});
     }
 
-    resource.model.findOne({name: req.body.name, deleted: {$eq: null}}, (err, project) => {
-      if (err) {
-        debug(err);
-        return next(err);
-      }
-
+    try {
+      const project = await resource.model.findOne({name: req.body.name, deleted: {$eq: null}});
       return res.status(200).json({available: !project});
-    });
+    }
+    catch (err) {
+      debug(err);
+      return next(err);
+    }
   });
 
   const sqlconnector = require('../actions/sqlconnector/util')(formioServer);
@@ -473,7 +473,7 @@ module.exports = (router, formioServer) => {
     '/project/:projectId/portal-check',
       cors(),
       formio.middleware.tokenHandler,
-      (req, res, next) => {
+      async (req, res, next) => {
         const origin = req.header('Origin');
         if (
           !origin || (origin.includes('http://localhost:') ||
@@ -488,16 +488,17 @@ module.exports = (router, formioServer) => {
           if (hash === req.body.payload && origin) {
             const domain = _.get(req.currentProject, 'settings.portalDomain');
             if (!domain || domain !== origin) {
-              formio.cache.updateCurrentProject(req, {
-                settings: {
-                  portalDomain: origin
-                }
-              }, (err, project) => {
-                if (err) {
-                  return next(err);
-                }
+              try {
+                await formio.cache.updateCurrentProject(req, {
+                  settings: {
+                    portalDomain: origin
+                  }
+                });
                 return res.status(200).send('OK');
-              });
+            }
+            catch (err) {
+              return next(err);
+            }
             }
             return res.status(200).send('OK');
           }

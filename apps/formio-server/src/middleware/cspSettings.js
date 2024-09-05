@@ -7,7 +7,7 @@ const helmet = require('helmet');
  * Middleware to set CSP.
  */
 module.exports = function(router) {
-  return function(req, res, next) {
+  return async function(req, res, next) {
     const helmetOverrides = {};
     // Do not add opener, embedder, or resource policies.
     helmetOverrides.crossOriginOpenerPolicy = false;
@@ -68,14 +68,8 @@ module.exports = function(router) {
     }
 
       // Load the project settings.
-    router.formio.formio.hook.settings(req, function(err, settings) {
-      if (err) {
-        if (err === 'Project not found') {
-          return createCSPMiddleware(directives)(req, res, next);
-        }
-        return next(err);
-      }
-
+    try {
+      let settings = await router.formio.formio.hook.settings(req);
       // Build the CSP settings string.
       settings = settings || {};
       let cspSettings = settings.csp || '';
@@ -100,6 +94,12 @@ module.exports = function(router) {
       }
 
       return createCSPMiddleware(cspSettings)(req, res, next);
-    });
+    }
+    catch (err) {
+      if (err.message === 'Project not found') {
+        return createCSPMiddleware(directives)(req, res, next);
+      }
+      return next(err);
+    }
   };
 };

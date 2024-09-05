@@ -916,11 +916,9 @@ module.exports = function(app, template, hook) {
         });
       });
 
-      it('Upgrade the project to a team project plan', function(done) {
-        cache.updateProject(teamProject._id, {plan: 'team'}, (err, project) => {
-          teamProject = project;
-          done();
-        });
+      it('Upgrade the project to a team project plan', async function() {
+        const project = await cache.updateProject(teamProject._id, {plan: 'team'});
+        teamProject = project;
       });
 
       it('A Project Owner should be able to add a Team they own to their project, if its on a team plan', function(done) {
@@ -1155,11 +1153,9 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      it('Upgrade the project to a commercial project plan', function(done) {
-        cache.updateProject(teamProject._id, {plan: 'commercial'}, (err, project) => {
-          teamProject = project;
-          done();
-        });
+      it('Upgrade the project to a commercial project plan', async function() {
+        const project = await cache.updateProject(teamProject._id, {plan: 'commercial'});
+        teamProject = project;
       });
 
       it('A Project Owner should be able to add a Team they own to their project, if its on a commercial plan', function(done) {
@@ -1217,11 +1213,9 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      it('Upgrade the project to a commercial project plan', function(done) {
-        cache.updateProject(teamProject._id, {plan: 'trial'}, (err, project) => {
-          teamProject = project;
-          done();
-        });
+      it('Upgrade the project to a commercial project plan', async function() {
+        const project = await cache.updateProject(teamProject._id, {plan: 'trial'});
+        teamProject = project;
       });
 
       it('A Project Owner should be able to add a Team they own to their project, if its on a commercial plan', function(done) {
@@ -1279,11 +1273,9 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      it('Revert the project to a team project plan', function(done) {
-        cache.updateProject(teamProject._id, {plan: 'team'}, (err, project) => {
-          teamProject = project;
-          done();
-        });
+      it('Revert the project to a team project plan', async function() {
+        const project = await cache.updateProject(teamProject._id, {plan: 'team'});
+        teamProject = project;
       });
 
       it('A Project Owner should be able to remove a team from their project', function(done) {
@@ -3783,7 +3775,7 @@ module.exports = function(app, template, hook) {
           .send(temp)
           .expect('Content-Type', /json/)
           .expect(200)
-          .end(function(err, res) {
+          .end(async function(err, res) {
             if (err) {
               return done(err);
             }
@@ -3796,10 +3788,8 @@ module.exports = function(app, template, hook) {
               return done();
             }
 
-            cache.loadCache.load(teamProject._id, (err, project) => {
-              if(err) {
-                return done(err);
-              }
+            try {
+              await cache.loadCache.load(teamProject._id, true);
 
               // Confirm that the settings were changed.
               assert.deepEqual(_.omit(response.settings, ['licenseKey']), temp.settings);
@@ -3808,7 +3798,9 @@ module.exports = function(app, template, hook) {
               template.formio.user1.token = res.headers['x-jwt-token'];
 
               done();
-            }, true);
+            } catch (err) {
+              return done(err);
+            }
           });
       });
 

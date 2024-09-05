@@ -125,11 +125,9 @@ const middleware = router => {
       next();
     },
     router.formio.formio.middleware.permissionHandler,
-    function(req, res) {
-      router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
-        if (err) {
-          return res.status(400).send('Project not found.');
-        }
+    async function(req, res) {
+      try {
+        const project = await router.formio.formio.cache.loadProject(req, req.projectId);
 
         if (!project.settings.storage || !project.settings.storage.dropbox) {
           return res.status(400).send('Storage settings not set.');
@@ -168,7 +166,10 @@ const middleware = router => {
               return res.status(400).send('Invalid response.');
             }
           });
-      });
+      }
+      catch (err) {
+        return res.status(400).send('Project not found.');
+      }
     }
   );
 
@@ -186,11 +187,9 @@ const middleware = router => {
     },
     router.formio.formio.middleware.permissionHandler,
     upload.single('file'),
-    function(req, res) {
-      router.formio.formio.cache.loadProject(req, req.projectId, function(err, project) {
-        if (err) {
-          return res.status(400).send('Project not found.');
-        }
+    async function(req, res) {
+      try {
+        const project = await router.formio.formio.cache.loadProject(req, req.projectId);
 
         if (!project.settings.storage ||
           !project.settings.storage.dropbox ||
@@ -229,7 +228,10 @@ const middleware = router => {
 
             res.send(body);
           });
-      });
+      }
+      catch (err) {
+        return res.status(400).send('Project not found.');
+      }
     }
   );
 };

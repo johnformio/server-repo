@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = app => (instance, revision, model, done) => {
+module.exports = app => async (instance, revision, model) => {
   const query = [];
   if (revision.length === 24) {
     query.push({_id: revision});
@@ -14,12 +14,6 @@ module.exports = app => (instance, revision, model, done) => {
       _vid: parseInt(revision, 10)
     });
   }
-  const findRevision = model.findOne({$or: query});
 
-  findRevision.lean().exec((err, result) => {
-    if (err) {
-      return done(err);
-    }
-    done(null, result);
-  });
+  return await model.findOne({$or: query}).lean().exec();
 };

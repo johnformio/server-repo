@@ -40,32 +40,25 @@ module.exports = function(app, template, hook) {
         });
     });
 
-    it('installs one project named formio', function(done) {
-      app.formio.resources.project.model.find({})
-        .exec(function(err, results) {
-          if (err) {
-            return done(err);
-          }
-
-          assert.equal(results.length, 1);
-          _template.project = results[0];
-          _template.project.accessObject = {};
-          _template.project.access.forEach(function(access) {
-            _template.project.accessObject[access.type] = access.roles;
-          });
-          assert.equal(_template.project.name, 'formio');
-          assert.equal(_template.project.machineName, 'formio');
-          assert.equal(_template.project.accessObject.create_all.length, 1);
-          assert.notEqual(_template.project.accessObject.create_all.indexOf(_template.roles.Administrator._id), -1);
-          assert.equal(_template.project.accessObject.read_all.length, 2);
-          assert.notEqual(_template.project.accessObject.read_all.indexOf(_template.roles.Administrator._id), -1);
-          assert.notEqual(_template.project.accessObject.read_all.indexOf(_template.roles.Anonymous._id), -1);
-          assert.equal(_template.project.accessObject.update_all.length, 1);
-          assert.notEqual(_template.project.accessObject.update_all.indexOf(_template.roles.Administrator._id), -1);
-          assert.equal(_template.project.accessObject.delete_all.length, 1);
-          assert.notEqual(_template.project.accessObject.delete_all.indexOf(_template.roles.Administrator._id), -1);
-          done();
-        });
+    it('installs one project named formio', async function() {
+      const results = await app.formio.resources.project.model.find({});
+      assert.equal(results.length, 1);
+      _template.project = results[0];
+      _template.project.accessObject = {};
+      _template.project.access.forEach(function(access) {
+        _template.project.accessObject[access.type] = access.roles;
+       });
+        assert.equal(_template.project.name, 'formio');
+        assert.equal(_template.project.machineName, 'formio');
+        assert.equal(_template.project.accessObject.create_all.length, 1);
+        assert.notEqual(_template.project.accessObject.create_all.indexOf(_template.roles.Administrator._id), -1);
+        assert.equal(_template.project.accessObject.read_all.length, 2);
+        assert.notEqual(_template.project.accessObject.read_all.indexOf(_template.roles.Administrator._id), -1);
+        assert.notEqual(_template.project.accessObject.read_all.indexOf(_template.roles.Anonymous._id), -1);
+        assert.equal(_template.project.accessObject.update_all.length, 1);
+        assert.notEqual(_template.project.accessObject.update_all.indexOf(_template.roles.Administrator._id), -1);
+        assert.equal(_template.project.accessObject.delete_all.length, 1);
+        assert.notEqual(_template.project.accessObject.delete_all.indexOf(_template.roles.Administrator._id), -1);
     });
 
     it('Should put the roles in the project', function(done) {
@@ -75,15 +68,11 @@ module.exports = function(app, template, hook) {
       done();
     });
 
-    it('creates one resource named user', function(done) {
-      app.formio.resources.form.model.find({
-        type: 'resource'
-      })
-      .exec(function(err, results) {
-        if (err) {
-          return done(err);
-        }
-
+    it('creates one resource named user', async function() {
+        const results = await app.formio.resources.form.model.find({
+          type: 'resource'
+        })
+        .exec();
         assert.equal(results.length, 1);
         assert.equal(results[0].name, 'user');
         _template.resources = {};
@@ -98,19 +87,13 @@ module.exports = function(app, template, hook) {
         assert.equal(_template.project.accessObject.read_all.length, 2);
         assert.notEqual(_template.project.accessObject.read_all.indexOf(_template.roles.Administrator._id), -1);
         assert.notEqual(_template.project.accessObject.read_all.indexOf(_template.roles.Anonymous._id), -1);
-        done();
-      });
     });
 
-    it('creates one form named user login', function(done) {
-      app.formio.resources.form.model.find({
-        type: 'form'
-      })
-      .exec(function(err, results) {
-        if (err) {
-          return done(err);
-        }
-
+    it('creates one form named user login', async function() {
+        const results = await app.formio.resources.form.model.find({
+          type: 'form'
+        })
+        .exec();
         assert.equal(results.length, 1);
         assert.equal(results[0].name, 'userLogin');
         _template.forms = {};
@@ -118,8 +101,6 @@ module.exports = function(app, template, hook) {
         assert.equal(_template.forms.userLogin.title, 'User Login');
         assert.equal(_template.forms.userLogin.machineName, 'formio:userLogin');
         assert.equal(_template.forms.userLogin.project._id, _template.project._id._id);
-        done();
-      });
     });
 
     it('creates three actions', function(done) {
@@ -151,21 +132,15 @@ module.exports = function(app, template, hook) {
         });
     });
 
-    it('creates the administrative account', function(done) {
-      app.formio.resources.submission.model.find()
-        .exec(function(err, results) {
-          if (err) {
-            return done(err);
-          }
-
+    it('creates the administrative account', async function() {
+          const results = await app.formio.resources.submission.model.find()
+          .exec();
           assert.equal(results.length, 1);
           _template.owner = results[0];
           assert.equal(_template.owner.form._id, _template.resources.user._id._id);
 
           assert.equal(_template.owner.roles.length, 1);
           assert.notEqual(_template.owner.roles.indexOf(_template.roles.Administrator._id), -1);
-          done();
-        });
     });
 
     it('assigns the admin to be the owner of the project', function(done) {

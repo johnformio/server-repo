@@ -10,7 +10,7 @@ module.exports = function(formio) {
    *
    * This middleware will filter all roles that are not part of the project or are not teams that the project owner, owns.
    */
-  return function(req, res, next) {
+  return async function(req, res, next) {
     if (req.method !== 'PUT') {
       return next();
     }
@@ -44,22 +44,15 @@ module.exports = function(formio) {
     }
 
     // Get the owner of the Project
-    formio.cache.loadProject(req, req.projectId, function(err, project) {
-      if (err) {
-        debug(err);
-        return res.sendStatus(400);
-      }
+    try {
+      const project = await formio.cache.loadProject(req, req.projectId);
+
       if (!project.owner) {
         return res.sendStatus(400);
       }
 
       // Search for all roles associated with a project.
-      formio.resources.role.model.find({deleted: {$eq: null}, project: project._id.toString()}, function(err, roles) {
-        if (err) {
-          debug(err);
-          return res.sendStatus(400);
-        }
-
+        let roles = await formio.resources.role.model.find({deleted: {$eq: null}, project: project._id.toString()});
         // Update the accessIds with the project roles.
         roles = roles || [];
         roles = _.map(_.map(roles, '_id'), formio.util.idToString);
@@ -89,24 +82,27 @@ module.exports = function(formio) {
         });
 
         // Find all the Teams for the current user.
-        formio.teams.getTeams(req.user, false, true)
-          .then(function(teams) {
-            teams = teams || [];
-            teams = _.map(_.map(teams, '_id'), formio.util.idToString);
+        try {
+          let teams = await formio.teams.getTeams(req.user, false, true);
+          teams = teams || [];
+          teams = _.map(_.map(teams, '_id'), formio.util.idToString);
 
-            accessIds = accessIds.concat(currentTeams).concat(teams);
-            accessIds = _.uniq(_.filter(accessIds));
+          accessIds = accessIds.concat(currentTeams).concat(teams);
+          accessIds = _.uniq(_.filter(accessIds));
 
-            filterAccess();
-            next();
-          })
-          .catch(function(err) {
-            debug(err);
+          filterAccess();
+          return next();
+        }
+        catch (err) {
+          debug(err);
 
-            filterAccess();
-            next();
-          });
-      });
-    });
+          filterAccess();
+          return next();
+        }
+    }
+    catch (err) {
+      debug(err);
+      return res.sendStatus(400);
+    }
   };
 };

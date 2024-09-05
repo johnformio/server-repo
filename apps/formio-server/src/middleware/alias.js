@@ -22,7 +22,7 @@ module.exports = function(formio) {
   };
 
   // Handle the request.
-  return function(req, res, next) {
+  return async function(req, res, next) {
     // Determine if this is a local domain or not.
     let local = false;
 
@@ -75,7 +75,7 @@ module.exports = function(formio) {
       return skip(req, res, next);
     }
 
-    const checkSubDomain = () => {
+    const checkSubDomain = async () => {
       // Allow using subdomains as subdirectories as well.
       const subdirectory = req.url.split('/')[1];
       // Quick confirmation that we have an projectName.
@@ -83,10 +83,11 @@ module.exports = function(formio) {
         return next();
       }
       else {
-        formio.cache.loadProjectByName(req, subdirectory, function(err, project) {
+        try {
+          const project = await formio.cache.loadProjectByName(req, subdirectory);
           debug.alias(`Loading project from subdir: ${projectName}`);
 
-          if (err || !project) {
+          if (!project) {
             return next();
           }
 
@@ -94,26 +95,25 @@ module.exports = function(formio) {
           req.projectId = project._id.toString();
           req.url = `/project/${project._id}${req.url.slice(subdirectory.length + 1)}`;
           return next();
-        });
       }
-    };
+      catch (err) {
+        return next();
+      }
+    }
+  };
 
     if (!projectName) {
-      return checkSubDomain();
+      return await checkSubDomain();
     }
 
     // Look up the subdomain.
-    formio.cache.loadProjectByName(req, projectName, function(err, project) {
+    try {
+      const project = await formio.cache.loadProjectByName(req, projectName);
       debug.alias(`Loading project: ${projectName}`);
 
-      if (err || !project) {
+      if (!project) {
         // If project is not found by subdomain, check if the directory refers to the project.
-        if (err === 'Project not found') {
-          return checkSubDomain();
-        }
-        else {
-          return next();
-        }
+          return await checkSubDomain();
       }
       else {
         // Set the Project Id in the request.
@@ -121,6 +121,17 @@ module.exports = function(formio) {
         req.url = `/project/${project._id}${req.url}`;
         return next();
       }
-    });
+    }
+    catch (err) {
+      debug.alias(`Loading project: ${projectName}`);
+
+      // If project is not found by subdomain, check if the directory refers to the project.
+      if (err.message === 'Project not found') {
+        return await checkSubDomain();
+      }
+      else {
+        return next();
+      }
+    }
   };
 };
