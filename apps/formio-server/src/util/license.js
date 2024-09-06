@@ -231,9 +231,9 @@ async function submitUtilizationRequest(
 
       console.log(`Retrying in ${INTERVAL / 1000}s...`);
 
-      return require('bluebird').delay(INTERVAL).then(
-        () => submitUtilizationRequest(app, payload, attempts + 1, MAX_ATTEMPTS)
-      );
+      const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+      await delay(INTERVAL);
+      await submitUtilizationRequest(app, payload, attempts + 1, MAX_ATTEMPTS);
     }
     // Otherwise, print an error and exit
     else {
