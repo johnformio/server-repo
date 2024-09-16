@@ -87,6 +87,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-8693: Resolve Failing Server Tests v2 (Revert PR 1502 & 1465)
  - use TextDecoder to decode UIntArray8
  - FIO-6495: form revision id transferring from stage to stage
+ - FIO-8556: Add tests coverage metrics with nyc
+ - FIO-8542: removed bluebird
+ - Fixed issues with the premium imports and browser contexts
+ - FIO-8295: cache promisifying mongodb upgrade
+ - FIO-8971 Update setup docker image
+ - FIO-8927 fixed csp headers for fmg
+ - FIO-7783: added character limit to add new team member
 
 ## 9.3.0-rc.5
 ### Changed
