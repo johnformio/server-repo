@@ -15,3 +15,5 @@ build
 dist
 portal
 package-lock.json
+coverage
+.nyc_output
