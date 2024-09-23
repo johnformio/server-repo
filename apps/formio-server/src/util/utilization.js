@@ -263,20 +263,23 @@ async function remoteUtilization(app, project) {
     return {error: new Error('License is expired.')};
   }
   const numberOfProjects = await getNumberOfExistingProjects(app.formio.formio, project);
-  let projectLimit;
+
+  let limit;
   switch (project.type) {
     case 'project':
-      projectLimit = licenseData.terms.projectsNumberLimit;
+      limit = licenseData.terms.projectsNumberLimit;
       break;
     case 'tenant':
-      projectLimit = licenseData.terms.tenants;
+      limit = licenseData.terms.tenants;
       break;
     case 'stage':
-      projectLimit = licenseData.terms.stages;
+      limit = licenseData.terms.stages;
       break;
   }
-  if (projectLimit && numberOfProjects >= projectLimit) {
-    return {error: new Error(`Exceeded the allowed number of ${project.type}s. Max number of your ${project.type}s is ${projectLimit}. You have ${numberOfProjects} ${project.type}s.`)};
+  debug(`license-utilization: Number of ${project.type}s: ${numberOfProjects}, license limit: ${limit}`);
+  if (limit && numberOfProjects > limit) {
+    debug(`license-utilization: exceeded limit for ${project.type}`);
+    return {error: new Error(`Exceeded the allowed number of ${project.type}s. Max number of your ${project.type}s is ${limit}. You have ${numberOfProjects} ${project.type}s.`)};
   }
 }
 
