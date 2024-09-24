@@ -588,7 +588,6 @@ module.exports = (router) => {
                     ? req.currentProject.config
                     : {},
               },
-              timeout: config.formio.vmTimeout
             });
           }
           catch (err) {
