@@ -30,6 +30,8 @@ export const dependeciesMap = {
     ],
 };
 
+export let globalTimeout = 500;
+
 type BaseDependencyMap = {
     lodash?: string;
     moment?: string;
@@ -40,18 +42,26 @@ type BaseDependencyMap = {
     nunjucksDateFilter?: string;
 };
 
+type VmOptions = {
+    dependencies: BaseDependencyMap;
+    timeout?: number;
+};
+
 /**
  * Function to modify/configure the formio/vm library's global dependencies map.
  */
 export const configureVm = ({
-    lodash,
-    moment,
-    inputmask,
-    core,
-    instanceShim,
-    nunjucks,
-    nunjucksDateFilter,
-}: BaseDependencyMap) => {
+    dependencies: {
+        lodash,
+        moment,
+        inputmask,
+        core,
+        instanceShim,
+        nunjucks,
+        nunjucksDateFilter,
+    },
+    timeout,
+}: VmOptions) => {
     if (lodash) {
         dependeciesMap.lodash = [lodash];
     }
@@ -89,5 +99,9 @@ export const configureVm = ({
                 nunjucksUtilsCode,
             ];
         }
+    }
+
+    if (timeout) {
+        globalTimeout = timeout;
     }
 };

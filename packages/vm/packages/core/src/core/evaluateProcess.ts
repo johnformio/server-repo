@@ -1,6 +1,7 @@
 import * as FormioCore from '@formio/core';
 import { evaluate } from './evaluate';
 import { RootShim } from './RootShim';
+import { globalTimeout } from './configureVm';
 
 const code = `
 root = new RootShim(context.form, context.submission);
@@ -43,7 +44,7 @@ export type EvaluateProcessorsResult = {
 export async function evaluateProcess({
     form,
     submission,
-    timeout,
+    timeout = globalTimeout,
     scope = {},
     token = '',
     additionalDeps = [],
