@@ -1,6 +1,6 @@
 import ContextBuilder from './ContextBuilder';
 import _ from 'lodash';
-import { dependeciesMap } from './configureVm.js';
+import { dependeciesMap, globalTimeout } from './configureVm';
 
 export type EvaluationDependency = keyof typeof dependeciesMap;
 
@@ -32,7 +32,7 @@ export async function evaluate({
     additionalDeps = [],
     data = {},
     code,
-    timeout = 500,
+    timeout = globalTimeout,
 }: EvaluateOptions): Promise<EvaluateResult> {
     // Create context with dependencies
     const contextBuilder = ContextBuilder.fromDefaultIsolate();
@@ -61,7 +61,7 @@ export function evaluateSync({
     additionalDeps = [],
     data = {},
     code,
-    timeout = 500,
+    timeout = globalTimeout,
 }: EvaluateOptions): EvaluateResult {
     // Create context with dependencies
     const contextBuilder = ContextBuilder.fromDefaultIsolate();
