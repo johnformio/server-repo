@@ -828,7 +828,7 @@ atob@^2.1.2:
 
 autocompleter@^8.0.4:
   version "8.0.4"
-  resolved "https://registry.npmjs.org/autocompleter/-/autocompleter-8.0.4.tgz#1c4440397fbe9816ab443ebaa09f38e6d7bed89e"
+  resolved "https://registry.yarnpkg.com/autocompleter/-/autocompleter-8.0.4.tgz#1c4440397fbe9816ab443ebaa09f38e6d7bed89e"
   integrity sha512-q334YswwucSBphN5djVkEt3beVhHotrCtPGNIXmyilw9UnXV9Cb+gNAZ2yhZSfiBSzP6rxHLLT2gpr57xgbcwQ==
 
 available-typed-arrays@^1.0.5:
@@ -920,7 +920,7 @@ body-parser@1.20.1:
 
 bootstrap@^5.3.3:
   version "5.3.3"
-  resolved "https://registry.npmjs.org/bootstrap/-/bootstrap-5.3.3.tgz#de35e1a765c897ac940021900fcbb831602bac38"
+  resolved "https://registry.yarnpkg.com/bootstrap/-/bootstrap-5.3.3.tgz#de35e1a765c897ac940021900fcbb831602bac38"
   integrity sha512-8HLCdWgyoMguSO9o+aH+iuZ+aht+mzW0u3HIMzVu7Srrpv7EBBxTnrFlSCskwdY1+EOFQSm7uMJhNQHkdPcmjg==
 
 brace-expansion@^1.1.7:
@@ -1253,9 +1253,9 @@ commander@^5.1.0:
   integrity sha512-P0CysNDQ7rtVw4QIQtm+MRxV66vKFSvlsQvGYXZWR3qFU0jlMKHZZZgw8e+8DSah4UDKMqnknRDQz+xuQXQ/Zg==
 
 compare-versions@^6.0.0-rc.2:
-  version "6.1.0"
-  resolved "https://registry.npmjs.org/compare-versions/-/compare-versions-6.1.0.tgz#3f2131e3ae93577df111dba133e6db876ffe127a"
-  integrity sha512-LNZQXhqUvqUTotpZ00qLSaify3b4VFD588aRr8MKFw4CMUr98ytzCW5wDH5qx/DEY5kCDXcbcRuCqL0szEf2tg==
+  version "6.1.1"
+  resolved "https://registry.yarnpkg.com/compare-versions/-/compare-versions-6.1.1.tgz#7af3cc1099ba37d244b3145a9af5201b629148a9"
+  integrity sha512-4hm4VPpIecmlg59CHXnRDnqGplJFrbLG4aFEl5vl6cK1u76ws3LLvX7ikFnTDl5vo39sjWD6AaDPYodJp/NNHg==
 
 component-emitter@^1.2.1:
   version "1.3.1"
@@ -1601,7 +1601,12 @@ dom-set@^1.0.1:
     is-array "^1.0.1"
     iselement "^1.1.4"
 
-dompurify@^3.1.3, dompurify@^3.1.4:
+dompurify@^3.1.3:
+  version "3.1.6"
+  resolved "https://registry.yarnpkg.com/dompurify/-/dompurify-3.1.6.tgz#43c714a94c6a7b8801850f82e756685300a027e2"
+  integrity sha512-cTOAhc36AalkjtBpfG6O8JimdTMWNXjiePT2xQH/ppBGi/4uIpmj8eKyIkMJErXWARyINV/sB38yf8JCLF5pbQ==
+
+dompurify@^3.1.4:
   version "3.1.5"
   resolved "https://registry.npmjs.org/dompurify/-/dompurify-3.1.5.tgz#2c6a113fc728682a0f55684b1388c58ddb79dc38"
   integrity sha512-lwG+n5h8QNpxtyrJW/gJWckL+1/DQiYMX8f7t8Z2AZTPw1esVrqjI63i7Zc2Gz0aKzLVMYC1V1PL/ky+aY/NgA==
@@ -2121,7 +2126,7 @@ fast-deep-equal@^3.1.1, fast-deep-equal@^3.1.3:
 
 fast-diff@^1.3.0:
   version "1.3.0"
-  resolved "https://registry.npmjs.org/fast-diff/-/fast-diff-1.3.0.tgz#ece407fa550a64d638536cd727e129c61616e0f0"
+  resolved "https://registry.yarnpkg.com/fast-diff/-/fast-diff-1.3.0.tgz#ece407fa550a64d638536cd727e129c61616e0f0"
   integrity sha512-VxPP4NqbUjj6MaAOafWeUn2cXWLcCtljklUtZf0Ind4XQ+QPtmA0b18zZy0jIQx+ExRVCR/ZQpBmik5lXshNsw==
 
 fast-glob@^3.2.9, fast-glob@^3.3.0:
@@ -3399,17 +3404,17 @@ locate-path@^6.0.0:
 
 lodash-es@^4.17.21:
   version "4.17.21"
-  resolved "https://registry.npmjs.org/lodash-es/-/lodash-es-4.17.21.tgz#43e626c46e6591b7750beb2b50117390c609e3ee"
+  resolved "https://registry.yarnpkg.com/lodash-es/-/lodash-es-4.17.21.tgz#43e626c46e6591b7750beb2b50117390c609e3ee"
   integrity sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==
 
 lodash.clonedeep@^4.5.0:
   version "4.5.0"
-  resolved "https://registry.npmjs.org/lodash.clonedeep/-/lodash.clonedeep-4.5.0.tgz#e23f3f9c4f8fbdde872529c1071857a086e5ccef"
+  resolved "https://registry.yarnpkg.com/lodash.clonedeep/-/lodash.clonedeep-4.5.0.tgz#e23f3f9c4f8fbdde872529c1071857a086e5ccef"
   integrity sha512-H5ZhCF25riFd9uB5UCkVKo61m3S/xZk1x4wA6yp/L3RFP6Z/eHH1ymQcGLo7J3GMPfm0V/7m1tryHuGVxpqEBQ==
 
 lodash.isequal@^4.5.0:
   version "4.5.0"
-  resolved "https://registry.npmjs.org/lodash.isequal/-/lodash.isequal-4.5.0.tgz#415c4478f2bcc30120c22ce10ed3226f7d3e18e0"
+  resolved "https://registry.yarnpkg.com/lodash.isequal/-/lodash.isequal-4.5.0.tgz#415c4478f2bcc30120c22ce10ed3226f7d3e18e0"
   integrity sha512-pDo3lu8Jhfjqls6GkMgpahsF9kCyayhgykjyLMNFTKWrpVdAQtYyB4muAMWozBB4ig/dtWAmsMxLEI8wuz+DYQ==
 
 lodash.merge@^4.6.2:
@@ -3648,7 +3653,7 @@ moment-timezone@^0.5.43:
 
 moment-timezone@^0.5.44:
   version "0.5.45"
-  resolved "https://registry.npmjs.org/moment-timezone/-/moment-timezone-0.5.45.tgz#cb685acd56bac10e69d93c536366eb65aa6bcf5c"
+  resolved "https://registry.yarnpkg.com/moment-timezone/-/moment-timezone-0.5.45.tgz#cb685acd56bac10e69d93c536366eb65aa6bcf5c"
   integrity sha512-HIWmqA86KcmCAhnMAN0wuDOARV/525R2+lOLotuGFzn4HO+FH+/645z2wx0Dt3iDv6/p61SIvKnDstISainhLQ==
   dependencies:
     moment "^2.29.4"
@@ -3993,7 +3998,7 @@ p-map@^5.5.0:
 
 parchment@^3.0.0:
   version "3.0.0"
-  resolved "https://registry.npmjs.org/parchment/-/parchment-3.0.0.tgz#2e3a4ada454e1206ae76ea7afcb50e9fb517e7d6"
+  resolved "https://registry.yarnpkg.com/parchment/-/parchment-3.0.0.tgz#2e3a4ada454e1206ae76ea7afcb50e9fb517e7d6"
   integrity sha512-HUrJFQ/StvgmXRcQ1ftY6VEZUq3jA2t9ncFN4F84J/vN0/FPpQF+8FKXb3l6fLces6q0uOHj6NJn+2xvZnxO6A==
 
 parent-module@^1.0.0:
@@ -4239,7 +4244,7 @@ queue-microtask@^1.2.2:
 
 quill-delta@^5.1.0:
   version "5.1.0"
-  resolved "https://registry.npmjs.org/quill-delta/-/quill-delta-5.1.0.tgz#1c4bc08f7c8e5cc4bdc88a15a1a70c1cc72d2b48"
+  resolved "https://registry.yarnpkg.com/quill-delta/-/quill-delta-5.1.0.tgz#1c4bc08f7c8e5cc4bdc88a15a1a70c1cc72d2b48"
   integrity sha512-X74oCeRI4/p0ucjb5Ma8adTXd9Scumz367kkMK5V/IatcX6A0vlgLgKbzXWy5nZmCGeNJm2oQX0d2Eqj+ZIlCA==
   dependencies:
     fast-diff "^1.3.0"
@@ -4248,7 +4253,7 @@ quill-delta@^5.1.0:
 
 quill@^2.0.2:
   version "2.0.2"
-  resolved "https://registry.npmjs.org/quill/-/quill-2.0.2.tgz#5b26bc10a74e9f7fdcfdb5156b3133a3ebf0a814"
+  resolved "https://registry.yarnpkg.com/quill/-/quill-2.0.2.tgz#5b26bc10a74e9f7fdcfdb5156b3133a3ebf0a814"
   integrity sha512-QfazNrhMakEdRG57IoYFwffUIr04LWJxbS/ZkidRFXYCQt63c1gK6Z7IHUXMx/Vh25WgPBU42oBaNzQ0K1R/xw==
   dependencies:
     eventemitter3 "^5.0.1"
@@ -4691,7 +4696,7 @@ signal-exit@^4.1.0:
 
 signature_pad@^4.2.0:
   version "4.2.0"
-  resolved "https://registry.npmjs.org/signature_pad/-/signature_pad-4.2.0.tgz#7513cee8cb8afd6594d871c61cf4d61420601422"
+  resolved "https://registry.yarnpkg.com/signature_pad/-/signature_pad-4.2.0.tgz#7513cee8cb8afd6594d871c61cf4d61420601422"
   integrity sha512-YLWysmaUBaC5wosAKkgbX7XI+LBv2w5L0QUcI6Jc4moHYzv9BUBJtAyNLpWzHjtjKTeWOH6bfP4a4pzf0UinfQ==
 
 simple-concat@^1.0.0:
@@ -5427,7 +5432,7 @@ value-or-function@^3.0.0:
 
 vanilla-picker@^2.12.3:
   version "2.12.3"
-  resolved "https://registry.npmjs.org/vanilla-picker/-/vanilla-picker-2.12.3.tgz#1cc47b641a2b9c9afc5ac3a9a02febace0f1b17a"
+  resolved "https://registry.yarnpkg.com/vanilla-picker/-/vanilla-picker-2.12.3.tgz#1cc47b641a2b9c9afc5ac3a9a02febace0f1b17a"
   integrity sha512-qVkT1E7yMbUsB2mmJNFmaXMWE2hF8ffqzMMwe9zdAikd8u2VfnsVY2HQcOUi2F38bgbxzlJBEdS1UUhOXdF9GQ==
   dependencies:
     "@sphinxxxx/color-conversion" "^2.2.2"
