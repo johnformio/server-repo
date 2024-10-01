@@ -136,7 +136,7 @@ function middleware(app) {
           }
           projectContext = getProjectContext(req);
           if (remote) {
-            result = await remoteUtilization(app, projectContext);
+            result = await remoteUtilization(app, projectContext, 'PUT');
           }
           else {
             result = utilization(app, `project:${req.projectId}`, {
