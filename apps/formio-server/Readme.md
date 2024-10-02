@@ -11,8 +11,11 @@ Local Development
 ## Prequisites
 Before you can start the app server, you need to do a few things first:
 1. Install [Yarn](https://classic.yarnpkg.com/lang/en/)
-2. Setup [ssh keys](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) with github.
-3. clone the [formio-app](https://github.com/formio/formio-app) project and set it up.
+2. Install [Python 3](https://www.python.org/downloads/)
+3. Install node-gyp globally `npm install -g node-gyp`
+4. Use Node version 20 (confirmed working; 22 doesn't work, not sure about 21)
+5. Setup [ssh keys](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) with github.
+6. clone the [formio-app](https://github.com/formio/formio-app) project and set it up.
 
 ### setup mongo with docker
 It's easiest to run mongo for a docker container, though you can run it manually if you want to.
