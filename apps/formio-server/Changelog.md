@@ -94,6 +94,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - FIO-8971 Update setup docker image
  - FIO-8927 fixed csp headers for fmg
  - FIO-7783: added character limit to add new team member
+ - FIO-8946: fix error when updating stages with offline license
+ - FIO-9064: refactor timeout to be part of config rather than function arg
+ - FIO-8946 change stage limit test for offline licenses
 
 ## 9.3.0-rc.5
 ### Changed
