@@ -5,7 +5,6 @@ without a subdomain in front of the domain. The main components that are include
 
  - **formio** @ /node_modules/formio - The Form.IO core server - https://github.com/formio/formio
 
-
 Local Development
 ------------
 ## Prequisites
@@ -23,14 +22,14 @@ It's easiest to run mongo for a docker container, though you can run it manually
 start up a mongodb server in docker with the following command.
 
   - ```docker run --name mongo-server -p 27017:27017 -d mongo```
-  
+
 In this docker command, we are downloading and running a mongodb instance.
- 
+
   - --name mongo-server will name the server.
   - -p 27017:27017 will map the port to the boot2docker-vm.
   - -d will daemonize it so it will run in the background.
   - mongo is the name of the docker image to use from docker hub.
-  
+
 You can control the mongo server with these commands.
 
   - ```docker start mongo-server```
@@ -53,6 +52,20 @@ You should now be able to run the server
 yarn start
 ```
 
+Containerized Development
+------------
+## Prerequisites
+1. Recent version of Docker Engine
+2. Your .env file should include NPM_USERNAME, NPM_EMAIL, NPM_PASSWORD that correspond to your npm credentials for access to pkg.form.io
+3. Your .env file should also include a BRANCH_OR_TAG variable with the Github tag or branch name (e.g. 9.2.x)
+
+## Build
+```bash
+docker compose up -d
+```
+
+## Debug
+Use the included "Attach to Docker" launch configuration or use chrome://inspect. DO NOT run these containers anywhere but your local machine.
 
 Deployment
 ---------------
