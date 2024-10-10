@@ -5,7 +5,7 @@ node_modules
 .test.env
 .env.bak
 test/bower_components
-.vscode
+.vscode/settings.json
 .idea
 deployment/aws-eb/versions
 test/screenshots/*.png

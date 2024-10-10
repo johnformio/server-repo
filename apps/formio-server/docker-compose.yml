@@ -1,24 +1,22 @@
-version: '3.7'
 services:
-  mongo:
-    image: mongo:4.1
+  formio-server-development:
+    image: formio-server-development:${BRANCH_OR_TAG}
+    build:
+      context: .
+      dockerfile: deployment/docker/Dockerfile-development
+      args:
+        - BRANCH_OR_TAG=${BRANCH_OR_TAG}
+        - NPM_USERNAME=${NPM_USERNAME}
+        - NPM_PASSWORD=${NPM_PASSWORD}
+        - NPM_EMAIL=${NPM_EMAIL}
     restart: always
-    volumes:
-      - mdb-data:/data/db
-    environment:
-      MONGO_INITDB_ROOT_USERNAME:
-      MONGO_INITDB_ROOT_PASSWORD:
-  formio:
-    image: formio/formio-enterprise
-    restart: always
-    links:
-      - mongo
     ports:
-      - "3000:80"
+      - "3000:3000"
+      - "9229:9229"
     environment:
       PORTAL_ENABLED: 1
-      ADMIN_EMAIL: admin@example.com
-      ADMIN_PASS: CHANGEME
-      LICENSE:
-volumes:
-  mdb-data:
+      ADMIN_EMAIL: brendan@form.io
+      ADMIN_PASS: Sanford1f!
+      MONGO: mongodb://host.docker.internal:27017/formio
+    env_file:
+      - .env

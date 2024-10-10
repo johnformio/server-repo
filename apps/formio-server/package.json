@@ -23,7 +23,8 @@
     "lint": "eslint .",
     "validate": "circleci config validate -c .circleci/config.yml",
     "preinstall": "npx check-node-version --node \">=20.0.0\"",
-    "show-coverage": "open coverage/lcov-report/index.html"
+    "show-coverage": "open coverage/lcov-report/index.html",
+    "dev:docker": "docker-compose up -d"
   },
   "cache": "1550086650",
   "main": "./main.js",
