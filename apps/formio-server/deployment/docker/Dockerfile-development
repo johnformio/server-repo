@@ -1,4 +1,4 @@
-FROM node:lts-alpine AS builder
+FROM node:20-alpine AS builder
 ARG NPM_USERNAME
 ARG NPM_PASSWORD
 ARG NPM_EMAIL
@@ -37,7 +37,7 @@ RUN rm /root/.npmrc \
     && rm -rf /src/id_ed25519 \
     && find / -xdev -type l ! -exec test -e {} \; -delete
 
-FROM node:lts-alpine
+FROM node:20-alpine
 
 ENV USERNAME=formiouser
 ENV UID=5000

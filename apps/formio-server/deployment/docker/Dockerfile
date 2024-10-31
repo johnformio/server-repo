@@ -1,4 +1,4 @@
-FROM node:lts-alpine
+FROM node:20-alpine
 
 ENV USERNAME=formiouser
 ENV UID=5000
