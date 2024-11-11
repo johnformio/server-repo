@@ -16,11 +16,15 @@ module.exports = function(formio, formioServer) {
       return next();
     }
 
-    const query = {_id: formioServer.formio.util.idToBson(req.params.tagId), deleted: {$eq: null}};
+    const query = {
+      _id: formioServer.formio.util.idToBson(req.params.tagId),
+      deleted: {$eq: null},
+      project: req.currentProject.project || req.currentProject._id
+    };
     try {
       const tag = await formioServer.formio.resources.tag.model.findOne(query);
       if (!tag) {
-        return next();
+        return next(new Error('Could not find the tag'));
       }
 
       await formioServer.formio.resources.tag.model.updateMany({
