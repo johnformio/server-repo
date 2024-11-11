@@ -54,7 +54,8 @@ module.exports = function(app, template, hook) {
           title: chance.word(),
           description: chance.sentence(),
           name: chance.word(),
-          template: _template
+          template: _template,
+          type: 'project'
         };
 
         request(app)
