@@ -17,6 +17,7 @@ module.exports = function(app, template, hook) {
   describe('Tagging', () => {
     const _template = _.cloneDeep(require('./fixtures/template')());
     let project = {};
+    let projectUser2 = {};
 
     describe('Setup', () => {
       it('Create a project', done => {
@@ -44,6 +45,31 @@ module.exports = function(app, template, hook) {
             // Store the JWT for future API calls.
             template.env.owner.token = res.headers['x-jwt-token'];
 
+            done();
+          });
+      });
+
+      it('Create a project for user2', done => {
+        const primaryProject = {
+          title: chance.word(),
+          description: chance.sentence(),
+          name: chance.word(),
+          template: _template,
+          type: 'project'
+        };
+
+        request(app)
+          .post('/project')
+          .set('x-jwt-token', template.env.users.user2.token)
+          .send(primaryProject)
+          .expect('Content-Type', /json/)
+          .expect(201)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+
+            projectUser2 = res.body;
             done();
           });
       });
@@ -531,6 +557,15 @@ module.exports = function(app, template, hook) {
           .send()
           .set('x-jwt-token', template.env.users.user2.token)
           .expect(401)
+          .end(done);
+      });
+
+      it('A Non Team member should not be able to delete a tag', done => {
+        request(app)
+          .delete(`/project/${  projectUser2._id  }/tag/${  tag2._id }`)
+          .send()
+          .set('x-jwt-token', template.env.users.user2.token)
+          .expect(400)
           .end(done);
       });
 
