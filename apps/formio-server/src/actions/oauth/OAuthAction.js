@@ -691,6 +691,7 @@ module.exports = router => {
             // Set LogOut URL per user to achieve the logout in Portal via OIDC
             data.logoutURI =  settings.logout;
             const user = {
+              sso: true,
               _id: formioUtil.toMongoId(userId),
               project: req.currentProject._id.toString(),
               data,
