@@ -40,6 +40,7 @@
     "@azure/storage-blob": "12.15.0",
     "@braintree/sanitize-url": "^6.0.4",
     "@formio/core": "2.1.0-dev.129.a4f2d55",
+    "@formio/license": "^1.4.2",
     "@formio/node-fetch-http-proxy": "^1.1.0",
     "@formio/premium": "github:formio/premium#v3.0.0-rc.1",
     "@formio/reporting": "github:formio/reporting#2.0.0-rc.9",
