@@ -375,7 +375,7 @@ const Teams = {
 
     let teams = [];
 
-    if (user.sso && user.teams) {
+    if (user.sso && user.teams?.length) {
       const teamResource = await Teams.getTeamResource();
       teams = await Teams.submissionModel().find({
         _id: {$in: user.teams.map((id) => Teams.util().idToBson(id))},
