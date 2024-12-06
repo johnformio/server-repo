@@ -12,7 +12,6 @@ const {
   constructHeadersObject,
   processWebhookResponseBody,
 } = require('./util');
-const config = require('../../../config');
 
 module.exports = (router) => {
   const Action = router.formio.Action;

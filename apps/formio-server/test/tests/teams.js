@@ -4,10 +4,8 @@
 var request = require('supertest');
 var assert = require('assert');
 var _ = require('lodash');
-var async = require('async');
 var chance = new (require('chance'))();
 var docker = process.env.DOCKER;
-var customer = process.env.CUSTOMER;
 
 module.exports = function(app, template, hook) {
   // Don't run for docker.
@@ -334,7 +332,7 @@ module.exports = function(app, template, hook) {
           }
         })
         .expect('Content-Type', /json/)
-        .expect(200)
+        .expect(201)
         .end(function(err, res) {
           if (err) {
             return done(err);
@@ -376,7 +374,7 @@ module.exports = function(app, template, hook) {
           }
         })
         .expect('Content-Type', /json/)
-        .expect(200)
+        .expect(201)
         .end(function(err, res) {
           if (err) {
             return done(err);
@@ -1513,7 +1511,7 @@ module.exports = function(app, template, hook) {
             },
           })
           .expect("Content-Type", /json/)
-          .expect(200)
+          .expect(201)
           .end((err, res) => {
             if (err) {
               return done(err);
@@ -1739,7 +1737,7 @@ module.exports = function(app, template, hook) {
           });
       });
 
-      let user1Member = null;
+      let user1Member, user3Member, user4Member = null;
       it('Should allow user1 to be added to a team', (done) => {
         request(app)
           .post('/team/' + template.team1._id + '/member')
@@ -1752,7 +1750,7 @@ module.exports = function(app, template, hook) {
             }
           })
           .expect('Content-Type', /json/)
-          .expect(200)
+          .expect(201)
           .end(function(err, res) {
             if (err) {
               return done(err);
@@ -1778,13 +1776,14 @@ module.exports = function(app, template, hook) {
             }
           })
           .expect('Content-Type', /json/)
-          .expect(200)
+          .expect(201)
           .end(function(err, res) {
             if (err) {
               return done(err);
             }
 
             // Store the JWT for future API calls.
+            user3Member = res.body;
             template.formio.teamAdmin.token = res.headers['x-jwt-token'];
 
             done();
@@ -1803,13 +1802,14 @@ module.exports = function(app, template, hook) {
             }
           })
           .expect('Content-Type', /json/)
-          .expect(200)
+          .expect(201)
           .end(function(err, res) {
             if (err) {
               return done(err);
             }
 
             // Store the JWT for future API calls.
+            user4Member = res.body;
             template.formio.teamAdmin.token = res.headers['x-jwt-token'];
 
             done();
@@ -1850,6 +1850,27 @@ module.exports = function(app, template, hook) {
             template.formio.user4.token = res.headers['x-jwt-token'];
             done();
           });
+      });
+
+      it('A team owner should not be able to GET a user from another team when :teamId is a team they control', async function () {
+        await request(app)
+          .get(`/team/${template.team1._id}/member/${template.formio.user4._id}`)
+          .set('x-jwt-token', template.formio.teamAdmin.token)
+          .expect(404);
+      });
+
+      it('A team owner should not be able to PUT a user from another team when :teamId is a team they control', async function () {
+        await request(app)
+          .get(`/team/${template.team1._id}/member/${user4Member._id}`)
+          .set('x-jwt-token', template.formio.teamAdmin.token)
+          .expect(404);
+      });
+
+      it('A team owner should not be able to DELETE a user from another team when :teamId is a team they control', async function () {
+        await request(app)
+          .delete(`/team/${template.team1._id}/member/${user4Member._id}`)
+          .set('x-jwt-token', template.formio.teamAdmin.token)
+          .expect(404);
       });
 
       it('A Team Owner should be able to delete a team they do own', function(done) {
@@ -2099,7 +2120,7 @@ module.exports = function(app, template, hook) {
             }
           })
           .expect('Content-Type', /json/)
-          .expect(200)
+          .expect(201)
           .end(function(err, res) {
             if (err) {
               return done(err);

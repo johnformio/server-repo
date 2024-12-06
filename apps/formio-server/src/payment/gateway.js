@@ -3,7 +3,6 @@
 const _ = require('lodash');
 const fetch = require('@formio/node-fetch-http-proxy');
 const util = require('formio/src/util/util');
-const debug = require('debug')('formio:payment:gateway');
 
 module.exports = function(config, formio) {
   return async function(req, res, next) {
@@ -62,41 +61,6 @@ module.exports = function(config, formio) {
           "postal_code": data.zipCode,
         }
       };
-    };
-    // Create Fortis Contact
-    const createFortisContact = async () => {
-      const contactApi = `${config.fortis.endpoint}/contacts`;
-      const fullNameParts = portalUser.fullName.split(' ');
-      const contactReq = {
-        "email": portalUser.email,
-        "location_id": config.fortis.location,
-      };
-      if (fullNameParts.length > 1) {
-        contactReq['first_name'] = fullNameParts[0];
-      }
-      if (fullNameParts.length > 1 || fullNameParts.length === 1) {
-        contactReq['last_name'] = fullNameParts[fullNameParts.length - 1];
-      }
-      const response = await fetch(contactApi, {
-        headers: {
-          "user-id": config.fortis.userId,
-          "user-api-key": config.fortis.userAPIKey,
-          "Content-Type": "application/json",
-          "developer-id": config.fortis.developerId,
-          "Accept": "application/json"
-        },
-        method: 'POST',
-        body: JSON.stringify(contactReq)
-      });
-      if (response.ok) {
-        return response.json();
-      }
-      else {
-        const message = await response.text();
-        debug(`Failed to create contact: ${message}`);
-        debug("Failed Contact Request: ", contactReq);
-        throw new Error(`Failed to create contact: ${message}`);
-      }
     };
 
     // Send an authorize transaction.
