@@ -2,8 +2,7 @@
 
 const config = require('../../config.js');
 const {utilizationSync, getNumberOfExistingProjects, licenseConfig} = require('../util/utilization');
-const crypto = require('crypto');
-const {compactVerify} = require('jose');
+const {OfflineLicense} = require('@formio/license');
 const _ = require('lodash');
 
 const terms = {};
@@ -131,24 +130,8 @@ async function performValidationRound(app) {
   if (config.licenseRemote) {
     licenseConfig.remote = true;
     try {
-      const pubkey = crypto.createPublicKey(`-----BEGIN PUBLIC KEY-----
-MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAvfrMKWDgcffKI86ZPj8D
-dnACabymCcjXLkX/nO9dVvlpVOnZFr7ibDiLd3Op1orUrRyPJ0R3bur4UZKXDlns
-p1wUx5kgTa/q57LV6GRCJQIjLEu+1UZcBAC7so2zV1a9lWSnWBQJA/CsCeANtN9F
-UGZYFOj9EprKLUShEno9+re2vDkjA2O2tavRjiftG+dG+LA6swPjo3L+ux2z4KPi
-BJuplQVPoTukLbb4wGXoJnt7cIrmw3SjPC+0kqWBTY+pfuQFtIMPxbA/4nWuUQfC
-eI4B/9wVSAWiSGmJL9CtnVJE/oFQVChDr2GYU0+5uKBV7w0ojaddQwuggmrKQU1W
-JeMsyw8iDlHwbvH8nD5M2x6O7Pr8Ub7/L0xO0KSOuuz4OddmPcIO6RQWQ8syeUxh
-NB7yryb/BEJH44n16GWd54dY3hpSeI2Vm/12qxt946ui081Ss13sjlyOt6kcXbGn
-HNGm9NZJnkHVrLybZMZrXEpBfSLqHWcFCQSQzHBS3PifUCeOFjdLebOyGbFd0rdh
-bJcTkVafzW5LxWsJX55zSUj8AvyKnQgbcr+kcLqBnZyvQ6m8NmZVroX1wZeQXTHu
-6rOqGz9EgYOSwypDJRqBuefwlhhAs7r53qqfIFVDaRbzrZuUh3SlZF2ifkMDBoy+
-KuKgTy9kdUG5qewqC7H6Jo8CAwEAAQ==
------END PUBLIC KEY-----`);
-      let {payload} = await compactVerify(config.licenseKey, pubkey);
-      payload = JSON.parse(new TextDecoder().decode(payload));
-      // eslint-disable-next-line no-console
-      if (payload.exp < parseInt(Date.now() / 1000)) {
+      const payload =  await OfflineLicense.verify(config.licenseKey);
+      if (!payload) {
         console.log(`
 
         License is expired.
@@ -162,6 +145,8 @@ KuKgTy9kdUG5qewqC7H6Jo8CAwEAAQ==
 
       `);
         app.restrictMethods = true;
+
+        return {remote:true};
       }
       const numberOfProjects = await getNumberOfExistingProjects(app.formio.formio);
       if (payload.terms.projectsNumberLimit && numberOfProjects > payload.terms.projectsNumberLimit) {
