@@ -173,6 +173,7 @@ module.exports = function(app, formioServer) {
         const member = await Teams.getMemberFromId(req.params.submissionId);
         member.data = {...member.data, ...req.body.data};
         req.body = member;
+        req.currentMember = member;
       }
       next();
     },

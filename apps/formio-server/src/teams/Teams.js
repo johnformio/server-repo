@@ -375,7 +375,7 @@ const Teams = {
 
     let teams = [];
 
-    if (user.sso && user.teams) {
+    if (user.sso && user.teams?.length) {
       const teamResource = await Teams.getTeamResource();
       teams = await Teams.submissionModel().find({
         _id: {$in: user.teams.map((id) => Teams.util().idToBson(id))},
@@ -782,7 +782,7 @@ const Teams = {
    */
   async removeTeamMembership(team, member) {
     // Do not remove them from a team they do not belong to.
-    if (team._id.toString() !== member.data.team._id.toString()) {
+    if (!Teams.isMemberOfTeam(member, team)) {
       return;
     }
     const user = await Teams.getMemberUser(member);
@@ -846,6 +846,16 @@ const Teams = {
   },
 
   /**
+  * Checks if the member is part of the team.
+  * @param {*} member - the member object
+  * @param {*} team - the team object
+  * @returns {boolean} - true if the member is part of the team, false otherwise
+  */
+  isMemberOfTeam(member, team) {
+    return member.data.team._id.toString() === team._id.toString();
+  },
+
+  /**
    * Handles team membership requests.
    *
    * @param req
@@ -857,20 +867,47 @@ const Teams = {
         const method = _method || req.method.toLowerCase();
         const memberId = _memberId || req.params.submissionId;
         const memberResource = await Teams.getMemberResource();
-        if (method !== 'delete' && req.currentTeam) {
-          _.set(req.body, 'data.team', req.currentTeam);
-        }
-        const member = await Teams.subRequest(req, res, method, memberResource, memberId);
-        if (respond) {
-          if (method !== 'delete' && !member) {
-            return res.status(400).send('Could not create membership.');
+
+        switch (method) {
+          case 'get': {
+            const member = req.currentMember || await Teams.getMemberFromId(memberId);
+            if (!member || !Teams.isMemberOfTeam(member, req.currentTeam)) {
+              return respond ? res.status(404).send('Team member not found') : undefined;
+            }
+            return respond ? res.status(200).json(member) : member;
           }
-          return res.status(200).json(member || {});
+          case 'post': {
+            if (req.currentTeam) {
+              _.set(req.body, 'data.team', req.currentTeam);
+            }
+            const createdMember = await Teams.subRequest(req, res, method, memberResource, null);
+            return respond ? res.status(201).json(createdMember) : createdMember;
+          }
+          case 'put': {
+            const member = req.currentMember || await Teams.getMemberFromId(memberId);
+            if (!member || !Teams.isMemberOfTeam(member, req.currentTeam)) {
+              return respond ? res.status(404).send('Team member not found') : undefined;
+            }
+            if (req.currentTeam) {
+              _.set(req.body, 'data.team', req.currentTeam);
+            }
+            const updatedMember = await Teams.subRequest(req, res, method, memberResource, memberId);
+            return respond ? res.status(200).json(updatedMember) : updatedMember;
+          }
+          case 'delete': {
+            const member = req.currentMember || await Teams.getMemberFromId(memberId);
+            if (!member || !Teams.isMemberOfTeam(member, req.currentTeam)) {
+              return respond ? res.status(404).send('Team member not found') : undefined;
+            }
+            await Teams.subRequest(req, res, method, memberResource, memberId);
+            return respond ? res.status(200).send('OK') : undefined;
+          }
+          default:
+            return respond ? res.status(400).send('Operation not supported') : undefined;
         }
-        return member;
       }
       catch (err) {
-        return res.status(400).send(err.message || 'Could not create membership.');
+        return res.status(400).send(err.message || 'Something went wrong with your request.');
       }
     };
   },
