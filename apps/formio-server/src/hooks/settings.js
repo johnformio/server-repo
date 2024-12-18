@@ -256,7 +256,7 @@ module.exports = function(app) {
         return true;
       },
 
-      emailTransports(transports, settings, req, cb) {
+      emailTransports(transports, settings, req) {
         settings = settings || {};
         if (req && req.primaryProject) {
           if (!config.formio.hosted && process.env.DEFAULT_TRANSPORT) {
@@ -266,7 +266,7 @@ module.exports = function(app) {
             });
           }
         }
-        return cb(null, transports);
+        return transports;
       },
       hasEmailAccess(req) {
         const noEmailPlans = ['basic', 'archived'];
