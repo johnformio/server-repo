@@ -1757,6 +1757,11 @@ module.exports = function(app) {
             // Set the update.
             update.access = res.resource.item.access;
           }
+
+          // Will only trigger on beforePost with SQLConnector so can be added to submisson
+          if (res.submission?.externalIds && (res.submission?.externalIds.length > 0)) {
+            update.externalIds = res.submission.externalIds;
+          }
         }
         return update;
       },

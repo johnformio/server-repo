@@ -12,7 +12,6 @@ module.exports = (router) => {
 
   /**
    * Add an externalId to the local resource with the remote id.
-   *
    * @param {string} localId
    *   The BSON id for the local resource.
    * @param {string} remoteId
@@ -34,25 +33,46 @@ module.exports = (router) => {
 
   /**
    * Get the externalId for the current submission.
-   *
-   * @param {object} res
+   * @param {import('express').Request} req
+   *   The express request object.
+   * @param {import('express').Response} res
    *   The express response object.
-   *
-   * @returns {string|undefined}
+   * @returns {string|null}
    *   The external id for the sqlconnector in the submission if defined.
    */
   function getSubmissionId(req, res) {
-    let external;
+    // We need to retrieve the externalIds for update, and delete ops. Limit need to fetch from db.
+    // formioCache and the previousSubmission were more consistently available than previous options.
+    const external = (
+      req.formioCache.submissions[req.subId] ||
+      req.previousSubmission ||
+      res.resource?.item ||
+      res.resource?.previousItem
+    )?.externalIds.find((item) => item.type === 'sqlconnector');
 
-    // If an item was included in the response
-    if (res.resource.item) {
-      external = (res.resource.previousItem || res.resource.item)
-        .externalIds.find((item) => item.type === 'sqlconnector');
+    // External has be found let's return
+    if (external) {
+      return external.id;
     }
 
-    return external
-      ? external.id
-      : null;
+    // Only perform the async op if external is still not found. Uphold synchronization.
+    // Only time wouldn't be found is if someone as manually deleted from db.
+    return formio.resources.submission.model
+      .findOne({_id: formio.util.ObjectId(req.subId)})
+      .exec()
+      .then((fallBack) => {
+        if (fallBack) {
+          fallBack = fallBack.toObject();
+
+          const external = fallBack.externalIds?.find((item) => item.type === 'sqlconnector');
+          return external ? external.id : null;
+        }
+        return null;
+      })
+      .catch((err) => {
+        debug(err);
+        return null;
+      });
   }
 
   /**
@@ -60,6 +80,14 @@ module.exports = (router) => {
    *   This class is used to integrate into external SQL Databases.
    */
   class SQLConnector extends Action {
+    /**
+     * @param {import('express').Request} req
+     *   The Express request object.
+     * @param {import('express').Response} res
+     *   The Express response object.
+     * @param {import('express').NextFunction} next
+     *   The callback function to execute upon completion.
+     */
     static info(req, res, next) {
       if (config.formio.hosted) {
         return next(null);
@@ -255,11 +283,11 @@ module.exports = (router) => {
      *
      * @param handler
      * @param method
-     * @param req
+     * @param {import('express').Request} req
      *   The Express request object.
-     * @param res
+     * @param {import('express').Response} res
      *   The Express response object.
-     * @param next
+     * @param {import('express').NextFunction} next
      *   The callback function to execute upon completion.
      */
     resolve(handler, method, req, res, next) {
@@ -272,6 +300,15 @@ module.exports = (router) => {
 
       function handleErrors(err) {
         debug(err);
+
+        // If server is not running 502 error is more appropriate than 400
+        if (err.code === 'ECONNREFUSED') {
+          return res.status(502).json({
+            status: 502,
+            message: err.message
+          });
+        }
+
         try {
           // If this is not a creation, skip clean up of the failed item.
           if (method !== 'post' || !res.resource) {
@@ -405,6 +442,11 @@ module.exports = (router) => {
               }
 
               return addExternalId(localId, remoteId);
+            }
+            // Runs beforePost, ensuring externalId is created after postSubmissionUpdate
+            else {
+              res.submission['externalIds'] = [];
+              res.submission.externalIds.push({type: "sqlconnector", id: results[0].id});
             }
           })
           // If blocking is on, return the error.
