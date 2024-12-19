@@ -308,6 +308,60 @@ module.exports = function(app, template, hook) {
         });
     });
 
+    it('A Form.io User should be able to delete the created project with stages', function(done) {
+      const projectToDelete = {
+        title: chance.word(),
+        description: chance.sentence(),
+        type: 'project'
+      };
+      request(app)
+        .post('/project')
+        .send(projectToDelete)
+        .set('x-jwt-token', template.formio.owner.token)
+        .end(function(err, res) {
+          if (err) {
+            return done(err);
+          }
+
+          const mainProject = res.body;
+          assert(mainProject.hasOwnProperty('_id'), 'The response should contain an `_id`.');
+
+          const stage = {
+            title: chance.word(),
+            description: chance.sentence(),
+            type: 'stage',
+            stageTitle: chance.word(),
+            project: mainProject._id
+          };
+
+          request(app)
+          .post('/project')
+          .send(stage)
+          .set('x-jwt-token', template.formio.owner.token)
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            }
+            assert(res.body.hasOwnProperty('_id'), 'The response should contain an `_id`.');
+  
+            request(app)
+              .delete('/project/' + mainProject._id)
+              .set('x-jwt-token', template.formio.owner.token)
+              .expect(200)
+              .end(function(err, res) {
+                if (err) {
+                  return done(err);
+                }
+
+                const response = res.body;
+                assert.deepEqual(response, {});
+      
+                done();
+              });
+          });
+        });
+    });
+
     it('A Form.io User should be able to Read their Project', function(done) {
       request(app)
         .get('/project/' + template.project._id)
