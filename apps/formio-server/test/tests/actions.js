@@ -336,7 +336,7 @@ module.exports = (app, template, hook) => {
                   .expect("Content-Type", /json/)
                   .end((err, res) => {
                     if (err) {
-                      done(err);
+                      return done(err);
                     }
                     assert(res.body.hasOwnProperty("config"), 'Test project should have public configurations');
                     project = res.body;
@@ -1297,8 +1297,8 @@ module.exports = (app, template, hook) => {
     });
 
     it('Set up sqlconnector listener', (done) => {
-      server = sqlConnectorMockServer.listen(sqlConnecjtorPort, () => {
-        console.log(`Listening on ${sqlConnecjtorPort}`);
+      server = sqlConnectorMockServer.listen(sqlConnectorPort, () => {
+        console.log(`Listening on ${sqlConnectorPort}`);
         done();
       });
     });
