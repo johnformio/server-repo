@@ -1218,6 +1218,9 @@ module.exports = (app, template, hook) => {
 
   describe('SQL Connector', function() {
     const sqlConnectorPort = 3002;
+    let formio = app.formio.formio;
+    let alters = hook.alter(`templateAlters`, {});
+    let importer = formio.template;
     let testTemplate = require('./fixtures/sqlConnectorTemplate.json');
     let _template = _.cloneDeep(testTemplate);
     let projectApiKey = _template.settings.keys[0].key;
@@ -1240,6 +1243,10 @@ module.exports = (app, template, hook) => {
         importedProject = template;
         done();
       });
+    });
+
+    before(() => {
+      process.env.ADMIN_KEY = 'examplekey';
     });
 
     it('Should set SQL connector project settings', (done) => {
