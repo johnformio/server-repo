@@ -132,11 +132,7 @@ module.exports = function(formio) {
       return;
     }
 
-      await Promise.all(
-        stageIds.map(stageId => new Promise((res, rej) => {
-          deleteProject(stageId, err => err ? rej(err) : res());
-        }))
-      );
+    await Promise.all(stageIds.map(stageId => deleteProject(stageId)));
   };
 
   /**
@@ -168,7 +164,7 @@ module.exports = function(formio) {
    * @param {Function} next
    *   The callback function to return the results.
    */
-  async function deleteProject(projectId, next) {
+  async function deleteProject(projectId) {
     if (!projectId) {
       return;
     }
