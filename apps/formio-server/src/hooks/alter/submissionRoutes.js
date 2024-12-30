@@ -79,7 +79,7 @@ module.exports = app => routes => {
       }
 
       const submissionRevision = new SubmissionRevision(app, req.submissionModel || null);
-      if (submissionRevision.revisionsAllowed(req) && currentForm.submissionRevisions) {
+      if (await submissionRevision.revisionsAllowed(req) && currentForm.submissionRevisions) {
         debug(`Unable to delete submission ${req.params?.submissionId} with enabled submission revisions.`);
         return res.status(403).send('Deletion is not allowed when submission revisions are enabled.');
       }
@@ -205,7 +205,7 @@ module.exports = app => routes => {
       try {
         const form = await app.formio.formio.cache.loadForm(req, null, req.params.formId);
         const submissionRevision = new SubmissionRevision(app, req.submissionModel || null);
-        if (submissionRevision.shouldCreateNewRevision(req, item, null, form)) {
+        if (await submissionRevision.shouldCreateNewRevision(req, item, null, form)) {
           const revision = await submissionRevision.createVersion(item, req.user, req.body._vnote);
           const esignature = new ESignature(app.formio, req);
           if (esignature.allowESign(form)) {
@@ -234,7 +234,7 @@ module.exports = app => routes => {
         );
 
         loadSubmission = await submissionRevision.checkDraft(loadSubmission);
-        if (submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form)) {
+        if (await submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form)) {
           req.shouldCreateSubmissionRevision = true;
           const esignature = new ESignature(app.formio, req);
           if (esignature.allowESign(form)) {
@@ -256,7 +256,7 @@ module.exports = app => routes => {
           req.body.form,
           req.body._id);
           loadSubmission = await submissionRevision.checkDraft(loadSubmission);
-          if (submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form) || req.shouldCreateSubmissionRevision) {
+          if (await submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form) || req.shouldCreateSubmissionRevision) {
             const revision = await submissionRevision.createVersion(item, req.user, req.body._vnote);
             const esignature = new ESignature(app.formio, req);
             if (esignature.allowESign(form)) {
@@ -294,7 +294,7 @@ module.exports = app => routes => {
           req.body.form,
           req.body._id);
             loadSubmission = await submissionRevision.checkDraft(loadSubmission);
-            if (submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form)) {
+            if (await submissionRevision.shouldCreateNewRevision(req, item, loadSubmission, form)) {
               const revision = await submissionRevision.createVersion(item, null, req.body._vnote);
               const esignature = new ESignature(app.formio, req);
               if (esignature.allowESign(form)) {

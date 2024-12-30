@@ -37,7 +37,7 @@ module.exports = function(formio) {
   };
 
   return async function(req, res, next) {
-    if (req.method !== 'DELETE' || !req.projectId || !req.user._id) {
+    if (req.method !== 'DELETE' || !req.projectId || !req.user?._id) {
       return next();
     }
 

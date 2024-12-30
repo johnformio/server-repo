@@ -101,6 +101,9 @@ module.exports = function(formioServer) {
     try {
       const currentProject = await formioServer.formio.cache.loadCurrentProject(req);
       const project = await formioServer.formio.cache.loadPrimaryProject(req);
+      if (!currentProject || !project) {
+        throw new Error('Project not found.');
+      }
       return getProjectPlan(project, currentProject);
     }
     catch (err) {

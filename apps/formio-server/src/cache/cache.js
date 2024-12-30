@@ -32,15 +32,15 @@ module.exports = function(server) {
         throw new Error('Project not found');
       }
 
-        project = project.toObject();
-        const projectId = project._id.toString();
-        if (!cache.projectNames) {
-          cache.projectNames = {};
-        }
-        cache.projectNames[name] = projectId;
-        cache.projects[projectId] = project;
-        loadCache.set(project);
-        return project;
+      project = project.toObject();
+      const projectId = project._id.toString();
+      if (!cache.projectNames) {
+        cache.projectNames = {};
+      }
+      cache.projectNames[name] = projectId;
+      cache.projects[projectId] = project;
+      loadCache.set(project);
+      return project;
     },
 
     /**
@@ -59,7 +59,7 @@ module.exports = function(server) {
 
     getCurrentProjectId(req) {
       let projectId = req.projectId;
-      if (req.params.projectId) {
+      if (req.params?.projectId) {
         projectId = req.params.projectId;
       }
       if (!projectId && req.body && req.body.project) {
@@ -78,15 +78,24 @@ module.exports = function(server) {
     * @param cb
     */
     async loadCurrentProject(req) {
+      if (req.currentProject) {
+        return req.currentProject;
+      }
       const projectId = this.getCurrentProjectId(req);
       if (!projectId) {
-        throw new Error('No project found.');
+        return;
       }
       return await this.loadProject(req, projectId);
     },
 
     async loadParentProject(req) {
+        if (req.parentProject) {
+          return req.parentProject;
+        }
         const currentProject = await this.loadCurrentProject(req);
+        if (!currentProject) {
+          return;
+        }
         // If this is an environment, not a project, load the primary project.
         if ('project' in currentProject && currentProject.project) {
           const parentProject = await this.loadProject(req, currentProject.project);
@@ -100,7 +109,13 @@ module.exports = function(server) {
     },
 
     async loadPrimaryProject(req) {
+        if (req.primaryProject) {
+          return req.primaryProject;
+        }
         const parentProject = await this.loadParentProject(req);
+        if (!parentProject) {
+          return;
+        }
         if ('project' in parentProject && parentProject.project) {
           const primaryProject = await this.loadProject(req, parentProject.project);
             debug.loadProject('Has primary. ', parentProject._id, primaryProject._id);

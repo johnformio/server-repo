@@ -10,12 +10,12 @@ module.exports = (formio) => {
   const projects = formio.db.collection('projects');
 
   return async (req, res, next) => {
-    //// Run only on hosted envs, skip for OPTIONS and plan upgrade requests
+    // Run only on hosted envs, skip for OPTIONS and plan upgrade requests
     if (!config.formio.hosted || req.method === 'OPTIONS' || req.path.endsWith('/upgrade')) {
       return next();
     }
 
-    const primaryProject = req.primaryProject ? req.primaryProject: await formio.cache.loadPrimaryProject(req);
+    const primaryProject = await formio.cache.loadPrimaryProject(req);
 
     // Skip if the request doesn't contain any project information
     if (!primaryProject) {

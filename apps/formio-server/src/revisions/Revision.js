@@ -17,7 +17,7 @@ module.exports = class Revision {
     return this.revisionPlans.includes(plan);
   }
 
-  revisionsAllowed(req) {
+  async revisionsAllowed(req) {
     const validatePlan = (project) => {
       return this.checkRevisionPlan(project.plan)
             && !config.formio.hosted
@@ -28,18 +28,18 @@ module.exports = class Revision {
     if (req.primaryProject) {
       return validatePlan(req.primaryProject);
     }
-    this.app.formio.formio.cache.loadPrimaryProject(req, (err, project) => {
-      if (err) {
-        debug(`Unable to load primary project: ${err}`);
-        return false;
-      }
-      req.primaryProject = project;
-      return validatePlan(project);
-    });
+    const project = await this.app.formio.formio.cache.loadPrimaryProject(req);
+    if (!project) {
+      debug(`Unable to load primary project`);
+      return false;
+    }
+    req.primaryProject = project;
+    return validatePlan(project);
   }
 
-  shouldCreateNewRevision(req, item, loadItem, form) {
-    if (!this.revisionsAllowed(req)) {
+  async shouldCreateNewRevision(req, item, loadItem, form) {
+    const configurationAllowsRevisions = await this.revisionsAllowed(req);
+    if (!configurationAllowsRevisions) {
       return false;
     }
 

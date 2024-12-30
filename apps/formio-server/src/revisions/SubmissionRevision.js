@@ -20,7 +20,7 @@ module.exports = class FormRevision extends Revision {
     }
   }
 
-  shouldCreateNewRevision(req, item, loadItem, form) {
+  async shouldCreateNewRevision(req, item, loadItem, form) {
     if (item.state === 'draft') {
       return false;
     }
@@ -37,7 +37,7 @@ module.exports = class FormRevision extends Revision {
         return false;
       }
 
-      if (Revision.prototype.shouldCreateNewRevision.call(this, req, item, loadItem, form)) {
+      if (await super.shouldCreateNewRevision(req, item, loadItem, form)) {
         if (loadItem && loadItem.data) {
           _.set(req.body.metadata, 'previousData', loadItem.data);
         }
@@ -122,4 +122,3 @@ module.exports = class FormRevision extends Revision {
     }
   }
 };
-

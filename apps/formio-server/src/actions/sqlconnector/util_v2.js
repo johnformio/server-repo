@@ -274,6 +274,9 @@ module.exports = (router) => {
   function actionsToRoutes(req, actions) {
     return Q.ninvoke(formio.cache, 'loadCurrentProject', req)
       .then((project) => {
+        if (!project) {
+          throw new Error('Project not found');
+        }
         debug.actionsToRoutes(project);
         const type = _.get(project, 'settings.sqlconnector.type');
 
@@ -313,6 +316,9 @@ module.exports = (router) => {
   function getConnectorActions(req) {
     return Q.ninvoke(formio.cache, 'loadCurrentProject', req)
       .then((project) => {
+        if (!project) {
+          throw new Error('Project not found');
+        }
         const projectId = util.idToBson(project._id);
         return router.formio.resources.form.model.find({project: projectId, deleted: {$eq: null}}).lean().exec();
       })
