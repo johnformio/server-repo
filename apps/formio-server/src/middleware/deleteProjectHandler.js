@@ -37,7 +37,7 @@ module.exports = function(formio) {
   };
 
   return async function(req, res, next) {
-    if (req.method !== 'DELETE' || !req.projectId || !req.user?._id) {
+    if (req.method !== 'DELETE' || !req.projectId) {
       return next();
     }
 
@@ -50,13 +50,17 @@ module.exports = function(formio) {
 
       req.primaryProject = project;
 
-      if (
+      if (req.isAdmin) {
+        return deleteProject(req, res, next);
+      }
+      else if (
+        req.user?._id &&
         (formio.util.idToString(req.user._id) === formio.util.idToString(project.owner)) ||
         (req.remotePermission === 'team_admin') || (req.remotePermission === 'owner')
       ) {
         return deleteProject(req, res, next);
       }
-      else if (req.user) {
+      else if (req.user?.teams?.length) {
         const access = _.chain(project.access)
           .filter({type: 'team_admin'})
           .head()
