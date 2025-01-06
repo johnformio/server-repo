@@ -71,7 +71,7 @@ module.exports = router => {
           return res.status(400).send('Could not load the Roles.');
         }
 
-        const availableProviders = await oauthUtil.availableProviders(req, next);
+        const availableProviders = await oauthUtil.availableProviders(req);
         const form = await formio.cache.loadCurrentForm(req);
 
         const getOAuthActionButtons = () => {

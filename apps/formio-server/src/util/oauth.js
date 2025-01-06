@@ -7,7 +7,7 @@ module.exports = function(formio) {
     // Gets available providers
     // Returns a promise, or you can provide the next callback arg
     // Resolves with array of {name, title}
-    async availableProviders(req, next) {
+    async availableProviders(req) {
       try {
         const settings = await formio.hook.settings(req);
         const providers = _(formio.oauth.providers)
@@ -21,10 +21,10 @@ module.exports = function(formio) {
           })
           .map(_.partialRight(_.pick, 'name', 'title'))
           .value();
-        return next(null, providers);
+        return providers;
       }
       catch (err) {
-        return next(err);
+        return console.warn('Unable to get available providers.');
       }
     },
 
