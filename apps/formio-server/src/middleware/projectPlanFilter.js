@@ -105,7 +105,7 @@ module.exports = function(formio) {
     }
 
     try {
-      const plan = await formio.plans.getPlan(req);
+      const {plan} = await formio.plans.getPlan(req);
       if (!plan) {
         debug('Project plan not found.');
         return next('Project plan not found.');
