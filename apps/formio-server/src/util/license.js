@@ -189,7 +189,7 @@ async function performValidationRound(app) {
     hostname,
   });
 }
-
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 /* eslint-disable no-console */
 async function submitUtilizationRequest(
   app,
@@ -216,9 +216,8 @@ async function submitUtilizationRequest(
 
       console.log(`Retrying in ${INTERVAL / 1000}s...`);
 
-      const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
       await delay(INTERVAL);
-      await submitUtilizationRequest(app, payload, attempts + 1, MAX_ATTEMPTS);
+      return submitUtilizationRequest(app, payload, attempts + 1, MAX_ATTEMPTS);
     }
     // Otherwise, print an error and exit
     else {
