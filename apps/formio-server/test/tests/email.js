@@ -649,5 +649,136 @@ module.exports = function(app, template, hook) {
         }
       });
     });
+
+    it('Should send correct email for nested forms', (done) => {
+      let testAction = {
+        title: 'Email',
+        name: 'email',
+        handler: ['after'],
+        method: ['create'],
+        priority: 1,
+        settings: {
+          from: 'travis@form.io',
+          replyTo: '',
+          emails: ['test@form.io'],
+          sendEach: false,
+          subject: 'Hello',
+          message: '{{ submission(data, form.components) }}',
+          transport: 'test',
+          template: 'https://pro.formview.io/assets/email.html',
+          renderingMethod: 'dynamic'
+        },
+      }
+      const childForm = {
+        "_id": "677801142628e5aad5e7b1c2",
+        "title": "9503 child",
+        "name": "9503Child",
+        "path": "9503child",
+        "type": "form",
+        "access": [],
+        "submissionAccess": [],
+        "components": [
+          {
+            "label": "Text Field",
+            "applyMaskOn": "change",
+            "tableView": true,
+            "validateWhenHidden": false,
+            "key": "textField",
+            "type": "textfield",
+            "input": true
+          }
+        ]
+      }
+      const parentForm = {
+        "title": "9503 parent",
+        "name": "9503Parent",
+        "path": "9503parent",
+        "type": "form",
+        "access": [],
+        "submissionAccess": [],
+        "components": [
+          {
+            "label": "Form",
+            "tableView": true,
+            "form": "677801142628e5aad5e7b1c2",
+            "useOriginalRevision": false,
+            "key": "form",
+            "type": "form",
+            "input": true
+          },
+          {
+            "type": "button",
+            "label": "Submit",
+            "key": "submit",
+            "disableOnInvalid": true,
+            "input": true,
+            "tableView": false
+          }
+        ]
+      }
+      // Create child form
+      request(app)
+        .post(hook.alter('url', '/form', template))
+        .set('x-jwt-token', template.users.admin.token)
+        .send(childForm)
+        .end((err, resChild) => {
+          if (err) {
+            return done(err);
+          }
+          parentForm.components[0].form = resChild.body._id;
+          // Create parent form
+          request(app)
+            .post(hook.alter('url', '/form', template))
+            .set('x-jwt-token', template.users.admin.token)
+            .send(parentForm)
+            .end((err, resParent) => {
+              if (err) {
+                return done(err);
+              }
+              testAction.form = resParent.body._id;
+              // Add the action to the form.
+              request(app)
+                .post(hook.alter('url', `/form/${resParent.body._id}/action`, template))
+                .set('x-jwt-token', template.users.admin.token)
+                .send(testAction)
+                .end((err, res) => {
+                  if (err) {
+                    return done(err);
+                  }
+                  testAction = res.body;
+                  const event = template.hooks.getEmitter();
+                  event.on('newMail', (email) => {
+                    assert(email.html.includes('test'));
+                    event.removeAllListeners('newMail');
+                    done();
+                  });
+                  const submission = {
+                    noValidate: true,
+                    data: {
+                      form: {
+                        data: {
+                          textField: 'test',
+                        },
+                        form: resChild.body._id,
+                        _id: resParent.body._id
+                      },
+                      submit: true
+                    },
+                    state: 'submitted'
+                  };
+                  // Send submission
+                  request(app)
+                    .post(hook.alter('url', `/form/${resParent.body._id}/submission`, template))
+                    .set('x-jwt-token', template.users.admin.token)
+                    .send(submission)
+                    .end((err, res) => {
+                      if(err) {
+                        return done(err);
+                      }
+                    });
+                });
+            });
+        });
+    });
   });
 };
