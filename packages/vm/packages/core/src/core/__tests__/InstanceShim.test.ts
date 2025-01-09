@@ -35,6 +35,60 @@ const data = {
     email: '',
 };
 
+const dataGrid = {
+    label: 'Data Grid',
+    reorder: false,
+    addAnotherPosition: 'bottom',
+    layoutFixed: false,
+    enableRowGroups: false,
+    initEmpty: false,
+    hideLabel: true,
+    tableView: false,
+    defaultValue: [
+        {
+            accountName: '',
+            accountNumber: '',
+            BillNoField: '',
+        },
+    ],
+    validate: {
+        maxLength: '15',
+    },
+    key: 'accountInfo',
+    type: 'datagrid',
+    defaultOpen: false,
+    input: true,
+    components: [
+        {
+            label: 'Using instance.rowIndex',
+            applyMaskOn: 'change',
+            tableView: true,
+            validateOn: 'blur',
+            validate: {
+                required: true,
+                custom: 'valid = isDup() ? "Duplicate detected" : true;\n\nfunction isDup() {\n    var cRow = instance.rowIndex;\n    if (data.accountInfo.length \u003E 1) {\n        for (var i = 0; i \u003C data.accountInfo.length; i++) {\n            if (i !== cRow && input === data.accountInfo[i].BillNoField) {\n                return true;\n            }\n        }\n        return false;\n    } else {\n        return false;\n    }\n}',
+            },
+            validateWhenHidden: false,
+            key: 'BillNoField',
+            type: 'textfield',
+            input: true,
+        },
+        {
+            label: 'Using rowIndex',
+            applyMaskOn: 'change',
+            tableView: true,
+            validateOn: 'blur',
+            validate: {
+                required: true,
+                custom: 'valid = isDup() ? "Duplicate detected" : true;\n\nfunction isDup() {\n    var cRow = rowIndex;\n    if (data.accountInfo.length \u003E 1) {\n        for (var i = 0; i \u003C data.accountInfo.length; i++) {\n            if (i !== cRow && input === data.accountInfo[i].BillNoField1) {\n                return true;\n            }\n        }\n        return false;\n    } else {\n        return false;\n    }\n}',
+            },
+            key: 'BillNoField1',
+            type: 'textfield',
+            input: true,
+        },
+    ],
+};
+
 describe('Test InstanceShim', () => {
     const root = new RootShim({ components }, { data });
     const instanceMap = root.instanceMap;
@@ -67,5 +121,33 @@ describe('Test InstanceShim', () => {
     it('should expose a getCustomDefaultValue method', () => {
         const firstNameInstance = instanceMap.firstName;
         expect(firstNameInstance.getCustomDefaultValue()).to.equal('John');
+    });
+
+    it('should add rowIndex property to the nested components', () => {
+        const root = new RootShim(
+            { components: [dataGrid] },
+            {
+                data: {
+                    accountInfo: [
+                        {
+                            BillNoField: 'test',
+                            BillNoField1: 'test2',
+                        },
+                        {
+                            BillNoField: 'test3',
+                            BillNoField1: 'test4',
+                        },
+                    ],
+                    submit: true,
+                },
+            },
+        );
+        const instanceMap = root.instanceMap;
+        const billNoFieldInstanceRow0 =
+            instanceMap['accountInfo[0].BillNoField'];
+        const billNoFieldInstanceRow1 =
+            instanceMap['accountInfo[1].BillNoField'];
+        expect(billNoFieldInstanceRow0.rowIndex).to.equal(0);
+        expect(billNoFieldInstanceRow1.rowIndex).to.equal(1);
     });
 });

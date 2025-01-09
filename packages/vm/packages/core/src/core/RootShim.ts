@@ -23,6 +23,8 @@ export class RootShim {
                 data: any,
                 row: any,
                 path: any,
+                componentComponents: any,
+                dataIndex: any,
             ) => {
                 if (!this.instanceMap[path]) {
                     this.instanceMap[path] = new InstanceShim(
@@ -30,6 +32,7 @@ export class RootShim {
                         this,
                         submission.data,
                         path,
+                        dataIndex,
                     );
                     this.components.push(this.instanceMap[path]);
                 }
