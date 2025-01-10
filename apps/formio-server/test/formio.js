@@ -177,6 +177,22 @@ const requestMock = sinon.stub()
             last_name: 'Ahmed',
           }),
         });
+      case 'https://www.google.com/recaptcha/api/siteverify':
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            url: 'https://www.google.com/recaptcha/api/siteverify',
+            success: true
+          })
+        })
+      case 'https://challenges.cloudflare.com/turnstile/v0/siteverify':
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            url: 'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+            success: true
+          })
+        });
       default:
         // Fallback to fetch.
         if (url.includes('localhost')) {
