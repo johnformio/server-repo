@@ -10,21 +10,28 @@ export class InstanceShim {
     public _root: any;
     public _data: any;
     public _path: string;
+    public _rowIndex: number | null;
 
     constructor(
         component: any,
         root: any,
         data: any,
         path: string = component.path || component.key,
+        dataIndex: number | null = null,
     ) {
         this._component = component;
         this._root = root;
         this._data = data;
         this._path = path;
+        this._rowIndex = dataIndex;
     }
 
     get root() {
         return this._root;
+    }
+
+    get rowIndex() {
+        return this._rowIndex;
     }
 
     get component() {
