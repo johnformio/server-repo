@@ -288,7 +288,7 @@ module.exports = function(app) {
         if (req.url.indexOf(`/project/${req.projectId}/manage`) === 0) {
           return true;
         }
-        if (req.url.includes('/pdf-proxy')) {
+        if (req.url.includes('/pdf-proxy') && req.method === "GET") {
           return true;
         }
 
@@ -1470,6 +1470,12 @@ module.exports = function(app) {
           projectId = null;
         }
         req.projectId = projectId;
+
+        const proxyUrl = req.url.replace('/pdf-proxy', '');
+        const urlParams = formioServer.formio.util.getUrlParams(proxyUrl);
+        if (urlParams.pdf) {
+          req.projectId = urlParams.pdf;
+        }
         return params;
       },
 

@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = app => (req, res, next) => {
+module.exports = (app) => async (req, res, next) => {
   if (!req.query.token) {
     return next();
   }
@@ -13,18 +13,21 @@ module.exports = app => (req, res, next) => {
   delete req.query.token;
 
   // Get the jwt token for this user.
-  app.formio.formio.mongoose.models.token.findOne({
-    key: aliasToken
-  }, (err, token) => {
-    if (err) {
-      return next('Token not valid.');
-    }
+  try {
+    const token = await app.formio.formio.mongoose.models.token.findOne({
+      key: aliasToken,
+    });
 
     if (!token) {
       return next('Token expired.');
     }
 
     req.headers['x-jwt-token'] = token.value;
-    next();
-  });
+    return next();
+  }
+  catch (err) {
+    if (err) {
+      return next('Token not valid.');
+    }
+  }
 };

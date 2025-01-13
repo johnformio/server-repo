@@ -26,8 +26,12 @@ module.exports = (app) => {
         if (!req.currentProject) {
           return next('No project found.');
         }
-
-        proxy.authenticate(req, req.currentProject);
+        try {
+          proxy.authenticate(req, req.currentProject);
+        }
+        catch (err) {
+          return next(err.message);
+        }
         next();
         });
       }
