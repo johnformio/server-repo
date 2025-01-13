@@ -18,14 +18,14 @@ module.exports = app => routes => {
     async before(req, res, item, next) {
       app.formio.formio.util.markModifiedParameters(item, ['components', 'properties']);
       const form = await app.formio.formio.cache.loadForm(req, null, req.params.formId);
-      if (formRevision.shouldCreateNewRevision(req, item, form)) {
+      if (await formRevision.shouldCreateNewRevision(req, item, form)) {
         formRevision.incrementVersion(item);
       }
       next();
     },
     async after(req, res, item, next) {
         const form = await app.formio.formio.cache.loadForm(req, null, req.params.formId);
-        if (formRevision.shouldCreateNewRevision(req, item, form)) {
+        if (await formRevision.shouldCreateNewRevision(req, item, form)) {
           return formRevision.createVersion(item, getRequestUser(req), req.body._vnote, async (err, revision) => {
             if (err) {
               return next(err);
@@ -60,14 +60,14 @@ module.exports = app => routes => {
     async before(req, res, item, next) {
       app.formio.formio.util.markModifiedParameters(item, ['components', 'properties']);
       const form = await app.formio.formio.cache.loadForm(req, null, req.params.formId);
-      if (formRevision.shouldCreateNewRevision(req, item, form)) {
+      if (await formRevision.shouldCreateNewRevision(req, item, form)) {
         formRevision.incrementVersion(item);
       }
       return next();
     },
     async after(req, res, item, next) {
         const form = await app.formio.formio.cache.loadForm(req, null, req.params.formId);
-        if (formRevision.shouldCreateNewRevision(req, item, form)) {
+        if (await formRevision.shouldCreateNewRevision(req, item, form)) {
           return formRevision.createVersion(item, getRequestUser(req), '', async (err, revision) => {
             if (err) {
               return next(err);
@@ -93,10 +93,10 @@ module.exports = app => routes => {
   };
 
   routes.hooks.post = {
-    after(req, res, item, next) {
+    async after(req, res, item, next) {
       if (
         item.revisions &&
-        formRevision.revisionsAllowed(req)
+        await formRevision.revisionsAllowed(req)
       ) {
         return formRevision.createVersion(item, getRequestUser(req), req.body._vnote, async (err, revision) => {
           if (err) {
@@ -148,11 +148,11 @@ module.exports = app => routes => {
     next();
   });
 
-  routes.before.unshift((req, res, next) => {
+  routes.before.unshift(async (req, res, next) => {
     // Don't allow editing drafts if not on enterprise plan.
     if (
       ['PUT'].includes(req.method) &&
-      !formRevision.revisionsAllowed(req) &&
+      !(await formRevision.revisionsAllowed(req)) &&
       req.url.endsWith('/draft')
     ) {
       if (!formRevision.checkRevisionPlan(req.primaryProject.plan)) {

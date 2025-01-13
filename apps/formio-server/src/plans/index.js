@@ -78,29 +78,32 @@ module.exports = function(formioServer) {
 
       // Allow admins to set plan on deployed env.
       if (!config.formio.hosted && req.body.plan && req.isAdmin) {
-        return req.body.plan;
+        return {plan: req.body.plan};
       }
 
       // Allow admin with x-admin-token to set plan on hosted env.
       if (config.formio.hosted && req.body.plan && isSuperAdmin(req)) {
-        return req.body.plan;
+        return {plan: req.body.plan};
       }
     }
 
     if (req.method === 'PUT' && req.projectId && !req.formId) {
       if (config.formio.hosted && req.body.plan && isSuperAdmin(req)) {
-        return req.body.plan;
+        return {plan: req.body.plan};
       }
     }
 
     // Ignore project plans, if not interacting with a project.
     if (!req.projectId) {
       debug.getPlan('No project given.');
-      return getBasePlan();
+      return {plan: getBasePlan()};
     }
     try {
       const currentProject = await formioServer.formio.cache.loadCurrentProject(req);
       const project = await formioServer.formio.cache.loadPrimaryProject(req);
+      if (!currentProject || !project) {
+        throw new Error('Project not found.');
+      }
       return getProjectPlan(project, currentProject);
     }
     catch (err) {

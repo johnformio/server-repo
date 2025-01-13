@@ -54,13 +54,16 @@ module.exports = app => (mail, req, res, params, setActionItemMessage, cb) => {
   const attachPDF = async () => {
     // If they wish to attach a PDF.
     if (params.settings && params.settings.attachPDF) {
-      const attachment = {};
-      const project = await formio.cache.loadPrimaryProject(req);
-      const form = await formio.cache.loadCurrentForm(req);
-      const submission = _.get(res.resource, 'item', req.body);
-      const downloadPDF = require('../../util/downloadPDF')(formioServer);
-
       try {
+        const attachment = {};
+        const project = await formio.cache.loadPrimaryProject(req);
+        if (!project) {
+          throw new Error('Project not found');
+        }
+        const form = await formio.cache.loadCurrentForm(req);
+        const submission = _.get(res.resource, 'item', req.body);
+        const downloadPDF = require('../../util/downloadPDF')(formioServer);
+
         const response = await downloadPDF(req, project, form, submission);
         if (response.status !== 200 || response.ok === false) {
           const nonFatalAttachmentError = await util.parseUnknownContentResponse(response);
@@ -74,6 +77,30 @@ module.exports = app => (mail, req, res, params, setActionItemMessage, cb) => {
         const responseBuffer = await response.buffer();
         const base64 = responseBuffer.toString('base64');
         attachment.path = `data:application/pdf;base64,${base64}`;
+
+        // Get the file name settings.
+        let fileName = params.settings.pdfName || '{{ form.name }}-{{ submission._id }}';
+
+        // Only allow certain characters and keep malicious code from executing.
+        fileName = fileName
+          .replace(/{{/g, '----ob----')
+          .replace(/}}/g, '----cb----')
+          .replace(/[^0-9A-Za-z._-]/g, '')
+          .replace(/----ob----/g, '{{')
+          .replace(/----cb----/g, '}}');
+        try {
+          fileName = formio.util.FormioUtils.interpolate(fileName, {
+            submission: submission,
+            form: form
+          }).replace('.', '');
+        }
+        catch (err) {
+          fileName = `submission-${submission._id || submission.created}`;
+        }
+
+        attachment.filename = `${fileName}.pdf`;
+        attachment.contentType = 'application/pdf';
+        mail.attachments = (mail.attachments || []).concat([attachment]);
       }
       catch (err) {
         // in case PDF throws an error rather than a bad response (e.g. the PDF server is not even configured) we want to
@@ -85,30 +112,6 @@ module.exports = app => (mail, req, res, params, setActionItemMessage, cb) => {
         );
         return;
       }
-
-      // Get the file name settings.
-      let fileName = params.settings.pdfName || '{{ form.name }}-{{ submission._id }}';
-
-      // Only allow certain characters and keep malicious code from executing.
-      fileName = fileName
-        .replace(/{{/g, '----ob----')
-        .replace(/}}/g, '----cb----')
-        .replace(/[^0-9A-Za-z._-]/g, '')
-        .replace(/----ob----/g, '{{')
-        .replace(/----cb----/g, '}}');
-      try {
-        fileName = formio.util.FormioUtils.interpolate(fileName, {
-          submission: submission,
-          form: form
-        }).replace('.', '');
-      }
-      catch (err) {
-        fileName = `submission-${submission._id || submission.created}`;
-      }
-
-      attachment.filename = `${fileName}.pdf`;
-      attachment.contentType = 'application/pdf';
-      mail.attachments = (mail.attachments || []).concat([attachment]);
     }
   };
 

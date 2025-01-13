@@ -18,7 +18,8 @@ module.exports = function(formio) {
                 }
             }
 
-            let result = await  formio.resources.project.model.findOne({
+            try {
+              let result = await formio.resources.project.model.findOne({
                 _id: formio.util.idToBson(projectId),
                 deleted: {$eq: null}
               }).exec();
@@ -27,6 +28,11 @@ module.exports = function(formio) {
                 projectCache.set(result);
               }
               return result;
+            }
+            catch (ignoreErr) {
+              // Return undefined if there is an error finding the project e.g. can't cast ObjectId etc.
+              return;
+            }
         },
 
         set(project) {

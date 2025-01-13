@@ -260,8 +260,7 @@ module.exports = function(app, template, hook) {
         });
     });
 
-    // commenting this out for same reason as above
-    xit('A Project Owner should not be able to Create a Form without a valid Project ID', function(done) {
+    it('A Project Owner should not be able to Create a Form without a valid Project ID', function(done) {
       request(app)
         .post(`/project/${encodeURI('💩')}/form`) // Invalid project id
         .set('x-jwt-token', template.formio.owner.token)

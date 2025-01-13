@@ -9,7 +9,7 @@ module.exports = app => async (req, cb) => {
 
     if (project.type === 'tenant') {
       const parentProject = await app.formio.formio.cache.loadCache.load(project.project);
-      return cb(null, parentProject.settings);
+      return cb(null, parentProject?.settings ?? project.settings);
     }
     else {
       return cb(null, project.settings);

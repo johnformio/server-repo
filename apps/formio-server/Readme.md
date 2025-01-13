@@ -52,6 +52,12 @@ You should now be able to run the server
 yarn start
 ```
 
+### Running tests
+To run tests locally in your IDE you need to do the following...
+- Remove the /portal folder (not removing this will cause 'Discovers the formio project' test to fail)
+- Create a .test.env file copy the contents of .test.env.example to .test.env (Make sure if you are on windows to set the environment variable DOTENV_CONFIG_PATH=./.test.env;)
+- WARNING: Running the tests will delete whatever database it is pointed to. Make sure that the mongo connection string is pointed to a test environment
+
 Containerized Development
 ------------
 ## Prerequisites

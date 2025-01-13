@@ -256,7 +256,7 @@ module.exports = function(app) {
         return true;
       },
 
-      emailTransports(transports, settings, req, cb) {
+      emailTransports(transports, settings, req) {
         settings = settings || {};
         if (req && req.primaryProject) {
           if (!config.formio.hosted && process.env.DEFAULT_TRANSPORT) {
@@ -266,7 +266,7 @@ module.exports = function(app) {
             });
           }
         }
-        return cb(null, transports);
+        return transports;
       },
       hasEmailAccess(req) {
         const noEmailPlans = ['basic', 'archived'];
@@ -595,37 +595,38 @@ module.exports = function(app) {
           }
 
           // Load the project.
-            const project = await formioServer.formio.cache.loadProject(req, req.projectId);
-            if (!project) {
-              throw new Error(`No project found with projectId: ${req.projectId}`);
-            }
+          const currentProject = await formioServer.formio.cache.loadCurrentProject(req);
+          if (!currentProject) {
+            throw new Error('Project not found');
+          }
 
-            req.currentProject = project;
-            const primaryProject = await formioServer.formio.cache.loadPrimaryProject(req);
-            req.primaryProject = primaryProject;
+          const primaryProject = await formioServer.formio.cache.loadPrimaryProject(req);
+          if (!primaryProject) {
+            throw new Error(`No primary project found with projectId: ${req.projectId}`);
+          }
 
-              // Store the Project Owners UserId, because they will have all permissions.
-              if (req.primaryProject && req.primaryProject.owner) {
-                access.project.owner = req.primaryProject.owner.toString();
+          // Store the Project Owners UserId, because they will have all permissions.
+          if (primaryProject && primaryProject.owner) {
+            access.project.owner = primaryProject.owner.toString();
 
-                // Add the UserId of the Project Owner for the ownerFilter middleware.
-                req.projectOwner = access.project.owner;
-              }
+            // Add the UserId of the Project Owner for the ownerFilter middleware.
+            req.projectOwner = access.project.owner;
+          }
 
-              // Add the other defined access types.
-              if (project.access) {
-                project.access.forEach(function(permission) {
-                  access.project[permission.type] = access.project[permission.type] || [];
+          // Add the other defined access types.
+          if (currentProject.access) {
+            currentProject.access.forEach(function(permission) {
+              access.project[permission.type] = access.project[permission.type] || [];
 
-                  // Convert the roles from BSON to comparable strings.
-                  permission.roles.forEach(function(id) {
-                    access.project[permission.type].push(id.toString());
-                  });
-                });
-              }
+              // Convert the roles from BSON to comparable strings.
+              permission.roles.forEach(function(id) {
+                access.project[permission.type].push(id.toString());
+              });
+            });
+          }
 
-              // Pass the access of this project to the next function.
-            return null;
+          // Pass the access of this project to the next function.
+          return null;
         };
 
         /**
@@ -641,108 +642,111 @@ module.exports = function(app) {
             return null;
           }
 
-            const currentProject = await formioServer.formio.cache.loadCurrentProject(req);
-            // Load the primary project.
-            /* eslint-disable camelcase, max-statements, no-fallthrough */
-            const primaryProject = await formioServer.formio.cache.loadPrimaryProject(req);
-              if (!primaryProject) {
-                throw new Error(`No project found with projectId: ${req.projectId}`);
+          const currentProject = await formioServer.formio.cache.loadCurrentProject(req);
+          if (!currentProject) {
+            throw new Error(`Project not found`);
+          }
+          // Load the primary project.
+          /* eslint-disable camelcase, max-statements, no-fallthrough */
+          const primaryProject = await formioServer.formio.cache.loadPrimaryProject(req);
+          if (!primaryProject) {
+            throw new Error('Project not found');
+          }
+
+          // Skip teams processing, if this projects plan does not support teams.
+          if (['basic', 'independent', 'archived'].includes(primaryProject.plan)) {
+            return null;
+          }
+
+          // Iterate the project access permissions, and search for teams functionality.
+          if (primaryProject.access) {
+            const teamAccess = _.filter(primaryProject.access, function(permission) {
+              return _.startsWith(permission.type, 'team_');
+            }).concat(_.filter(currentProject.access, function(permission) {
+              return _.startsWith(permission.type, 'stage_');
+            }));
+
+            if (req.currentProject?.type === 'tenant' && req.userProject?.name === 'formio') {
+              if (req.access && _.includes(_.keys(req.access), req.currentProject.name)) {
+                _.find(teamAccess, {type: req.access[req.currentProject.name]}).roles.push(req.user._id.toString());
               }
-
-              // Skip teams processing, if this projects plan does not support teams.
-              if (['basic', 'independent', 'archived'].includes(primaryProject.plan)) {
-                return null;
+              if (req.user && req.user.sso && req.user.access && _.includes(_.keys(req.user.access), req.currentProject.name)) {
+                _.find(teamAccess, {type: req.user.access[req.currentProject.name]}).roles.push(req.user._id.toString());
               }
+            }
 
-              // Iterate the project access permissions, and search for teams functionality.
-              if (primaryProject.access) {
-                const teamAccess = _.filter(primaryProject.access, function(permission) {
-                  return _.startsWith(permission.type, 'team_');
-                }).concat(_.filter(currentProject.access, function(permission) {
-                  return _.startsWith(permission.type, 'stage_');
-                }));
+            // Initialize the project access.
+            access.project = access.project || {};
+            access.project.create_all = access.project.create_all || [];
+            access.project.read_all = access.project.read_all || [];
+            access.project.update_all = access.project.update_all || [];
+            access.project.delete_all = access.project.delete_all || [];
 
-                if (req.currentProject?.type === 'tenant' && req.userProject?.name === 'formio') {
-                  if (req.access && _.includes(_.keys(req.access), req.currentProject.name)) {
-                    _.find(teamAccess, {type: req.access[req.currentProject.name]}).roles.push(req.user._id.toString());
-                  }
-                  if (req.user && req.user.sso && req.user.access && _.includes(_.keys(req.user.access), req.currentProject.name)) {
-                    _.find(teamAccess, {type: req.user.access[req.currentProject.name]}).roles.push(req.user._id.toString());
-                  }
-                }
+            // Initialize the form access.
+            access.form = access.form || {};
+            access.form.create_all = access.form.create_all || [];
+            access.form.read_all = access.form.read_all || [];
+            access.form.update_all = access.form.update_all || [];
+            access.form.delete_all = access.form.delete_all || [];
 
-                // Initialize the project access.
-                access.project = access.project || {};
-                access.project.create_all = access.project.create_all || [];
-                access.project.read_all = access.project.read_all || [];
-                access.project.update_all = access.project.update_all || [];
-                access.project.delete_all = access.project.delete_all || [];
+            // Initialize the submission access.
+            access.submission = access.submission || {};
+            access.submission.create_all = access.submission.create_all || [];
+            access.submission.read_all = access.submission.read_all || [];
+            access.submission.update_all = access.submission.update_all || [];
+            access.submission.delete_all = access.submission.delete_all || [];
 
-                // Initialize the form access.
-                access.form = access.form || {};
-                access.form.create_all = access.form.create_all || [];
-                access.form.read_all = access.form.read_all || [];
-                access.form.update_all = access.form.update_all || [];
-                access.form.delete_all = access.form.delete_all || [];
+            // Initialize the role access.
+            access.role = access.role || {};
+            access.role.create_all = access.role.create_all || [];
+            access.role.read_all = access.role.read_all || [];
+            access.role.update_all = access.role.update_all || [];
+            access.role.delete_all = access.role.delete_all || [];
 
-                // Initialize the submission access.
-                access.submission = access.submission || {};
-                access.submission.create_all = access.submission.create_all || [];
-                access.submission.read_all = access.submission.read_all || [];
-                access.submission.update_all = access.submission.update_all || [];
-                access.submission.delete_all = access.submission.delete_all || [];
+            const isFormCreation = req.method === 'POST' && req.url.endsWith('/form');
+            const isPdfUploading = req.method === 'POST' && req.url.endsWith('/upload');
 
-                // Initialize the role access.
-                access.role = access.role || {};
-                access.role.create_all = access.role.create_all || [];
-                access.role.read_all = access.role.read_all || [];
-                access.role.update_all = access.role.update_all || [];
-                access.role.delete_all = access.role.delete_all || [];
-
-                const isFormCreation = req.method === 'POST' && req.url.endsWith('/form');
-                const isPdfUploading = req.method === 'POST' && req.url.endsWith('/upload');
-
-                teamAccess.forEach(function(permission) {
-                  permission.roles = permission.roles || [];
-                  // Note: These roles are additive. team_admin gets all roles in team_write and team_read.
-                  // Iterate each team in the team roles, and add their permissions.
-                  permission.roles.forEach(function(id) {
-                    switch (permission.type) {
-                      case 'team_admin':
-                        access.project.update_all.push(id.toString());
-                        access.project.delete_all.push(id.toString());
-                      case 'team_write':
-                      case 'stage_write':
-                        if (isFormCreation || isPdfUploading || permission.type === 'team_admin') {
-                          access.project.create_all.push(id.toString()); // This controls form creation.
-                        }
-                        access.form.create_all.push(id.toString());
-                        access.form.update_all.push(id.toString());
-                        access.form.delete_all.push(id.toString());
-                        access.submission.create_all.push(id.toString());
-                        access.submission.update_all.push(id.toString());
-                        access.submission.delete_all.push(id.toString());
-                        access.role.create_all.push(id.toString());
-                        access.role.update_all.push(id.toString());
-                        access.role.delete_all.push(id.toString());
-                      case 'team_read':
-                      case 'stage_read':
-                        access.project.read_all.push(id.toString());
-                        access.form.read_all.push(id.toString());
-                        access.submission.read_all.push(id.toString());
-                        access.role.read_all.push(id.toString());
-                        break;
-                      case 'team_access':
-                        access.project.read_all.push(id.toString());
+            teamAccess.forEach(function(permission) {
+              permission.roles = permission.roles || [];
+              // Note: These roles are additive. team_admin gets all roles in team_write and team_read.
+              // Iterate each team in the team roles, and add their permissions.
+              permission.roles.forEach(function(id) {
+                switch (permission.type) {
+                  case 'team_admin':
+                    access.project.update_all.push(id.toString());
+                    access.project.delete_all.push(id.toString());
+                  case 'team_write':
+                  case 'stage_write':
+                    if (isFormCreation || isPdfUploading || permission.type === 'team_admin') {
+                      access.project.create_all.push(id.toString()); // This controls form creation.
                     }
-                  });
-                });
-              }
+                    access.form.create_all.push(id.toString());
+                    access.form.update_all.push(id.toString());
+                    access.form.delete_all.push(id.toString());
+                    access.submission.create_all.push(id.toString());
+                    access.submission.update_all.push(id.toString());
+                    access.submission.delete_all.push(id.toString());
+                    access.role.create_all.push(id.toString());
+                    access.role.update_all.push(id.toString());
+                    access.role.delete_all.push(id.toString());
+                  case 'team_read':
+                  case 'stage_read':
+                    access.project.read_all.push(id.toString());
+                    access.form.read_all.push(id.toString());
+                    access.submission.read_all.push(id.toString());
+                    access.role.read_all.push(id.toString());
+                    break;
+                  case 'team_access':
+                    access.project.read_all.push(id.toString());
+                }
+              });
+            });
+          }
 
-              // Pass the access of this Team to the next function.
-              return null;
+          // Pass the access of this Team to the next function.
+          return null;
 
-            /* eslint-enable camelcase, max-statements, no-fallthrough */
+          /* eslint-enable camelcase, max-statements, no-fallthrough */
         };
 
         const getPrimaryProjectAdminRole = async function() {
@@ -1757,15 +1761,21 @@ module.exports = function(app) {
             // Set the update.
             update.access = res.resource.item.access;
           }
+
+          // Will only trigger on beforePost with SQLConnector so can be added to submisson
+          if (res.submission?.externalIds && (res.submission?.externalIds.length > 0)) {
+            update.externalIds = res.submission.externalIds;
+          }
         }
         return update;
       },
-      submission(req, res, next) {
+      async submission(req, res, next) {
         if (req.body.hasOwnProperty('_fvid') && typeof res.submission === 'object') {
           res.submission._fvid = req.body._fvid;
         }
         try {
-          encrypt.handle(req, res, next);
+          await encrypt.handle(req, res);
+          return next();
         }
         catch (err) {
           return next(err);

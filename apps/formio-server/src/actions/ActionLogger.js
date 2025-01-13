@@ -61,29 +61,30 @@ module.exports = class ActionLogger {
      * @param method
      * @param done
      */
-    createActionItem(done) {
+    async createActionItem(done) {
         // Instantiate ActionItem here.
-        this.router.formio.mongoose.models.actionItem.create({
-            title: this.action.title,
-            form: this.req.formId,
-            submission: this.res.resource ? this.res.resource.item._id : this.req.body._id,
-            action: this.action.name,
-            handler: this.handler,
-            method: this.method,
-            state: 'inprogress',
-            project: this.req.projectId,
-            messages: [
-                {
-                    datetime: new Date(),
-                    info: 'Starting Action',
-                    data: {}
-                }
-            ]
-        }, (err, actionItem) => {
-            if (err) {
-                return done(err);
-            }
+        try {
+            const actionItem = await this.router.formio.mongoose.models.actionItem.create({
+                title: this.action.title,
+                form: this.req.formId,
+                submission: this.res.resource ? this.res.resource.item._id : this.req.body._id,
+                action: this.action.name,
+                handler: this.handler,
+                method: this.method,
+                state: 'inprogress',
+                project: this.req.projectId,
+                messages: [
+                    {
+                        datetime: new Date(),
+                        info: 'Starting Action',
+                        data: {}
+                    }
+                ]
+            });
             return done(null, actionItem);
-        });
+        }
+        catch (err) {
+            return done(err);
+        }
     }
 };

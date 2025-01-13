@@ -9,6 +9,9 @@ module.exports = function(formio) {
 
     try {
       const project = await formio.cache.loadCurrentProject(req);
+      if (!project) {
+        throw new Error('Project not found.');
+      }
       if ('protect' in project && project.protect) {
         return res.status(403).send('Modifications not allowed. Project is protected.');
       }

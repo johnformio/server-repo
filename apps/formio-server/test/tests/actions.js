@@ -5,6 +5,7 @@ const request = require('supertest');
 const assert = require('assert');
 const MockServer = require('./fixtures/MockServer');
 const config = require("../../config");
+const sqlConnectorMockServer = require('./fixtures/sqlConnectorMockServer');
 const _ = require('lodash');
 const docker = process.env.DOCKER;
 const customer = process.env.CUSTOMER;
@@ -335,7 +336,7 @@ module.exports = (app, template, hook) => {
                   .expect("Content-Type", /json/)
                   .end((err, res) => {
                     if (err) {
-                      done(err);
+                      return done(err);
                     }
                     assert(res.body.hasOwnProperty("config"), 'Test project should have public configurations');
                     project = res.body;
@@ -1214,6 +1215,279 @@ module.exports = (app, template, hook) => {
       });
     });
   })
+
+  describe('SQL Connector', function() {
+    const sqlConnectorPort = 3002;
+    let formio = app.formio.formio;
+    let alters = hook.alter(`templateAlters`, {});
+    let importer = formio.template;
+    let testTemplate = require('./fixtures/sqlConnectorTemplate.json');
+    let _template = _.cloneDeep(testTemplate);
+    let projectApiKey = _template.settings.keys[0].key;
+    let importedProject = {};
+    let createdObjectId;
+    let submissionPayload = {
+      data: {
+        firstname: "John",
+        email: "john@smith.com",
+        submit: true,
+      }
+    };
+    let server;
+
+    it('Should be able to bootstrap form/resource with SQL Action', function(done) {
+      importer.import.template(_template, alters, (err, template) => {
+        if (err) {
+          return done(err);
+        }
+        importedProject = template;
+        done();
+      });
+    });
+
+    before(() => {
+      process.env.ADMIN_KEY = 'examplekey';
+    });
+
+    it('Should set SQL connector project settings', (done) => {
+      importedProject.settings = _template.settings
+
+      request(app)
+        .put(`/${importedProject.name}`)
+        .set('x-admin-key', process.env.ADMIN_KEY)
+        .set('Content-Type', 'application/json')
+        .set('Accept', 'application/json')
+        .send(importedProject)
+        .expect(200)
+        .expect('Content-Type', /json/)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+          
+          assert.deepEqual(
+            _template.settings,
+            JSON.parse(res.text).settings
+          );
+          
+          done();
+        });
+    });
+
+    it('Return 502 error if server is not available (ECONNREFUSED)', (done) => {
+      request(app)
+        .post(`/${importedProject.name}/form/${importedProject.resources.customer._id}/submission`)
+        .set('x-token', projectApiKey)
+        .set('Content-Type', 'application/json')
+        .set('Accept', 'application/json')
+        .send(submissionPayload)
+        .expect(502)
+        .expect('Content-Type', /json/)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+          assert.equal(
+            502,
+            res.status
+          );
+
+          done();
+        });
+    });
+
+    it('Set up sqlconnector listener', (done) => {
+      server = sqlConnectorMockServer.listen(sqlConnectorPort, () => {
+        console.log(`Listening on ${sqlConnectorPort}`);
+        done();
+      });
+    });
+
+    after('Stop the sqlconnector listener process', () => {
+      server.close();
+    });
+
+    it('Returns 400 when invalid request body', (done) => {
+      request(app)
+        .post(`/${importedProject.name}/form/${importedProject.resources.customer._id}/submission`)
+        .set('x-token', projectApiKey)
+        .set('Content-Type', 'application/json')
+        .set('Accept', 'application/json')
+        .send(submissionPayload)
+        .expect(400)
+        .expect('Content-Type', /json/)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+
+          assert.equal(
+            "Bad Request",
+            JSON.parse(res.text).message
+          );
+
+          done();
+        });
+    });
+
+    it('Returns 201 when creating a submission w/ AFTER handler', (done) => {
+      submissionPayload.data.age = 123
+
+      request(app)
+        .post(`/${importedProject.name}/form/${importedProject.resources.customer._id}/submission`)
+        .set('x-token', projectApiKey)
+        .set('Content-Type', 'application/json')
+        .set('Accept', 'application/json')
+        .send(submissionPayload)
+        .expect(201)
+        .expect('Content-Type', /json/)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+
+          createdObjectId = JSON.parse(res.text)._id;
+          done();
+        });
+    });
+
+    it('Returns 200 when updating a submission w/ AFTER handler', (done) => {
+      submissionPayload.data.age = 234
+
+      request(app)
+        .put(`/${importedProject.name}/form/${importedProject.resources.customer._id}/submission/${createdObjectId}`)
+        .set('x-token', projectApiKey)
+        .set('Content-Type', 'application/json')
+        .set('Accept', 'application/json')
+        .send(submissionPayload)
+        .expect(200)
+        .expect('Content-Type', /json/)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+
+          assert.equal(
+            submissionPayload.data.age,
+            JSON.parse(res.text).data.age
+          );
+
+          done();
+        });
+    });
+
+    it('Returns 200 when deleting a submission w/ AFTER handler', (done) => {
+      request(app)
+        .delete(`/${importedProject.name}/form/${importedProject.resources.customer._id}/submission/${createdObjectId}`)
+        .set('x-token', projectApiKey)
+        .set('Content-Type', 'application/json')
+        .set('Accept', 'application/json')
+        .expect(200)
+        .expect('Content-Type', /json/)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+
+          assert.deepEqual({}, JSON.parse(res.text));
+
+          done();
+        });
+    });
+
+    it('Should update SQLConnector action handler from AFTER to BEFORE', (done) => {
+      importedProject.settings = _template.settings
+      let actionData = importedProject.actions['customer:sqlconnector']
+      actionData.handler = ['before']
+
+      request(app)
+        .put(`/${importedProject.name}/form/${importedProject.resources.customer._id}/action/${actionData._id}`)
+        .set('x-admin-key', process.env.ADMIN_KEY)
+        .set('Content-Type', 'application/json')
+        .set('Accept', 'application/json')
+        .send(actionData)
+        .expect(200)
+        .expect('Content-Type', /json/)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+          
+          assert.equal(
+            actionData.handler[0],
+            JSON.parse(res.text).handler[0]
+          );
+          
+          done();
+        });
+    });
+
+    it('Returns 201 when creating a submission w/ BEFORE handler', (done) => {
+      submissionPayload.data.age = 123
+
+      request(app)
+        .post(`/${importedProject.name}/form/${importedProject.resources.customer._id}/submission`)
+        .set('x-token', projectApiKey)
+        .set('Content-Type', 'application/json')
+        .set('Accept', 'application/json')
+        .send(submissionPayload)
+        .expect(201)
+        .expect('Content-Type', /json/)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+
+          createdObjectId = JSON.parse(res.text)._id;
+          done();
+        });
+    });
+
+    it('Returns 200 when updating a submission w/ BEFORE handler', (done) => {
+      submissionPayload.data.age = 234
+
+      request(app)
+        .put(`/${importedProject.name}/form/${importedProject.resources.customer._id}/submission/${createdObjectId}`)
+        .set('x-token', projectApiKey)
+        .set('Content-Type', 'application/json')
+        .set('Accept', 'application/json')
+        .send(submissionPayload)
+        .expect(200)
+        .expect('Content-Type', /json/)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+
+          assert.equal(
+            submissionPayload.data.age,
+            JSON.parse(res.text).data.age
+          );
+
+          done();
+        });
+    });
+
+    it('Returns 200 when deleting a submission w/ BEFORE handler', (done) => {
+      request(app)
+        .delete(`/${importedProject.name}/form/${importedProject.resources.customer._id}/submission/${createdObjectId}`)
+        .set('x-token', projectApiKey)
+        .set('Content-Type', 'application/json')
+        .set('Accept', 'application/json')
+        .expect(200)
+        .expect('Content-Type', /json/)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+
+          assert.deepEqual({}, JSON.parse(res.text));
+
+          done();
+        });
+    });
+
+  });
 
   if (!docker)
   describe('x- headers for actions', () => {

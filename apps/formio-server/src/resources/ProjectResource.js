@@ -65,6 +65,11 @@ module.exports = (router, formioServer) => {
     else if (req.projectId && req.user) {
       try {
         const project = await formio.cache.loadPrimaryProject(req);
+        if (!project) {
+          const error = new Error('Project not found');
+          error.status = 400;
+          throw error;
+        }
         let role = 'read';
         const adminAccess = getProjectAccess(project.access, 'team_admin');
         const writeAccess = getProjectAccess(project.access, 'team_write');

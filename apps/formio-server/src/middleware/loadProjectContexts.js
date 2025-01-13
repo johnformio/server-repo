@@ -15,7 +15,6 @@ module.exports = (formio) => async (req, res, next) => {
 
   try {
     const loadCurrentProject = async () => {
-        // TODO: why do we not resolve with an error here (or reject)?
       try {
         const currentProject = await formio.cache.loadCurrentProject(req);
 
@@ -29,7 +28,7 @@ module.exports = (formio) => async (req, res, next) => {
           }
         }
       }
-      catch (err) {
+      catch (ignoreErr) {
         return;
       }
     };
@@ -41,7 +40,7 @@ module.exports = (formio) => async (req, res, next) => {
           req.parentProject = parentProject;
         }
       }
-      catch (err) {
+      catch (ignoreErr) {
         return;
       }
     };
@@ -53,7 +52,7 @@ module.exports = (formio) => async (req, res, next) => {
           req.primaryProject = primaryProject;
         }
       }
-      catch (err) {
+      catch (ignoreErr) {
         return;
       }
     };

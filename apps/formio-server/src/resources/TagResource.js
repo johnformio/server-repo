@@ -40,7 +40,11 @@ module.exports = function(router, formioServer) {
       formio.middleware.filterMongooseExists({field: 'deleted', isNull: true}),
       formio.middleware.tagHandler,
       async function(req, res, next) {
+        try {
           const project = await formio.cache.loadCurrentProject(req);
+          if (!project) {
+            throw new Error('Project not found.');
+          }
           // Allow passing template from frontend. This is useful for remote environments.
           if (!req.body.template) {
             const options = await router.formio.formio.hook.alter('exportOptions', {}, req, res);
@@ -60,6 +64,10 @@ module.exports = function(router, formioServer) {
 
             return next();
           }
+        }
+        catch (err) {
+          return next(err);
+        }
       },
       function(req, res, next) {
         const template = {};
@@ -141,6 +149,9 @@ module.exports = function(router, formioServer) {
     async function(req, res, next) {
       try {
         const project = await formio.cache.loadCurrentProject(req);
+        if (!project) {
+          throw new Error('Project not found.');
+        }
         return res.send({tag: project.tag});
       }
       catch (err) {
@@ -157,7 +168,11 @@ module.exports = function(router, formioServer) {
     formio.middleware.checkRequestAllowed,
     formio.middleware.restrictToPlans(['commercial', 'trial']),
     async function(req, res, next) {
+      try {
         const project = await formio.cache.loadCurrentProject(req);
+        if (!project) {
+          throw new Error('Project not found.');
+        }
         const deploy = req.body;
 
         // Sanity checks.
@@ -249,6 +264,10 @@ module.exports = function(router, formioServer) {
             return res.status(400).send('Unknown deploy type. Please use tag or environment.');
           }
         }
+      }
+      catch (err) {
+        return next(err);
+      }
     }
   );
 

@@ -57,6 +57,11 @@ module.exports = (formio) => {
 
       // Get the owner of the Project
       const project = await formio.cache.loadPrimaryProject(req);
+      if (!project) {
+        const error = new Error('Project not found');
+        error.status = 400;
+        throw error;
+      }
 
       if (!project.owner && accessLevel === 'owner') {
         const error = new Error('No project owner found');

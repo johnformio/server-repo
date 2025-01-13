@@ -1,7 +1,6 @@
 'use strict';
 
 const _ = require('lodash');
-const eachSeries = require('async/eachSeries');
 const util = require('./util');
 const config = require('../../config');
 const {Utils} = require('@formio/core/utils');
@@ -108,7 +107,7 @@ module.exports = (formioServer) => {
       return result;
     },
 
-    traverseComponents: (req, project, operation, components, data, next) => {
+    traverseComponents: (req, project, operation, components, data) => {
       Utils.eachComponentData(components, data, (component, data, row, path, components, index, parent) => {
         if (Encryptor.encryptedComponent(component)) {
           if (parent && Encryptor.containerBasedComponent(parent) && Encryptor.encryptedComponent(parent)) {
@@ -125,50 +124,36 @@ module.exports = (formioServer) => {
           }
         }
       });
-      next();
     },
 
-    encryptDecrypt: (req, submission, operation, next) => {
-      Encryptor.loadProject(req).then((project) => {
-        if (!req.currentForm) {
-          formioServer.formio.cache.loadCurrentForm(req, (err, form) => {
-            if (err) {
-              return next();
-            }
-            formioServer.formio.cache.loadSubForms(form, req, () => {
-              Encryptor.traverseComponents(req, project, operation, form.components, submission.data, next);
-            });
-          });
+    encryptDecrypt: async (req, submission, operation) => {
+      try {
+        const project = await formioServer.formio.cache.loadCurrentProject(req);
+        if (!project) {
+          throw new Error('Project not found');
         }
-        else {
-          Encryptor.traverseComponents(req, project, operation, req.currentForm.components, submission.data, next);
-        }
-      }).catch((err)=>{
-        console.warn(err.message);
-        next();
-      });
+        const form = req.currentForm || formioServer.formio.cache.loadCurrentForm(req);
+        await formioServer.formio.cache.loadSubForms(form, req);
+        Encryptor.traverseComponents(req, project, operation, form.components, submission.data);
+      }
+      catch (err) {
+        console.warn(err.message || err);
+      }
     },
 
-    handle: (req, res, next) => {
+    handle: async (req, res) => {
       if (req.handlerName && _.get(req, 'licenseTerms.options.sac', false)) {
         if (Encryptor.encryptHandler(req.handlerName)) {
-          Encryptor.encryptDecrypt(req, req.body, 'encrypt', next);
+          await Encryptor.encryptDecrypt(req, req.body, 'encrypt');
         }
         else if (Encryptor.decryptHandler(req.handlerName)) {
           if (res.resource && res.resource.item) {
-            const items = (req.handlerName === 'afterIndex') ? res.resource.item : [res.resource.item];
-            eachSeries(items, (submission, done) => Encryptor.encryptDecrypt(req, submission, 'decrypt', done), next);
-          }
-          else {
-            return next();
+            const submissions = (req.handlerName === 'afterIndex') ? res.resource.item : [res.resource.item];
+            for (const submission of submissions) {
+              await Encryptor.encryptDecrypt(req, submission, 'decrypt');
+            }
           }
         }
-        else {
-          return next();
-        }
-      }
-      else {
-        return next();
       }
     }
   };

@@ -12,12 +12,13 @@ module.exports = class FormRevision extends Revision {
     return ['components', 'settings', 'tags', 'properties', 'controller', 'esign'];
   }
 
-  revisionsAllowed(req) {
-    return super.revisionsAllowed(req) || (this.checkRevisionPlan(req.primaryProject.plan) && config.formio.hosted);
+  async revisionsAllowed(req) {
+    const configurationAllowsRevisions = await super.revisionsAllowed(req);
+    return configurationAllowsRevisions || (this.checkRevisionPlan(req.primaryProject.plan) && config.formio.hosted);
   }
 
   shouldCreateNewRevision(req, item, loadItem) {
-    return Revision.prototype.shouldCreateNewRevision.call(this, req, item, loadItem, loadItem);
+    return super.shouldCreateNewRevision(req, item, loadItem, loadItem);
   }
 
   incrementVersion(item) {

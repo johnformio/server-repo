@@ -22,6 +22,9 @@ module.exports = function(formioServer) {
   const report = async function(req, res, next, filter) {
     try {
       const project = await formio.cache.loadPrimaryProject(req);
+      if (!project) {
+        throw new Error('Project not found');
+      }
 
       debug.report(`Plan: ${project.plan}`);
       if (!['trial', 'team', 'commercial'].includes(project.plan)) {

@@ -22,7 +22,6 @@ module.exports = function(formio) {
 
       // Skip the middleware if there are no apiKeys within the project.
       if (
-        !currentProject ||
         !currentProject.settings ||
         !currentProject.settings.keys ||
         (currentProject.settings.keys.length === 0) ||
@@ -39,9 +38,9 @@ module.exports = function(formio) {
       req.user = null;
       req.token = null;
       return next();
-  }
-  catch (err) {
-    return next();
-  }
+    }
+    catch (err) {
+      return next();
+    }
   };
 };

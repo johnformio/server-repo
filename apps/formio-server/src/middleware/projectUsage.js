@@ -7,7 +7,7 @@ module.exports = function(formioServer) {
   const loadPrimaryProjectPlanFromCache = async (req, primaryProjectId) => {
     const primaryProject = await formioServer.formio.cache.loadProject(req, primaryProjectId);
     if (!primaryProject) {
-      throw new Error('Primary project not found');
+      throw new Error('Project not found');
     }
     else {
       return primaryProject.plan;
