@@ -63,7 +63,7 @@
     "dotenv": "^16.3.1",
     "express": "^4.21.1",
     "express-cache-controller": "^1.1.0",
-    "formio": "4.0.0-dev.1880.a95f46b",
+    "formio": "4.0.0-dev.1880.ff71b3e",
     "googleapis": "^105.0.0",
     "helmet": "^5.0.2",
     "is-url": "^1.2.4",

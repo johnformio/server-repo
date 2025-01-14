@@ -1059,6 +1059,23 @@
     lodash "^4.17.21"
     moment "^2.29.4"
 
+"@formio/core@2.4.0-rc.4":
+  version "2.4.0-rc.4"
+  resolved "https://registry.yarnpkg.com/@formio/core/-/core-2.4.0-rc.4.tgz#cdb87d5681b430ce900d4b897d41c1f3e854ad0b"
+  integrity sha512-vsPkMmAHNuCUG6kHr9v8UGZ4cUssOPzZIDnDEN5fJY39Gjpy06BG5pOXTHvWFKdUtMOqodgfePek3tG7A3Sx3w==
+  dependencies:
+    browser-cookies "^1.2.0"
+    core-js "^3.39.0"
+    dayjs "^1.11.12"
+    dompurify "^3.1.7"
+    eventemitter3 "^5.0.0"
+    fast-json-patch "^3.1.1"
+    fetch-ponyfill "^7.1.0"
+    inputmask "5.0.9"
+    json-logic-js "^2.0.5"
+    lodash "^4.17.21"
+    moment "^2.29.4"
+
 "@formio/js@5.0.0-rc.66":
   version "5.0.0-rc.66"
   resolved "https://registry.yarnpkg.com/@formio/js/-/js-5.0.0-rc.66.tgz#9ab892d6b51d8ddcf68a733c513d5fc4d7e89515"
@@ -3298,7 +3315,7 @@ copy-webpack-plugin@^9.0.1:
     schema-utils "^3.1.1"
     serialize-javascript "^6.0.0"
 
-core-js@^3.26.1, core-js@^3.37.1:
+core-js@^3.26.1, core-js@^3.37.1, core-js@^3.39.0:
   version "3.40.0"
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-3.40.0.tgz#2773f6b06877d8eda102fc42f828176437062476"
   integrity sha512-7vsMc/Lty6AGnn7uFpYT56QesI5D2Y/UkgKounk87OP9Z2H9Z8kj6jzcSGAxFmUtDOS0ntK6lbQz+Nsa0Jj6mQ==
@@ -3435,7 +3452,7 @@ data-view-byte-offset@^1.0.1:
     es-errors "^1.3.0"
     is-data-view "^1.0.1"
 
-dayjs@^1.11.11:
+dayjs@^1.11.11, dayjs@^1.11.12:
   version "1.11.13"
   resolved "https://registry.yarnpkg.com/dayjs/-/dayjs-1.11.13.tgz#92430b0139055c3ebb60150aa13e860a4b5a366c"
   integrity sha512-oaMBel6gjolK862uaPQOVTA7q3TZhuSvuMQAAglQDOWYO9A91IrAOUJEyKVlqJlHE0vq5p5UXxzdPfMH/x6xNg==
@@ -3642,7 +3659,7 @@ dom-set@^1.0.1:
     is-array "^1.0.1"
     iselement "^1.1.4"
 
-dompurify@^3.0.5, dompurify@^3.1.3, dompurify@^3.1.4:
+dompurify@^3.0.5, dompurify@^3.1.3, dompurify@^3.1.4, dompurify@^3.1.7:
   version "3.2.3"
   resolved "https://registry.yarnpkg.com/dompurify/-/dompurify-3.2.3.tgz#05dd2175225324daabfca6603055a09b2382a4cd"
   integrity sha512-U1U5Hzc2MO0oW3DF+G9qYN0aT7atAou4AgI0XjWz061nyBPbdxkfdhfy5uMgGn6+oLFCfn44ZGbdDqCzVmlOWA==
@@ -4297,12 +4314,12 @@ formidable@^2.1.2:
     once "^1.4.0"
     qs "^6.11.0"
 
-formio@4.0.0-dev.1880.a95f46b:
-  version "4.0.0-dev.1880.a95f46b"
-  resolved "https://registry.yarnpkg.com/formio/-/formio-4.0.0-dev.1880.a95f46b.tgz#0f6aa8c8d73ec32c0203ffbeb6a8d6a3ff1d67d9"
-  integrity sha512-rwmLbz6fufWVqZqipjYjTjUuujz9AsdCcSu6gZ6ZqB6bgqpB+YWB4tRr/1pXZclbUrlQ0GLqE1zhq1cDav5OXg==
+formio@4.0.0-dev.1880.ff71b3e:
+  version "4.0.0-dev.1880.ff71b3e"
+  resolved "https://registry.yarnpkg.com/formio/-/formio-4.0.0-dev.1880.ff71b3e.tgz#e5d2570aeedf0b8714ef07366dae212ac7bfd5a9"
+  integrity sha512-/DWPsCxZQXdvDqt21+PmbqzxURBIBouuF2PbfuVNRtOHjHLFhZaQe7+J6V2CV002j6hx6zIiyCw7vCGsNsl15g==
   dependencies:
-    "@formio/core" "2.3.0-rc.21"
+    "@formio/core" "2.4.0-rc.4"
     "@formio/js" "5.0.0-rc.97"
     "@formio/node-fetch-http-proxy" "^1.1.0"
     "@formio/vm" "0.3.0-rc.26"
@@ -4899,7 +4916,7 @@ inputmask@5.0.8:
   resolved "https://registry.yarnpkg.com/inputmask/-/inputmask-5.0.8.tgz#cd0f70b058c3291a0d4f27de25dbfc179c998bb4"
   integrity sha512-1WcbyudPTXP1B28ozWWyFa6QRIUG4KiLoyR6LFHlpT4OfTzRqFfWgHFadNvRuMN1S9XNVz9CdNvCGjJi+uAMqQ==
 
-inputmask@^5.0.8, inputmask@^5.0.9:
+inputmask@5.0.9, inputmask@^5.0.8, inputmask@^5.0.9:
   version "5.0.9"
   resolved "https://registry.yarnpkg.com/inputmask/-/inputmask-5.0.9.tgz#7bf4e83f5e199c88c0edf28545dc23fa208ef4be"
   integrity sha512-s0lUfqcEbel+EQXtehXqwCJGShutgieOaIImFKC/r4reYNvX3foyrChl6LOEvaEgxEbesePIrw1Zi2jhZaDZbQ==
@@ -5398,7 +5415,7 @@ json-format@^1.0.1:
   resolved "https://registry.yarnpkg.com/json-format/-/json-format-1.0.1.tgz#143f67e62af129d6bffed288a46265ea23d0df0c"
   integrity sha512-MoKIg/lBeQALqjYnqEanikfo3zBKRwclpXJexdF0FUniYAAN2ypEIXBEtpQb+9BkLFtDK1fyTLAsnGlyGfLGxw==
 
-json-logic-js@^2.0.2:
+json-logic-js@^2.0.2, json-logic-js@^2.0.5:
   version "2.0.5"
   resolved "https://registry.yarnpkg.com/json-logic-js/-/json-logic-js-2.0.5.tgz#55f0c687dd6f56b02ccdcfdd64171ed998ab5499"
   integrity sha512-rTT2+lqcuUmj4DgWfmzupZqQDA64AdmYqizzMPWj3DxGdfFNsxPpcNVSaTj4l8W2tG/+hg7/mQhxjU3aPacO6g==
