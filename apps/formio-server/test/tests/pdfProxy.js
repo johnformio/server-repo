@@ -6,6 +6,8 @@ const request = require('supertest');
 const assert = require('assert');
 const sinon = require('sinon');
 const downloadPDF = require('../../src/util/downloadPDF');
+const formioProject = require('../../formio.json');
+var chance = new (require('chance'))();
 
 module.exports = function(app, template, hook) {
   describe('PDF Proxy tests', () => {
@@ -45,6 +47,68 @@ module.exports = function(app, template, hook) {
         );
     });
 
+
+    before('Create the test project for checking permissions', (done) => {
+      request(app)
+        .post('/project')
+        .set('x-jwt-token', template.formio.owner.token)
+        .send({
+          title: 'Usual',
+          name: 'usual',
+          plan: 'commercial',
+          template: formioProject,
+          type: 'project'
+        })
+        .expect(201)
+        .then((res) => {
+          template.usualProject = {
+            primary: res.body,
+            project: res.body,
+            owner: {
+              data: {
+                name: chance.word(),
+                email: 'mike@form.io',
+                password: chance.word({ length: 8 })
+              }
+            }
+          };
+          const event = template.hooks.getEmitter();
+          event.once('newMail', (email) => {
+            const regex = /(?<=token=)[^"]+/i;
+            let token = email.html.match(regex);
+            token = token ? token[0] : token;
+            template.usualProject.owner.token = token;
+            done();
+          });
+
+          return request(app).get('/project/' + template.usualProject.project._id + '/form?limit=9999999')
+        })
+        .then((res) => {
+            const response = res.body;
+            response.forEach(function (form) {
+              if (form.name === 'userRegistrationForm') {
+                template.usualProject.formRegister = form;
+              }
+            });
+          return request(app)
+            .post('/project/' + template.usualProject.project._id + '/form/' + template.usualProject.formRegister._id + '/submission')
+            .send({
+              data: {
+                'name': template.usualProject.owner.data.name,
+                'email': template.usualProject.owner.data.email,
+              }
+            }).then((res) => {
+              const response = res.body;
+              assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
+            })
+        }).catch(done);
+    });
+
+    after('Remove unused projects', (done) => {
+      delete template.usualProject;
+      done();
+    })
+
     it('Will not error out if there is no projectId', (done) => {
       request(app)
         .get('/pdf-proxy/pdf/thisProjectDoesNotExist')
@@ -57,6 +121,14 @@ module.exports = function(app, template, hook) {
           assert(res.body.message === 'No project found.');
           done();
         });
+    });
+
+    it('Shouldn`t allowed to delete PDF for a user without permissions', (done) => {
+      request(app)
+        .delete(`/pdf-proxy/pdf/${template.usualProject.project._id}/file/${fileId}`)
+        .set('x-jwt-token', template.usualProject.owner.token)
+        .expect(401)
+        .end(done);
     });
 
     it('Should proxy file fetch', (done) => {
