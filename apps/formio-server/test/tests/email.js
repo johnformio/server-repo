@@ -750,6 +750,23 @@ module.exports = function(app, template, hook) {
                   event.on('newMail', (email) => {
                     assert(email.html.includes('test'));
                     event.removeAllListeners('newMail');
+                    //Clean up forms
+                    request(app)
+                      .delete(hook.alter('url', `/form/${resParent.body._id}`, template))
+                      .set('x-jwt-token', template.users.admin.token)
+                      .end((err, res) => {
+                        if(err){
+                          done(err);
+                        }
+                      });
+                    request(app)
+                      .delete(hook.alter('url', `/form/${resChild.body._id}`, template))
+                      .set('x-jwt-token', template.users.admin.token)
+                      .end((err, res) => {
+                        if(err){
+                          done(err);
+                        }
+                      });
                     done();
                   });
                   const submission = {
