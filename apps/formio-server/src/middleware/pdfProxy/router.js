@@ -16,9 +16,11 @@ module.exports = (app) => {
   router.use(express.raw({type: '*/*', limit: '50mb'}));
 
   router.use(async (req, res, next) => {
-    const params = formio.util.getUrlParams(req.url);
-    if (params.pdf) {
-      req.projectId = params.pdf;
+    if (!req.projectId) {
+      const params = formio.util.getUrlParams(req.url);
+      if (params.pdf) {
+        req.projectId = params.pdf;
+      }
     }
     if (req.projectId) {
       try {
