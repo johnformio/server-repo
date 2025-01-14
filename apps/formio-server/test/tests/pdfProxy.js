@@ -9,7 +9,7 @@ const downloadPDF = require('../../src/util/downloadPDF');
 const formioProject = require('../../formio.json');
 var chance = new (require('chance'))();
 
-module.exports = function(app, template, hook) {
+module.exports = function (app, template, hook) {
   describe('PDF Proxy tests', () => {
     const pdfServer = 'http://localhost:4005';
 
@@ -23,31 +23,6 @@ module.exports = function(app, template, hook) {
 
     const pdfFile = Buffer.from('some test dummy pdf data');
     const fileId = '123';
-
-    before(() => {
-      nock(pdfServer)
-        .persist()
-
-        .get(`/pdf/${projectId}/file/${fileId}`)
-        .reply(200, pdfFile, {'Content-Type': 'application/pdf', 'Content-Length': pdfFile.length})
-
-        .post(`/pdf/${projectId}/file/pdf/download`, (body) => body.form && body.submission)
-        .query((qs) => qs.format && qs.project)
-        .reply(200, pdfFile, {'Content-Type': 'application/pdf', 'Content-Length': pdfFile.length})
-
-        .post(`/pdf/${projectId}/download`, (body) => body.form && body.submission)
-        .query((qs) => qs.format && qs.project)
-        .reply(200, pdfFile, {'Content-Type': 'application/pdf', 'Content-Length': pdfFile.length})
-
-        .post(`/pdf/${projectId}/file`, )
-        .reply(
-          200,
-          JSON.stringify({path: "somepath", file: "somepath", formfields: {}}),
-          {'Content-Type': 'application/json'}
-        );
-    });
-
-
     before('Create the test project for checking permissions', (done) => {
       request(app)
         .post('/project')
@@ -70,7 +45,8 @@ module.exports = function(app, template, hook) {
                 email: 'mike@form.io',
                 password: chance.word({ length: 8 })
               }
-            }
+            },
+            access: res.body.access
           };
           const event = template.hooks.getEmitter();
           event.once('newMail', (email) => {
@@ -84,12 +60,12 @@ module.exports = function(app, template, hook) {
           return request(app).get('/project/' + template.usualProject.project._id + '/form?limit=9999999')
         })
         .then((res) => {
-            const response = res.body;
-            response.forEach(function (form) {
-              if (form.name === 'userRegistrationForm') {
-                template.usualProject.formRegister = form;
-              }
-            });
+          const response = res.body;
+          response.forEach(function (form) {
+            if (form.name === 'userRegistrationForm') {
+              template.usualProject.formRegister = form;
+            }
+          });
           return request(app)
             .post('/project/' + template.usualProject.project._id + '/form/' + template.usualProject.formRegister._id + '/submission')
             .send({
@@ -99,9 +75,37 @@ module.exports = function(app, template, hook) {
               }
             }).then((res) => {
               const response = res.body;
+              template.usualProject.userRoles = response.roles;
               assert(response.hasOwnProperty('_id'), 'The response should contain an `_id`.');
             })
         }).catch(done);
+    });
+
+    before(() => {
+      nock(pdfServer)
+        .persist()
+
+        .get(`/pdf/${projectId}/file/${fileId}`)
+        .reply(200, pdfFile, { 'Content-Type': 'application/pdf', 'Content-Length': pdfFile.length })
+
+        .delete(`/pdf/${template.usualProject.project._id}/file/${fileId}`)
+        .reply(200, JSON.stringify({ message: "this file has been deleted" }),
+          { 'Content-Type': 'application/json' })
+
+        .post(`/pdf/${projectId}/file/pdf/download`, (body) => body.form && body.submission)
+        .query((qs) => qs.format && qs.project)
+        .reply(200, pdfFile, { 'Content-Type': 'application/pdf', 'Content-Length': pdfFile.length })
+
+        .post(`/pdf/${projectId}/download`, (body) => body.form && body.submission)
+        .query((qs) => qs.format && qs.project)
+        .reply(200, pdfFile, { 'Content-Type': 'application/pdf', 'Content-Length': pdfFile.length })
+
+        .post(`/pdf/${projectId}/file`,)
+        .reply(
+          200,
+          JSON.stringify({ path: "somepath", file: "somepath", formfields: {} }),
+          { 'Content-Type': 'application/json' }
+        );
     });
 
     after('Remove unused projects', (done) => {
@@ -129,6 +133,21 @@ module.exports = function(app, template, hook) {
         .set('x-jwt-token', template.usualProject.owner.token)
         .expect(401)
         .end(done);
+    });
+
+    it('Should allowed to delete PDF for a user with permissions', async () => {
+      const access = template.usualProject.access;
+      access[3].roles = [...access[3].roles, ...template.usualProject.userRoles];
+
+      await request(app)
+        .put('/project/' + template.usualProject.project._id)
+        .set('x-jwt-token', template.formio.owner.token)
+        .send({ access });
+
+      const response = await request(app)
+        .delete(`/pdf-proxy/pdf/${template.usualProject.project._id}/file/${fileId}`)
+        .set('x-jwt-token', template.usualProject.owner.token);
+      assert.equal(response.body.message, 'this file has been deleted');
     });
 
     it('Should proxy file fetch', (done) => {
