@@ -16,6 +16,8 @@ export default function mockBrowserContext() {
             setAttribute: () => {},
             getContext: () => ({}),
         });
+    if (!globalThis.document.querySelector)
+        globalThis.document.querySelector = () => {};
     if (!globalThis.document.cookie) globalThis.document.cookie = '';
     if (!globalThis.document.getElementsByTagName)
         globalThis.document.getElementsByTagName = () => [];
