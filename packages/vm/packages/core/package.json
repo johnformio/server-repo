@@ -15,7 +15,7 @@
     ],
     "dependencies": {
         "@formio/core": "2.4.0-dev.2",
-        "@formio/js": "5.1.0-dev.5979.96c77b0",
+        "@formio/js": "5.1.0-dev.5977.69f20ee",
         "debug": "^4.3.4",
         "dotenv": "^16.3.1",
         "express": "^4.18.2",
