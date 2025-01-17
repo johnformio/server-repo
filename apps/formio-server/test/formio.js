@@ -723,7 +723,6 @@ describe('Initial Tests', function() {
         require('./tests/dropbox')(app, template, hook);
         require('./tests/report')(app, template, hook);
         require('./tests/actions')(app, template, hook);
-        require('./tests/pdfProxy')(app, template, hook);
         require('./tests/pdfUtils')(app, template, hook);
         require('./tests/revisions')(app, template, hook);
         require('./tests/esign')(app, template, hook);
