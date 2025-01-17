@@ -30,7 +30,7 @@
   "main": "./main.js",
   "version": "9.4.0-dev.1",
   "schema": "3.3.19",
-  "portalVersion": "9.0.0-rc.11",
+  "portalVersion": "9.4.0-rc.13",
   "dependencies": {
     "@aws-sdk/client-kms": "^3.574.0",
     "@aws-sdk/client-s3": "^3.621.0",
