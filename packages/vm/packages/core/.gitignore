@@ -1,6 +1,0 @@
-node_modules
-.vscode
-build
-*.log
-perf-testing
-.env
