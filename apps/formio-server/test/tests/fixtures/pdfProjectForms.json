@@ -1,0 +1,579 @@
+{
+  "pdf": {
+    "title": "PDF",
+    "name": "pdf",
+    "path": "pdf",
+    "display": "form",
+    "components": [
+      {
+        "input": true,
+        "tableView": true,
+        "inputType": "text",
+        "inputMask": "",
+        "label": "Project",
+        "key": "project",
+        "placeholder": "",
+        "prefix": "",
+        "suffix": "",
+        "multiple": false,
+        "defaultValue": "",
+        "protected": false,
+        "unique": false,
+        "persistent": true,
+        "clearOnHide": true,
+        "validate": {
+          "required": false,
+          "minLength": "",
+          "maxLength": "",
+          "pattern": "",
+          "custom": "",
+          "customPrivate": false
+        },
+        "conditional": {
+          "show": "",
+          "when": null,
+          "eq": ""
+        },
+        "type": "textfield",
+        "tags": [],
+        "hidden": false,
+        "hideLabel": false
+      },
+      {
+        "input": true,
+        "tableView": true,
+        "inputType": "text",
+        "inputMask": "",
+        "label": "ID",
+        "key": "id",
+        "placeholder": "",
+        "prefix": "",
+        "suffix": "",
+        "multiple": false,
+        "defaultValue": "",
+        "protected": false,
+        "unique": false,
+        "persistent": true,
+        "clearOnHide": true,
+        "validate": {
+          "required": false,
+          "minLength": "",
+          "maxLength": "",
+          "pattern": "",
+          "custom": "",
+          "customPrivate": false
+        },
+        "conditional": {
+          "show": "",
+          "when": null,
+          "eq": ""
+        },
+        "type": "textfield",
+        "tags": [],
+        "lockKey": true,
+        "hidden": false,
+        "hideLabel": false
+      },
+      {
+        "input": true,
+        "tableView": true,
+        "inputType": "text",
+        "inputMask": "",
+        "label": "Path",
+        "key": "path",
+        "placeholder": "",
+        "prefix": "",
+        "suffix": "",
+        "multiple": false,
+        "defaultValue": "",
+        "protected": false,
+        "unique": false,
+        "persistent": true,
+        "clearOnHide": true,
+        "validate": {
+          "required": false,
+          "minLength": "",
+          "maxLength": "",
+          "pattern": "",
+          "custom": "",
+          "customPrivate": false
+        },
+        "conditional": {
+          "show": "",
+          "when": null,
+          "eq": ""
+        },
+        "type": "textfield",
+        "tags": [],
+        "lockKey": true,
+        "hidden": false,
+        "hideLabel": false
+      },
+      {
+        "input": true,
+        "tableView": true,
+        "label": "Status",
+        "key": "status",
+        "placeholder": "",
+        "data": {
+          "values": [
+            {
+              "value": "active",
+              "label": "Active"
+            },
+            {
+              "value": "inactive",
+              "label": "Inactive"
+            }
+          ],
+          "json": "",
+          "url": "",
+          "resource": "",
+          "custom": ""
+        },
+        "dataSrc": "values",
+        "valueProperty": "",
+        "defaultValue": "",
+        "refreshOn": "",
+        "filter": "",
+        "authenticate": false,
+        "template": "<span>{{ item.label }}</span>",
+        "multiple": false,
+        "protected": false,
+        "unique": false,
+        "persistent": true,
+        "clearOnHide": true,
+        "validate": {
+          "required": false
+        },
+        "type": "select",
+        "tags": [],
+        "conditional": {
+          "show": "",
+          "when": null,
+          "eq": ""
+        },
+        "hidden": false,
+        "hideLabel": false,
+        "labelPosition": "top",
+        "properties": {}
+      },
+      {
+        "input": true,
+        "label": "Submit",
+        "tableView": false,
+        "key": "submit",
+        "size": "md",
+        "leftIcon": "",
+        "rightIcon": "",
+        "block": false,
+        "action": "submit",
+        "disableOnInvalid": false,
+        "theme": "primary",
+        "type": "button",
+        "hideLabel": false
+      }
+    ],
+    "owner": null,
+    "submissionAccess": [],
+    "access": [],
+    "tags": [],
+    "type": "resource",
+    "revisions": "",
+    "_vid": 0,
+    "submissionRevisions": ""
+  },
+  "info": {
+    "title": "Info",
+    "name": "info",
+    "path": "info",
+    "display": "form",
+    "components": [
+      {
+        "lockKey": true,
+        "tags": [],
+        "type": "textfield",
+        "conditional": {
+          "eq": "",
+          "when": null,
+          "show": ""
+        },
+        "validate": {
+          "customPrivate": false,
+          "custom": "",
+          "pattern": "",
+          "maxLength": "",
+          "minLength": "",
+          "required": false
+        },
+        "clearOnHide": true,
+        "persistent": true,
+        "unique": false,
+        "protected": false,
+        "defaultValue": "",
+        "multiple": false,
+        "suffix": "",
+        "prefix": "",
+        "placeholder": "",
+        "key": "project",
+        "label": "Project",
+        "inputMask": "",
+        "inputType": "text",
+        "tableView": true,
+        "input": true
+      },
+      {
+        "tags": [],
+        "type": "textfield",
+        "conditional": {
+          "eq": "",
+          "when": null,
+          "show": ""
+        },
+        "validate": {
+          "customPrivate": false,
+          "custom": "",
+          "pattern": "",
+          "maxLength": "",
+          "minLength": "",
+          "required": false
+        },
+        "clearOnHide": true,
+        "persistent": true,
+        "unique": false,
+        "protected": false,
+        "defaultValue": "",
+        "multiple": false,
+        "suffix": "",
+        "prefix": "",
+        "placeholder": "",
+        "key": "host",
+        "label": "Host",
+        "inputMask": "",
+        "inputType": "text",
+        "tableView": true,
+        "input": true
+      },
+      {
+        "input": true,
+        "tableView": true,
+        "inputType": "text",
+        "inputMask": "",
+        "label": "Plan",
+        "key": "plan",
+        "placeholder": "",
+        "prefix": "",
+        "suffix": "",
+        "multiple": false,
+        "defaultValue": "",
+        "protected": false,
+        "unique": false,
+        "persistent": true,
+        "clearOnHide": true,
+        "validate": {
+          "required": false,
+          "minLength": "",
+          "maxLength": "",
+          "pattern": "",
+          "custom": "",
+          "customPrivate": false
+        },
+        "conditional": {
+          "show": "",
+          "when": null,
+          "eq": ""
+        },
+        "type": "textfield",
+        "tags": [],
+        "isNew": false
+      },
+      {
+        "tags": [],
+        "type": "textfield",
+        "conditional": {
+          "eq": "",
+          "when": null,
+          "show": ""
+        },
+        "validate": {
+          "customPrivate": false,
+          "custom": "",
+          "pattern": "",
+          "maxLength": "",
+          "minLength": "",
+          "required": false
+        },
+        "clearOnHide": true,
+        "persistent": true,
+        "unique": false,
+        "protected": false,
+        "defaultValue": "",
+        "multiple": false,
+        "suffix": "",
+        "prefix": "",
+        "placeholder": "",
+        "key": "forms",
+        "label": "Forms",
+        "inputMask": "",
+        "inputType": "text",
+        "tableView": true,
+        "input": true
+      },
+      {
+        "tags": [],
+        "type": "textfield",
+        "conditional": {
+          "eq": "",
+          "when": null,
+          "show": ""
+        },
+        "validate": {
+          "customPrivate": false,
+          "custom": "",
+          "pattern": "",
+          "maxLength": "",
+          "minLength": "",
+          "required": false
+        },
+        "clearOnHide": true,
+        "persistent": true,
+        "unique": false,
+        "protected": false,
+        "defaultValue": "",
+        "multiple": false,
+        "suffix": "",
+        "prefix": "",
+        "placeholder": "",
+        "key": "submissions",
+        "label": "Submissions",
+        "inputMask": "",
+        "inputType": "text",
+        "tableView": true,
+        "input": true
+      },
+      {
+        "input": true,
+        "tableView": true,
+        "inputType": "number",
+        "label": "Last Conversion",
+        "key": "lastConversion",
+        "placeholder": "",
+        "prefix": "",
+        "suffix": "",
+        "defaultValue": "",
+        "protected": false,
+        "persistent": true,
+        "clearOnHide": true,
+        "validate": {
+          "required": false,
+          "min": "",
+          "max": "",
+          "step": "any",
+          "integer": "",
+          "multiple": "",
+          "custom": ""
+        },
+        "type": "number",
+        "tags": [],
+        "conditional": {
+          "show": "",
+          "when": null,
+          "eq": ""
+        }
+      },
+      {
+        "input": true,
+        "tableView": true,
+        "label": "Status",
+        "key": "status",
+        "placeholder": "",
+        "data": {
+          "values": [
+            {
+              "value": "active",
+              "label": "Active"
+            },
+            {
+              "value": "inactive",
+              "label": "Inactive"
+            }
+          ],
+          "json": "",
+          "url": "",
+          "resource": "",
+          "custom": ""
+        },
+        "dataSrc": "values",
+        "valueProperty": "",
+        "defaultValue": "",
+        "refreshOn": "",
+        "filter": "",
+        "authenticate": false,
+        "template": "<span>{{ item.label }}</span>",
+        "multiple": false,
+        "protected": false,
+        "unique": false,
+        "persistent": true,
+        "clearOnHide": true,
+        "validate": {
+          "required": false
+        },
+        "type": "select",
+        "tags": [],
+        "conditional": {
+          "show": "",
+          "when": null,
+          "eq": ""
+        }
+      },
+      {
+        "input": true,
+        "tableView": true,
+        "inputType": "text",
+        "inputMask": "",
+        "label": "Token",
+        "key": "token",
+        "placeholder": "",
+        "prefix": "",
+        "suffix": "",
+        "multiple": false,
+        "defaultValue": "",
+        "protected": false,
+        "unique": false,
+        "persistent": true,
+        "clearOnHide": true,
+        "validate": {
+          "required": false,
+          "minLength": "",
+          "maxLength": "",
+          "pattern": "",
+          "custom": "",
+          "customPrivate": false
+        },
+        "conditional": {
+          "show": "",
+          "when": null,
+          "eq": ""
+        },
+        "type": "textfield",
+        "tags": []
+      },
+      {
+        "type": "button",
+        "theme": "primary",
+        "disableOnInvalid": false,
+        "action": "submit",
+        "block": false,
+        "rightIcon": "",
+        "leftIcon": "",
+        "size": "md",
+        "key": "submit",
+        "tableView": false,
+        "label": "Submit",
+        "input": true
+      }
+    ],
+    "owner": null,
+    "submissionAccess": [],
+    "access": [],
+    "tags": [],
+    "type": "resource",
+    "_vid": 0,
+    "revisions": "",
+    "submissionRevisions": ""
+  },
+  "purchase": {
+    "title": "Purchase",
+    "name": "purchase",
+    "path": "purchase",
+    "display": "form",
+    "components": [
+      {
+        "input": true,
+        "tableView": true,
+        "inputType": "text",
+        "inputMask": "",
+        "label": "Project",
+        "key": "project",
+        "placeholder": "",
+        "prefix": "",
+        "suffix": "",
+        "multiple": false,
+        "defaultValue": "",
+        "protected": false,
+        "unique": false,
+        "persistent": true,
+        "clearOnHide": true,
+        "validate": {
+          "required": false,
+          "minLength": "",
+          "maxLength": "",
+          "pattern": "",
+          "custom": "",
+          "customPrivate": false
+        },
+        "conditional": {
+          "show": "",
+          "when": null,
+          "eq": ""
+        },
+        "type": "textfield",
+        "tags": []
+      },
+      {
+        "tags": [],
+        "type": "textfield",
+        "conditional": {
+          "eq": "",
+          "when": null,
+          "show": ""
+        },
+        "validate": {
+          "customPrivate": false,
+          "custom": "",
+          "pattern": "",
+          "maxLength": "",
+          "minLength": "",
+          "required": false
+        },
+        "clearOnHide": true,
+        "persistent": true,
+        "unique": false,
+        "protected": false,
+        "defaultValue": "",
+        "multiple": false,
+        "suffix": "",
+        "prefix": "",
+        "placeholder": "",
+        "key": "plan",
+        "label": "Plan",
+        "inputMask": "",
+        "inputType": "text",
+        "tableView": true,
+        "input": true
+      },
+      {
+        "input": true,
+        "label": "Submit",
+        "tableView": false,
+        "key": "submit",
+        "size": "md",
+        "leftIcon": "",
+        "rightIcon": "",
+        "block": false,
+        "action": "submit",
+        "disableOnInvalid": false,
+        "theme": "primary",
+        "type": "button"
+      }
+    ],
+    "owner": null,
+    "submissionAccess": [],
+    "access": [],
+    "tags": [],
+    "type": "resource",
+    "_vid": 0,
+    "revisions": "",
+    "submissionRevisions": ""
+  }
+}
