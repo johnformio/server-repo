@@ -1,0 +1,75 @@
+{
+    "name": "@formio/vm",
+    "version": "1.0.0-dev.5",
+    "main": "build/index.js",
+    "license": "OSL-3.0",
+    "engines": {
+        "node": ">=20.0.0"
+    },
+    "files": [
+        "build",
+        "package.json",
+        "yarn.lock",
+        "README.md",
+        "LICENSE.txt"
+    ],
+    "dependencies": {
+        "@formio/core": "2.4.0-dev.2",
+        "@formio/js": "5.1.0-dev.5977.69f20ee",
+        "debug": "^4.3.4",
+        "dotenv": "^16.3.1",
+        "express": "^4.18.2",
+        "inputmask": "^5.0.9",
+        "isolated-vm": "^4.6.0",
+        "lodash": "^4.17.21",
+        "moment": "^2.29.4",
+        "moment-timezone": "^0.5.43",
+        "nunjucks": "^3.2.4",
+        "nunjucks-date-filter": "^0.1.1"
+    },
+    "scripts": {
+        "preinstall": "npx check-node-version --node \">=20.0.0\"",
+        "test": "npm run build && mocha -r ts-node/register -b -t 0 --no-node-snapshot 'build/**/__tests__/*.test.js'",
+        "start": "DOTENV_CONFIG_PATH=./.env node --no-node-snapshot build/server.js",
+        "build": "gulp prebuild && tsc && gulp postbuild",
+        "prepack": "npm run build && gulp remove-tests",
+        "prepare": "husky install",
+        "lint": "eslint ."
+    },
+    "devDependencies": {
+        "@types/chai": "^4.3.11",
+        "@types/debug": "^4.1.10",
+        "@types/express": "^4.17.20",
+        "@types/lodash": "^4.14.200",
+        "@types/method-override": "^0.0.35",
+        "@types/mocha": "^10.0.6",
+        "@types/node": "^20.8.9",
+        "@types/nunjucks": "^3.2.6",
+        "@typescript-eslint/eslint-plugin": "^7.2.0",
+        "@typescript-eslint/parser": "^7.2.0",
+        "chai": "^4.3.10",
+        "del": "^7.1.0",
+        "eslint": ">=7.0.0",
+        "eslint-config-prettier": "^9.1.0",
+        "eslint-config-standard": "^17.1.0",
+        "eslint-plugin-import": "^2.25.2",
+        "eslint-plugin-n": "^15.0.0 || ^16.0.0 ",
+        "eslint-plugin-promise": "^6.0.0",
+        "gulp": "^4.0.2",
+        "husky": ">=6",
+        "lint-staged": ">=10",
+        "mocha": "^10.2.0",
+        "nodemon": "^3.0.1",
+        "prettier": "^3.1.0",
+        "ts-node": "^10.9.1",
+        "tsc": "^2.0.4",
+        "typescript": "^5.2.2"
+    },
+    "lint-staged": {
+        "*.ts": [
+            "eslint --fix",
+            "prettier --write"
+        ],
+        "*.{ts,json,md}": "prettier --write"
+    }
+}
