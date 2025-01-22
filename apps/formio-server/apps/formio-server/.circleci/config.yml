@@ -1,0 +1,255 @@
+version: 2.1
+orbs:
+  snyk: snyk/snyk@1.1.2
+jobs:
+  build:
+    docker:
+      - image: cimg/node:20.11
+    steps:
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+      - run:
+          name: Install npm modules
+          command: |
+            sudo npm i -g npm-cli-login
+            npm-cli-login -u $NPM_USERNAME -p $NPM_PASSWORD -e $NPM_EMAIL -r https://pkg.form.io
+            yarn install
+      - save_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+          paths:
+            - node_modules
+      - run:
+          name: Lint
+          command: npm run lint
+      - run:
+          name: Clean
+          command: npm run clean
+      - run:
+          name: Build
+          command: npm run compile
+      - persist_to_workspace:
+          root: build
+          paths:
+            - favicon.ico
+            - formio.js 
+            - package.json
+            - yarn.lock
+  portal:
+    environment:
+      AWS_DEFAULT_REGION: "us-west-2"
+    docker:
+      - image: cimg/node:20.11
+    steps:
+      - checkout
+      - run:
+          name: Install awscli
+          command: |
+            sudo apt-get update
+            sudo apt install -y awscli
+      - attach_workspace:
+          at: .
+      - run:
+          name: Download Portal
+          command: |
+            aws s3 cp s3://formio-app-releases/$(node -e "console.log(require('./package.json').portalVersion)").tgz portal.tgz
+            mkdir -p build/portal
+            tar -zxvf portal.tgz -C build/portal
+      - persist_to_workspace:
+          root: build
+          paths:
+            - portal
+
+  test:
+    environment:
+      MONGO: "mongodb://localhost:27017/formio"
+      FILTER_ACCESS: "false"
+      TEST_SUITE: 1
+      PROTOCOL: "http"
+      PROJECT_PLAN: "trial"
+      DROPBOX_CLIENTID: "client123"
+      DROPBOX_CLIENTSECRET: "clientsecret123"
+      PORTAL_ENABLED: "false"
+      JWT_SECRET: "123secret123"
+    docker:
+      - image: cimg/node:20.11
+      - image: circleci/mongo:5.0
+    steps:
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+      - run:
+          name: Waiting for Mongo
+          command: dockerize -wait tcp://localhost:27017 -timeout 1m
+      - run:
+          name: Setup hostnames
+          command: |
+            sudo bash -c "echo \"127.0.0.1 formio.localhost\" >> /etc/hosts"
+            sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
+      - run:
+          name: Test
+          command: npm test
+  docker:
+    environment:
+      IMAGE_PATH: formio/formio-enterprise
+    docker:
+      - image: cimg/node:20.11
+    steps:
+      - setup_remote_docker:
+          version: default
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+      - attach_workspace:
+          at: build
+      - run:
+          name: Setup hostnames
+          command: |
+            sudo bash -c "echo \"127.0.0.1 formio.localhost\" >> /etc/hosts"
+            sudo bash -c "echo \"127.0.0.1 api.localhost\" >> /etc/hosts"
+      - run: docker build --no-cache -t tmpimage --build-arg NPM_USERNAME=$NPM_USERNAME --build-arg NPM_PASSWORD=$NPM_PASSWORD --build-arg NPM_EMAIL=$NPM_EMAIL -f deployment/docker/Builder .
+      - run: docker create -ti --name tmpcontainer tmpimage sh
+      - run: docker cp tmpcontainer:/src/node_modules build/
+      - run: docker rm -f tmpcontainer
+      - run: docker build --no-cache -t $IMAGE_PATH -f deployment/docker/Dockerfile .
+      - run:
+          name: Install awscli
+          command: |
+            sudo apt-get update
+            sudo apt install -y awscli
+      - run:
+          name: deploy
+          command: |
+            if [[ $CIRCLE_TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+              docker login -u $DOCKER_USER -p $DOCKER_PASS
+              docker tag $IMAGE_PATH $IMAGE_PATH:$CIRCLE_TAG
+              docker push $IMAGE_PATH:$CIRCLE_TAG
+              if [[ $CIRCLE_TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                docker push $IMAGE_PATH
+              fi
+              ./deployment/scripts/createVersion.sh $CIRCLE_TAG
+            fi
+      - run:
+          name: push_ecr
+          command: |
+            if [[ $CIRCLE_TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip awscliv2.zip
+              sudo ./aws/install
+              docker login -u AWS -p $(aws ecr-public get-login-password --region us-east-1) public.ecr.aws/formio
+              docker tag $IMAGE_PATH public.ecr.aws/$IMAGE_PATH:$CIRCLE_TAG
+              docker push public.ecr.aws/$IMAGE_PATH:$CIRCLE_TAG
+            fi
+      - snyk/scan:
+          docker-image-name: $IMAGE_PATH
+          fail-on-issues: false
+          monitor-on-build: true
+          organization: ${SNYK_CICD_ORGANIZATION}
+          project: ${IMAGE_PATH}:${CIRCLE_TAG}
+          token-variable: SNYK_TOKEN
+          additional-arguments: --container ${IMAGE_PATH}:${CIRCLE_TAG} --app-vulns
+
+  deploy_npm:
+    docker:
+      - image: cimg/node:20.11
+    steps:
+      - checkout
+      - attach_workspace:
+          at: build
+      - run: git clone --depth 1 git@github.com:formio/formio-enterprise.git
+      - run: rm -rf formio-enterprise/portal
+      - run: cp -r build/* formio-enterprise/
+      - run:
+          name: Commit
+          command: |
+            cd formio-enterprise
+            git config user.email "formiobot@example.com"
+            git config user.name "Formiobot"
+            git add --all && git commit -am "$CIRCLE_TAG"
+            git tag $CIRCLE_TAG
+            if [[ $CIRCLE_TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              git push
+            fi
+            git push --tags
+
+            
+# workflows:
+#   do-build:
+#     jobs:
+#       - build:
+#           filters:
+#             tags:
+#               only: /.*/
+#       - portal:
+#           filters:
+#             tags:
+#               only: /.*/
+#       - test:
+#           requires:
+#             - build
+#             - portal
+#           filters:
+#             tags:
+#               only: /.*/
+#       - docker:
+#           requires:
+#             - test
+#           filters:
+#             tags:
+#               only: /^\d+\.\d+\.\d+.*/
+#             branches:
+#               ignore: /.*/
+#       - deploy_npm:
+#           requires:
+#             - test
+#             - docker
+#           filters:
+#             tags:
+#               only: /^\d+\.\d+\.\d+.*/
+#             branches:
+#               ignore: /.*/
+
+############################################################
+## Disables Circle CI (Comment/Remove to re-enable CircleCI)
+############################################################
+workflows:
+  do-build:
+    jobs:
+      - build:
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              ignore: /.*/
+      - portal:
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              ignore: /.*/
+      - test:
+          requires:
+            - build
+            - portal
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              ignore: /.*/
+      - docker:
+          requires:
+            - test
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              ignore: /.*/
+      - deploy_npm:
+          requires:
+            - test
+            - docker
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              ignore: /.*/
